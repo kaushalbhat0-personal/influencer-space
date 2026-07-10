@@ -76,6 +76,36 @@ export function SettingsForm({
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">
+              Niche
+            </h3>
+            <div>
+              <label
+                htmlFor="niche"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Background Theme
+              </label>
+              <select
+                id="niche"
+                name="niche"
+                defaultValue={config.niche || "fitness"}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              >
+                <option value="fitness">Fitness</option>
+                <option value="fashion">Fashion</option>
+                <option value="travel">Travel</option>
+                <option value="tech">Tech</option>
+                <option value="food">Food</option>
+                <option value="lifestyle">Lifestyle</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Controls the floating background icons on the public site.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">
               Social Media Links
             </h3>
             <p className="text-sm text-gray-500">

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { NicheBackground } from "@/components/ui/NicheBackground";
+import { getInfluencerConfig } from "@/config/influencer";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -20,17 +22,20 @@ export const metadata: Metadata = {
     "I help women rebuild their strength—physically and emotionally. Specializing in fat loss, metabolism correction, hormonal balance, and postpartum recovery.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const config = await getInfluencerConfig();
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ScrollProgress />
+        <NicheBackground niche={config.niche} />
         {children}
       </body>
     </html>

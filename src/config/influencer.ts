@@ -9,6 +9,7 @@ export type InfluencerDataType = {
     tiktok: string;
   };
   profileImage: string | null;
+  niche: string;
   colors: {
     primary: string;
     secondary: string;
@@ -28,6 +29,7 @@ export const defaultConfig: InfluencerDataType = {
   },
   profileImage:
     "https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=400&h=400&fit=crop",
+  niche: "fitness",
   colors: {
     primary: "#d4a843",
     secondary: "#fbbf24",
