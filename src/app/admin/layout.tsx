@@ -10,7 +10,8 @@ const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
   { href: "/admin/products", label: "Products", icon: "📦" },
   { href: "/admin/affiliates", label: "Affiliates", icon: "🔗" },
-  { href: "/admin/brand", label: "Brand Settings", icon: "🎨" },
+  { href: "/admin/messages", label: "Messages", icon: "✉️" },
+  { href: "/admin/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export default function AdminLayout({

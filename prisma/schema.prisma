@@ -46,3 +46,10 @@ model ContactSubmission {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model Setting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}

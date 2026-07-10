@@ -3,12 +3,23 @@
 import { motion } from "framer-motion";
 import { SocialIcon } from "@/components/ui/SocialIcon";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { SOCIAL_LINKS } from "@/lib/constants";
+import type { InfluencerDataType } from "@/config/influencer";
 
-export function HeroSection() {
+export function HeroSection({
+  config,
+}: {
+  config: InfluencerDataType;
+}) {
   const scrollToProducts = () => {
     document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const socialPlatforms = [
+    { platform: "instagram" as const, url: config.social.instagram },
+    { platform: "youtube" as const, url: config.social.youtube },
+    { platform: "twitter" as const, url: config.social.twitter },
+    { platform: "tiktok" as const, url: config.social.tiktok },
+  ].filter((s) => s.url.length > 0);
 
   return (
     <section className="relative min-h-[90vh] w-full overflow-hidden bg-black/95">
@@ -18,6 +29,21 @@ export function HeroSection() {
 
       <div className="relative z-10 flex h-full min-h-[90vh] items-center justify-center px-4">
         <div className="max-w-4xl text-center">
+          {config.profileImage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="mb-6 flex justify-center"
+            >
+              <img
+                src={config.profileImage}
+                alt={config.name}
+                className="h-28 w-28 rounded-full border-2 border-amber-400/50 object-cover shadow-lg shadow-amber-400/20 sm:h-36 sm:w-36"
+              />
+            </motion.div>
+          )}
+
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -25,7 +51,7 @@ export function HeroSection() {
             className="mb-4 text-4xl font-bold text-white sm:text-6xl lg:text-7xl"
           >
             <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">
-              Your Name
+              {config.name}
             </span>
           </motion.h1>
 
@@ -35,21 +61,21 @@ export function HeroSection() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="mx-auto mb-8 max-w-2xl px-2 text-base text-white/70 sm:text-xl"
           >
-            Creator | Storyteller | Building the future of digital influence.
-            Join the journey.
+            {config.tagline}
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="mb-10 flex flex-wrap justify-center gap-4"
-          >
-            <SocialIcon platform="instagram" href={SOCIAL_LINKS.instagram} />
-            <SocialIcon platform="youtube" href={SOCIAL_LINKS.youtube} />
-            <SocialIcon platform="twitter" href={SOCIAL_LINKS.twitter} />
-            <SocialIcon platform="tiktok" href={SOCIAL_LINKS.tiktok} />
-          </motion.div>
+          {socialPlatforms.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="mb-10 flex flex-wrap justify-center gap-4"
+            >
+              {socialPlatforms.map((s) => (
+                <SocialIcon key={s.platform} platform={s.platform} href={s.url} />
+              ))}
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
