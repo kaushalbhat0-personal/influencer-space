@@ -1,6 +1,8 @@
 import { HeroSection } from "@/components/public/HeroSection";
 import { ProductGrid } from "@/components/public/ProductGrid";
 import { AffiliateGrid } from "@/components/public/AffiliateGrid";
+import { InstagramFeed } from "@/components/public/InstagramFeed";
+import { VideoCarousel } from "@/components/public/VideoCarousel";
 import { ProductService } from "@/services/product.service";
 import { AffiliateService } from "@/services/affiliate.service";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -58,6 +60,10 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <InstagramFeed instagramUrl={config.social.instagram} />
+
+      <VideoCarousel />
+
       <section className="relative px-4 py-12 sm:py-20 md:px-8">
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent" />
         <div className="relative z-10 mx-auto max-w-3xl text-center">
@@ -82,6 +88,12 @@ export default async function HomePage() {
 
       <footer className="border-t border-white/5 px-4 py-6 text-center text-xs text-white/30 sm:text-sm">
         <p>© {new Date().getFullYear()} {config.name}. All rights reserved.</p>
+        <Link
+          href="/admin/login"
+          className="mt-2 inline-block text-white/10 transition-colors duration-300 hover:text-white/40"
+        >
+          Admin Login
+        </Link>
       </footer>
     </main>
   );
