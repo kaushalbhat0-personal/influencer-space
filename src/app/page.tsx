@@ -3,6 +3,7 @@ import { ProductGrid } from "@/components/public/ProductGrid";
 import { AffiliateGrid } from "@/components/public/AffiliateGrid";
 import { InstagramFeed } from "@/components/public/InstagramFeed";
 import { VideoCarousel } from "@/components/public/VideoCarousel";
+import { SocialStats } from "@/components/public/SocialStats";
 import { ProductService } from "@/services/product.service";
 import { AffiliateService } from "@/services/affiliate.service";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -29,6 +30,8 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen bg-black">
       <HeroSection config={config} />
+
+      <SocialStats />
 
       <section id="products" className="relative px-4 py-12 sm:py-20 md:px-8">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/95 to-black/90" />

@@ -8,22 +8,22 @@ const videos = [
   {
     id: "1",
     title: "Home Workout for Postpartum Recovery 🏋️‍♀️",
-    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    embedUrl: "https://www.youtube.com/embed/um0ENGpAzvQ",
   },
   {
     id: "2",
     title: "Hormonal Balance Meal Prep Tips 🥗",
-    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    embedUrl: "https://www.youtube.com/embed/1V7W4dK1VJE",
   },
   {
     id: "3",
     title: "Strength Training at Home 💪",
-    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    embedUrl: "https://www.youtube.com/embed/2Mgn8Fk3tJw",
   },
   {
     id: "4",
     title: "Mind-Body Connection for Fitness 🧘‍♀️",
-    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    embedUrl: "https://www.youtube.com/embed/JbEgFgJMYEw",
   },
 ];
 

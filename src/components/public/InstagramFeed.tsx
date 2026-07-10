@@ -1,38 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-const demoPosts = [
+type InstagramPost = {
+  id: string;
+  media_url: string;
+  caption: string;
+  permalink: string;
+  media_type: string;
+};
+
+const demoPosts: InstagramPost[] = [
   {
     id: "1",
-    imageUrl: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=400&fit=crop",
+    media_url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=400&fit=crop",
     caption: "Stronger every day! 💪",
+    permalink: "#",
+    media_type: "IMAGE",
   },
   {
     id: "2",
-    imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop",
+    media_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop",
     caption: "Postpartum recovery journey 🏋️‍♀️",
+    permalink: "#",
+    media_type: "IMAGE",
   },
   {
     id: "3",
-    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop",
+    media_url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop",
     caption: "Hormonal balance meal prep 🥗",
+    permalink: "#",
+    media_type: "IMAGE",
   },
   {
     id: "4",
-    imageUrl: "https://images.unsplash.com/photo-1581009137042-c552e485697a?w=400&h=400&fit=crop",
+    media_url: "https://images.unsplash.com/photo-1581009137042-c552e485697a?w=400&h=400&fit=crop",
     caption: "Mind-body connection 🧘‍♀️",
+    permalink: "#",
+    media_type: "IMAGE",
   },
   {
     id: "5",
-    imageUrl: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&h=400&fit=crop",
+    media_url: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&h=400&fit=crop",
     caption: "Self-care is fitness too 💖",
+    permalink: "#",
+    media_type: "IMAGE",
   },
   {
     id: "6",
-    imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
+    media_url: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
     caption: "Consistency over perfection 🌟",
+    permalink: "#",
+    media_type: "IMAGE",
   },
 ];
 
@@ -41,7 +61,28 @@ export function InstagramFeed({
 }: {
   instagramUrl: string;
 }) {
+  const [posts, setPosts] = useState<InstagramPost[]>(demoPosts);
   const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    async function fetchInstagram() {
+      try {
+        const res = await fetch(
+          `/api/instagram?url=${encodeURIComponent(instagramUrl)}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.posts?.length > 0) {
+            setPosts(data.posts.slice(0, 6));
+          }
+        }
+      } catch {
+        // fallback to demo
+      }
+    }
+
+    fetchInstagram();
+  }, [instagramUrl]);
 
   return (
     <section className="relative px-4 py-12 sm:py-20">
@@ -73,10 +114,10 @@ export function InstagramFeed({
         </motion.div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {demoPosts.map((post, index) => (
+          {posts.map((post, index) => (
             <motion.a
               key={post.id}
-              href={instagramUrl}
+              href={post.permalink !== "#" ? post.permalink : instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 30 }}
@@ -92,9 +133,10 @@ export function InstagramFeed({
                   <div className="absolute inset-0 animate-pulse bg-white/5" />
                 )}
                 <img
-                  src={post.imageUrl}
+                  src={post.media_url}
                   alt={post.caption}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
                   onLoad={() => setLoaded(true)}
                 />
                 <div className="absolute bottom-2 right-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
