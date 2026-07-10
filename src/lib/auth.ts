@@ -21,31 +21,45 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log("Login attempt missing email or password");
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        console.log("Login attempt for:", credentials.email);
 
-        if (!user) {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          });
+
+          console.log("User found:", !!user);
+
+          if (!user) {
+            return null;
+          }
+
+          console.log("Stored hash prefix:", user.password.substring(0, 4));
+
+          const passwordMatch = await bcrypt.compare(
+            credentials.password,
+            user.password,
+          );
+
+          console.log("Password match:", passwordMatch);
+
+          if (!passwordMatch) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
           return null;
         }
-
-        const passwordMatch = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-
-        if (!passwordMatch) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        };
       },
     }),
   ],
