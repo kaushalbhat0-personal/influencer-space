@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { createAffiliate, updateAffiliate } from "@/actions/affiliate.actions";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
 import type { AffiliateData } from "@/services/affiliate.service";
@@ -19,10 +20,14 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<AffiliateActionState>({ success: false });
   const [pending, setPending] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(affiliate?.imageUrl || "");
 
   const serverAction = mode === "create" ? createAffiliate : updateAffiliate;
 
   async function handleSubmit(formData: FormData) {
+    if (imageUrl) {
+      formData.set("imageUrl", imageUrl);
+    }
     setPending(true);
     setState({ success: false });
     const result = await serverAction(state, formData);
@@ -64,14 +69,11 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
             required
           />
 
-          <Input
-            id="imageUrl"
-            name="imageUrl"
-            label="Image URL"
-            type="url"
-            defaultValue={affiliate?.imageUrl ?? ""}
-            error={state.fieldErrors?.imageUrl?.[0]}
-            placeholder="https://example.com/image.jpg"
+          <ImageUpload
+            onUpload={setImageUrl}
+            currentImage={imageUrl || null}
+            folder="affiliates"
+            label="Affiliate Image"
           />
 
           <div className="flex items-center gap-3">

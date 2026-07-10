@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { createProduct, updateProduct } from "@/actions/product.actions";
 import { PRODUCTS_ROUTE } from "@/lib/constants";
 import type { ProductData } from "@/services/product.service";
@@ -20,10 +21,14 @@ export function ProductForm({ mode, product }: ProductFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<ProductActionState>({ success: false });
   const [pending, setPending] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(product?.imageUrl || "");
 
   const serverAction = mode === "create" ? createProduct : updateProduct;
 
   async function handleSubmit(formData: FormData) {
+    if (imageUrl) {
+      formData.set("imageUrl", imageUrl);
+    }
     setPending(true);
     setState({ success: false });
     const result = await serverAction(state, formData);
@@ -73,14 +78,11 @@ export function ProductForm({ mode, product }: ProductFormProps) {
             required
           />
 
-          <Input
-            id="imageUrl"
-            name="imageUrl"
-            label="Image URL"
-            type="url"
-            defaultValue={product?.imageUrl ?? ""}
-            error={state.fieldErrors?.imageUrl?.[0]}
-            placeholder="https://example.com/image.jpg"
+          <ImageUpload
+            onUpload={setImageUrl}
+            currentImage={imageUrl || null}
+            folder="products"
+            label="Product Image"
           />
 
           {state.error && (
