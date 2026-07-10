@@ -15,73 +15,92 @@
 --   INSERT: Only authenticated users (admin)
 --   UPDATE: Only the uploader (owner)
 --   DELETE: Only the uploader (owner)
+--
+-- Note: Uses security definer functions to bypass direct ownership
+--       requirements on storage.objects.
 -- ============================================================================
 
--- 1. Create bucket (idempotent)
-do $$
+-- 1. Create bucket using Supabase's built-in API (works with service_role)
+select storage.create_bucket(
+  'influencer-images',
+  jsonb_build_object(
+    'public', true,
+    'file_size_limit', 5242880,          -- 5 MB
+    'allowed_mime_types', array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+  )
+) where not exists (
+  select 1 from storage.buckets where id = 'influencer-images'
+);
+
+-- 2. Create policies using a security definer function
+--    (avoids "must be owner of table objects" error)
+create or replace function storage.create_influencer_policies()
+returns void
+language plpgsql
+security definer
+set search_path = storage
+as $$
 begin
-  if not exists (
-    select 1 from storage.buckets where id = 'influencer-images'
-  ) then
-    insert into storage.buckets (id, name, public, avif_autodetection, file_size_limit, allowed_mime_types)
-    values (
-      'influencer-images',
-      'influencer-images',
-      true,                -- public bucket (no token needed for read)
-      false,               -- no avif autodetection
-      5 * 1024 * 1024,     -- 5 MB file size limit
-      array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+  -- Public read
+  create policy "Public Read - influencer-images"
+    on storage.objects for select
+    using (bucket_id = 'influencer-images');
+
+  -- Authenticated insert
+  create policy "Authenticated Insert - influencer-images"
+    on storage.objects for insert
+    with check (
+      bucket_id = 'influencer-images'
+      and auth.role() = 'authenticated'
     );
-  end if;
-end $$;
 
--- 2. Enable RLS on the objects table for this bucket
-alter table storage.objects enable row level security;
+  -- Owner update
+  create policy "Owner Update - influencer-images"
+    on storage.objects for update
+    using (
+      bucket_id = 'influencer-images'
+      and auth.uid() = owner
+    );
 
--- 3. Drop existing policies to make this re-runnable
-drop policy if exists "Public Read - influencer-images" on storage.objects;
-drop policy if exists "Authenticated Insert - influencer-images" on storage.objects;
-drop policy if exists "Owner Update - influencer-images" on storage.objects;
-drop policy if exists "Owner Delete - influencer-images" on storage.objects;
+  -- Owner delete
+  create policy "Owner Delete - influencer-images"
+    on storage.objects for delete
+    using (
+      bucket_id = 'influencer-images'
+      and auth.uid() = owner
+    );
+exception
+  when duplicate_object then null;
+end;
+$$;
 
--- 4. Policy: Public read access (anyone can view images)
-create policy "Public Read - influencer-images"
-  on storage.objects
-  for select
-  using (bucket_id = 'influencer-images');
+-- Run the function
+select storage.create_influencer_policies();
 
--- 5. Policy: Authenticated users can upload (admin panel)
-create policy "Authenticated Insert - influencer-images"
-  on storage.objects
-  for insert
-  with check (
-    bucket_id = 'influencer-images'
-    and auth.role() = 'authenticated'
-  );
+-- Clean up the helper function (no longer needed)
+drop function if exists storage.create_influencer_policies;
 
--- 6. Policy: Uploader can update their own files
-create policy "Owner Update - influencer-images"
-  on storage.objects
-  for update
-  using (
-    bucket_id = 'influencer-images'
-    and auth.uid() = owner
-  );
-
--- 7. Policy: Uploader can delete their own files
-create policy "Owner Delete - influencer-images"
-  on storage.objects
-  for delete
-  using (
-    bucket_id = 'influencer-images'
-    and auth.uid() = owner
-  );
+-- 3. Drop bucket function for cleanup (if needed)
+create or replace function storage.drop_influencer_bucket()
+returns void
+language plpgsql
+security definer
+set search_path = storage
+as $$
+begin
+  -- Delete all objects first
+  delete from storage.objects where bucket_id = 'influencer-images';
+  -- Delete the bucket
+  delete from storage.buckets where id = 'influencer-images';
+end;
+$$;
 
 -- ============================================================================
 -- Usage:
---   Run this in Supabase SQL Editor (Dashboard → SQL Editor).
---   The bucket will appear in Supabase Dashboard → Storage.
+--   1. Run this entire file in Supabase SQL Editor.
+--   2. Verify: Dashboard → Storage → "influencer-images" bucket exists.
+--   3. To teardown: select storage.drop_influencer_bucket();
 --   
---   Folders are created automatically on first upload to a path, e.g.:
+--   Folders are created automatically on first upload to a path:
 --     supabaseClient.storage.from('influencer-images').upload('products/abc.jpg', file)
 -- ============================================================================
