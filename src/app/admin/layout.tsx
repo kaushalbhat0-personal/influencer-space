@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MobileSidebarToggle } from "@/components/admin/MobileSidebarToggle";
 
 const sidebarLinks = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
+  { href: "/admin/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/admin/products", label: "Products", icon: "📦" },
   { href: "/admin/affiliates", label: "Affiliates", icon: "🔗" },
   { href: "/admin/messages", label: "Messages", icon: "✉️" },
@@ -52,7 +52,7 @@ export default function AdminLayout({
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-center border-b border-gray-700">
             <Link
-              href="/admin"
+              href="/admin/dashboard"
               onClick={closeSidebar}
               className="text-xl font-bold text-white"
             >
@@ -62,8 +62,8 @@ export default function AdminLayout({
           <nav className="flex-1 space-y-1 p-4">
             {sidebarLinks.map((link) => {
               const isActive =
-                link.href === "/admin"
-                  ? pathname === "/admin"
+                link.href === "/admin/dashboard"
+                  ? pathname === "/admin/dashboard"
                   : pathname.startsWith(link.href);
               return (
                 <Link

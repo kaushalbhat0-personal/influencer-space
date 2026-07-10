@@ -87,7 +87,7 @@ export function NicheBackground({ niche = "fitness" }: { niche?: string }) {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="w-full h-full text-gray-400"
+            className="w-full h-full text-white"
           >
             <path d={icon.path} />
           </svg>
