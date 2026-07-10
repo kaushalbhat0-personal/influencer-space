@@ -9,10 +9,18 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+async function safeFindAllActive<T>(fn: () => Promise<T[]>): Promise<T[]> {
+  try {
+    return await fn();
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
   const [products, affiliates, config] = await Promise.all([
-    ProductService.findAllActive(),
-    AffiliateService.findAllActive(),
+    safeFindAllActive(() => ProductService.findAllActive()),
+    safeFindAllActive(() => AffiliateService.findAllActive()),
     getInfluencerConfig(),
   ]);
 
