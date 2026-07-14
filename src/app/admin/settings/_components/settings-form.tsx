@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { VideoUpload } from "@/components/ui/VideoUpload";
+import { StorageService } from "@/services/storage.service";
 import { updateInfluencerData, updateHeroData } from "@/actions/settings.actions";
 import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
@@ -25,8 +28,19 @@ export function SettingsForm({
   const [heroState, setHeroState] = useState<SettingsActionState>({ success: false });
   const [profilePending, setProfilePending] = useState(false);
   const [heroPending, setHeroPending] = useState(false);
+  const [profileImage, setProfileImage] = useState<string>(config.profileImage || "");
+  const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
+  const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
+
+  async function handleImageDelete(url: string) {
+    const path = StorageService.extractPathFromUrl(url);
+    if (path) {
+      await StorageService.delete(path);
+    }
+  }
 
   async function handleProfileSubmit(formData: FormData) {
+    if (profileImage) formData.set("profileImage", profileImage);
     setProfilePending(true);
     setProfileState({ success: false });
     const result = await updateInfluencerData(profileState, formData);
@@ -39,6 +53,8 @@ export function SettingsForm({
   }
 
   async function handleHeroSubmit(formData: FormData) {
+    if (videoUrl) formData.set("videoUrl", videoUrl);
+    if (posterUrl) formData.set("posterUrl", posterUrl);
     setHeroPending(true);
     setHeroState({ success: false });
     const result = await updateHeroData(heroState, formData);
@@ -84,12 +100,13 @@ export function SettingsForm({
                 rows={5}
                 required
               />
-              <Input
-                id="profileImage"
-                name="profileImage"
-                label="Profile Image URL"
-                defaultValue={config.profileImage || ""}
-                placeholder="https://example.com/profile.jpg"
+
+              <ImageUpload
+                onUpload={setProfileImage}
+                onDelete={handleImageDelete}
+                currentImage={profileImage || null}
+                folder="profile"
+                label="Profile Image"
               />
             </div>
 
@@ -197,20 +214,22 @@ export function SettingsForm({
                 Control the hero video, title, subtitle, and call-to-action buttons on the landing page.
               </p>
 
-              <Input
-                id="videoUrl"
-                name="videoUrl"
-                label="Video URL"
-                defaultValue={heroData.videoUrl}
-                placeholder="/videos/intro-video/intro.mp4"
+              <VideoUpload
+                onUpload={setVideoUrl}
+                onDelete={handleImageDelete}
+                currentVideo={videoUrl || null}
+                folder="hero"
+                label="Hero Video"
               />
-              <Input
-                id="posterUrl"
-                name="posterUrl"
-                label="Poster Image URL"
-                defaultValue={heroData.posterUrl}
-                placeholder="https://images.unsplash.com/..."
+
+              <ImageUpload
+                onUpload={setPosterUrl}
+                onDelete={handleImageDelete}
+                currentImage={posterUrl || null}
+                folder="hero"
+                label="Hero Poster Image"
               />
+
               <Input
                 id="heroTitle"
                 name="heroTitle"

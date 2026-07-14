@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
+import { ImageUpload } from "@/components/ui/ImageUpload";
+import { StorageService } from "@/services/storage.service";
 import { createTimelineEvent, updateTimelineEvent } from "@/actions/timeline.actions";
 import { TIMELINE_ROUTE } from "@/lib/constants";
 import type { TimelineEventData } from "@/services/timeline.service";
@@ -20,10 +22,22 @@ export function TimelineForm({ mode, event }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<TimelineActionState>({ success: false });
   const [pending, setPending] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(event?.imageUrl || "");
 
   const serverAction = mode === "create" ? createTimelineEvent : updateTimelineEvent;
 
+  async function handleImageDelete(url: string) {
+    const path = StorageService.extractPathFromUrl(url);
+    if (path) {
+      await StorageService.delete(path);
+    }
+    setImageUrl("");
+  }
+
   async function handleSubmit(formData: FormData) {
+    if (imageUrl) {
+      formData.set("imageUrl", imageUrl);
+    }
     setPending(true);
     setState({ success: false });
     const result = await serverAction(state, formData);
@@ -79,12 +93,12 @@ export function TimelineForm({ mode, event }: Props) {
             placeholder="e.g. 3x Champion"
           />
 
-          <Input
-            id="imageUrl"
-            name="imageUrl"
-            label="Image URL (optional)"
-            defaultValue={event?.imageUrl ?? ""}
-            placeholder="https://images.unsplash.com/..."
+          <ImageUpload
+            onUpload={setImageUrl}
+            onDelete={handleImageDelete}
+            currentImage={imageUrl || null}
+            folder="timeline"
+            label="Event Image (optional)"
           />
 
           {state.error && <p className="text-sm text-red-600">{state.error}</p>}
