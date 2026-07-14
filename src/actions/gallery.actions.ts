@@ -5,6 +5,7 @@ import { z } from "zod";
 import { GalleryService } from "@/services/gallery.service";
 import { StorageService } from "@/services/storage.service";
 import { GALLERY_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 const gallerySchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -18,6 +19,12 @@ export type GalleryActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+async function requireTenant(): Promise<string> {
+  const tenant = await getTenantContext();
+  if (!tenant) throw new Error("Unauthorized — no tenant context");
+  return tenant.id;
+}
 
 export async function createGalleryImage(
   _prevState: GalleryActionState,
@@ -42,7 +49,8 @@ export async function createGalleryImage(
   }
 
   try {
-    const result = await GalleryService.create({
+    const tenantId = await requireTenant();
+    const result = await GalleryService.create(tenantId, {
       title: parsed.data.title,
       description: parsed.data.description || undefined,
       imageUrl: parsed.data.imageUrl,
@@ -86,7 +94,8 @@ export async function updateGalleryImage(
   }
 
   try {
-    await GalleryService.update(id, {
+    const tenantId = await requireTenant();
+    await GalleryService.update(id, tenantId, {
       title: parsed.data.title,
       description: parsed.data.description || undefined,
       imageUrl: parsed.data.imageUrl,
@@ -106,7 +115,8 @@ export async function deleteGalleryImage(
 ): Promise<GalleryActionState> {
   console.log("📸 deleteGalleryImage called — id:", id);
   try {
-    const image = await GalleryService.findById(id);
+    const tenantId = await requireTenant();
+    const image = await GalleryService.findById(id, tenantId);
     console.log("📸 deleteGalleryImage found image:", image?.id);
     if (image?.imageUrl) {
       const path = StorageService.extractPathFromUrl(image.imageUrl);
@@ -116,7 +126,7 @@ export async function deleteGalleryImage(
         console.log("📸 deleteGalleryImage storage file deleted:", path);
       }
     }
-    await GalleryService.delete(id);
+    await GalleryService.delete(id, tenantId);
     console.log("📸 deleteGalleryImage success — id:", id);
     revalidatePath(GALLERY_ROUTE);
     return { success: true };

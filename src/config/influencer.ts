@@ -39,8 +39,12 @@ export const defaultConfig: InfluencerDataType = {
 
 export async function getInfluencerConfig(): Promise<InfluencerDataType> {
   try {
+    const { getTenantContext } = await import("@/lib/tenant");
+    const tenant = await getTenantContext();
+    if (!tenant) return defaultConfig;
+
     const { SettingsService } = await import("@/services/settings.service");
-    const data = await SettingsService.getInfluencerData();
+    const data = await SettingsService.getInfluencerData(tenant.id);
     return data;
   } catch {
     return defaultConfig;

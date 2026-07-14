@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { SettingsService } from "@/services/settings.service";
+import { getTenantContext } from "@/lib/tenant";
 
 const socialSchema = z.object({
   instagram: z.string().optional().default(""),
@@ -25,11 +26,7 @@ const influencerDataSchema = z.object({
       accent: z.string().optional().default("#b45309"),
     })
     .optional()
-    .default({
-      primary: "#d4a843",
-      secondary: "#fbbf24",
-      accent: "#b45309",
-    }),
+    .default({ primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" }),
 });
 
 const heroDataSchema = z.object({
@@ -55,6 +52,12 @@ export type SettingsActionState = {
   fieldErrors?: Record<string, string[]>;
 };
 
+async function requireTenant(): Promise<string> {
+  const tenant = await getTenantContext();
+  if (!tenant) throw new Error("Unauthorized — no tenant context");
+  return tenant.id;
+}
+
 export async function updateInfluencerData(
   _prevState: SettingsActionState,
   formData: FormData,
@@ -71,11 +74,7 @@ export async function updateInfluencerData(
     },
     profileImage: (formData.get("profileImage") as string) || "",
     niche: (formData.get("niche") as string) || "gaming",
-    colors: {
-      primary: "#d4a843",
-      secondary: "#fbbf24",
-      accent: "#b45309",
-    },
+    colors: { primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" },
   };
 
   console.log("⚙️ updateInfluencerData called with:", rawData);
@@ -83,7 +82,10 @@ export async function updateInfluencerData(
   const parsed = influencerDataSchema.safeParse(rawData);
 
   if (!parsed.success) {
-    console.log("⚙️ updateInfluencerData validation failed:", parsed.error.flatten().fieldErrors);
+    console.log(
+      "⚙️ updateInfluencerData validation failed:",
+      parsed.error.flatten().fieldErrors,
+    );
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -91,7 +93,8 @@ export async function updateInfluencerData(
   }
 
   try {
-    await SettingsService.updateInfluencerData(parsed.data);
+    const tenantId = await requireTenant();
+    await SettingsService.updateInfluencerData(tenantId, parsed.data);
     console.log("⚙️ updateInfluencerData success");
     revalidatePath("/");
     revalidatePath("/contact");
@@ -126,7 +129,10 @@ export async function updateHeroData(
   const parsed = heroDataSchema.safeParse(rawData);
 
   if (!parsed.success) {
-    console.log("⚙️ updateHeroData validation failed:", parsed.error.flatten().fieldErrors);
+    console.log(
+      "⚙️ updateHeroData validation failed:",
+      parsed.error.flatten().fieldErrors,
+    );
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -134,7 +140,8 @@ export async function updateHeroData(
   }
 
   try {
-    await SettingsService.updateHeroData(parsed.data);
+    const tenantId = await requireTenant();
+    await SettingsService.updateHeroData(tenantId, parsed.data);
     console.log("⚙️ updateHeroData success");
     revalidatePath("/");
     revalidatePath("/admin/settings");

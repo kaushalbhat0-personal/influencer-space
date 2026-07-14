@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-dvh bg-[#0a0a0a]">
+    <div className="min-h-dvh bg-[#0a0a0a] flex">
       <MobileSidebarToggle isOpen={sidebarOpen} onToggle={() => setSidebarOpen((prev) => !prev)} />
 
       <AnimatePresence>
@@ -49,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         initial={false}
         animate={{ x: sidebarOpen ? 0 : "-100%" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-[#0f0f0f] to-[#0a0a0a] shadow-2xl shadow-s8ul-cyan/5 lg:static lg:translate-x-0"
+        className="fixed inset-y-0 left-0 z-40 w-64 shrink-0 bg-gradient-to-b from-[#0f0f0f] to-[#0a0a0a] shadow-2xl shadow-s8ul-cyan/5 lg:static lg:!translate-x-0"
       >
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-center border-b border-white/10">
@@ -95,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </motion.aside>
 
-      <div className="lg:ml-64">
+      <div className="flex-1 min-w-0">
         <main className="p-4 pt-16 sm:p-6 sm:pt-16 lg:p-8 lg:pt-8">
           <Suspense fallback={<div className="flex h-64 items-center justify-center"><LoadingSpinner size="lg" text="Loading..." /></div>}>
             {children}

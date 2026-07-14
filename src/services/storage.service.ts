@@ -15,16 +15,18 @@ function getClient() {
 }
 
 export class StorageService {
-  static async upload(file: File, folder: string, filename?: string): Promise<UploadResult> {
-    console.log("☁️ StorageService.upload — file:", file.name, "type:", file.type, "size:", file.size, "folder:", folder);
+  static async upload(
+    tenantId: string,
+    file: File,
+    folder: string,
+    filename?: string,
+  ): Promise<UploadResult> {
     const client = getClient();
-    console.log("☁️ StorageService.upload — client ready, bucket:", BUCKET_NAME);
     const ext = file.name.split(".").pop();
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
     const name = filename || `${timestamp}-${random}`;
-    const path = `${folder}/${name}.${ext}`;
-    console.log("☁️ StorageService.upload — upload path:", path);
+    const path = `${tenantId}/${folder}/${name}.${ext}`;
 
     const { data, error } = await client.storage
       .from(BUCKET_NAME)
@@ -34,71 +36,57 @@ export class StorageService {
       });
 
     if (error) {
-      console.error("☁️ StorageService.upload error:", error.message);
-      console.error("☁️ StorageService.upload error details:", JSON.stringify(error));
+      console.error("StorageService.upload error:", error.message);
       throw new Error(error.message);
     }
-
-    console.log("☁️ StorageService.upload — upload response data:", JSON.stringify(data));
 
     const { data: urlData } = supabaseClient.storage
       .from(BUCKET_NAME)
       .getPublicUrl(data.path);
 
-    console.log("☁️ StorageService.upload success — path:", data.path, "url:", urlData.publicUrl);
     return { path: data.path, publicUrl: urlData.publicUrl };
   }
 
   static async delete(path: string): Promise<void> {
-    console.log("☁️ StorageService.delete — path:", path);
     const client = getClient();
     const { error } = await client.storage
       .from(BUCKET_NAME)
       .remove([path]);
 
     if (error) {
-      console.error("☁️ StorageService.delete error:", error.message);
+      console.error("StorageService.delete error:", error.message);
       throw new Error(error.message);
     }
-    console.log("☁️ StorageService.delete success");
   }
 
   static async deleteMultiple(paths: string[]): Promise<void> {
-    if (paths.length === 0) {
-      console.log("☁️ StorageService.deleteMultiple — no paths, skipping");
-      return;
-    }
-    console.log("☁️ StorageService.deleteMultiple — paths:", paths);
+    if (paths.length === 0) return;
     const client = getClient();
     const { error } = await client.storage
       .from(BUCKET_NAME)
       .remove(paths);
 
     if (error) {
-      console.error("☁️ StorageService.deleteMultiple error:", error.message);
+      console.error("StorageService.deleteMultiple error:", error.message);
       throw new Error(error.message);
     }
-    console.log("☁️ StorageService.deleteMultiple success");
   }
 
-  static async deleteFolder(folder: string): Promise<void> {
-    console.log("☁️ StorageService.deleteFolder — folder:", folder);
+  static async deleteFolder(tenantId: string, folder: string): Promise<void> {
+    const prefix = `${tenantId}/${folder}`;
     const client = getClient();
     const { data, error } = await client.storage
       .from(BUCKET_NAME)
-      .list(folder);
+      .list(prefix);
 
     if (error) {
-      console.error("☁️ StorageService.deleteFolder list error:", error.message);
+      console.error("StorageService.deleteFolder list error:", error.message);
       throw new Error(error.message);
     }
 
     if (data && data.length > 0) {
-      const paths = data.map((file) => `${folder}/${file.name}`);
-      console.log("☁️ StorageService.deleteFolder — deleting", paths.length, "files");
+      const paths = data.map((file) => `${prefix}/${file.name}`);
       await this.deleteMultiple(paths);
-    } else {
-      console.log("☁️ StorageService.deleteFolder — folder empty or not found");
     }
   }
 

@@ -1,15 +1,19 @@
 import { notFound } from "next/navigation";
 import { ProductService } from "@/services/product.service";
 import { ProductForm } from "../../_components/product-form";
+import { getTenantContext } from "@/lib/tenant";
 
 export default async function EditProductPage({
   params,
 }: {
   params: { id: string };
 }) {
+  const tenant = await getTenantContext();
+  if (!tenant) notFound();
+
   let product;
   try {
-    product = await ProductService.findById(params.id);
+    product = await ProductService.findById(params.id, tenant.id);
   } catch {
     notFound();
   }

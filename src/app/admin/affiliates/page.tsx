@@ -3,15 +3,25 @@ import { AffiliateService } from "@/services/affiliate.service";
 import { AffiliatesList } from "./_components/affiliates-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAffiliatesPage() {
+  const tenant = await getTenantContext();
+  if (!tenant) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">No tenant configured</p>
+      </div>
+    );
+  }
+
   let affiliates: Awaited<ReturnType<typeof AffiliateService.findAll>> = [];
   let error: string | null = null;
 
   try {
-    affiliates = await AffiliateService.findAll();
+    affiliates = await AffiliateService.findAll(tenant.id);
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load affiliates";
   }

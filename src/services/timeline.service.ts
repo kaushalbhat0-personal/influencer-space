@@ -14,10 +14,10 @@ export type TimelineEventData = {
 };
 
 export const TimelineService = {
-  async findAllActive(): Promise<TimelineEventData[]> {
+  async findAllActive(tenantId: string): Promise<TimelineEventData[]> {
     try {
       return await prisma.timelineEvent.findMany({
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         orderBy: { order: "asc" },
       });
     } catch (error) {
@@ -26,9 +26,10 @@ export const TimelineService = {
     }
   },
 
-  async findAll(): Promise<TimelineEventData[]> {
+  async findAll(tenantId: string): Promise<TimelineEventData[]> {
     try {
       return await prisma.timelineEvent.findMany({
+        where: { tenantId },
         orderBy: { order: "asc" },
       });
     } catch (error) {
@@ -37,29 +38,36 @@ export const TimelineService = {
     }
   },
 
-  async findById(id: string): Promise<TimelineEventData | null> {
+  async findById(id: string, tenantId: string): Promise<TimelineEventData | null> {
     try {
-      return await prisma.timelineEvent.findUnique({ where: { id } });
+      return await prisma.timelineEvent.findFirst({
+        where: { id, tenantId },
+      });
     } catch (error) {
       console.error("TimelineService.findById error:", error);
       return null;
     }
   },
 
-  async create(data: {
-    year: string;
-    title: string;
-    description: string;
-    imageUrl?: string;
-    stats?: string;
-    order?: number;
-  }): Promise<TimelineEventData> {
+  async create(
+    tenantId: string,
+    data: {
+      year: string;
+      title: string;
+      description: string;
+      imageUrl?: string;
+      stats?: string;
+      order?: number;
+    },
+  ): Promise<TimelineEventData> {
     try {
       const maxOrder = await prisma.timelineEvent.aggregate({
+        where: { tenantId },
         _max: { order: true },
       });
       return await prisma.timelineEvent.create({
         data: {
+          tenantId,
           ...data,
           order: data.order ?? (maxOrder._max.order ?? 0) + 1,
         },
@@ -72,6 +80,7 @@ export const TimelineService = {
 
   async update(
     id: string,
+    tenantId: string,
     data: {
       year?: string;
       title?: string;
@@ -83,6 +92,10 @@ export const TimelineService = {
     },
   ): Promise<TimelineEventData> {
     try {
+      const existing = await prisma.timelineEvent.findFirst({
+        where: { id, tenantId },
+      });
+      if (!existing) throw new Error("Timeline event not found");
       return await prisma.timelineEvent.update({ where: { id }, data });
     } catch (error) {
       console.error("TimelineService.update error:", error);
@@ -90,8 +103,12 @@ export const TimelineService = {
     }
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, tenantId: string): Promise<void> {
     try {
+      const existing = await prisma.timelineEvent.findFirst({
+        where: { id, tenantId },
+      });
+      if (!existing) throw new Error("Timeline event not found");
       await prisma.timelineEvent.delete({ where: { id } });
     } catch (error) {
       console.error("TimelineService.delete error:", error);
@@ -99,12 +116,12 @@ export const TimelineService = {
     }
   },
 
-  async reorder(ids: string[]): Promise<void> {
+  async reorder(ids: string[], tenantId: string): Promise<void> {
     try {
       await prisma.$transaction(
         ids.map((id, index) =>
-          prisma.timelineEvent.update({
-            where: { id },
+          prisma.timelineEvent.updateMany({
+            where: { id, tenantId },
             data: { order: index },
           }),
         ),

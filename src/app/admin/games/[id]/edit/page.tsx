@@ -1,15 +1,19 @@
 import { notFound } from "next/navigation";
 import { GameService } from "@/services/games.service";
 import { GameForm } from "../../_components/games-form";
+import { getTenantContext } from "@/lib/tenant";
 
 export default async function EditGamePage({
   params,
 }: {
   params: { id: string };
 }) {
+  const tenant = await getTenantContext();
+  if (!tenant) notFound();
+
   let game;
   try {
-    game = await GameService.findById(params.id);
+    game = await GameService.findById(params.id, tenant.id);
   } catch {
     notFound();
   }

@@ -15,6 +15,7 @@ import { TimelineService } from "@/services/timeline.service";
 import { GameService } from "@/services/games.service";
 import { SettingsService } from "@/services/settings.service";
 import { getInfluencerConfig } from "@/config/influencer";
+import { getTenantContext } from "@/lib/tenant";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -28,15 +29,19 @@ async function safeFindAllActive<T>(fn: () => Promise<T[]>): Promise<T[]> {
 }
 
 export default async function HomePage() {
+  const tenant = await getTenantContext()
+    .catch(() => null);
   const [products, affiliates, galleryImages, timelineEvents, games, config, heroData] =
     await Promise.all([
-      safeFindAllActive(() => ProductService.findAllActive()),
-      safeFindAllActive(() => AffiliateService.findAllActive()),
-      safeFindAllActive(() => GalleryService.findAllActive()),
-      safeFindAllActive(() => TimelineService.findAllActive()),
-      safeFindAllActive(() => GameService.findAllActive()),
+      safeFindAllActive(() => ProductService.findAllActive(tenant?.id ?? "")),
+      safeFindAllActive(() => AffiliateService.findAllActive(tenant?.id ?? "")),
+      safeFindAllActive(() => GalleryService.findAllActive(tenant?.id ?? "")),
+      safeFindAllActive(() => TimelineService.findAllActive(tenant?.id ?? "")),
+      safeFindAllActive(() => GameService.findAllActive(tenant?.id ?? "")),
       getInfluencerConfig(),
-      SettingsService.getHeroData().catch(() => undefined),
+      tenant
+        ? SettingsService.getHeroData(tenant.id).catch(() => undefined)
+        : undefined,
     ]);
 
   const galleryData = galleryImages.map((img) => ({
@@ -157,12 +162,26 @@ export default async function HomePage() {
 
       <footer className="border-t border-white/5 px-4 py-6 text-center text-xs text-white/30 sm:text-sm">
         <p>© {new Date().getFullYear()} {config.name}. All rights reserved.</p>
-        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-white/10">
-          <span>#S8UL</span>
-          <span>•</span>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-white/30">
+          <Link href="/terms" className="transition-colors hover:text-white/50">
+            Terms
+          </Link>
+          <span className="text-white/10">•</span>
+          <Link href="/privacy" className="transition-colors hover:text-white/50">
+            Privacy
+          </Link>
+          <span className="text-white/10">•</span>
+          <Link href="/refund" className="transition-colors hover:text-white/50">
+            Refunds
+          </Link>
+          <span className="text-white/10">•</span>
+          <Link href="/contact" className="transition-colors hover:text-white/50">
+            Contact
+          </Link>
+          <span className="text-white/10">•</span>
           <Link
             href="/admin/login"
-            className="transition-colors hover:text-white/40"
+            className="transition-colors hover:text-white/50"
           >
             Admin
           </Link>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ContactService } from "@/services/contact.service";
 import { MESSAGES_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -16,6 +17,12 @@ export type ContactActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+async function requireTenant(): Promise<string> {
+  const tenant = await getTenantContext();
+  if (!tenant) throw new Error("Unauthorized — no tenant context");
+  return tenant.id;
+}
 
 export async function submitContact(
   _prevState: ContactActionState,
@@ -35,7 +42,8 @@ export async function submitContact(
   }
 
   try {
-    await ContactService.create({
+    const tenantId = await requireTenant();
+    await ContactService.create(tenantId, {
       name: parsed.data.name,
       email: parsed.data.email,
       message: parsed.data.message,
@@ -51,7 +59,8 @@ export async function markMessageAsRead(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await ContactService.markAsRead(id);
+    const tenantId = await requireTenant();
+    await ContactService.markAsRead(id, tenantId);
     revalidatePath(MESSAGES_ROUTE);
     return { success: true };
   } catch {
@@ -63,7 +72,8 @@ export async function deleteMessage(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await ContactService.delete(id);
+    const tenantId = await requireTenant();
+    await ContactService.delete(id, tenantId);
     revalidatePath(MESSAGES_ROUTE);
     return { success: true };
   } catch {

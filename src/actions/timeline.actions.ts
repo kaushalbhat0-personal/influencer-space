@@ -5,6 +5,7 @@ import { z } from "zod";
 import { TimelineService } from "@/services/timeline.service";
 import { StorageService } from "@/services/storage.service";
 import { TIMELINE_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 const timelineSchema = z.object({
   year: z.string().min(1, "Year is required").max(10),
@@ -19,6 +20,12 @@ export type TimelineActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+async function requireTenant(): Promise<string> {
+  const tenant = await getTenantContext();
+  if (!tenant) throw new Error("Unauthorized — no tenant context");
+  return tenant.id;
+}
 
 export async function createTimelineEvent(
   _prevState: TimelineActionState,
@@ -44,7 +51,8 @@ export async function createTimelineEvent(
   }
 
   try {
-    const result = await TimelineService.create({
+    const tenantId = await requireTenant();
+    const result = await TimelineService.create(tenantId, {
       year: parsed.data.year,
       title: parsed.data.title,
       description: parsed.data.description,
@@ -90,7 +98,8 @@ export async function updateTimelineEvent(
   }
 
   try {
-    await TimelineService.update(id, {
+    const tenantId = await requireTenant();
+    await TimelineService.update(id, tenantId, {
       year: parsed.data.year,
       title: parsed.data.title,
       description: parsed.data.description,
@@ -111,7 +120,8 @@ export async function deleteTimelineEvent(
 ): Promise<TimelineActionState> {
   console.log("📅 deleteTimelineEvent called — id:", id);
   try {
-    const event = await TimelineService.findById(id);
+    const tenantId = await requireTenant();
+    const event = await TimelineService.findById(id, tenantId);
     console.log("📅 deleteTimelineEvent found:", event?.id);
     if (event?.imageUrl) {
       const path = StorageService.extractPathFromUrl(event.imageUrl);
@@ -121,7 +131,7 @@ export async function deleteTimelineEvent(
         console.log("📅 deleteTimelineEvent storage file deleted:", path);
       }
     }
-    await TimelineService.delete(id);
+    await TimelineService.delete(id, tenantId);
     console.log("📅 deleteTimelineEvent success — id:", id);
     revalidatePath(TIMELINE_ROUTE);
     return { success: true };

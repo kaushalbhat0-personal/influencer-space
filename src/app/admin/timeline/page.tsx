@@ -3,15 +3,25 @@ import { TimelineService } from "@/services/timeline.service";
 import { TimelineList } from "./_components/timeline-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { TIMELINE_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminTimelinePage() {
+  const tenant = await getTenantContext();
+  if (!tenant) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">No tenant configured</p>
+      </div>
+    );
+  }
+
   let events: Awaited<ReturnType<typeof TimelineService.findAll>> = [];
   let error: string | null = null;
 
   try {
-    events = await TimelineService.findAll();
+    events = await TimelineService.findAll(tenant.id);
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load timeline";
   }

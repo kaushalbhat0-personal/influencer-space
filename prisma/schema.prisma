@@ -7,17 +7,42 @@ datasource db {
   provider = "postgresql"
 }
 
+model Tenant {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  subdomain    String   @unique
+  customDomain String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users              User[]
+  products           Product[]
+  affiliateLinks     AffiliateLink[]
+  galleryImages      GalleryImage[]
+  timelineEvents     TimelineEvent[]
+  games              Game[]
+  settings           Setting[]
+  contactSubmissions ContactSubmission[]
+}
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
   name      String?
-  email     String   @unique
+  email     String
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
 }
 
 model Product {
   id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
   name        String
   description String?
   price       Float
@@ -25,10 +50,15 @@ model Product {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model AffiliateLink {
   id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
   title     String
   url       String
   imageUrl  String?
@@ -36,26 +66,42 @@ model AffiliateLink {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model ContactSubmission {
   id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
   name      String
   email     String
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model Setting {
   id        String   @id @default(uuid()) @db.Uuid
-  key       String   @unique
+  tenantId  String   @db.Uuid
+  key       String
   value     Json
   updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
 }
 
 model GalleryImage {
   id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
   title       String
   description String?
   imageUrl    String
@@ -64,10 +110,15 @@ model GalleryImage {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model TimelineEvent {
   id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
   year        String
   title       String
   description String
@@ -77,10 +128,15 @@ model TimelineEvent {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model Game {
   id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
   name        String
   logoUrl     String?
   description String?
@@ -89,4 +145,8 @@ model Game {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }

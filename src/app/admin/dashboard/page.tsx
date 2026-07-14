@@ -3,10 +3,14 @@ import { AffiliateService } from "@/services/affiliate.service";
 import { GalleryService } from "@/services/gallery.service";
 import { GameService } from "@/services/games.service";
 import { DashboardClient } from "./_components/dashboard-client";
+import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
+  const tenant = await getTenantContext().catch(() => null);
+  const tenantId = tenant?.id ?? "";
+
   let products: Awaited<ReturnType<typeof ProductService.findAll>> = [];
   let affiliates: Awaited<ReturnType<typeof AffiliateService.findAll>> = [];
   let gallery: Awaited<ReturnType<typeof GalleryService.findAll>> = [];
@@ -14,10 +18,10 @@ export default async function AdminDashboardPage() {
 
   try {
     [products, affiliates, gallery, games] = await Promise.all([
-      ProductService.findAll(),
-      AffiliateService.findAll(),
-      GalleryService.findAll(),
-      GameService.findAll(),
+      ProductService.findAll(tenantId),
+      AffiliateService.findAll(tenantId),
+      GalleryService.findAll(tenantId),
+      GameService.findAll(tenantId),
     ]);
   } catch {}
 

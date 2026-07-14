@@ -13,10 +13,10 @@ export type GameData = {
 };
 
 export const GameService = {
-  async findAllActive(): Promise<GameData[]> {
+  async findAllActive(tenantId: string): Promise<GameData[]> {
     try {
       return await prisma.game.findMany({
-        where: { isActive: true },
+        where: { isActive: true, tenantId },
         orderBy: { order: "asc" },
       });
     } catch (error) {
@@ -25,9 +25,10 @@ export const GameService = {
     }
   },
 
-  async findAll(): Promise<GameData[]> {
+  async findAll(tenantId: string): Promise<GameData[]> {
     try {
       return await prisma.game.findMany({
+        where: { tenantId },
         orderBy: { order: "asc" },
       });
     } catch (error) {
@@ -36,28 +37,35 @@ export const GameService = {
     }
   },
 
-  async findById(id: string): Promise<GameData | null> {
+  async findById(id: string, tenantId: string): Promise<GameData | null> {
     try {
-      return await prisma.game.findUnique({ where: { id } });
+      return await prisma.game.findFirst({
+        where: { id, tenantId },
+      });
     } catch (error) {
       console.error("GameService.findById error:", error);
       return null;
     }
   },
 
-  async create(data: {
-    name: string;
-    logoUrl?: string;
-    description?: string;
-    genre?: string;
-    order?: number;
-  }): Promise<GameData> {
+  async create(
+    tenantId: string,
+    data: {
+      name: string;
+      logoUrl?: string;
+      description?: string;
+      genre?: string;
+      order?: number;
+    },
+  ): Promise<GameData> {
     try {
       const maxOrder = await prisma.game.aggregate({
+        where: { tenantId },
         _max: { order: true },
       });
       return await prisma.game.create({
         data: {
+          tenantId,
           ...data,
           order: data.order ?? (maxOrder._max.order ?? 0) + 1,
         },
@@ -70,6 +78,7 @@ export const GameService = {
 
   async update(
     id: string,
+    tenantId: string,
     data: {
       name?: string;
       logoUrl?: string;
@@ -80,6 +89,10 @@ export const GameService = {
     },
   ): Promise<GameData> {
     try {
+      const existing = await prisma.game.findFirst({
+        where: { id, tenantId },
+      });
+      if (!existing) throw new Error("Game not found");
       return await prisma.game.update({ where: { id }, data });
     } catch (error) {
       console.error("GameService.update error:", error);
@@ -87,8 +100,12 @@ export const GameService = {
     }
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, tenantId: string): Promise<void> {
     try {
+      const existing = await prisma.game.findFirst({
+        where: { id, tenantId },
+      });
+      if (!existing) throw new Error("Game not found");
       await prisma.game.delete({ where: { id } });
     } catch (error) {
       console.error("GameService.delete error:", error);
@@ -96,12 +113,12 @@ export const GameService = {
     }
   },
 
-  async reorder(ids: string[]): Promise<void> {
+  async reorder(ids: string[], tenantId: string): Promise<void> {
     try {
       await prisma.$transaction(
         ids.map((id, index) =>
-          prisma.game.update({
-            where: { id },
+          prisma.game.updateMany({
+            where: { id, tenantId },
             data: { order: index },
           }),
         ),

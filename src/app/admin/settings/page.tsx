@@ -1,12 +1,28 @@
 import { SettingsService } from "@/services/settings.service";
 import { SettingsForm } from "./_components/settings-form";
+import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  const tenant = await getTenantContext();
+
+  if (!tenant) {
+    return (
+      <div>
+        <h1 className="admin-gradient-text text-2xl font-bold font-gaming">
+          Website Settings
+        </h1>
+        <p className="mt-4 text-gray-400">
+          No tenant configured. Please seed a tenant first.
+        </p>
+      </div>
+    );
+  }
+
   const [config, heroData] = await Promise.all([
-    SettingsService.getInfluencerData(),
-    SettingsService.getHeroData(),
+    SettingsService.getInfluencerData(tenant.id),
+    SettingsService.getHeroData(tenant.id),
   ]);
 
   return (

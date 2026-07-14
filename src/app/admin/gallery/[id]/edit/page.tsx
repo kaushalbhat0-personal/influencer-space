@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 import { GalleryService } from "@/services/gallery.service";
 import { GalleryForm } from "../../_components/gallery-form";
+import { getTenantContext } from "@/lib/tenant";
 
 export default async function EditGalleryPage({ params }: { params: { id: string } }) {
+  const tenant = await getTenantContext();
+  if (!tenant) notFound();
+
   let image;
   try {
-    image = await GalleryService.findById(params.id);
+    image = await GalleryService.findById(params.id, tenant.id);
   } catch {
     notFound();
   }

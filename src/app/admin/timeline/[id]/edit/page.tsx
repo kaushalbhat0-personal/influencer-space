@@ -1,15 +1,19 @@
 import { notFound } from "next/navigation";
 import { TimelineService } from "@/services/timeline.service";
 import { TimelineForm } from "../../_components/timeline-form";
+import { getTenantContext } from "@/lib/tenant";
 
 export default async function EditTimelinePage({
   params,
 }: {
   params: { id: string };
 }) {
+  const tenant = await getTenantContext();
+  if (!tenant) notFound();
+
   let event;
   try {
-    event = await TimelineService.findById(params.id);
+    event = await TimelineService.findById(params.id, tenant.id);
   } catch {
     notFound();
   }

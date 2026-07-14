@@ -5,6 +5,7 @@ import { z } from "zod";
 import { AffiliateService } from "@/services/affiliate.service";
 import { StorageService } from "@/services/storage.service";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 const affiliateSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -18,6 +19,12 @@ export type AffiliateActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+async function requireTenant(): Promise<string> {
+  const tenant = await getTenantContext();
+  if (!tenant) throw new Error("Unauthorized — no tenant context");
+  return tenant.id;
+}
 
 export async function createAffiliate(
   _prevState: AffiliateActionState,
@@ -42,7 +49,8 @@ export async function createAffiliate(
   }
 
   try {
-    const result = await AffiliateService.create({
+    const tenantId = await requireTenant();
+    const result = await AffiliateService.create(tenantId, {
       title: parsed.data.title,
       url: parsed.data.url,
       imageUrl: parsed.data.imageUrl || undefined,
@@ -87,7 +95,8 @@ export async function updateAffiliate(
   }
 
   try {
-    await AffiliateService.update(id, {
+    const tenantId = await requireTenant();
+    await AffiliateService.update(id, tenantId, {
       title: parsed.data.title,
       url: parsed.data.url,
       imageUrl: parsed.data.imageUrl || undefined,
@@ -108,7 +117,8 @@ export async function deleteAffiliate(
 ): Promise<AffiliateActionState> {
   console.log("🔗 deleteAffiliate called — id:", id);
   try {
-    const affiliate = await AffiliateService.findById(id);
+    const tenantId = await requireTenant();
+    const affiliate = await AffiliateService.findById(id, tenantId);
     console.log("🔗 deleteAffiliate found:", affiliate?.id);
     if (affiliate?.imageUrl) {
       const path = StorageService.extractPathFromUrl(affiliate.imageUrl);
@@ -118,7 +128,7 @@ export async function deleteAffiliate(
         console.log("🔗 deleteAffiliate storage file deleted:", path);
       }
     }
-    await AffiliateService.delete(id);
+    await AffiliateService.delete(id, tenantId);
     console.log("🔗 deleteAffiliate success — id:", id);
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");
@@ -134,7 +144,8 @@ export async function incrementAffiliateClicks(
 ): Promise<AffiliateActionState> {
   console.log("🔗 incrementAffiliateClicks called — id:", id);
   try {
-    await AffiliateService.incrementClicks(id);
+    const tenantId = await requireTenant();
+    await AffiliateService.incrementClicks(id, tenantId);
     console.log("🔗 incrementAffiliateClicks success — id:", id);
     return { success: true };
   } catch (error) {
@@ -148,7 +159,8 @@ export async function toggleAffiliateActive(
 ): Promise<AffiliateActionState> {
   console.log("🔗 toggleAffiliateActive called — id:", id);
   try {
-    await AffiliateService.toggleActive(id);
+    const tenantId = await requireTenant();
+    await AffiliateService.toggleActive(id, tenantId);
     console.log("🔗 toggleAffiliateActive success — id:", id);
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");

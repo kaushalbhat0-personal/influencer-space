@@ -6,54 +6,97 @@ import { defaultHeroData } from "@/config/hero";
 import type { Prisma } from "@/generated/prisma/client";
 
 export const SettingsService = {
-  async get(key: string): Promise<unknown> {
+  async getSettingByKey(tenantId: string, key: string): Promise<unknown> {
     try {
       const setting = await prisma.setting.findUnique({
-        where: { key },
+        where: { tenantId_key: { tenantId, key } },
       });
       return setting?.value ?? null;
     } catch (error) {
-      console.error("SettingsService.get error:", error);
+      console.error("SettingsService.getSettingByKey error:", error);
       return null;
     }
   },
 
-  async set(key: string, value: Prisma.InputJsonValue): Promise<void> {
+  async getAllSettings(tenantId: string): Promise<Record<string, unknown>> {
+    try {
+      const rows = await prisma.setting.findMany({
+        where: { tenantId },
+      });
+      const result: Record<string, unknown> = {};
+      for (const row of rows) {
+        result[row.key] = row.value;
+      }
+      return result;
+    } catch (error) {
+      console.error("SettingsService.getAllSettings error:", error);
+      return {};
+    }
+  },
+
+  async upsertSetting(
+    tenantId: string,
+    key: string,
+    value: Prisma.InputJsonValue,
+  ): Promise<void> {
     try {
       await prisma.setting.upsert({
-        where: { key },
+        where: { tenantId_key: { tenantId, key } },
         update: { value },
-        create: { key, value },
+        create: { tenantId, key, value },
       });
     } catch (error) {
-      console.error("SettingsService.set error:", error);
+      console.error("SettingsService.upsertSetting error:", error);
       throw error;
     }
   },
 
-  async getInfluencerData(): Promise<InfluencerDataType> {
-    const data = await this.get("influencer_data");
-    if (data) {
-      return data as InfluencerDataType;
-    }
-    await this.set("influencer_data", defaultConfig as Prisma.InputJsonValue).catch(() => {});
+  async getInfluencerData(tenantId: string): Promise<InfluencerDataType> {
+    try {
+      const data = await SettingsService.getSettingByKey(tenantId, "influencer_data");
+      if (data) return data as InfluencerDataType;
+    } catch {}
+
+    await SettingsService.upsertSetting(
+      tenantId,
+      "influencer_data",
+      defaultConfig as Prisma.InputJsonValue,
+    ).catch(() => {});
+
     return defaultConfig;
   },
 
-  async updateInfluencerData(data: InfluencerDataType): Promise<void> {
-    await this.set("influencer_data", data as Prisma.InputJsonValue);
+  async updateInfluencerData(
+    tenantId: string,
+    data: InfluencerDataType,
+  ): Promise<void> {
+    await SettingsService.upsertSetting(
+      tenantId,
+      "influencer_data",
+      data as Prisma.InputJsonValue,
+    );
   },
 
-  async getHeroData(): Promise<HeroDataType> {
-    const data = await this.get("hero_data");
-    if (data) {
-      return { ...defaultHeroData, ...(data as Partial<HeroDataType>) };
-    }
-    await this.set("hero_data", defaultHeroData as Prisma.InputJsonValue).catch(() => {});
+  async getHeroData(tenantId: string): Promise<HeroDataType> {
+    try {
+      const data = await SettingsService.getSettingByKey(tenantId, "hero_data");
+      if (data) return { ...defaultHeroData, ...(data as Partial<HeroDataType>) };
+    } catch {}
+
+    await SettingsService.upsertSetting(
+      tenantId,
+      "hero_data",
+      defaultHeroData as Prisma.InputJsonValue,
+    ).catch(() => {});
+
     return defaultHeroData;
   },
 
-  async updateHeroData(data: HeroDataType): Promise<void> {
-    await this.set("hero_data", data as Prisma.InputJsonValue);
+  async updateHeroData(tenantId: string, data: HeroDataType): Promise<void> {
+    await SettingsService.upsertSetting(
+      tenantId,
+      "hero_data",
+      data as Prisma.InputJsonValue,
+    );
   },
 };

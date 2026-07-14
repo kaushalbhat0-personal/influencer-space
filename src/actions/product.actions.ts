@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ProductService } from "@/services/product.service";
 import { StorageService } from "@/services/storage.service";
 import { PRODUCTS_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -18,6 +19,12 @@ export type ProductActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+async function requireTenant(): Promise<string> {
+  const tenant = await getTenantContext();
+  if (!tenant) throw new Error("Unauthorized — no tenant context");
+  return tenant.id;
+}
 
 export async function createProduct(
   _prevState: ProductActionState,
@@ -42,7 +49,8 @@ export async function createProduct(
   }
 
   try {
-    const result = await ProductService.create({
+    const tenantId = await requireTenant();
+    const result = await ProductService.create(tenantId, {
       name: parsed.data.name,
       description: parsed.data.description || undefined,
       price: parsed.data.price,
@@ -86,7 +94,8 @@ export async function updateProduct(
   }
 
   try {
-    await ProductService.update(id, {
+    const tenantId = await requireTenant();
+    await ProductService.update(id, tenantId, {
       name: parsed.data.name,
       description: parsed.data.description || undefined,
       price: parsed.data.price,
@@ -106,7 +115,8 @@ export async function deleteProduct(
 ): Promise<ProductActionState> {
   console.log("📦 deleteProduct called — id:", id);
   try {
-    const product = await ProductService.findById(id);
+    const tenantId = await requireTenant();
+    const product = await ProductService.findById(id, tenantId);
     console.log("📦 deleteProduct found:", product?.id);
     if (product?.imageUrl) {
       const path = StorageService.extractPathFromUrl(product.imageUrl);
@@ -116,7 +126,7 @@ export async function deleteProduct(
         console.log("📦 deleteProduct storage file deleted:", path);
       }
     }
-    await ProductService.delete(id);
+    await ProductService.delete(id, tenantId);
     console.log("📦 deleteProduct success — id:", id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };
@@ -131,7 +141,8 @@ export async function toggleProductActive(
 ): Promise<ProductActionState> {
   console.log("📦 toggleProductActive called — id:", id);
   try {
-    await ProductService.toggleActive(id);
+    const tenantId = await requireTenant();
+    await ProductService.toggleActive(id, tenantId);
     console.log("📦 toggleProductActive success — id:", id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };

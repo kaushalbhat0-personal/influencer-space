@@ -16,8 +16,21 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const existing = await prisma.user.findUnique({
-    where: { email: "admin@snaxgaming.com" },
+  let tenant = await prisma.tenant.findUnique({
+    where: { subdomain: "snax" },
+  });
+
+  if (!tenant) {
+    tenant = await prisma.tenant.create({
+      data: { name: "S8UL Snax", subdomain: "snax" },
+    });
+    console.log(`Tenant created: ${tenant.name} (${tenant.id})`);
+  } else {
+    console.log("Tenant already exists, skipping creation.");
+  }
+
+  const existing = await prisma.user.findFirst({
+    where: { email: "admin@snaxgaming.com", tenantId: tenant.id },
   });
 
   if (existing) {
@@ -32,6 +45,7 @@ async function main() {
       name: "Admin",
       email: "admin@snaxgaming.com",
       password,
+      tenantId: tenant.id,
     },
   });
 

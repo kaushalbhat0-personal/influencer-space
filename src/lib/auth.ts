@@ -18,6 +18,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        tenantId: { label: "Tenant ID", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -25,20 +26,26 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        console.log("Login attempt for:", credentials.email);
+        if (!credentials?.tenantId) {
+          console.log("Login attempt missing tenantId");
+          return null;
+        }
+
+        console.log("Login attempt for:", credentials.email, "tenant:", credentials.tenantId);
 
         try {
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email },
+            where: {
+              tenantId_email: {
+                tenantId: credentials.tenantId,
+                email: credentials.email,
+              },
+            },
           });
 
           console.log("User found:", !!user);
 
-          if (!user) {
-            return null;
-          }
-
-          console.log("Stored hash prefix:", user.password.substring(0, 4));
+          if (!user) return null;
 
           const passwordMatch = await bcrypt.compare(
             credentials.password,
@@ -47,14 +54,13 @@ export const authOptions: NextAuthOptions = {
 
           console.log("Password match:", passwordMatch);
 
-          if (!passwordMatch) {
-            return null;
-          }
+          if (!passwordMatch) return null;
 
           return {
             id: user.id,
             email: user.email,
             name: user.name,
+            tenantId: user.tenantId,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -74,12 +80,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.tenantId = user.tenantId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.tenantId = token.tenantId as string;
       }
       return session;
     },

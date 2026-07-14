@@ -3,15 +3,25 @@ import { GameService } from "@/services/games.service";
 import { GamesList } from "./_components/games-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { GAMES_ROUTE } from "@/lib/constants";
+import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminGamesPage() {
+  const tenant = await getTenantContext();
+  if (!tenant) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">No tenant configured</p>
+      </div>
+    );
+  }
+
   let games: Awaited<ReturnType<typeof GameService.findAll>> = [];
   let error: string | null = null;
 
   try {
-    games = await GameService.findAll();
+    games = await GameService.findAll(tenant.id);
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load games";
   }
