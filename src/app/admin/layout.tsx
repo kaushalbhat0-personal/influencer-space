@@ -8,6 +8,9 @@ import { MobileSidebarToggle } from "@/components/admin/MobileSidebarToggle";
 
 const sidebarLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "📊" },
+  { href: "/admin/gallery", label: "Gallery", icon: "📸" },
+  { href: "/admin/timeline", label: "Timeline", icon: "📅" },
+  { href: "/admin/games", label: "Games", icon: "🎮" },
   { href: "/admin/products", label: "Products", icon: "📦" },
   { href: "/admin/affiliates", label: "Affiliates", icon: "🔗" },
   { href: "/admin/messages", label: "Messages", icon: "✉️" },

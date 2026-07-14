@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { NicheBackground } from "@/components/ui/NicheBackground";
+import { LiveStatus } from "@/components/ui/LiveStatus";
 import { getInfluencerConfig } from "@/config/influencer";
 import "./globals.css";
 
@@ -17,9 +18,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Sapna Khanna - Fitness Coach | Ms. Fitness India 2018",
+  title: "Snax - S8UL Esports | BGMI Pro | Content Creator",
   description:
-    "I help women rebuild their strength—physically and emotionally. Specializing in fat loss, metabolism correction, hormonal balance, and postpartum recovery.",
+    "Welcome to Snax's Gaming HQ. S8UL Esports content creator, BGMI pro, and Hyderabad's favorite gaming son. Join the squad.",
 };
 
 export default async function RootLayout({
@@ -35,6 +36,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ScrollProgress />
+        <LiveStatus />
         <NicheBackground niche={config.niche} />
         {children}
       </body>

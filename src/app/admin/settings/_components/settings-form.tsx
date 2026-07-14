@@ -91,6 +91,7 @@ export function SettingsForm({
                 defaultValue={config.niche || "fitness"}
                 className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               >
+                <option value="gaming">Gaming</option>
                 <option value="fitness">Fitness</option>
                 <option value="fashion">Fashion</option>
                 <option value="travel">Travel</option>

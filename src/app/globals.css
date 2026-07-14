@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,4 +7,25 @@
 
 body {
   font-family: "Inter", sans-serif;
+}
+
+@layer utilities {
+  .neon-cyan {
+    text-shadow: 0 0 7px #00f5ff, 0 0 10px #00f5ff, 0 0 21px #00f5ff;
+  }
+  .neon-pink {
+    text-shadow: 0 0 7px #ff00e5, 0 0 10px #ff00e5, 0 0 21px #ff00e5;
+  }
+  .neon-gold {
+    text-shadow: 0 0 7px #FFD700, 0 0 10px #FFD700, 0 0 21px #FFD700;
+  }
+  .glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3), 0 0 30px rgba(0, 245, 255, 0.1);
+  }
+  .glow-pink {
+    box-shadow: 0 0 15px rgba(255, 0, 229, 0.3), 0 0 30px rgba(255, 0, 229, 0.1);
+  }
+  .glow-gold {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), 0 0 30px rgba(255, 215, 0, 0.1);
+  }
 }
