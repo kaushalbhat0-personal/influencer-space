@@ -15,42 +15,42 @@ const demoPosts: InstagramPost[] = [
   {
     id: "1",
     media_url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=400&fit=crop",
-    caption: "Stronger every day! 💪",
+    caption: "S8UL vibes only! 🔥",
     permalink: "#",
     media_type: "IMAGE",
   },
   {
     id: "2",
     media_url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop",
-    caption: "Postpartum recovery journey 🏋️‍♀️",
+    caption: "Another day, another win 🏆",
     permalink: "#",
     media_type: "IMAGE",
   },
   {
     id: "3",
     media_url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop",
-    caption: "Hormonal balance meal prep 🥗",
+    caption: "Grind never stops 💯",
     permalink: "#",
     media_type: "IMAGE",
   },
   {
     id: "4",
     media_url: "https://images.unsplash.com/photo-1581009137042-c552e485697a?w=400&h=400&fit=crop",
-    caption: "Mind-body connection 🧘‍♀️",
+    caption: "Squad goals with S8UL 🎯",
     permalink: "#",
     media_type: "IMAGE",
   },
   {
     id: "5",
     media_url: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&h=400&fit=crop",
-    caption: "Self-care is fitness too 💖",
+    caption: "Grinding everyday 💪",
     permalink: "#",
     media_type: "IMAGE",
   },
   {
     id: "6",
     media_url: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
-    caption: "Consistency over perfection 🌟",
+    caption: "Hyderabadi energy 🇮🇳",
     permalink: "#",
     media_type: "IMAGE",
   },
@@ -95,7 +95,7 @@ export function InstagramFeed({
           transition={{ duration: 0.6 }}
         >
           <h2 className="mb-2 text-center text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-            <span className="bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
               Latest from Instagram
             </span>
           </h2>
@@ -105,11 +105,11 @@ export function InstagramFeed({
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-amber-400 hover:underline"
+              className="text-s8ul-cyan hover:underline"
             >
-              @sapnakhannafitness
+               {instagramUrl.split("/").pop() || "snaxgaming"}
             </a>{" "}
-            for daily inspiration 💪
+            for daily gaming content 🎮
           </p>
         </motion.div>
 

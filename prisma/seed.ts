@@ -17,7 +17,7 @@ const prisma = new PrismaClient({
 
 async function main() {
   const existing = await prisma.user.findUnique({
-    where: { email: "admin@sapnakhanna.com" },
+    where: { email: "admin@snaxgaming.com" },
   });
 
   if (existing) {
@@ -30,12 +30,12 @@ async function main() {
   await prisma.user.create({
     data: {
       name: "Admin",
-      email: "admin@sapnakhanna.com",
+      email: "admin@snaxgaming.com",
       password,
     },
   });
 
-  console.log("Admin user created: admin@sapnakhanna.com / admin123");
+  console.log("Admin user created: admin@snaxgaming.com / admin123");
 }
 
 main()

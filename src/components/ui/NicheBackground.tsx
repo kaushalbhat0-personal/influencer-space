@@ -37,13 +37,13 @@ function generateIcons(paths: string[], seed: number): FloatingIcon[] {
   return icons;
 }
 
-export function NicheBackground({ niche = "fitness" }: { niche?: string }) {
+export function NicheBackground({ niche = "gaming" }: { niche?: string }) {
   const pathname = usePathname();
 
   const isAdmin = pathname?.startsWith("/admin");
 
   const icons = useMemo(() => {
-    const key = (niche as Niche) in nicheIcons ? (niche as Niche) : "fitness";
+    const key = (niche as Niche) in nicheIcons ? (niche as Niche) : "gaming";
     const paths = nicheIcons[key];
     return generateIcons(paths, key.length + paths.length);
   }, [niche]);

@@ -18,7 +18,7 @@ const influencerDataSchema = z.object({
   bio: z.string().min(10, "Bio must be at least 10 characters"),
   social: socialSchema,
   profileImage: z.string().optional().default(""),
-  niche: z.string().optional().default("fitness"),
+  niche: z.string().optional().default("gaming"),
   colors: z
     .object({
       primary: z.string().optional().default("#d4a843"),
@@ -54,7 +54,7 @@ export async function updateInfluencerData(
       tiktok: (formData.get("tiktok") as string) || "",
     },
     profileImage: (formData.get("profileImage") as string) || "",
-    niche: (formData.get("niche") as string) || "fitness",
+    niche: (formData.get("niche") as string) || "gaming",
     colors: {
       primary: "#d4a843",
       secondary: "#fbbf24",

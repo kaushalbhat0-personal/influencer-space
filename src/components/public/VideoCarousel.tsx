@@ -7,22 +7,22 @@ import { GlassCard } from "@/components/ui/GlassCard";
 const videos = [
   {
     id: "1",
-    title: "Home Workout for Postpartum Recovery 🏋️‍♀️",
+    title: "BGMI Rank Push with S8UL 🎯",
     embedUrl: "https://www.youtube.com/embed/um0ENGpAzvQ",
   },
   {
     id: "2",
-    title: "Hormonal Balance Meal Prep Tips 🥗",
+    title: "Snax Stream Highlights 🔥",
     embedUrl: "https://www.youtube.com/embed/1V7W4dK1VJE",
   },
   {
     id: "3",
-    title: "Strength Training at Home 💪",
+    title: "S8UL Squad Gameplay 🎮",
     embedUrl: "https://www.youtube.com/embed/2Mgn8Fk3tJw",
   },
   {
     id: "4",
-    title: "Mind-Body Connection for Fitness 🧘‍♀️",
+    title: "Tournament Victory Moments 🏆",
     embedUrl: "https://www.youtube.com/embed/JbEgFgJMYEw",
   },
 ];
@@ -49,12 +49,12 @@ export function VideoCarousel() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="mb-2 text-center text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-            <span className="bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-              Fitness Videos
+            <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
+              Latest Videos
             </span>
           </h2>
           <p className="mb-8 text-center text-sm text-white/50 sm:mb-12">
-            Watch and learn with Sapna 📹
+            Watch Snax in action 🎮
           </p>
         </motion.div>
 
@@ -110,7 +110,7 @@ export function VideoCarousel() {
                 onClick={() => setCurrentIndex(index)}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex
-                    ? "w-8 bg-amber-400"
+                    ? "w-8 bg-s8ul-cyan"
                     : "w-2 bg-white/30 hover:bg-white/50"
                 }`}
                 aria-label={`Go to video ${index + 1}`}

@@ -33,7 +33,7 @@ export function ContactFormClient({
 
   return (
     <main className="min-h-screen bg-black">
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-amber-950/30" />
+      <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-s8ul-purple/30" />
       <div className="relative z-10 mx-auto max-w-3xl px-4 py-16 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -45,9 +45,8 @@ export function ContactFormClient({
               Get in Touch with {config.name}
             </h1>
             <p className="mb-6 text-sm text-white/60 sm:text-base">
-              Have a question about fitness, fat loss, hormonal health, or
-              postpartum recovery? Or want to collaborate? Fill out the form
-              below and I&apos;ll get back to you soon.
+              Want to collaborate, sponsor a stream, or book Snax for an event?
+              Fill out the form below and I&apos;ll get back to you soon.
             </p>
 
             {state.success ? (
@@ -77,7 +76,7 @@ export function ContactFormClient({
                   id="message"
                   name="message"
                   label="Your Message"
-                  placeholder="Tell me about your fitness goals, questions, or collaboration ideas..."
+                  placeholder="Tell me about your collaboration ideas, sponsorships, or event inquiries..."
                   error={state.fieldErrors?.message?.[0]}
                   rows={5}
                   required
@@ -88,7 +87,7 @@ export function ContactFormClient({
                 <Button
                   type="submit"
                   disabled={pending}
-                  className="w-full bg-amber-500/30 text-amber-300 hover:bg-amber-500/40 sm:w-auto"
+                  className="w-full bg-s8ul-cyan/20 text-s8ul-cyan hover:bg-s8ul-cyan/30 sm:w-auto"
                 >
                   {pending ? "Sending..." : "Send Message →"}
                 </Button>
