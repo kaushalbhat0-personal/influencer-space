@@ -23,6 +23,9 @@ export async function createProduct(
   _prevState: ProductActionState,
   formData: FormData,
 ): Promise<ProductActionState> {
+  const raw = Object.fromEntries(formData);
+  console.log("📦 createProduct called with:", raw);
+
   const parsed = productSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
@@ -31,6 +34,7 @@ export async function createProduct(
   });
 
   if (!parsed.success) {
+    console.log("📦 createProduct validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -38,15 +42,17 @@ export async function createProduct(
   }
 
   try {
-    await ProductService.create({
+    const result = await ProductService.create({
       name: parsed.data.name,
       description: parsed.data.description || undefined,
       price: parsed.data.price,
       imageUrl: parsed.data.imageUrl || undefined,
     });
+    console.log("📦 createProduct success:", result.id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📦 createProduct error:", error);
     return { success: false, error: "Failed to create product" };
   }
 }
@@ -56,7 +62,11 @@ export async function updateProduct(
   formData: FormData,
 ): Promise<ProductActionState> {
   const id = formData.get("id") as string;
+  const raw = Object.fromEntries(formData);
+  console.log("📦 updateProduct called — id:", id, "data:", raw);
+
   if (!id) {
+    console.log("📦 updateProduct missing id");
     return { success: false, error: "Product ID is required" };
   }
 
@@ -68,6 +78,7 @@ export async function updateProduct(
   });
 
   if (!parsed.success) {
+    console.log("📦 updateProduct validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -81,9 +92,11 @@ export async function updateProduct(
       price: parsed.data.price,
       imageUrl: parsed.data.imageUrl || undefined,
     });
+    console.log("📦 updateProduct success — id:", id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📦 updateProduct error:", error);
     return { success: false, error: "Failed to update product" };
   }
 }
@@ -91,18 +104,24 @@ export async function updateProduct(
 export async function deleteProduct(
   id: string,
 ): Promise<ProductActionState> {
+  console.log("📦 deleteProduct called — id:", id);
   try {
     const product = await ProductService.findById(id);
+    console.log("📦 deleteProduct found:", product?.id);
     if (product?.imageUrl) {
       const path = StorageService.extractPathFromUrl(product.imageUrl);
+      console.log("📦 deleteProduct extracting storage path:", path);
       if (path) {
         await StorageService.delete(path);
+        console.log("📦 deleteProduct storage file deleted:", path);
       }
     }
     await ProductService.delete(id);
+    console.log("📦 deleteProduct success — id:", id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📦 deleteProduct error:", error);
     return { success: false, error: "Failed to delete product" };
   }
 }
@@ -110,11 +129,14 @@ export async function deleteProduct(
 export async function toggleProductActive(
   id: string,
 ): Promise<ProductActionState> {
+  console.log("📦 toggleProductActive called — id:", id);
   try {
     await ProductService.toggleActive(id);
+    console.log("📦 toggleProductActive success — id:", id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📦 toggleProductActive error:", error);
     return { success: false, error: "Failed to toggle product status" };
   }
 }

@@ -30,12 +30,16 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log("🖼️ ImageUpload handleFileChange — file:", file.name, "size:", file.size, "type:", file.type);
+
     if (file.size > 5 * 1024 * 1024) {
+      console.log("🖼️ ImageUpload — file too large:", file.size);
       setError("File size must be less than 5MB");
       return;
     }
 
     if (!file.type.startsWith("image/")) {
+      console.log("🖼️ ImageUpload — invalid file type:", file.type);
       setError("Only image files are allowed");
       return;
     }
@@ -45,9 +49,11 @@ export function ImageUpload({
 
     try {
       const result = await StorageService.upload(file, folder);
+      console.log("🖼️ ImageUpload upload success — calling onUpload with:", result.publicUrl);
       setPreview(result.publicUrl);
       onUpload(result.publicUrl);
     } catch (err) {
+      console.error("🖼️ ImageUpload upload failed:", err);
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
@@ -56,6 +62,8 @@ export function ImageUpload({
 
   const handleDelete = async () => {
     if (!preview) return;
+
+    console.log("🖼️ ImageUpload handleDelete — preview:", preview);
 
     if (onDelete) {
       await onDelete(preview);
@@ -66,11 +74,13 @@ export function ImageUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    console.log("🖼️ ImageUpload handleDelete done");
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
+    console.log("🖼️ ImageUpload handleDrop — file:", file?.name);
     if (file && fileInputRef.current) {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);

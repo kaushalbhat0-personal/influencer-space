@@ -9,6 +9,7 @@ export interface UploadResult {
 
 export class StorageService {
   static async upload(file: File, folder: string, filename?: string): Promise<UploadResult> {
+    console.log("☁️ StorageService.upload — file:", file.name, "size:", file.size, "folder:", folder);
     const ext = file.name.split(".").pop();
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
@@ -22,42 +23,66 @@ export class StorageService {
         upsert: true,
       });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("☁️ StorageService.upload error:", error.message);
+      throw new Error(error.message);
+    }
 
     const { data: urlData } = supabaseClient.storage
       .from(BUCKET_NAME)
       .getPublicUrl(data.path);
 
+    console.log("☁️ StorageService.upload success — path:", data.path, "url:", urlData.publicUrl);
     return { path: data.path, publicUrl: urlData.publicUrl };
   }
 
   static async delete(path: string): Promise<void> {
+    console.log("☁️ StorageService.delete — path:", path);
     const { error } = await supabaseClient.storage
       .from(BUCKET_NAME)
       .remove([path]);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("☁️ StorageService.delete error:", error.message);
+      throw new Error(error.message);
+    }
+    console.log("☁️ StorageService.delete success");
   }
 
   static async deleteMultiple(paths: string[]): Promise<void> {
-    if (paths.length === 0) return;
+    if (paths.length === 0) {
+      console.log("☁️ StorageService.deleteMultiple — no paths, skipping");
+      return;
+    }
+    console.log("☁️ StorageService.deleteMultiple — paths:", paths);
     const { error } = await supabaseClient.storage
       .from(BUCKET_NAME)
       .remove(paths);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("☁️ StorageService.deleteMultiple error:", error.message);
+      throw new Error(error.message);
+    }
+    console.log("☁️ StorageService.deleteMultiple success");
   }
 
   static async deleteFolder(folder: string): Promise<void> {
+    console.log("☁️ StorageService.deleteFolder — folder:", folder);
     const { data, error } = await supabaseClient.storage
       .from(BUCKET_NAME)
       .list(folder);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("☁️ StorageService.deleteFolder list error:", error.message);
+      throw new Error(error.message);
+    }
 
     if (data && data.length > 0) {
       const paths = data.map((file) => `${folder}/${file.name}`);
+      console.log("☁️ StorageService.deleteFolder — deleting", paths.length, "files");
       await this.deleteMultiple(paths);
+    } else {
+      console.log("☁️ StorageService.deleteFolder — folder empty or not found");
     }
   }
 

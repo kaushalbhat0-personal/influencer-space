@@ -23,6 +23,9 @@ export async function createGalleryImage(
   _prevState: GalleryActionState,
   formData: FormData,
 ): Promise<GalleryActionState> {
+  const raw = Object.fromEntries(formData);
+  console.log("📸 createGalleryImage called with:", raw);
+
   const parsed = gallerySchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description"),
@@ -31,6 +34,7 @@ export async function createGalleryImage(
   });
 
   if (!parsed.success) {
+    console.log("📸 createGalleryImage validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -38,15 +42,17 @@ export async function createGalleryImage(
   }
 
   try {
-    await GalleryService.create({
+    const result = await GalleryService.create({
       title: parsed.data.title,
       description: parsed.data.description || undefined,
       imageUrl: parsed.data.imageUrl,
       category: parsed.data.category,
     });
+    console.log("📸 createGalleryImage success:", result.id);
     revalidatePath(GALLERY_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📸 createGalleryImage error:", error);
     return { success: false, error: "Failed to create gallery image" };
   }
 }
@@ -56,7 +62,11 @@ export async function updateGalleryImage(
   formData: FormData,
 ): Promise<GalleryActionState> {
   const id = formData.get("id") as string;
+  const raw = Object.fromEntries(formData);
+  console.log("📸 updateGalleryImage called — id:", id, "data:", raw);
+
   if (!id) {
+    console.log("📸 updateGalleryImage missing id");
     return { success: false, error: "Image ID is required" };
   }
 
@@ -68,6 +78,7 @@ export async function updateGalleryImage(
   });
 
   if (!parsed.success) {
+    console.log("📸 updateGalleryImage validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -81,9 +92,11 @@ export async function updateGalleryImage(
       imageUrl: parsed.data.imageUrl,
       category: parsed.data.category,
     });
+    console.log("📸 updateGalleryImage success — id:", id);
     revalidatePath(GALLERY_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📸 updateGalleryImage error:", error);
     return { success: false, error: "Failed to update gallery image" };
   }
 }
@@ -91,18 +104,24 @@ export async function updateGalleryImage(
 export async function deleteGalleryImage(
   id: string,
 ): Promise<GalleryActionState> {
+  console.log("📸 deleteGalleryImage called — id:", id);
   try {
     const image = await GalleryService.findById(id);
+    console.log("📸 deleteGalleryImage found image:", image?.id);
     if (image?.imageUrl) {
       const path = StorageService.extractPathFromUrl(image.imageUrl);
+      console.log("📸 deleteGalleryImage extracting storage path:", path);
       if (path) {
         await StorageService.delete(path);
+        console.log("📸 deleteGalleryImage storage file deleted:", path);
       }
     }
     await GalleryService.delete(id);
+    console.log("📸 deleteGalleryImage success — id:", id);
     revalidatePath(GALLERY_ROUTE);
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("📸 deleteGalleryImage error:", error);
     return { success: false, error: "Failed to delete gallery image" };
   }
 }

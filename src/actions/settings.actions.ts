@@ -79,9 +79,12 @@ export async function updateInfluencerData(
     },
   };
 
+  console.log("⚙️ updateInfluencerData called with:", rawData);
+
   const parsed = influencerDataSchema.safeParse(rawData);
 
   if (!parsed.success) {
+    console.log("⚙️ updateInfluencerData validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -91,11 +94,13 @@ export async function updateInfluencerData(
   try {
     await SettingsService.updateInfluencerData(parsed.data);
     invalidateConfigCache();
+    console.log("⚙️ updateInfluencerData success");
     revalidatePath("/");
     revalidatePath("/contact");
     revalidatePath("/admin/settings");
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("⚙️ updateInfluencerData error:", error);
     return { success: false, error: "Failed to update settings" };
   }
 }
@@ -118,9 +123,12 @@ export async function updateHeroData(
     showLiveBadge: (formData.get("showLiveBadge") as string) || "false",
   };
 
+  console.log("⚙️ updateHeroData called with:", rawData);
+
   const parsed = heroDataSchema.safeParse(rawData);
 
   if (!parsed.success) {
+    console.log("⚙️ updateHeroData validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -129,10 +137,12 @@ export async function updateHeroData(
 
   try {
     await SettingsService.updateHeroData(parsed.data);
+    console.log("⚙️ updateHeroData success");
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error("⚙️ updateHeroData error:", error);
     return { success: false, error: "Failed to update hero settings" };
   }
 }
