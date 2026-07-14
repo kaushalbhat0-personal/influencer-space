@@ -37,22 +37,14 @@ export const defaultConfig: InfluencerDataType = {
   },
 };
 
-let cachedConfig: InfluencerDataType | null = null;
-
 export async function getInfluencerConfig(): Promise<InfluencerDataType> {
-  if (cachedConfig) return cachedConfig;
   try {
     const { SettingsService } = await import("@/services/settings.service");
     const data = await SettingsService.getInfluencerData();
-    cachedConfig = data;
     return data;
   } catch {
     return defaultConfig;
   }
-}
-
-export function invalidateConfigCache() {
-  cachedConfig = null;
 }
 
 export const influencerConfig = defaultConfig;

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { SettingsService } from "@/services/settings.service";
-import { invalidateConfigCache } from "@/config/influencer";
 
 const socialSchema = z.object({
   instagram: z.string().optional().default(""),
@@ -93,7 +92,6 @@ export async function updateInfluencerData(
 
   try {
     await SettingsService.updateInfluencerData(parsed.data);
-    invalidateConfigCache();
     console.log("⚙️ updateInfluencerData success");
     revalidatePath("/");
     revalidatePath("/contact");

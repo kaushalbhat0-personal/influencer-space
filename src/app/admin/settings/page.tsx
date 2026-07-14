@@ -12,12 +12,16 @@ export default async function SettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Website Settings</h1>
-        <p className="text-sm text-gray-400">
+        <h1 className="admin-gradient-text text-2xl font-bold font-gaming">Website Settings</h1>
+        <p className="mt-1 text-sm text-gray-400">
           Update your brand information below. Changes appear on the public site instantly.
         </p>
       </div>
-      <SettingsForm config={config} heroData={heroData} />
+      <SettingsForm
+        key={`${config.name}-${config.profileImage}-${heroData.videoUrl}`}
+        config={config}
+        heroData={heroData}
+      />
     </div>
   );
 }
