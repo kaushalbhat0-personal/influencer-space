@@ -11,7 +11,7 @@ body {
 
 @layer components {
   .admin-card {
-    @apply rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md;
+    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-md;
   }
   .admin-card-hover {
     @apply admin-card transition-all duration-300 hover:border-s8ul-cyan/30 hover:shadow-[0_0_30px_rgba(0,245,255,0.15)];
