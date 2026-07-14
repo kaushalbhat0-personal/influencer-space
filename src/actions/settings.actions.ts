@@ -33,6 +33,23 @@ const influencerDataSchema = z.object({
     }),
 });
 
+const heroDataSchema = z.object({
+  videoUrl: z.string().optional().default(""),
+  posterUrl: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+  subtitle: z.string().optional().default(""),
+  tagline: z.string().optional().default(""),
+  ctaText: z.string().optional().default(""),
+  ctaLink: z.string().optional().default(""),
+  ctaSecondaryText: z.string().optional().default(""),
+  ctaSecondaryLink: z.string().optional().default(""),
+  liveBadgeText: z.string().optional().default(""),
+  showLiveBadge: z
+    .string()
+    .optional()
+    .transform((v) => v === "on" || v === "true"),
+});
+
 export type SettingsActionState = {
   success: boolean;
   error?: string;
@@ -80,5 +97,42 @@ export async function updateInfluencerData(
     return { success: true };
   } catch {
     return { success: false, error: "Failed to update settings" };
+  }
+}
+
+export async function updateHeroData(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const rawData = {
+    videoUrl: (formData.get("videoUrl") as string) || "",
+    posterUrl: (formData.get("posterUrl") as string) || "",
+    title: (formData.get("heroTitle") as string) || "",
+    subtitle: (formData.get("heroSubtitle") as string) || "",
+    tagline: (formData.get("heroTagline") as string) || "",
+    ctaText: (formData.get("ctaText") as string) || "",
+    ctaLink: (formData.get("ctaLink") as string) || "",
+    ctaSecondaryText: (formData.get("ctaSecondaryText") as string) || "",
+    ctaSecondaryLink: (formData.get("ctaSecondaryLink") as string) || "",
+    liveBadgeText: (formData.get("liveBadgeText") as string) || "",
+    showLiveBadge: (formData.get("showLiveBadge") as string) || "false",
+  };
+
+  const parsed = heroDataSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    await SettingsService.updateHeroData(parsed.data);
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update hero settings" };
   }
 }

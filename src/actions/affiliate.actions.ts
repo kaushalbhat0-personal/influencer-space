@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { AffiliateService } from "@/services/affiliate.service";
+import { StorageService } from "@/services/storage.service";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
 
 const affiliateSchema = z.object({
@@ -93,6 +94,13 @@ export async function deleteAffiliate(
   id: string,
 ): Promise<AffiliateActionState> {
   try {
+    const affiliate = await AffiliateService.findById(id);
+    if (affiliate?.imageUrl) {
+      const path = StorageService.extractPathFromUrl(affiliate.imageUrl);
+      if (path) {
+        await StorageService.delete(path);
+      }
+    }
     await AffiliateService.delete(id);
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");

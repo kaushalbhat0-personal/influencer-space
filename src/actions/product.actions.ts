@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ProductService } from "@/services/product.service";
+import { StorageService } from "@/services/storage.service";
 import { PRODUCTS_ROUTE } from "@/lib/constants";
 
 const productSchema = z.object({
@@ -91,6 +92,13 @@ export async function deleteProduct(
   id: string,
 ): Promise<ProductActionState> {
   try {
+    const product = await ProductService.findById(id);
+    if (product?.imageUrl) {
+      const path = StorageService.extractPathFromUrl(product.imageUrl);
+      if (path) {
+        await StorageService.delete(path);
+      }
+    }
     await ProductService.delete(id);
     revalidatePath(PRODUCTS_ROUTE);
     return { success: true };

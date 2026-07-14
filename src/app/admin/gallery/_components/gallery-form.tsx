@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { StorageService } from "@/services/storage.service";
 import { createGalleryImage, updateGalleryImage } from "@/actions/gallery.actions";
 import { GALLERY_ROUTE } from "@/lib/constants";
 import type { GalleryImageData } from "@/services/gallery.service";
@@ -29,11 +30,21 @@ export function GalleryForm({ mode, image }: Props) {
   const [state, setState] = useState<GalleryActionState>({ success: false });
   const [pending, setPending] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(image?.imageUrl || "");
+  const [category, setCategory] = useState(image?.category || "bgmi");
 
   const serverAction = mode === "create" ? createGalleryImage : updateGalleryImage;
 
+  async function handleImageDelete(url: string) {
+    const path = StorageService.extractPathFromUrl(url);
+    if (path) {
+      await StorageService.delete(path);
+    }
+    setImageUrl("");
+  }
+
   async function handleSubmit(formData: FormData) {
     if (imageUrl) formData.set("imageUrl", imageUrl);
+    formData.set("category", category);
     setPending(true);
     setState({ success: false });
     const result = await serverAction(state, formData);
@@ -78,7 +89,8 @@ export function GalleryForm({ mode, image }: Props) {
             <select
               id="category"
               name="category"
-              defaultValue={image?.category ?? "bgmi"}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
               className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-s8ul-cyan focus:outline-none focus:ring-1 focus:ring-s8ul-cyan"
             >
               {categories.map((cat) => (
@@ -92,8 +104,9 @@ export function GalleryForm({ mode, image }: Props) {
 
           <ImageUpload
             onUpload={setImageUrl}
+            onDelete={handleImageDelete}
             currentImage={imageUrl || null}
-            folder="gallery"
+            folder={`gallery/${category}`}
             label="Gallery Image"
           />
 

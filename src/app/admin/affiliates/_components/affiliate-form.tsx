@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { StorageService } from "@/services/storage.service";
 import { createAffiliate, updateAffiliate } from "@/actions/affiliate.actions";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
 import type { AffiliateData } from "@/services/affiliate.service";
@@ -23,6 +24,14 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
   const [imageUrl, setImageUrl] = useState<string>(affiliate?.imageUrl || "");
 
   const serverAction = mode === "create" ? createAffiliate : updateAffiliate;
+
+  async function handleImageDelete(url: string) {
+    const path = StorageService.extractPathFromUrl(url);
+    if (path) {
+      await StorageService.delete(path);
+    }
+    setImageUrl("");
+  }
 
   async function handleSubmit(formData: FormData) {
     if (imageUrl) {
@@ -71,6 +80,7 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
 
           <ImageUpload
             onUpload={setImageUrl}
+            onDelete={handleImageDelete}
             currentImage={imageUrl || null}
             folder="affiliates"
             label="Affiliate Image"
@@ -82,7 +92,7 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
               id="isActive"
               name="isActive"
               defaultChecked={affiliate?.isActive ?? true}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="h-4 w-4 rounded border-gray-300 text-s8ul-cyan focus:ring-s8ul-cyan"
             />
             <label htmlFor="isActive" className="text-sm text-gray-700">
               Active (visible on public site)

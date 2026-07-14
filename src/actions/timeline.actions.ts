@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { TimelineService } from "@/services/timeline.service";
+import { StorageService } from "@/services/storage.service";
 import { TIMELINE_ROUTE } from "@/lib/constants";
 
 const timelineSchema = z.object({
@@ -96,6 +97,13 @@ export async function deleteTimelineEvent(
   id: string,
 ): Promise<TimelineActionState> {
   try {
+    const event = await TimelineService.findById(id);
+    if (event?.imageUrl) {
+      const path = StorageService.extractPathFromUrl(event.imageUrl);
+      if (path) {
+        await StorageService.delete(path);
+      }
+    }
     await TimelineService.delete(id);
     revalidatePath(TIMELINE_ROUTE);
     return { success: true };

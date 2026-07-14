@@ -6,26 +6,44 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
-import { updateInfluencerData } from "@/actions/settings.actions";
+import { updateInfluencerData, updateHeroData } from "@/actions/settings.actions";
 import type { InfluencerDataType } from "@/config/influencer";
+import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.actions";
 
 export function SettingsForm({
   config,
+  heroData,
 }: {
   config: InfluencerDataType;
+  heroData: HeroDataType;
 }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  const [state, setState] = useState<SettingsActionState>({ success: false });
-  const [pending, setPending] = useState(false);
+  const profileFormRef = useRef<HTMLFormElement>(null);
+  const heroFormRef = useRef<HTMLFormElement>(null);
+  const [profileState, setProfileState] = useState<SettingsActionState>({ success: false });
+  const [heroState, setHeroState] = useState<SettingsActionState>({ success: false });
+  const [profilePending, setProfilePending] = useState(false);
+  const [heroPending, setHeroPending] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
-    setPending(true);
-    setState({ success: false });
-    const result = await updateInfluencerData(state, formData);
-    setState(result);
-    setPending(false);
+  async function handleProfileSubmit(formData: FormData) {
+    setProfilePending(true);
+    setProfileState({ success: false });
+    const result = await updateInfluencerData(profileState, formData);
+    setProfileState(result);
+    setProfilePending(false);
+
+    if (result.success) {
+      router.refresh();
+    }
+  }
+
+  async function handleHeroSubmit(formData: FormData) {
+    setHeroPending(true);
+    setHeroState({ success: false });
+    const result = await updateHeroData(heroState, formData);
+    setHeroState(result);
+    setHeroPending(false);
 
     if (result.success) {
       router.refresh();
@@ -33,138 +51,262 @@ export function SettingsForm({
   }
 
   return (
-    <Card>
-      <CardContent>
-        <form ref={formRef} action={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Personal Information
-            </h3>
-            <Input
-              id="name"
-              name="name"
-              label="Full Name"
-              defaultValue={config.name}
-              error={state.fieldErrors?.name?.[0]}
-              required
-            />
-            <Input
-              id="tagline"
-              name="tagline"
-              label="Tagline"
-              defaultValue={config.tagline}
-              error={state.fieldErrors?.tagline?.[0]}
-              required
-            />
-            <Textarea
-              id="bio"
-              name="bio"
-              label="Bio"
-              defaultValue={config.bio}
-              error={state.fieldErrors?.bio?.[0]}
-              rows={5}
-              required
-            />
-            <Input
-              id="profileImage"
-              name="profileImage"
-              label="Profile Image URL"
-              defaultValue={config.profileImage || ""}
-              placeholder="https://example.com/profile.jpg"
-            />
-          </div>
+    <div className="space-y-8">
+      <Card>
+        <CardContent>
+          <form ref={profileFormRef} action={handleProfileSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Personal Information
+              </h3>
+              <Input
+                id="name"
+                name="name"
+                label="Full Name"
+                defaultValue={config.name}
+                error={profileState.fieldErrors?.name?.[0]}
+                required
+              />
+              <Input
+                id="tagline"
+                name="tagline"
+                label="Tagline"
+                defaultValue={config.tagline}
+                error={profileState.fieldErrors?.tagline?.[0]}
+                required
+              />
+              <Textarea
+                id="bio"
+                name="bio"
+                label="Bio"
+                defaultValue={config.bio}
+                error={profileState.fieldErrors?.bio?.[0]}
+                rows={5}
+                required
+              />
+              <Input
+                id="profileImage"
+                name="profileImage"
+                label="Profile Image URL"
+                defaultValue={config.profileImage || ""}
+                placeholder="https://example.com/profile.jpg"
+              />
+            </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Niche
-            </h3>
-            <div>
-              <label
-                htmlFor="niche"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Background Theme
-              </label>
-              <select
-                id="niche"
-                name="niche"
-                defaultValue={config.niche || "gaming"}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-              >
-                <option value="gaming">Gaming</option>
-                <option value="fitness">Fitness</option>
-                <option value="fashion">Fashion</option>
-                <option value="travel">Travel</option>
-                <option value="tech">Tech</option>
-                <option value="food">Food</option>
-                <option value="lifestyle">Lifestyle</option>
-              </select>
-              <p className="mt-1 text-xs text-gray-500">
-                Controls the floating background icons on the public site.
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Niche
+              </h3>
+              <div>
+                <label
+                  htmlFor="niche"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Background Theme
+                </label>
+                <select
+                  id="niche"
+                  name="niche"
+                  defaultValue={config.niche || "gaming"}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-s8ul-cyan focus:outline-none focus:ring-1 focus:ring-s8ul-cyan"
+                >
+                  <option value="gaming">Gaming</option>
+                  <option value="fitness">Fitness</option>
+                  <option value="fashion">Fashion</option>
+                  <option value="travel">Travel</option>
+                  <option value="tech">Tech</option>
+                  <option value="food">Food</option>
+                  <option value="lifestyle">Lifestyle</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Controls the floating background icons on the public site.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Social Media Links
+              </h3>
+              <p className="text-sm text-gray-500">
+                Leave empty to hide the icon from the public site.
               </p>
+              <Input
+                id="instagram"
+                name="instagram"
+                label="Instagram URL"
+                defaultValue={config.social.instagram}
+                placeholder="https://instagram.com/username"
+              />
+              <Input
+                id="youtube"
+                name="youtube"
+                label="YouTube URL"
+                defaultValue={config.social.youtube}
+                placeholder="https://youtube.com/@username"
+              />
+              <Input
+                id="twitter"
+                name="twitter"
+                label="Twitter / X URL"
+                defaultValue={config.social.twitter}
+                placeholder="https://twitter.com/username"
+              />
+              <Input
+                id="tiktok"
+                name="tiktok"
+                label="TikTok URL"
+                defaultValue={config.social.tiktok}
+                placeholder="https://tiktok.com/@username"
+              />
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Social Media Links
-            </h3>
-            <p className="text-sm text-gray-500">
-              Leave empty to hide the icon from the public site.
-            </p>
-            <Input
-              id="instagram"
-              name="instagram"
-              label="Instagram URL"
-              defaultValue={config.social.instagram}
-              placeholder="https://instagram.com/username"
-            />
-            <Input
-              id="youtube"
-              name="youtube"
-              label="YouTube URL"
-              defaultValue={config.social.youtube}
-              placeholder="https://youtube.com/@username"
-            />
-            <Input
-              id="twitter"
-              name="twitter"
-              label="Twitter / X URL"
-              defaultValue={config.social.twitter}
-              placeholder="https://twitter.com/username"
-            />
-            <Input
-              id="tiktok"
-              name="tiktok"
-              label="TikTok URL"
-              defaultValue={config.social.tiktok}
-              placeholder="https://tiktok.com/@username"
-            />
-          </div>
+            {profileState.success && (
+              <div className="rounded-lg bg-green-100 p-3 text-sm text-green-700">
+                Profile updated successfully!
+              </div>
+            )}
+            {profileState.error && (
+              <p className="text-sm text-red-600">{profileState.error}</p>
+            )}
 
-          {state.success && (
-            <div className="rounded-lg bg-green-100 p-3 text-sm text-green-700">
-              Settings updated successfully!
+            <div className="flex items-center gap-4">
+              <Button type="submit" disabled={profilePending}>
+                {profilePending ? "Saving..." : "Save Profile"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/admin/dashboard")}
+              >
+                Back to Dashboard
+              </Button>
             </div>
-          )}
-          {state.error && (
-            <p className="text-sm text-red-600">{state.error}</p>
-          )}
+          </form>
+        </CardContent>
+      </Card>
 
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : "Save Changes"}
+      <Card>
+        <CardContent>
+          <form ref={heroFormRef} action={handleHeroSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Hero Section
+              </h3>
+              <p className="text-sm text-gray-500">
+                Control the hero video, title, subtitle, and call-to-action buttons on the landing page.
+              </p>
+
+              <Input
+                id="videoUrl"
+                name="videoUrl"
+                label="Video URL"
+                defaultValue={heroData.videoUrl}
+                placeholder="/videos/intro-video/intro.mp4"
+              />
+              <Input
+                id="posterUrl"
+                name="posterUrl"
+                label="Poster Image URL"
+                defaultValue={heroData.posterUrl}
+                placeholder="https://images.unsplash.com/..."
+              />
+              <Input
+                id="heroTitle"
+                name="heroTitle"
+                label="Title"
+                defaultValue={heroData.title}
+                placeholder="Raj 'Snax' Varma"
+              />
+              <Input
+                id="heroSubtitle"
+                name="heroSubtitle"
+                label="Subtitle"
+                defaultValue={heroData.subtitle}
+                placeholder="S8UL Esports | BGMI Pro | Content Creator"
+              />
+              <Input
+                id="heroTagline"
+                name="heroTagline"
+                label="Tagline"
+                defaultValue={heroData.tagline}
+                placeholder="Hyderabad ki energy — global level ka game."
+              />
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900">
+                Call-to-Action Buttons
+              </h4>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  id="ctaText"
+                  name="ctaText"
+                  label="Primary Button Text"
+                  defaultValue={heroData.ctaText}
+                  placeholder="Subscribe"
+                />
+                <Input
+                  id="ctaLink"
+                  name="ctaLink"
+                  label="Primary Button Link"
+                  defaultValue={heroData.ctaLink}
+                  placeholder="https://youtube.com/@..."
+                />
+                <Input
+                  id="ctaSecondaryText"
+                  name="ctaSecondaryText"
+                  label="Secondary Button Text"
+                  defaultValue={heroData.ctaSecondaryText}
+                  placeholder="Follow on IG"
+                />
+                <Input
+                  id="ctaSecondaryLink"
+                  name="ctaSecondaryLink"
+                  label="Secondary Button Link"
+                  defaultValue={heroData.ctaSecondaryLink}
+                  placeholder="https://instagram.com/..."
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900">
+                Live Badge
+              </h4>
+              <Input
+                id="liveBadgeText"
+                name="liveBadgeText"
+                label="Live Badge Text"
+                defaultValue={heroData.liveBadgeText}
+                placeholder="Live on YouTube"
+              />
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="showLiveBadge"
+                  defaultChecked={heroData.showLiveBadge}
+                  className="h-4 w-4 rounded border-gray-300 text-s8ul-cyan focus:ring-s8ul-cyan"
+                />
+                <span className="text-sm text-gray-700">Show Live Badge</span>
+              </label>
+            </div>
+
+            {heroState.success && (
+              <div className="rounded-lg bg-green-100 p-3 text-sm text-green-700">
+                Hero settings updated successfully!
+              </div>
+            )}
+            {heroState.error && (
+              <p className="text-sm text-red-600">{heroState.error}</p>
+            )}
+
+            <Button type="submit" disabled={heroPending}>
+              {heroPending ? "Saving..." : "Save Hero Settings"}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/admin")}
-            >
-              Back to Dashboard
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

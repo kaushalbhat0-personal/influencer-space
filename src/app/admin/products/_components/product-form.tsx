@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { StorageService } from "@/services/storage.service";
 import { createProduct, updateProduct } from "@/actions/product.actions";
 import { PRODUCTS_ROUTE } from "@/lib/constants";
 import type { ProductData } from "@/services/product.service";
@@ -24,6 +25,14 @@ export function ProductForm({ mode, product }: ProductFormProps) {
   const [imageUrl, setImageUrl] = useState<string>(product?.imageUrl || "");
 
   const serverAction = mode === "create" ? createProduct : updateProduct;
+
+  async function handleImageDelete(url: string) {
+    const path = StorageService.extractPathFromUrl(url);
+    if (path) {
+      await StorageService.delete(path);
+    }
+    setImageUrl("");
+  }
 
   async function handleSubmit(formData: FormData) {
     if (imageUrl) {
@@ -80,6 +89,7 @@ export function ProductForm({ mode, product }: ProductFormProps) {
 
           <ImageUpload
             onUpload={setImageUrl}
+            onDelete={handleImageDelete}
             currentImage={imageUrl || null}
             folder="products"
             label="Product Image"

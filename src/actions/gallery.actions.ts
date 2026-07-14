@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { GalleryService } from "@/services/gallery.service";
+import { StorageService } from "@/services/storage.service";
 import { GALLERY_ROUTE } from "@/lib/constants";
 
 const gallerySchema = z.object({
@@ -91,6 +92,13 @@ export async function deleteGalleryImage(
   id: string,
 ): Promise<GalleryActionState> {
   try {
+    const image = await GalleryService.findById(id);
+    if (image?.imageUrl) {
+      const path = StorageService.extractPathFromUrl(image.imageUrl);
+      if (path) {
+        await StorageService.delete(path);
+      }
+    }
     await GalleryService.delete(id);
     revalidatePath(GALLERY_ROUTE);
     return { success: true };

@@ -2,20 +2,24 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { uploadImage } from "@/lib/supabase";
+import { StorageService } from "@/services/storage.service";
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
+  onDelete?: (url: string) => Promise<void>;
   currentImage?: string | null;
   folder?: string;
   label?: string;
+  showDelete?: boolean;
 }
 
 export function ImageUpload({
   onUpload,
+  onDelete,
   currentImage,
   folder = "general",
   label = "Upload Image",
+  showDelete = true,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage || null);
@@ -40,16 +44,27 @@ export function ImageUpload({
     setError(null);
 
     try {
-      const ext = file.name.split(".").pop();
-      const filename = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-
-      const url = await uploadImage(file, filename);
-      setPreview(url);
-      onUpload(url);
+      const result = await StorageService.upload(file, folder);
+      setPreview(result.publicUrl);
+      onUpload(result.publicUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!preview) return;
+
+    if (onDelete) {
+      await onDelete(preview);
+    }
+
+    setPreview(null);
+    onUpload("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -64,14 +79,6 @@ export function ImageUpload({
     }
   };
 
-  const handleRemove = () => {
-    setPreview(null);
-    onUpload("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
@@ -83,7 +90,7 @@ export function ImageUpload({
         className={`
           relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center
           rounded-lg border-2 border-dashed border-gray-300 transition-colors
-          hover:border-amber-400 hover:bg-amber-50/5
+          hover:border-s8ul-cyan hover:bg-s8ul-cyan/5
           ${isUploading ? "opacity-50" : ""}
         `}
       >
@@ -94,37 +101,28 @@ export function ImageUpload({
               alt="Upload preview"
               className="h-auto max-h-48 w-full rounded-lg object-cover"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemove();
-              }}
-              className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {showDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow-lg hover:bg-red-600"
+                title="Delete image"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         ) : (
           <div className="p-4 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p className="mt-2 text-sm text-gray-500">
-              {isUploading ? "Uploading..." : "Click or drag & drop to upload"}
-            </p>
+            <p className="mt-2 text-sm text-gray-500">{isUploading ? "Uploading..." : "Click or drag & drop to upload"}</p>
             <p className="text-xs text-gray-400">PNG, JPG, WebP up to 5MB</p>
           </div>
         )}
@@ -144,7 +142,7 @@ export function ImageUpload({
         <div className="flex items-center gap-2">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
             <motion.div
-              className="h-full bg-amber-500"
+              className="h-full bg-s8ul-cyan"
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
               transition={{ duration: 1.5, ease: "easeInOut" }}

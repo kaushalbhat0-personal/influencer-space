@@ -4,14 +4,19 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { SocialIcon } from "@/components/ui/SocialIcon";
 import type { InfluencerDataType } from "@/config/influencer";
+import type { HeroDataType } from "@/config/hero";
+import { defaultHeroData } from "@/config/hero";
 
 interface VideoHeroProps {
   config: InfluencerDataType;
+  heroData?: HeroDataType;
 }
 
-export function VideoHero({ config }: VideoHeroProps) {
+export function VideoHero({ config, heroData }: VideoHeroProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [videoError, setVideoError] = useState(false);
+
+  const hd = { ...defaultHeroData, ...heroData };
 
   const socialPlatforms = [
     { platform: "instagram" as const, url: config.social.instagram },
@@ -26,23 +31,25 @@ export function VideoHero({ config }: VideoHeroProps) {
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {!videoError ? (
+      {!videoError && hd.videoUrl ? (
         <video
           autoPlay
           loop
           muted={isMuted}
           playsInline
           className="absolute inset-0 h-full w-full object-cover"
-          poster="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1920&h=1080&fit=crop"
+          poster={hd.posterUrl}
           onError={() => setVideoError(true)}
         >
-          <source
-            src="https://res.cloudinary.com/demo/video/upload/v1/sample-video"
-            type="video/mp4"
-          />
+          <source src={hd.videoUrl} type="video/mp4" />
         </video>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-s8ul-purple via-black to-s8ul-purple/40" />
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${hd.posterUrl})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-s8ul-purple via-black to-s8ul-purple/40" />
+        </div>
       )}
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
@@ -66,7 +73,7 @@ export function VideoHero({ config }: VideoHeroProps) {
         </div>
       </div>
 
-      {!videoError && (
+      {!videoError && hd.videoUrl && (
         <button
           onClick={() => setIsMuted(!isMuted)}
           className="absolute bottom-8 right-8 z-20 rounded-full bg-black/60 p-3 text-s8ul-cyan backdrop-blur-sm transition-all hover:bg-black/80 hover:shadow-[0_0_15px_rgba(0,245,255,0.3)]"
@@ -92,20 +99,22 @@ export function VideoHero({ config }: VideoHeroProps) {
           transition={{ duration: 1, ease: "easeOut" }}
           className="max-w-4xl text-center"
         >
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="mb-4 flex items-center justify-center gap-2"
-          >
-            <span className="flex h-2 w-2">
-              <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-s8ul-cyan opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-s8ul-cyan" />
-            </span>
-            <span className="font-gaming text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
-              Live on YouTube
-            </span>
-          </motion.div>
+          {hd.showLiveBadge && hd.liveBadgeText && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="mb-4 flex items-center justify-center gap-2"
+            >
+              <span className="flex h-2 w-2">
+                <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-s8ul-cyan opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-s8ul-cyan" />
+              </span>
+              <span className="font-gaming text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
+                {hd.liveBadgeText}
+              </span>
+            </motion.div>
+          )}
 
           {config.profileImage && (
             <motion.div
@@ -137,35 +146,39 @@ export function VideoHero({ config }: VideoHeroProps) {
             className="mb-1 font-gaming text-5xl font-bold text-white sm:text-6xl lg:text-7xl"
           >
             <span className="bg-gradient-to-r from-s8ul-cyan via-white to-s8ul-pink bg-clip-text text-transparent">
-              Raj &apos;Snax&apos; Varma
+              {hd.title}
             </span>
           </motion.h1>
 
           <p className="mb-1 text-lg text-white/70 sm:text-xl">
-            {config.tagline}
+            {hd.subtitle}
           </p>
 
           <p className="mx-auto mb-2 max-w-xl text-sm text-white/40 sm:text-base">
-            Hyderabad ki energy — global level ka game.
+            {hd.tagline}
           </p>
 
           <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href="https://youtube.com/@SnaxGaming"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-s8ul-pink to-s8ul-purple px-6 py-3 font-gaming text-xs font-bold uppercase tracking-wider text-white transition-all hover:shadow-[0_0_25px_rgba(255,0,229,0.5)]"
-            >
-              Subscribe
-            </a>
-            <a
-              href="https://instagram.com/snaxgaming"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-s8ul-cyan/30 bg-s8ul-cyan/10 px-6 py-3 font-gaming text-xs font-bold uppercase tracking-wider text-s8ul-cyan backdrop-blur-sm transition-all hover:bg-s8ul-cyan/20 hover:shadow-[0_0_20px_rgba(0,245,255,0.3)]"
-            >
-              Follow on IG
-            </a>
+            {hd.ctaLink && (
+              <a
+                href={hd.ctaLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-s8ul-pink to-s8ul-purple px-6 py-3 font-gaming text-xs font-bold uppercase tracking-wider text-white transition-all hover:shadow-[0_0_25px_rgba(255,0,229,0.5)]"
+              >
+                {hd.ctaText}
+              </a>
+            )}
+            {hd.ctaSecondaryLink && (
+              <a
+                href={hd.ctaSecondaryLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-s8ul-cyan/30 bg-s8ul-cyan/10 px-6 py-3 font-gaming text-xs font-bold uppercase tracking-wider text-s8ul-cyan backdrop-blur-sm transition-all hover:bg-s8ul-cyan/20 hover:shadow-[0_0_20px_rgba(0,245,255,0.3)]"
+              >
+                {hd.ctaSecondaryText}
+              </a>
+            )}
           </div>
 
           {socialPlatforms.length > 0 && (

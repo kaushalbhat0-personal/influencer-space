@@ -13,6 +13,7 @@ import { AffiliateService } from "@/services/affiliate.service";
 import { GalleryService } from "@/services/gallery.service";
 import { TimelineService } from "@/services/timeline.service";
 import { GameService } from "@/services/games.service";
+import { SettingsService } from "@/services/settings.service";
 import { getInfluencerConfig } from "@/config/influencer";
 import Link from "next/link";
 
@@ -27,7 +28,7 @@ async function safeFindAllActive<T>(fn: () => Promise<T[]>): Promise<T[]> {
 }
 
 export default async function HomePage() {
-  const [products, affiliates, galleryImages, timelineEvents, games, config] =
+  const [products, affiliates, galleryImages, timelineEvents, games, config, heroData] =
     await Promise.all([
       safeFindAllActive(() => ProductService.findAllActive()),
       safeFindAllActive(() => AffiliateService.findAllActive()),
@@ -35,6 +36,7 @@ export default async function HomePage() {
       safeFindAllActive(() => TimelineService.findAllActive()),
       safeFindAllActive(() => GameService.findAllActive()),
       getInfluencerConfig(),
+      SettingsService.getHeroData().catch(() => undefined),
     ]);
 
   const galleryData = galleryImages.map((img) => ({
@@ -64,7 +66,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-black">
-      <VideoHero config={config} />
+      <VideoHero config={config} heroData={heroData} />
 
       <SocialStats />
 

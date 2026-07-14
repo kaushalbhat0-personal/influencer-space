@@ -4,7 +4,10 @@ import { SettingsForm } from "./_components/settings-form";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const config = await SettingsService.getInfluencerData();
+  const [config, heroData] = await Promise.all([
+    SettingsService.getInfluencerData(),
+    SettingsService.getHeroData(),
+  ]);
 
   return (
     <div>
@@ -14,7 +17,7 @@ export default async function SettingsPage() {
           Update your brand information below. Changes appear on the public site instantly.
         </p>
       </div>
-      <SettingsForm config={config} />
+      <SettingsForm config={config} heroData={heroData} />
     </div>
   );
 }
