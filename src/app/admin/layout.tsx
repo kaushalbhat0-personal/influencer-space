@@ -26,7 +26,16 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
+  const isLoginPage = pathname === "/admin/login";
   const closeSidebar = () => setSidebarOpen(false);
+
+  if (isLoginPage) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <main>{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -99,7 +108,7 @@ export default function AdminLayout({
       </motion.aside>
 
       <div className="lg:pl-64">
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 pt-16 sm:p-6 sm:pt-16 lg:p-8 lg:pt-8">
           <Suspense
             fallback={
               <div className="flex h-64 items-center justify-center">

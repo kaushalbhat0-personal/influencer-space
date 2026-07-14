@@ -34,7 +34,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-950 px-4">
       <div className="w-full max-w-md">
         <GlassCard withGoldBorder className="p-6 sm:p-8">
           <div className="text-center">
