@@ -16,13 +16,15 @@ function getClient() {
 
 export class StorageService {
   static async upload(file: File, folder: string, filename?: string): Promise<UploadResult> {
-    console.log("☁️ StorageService.upload — file:", file.name, "size:", file.size, "folder:", folder);
+    console.log("☁️ StorageService.upload — file:", file.name, "type:", file.type, "size:", file.size, "folder:", folder);
     const client = getClient();
+    console.log("☁️ StorageService.upload — client ready, bucket:", BUCKET_NAME);
     const ext = file.name.split(".").pop();
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
     const name = filename || `${timestamp}-${random}`;
     const path = `${folder}/${name}.${ext}`;
+    console.log("☁️ StorageService.upload — upload path:", path);
 
     const { data, error } = await client.storage
       .from(BUCKET_NAME)
@@ -33,8 +35,11 @@ export class StorageService {
 
     if (error) {
       console.error("☁️ StorageService.upload error:", error.message);
+      console.error("☁️ StorageService.upload error details:", JSON.stringify(error));
       throw new Error(error.message);
     }
+
+    console.log("☁️ StorageService.upload — upload response data:", JSON.stringify(data));
 
     const { data: urlData } = supabaseClient.storage
       .from(BUCKET_NAME)

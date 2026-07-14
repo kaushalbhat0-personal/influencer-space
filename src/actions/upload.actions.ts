@@ -1,6 +1,7 @@
 "use server";
 
 import { StorageService } from "@/services/storage.service";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export type UploadResult = {
   success: true;
@@ -13,9 +14,12 @@ export type UploadResult = {
 
 export async function uploadFile(formData: FormData): Promise<UploadResult> {
   console.log("📤 uploadFile called");
+  console.log("🔑 supabaseAdmin exists:", !!supabaseAdmin);
   try {
     const file = formData.get("file") as File;
     const folder = formData.get("folder") as string;
+
+    console.log("📁 File:", file?.name, "type:", file?.type, "size:", file?.size, "folder:", folder);
 
     if (!file || !folder) {
       console.log("📤 uploadFile — missing file or folder");
