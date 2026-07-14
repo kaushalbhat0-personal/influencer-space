@@ -13,20 +13,35 @@ export type ProductData = {
 
 export const ProductService = {
   async findAllActive(): Promise<ProductData[]> {
-    return prisma.product.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
-    });
+    try {
+      return await prisma.product.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (error) {
+      console.error("ProductService.findAllActive error:", error);
+      return [];
+    }
   },
 
   async findAll(): Promise<ProductData[]> {
-    return prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    try {
+      return await prisma.product.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (error) {
+      console.error("ProductService.findAll error:", error);
+      return [];
+    }
   },
 
   async findById(id: string): Promise<ProductData | null> {
-    return prisma.product.findUnique({ where: { id } });
+    try {
+      return await prisma.product.findUnique({ where: { id } });
+    } catch (error) {
+      console.error("ProductService.findById error:", error);
+      return null;
+    }
   },
 
   async create(data: {
@@ -35,7 +50,12 @@ export const ProductService = {
     price: number;
     imageUrl?: string;
   }): Promise<ProductData> {
-    return prisma.product.create({ data });
+    try {
+      return await prisma.product.create({ data });
+    } catch (error) {
+      console.error("ProductService.create error:", error);
+      throw error;
+    }
   },
 
   async update(
@@ -48,20 +68,35 @@ export const ProductService = {
       isActive?: boolean;
     },
   ): Promise<ProductData> {
-    return prisma.product.update({ where: { id }, data });
+    try {
+      return await prisma.product.update({ where: { id }, data });
+    } catch (error) {
+      console.error("ProductService.update error:", error);
+      throw error;
+    }
   },
 
   async delete(id: string): Promise<void> {
-    await prisma.product.delete({ where: { id } });
+    try {
+      await prisma.product.delete({ where: { id } });
+    } catch (error) {
+      console.error("ProductService.delete error:", error);
+      throw error;
+    }
   },
 
   async toggleActive(id: string): Promise<ProductData> {
-    const product = await prisma.product.findUniqueOrThrow({
-      where: { id },
-    });
-    return prisma.product.update({
-      where: { id },
-      data: { isActive: !product.isActive },
-    });
+    try {
+      const product = await prisma.product.findUniqueOrThrow({
+        where: { id },
+      });
+      return await prisma.product.update({
+        where: { id },
+        data: { isActive: !product.isActive },
+      });
+    } catch (error) {
+      console.error("ProductService.toggleActive error:", error);
+      throw error;
+    }
   },
 };

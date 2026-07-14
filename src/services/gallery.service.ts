@@ -14,20 +14,35 @@ export type GalleryImageData = {
 
 export const GalleryService = {
   async findAllActive(): Promise<GalleryImageData[]> {
-    return prisma.galleryImage.findMany({
-      where: { isActive: true },
-      orderBy: { order: "asc" },
-    });
+    try {
+      return await prisma.galleryImage.findMany({
+        where: { isActive: true },
+        orderBy: { order: "asc" },
+      });
+    } catch (error) {
+      console.error("GalleryService.findAllActive error:", error);
+      return [];
+    }
   },
 
   async findAll(): Promise<GalleryImageData[]> {
-    return prisma.galleryImage.findMany({
-      orderBy: { order: "asc" },
-    });
+    try {
+      return await prisma.galleryImage.findMany({
+        orderBy: { order: "asc" },
+      });
+    } catch (error) {
+      console.error("GalleryService.findAll error:", error);
+      return [];
+    }
   },
 
   async findById(id: string): Promise<GalleryImageData | null> {
-    return prisma.galleryImage.findUnique({ where: { id } });
+    try {
+      return await prisma.galleryImage.findUnique({ where: { id } });
+    } catch (error) {
+      console.error("GalleryService.findById error:", error);
+      return null;
+    }
   },
 
   async create(data: {
@@ -37,15 +52,20 @@ export const GalleryService = {
     category: string;
     order?: number;
   }): Promise<GalleryImageData> {
-    const maxOrder = await prisma.galleryImage.aggregate({
-      _max: { order: true },
-    });
-    return prisma.galleryImage.create({
-      data: {
-        ...data,
-        order: data.order ?? (maxOrder._max.order ?? 0) + 1,
-      },
-    });
+    try {
+      const maxOrder = await prisma.galleryImage.aggregate({
+        _max: { order: true },
+      });
+      return await prisma.galleryImage.create({
+        data: {
+          ...data,
+          order: data.order ?? (maxOrder._max.order ?? 0) + 1,
+        },
+      });
+    } catch (error) {
+      console.error("GalleryService.create error:", error);
+      throw error;
+    }
   },
 
   async update(
@@ -59,21 +79,36 @@ export const GalleryService = {
       isActive?: boolean;
     },
   ): Promise<GalleryImageData> {
-    return prisma.galleryImage.update({ where: { id }, data });
+    try {
+      return await prisma.galleryImage.update({ where: { id }, data });
+    } catch (error) {
+      console.error("GalleryService.update error:", error);
+      throw error;
+    }
   },
 
   async delete(id: string): Promise<void> {
-    await prisma.galleryImage.delete({ where: { id } });
+    try {
+      await prisma.galleryImage.delete({ where: { id } });
+    } catch (error) {
+      console.error("GalleryService.delete error:", error);
+      throw error;
+    }
   },
 
   async reorder(ids: string[]): Promise<void> {
-    await prisma.$transaction(
-      ids.map((id, index) =>
-        prisma.galleryImage.update({
-          where: { id },
-          data: { order: index },
-        }),
-      ),
-    );
+    try {
+      await prisma.$transaction(
+        ids.map((id, index) =>
+          prisma.galleryImage.update({
+            where: { id },
+            data: { order: index },
+          }),
+        ),
+      );
+    } catch (error) {
+      console.error("GalleryService.reorder error:", error);
+      throw error;
+    }
   },
 };

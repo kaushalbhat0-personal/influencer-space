@@ -15,20 +15,35 @@ export type TimelineEventData = {
 
 export const TimelineService = {
   async findAllActive(): Promise<TimelineEventData[]> {
-    return prisma.timelineEvent.findMany({
-      where: { isActive: true },
-      orderBy: { order: "asc" },
-    });
+    try {
+      return await prisma.timelineEvent.findMany({
+        where: { isActive: true },
+        orderBy: { order: "asc" },
+      });
+    } catch (error) {
+      console.error("TimelineService.findAllActive error:", error);
+      return [];
+    }
   },
 
   async findAll(): Promise<TimelineEventData[]> {
-    return prisma.timelineEvent.findMany({
-      orderBy: { order: "asc" },
-    });
+    try {
+      return await prisma.timelineEvent.findMany({
+        orderBy: { order: "asc" },
+      });
+    } catch (error) {
+      console.error("TimelineService.findAll error:", error);
+      return [];
+    }
   },
 
   async findById(id: string): Promise<TimelineEventData | null> {
-    return prisma.timelineEvent.findUnique({ where: { id } });
+    try {
+      return await prisma.timelineEvent.findUnique({ where: { id } });
+    } catch (error) {
+      console.error("TimelineService.findById error:", error);
+      return null;
+    }
   },
 
   async create(data: {
@@ -39,15 +54,20 @@ export const TimelineService = {
     stats?: string;
     order?: number;
   }): Promise<TimelineEventData> {
-    const maxOrder = await prisma.timelineEvent.aggregate({
-      _max: { order: true },
-    });
-    return prisma.timelineEvent.create({
-      data: {
-        ...data,
-        order: data.order ?? (maxOrder._max.order ?? 0) + 1,
-      },
-    });
+    try {
+      const maxOrder = await prisma.timelineEvent.aggregate({
+        _max: { order: true },
+      });
+      return await prisma.timelineEvent.create({
+        data: {
+          ...data,
+          order: data.order ?? (maxOrder._max.order ?? 0) + 1,
+        },
+      });
+    } catch (error) {
+      console.error("TimelineService.create error:", error);
+      throw error;
+    }
   },
 
   async update(
@@ -62,21 +82,36 @@ export const TimelineService = {
       isActive?: boolean;
     },
   ): Promise<TimelineEventData> {
-    return prisma.timelineEvent.update({ where: { id }, data });
+    try {
+      return await prisma.timelineEvent.update({ where: { id }, data });
+    } catch (error) {
+      console.error("TimelineService.update error:", error);
+      throw error;
+    }
   },
 
   async delete(id: string): Promise<void> {
-    await prisma.timelineEvent.delete({ where: { id } });
+    try {
+      await prisma.timelineEvent.delete({ where: { id } });
+    } catch (error) {
+      console.error("TimelineService.delete error:", error);
+      throw error;
+    }
   },
 
   async reorder(ids: string[]): Promise<void> {
-    await prisma.$transaction(
-      ids.map((id, index) =>
-        prisma.timelineEvent.update({
-          where: { id },
-          data: { order: index },
-        }),
-      ),
-    );
+    try {
+      await prisma.$transaction(
+        ids.map((id, index) =>
+          prisma.timelineEvent.update({
+            where: { id },
+            data: { order: index },
+          }),
+        ),
+      );
+    } catch (error) {
+      console.error("TimelineService.reorder error:", error);
+      throw error;
+    }
   },
 };

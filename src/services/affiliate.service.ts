@@ -13,20 +13,35 @@ export type AffiliateData = {
 
 export const AffiliateService = {
   async findAll(): Promise<AffiliateData[]> {
-    return prisma.affiliateLink.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    try {
+      return await prisma.affiliateLink.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (error) {
+      console.error("AffiliateService.findAll error:", error);
+      return [];
+    }
   },
 
   async findById(id: string): Promise<AffiliateData | null> {
-    return prisma.affiliateLink.findUnique({ where: { id } });
+    try {
+      return await prisma.affiliateLink.findUnique({ where: { id } });
+    } catch (error) {
+      console.error("AffiliateService.findById error:", error);
+      return null;
+    }
   },
 
   async findAllActive(): Promise<AffiliateData[]> {
-    return prisma.affiliateLink.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
-    });
+    try {
+      return await prisma.affiliateLink.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (error) {
+      console.error("AffiliateService.findAllActive error:", error);
+      return [];
+    }
   },
 
   async create(data: {
@@ -35,15 +50,20 @@ export const AffiliateService = {
     imageUrl?: string;
     isActive?: boolean;
   }): Promise<AffiliateData> {
-    return prisma.affiliateLink.create({
-      data: {
-        title: data.title,
-        url: data.url,
-        imageUrl: data.imageUrl ?? null,
-        isActive: data.isActive ?? true,
-        clicks: 0,
-      },
-    });
+    try {
+      return await prisma.affiliateLink.create({
+        data: {
+          title: data.title,
+          url: data.url,
+          imageUrl: data.imageUrl ?? null,
+          isActive: data.isActive ?? true,
+          clicks: 0,
+        },
+      });
+    } catch (error) {
+      console.error("AffiliateService.create error:", error);
+      throw error;
+    }
   },
 
   async update(
@@ -55,27 +75,47 @@ export const AffiliateService = {
       isActive?: boolean;
     },
   ): Promise<AffiliateData> {
-    return prisma.affiliateLink.update({ where: { id }, data });
+    try {
+      return await prisma.affiliateLink.update({ where: { id }, data });
+    } catch (error) {
+      console.error("AffiliateService.update error:", error);
+      throw error;
+    }
   },
 
   async delete(id: string): Promise<void> {
-    await prisma.affiliateLink.delete({ where: { id } });
+    try {
+      await prisma.affiliateLink.delete({ where: { id } });
+    } catch (error) {
+      console.error("AffiliateService.delete error:", error);
+      throw error;
+    }
   },
 
   async toggleActive(id: string): Promise<AffiliateData> {
-    const current = await prisma.affiliateLink.findUniqueOrThrow({
-      where: { id },
-    });
-    return prisma.affiliateLink.update({
-      where: { id },
-      data: { isActive: !current.isActive },
-    });
+    try {
+      const current = await prisma.affiliateLink.findUniqueOrThrow({
+        where: { id },
+      });
+      return await prisma.affiliateLink.update({
+        where: { id },
+        data: { isActive: !current.isActive },
+      });
+    } catch (error) {
+      console.error("AffiliateService.toggleActive error:", error);
+      throw error;
+    }
   },
 
   async incrementClicks(id: string): Promise<void> {
-    await prisma.affiliateLink.update({
-      where: { id },
-      data: { clicks: { increment: 1 } },
-    });
+    try {
+      await prisma.affiliateLink.update({
+        where: { id },
+        data: { clicks: { increment: 1 } },
+      });
+    } catch (error) {
+      console.error("AffiliateService.incrementClicks error:", error);
+      throw error;
+    }
   },
 };

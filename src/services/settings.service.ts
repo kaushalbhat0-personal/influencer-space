@@ -7,18 +7,28 @@ import type { Prisma } from "@/generated/prisma/client";
 
 export const SettingsService = {
   async get(key: string): Promise<unknown> {
-    const setting = await prisma.setting.findUnique({
-      where: { key },
-    });
-    return setting?.value ?? null;
+    try {
+      const setting = await prisma.setting.findUnique({
+        where: { key },
+      });
+      return setting?.value ?? null;
+    } catch (error) {
+      console.error("SettingsService.get error:", error);
+      return null;
+    }
   },
 
   async set(key: string, value: Prisma.InputJsonValue): Promise<void> {
-    await prisma.setting.upsert({
-      where: { key },
-      update: { value },
-      create: { key, value },
-    });
+    try {
+      await prisma.setting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value },
+      });
+    } catch (error) {
+      console.error("SettingsService.set error:", error);
+      throw error;
+    }
   },
 
   async getInfluencerData(): Promise<InfluencerDataType> {
@@ -26,7 +36,7 @@ export const SettingsService = {
     if (data) {
       return data as InfluencerDataType;
     }
-    await this.set("influencer_data", defaultConfig as Prisma.InputJsonValue);
+    await this.set("influencer_data", defaultConfig as Prisma.InputJsonValue).catch(() => {});
     return defaultConfig;
   },
 
@@ -39,7 +49,7 @@ export const SettingsService = {
     if (data) {
       return { ...defaultHeroData, ...(data as Partial<HeroDataType>) };
     }
-    await this.set("hero_data", defaultHeroData as Prisma.InputJsonValue);
+    await this.set("hero_data", defaultHeroData as Prisma.InputJsonValue).catch(() => {});
     return defaultHeroData;
   },
 
