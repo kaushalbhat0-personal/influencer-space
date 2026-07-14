@@ -79,7 +79,7 @@ export function GalleryForm({ mode, image }: Props) {
               id="category"
               name="category"
               defaultValue={image?.category ?? "bgmi"}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-s8ul-cyan focus:outline-none focus:ring-1 focus:ring-s8ul-cyan"
             >
               {categories.map((cat) => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>

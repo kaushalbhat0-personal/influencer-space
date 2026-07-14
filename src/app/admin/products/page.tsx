@@ -1,12 +1,29 @@
 import Link from "next/link";
 import { ProductService } from "@/services/product.service";
 import { ProductsList } from "./_components/products-list";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { PRODUCTS_ROUTE } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
-  const products = await ProductService.findAll();
+  let products: Awaited<ReturnType<typeof ProductService.findAll>> = [];
+  let error: string | null = null;
+
+  try {
+    products = await ProductService.findAll();
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Failed to load products";
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">Failed to load products</p>
+        <p className="mt-1 text-sm text-red-300">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -19,13 +36,14 @@ export default async function AdminProductsPage() {
         </div>
         <Link
           href={`${PRODUCTS_ROUTE}/new`}
-          className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-amber-400"
+          className="inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-s8ul-cyan/80"
         >
           + New Product
         </Link>
       </div>
-
-      <ProductsList products={products} />
+      <ErrorBoundary>
+        <ProductsList products={products} />
+      </ErrorBoundary>
     </div>
   );
 }

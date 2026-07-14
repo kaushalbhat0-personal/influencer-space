@@ -1,12 +1,32 @@
 import Link from "next/link";
 import { GameService } from "@/services/games.service";
 import { GamesList } from "./_components/games-list";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { GAMES_ROUTE } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminGamesPage() {
-  const games = await GameService.findAll();
+  let games: Awaited<ReturnType<typeof GameService.findAll>> = [];
+  let error: string | null = null;
+
+  try {
+    games = await GameService.findAll();
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Failed to load games";
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">Failed to load games</p>
+        <p className="mt-1 text-sm text-red-300">{error}</p>
+        <p className="mt-2 text-xs text-red-400/60">
+          Make sure the database migration has been run.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -19,12 +39,14 @@ export default async function AdminGamesPage() {
         </div>
         <Link
           href={`${GAMES_ROUTE}/new`}
-          className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-amber-400"
+          className="inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-s8ul-cyan/80"
         >
           + New Game
         </Link>
       </div>
-      <GamesList games={games} />
+      <ErrorBoundary>
+        <GamesList games={games} />
+      </ErrorBoundary>
     </div>
   );
 }

@@ -7,12 +7,17 @@ export default async function EditGamePage({
 }: {
   params: { id: string };
 }) {
-  const game = await GameService.findById(params.id);
+  let game;
+  try {
+    game = await GameService.findById(params.id);
+  } catch {
+    notFound();
+  }
   if (!game) notFound();
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Edit Game</h1>
+      <h1 className="mb-6 text-2xl font-bold text-white">Edit Game</h1>
       <div className="max-w-lg">
         <GameForm mode="edit" game={game} />
       </div>

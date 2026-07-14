@@ -3,6 +3,8 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
 
 function LoginForm() {
   const router = useRouter();
@@ -10,15 +12,19 @@ function LoginForm() {
   const error = searchParams.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setLoading(true);
 
     const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
+
+    setLoading(false);
 
     if (result?.error) {
       router.push("/admin/login?error=CredentialsSignin");
@@ -28,64 +34,62 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in to manage your CreatorBrand
-          </p>
-        </div>
-
-        {error === "CredentialsSignin" && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-            Invalid email or password. Please try again.
+    <div className="flex min-h-screen items-center justify-center bg-black px-4">
+      <div className="w-full max-w-md">
+        <GlassCard withGoldBorder className="p-6 sm:p-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">Admin Login</h1>
+            <p className="mt-2 text-sm text-white/50">
+              Sign in to manage your CreatorBrand
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+          {error === "CredentialsSignin" && (
+            <div className="mt-4 rounded-lg bg-red-500/20 p-3 text-sm text-red-400">
+              Invalid email or password. Please try again.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-white/70">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:border-s8ul-cyan focus:outline-none focus:ring-2 focus:ring-s8ul-cyan/50"
+                placeholder="admin@snaxgaming.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-white/70">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:border-s8ul-cyan focus:outline-none focus:ring-2 focus:ring-s8ul-cyan/50"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-s8ul-cyan/20 text-s8ul-cyan hover:bg-s8ul-cyan/30"
             >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              placeholder="admin@example.com"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Sign in
-          </button>
-        </form>
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+        </GlassCard>
       </div>
     </div>
   );

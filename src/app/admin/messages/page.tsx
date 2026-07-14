@@ -1,10 +1,27 @@
 import { ContactService } from "@/services/contact.service";
 import { MessagesList } from "./_components/messages-list";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMessagesPage() {
-  const messages = await ContactService.findAll();
+  let messages: Awaited<ReturnType<typeof ContactService.findAll>> = [];
+  let error: string | null = null;
 
-  return <MessagesList messages={messages} />;
+  try {
+    messages = await ContactService.findAll();
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Failed to load messages";
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">Failed to load messages</p>
+        <p className="mt-1 text-sm text-red-300">{error}</p>
+      </div>
+    );
+  }
+
+  return <ErrorBoundary><MessagesList messages={messages} /></ErrorBoundary>;
 }

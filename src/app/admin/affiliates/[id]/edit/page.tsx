@@ -11,11 +11,13 @@ export const dynamic = "force-dynamic";
 export default async function EditAffiliatePage({
   params,
 }: EditAffiliatePageProps) {
-  const affiliate = await AffiliateService.findById(params.id);
-
-  if (!affiliate) {
+  let affiliate;
+  try {
+    affiliate = await AffiliateService.findById(params.id);
+  } catch {
     notFound();
   }
+  if (!affiliate) notFound();
 
   return (
     <div>

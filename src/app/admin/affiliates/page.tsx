@@ -1,12 +1,29 @@
 import Link from "next/link";
 import { AffiliateService } from "@/services/affiliate.service";
 import { AffiliatesList } from "./_components/affiliates-list";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAffiliatesPage() {
-  const affiliates = await AffiliateService.findAll();
+  let affiliates: Awaited<ReturnType<typeof AffiliateService.findAll>> = [];
+  let error: string | null = null;
+
+  try {
+    affiliates = await AffiliateService.findAll();
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Failed to load affiliates";
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
+        <p className="text-lg font-semibold">Failed to load affiliates</p>
+        <p className="mt-1 text-sm text-red-300">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -19,13 +36,14 @@ export default async function AdminAffiliatesPage() {
         </div>
         <Link
           href={`${AFFILIATES_ROUTE}/new`}
-          className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-amber-400"
+          className="inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-s8ul-cyan/80"
         >
           + New Affiliate
         </Link>
       </div>
-
-      <AffiliatesList affiliates={affiliates} />
+      <ErrorBoundary>
+        <AffiliatesList affiliates={affiliates} />
+      </ErrorBoundary>
     </div>
   );
 }

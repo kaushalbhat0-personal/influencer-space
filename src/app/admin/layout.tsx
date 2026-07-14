@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { MobileSidebarToggle } from "@/components/admin/MobileSidebarToggle";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const sidebarLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "📊" },
@@ -75,7 +76,7 @@ export default function AdminLayout({
                   onClick={closeSidebar}
                   className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-amber-500/20 text-amber-400"
+                      ? "bg-s8ul-cyan/20 text-s8ul-cyan"
                       : "text-gray-400 hover:bg-gray-700 hover:text-white"
                   }`}
                 >
@@ -98,7 +99,17 @@ export default function AdminLayout({
       </motion.aside>
 
       <div className="lg:pl-64">
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8">
+          <Suspense
+            fallback={
+              <div className="flex h-64 items-center justify-center">
+                <LoadingSpinner size="lg" />
+              </div>
+            }
+          >
+            {children}
+          </Suspense>
+        </main>
       </div>
     </div>
   );
