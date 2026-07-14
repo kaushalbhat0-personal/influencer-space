@@ -1,4 +1,4 @@
-import { supabaseClient } from "@/lib/supabase";
+import { supabaseClient, supabaseAdmin } from "@/lib/supabase";
 
 const BUCKET_NAME = "influencer-images";
 
@@ -7,16 +7,24 @@ export interface UploadResult {
   publicUrl: string;
 }
 
+function getClient() {
+  if (!supabaseAdmin) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for storage operations");
+  }
+  return supabaseAdmin;
+}
+
 export class StorageService {
   static async upload(file: File, folder: string, filename?: string): Promise<UploadResult> {
     console.log("☁️ StorageService.upload — file:", file.name, "size:", file.size, "folder:", folder);
+    const client = getClient();
     const ext = file.name.split(".").pop();
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(7);
     const name = filename || `${timestamp}-${random}`;
     const path = `${folder}/${name}.${ext}`;
 
-    const { data, error } = await supabaseClient.storage
+    const { data, error } = await client.storage
       .from(BUCKET_NAME)
       .upload(path, file, {
         cacheControl: "3600",
@@ -38,7 +46,8 @@ export class StorageService {
 
   static async delete(path: string): Promise<void> {
     console.log("☁️ StorageService.delete — path:", path);
-    const { error } = await supabaseClient.storage
+    const client = getClient();
+    const { error } = await client.storage
       .from(BUCKET_NAME)
       .remove([path]);
 
@@ -55,7 +64,8 @@ export class StorageService {
       return;
     }
     console.log("☁️ StorageService.deleteMultiple — paths:", paths);
-    const { error } = await supabaseClient.storage
+    const client = getClient();
+    const { error } = await client.storage
       .from(BUCKET_NAME)
       .remove(paths);
 
@@ -68,7 +78,8 @@ export class StorageService {
 
   static async deleteFolder(folder: string): Promise<void> {
     console.log("☁️ StorageService.deleteFolder — folder:", folder);
-    const { data, error } = await supabaseClient.storage
+    const client = getClient();
+    const { data, error } = await client.storage
       .from(BUCKET_NAME)
       .list(folder);
 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { StorageService } from "@/services/storage.service";
+import { uploadFile } from "@/actions/upload.actions";
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
@@ -48,12 +48,22 @@ export function ImageUpload({
     setError(null);
 
     try {
-      const result = await StorageService.upload(file, folder);
-      console.log("🖼️ ImageUpload upload success — calling onUpload with:", result.publicUrl);
-      setPreview(result.publicUrl);
-      onUpload(result.publicUrl);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", folder);
+      const result = await uploadFile(formData);
+      if (result.success) {
+        const url = result.publicUrl;
+        console.log("🖼️ ImageUpload upload success — calling onUpload with:", url);
+        setPreview(url);
+        onUpload(url);
+      } else {
+        const msg = result.error;
+        console.error("🖼️ ImageUpload upload failed:", msg);
+        setError(msg);
+      }
     } catch (err) {
-      console.error("🖼️ ImageUpload upload failed:", err);
+      console.error("🖼️ ImageUpload upload failed (exception):", err);
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
