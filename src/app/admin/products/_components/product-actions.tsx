@@ -11,37 +11,24 @@ export function ProductActions({ product }: { product: ProductData }) {
 
   async function handleToggle() {
     const result = await toggleProductActive(product.id);
-    if (result.success) {
-      router.refresh();
-    }
+    if (result.success) router.refresh();
   }
 
   async function handleDelete() {
     if (!confirm("Are you sure you want to delete this product?")) return;
     const result = await deleteProduct(product.id);
-    if (result.success) {
-      router.refresh();
-    }
+    if (result.success) router.refresh();
   }
 
   return (
     <div className="flex items-center justify-end gap-2">
-      <Link
-        href={`${PRODUCTS_ROUTE}/${product.id}/edit`}
-        className="rounded-md bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
-      >
+      <Link href={`${PRODUCTS_ROUTE}/${product.id}/edit`} className="admin-btn-outline px-3 py-1.5 text-xs">
         Edit
       </Link>
-      <button
-        onClick={handleToggle}
-        className="rounded-md bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
-      >
+      <button onClick={handleToggle} className="admin-btn-gold px-3 py-1.5 text-xs">
         {product.isActive ? "Deactivate" : "Activate"}
       </button>
-      <button
-        onClick={handleDelete}
-        className="rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100"
-      >
+      <button onClick={handleDelete} className="admin-btn-danger px-3 py-1.5 text-xs">
         Delete
       </button>
     </div>

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -28,16 +27,12 @@ export function TimelineForm({ mode, event }: Props) {
 
   async function handleImageDelete(url: string) {
     const path = StorageService.extractPathFromUrl(url);
-    if (path) {
-      await StorageService.delete(path);
-    }
+    if (path) await StorageService.delete(path);
     setImageUrl("");
   }
 
   async function handleSubmit(formData: FormData) {
-    if (imageUrl) {
-      formData.set("imageUrl", imageUrl);
-    }
+    if (imageUrl) formData.set("imageUrl", imageUrl);
     setPending(true);
     setState({ success: false });
     const result = await serverAction(state, formData);
@@ -53,9 +48,7 @@ export function TimelineForm({ mode, event }: Props) {
     <Card>
       <CardContent>
         <form ref={formRef} action={handleSubmit} className="space-y-6">
-          {mode === "edit" && event && (
-            <input type="hidden" name="id" value={event.id} />
-          )}
+          {mode === "edit" && event && <input type="hidden" name="id" value={event.id} />}
 
           <Input
             id="year"
@@ -101,15 +94,15 @@ export function TimelineForm({ mode, event }: Props) {
             label="Event Image (optional)"
           />
 
-          {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={pending}>
+          <div className="flex items-center gap-4 pt-2">
+            <button type="submit" disabled={pending} className="admin-btn-cyan">
               {pending ? "Saving..." : mode === "create" ? "Create Event" : "Save Changes"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.push(TIMELINE_ROUTE)}>
+            </button>
+            <button type="button" onClick={() => router.push(TIMELINE_ROUTE)} className="admin-btn-outline">
               Cancel
-            </Button>
+            </button>
           </div>
         </form>
       </CardContent>

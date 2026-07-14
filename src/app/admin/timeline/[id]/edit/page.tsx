@@ -17,8 +17,8 @@ export default async function EditTimelinePage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-white">Edit Timeline Event</h1>
-      <div className="max-w-lg">
+      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-gaming">Edit Timeline Event</h1>
+      <div className="max-w-2xl">
         <TimelineForm mode="edit" event={event} />
       </div>
     </div>

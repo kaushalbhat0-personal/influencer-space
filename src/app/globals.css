@@ -9,6 +9,72 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+@layer components {
+  .admin-card {
+    @apply rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-md;
+  }
+  .admin-card-hover {
+    @apply admin-card transition-all duration-300 hover:border-s8ul-cyan/30 hover:shadow-[0_0_30px_rgba(0,245,255,0.15)];
+  }
+  .admin-table {
+    @apply w-full;
+  }
+  .admin-table th {
+    @apply bg-white/5 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400;
+  }
+  .admin-table td {
+    @apply border-t border-white/5 px-4 py-4 text-sm;
+  }
+  .admin-table tbody tr {
+    @apply transition-colors duration-150;
+  }
+  .admin-table tbody tr:nth-child(even) {
+    @apply bg-white/[0.02];
+  }
+  .admin-table tbody tr:hover {
+    @apply bg-s8ul-cyan/5;
+  }
+  .admin-gradient {
+    @apply bg-gradient-to-br from-s8ul-cyan to-s8ul-purple;
+  }
+  .admin-gradient-text {
+    @apply bg-gradient-to-r from-s8ul-cyan to-s8ul-gold bg-clip-text text-transparent;
+  }
+  .admin-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .admin-badge-active {
+    @apply admin-badge bg-green-500/20 text-green-400;
+  }
+  .admin-badge-inactive {
+    @apply admin-badge bg-gray-500/20 text-gray-400;
+  }
+  .admin-badge-gold {
+    @apply admin-badge bg-amber-500/20 text-amber-400;
+  }
+  .admin-badge-cyan {
+    @apply admin-badge bg-s8ul-cyan/20 text-s8ul-cyan;
+  }
+  .admin-btn-cyan {
+    @apply inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black transition-all duration-200 hover:bg-s8ul-cyan/80 hover:shadow-[0_0_20px_rgba(0,245,255,0.3)] disabled:opacity-50;
+  }
+  .admin-btn-outline {
+    @apply inline-flex items-center justify-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:border-s8ul-cyan/50 hover:bg-white/5;
+  }
+  .admin-btn-danger {
+    @apply inline-flex items-center justify-center rounded-lg bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-400 transition-all duration-200 hover:bg-red-500/30 hover:shadow-[0_0_20px_rgba(255,0,64,0.2)] disabled:opacity-50;
+  }
+  .admin-btn-gold {
+    @apply inline-flex items-center justify-center rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-400 transition-all duration-200 hover:bg-amber-500/30 hover:shadow-[0_0_20px_rgba(255,215,0,0.2)] disabled:opacity-50;
+  }
+  .admin-input {
+    @apply block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 transition-all duration-200 focus:border-s8ul-cyan focus:outline-none focus:ring-2 focus:ring-s8ul-cyan/30;
+  }
+  .admin-select {
+    @apply admin-input appearance-none;
+  }
+}
+
 @layer utilities {
   .neon-cyan {
     text-shadow: 0 0 7px #00f5ff, 0 0 10px #00f5ff, 0 0 21px #00f5ff;

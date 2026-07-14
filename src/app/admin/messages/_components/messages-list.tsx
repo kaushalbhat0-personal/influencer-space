@@ -4,14 +4,6 @@ import { motion } from "framer-motion";
 import { MessageActions } from "./message-actions";
 import type { ContactData } from "@/services/contact.service";
 
-const tableVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
 const rowVariants = {
   hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0 },
@@ -32,55 +24,35 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Messages</h1>
-          <p className="text-sm text-gray-400">
-            Contact form submissions
-          </p>
+          <h1 className="admin-gradient-text text-2xl font-bold font-gaming">Messages</h1>
+          <p className="mt-1 text-sm text-gray-400">Contact form submissions</p>
         </div>
         {unreadCount > 0 && (
-          <span className="rounded-full bg-blue-500/20 px-3 py-1 text-xs font-medium text-blue-400">
-            {unreadCount} unread
-          </span>
+          <span className="admin-badge-cyan">{unreadCount} unread</span>
         )}
       </div>
 
       <motion.div
-        variants={tableVariants}
         initial="hidden"
         animate="show"
-        className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+        className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]"
       >
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                  Name
-                </th>
-                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                  Message
-                </th>
-                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">
-                  Status
-                </th>
-                <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 lg:table-cell sm:px-6 sm:py-3">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                  Actions
-                </th>
+                <th>Name</th>
+                <th className="hidden sm:table-cell">Email</th>
+                <th>Message</th>
+                <th className="hidden sm:table-cell">Status</th>
+                <th className="hidden lg:table-cell">Date</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody>
               {messages.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-12 text-center text-sm text-gray-500 sm:px-6"
-                  >
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
                     No messages yet.
                   </td>
                 </tr>
@@ -89,36 +61,27 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
                   <motion.tr
                     key={message.id}
                     variants={rowVariants}
-                    className={`hover:bg-gray-50 ${!message.isRead ? "bg-blue-50/50" : ""}`}
+                    className={`group ${!message.isRead ? "bg-s8ul-cyan/[0.02]" : ""}`}
                   >
-                    <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
-                      {message.name}
+                    <td className="font-medium text-white">{message.name}</td>
+                    <td className="hidden sm:table-cell">
+                      <span className="text-gray-400">{message.email}</span>
                     </td>
-                    <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-500 sm:table-cell sm:px-6">
-                      {message.email}
+                    <td>
+                      <span className="line-clamp-2 text-sm text-gray-400">{message.message}</span>
                     </td>
-                    <td className="max-w-xs truncate px-4 py-4 text-sm text-gray-500 sm:px-6">
-                      <span className="line-clamp-2">{message.message}</span>
-                    </td>
-                    <td className="hidden whitespace-nowrap px-4 py-4 text-sm sm:table-cell sm:px-6">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          message.isRead
-                            ? "bg-gray-100 text-gray-600"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
+                    <td className="hidden sm:table-cell">
+                      <span className={message.isRead ? "admin-badge-inactive" : "admin-badge-cyan"}>
                         {message.isRead ? "Read" : "Unread"}
                       </span>
                     </td>
-                    <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-500 lg:table-cell sm:px-6">
+                    <td className="hidden text-gray-400 lg:table-cell">
                       {formatDate(message.createdAt)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-right text-sm sm:px-6">
-                      <MessageActions
-                        messageId={message.id}
-                        isRead={message.isRead}
-                      />
+                    <td>
+                      <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                        <MessageActions messageId={message.id} isRead={message.isRead} />
+                      </div>
                     </td>
                   </motion.tr>
                 ))

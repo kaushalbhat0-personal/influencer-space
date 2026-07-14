@@ -7,14 +7,6 @@ import { PRODUCTS_ROUTE } from "@/lib/constants";
 import { ProductActions } from "./product-actions";
 import type { ProductData } from "@/services/product.service";
 
-const tableVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
 const rowVariants = {
   hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0 },
@@ -23,71 +15,55 @@ const rowVariants = {
 export function ProductsList({ products }: { products: ProductData[] }) {
   return (
     <motion.div
-      variants={tableVariants}
       initial="hidden"
       animate="show"
-      className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+      className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]"
     >
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                Price
-              </th>
-              <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">
-                Status
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                Actions
-              </th>
+              <th>Product</th>
+              <th className="hidden sm:table-cell">Price</th>
+              <th className="hidden sm:table-cell">Status</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody>
             {products.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-12 text-center text-sm text-gray-500 sm:px-6"
-                >
+                <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
                   No products yet.{" "}
-                  <Link
-                    href={`${PRODUCTS_ROUTE}/new`}
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
-                  >
+                  <Link href={`${PRODUCTS_ROUTE}/new`} className="font-semibold text-s8ul-cyan hover:underline">
                     Add your first product
                   </Link>
                 </td>
               </tr>
             ) : (
               products.map((product) => (
-                <motion.tr
-                  key={product.id}
-                  variants={rowVariants}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
-                    {product.name}
+                <motion.tr key={product.id} variants={rowVariants} className="group">
+                  <td>
+                    <div className="flex items-center gap-3">
+                      {product.imageUrl && (
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-white/10">
+                          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+                        </div>
+                      )}
+                      <span className="font-medium text-white">{product.name}</span>
+                    </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-700 sm:px-6">
-                    {formatCurrency(product.price)}
+                  <td className="hidden sm:table-cell">
+                    <span className="font-mono text-gray-300">{formatCurrency(product.price)}</span>
                   </td>
-                  <td className="hidden whitespace-nowrap px-4 py-4 text-sm sm:table-cell sm:px-6">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        product.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
+                  <td className="hidden sm:table-cell">
+                    <span className={product.isActive ? "admin-badge-active" : "admin-badge-inactive"}>
                       {product.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-right text-sm sm:px-6">
-                    <ProductActions product={product} />
+                  <td>
+                    <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                      <ProductActions product={product} />
+                    </div>
                   </td>
                 </motion.tr>
               ))

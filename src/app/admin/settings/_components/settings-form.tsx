@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -34,9 +33,7 @@ export function SettingsForm({
 
   async function handleImageDelete(url: string) {
     const path = StorageService.extractPathFromUrl(url);
-    if (path) {
-      await StorageService.delete(path);
-    }
+    if (path) await StorageService.delete(path);
   }
 
   async function handleProfileSubmit(formData: FormData) {
@@ -46,10 +43,7 @@ export function SettingsForm({
     const result = await updateInfluencerData(profileState, formData);
     setProfileState(result);
     setProfilePending(false);
-
-    if (result.success) {
-      router.refresh();
-    }
+    if (result.success) router.refresh();
   }
 
   async function handleHeroSubmit(formData: FormData) {
@@ -60,10 +54,7 @@ export function SettingsForm({
     const result = await updateHeroData(heroState, formData);
     setHeroState(result);
     setHeroPending(false);
-
-    if (result.success) {
-      router.refresh();
-    }
+    if (result.success) router.refresh();
   }
 
   return (
@@ -72,9 +63,7 @@ export function SettingsForm({
         <CardContent>
           <form ref={profileFormRef} action={handleProfileSubmit} className="space-y-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Personal Information
-              </h3>
+              <h3 className="text-lg font-semibold text-white">Personal Information</h3>
               <Input
                 id="name"
                 name="name"
@@ -100,7 +89,6 @@ export function SettingsForm({
                 rows={5}
                 required
               />
-
               <ImageUpload
                 onUpload={setProfileImage}
                 onDelete={handleImageDelete}
@@ -111,29 +99,24 @@ export function SettingsForm({
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Niche
-              </h3>
+              <h3 className="text-lg font-semibold text-white">Niche</h3>
               <div>
-                <label
-                  htmlFor="niche"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label htmlFor="niche" className="block text-sm font-medium text-gray-300 mb-1.5">
                   Background Theme
                 </label>
                 <select
                   id="niche"
                   name="niche"
                   defaultValue={config.niche || "gaming"}
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-s8ul-cyan focus:outline-none focus:ring-1 focus:ring-s8ul-cyan"
+                  className="admin-select"
                 >
-                  <option value="gaming">Gaming</option>
-                  <option value="fitness">Fitness</option>
-                  <option value="fashion">Fashion</option>
-                  <option value="travel">Travel</option>
-                  <option value="tech">Tech</option>
-                  <option value="food">Food</option>
-                  <option value="lifestyle">Lifestyle</option>
+                  <option value="gaming" className="bg-gray-900 text-white">Gaming</option>
+                  <option value="fitness" className="bg-gray-900 text-white">Fitness</option>
+                  <option value="fashion" className="bg-gray-900 text-white">Fashion</option>
+                  <option value="travel" className="bg-gray-900 text-white">Travel</option>
+                  <option value="tech" className="bg-gray-900 text-white">Tech</option>
+                  <option value="food" className="bg-gray-900 text-white">Food</option>
+                  <option value="lifestyle" className="bg-gray-900 text-white">Lifestyle</option>
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
                   Controls the floating background icons on the public site.
@@ -142,9 +125,7 @@ export function SettingsForm({
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Social Media Links
-              </h3>
+              <h3 className="text-lg font-semibold text-white">Social Media Links</h3>
               <p className="text-sm text-gray-500">
                 Leave empty to hide the icon from the public site.
               </p>
@@ -179,25 +160,21 @@ export function SettingsForm({
             </div>
 
             {profileState.success && (
-              <div className="rounded-lg bg-green-100 p-3 text-sm text-green-700">
+              <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                 Profile updated successfully!
               </div>
             )}
             {profileState.error && (
-              <p className="text-sm text-red-600">{profileState.error}</p>
+              <p className="text-sm text-red-400">{profileState.error}</p>
             )}
 
-            <div className="flex items-center gap-4">
-              <Button type="submit" disabled={profilePending}>
+            <div className="flex items-center gap-4 pt-2">
+              <button type="submit" disabled={profilePending} className="admin-btn-cyan">
                 {profilePending ? "Saving..." : "Save Profile"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/admin/dashboard")}
-              >
+              </button>
+              <button type="button" onClick={() => router.push("/admin/dashboard")} className="admin-btn-outline">
                 Back to Dashboard
-              </Button>
+              </button>
             </div>
           </form>
         </CardContent>
@@ -207,9 +184,7 @@ export function SettingsForm({
         <CardContent>
           <form ref={heroFormRef} action={handleHeroSubmit} className="space-y-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Hero Section
-              </h3>
+              <h3 className="text-lg font-semibold text-white">Hero Section</h3>
               <p className="text-sm text-gray-500">
                 Control the hero video, title, subtitle, and call-to-action buttons on the landing page.
               </p>
@@ -254,9 +229,7 @@ export function SettingsForm({
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-gray-900">
-                Call-to-Action Buttons
-              </h4>
+              <h4 className="text-sm font-semibold text-white">Call-to-Action Buttons</h4>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input
                   id="ctaText"
@@ -290,9 +263,7 @@ export function SettingsForm({
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-gray-900">
-                Live Badge
-              </h4>
+              <h4 className="text-sm font-semibold text-white">Live Badge</h4>
               <Input
                 id="liveBadgeText"
                 name="liveBadgeText"
@@ -305,24 +276,26 @@ export function SettingsForm({
                   type="checkbox"
                   name="showLiveBadge"
                   defaultChecked={heroData.showLiveBadge}
-                  className="h-4 w-4 rounded border-gray-300 text-s8ul-cyan focus:ring-s8ul-cyan"
+                  className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
                 />
-                <span className="text-sm text-gray-700">Show Live Badge</span>
+                <span className="text-sm text-gray-300">Show Live Badge</span>
               </label>
             </div>
 
             {heroState.success && (
-              <div className="rounded-lg bg-green-100 p-3 text-sm text-green-700">
+              <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                 Hero settings updated successfully!
               </div>
             )}
             {heroState.error && (
-              <p className="text-sm text-red-600">{heroState.error}</p>
+              <p className="text-sm text-red-400">{heroState.error}</p>
             )}
 
-            <Button type="submit" disabled={heroPending}>
-              {heroPending ? "Saving..." : "Save Hero Settings"}
-            </Button>
+            <div className="pt-2">
+              <button type="submit" disabled={heroPending} className="admin-btn-cyan">
+                {heroPending ? "Saving..." : "Save Hero Settings"}
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>

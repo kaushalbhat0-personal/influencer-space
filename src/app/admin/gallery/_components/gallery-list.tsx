@@ -7,17 +7,16 @@ import { GALLERY_ROUTE } from "@/lib/constants";
 import { deleteGalleryImage } from "@/actions/gallery.actions";
 import type { GalleryImageData } from "@/services/gallery.service";
 
-const tableVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
 const rowVariants = {
   hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0 },
+};
+
+const categoryStyles: Record<string, string> = {
+  bgmi: "admin-badge-cyan",
+  tournament: "admin-badge-gold",
+  s8ul: "text-transparent bg-clip-text bg-gradient-to-r from-s8ul-pink to-s8ul-purple bg-s8ul-pink/10 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+  "behind-scenes": "admin-badge bg-white/10 text-gray-300",
 };
 
 export function GalleryList({ images }: { images: GalleryImageData[] }) {
@@ -31,51 +30,58 @@ export function GalleryList({ images }: { images: GalleryImageData[] }) {
 
   return (
     <motion.div
-      variants={tableVariants}
       initial="hidden"
       animate="show"
-      className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+      className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]"
     >
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">Image</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">Title</th>
-              <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">Category</th>
-              <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">Status</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">Actions</th>
+              <th>Image</th>
+              <th>Title</th>
+              <th className="hidden sm:table-cell">Category</th>
+              <th className="hidden sm:table-cell">Status</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody>
             {images.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500 sm:px-6">
+                <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
                   No gallery images yet.{" "}
-                  <Link href={`${GALLERY_ROUTE}/new`} className="font-semibold text-indigo-600 hover:text-indigo-500">
+                  <Link href={`${GALLERY_ROUTE}/new`} className="font-semibold text-s8ul-cyan hover:underline">
                     Add your first image
                   </Link>
                 </td>
               </tr>
             ) : (
               images.map((image) => (
-                <motion.tr key={image.id} variants={rowVariants} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-4 py-4 sm:px-6">
-                    <img src={image.imageUrl} alt={image.title} className="h-12 w-12 rounded-lg object-cover" />
+                <motion.tr key={image.id} variants={rowVariants} className="group">
+                  <td>
+                    <div className="h-12 w-12 overflow-hidden rounded-lg border border-white/10">
+                      <img src={image.imageUrl} alt={image.title} className="h-full w-full object-cover" />
+                    </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">{image.title}</td>
-                  <td className="hidden whitespace-nowrap px-4 py-4 text-sm text-gray-700 sm:table-cell sm:px-6">
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">{image.category}</span>
+                  <td className="font-medium text-white">{image.title}</td>
+                  <td className="hidden sm:table-cell">
+                    <span className={categoryStyles[image.category] || "admin-badge bg-white/10 text-gray-300"}>
+                      {image.category}
+                    </span>
                   </td>
-                  <td className="hidden whitespace-nowrap px-4 py-4 text-sm sm:table-cell sm:px-6">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${image.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                  <td className="hidden sm:table-cell">
+                    <span className={image.isActive ? "admin-badge-active" : "admin-badge-inactive"}>
                       {image.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-right text-sm sm:px-6">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link href={`${GALLERY_ROUTE}/${image.id}/edit`} className="rounded-md bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100">Edit</Link>
-                      <button onClick={() => handleDelete(image.id)} className="rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">Delete</button>
+                  <td>
+                    <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <Link href={`${GALLERY_ROUTE}/${image.id}/edit`} className="admin-btn-outline px-3 py-1.5 text-xs">
+                        Edit
+                      </Link>
+                      <button onClick={() => handleDelete(image.id)} className="admin-btn-danger px-3 py-1.5 text-xs">
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </motion.tr>

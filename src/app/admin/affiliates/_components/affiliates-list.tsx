@@ -6,115 +6,74 @@ import { AFFILIATES_ROUTE } from "@/lib/constants";
 import { AffiliateActions } from "./affiliate-actions";
 import type { AffiliateData } from "@/services/affiliate.service";
 
-const tableVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
 const rowVariants = {
   hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0 },
 };
 
-export function AffiliatesList({
-  affiliates,
-}: {
-  affiliates: AffiliateData[];
-}) {
+export function AffiliatesList({ affiliates }: { affiliates: AffiliateData[] }) {
   return (
     <motion.div
-      variants={tableVariants}
       initial="hidden"
       animate="show"
-      className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+      className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]"
     >
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                Title
-              </th>
-              <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">
-                URL
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                Clicks
-              </th>
-              <th className="hidden px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6 sm:py-3">
-                Status
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 sm:py-3">
-                Actions
-              </th>
+              <th>Title</th>
+              <th className="hidden sm:table-cell">URL</th>
+              <th>Clicks</th>
+              <th className="hidden sm:table-cell">Status</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody>
             {affiliates.length === 0 ? (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-12 text-center text-sm text-gray-500 sm:px-6"
-                >
+                <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
                   No affiliate links yet.{" "}
-                  <Link
-                    href={`${AFFILIATES_ROUTE}/new`}
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
-                  >
+                  <Link href={`${AFFILIATES_ROUTE}/new`} className="font-semibold text-s8ul-cyan hover:underline">
                     Add your first affiliate link
                   </Link>
                 </td>
               </tr>
             ) : (
               affiliates.map((affiliate) => (
-                <motion.tr
-                  key={affiliate.id}
-                  variants={rowVariants}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 sm:px-6">
+                <motion.tr key={affiliate.id} variants={rowVariants} className="group">
+                  <td>
                     <div className="flex items-center gap-3">
                       {affiliate.imageUrl && (
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
-                          <img
-                            src={affiliate.imageUrl}
-                            alt={affiliate.title}
-                            className="h-full w-full object-cover"
-                          />
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-white/10">
+                          <img src={affiliate.imageUrl} alt={affiliate.title} className="h-full w-full object-cover" />
                         </div>
                       )}
-                      <span>{affiliate.title}</span>
+                      <span className="font-medium text-white">{affiliate.title}</span>
                     </div>
                   </td>
-                  <td className="hidden max-w-xs truncate px-4 py-4 text-sm text-gray-500 sm:table-cell sm:px-6">
+                  <td className="hidden max-w-[200px] truncate sm:table-cell">
                     <a
                       href={affiliate.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-500 hover:underline"
+                      className="text-s8ul-cyan/70 hover:text-s8ul-cyan hover:underline"
                     >
                       {affiliate.url}
                     </a>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-900 sm:px-6">
-                    {affiliate.clicks}
+                  <td>
+                    <span className="admin-badge-cyan">{affiliate.clicks}</span>
                   </td>
-                  <td className="hidden whitespace-nowrap px-4 py-4 text-sm sm:table-cell sm:px-6">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        affiliate.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
+                  <td className="hidden sm:table-cell">
+                    <span className={affiliate.isActive ? "admin-badge-active" : "admin-badge-inactive"}>
                       {affiliate.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-right text-sm sm:px-6">
-                    <AffiliateActions affiliate={affiliate} />
+                  <td>
+                    <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                      <AffiliateActions affiliate={affiliate} />
+                    </div>
                   </td>
                 </motion.tr>
               ))

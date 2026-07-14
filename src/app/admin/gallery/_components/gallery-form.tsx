@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -36,9 +35,7 @@ export function GalleryForm({ mode, image }: Props) {
 
   async function handleImageDelete(url: string) {
     const path = StorageService.extractPathFromUrl(url);
-    if (path) {
-      await StorageService.delete(path);
-    }
+    if (path) await StorageService.delete(path);
     setImageUrl("");
   }
 
@@ -60,9 +57,7 @@ export function GalleryForm({ mode, image }: Props) {
     <Card>
       <CardContent>
         <form ref={formRef} action={handleSubmit} className="space-y-6">
-          {mode === "edit" && image && (
-            <input type="hidden" name="id" value={image.id} />
-          )}
+          {mode === "edit" && image && <input type="hidden" name="id" value={image.id} />}
 
           <Input
             id="title"
@@ -83,7 +78,7 @@ export function GalleryForm({ mode, image }: Props) {
           />
 
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1.5">
               Category
             </label>
             <select
@@ -91,14 +86,14 @@ export function GalleryForm({ mode, image }: Props) {
               name="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-s8ul-cyan focus:outline-none focus:ring-1 focus:ring-s8ul-cyan"
+              className="admin-select"
             >
               {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                <option key={cat.value} value={cat.value} className="bg-gray-900 text-white">{cat.label}</option>
               ))}
             </select>
             {state.fieldErrors?.category?.[0] && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.category[0]}</p>
+              <p className="mt-1 text-sm text-red-400">{state.fieldErrors.category[0]}</p>
             )}
           </div>
 
@@ -110,15 +105,15 @@ export function GalleryForm({ mode, image }: Props) {
             label="Gallery Image"
           />
 
-          {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={pending}>
+          <div className="flex items-center gap-4 pt-2">
+            <button type="submit" disabled={pending} className="admin-btn-cyan">
               {pending ? "Saving..." : mode === "create" ? "Create Image" : "Save Changes"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.push(GALLERY_ROUTE)}>
+            </button>
+            <button type="button" onClick={() => router.push(GALLERY_ROUTE)} className="admin-btn-outline">
               Cancel
-            </Button>
+            </button>
           </div>
         </form>
       </CardContent>

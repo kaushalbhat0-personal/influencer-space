@@ -3,8 +3,8 @@ import { GalleryForm } from "../_components/gallery-form";
 export default function NewGalleryPage() {
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-white">Add New Gallery Image</h1>
-      <div className="max-w-lg">
+      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-gaming">Add New Gallery Image</h1>
+      <div className="max-w-2xl">
         <GalleryForm mode="create" />
       </div>
     </div>

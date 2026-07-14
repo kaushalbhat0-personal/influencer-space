@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -39,9 +38,7 @@ export function GameForm({ mode, game }: Props) {
     <Card>
       <CardContent>
         <form ref={formRef} action={handleSubmit} className="space-y-6">
-          {mode === "edit" && game && (
-            <input type="hidden" name="id" value={game.id} />
-          )}
+          {mode === "edit" && game && <input type="hidden" name="id" value={game.id} />}
 
           <Input
             id="name"
@@ -77,15 +74,15 @@ export function GameForm({ mode, game }: Props) {
             placeholder="e.g. 🏆 or https://..."
           />
 
-          {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={pending}>
+          <div className="flex items-center gap-4 pt-2">
+            <button type="submit" disabled={pending} className="admin-btn-cyan">
               {pending ? "Saving..." : mode === "create" ? "Create Game" : "Save Changes"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.push(GAMES_ROUTE)}>
+            </button>
+            <button type="button" onClick={() => router.push(GAMES_ROUTE)} className="admin-btn-outline">
               Cancel
-            </Button>
+            </button>
           </div>
         </form>
       </CardContent>

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
@@ -27,22 +26,17 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
 
   async function handleImageDelete(url: string) {
     const path = StorageService.extractPathFromUrl(url);
-    if (path) {
-      await StorageService.delete(path);
-    }
+    if (path) await StorageService.delete(path);
     setImageUrl("");
   }
 
   async function handleSubmit(formData: FormData) {
-    if (imageUrl) {
-      formData.set("imageUrl", imageUrl);
-    }
+    if (imageUrl) formData.set("imageUrl", imageUrl);
     setPending(true);
     setState({ success: false });
     const result = await serverAction(state, formData);
     setState(result);
     setPending(false);
-
     if (result.success) {
       router.push(AFFILIATES_ROUTE);
       router.refresh();
@@ -53,9 +47,7 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
     <Card>
       <CardContent>
         <form ref={formRef} action={handleSubmit} className="space-y-6">
-          {mode === "edit" && affiliate && (
-            <input type="hidden" name="id" value={affiliate.id} />
-          )}
+          {mode === "edit" && affiliate && <input type="hidden" name="id" value={affiliate.id} />}
 
           <Input
             id="title"
@@ -92,32 +84,22 @@ export function AffiliateForm({ mode, affiliate }: AffiliateFormProps) {
               id="isActive"
               name="isActive"
               defaultChecked={affiliate?.isActive ?? true}
-              className="h-4 w-4 rounded border-gray-300 text-s8ul-cyan focus:ring-s8ul-cyan"
+              className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
             />
-            <label htmlFor="isActive" className="text-sm text-gray-700">
+            <label htmlFor="isActive" className="text-sm text-gray-300">
               Active (visible on public site)
             </label>
           </div>
 
-          {state.error && (
-            <p className="text-sm text-red-600">{state.error}</p>
-          )}
+          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={pending}>
-              {pending
-                ? "Saving..."
-                : mode === "create"
-                  ? "Create Affiliate"
-                  : "Save Changes"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push(AFFILIATES_ROUTE)}
-            >
+          <div className="flex items-center gap-4 pt-2">
+            <button type="submit" disabled={pending} className="admin-btn-cyan">
+              {pending ? "Saving..." : mode === "create" ? "Create Affiliate" : "Save Changes"}
+            </button>
+            <button type="button" onClick={() => router.push(AFFILIATES_ROUTE)} className="admin-btn-outline">
               Cancel
-            </Button>
+            </button>
           </div>
         </form>
       </CardContent>

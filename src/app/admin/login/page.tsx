@@ -3,8 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Button } from "@/components/ui/Button";
+import { motion } from "framer-motion";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,15 +16,8 @@ function LoginForm() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
+    const result = await signIn("credentials", { email, password, redirect: false });
     setLoading(false);
-
     if (result?.error) {
       router.push("/admin/login?error=CredentialsSignin");
     } else {
@@ -34,25 +26,49 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-950 px-4">
-      <div className="w-full max-w-md">
-        <GlassCard withGoldBorder className="p-6 sm:p-8">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-gradient-to-br from-[#0a0a0a] via-s8ul-purple/40 to-[#0a0a0a] px-4">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,245,255,0.15),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(255,215,0,0.08),transparent_70%)]" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative w-full max-w-md"
+      >
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] sm:p-10">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">Admin Login</h1>
-            <p className="mt-2 text-sm text-white/50">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="admin-gradient-text text-3xl font-bold font-gaming sm:text-4xl"
+            >
+              Admin Login
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35, duration: 0.5 }}
+              className="mt-2 text-sm text-gray-400"
+            >
               Sign in to manage your CreatorBrand
-            </p>
+            </motion.p>
           </div>
 
           {error === "CredentialsSignin" && (
-            <div className="mt-4 rounded-lg bg-red-500/20 p-3 text-sm text-red-400">
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+            >
               Invalid email or password. Please try again.
-            </div>
+            </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white/70">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                 Email
               </label>
               <input
@@ -61,13 +77,12 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:border-s8ul-cyan focus:outline-none focus:ring-2 focus:ring-s8ul-cyan/50"
+                className="admin-input mt-1.5"
                 placeholder="admin@snaxgaming.com"
               />
             </div>
-
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white/70">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 Password
               </label>
               <input
@@ -76,21 +91,30 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:border-s8ul-cyan focus:outline-none focus:ring-2 focus:ring-s8ul-cyan/50"
+                className="admin-input mt-1.5"
                 placeholder="••••••••"
               />
             </div>
-
-            <Button
+            <motion.button
               type="submit"
               disabled={loading}
-              className="w-full bg-s8ul-cyan/20 text-s8ul-cyan hover:bg-s8ul-cyan/30"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className="admin-btn-cyan w-full py-3 text-base"
             >
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : "Sign in"}
+            </motion.button>
           </form>
-        </GlassCard>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
