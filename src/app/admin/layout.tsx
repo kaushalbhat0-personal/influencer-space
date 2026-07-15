@@ -15,6 +15,7 @@ const sidebarLinks = [
   { href: "/admin/products", label: "Products", icon: "📦" },
   { href: "/admin/affiliates", label: "Affiliates", icon: "🔗" },
   { href: "/admin/messages", label: "Messages", icon: "✉️" },
+  { href: "/admin/billing", label: "Billing", icon: "💳" },
   { href: "/admin/settings", label: "Settings", icon: "⚙️" },
 ];
 
