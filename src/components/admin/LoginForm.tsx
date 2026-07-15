@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
@@ -24,8 +24,15 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
       redirect: false,
     });
     setLoading(false);
+
     if (result?.error) {
       router.push("/admin/login?error=CredentialsSignin");
+      return;
+    }
+
+    const session = await getSession();
+    if (session?.user?.role === "SUPER_ADMIN") {
+      router.push("/super-admin");
     } else {
       router.push("/admin/dashboard");
     }
