@@ -23,7 +23,7 @@ export function GalleryList({ images }: { images: GalleryImageData[] }) {
   const router = useRouter();
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this image?")) return;
+    if (!confirm("Delete this item?")) return;
     const result = await deleteGalleryImage(id);
     if (result.success) router.refresh();
   }
@@ -38,8 +38,9 @@ export function GalleryList({ images }: { images: GalleryImageData[] }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Image</th>
+              <th>Media</th>
               <th>Title</th>
+              <th className="hidden sm:table-cell">Type</th>
               <th className="hidden sm:table-cell">Category</th>
               <th className="hidden sm:table-cell">Status</th>
               <th className="text-right">Actions</th>
@@ -48,10 +49,10 @@ export function GalleryList({ images }: { images: GalleryImageData[] }) {
           <tbody>
             {images.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
-                  No gallery images yet.{" "}
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
+                  No gallery items yet.{" "}
                   <Link href={`${GALLERY_ROUTE}/new`} className="font-semibold text-s8ul-cyan hover:underline">
-                    Add your first image
+                    Add your first item
                   </Link>
                 </td>
               </tr>
@@ -59,11 +60,23 @@ export function GalleryList({ images }: { images: GalleryImageData[] }) {
               images.map((image) => (
                 <motion.tr key={image.id} variants={rowVariants} className="group">
                   <td>
-                    <div className="h-12 w-12 overflow-hidden rounded-lg border border-white/10">
+                    <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-white/10">
                       <img src={image.imageUrl} alt={image.title} className="h-full w-full object-cover" />
+                      {image.mediaType === "video" && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="font-medium text-white">{image.title}</td>
+                  <td className="hidden sm:table-cell">
+                    <span className={image.mediaType === "video" ? "admin-badge-purple" : "admin-badge-cyan"}>
+                      {image.mediaType === "video" ? "Video" : "Image"}
+                    </span>
+                  </td>
                   <td className="hidden sm:table-cell">
                     <span className={categoryStyles[image.category] || "admin-badge bg-white/10 text-gray-300"}>
                       {image.category}

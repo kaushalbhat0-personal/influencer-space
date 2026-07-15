@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   magicProvisionFromYoutube,
   attachCustomDomain,
+  deleteTenant,
   type ProvisionResult,
 } from "@/actions/super-admin.actions";
 import { motion } from "framer-motion";
@@ -25,6 +26,17 @@ export function SuperAdminDashboard({ tenants }: { tenants: TenantRow[] }) {
   const [provisionResult, setProvisionResult] = useState<ProvisionResult | null>(null);
   const [domainInputs, setDomainInputs] = useState<Record<string, string>>({});
   const [domainLoading, setDomainLoading] = useState<Record<string, boolean>>({});
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function handleDelete(tenantId: string, name: string) {
+    if (!window.confirm(`Delete "${name}"? This removes their site, users, products, and settings.`)) return;
+    setDeleting(tenantId);
+    const result = await deleteTenant(tenantId);
+    setDeleting(null);
+    if (result.success) {
+      router.refresh();
+    }
+  }
 
   async function handleProvision() {
     if (!youtubeUrl.trim()) return;
@@ -143,6 +155,7 @@ export function SuperAdminDashboard({ tenants }: { tenants: TenantRow[] }) {
                   <th>Subdomain</th>
                   <th>Custom Domain</th>
                   <th>Users</th>
+                  <th>Products</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -168,6 +181,7 @@ export function SuperAdminDashboard({ tenants }: { tenants: TenantRow[] }) {
                       )}
                     </td>
                     <td>{t._count.users}</td>
+                    <td>{t._count.products}</td>
                     <td>
                       <div className="flex items-center gap-2">
                         <a
@@ -178,6 +192,13 @@ export function SuperAdminDashboard({ tenants }: { tenants: TenantRow[] }) {
                         >
                           Preview
                         </a>
+                        <button
+                          onClick={() => handleDelete(t.id, t.name)}
+                          disabled={deleting === t.id}
+                          className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40"
+                        >
+                          {deleting === t.id ? "..." : "Delete"}
+                        </button>
                       </div>
                     </td>
                   </tr>

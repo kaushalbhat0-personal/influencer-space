@@ -17,7 +17,7 @@ export default async function EditGalleryPage({ params }: { params: { id: string
 
   return (
     <div>
-      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-gaming">Edit Gallery Image</h1>
+      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-gaming">Edit Hall of Fame Item</h1>
       <div className="max-w-2xl">
         <GalleryForm mode="edit" image={image} />
       </div>

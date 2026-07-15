@@ -65,6 +65,11 @@ const socialChannelSchema = z.object({
   twitchChannelId: z.string().optional().default(""),
 });
 
+const apiKeysSchema = z.object({
+  youtubeApiKey: z.string().optional().default(""),
+  instagramApiKey: z.string().optional().default(""),
+});
+
 export type SettingsActionState = {
   success: boolean;
   error?: string;
@@ -251,6 +256,35 @@ export async function updateSocialChannels(
   } catch (error) {
     console.error("updateSocialChannels error:", error);
     return { success: false, error: "Failed to update social channels" };
+  }
+}
+
+export async function updateApiKeys(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const rawData = {
+    youtubeApiKey: (formData.get("youtubeApiKey") as string) || "",
+    instagramApiKey: (formData.get("instagramApiKey") as string) || "",
+  };
+
+  const parsed = apiKeysSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const tenantId = await requireTenant();
+    await SettingsService.updateTenantApiKeys(tenantId, parsed.data);
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("updateApiKeys error:", error);
+    return { success: false, error: "Failed to update API keys" };
   }
 }
 

@@ -279,3 +279,43 @@ export async function attachCustomDomain(
     };
   }
 }
+
+export type DeleteTenantResult = {
+  success: boolean;
+  error?: string;
+};
+
+export async function deleteTenant(tenantId: string): Promise<DeleteTenantResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { customDomain: true },
+    });
+
+    if (!tenant) {
+      return { success: false, error: "Tenant not found." };
+    }
+
+    if (tenant.customDomain) {
+      try {
+        await VercelService.removeDomain(tenant.customDomain);
+      } catch {
+        console.warn("Vercel domain removal failed — proceeding with tenant delete.");
+      }
+    }
+
+    await prisma.tenant.delete({ where: { id: tenantId } });
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete tenant",
+    };
+  }
+}

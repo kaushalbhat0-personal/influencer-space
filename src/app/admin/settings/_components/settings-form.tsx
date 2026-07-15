@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { VideoUpload } from "@/components/ui/VideoUpload";
 import { StorageService } from "@/services/storage.service";
-import { updateInfluencerData, updateHeroData } from "@/actions/settings.actions";
+import { updateInfluencerData, updateHeroData, updateApiKeys } from "@/actions/settings.actions";
 import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.actions";
@@ -17,21 +17,30 @@ export function SettingsForm({
   config,
   heroData,
   role,
+  youtubeApiKey: initialYoutubeKey,
+  instagramApiKey: initialInstagramKey,
 }: {
   config: InfluencerDataType;
   heroData: HeroDataType;
   role: "SUPER_ADMIN" | "ADMIN";
+  youtubeApiKey: string;
+  instagramApiKey: string;
 }) {
   const router = useRouter();
   const profileFormRef = useRef<HTMLFormElement>(null);
   const heroFormRef = useRef<HTMLFormElement>(null);
+  const apiKeysFormRef = useRef<HTMLFormElement>(null);
   const [profileState, setProfileState] = useState<SettingsActionState>({ success: false });
   const [heroState, setHeroState] = useState<SettingsActionState>({ success: false });
+  const [apiKeysState, setApiKeysState] = useState<SettingsActionState>({ success: false });
   const [profilePending, setProfilePending] = useState(false);
   const [heroPending, setHeroPending] = useState(false);
+  const [apiKeysPending, setApiKeysPending] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(config.profileImage || "");
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
+  const [youtubeApiKey, setYoutubeApiKey] = useState(initialYoutubeKey);
+  const [instagramApiKey, setInstagramApiKey] = useState(initialInstagramKey);
 
   async function handleImageDelete(url: string) {
     const path = StorageService.extractPathFromUrl(url);
@@ -56,6 +65,17 @@ export function SettingsForm({
     const result = await updateHeroData(heroState, formData);
     setHeroState(result);
     setHeroPending(false);
+    if (result.success) router.refresh();
+  }
+
+  async function handleApiKeysSubmit(formData: FormData) {
+    formData.set("youtubeApiKey", youtubeApiKey);
+    formData.set("instagramApiKey", instagramApiKey);
+    setApiKeysPending(true);
+    setApiKeysState({ success: false });
+    const result = await updateApiKeys(apiKeysState, formData);
+    setApiKeysState(result);
+    setApiKeysPending(false);
     if (result.success) router.refresh();
   }
 
@@ -298,6 +318,57 @@ export function SettingsForm({
             <div className="pt-2">
               <button type="submit" disabled={heroPending} className="admin-btn-cyan">
                 {heroPending ? "Saving..." : "Save Hero Settings"}
+              </button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <form ref={apiKeysFormRef} action={handleApiKeysSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Developer / API Integrations</h3>
+              <p className="text-sm text-gray-400">
+                Provide your own API keys to automatically display your latest videos and posts on your live website.
+                These are stored securely and never exposed to the client.
+              </p>
+
+              <Input
+                id="youtubeApiKey"
+                name="youtubeApiKey"
+                label="YouTube Data API Key"
+                type="password"
+                value={youtubeApiKey}
+                onChange={(e) => setYoutubeApiKey(e.target.value)}
+                placeholder="AIzaSyA-..."
+                autoComplete="off"
+              />
+
+              <Input
+                id="instagramApiKey"
+                name="instagramApiKey"
+                label="Instagram Graph API Token"
+                type="password"
+                value={instagramApiKey}
+                onChange={(e) => setInstagramApiKey(e.target.value)}
+                placeholder="EAAloQ..."
+                autoComplete="off"
+              />
+            </div>
+
+            {apiKeysState.success && (
+              <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                API keys saved successfully!
+              </div>
+            )}
+            {apiKeysState.error && (
+              <p className="text-sm text-red-400">{apiKeysState.error}</p>
+            )}
+
+            <div className="pt-2">
+              <button type="submit" disabled={apiKeysPending} className="admin-btn-cyan">
+                {apiKeysPending ? "Saving..." : "Save API Keys"}
               </button>
             </div>
           </form>

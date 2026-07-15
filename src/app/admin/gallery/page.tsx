@@ -42,16 +42,16 @@ export default async function AdminGalleryPage() {
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Gallery</h1>
+          <h1 className="text-2xl font-bold text-white">Hall of Fame</h1>
           <p className="text-sm text-gray-400">
-            Manage Hall of Fame images and categories
+            Manage images and videos celebrating your greatest moments
           </p>
         </div>
         <Link
           href={`${GALLERY_ROUTE}/new`}
           className="inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-s8ul-cyan/80"
         >
-          + New Image
+          + New Item
         </Link>
       </div>
       <ErrorBoundary>

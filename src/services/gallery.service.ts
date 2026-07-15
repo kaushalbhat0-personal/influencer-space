@@ -5,6 +5,8 @@ export type GalleryImageData = {
   title: string;
   description: string | null;
   imageUrl: string;
+  mediaType: string;
+  videoUrl: string | null;
   category: string;
   order: number;
   isActive: boolean;
@@ -54,6 +56,8 @@ export const GalleryService = {
       title: string;
       description?: string;
       imageUrl: string;
+      mediaType?: string;
+      videoUrl?: string;
       category: string;
       order?: number;
     },
@@ -83,6 +87,8 @@ export const GalleryService = {
       title?: string;
       description?: string;
       imageUrl?: string;
+      mediaType?: string;
+      videoUrl?: string;
       category?: string;
       order?: number;
       isActive?: boolean;

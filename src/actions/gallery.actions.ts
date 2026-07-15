@@ -10,7 +10,9 @@ import { getTenantContext } from "@/lib/tenant";
 const gallerySchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(500).optional().default(""),
-  imageUrl: z.string().min(1, "Image URL is required"),
+  imageUrl: z.string().optional().or(z.literal("")),
+  mediaType: z.enum(["image", "video"]).optional().default("image"),
+  videoUrl: z.string().optional().or(z.literal("")),
   category: z.string().min(1, "Category is required"),
 });
 
@@ -37,6 +39,8 @@ export async function createGalleryImage(
     title: formData.get("title"),
     description: formData.get("description"),
     imageUrl: formData.get("imageUrl"),
+    mediaType: formData.get("mediaType") || "image",
+    videoUrl: formData.get("videoUrl"),
     category: formData.get("category"),
   });
 
@@ -48,12 +52,21 @@ export async function createGalleryImage(
     };
   }
 
+  if (parsed.data.mediaType === "image" && !parsed.data.imageUrl) {
+    return { success: false, error: "Image URL is required for image type." };
+  }
+  if (parsed.data.mediaType === "video" && !parsed.data.videoUrl) {
+    return { success: false, error: "Video URL is required for video type." };
+  }
+
   try {
     const tenantId = await requireTenant();
     const result = await GalleryService.create(tenantId, {
       title: parsed.data.title,
       description: parsed.data.description || undefined,
-      imageUrl: parsed.data.imageUrl,
+      imageUrl: parsed.data.imageUrl || "",
+      mediaType: parsed.data.mediaType,
+      videoUrl: parsed.data.videoUrl || undefined,
       category: parsed.data.category,
     });
     console.log("📸 createGalleryImage success:", result.id);
@@ -82,6 +95,8 @@ export async function updateGalleryImage(
     title: formData.get("title"),
     description: formData.get("description"),
     imageUrl: formData.get("imageUrl"),
+    mediaType: formData.get("mediaType") || "image",
+    videoUrl: formData.get("videoUrl"),
     category: formData.get("category"),
   });
 
@@ -98,7 +113,9 @@ export async function updateGalleryImage(
     await GalleryService.update(id, tenantId, {
       title: parsed.data.title,
       description: parsed.data.description || undefined,
-      imageUrl: parsed.data.imageUrl,
+      imageUrl: parsed.data.imageUrl || undefined,
+      mediaType: parsed.data.mediaType,
+      videoUrl: parsed.data.videoUrl || undefined,
       category: parsed.data.category,
     });
     console.log("📸 updateGalleryImage success — id:", id);

@@ -41,6 +41,8 @@ export default async function SettingsPage() {
         config={config}
         heroData={heroData}
         role={session?.user?.role ?? "ADMIN"}
+        youtubeApiKey={tenant.youtubeApiKey ?? ""}
+        instagramApiKey={tenant.instagramApiKey ?? ""}
       />
     </div>
   );

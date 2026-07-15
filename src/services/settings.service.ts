@@ -112,4 +112,17 @@ export const SettingsService = {
       },
     });
   },
+
+  async updateTenantApiKeys(
+    tenantId: string,
+    data: { youtubeApiKey?: string; instagramApiKey?: string },
+  ): Promise<void> {
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        ...(data.youtubeApiKey !== undefined && { youtubeApiKey: data.youtubeApiKey }),
+        ...(data.instagramApiKey !== undefined && { instagramApiKey: data.instagramApiKey }),
+      },
+    });
+  },
 };
