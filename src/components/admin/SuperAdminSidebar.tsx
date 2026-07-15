@@ -6,7 +6,6 @@ import { signOut } from "next-auth/react";
 
 const links = [
   { href: "/super-admin", label: "Dashboard", icon: "🏠" },
-  { href: "/admin/settings", label: "Platform Settings", icon: "⚙️" },
 ];
 
 export function SuperAdminSidebar() {
