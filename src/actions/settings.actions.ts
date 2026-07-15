@@ -31,6 +31,18 @@ const influencerDataSchema = z.object({
     .default({ primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" }),
 });
 
+const themeSettingsSchema = z.object({
+  niche: z.string().optional().default("gaming"),
+  colors: z
+    .object({
+      primary: z.string().optional().default("#d4a843"),
+      secondary: z.string().optional().default("#fbbf24"),
+      accent: z.string().optional().default("#b45309"),
+    })
+    .optional()
+    .default({ primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" }),
+});
+
 const heroDataSchema = z.object({
   videoUrl: z.string().optional().default(""),
   posterUrl: z.string().optional().default(""),
@@ -101,12 +113,21 @@ export async function updateInfluencerData(
 
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "SUPER_ADMIN") {
-      return { success: false, error: "Only Super Admins can modify theme settings." };
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
     }
 
     const tenantId = await requireTenant();
-    await SettingsService.updateInfluencerData(tenantId, parsed.data);
+    if (session.user.role === "ADMIN" && session.user.tenantId !== tenantId) {
+      return { success: false, error: "Unauthorized — cannot modify another tenant's data." };
+    }
+
+    const existing = await SettingsService.getInfluencerData(tenantId);
+    const merged =
+      session.user.role === "SUPER_ADMIN"
+        ? { ...existing, ...parsed.data }
+        : { ...existing, ...parsed.data, colors: existing.colors, niche: existing.niche };
+    await SettingsService.updateInfluencerData(tenantId, merged);
     console.log("⚙️ updateInfluencerData success");
     revalidatePath("/");
     revalidatePath("/contact");
@@ -115,6 +136,48 @@ export async function updateInfluencerData(
   } catch (error) {
     console.error("⚙️ updateInfluencerData error:", error);
     return { success: false, error: "Failed to update settings" };
+  }
+}
+
+export async function updateThemeSettings(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const rawData = {
+    niche: (formData.get("niche") as string) || "gaming",
+    colors: {
+      primary: (formData.get("colors.primary") as string) || "#d4a843",
+      secondary: (formData.get("colors.secondary") as string) || "#fbbf24",
+      accent: (formData.get("colors.accent") as string) || "#b45309",
+    },
+  };
+
+  const parsed = themeSettingsSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Only Super Admins can modify theme settings." };
+    }
+
+    const tenantId = await requireTenant();
+    const existing = await SettingsService.getInfluencerData(tenantId);
+    const merged = { ...existing, ...parsed.data };
+    await SettingsService.updateInfluencerData(tenantId, merged);
+    console.log("⚙️ updateThemeSettings success");
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("⚙️ updateThemeSettings error:", error);
+    return { success: false, error: "Failed to update theme settings" };
   }
 }
 

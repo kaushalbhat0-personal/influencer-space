@@ -47,6 +47,12 @@ export async function provisionNewCreator(
   }
 
   const { creatorName, adminEmail } = parsed.data;
+
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized — Super Admin access required." };
+  }
+
   const subdomain = toSubdomain(creatorName);
   const password = DEFAULT_PASSWORD;
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -140,6 +146,11 @@ export async function magicProvisionFromYoutube(
   const meta = await YouTubeScraperService.fetchChannelMetadata(parsed.data.youtubeUrl);
   if (!meta) {
     return { success: false, error: "Could not resolve YouTube channel. Check the handle." };
+  }
+
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized — Super Admin access required." };
   }
 
   const creatorName = meta.title;
