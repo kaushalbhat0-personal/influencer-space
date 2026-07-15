@@ -11,6 +11,8 @@ const PLATFORM_DOMAINS = [
   "influencer-space-alpha.vercel.app",
 ];
 
+const DEFAULT_TENANT = process.env.DEFAULT_TENANT_SUBDOMAIN || "";
+
 function parseTenantHost(host: string): string | null {
   const hostname = host.split(":")[0]?.toLowerCase() ?? "";
 
@@ -31,7 +33,7 @@ function parseTenantHost(host: string): string | null {
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
-  const tenantHost = parseTenantHost(host);
+  const tenantHost = parseTenantHost(host) || DEFAULT_TENANT || null;
 
   const requestHeaders = new Headers(request.headers);
   if (tenantHost) {
@@ -44,7 +46,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin")) {
     const token = await getToken({
       req: request,
       secret: secret,

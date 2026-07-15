@@ -16,16 +16,11 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!tenantId) {
-      router.push("/admin/login?error=Configuration");
-      return;
-    }
-
     setLoading(true);
     const result = await signIn("credentials", {
       email,
       password,
-      tenantId,
+      tenantId: tenantId ?? "",
       redirect: false,
     });
     setLoading(false);

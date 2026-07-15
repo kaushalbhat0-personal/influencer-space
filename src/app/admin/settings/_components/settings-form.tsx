@@ -16,9 +16,11 @@ import type { SettingsActionState } from "@/actions/settings.actions";
 export function SettingsForm({
   config,
   heroData,
+  role,
 }: {
   config: InfluencerDataType;
   heroData: HeroDataType;
+  role: "SUPER_ADMIN" | "ADMIN";
 }) {
   const router = useRouter();
   const profileFormRef = useRef<HTMLFormElement>(null);
@@ -98,6 +100,7 @@ export function SettingsForm({
               />
             </div>
 
+            {role === "SUPER_ADMIN" && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Niche</h3>
               <div>
@@ -123,6 +126,7 @@ export function SettingsForm({
                 </p>
               </div>
             </div>
+            )}
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Social Media Links</h3>

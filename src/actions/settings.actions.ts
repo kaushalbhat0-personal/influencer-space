@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
+import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
 import { getTenantContext } from "@/lib/tenant";
 
@@ -44,6 +46,11 @@ const heroDataSchema = z.object({
     .string()
     .optional()
     .transform((v) => v === "on" || v === "true"),
+});
+
+const socialChannelSchema = z.object({
+  youtubeChannelId: z.string().optional().default(""),
+  twitchChannelId: z.string().optional().default(""),
 });
 
 export type SettingsActionState = {
@@ -93,6 +100,11 @@ export async function updateInfluencerData(
   }
 
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Only Super Admins can modify theme settings." };
+    }
+
     const tenantId = await requireTenant();
     await SettingsService.updateInfluencerData(tenantId, parsed.data);
     console.log("⚙️ updateInfluencerData success");
@@ -147,7 +159,35 @@ export async function updateHeroData(
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
-    console.error("⚙️ updateHeroData error:", error);
+    console.error("updateHeroData error:", error);
     return { success: false, error: "Failed to update hero settings" };
   }
 }
+
+export async function updateSocialChannels(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const rawData = {
+    youtubeChannelId: (formData.get("youtubeChannelId") as string) || "",
+    twitchChannelId: (formData.get("twitchChannelId") as string) || "",
+  };
+
+  const parsed = socialChannelSchema.safeParse(rawData);
+
+  if (!parsed.success) {
+    return { success: false, error: "Invalid channel ID" };
+  }
+
+  try {
+    const tenantId = await requireTenant();
+    await SettingsService.updateTenantChannels(tenantId, parsed.data);
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("updateSocialChannels error:", error);
+    return { success: false, error: "Failed to update social channels" };
+  }
+}
+

@@ -99,4 +99,17 @@ export const SettingsService = {
       data as Prisma.InputJsonValue,
     );
   },
+
+  async updateTenantChannels(
+    tenantId: string,
+    data: { youtubeChannelId?: string; twitchChannelId?: string },
+  ): Promise<void> {
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        ...(data.youtubeChannelId !== undefined && { youtubeChannelId: data.youtubeChannelId }),
+        ...(data.twitchChannelId !== undefined && { twitchChannelId: data.twitchChannelId }),
+      },
+    });
+  },
 };

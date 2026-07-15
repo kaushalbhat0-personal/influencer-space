@@ -1,3 +1,5 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
 import { SettingsForm } from "./_components/settings-form";
 import { getTenantContext } from "@/lib/tenant";
@@ -6,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const tenant = await getTenantContext();
+  const session = await getServerSession(authOptions);
 
   if (!tenant) {
     return (
@@ -37,6 +40,7 @@ export default async function SettingsPage() {
         key={`${config.name}-${config.profileImage}-${heroData.videoUrl}`}
         config={config}
         heroData={heroData}
+        role={session?.user?.role ?? "ADMIN"}
       />
     </div>
   );

@@ -26,22 +26,25 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        if (!credentials?.tenantId) {
-          console.log("Login attempt missing tenantId");
-          return null;
-        }
-
         console.log("Login attempt for:", credentials.email, "tenant:", credentials.tenantId);
 
         try {
-          const user = await prisma.user.findUnique({
-            where: {
-              tenantId_email: {
-                tenantId: credentials.tenantId,
-                email: credentials.email,
-              },
-            },
-          });
+          const user = credentials.tenantId
+            ? await prisma.user.findUnique({
+                where: {
+                  tenantId_email: {
+                    tenantId: credentials.tenantId,
+                    email: credentials.email,
+                  },
+                },
+              })
+            : await prisma.user.findFirst({
+                where: {
+                  tenantId: null,
+                  email: credentials.email,
+                  role: "SUPER_ADMIN",
+                },
+              });
 
           console.log("User found:", !!user);
 
@@ -61,6 +64,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             tenantId: user.tenantId,
+            role: user.role,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -81,13 +85,15 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.tenantId = user.tenantId;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.tenantId = token.tenantId as string;
+        session.user.tenantId = (token.tenantId as string) ?? null;
+        session.user.role = token.role as "SUPER_ADMIN" | "ADMIN";
       }
       return session;
     },
