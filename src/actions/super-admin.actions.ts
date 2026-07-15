@@ -9,6 +9,7 @@ import { YouTubeScraperService } from "@/services/youtube-scraper.service";
 import { VercelService } from "@/services/vercel.service";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { toSubdomain } from "@/lib/utils";
 import type { Prisma } from "@/generated/prisma/client";
 
 const DEFAULT_PASSWORD = "CreatorLaunch2026!";
@@ -21,16 +22,6 @@ const schema = z.object({
 const youtubeProvisionSchema = z.object({
   youtubeUrl: z.string().min(1, "YouTube URL or handle is required"),
 });
-
-function toSubdomain(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export type ProvisionResult = {
   success: boolean;
