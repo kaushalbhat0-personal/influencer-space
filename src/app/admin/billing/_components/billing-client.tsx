@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createSubscriptionCheckout } from "@/actions/billing.actions";
 import type { BillingActionResult } from "@/actions/billing.actions";
@@ -55,7 +54,6 @@ const plans = [
 ];
 
 export function BillingClient({ subscription }: { subscription: SubscriptionRow }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<BillingActionResult | null>(null);
 
@@ -65,8 +63,7 @@ export function BillingClient({ subscription }: { subscription: SubscriptionRow 
   async function handleUpgrade() {
     setLoading(true);
     setResult(null);
-    const formData = new FormData();
-    const res = await createSubscriptionCheckout({ success: false }, formData);
+    const res = await createSubscriptionCheckout();
     setResult(res);
     setLoading(false);
     if (res.success && res.checkoutUrl && res.checkoutUrl !== "#") {

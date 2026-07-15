@@ -10,10 +10,7 @@ export type BillingActionResult = {
   error?: string;
 };
 
-export async function createSubscriptionCheckout(
-  _prevState: BillingActionResult,
-  _formData: FormData,
-): Promise<BillingActionResult> {
+export async function createSubscriptionCheckout(): Promise<BillingActionResult> {
   const session = await getServerSession(authOptions);
   if (!session) {
     return { success: false, error: "Unauthorized" };
