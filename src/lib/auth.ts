@@ -29,26 +29,16 @@ export const authOptions: NextAuthOptions = {
         console.log("Login attempt for:", credentials.email, "tenant:", credentials.tenantId);
 
         try {
-          const user = credentials.tenantId
-            ? await prisma.user.findUnique({
-                where: {
-                  tenantId_email: {
-                    tenantId: credentials.tenantId,
-                    email: credentials.email,
-                  },
-                },
-              })
-            : await prisma.user.findFirst({
-                where: {
-                  tenantId: null,
-                  email: credentials.email,
-                  role: "SUPER_ADMIN",
-                },
-              });
+          const user = await prisma.user.findFirst({
+            where: { email: credentials.email },
+          });
 
-          console.log("User found:", !!user);
+          console.log("User found:", !!user, "role:", user?.role);
 
-          if (!user) return null;
+          if (!user) {
+            console.log("No user found with email:", credentials.email);
+            return null;
+          }
 
           const passwordMatch = await bcrypt.compare(
             credentials.password,
@@ -59,13 +49,40 @@ export const authOptions: NextAuthOptions = {
 
           if (!passwordMatch) return null;
 
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            tenantId: user.tenantId,
-            role: user.role,
-          };
+          if (user.role === "SUPER_ADMIN") {
+            console.log("Super admin login approved");
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              tenantId: user.tenantId ?? null,
+              role: user.role,
+            };
+          }
+
+          if (user.role === "ADMIN") {
+            if (!credentials.tenantId || user.tenantId !== credentials.tenantId) {
+              console.log(
+                "Admin login blocked — tenant mismatch:",
+                "user.tenantId:",
+                user.tenantId,
+                "credential.tenantId:",
+                credentials.tenantId,
+              );
+              return null;
+            }
+
+            console.log("Admin login approved for tenant:", user.tenantId);
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              tenantId: user.tenantId,
+              role: user.role,
+            };
+          }
+
+          return null;
         } catch (error) {
           console.error("Auth error:", error);
           return null;
