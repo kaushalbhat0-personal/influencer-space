@@ -5,13 +5,23 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
 
-export function LoginForm({ tenantId }: { tenantId: string | null }) {
+type TenantOption = { id: string; name: string; subdomain: string };
+
+export function LoginForm({
+  tenantId,
+  tenants,
+}: {
+  tenantId: string | null;
+  tenants?: TenantOption[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedTenantId, setSelectedTenantId] = useState(tenantId ?? "");
+  const needsTenantSelection = !tenantId && tenants && tenants.length > 0;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -20,13 +30,19 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
     const result = await signIn("credentials", {
       email,
       password,
-      tenantId: tenantId ?? "",
+      tenantId: selectedTenantId,
       redirect: false,
     });
     setLoading(false);
 
     if (result?.error) {
-      router.push("/admin/login?error=CredentialsSignin");
+      const params = new URLSearchParams();
+      params.set("error", "CredentialsSignin");
+      if (needsTenantSelection && selectedTenantId) {
+        const t = tenants?.find((t) => t.id === selectedTenantId);
+        if (t) params.set("tenant", t.subdomain);
+      }
+      router.push(`/admin/login?${params.toString()}`);
       return;
     }
 
@@ -75,7 +91,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
               animate={{ opacity: 1, height: "auto" }}
               className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
             >
-              Invalid email or password. Please try again.
+              Invalid email, password, or creator brand selection. Please try again.
             </motion.div>
           )}
 
@@ -118,6 +134,26 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
                 placeholder="••••••••"
               />
             </div>
+            {needsTenantSelection && (
+              <div>
+                <label htmlFor="tenant" className="block text-sm font-medium text-gray-300">
+                  Creator Brand
+                </label>
+                <select
+                  id="tenant"
+                  value={selectedTenantId}
+                  onChange={(e) => setSelectedTenantId(e.target.value)}
+                  className="admin-input mt-1.5"
+                >
+                  <option value="">Select a creator brand...</option>
+                  {tenants!.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.subdomain})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <motion.button
               type="submit"
               disabled={loading}

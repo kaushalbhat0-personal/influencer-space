@@ -10,7 +10,15 @@ export default async function LoginPage({
 }) {
   const tenant = await getTenantContext().catch(() => null);
 
-  if (!tenant && searchParams?.tenant) {
+  const preselectedTenantId = tenant?.id ?? null;
+
+  // If no tenant context (platform domain), fetch all tenants for a dropdown
+  const allTenants = !preselectedTenantId
+    ? await prisma.tenant.findMany({ select: { id: true, name: true, subdomain: true } })
+    : [];
+
+  // If ?tenant= query param is provided on platform domain, use it
+  if (!preselectedTenantId && searchParams?.tenant) {
     const lookedUp = await prisma.tenant.findFirst({
       where: {
         OR: [
@@ -23,7 +31,7 @@ export default async function LoginPage({
     if (lookedUp) {
       return (
         <Suspense>
-          <LoginForm tenantId={lookedUp.id} />
+          <LoginForm tenantId={lookedUp.id} tenants={allTenants} />
         </Suspense>
       );
     }
@@ -31,7 +39,7 @@ export default async function LoginPage({
 
   return (
     <Suspense>
-      <LoginForm tenantId={tenant?.id ?? null} />
+      <LoginForm tenantId={preselectedTenantId} tenants={allTenants} />
     </Suspense>
   );
 }
