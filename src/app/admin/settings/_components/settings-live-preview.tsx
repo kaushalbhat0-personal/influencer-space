@@ -134,7 +134,7 @@ export function SettingsLivePreview({
           <div className="relative w-full h-full overflow-hidden bg-neutral-950">
             {showVideo ? (
               <video
-                key={videoUrl}
+                key={`${previewDevice}-${activeAlignment}-${videoUrl}`}
                 src={videoUrl}
                 controls
                 muted

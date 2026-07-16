@@ -15,6 +15,8 @@ import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.actions";
 
+type SaveState = { pending: boolean; state: SettingsActionState };
+
 async function uploadFile(file: File, tenantId: string, folder: string): Promise<string> {
   const ext = file.name.split(".").pop();
   const timestamp = Date.now();
@@ -29,6 +31,10 @@ async function uploadFile(file: File, tenantId: string, folder: string): Promise
 
   const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
   return urlData.publicUrl;
+}
+
+function emptyState(): SaveState {
+  return { pending: false, state: { success: false } };
 }
 
 export function SettingsForm({
@@ -47,15 +53,17 @@ export function SettingsForm({
   tenantId: string;
 }) {
   const router = useRouter();
-  const profileFormRef = useRef<HTMLFormElement>(null);
-  const heroFormRef = useRef<HTMLFormElement>(null);
+  const heroDetailFormRef = useRef<HTMLFormElement>(null);
+  const profileInfoFormRef = useRef<HTMLFormElement>(null);
   const apiKeysFormRef = useRef<HTMLFormElement>(null);
-  const [profileState, setProfileState] = useState<SettingsActionState>({ success: false });
-  const [heroState, setHeroState] = useState<SettingsActionState>({ success: false });
-  const [apiKeysState, setApiKeysState] = useState<SettingsActionState>({ success: false });
-  const [profilePending, setProfilePending] = useState(false);
-  const [heroPending, setHeroPending] = useState(false);
-  const [apiKeysPending, setApiKeysPending] = useState(false);
+
+  const [videoSave, setVideoSave] = useState<SaveState>(emptyState);
+  const [posterSave, setPosterSave] = useState<SaveState>(emptyState);
+  const [heroDetailsSave, setHeroDetailsSave] = useState<SaveState>(emptyState);
+  const [profilePicSave, setProfilePicSave] = useState<SaveState>(emptyState);
+  const [profileInfoSave, setProfileInfoSave] = useState<SaveState>(emptyState);
+  const [apiKeysSave, setApiKeysSave] = useState<SaveState>(emptyState);
+
   const [profileImage, setProfileImage] = useState<string>(config.profileImage || "");
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
@@ -135,9 +143,86 @@ export function SettingsForm({
     );
   }
 
-  async function handleSaveProfileImage() {
-    setProfilePending(true);
-    setProfileState({ success: false });
+  async function handleSaveVideo() {
+    setVideoSave({ pending: true, state: { success: false } });
+
+    const formData = new FormData();
+    const originalVideoUrl = heroData.videoUrl || "";
+
+    if (videoFile) {
+      try {
+        const url = await uploadFile(videoFile, tenantId, "hero");
+        setVideoUrl(url);
+        formData.set("videoUrl", url);
+      } catch (err) {
+        setVideoSave({ pending: false, state: { success: false, error: err instanceof Error ? err.message : "Upload failed" } });
+        return;
+      }
+    } else if (videoUrl) {
+      formData.set("videoUrl", videoUrl);
+    }
+
+    formData.set("videoDesktopAlignment", videoDesktopAlignment);
+    formData.set("videoMobileAlignment", videoMobileAlignment);
+
+    const result = await updateHeroData(tenantId, { success: false }, formData);
+    setVideoSave({ pending: false, state: result });
+
+    if (result.success) {
+      const finalVideoUrl = (formData.get("videoUrl") as string) || "";
+      if (originalVideoUrl && originalVideoUrl !== finalVideoUrl) {
+        const oldPath = extractSupabaseFilePath(originalVideoUrl);
+        if (oldPath) await deleteSupabaseFile(oldPath);
+      }
+      router.refresh();
+    }
+  }
+
+  async function handleSavePoster() {
+    setPosterSave({ pending: true, state: { success: false } });
+
+    const formData = new FormData();
+    const originalPosterUrl = heroData.posterUrl || "";
+
+    if (posterFile) {
+      try {
+        const url = await uploadFile(posterFile, tenantId, "hero");
+        setPosterUrl(url);
+        formData.set("posterUrl", url);
+      } catch (err) {
+        setPosterSave({ pending: false, state: { success: false, error: err instanceof Error ? err.message : "Upload failed" } });
+        return;
+      }
+    } else if (posterUrl) {
+      formData.set("posterUrl", posterUrl);
+    }
+
+    formData.set("imageDesktopAlignment", imageDesktopAlignment);
+    formData.set("imageMobileAlignment", imageMobileAlignment);
+
+    const result = await updateHeroData(tenantId, { success: false }, formData);
+    setPosterSave({ pending: false, state: result });
+
+    if (result.success) {
+      const finalPosterUrl = (formData.get("posterUrl") as string) || "";
+      if (originalPosterUrl && originalPosterUrl !== finalPosterUrl) {
+        const oldPath = extractSupabaseFilePath(originalPosterUrl);
+        if (oldPath) await deleteSupabaseFile(oldPath);
+      }
+      router.refresh();
+    }
+  }
+
+  async function handleSaveHeroDetails(formData: FormData) {
+    setHeroDetailsSave({ pending: true, state: { success: false } });
+
+    const result = await updateHeroData(tenantId, { success: false }, formData);
+    setHeroDetailsSave({ pending: false, state: result });
+    if (result.success) router.refresh();
+  }
+
+  async function handleSaveProfilePicture() {
+    setProfilePicSave({ pending: true, state: { success: false } });
 
     const formData = new FormData();
     formData.set("name", config.name);
@@ -156,17 +241,15 @@ export function SettingsForm({
         setProfileImage(url);
         formData.set("profileImage", url);
       } catch (err) {
-        setProfileState({ success: false, error: err instanceof Error ? err.message : "Upload failed" });
-        setProfilePending(false);
+        setProfilePicSave({ pending: false, state: { success: false, error: err instanceof Error ? err.message : "Upload failed" } });
         return;
       }
     } else if (profileImage) {
       formData.set("profileImage", profileImage);
     }
 
-    const result = await updateInfluencerData(tenantId, profileState, formData);
-    setProfileState(result);
-    setProfilePending(false);
+    const result = await updateInfluencerData(tenantId, { success: false }, formData);
+    setProfilePicSave({ pending: false, state: result });
 
     if (result.success) {
       const finalUrl = (formData.get("profileImage") as string) || "";
@@ -178,100 +261,23 @@ export function SettingsForm({
     }
   }
 
-  async function handleSaveVideo() {
-    setHeroPending(true);
-    setHeroState({ success: false });
+  async function handleSaveProfileInfo(formData: FormData) {
+    setProfileInfoSave({ pending: true, state: { success: false } });
 
-    const formData = new FormData();
-    const originalVideoUrl = heroData.videoUrl || "";
+    if (profileImage) formData.set("profileImage", profileImage);
 
-    if (videoFile) {
-      try {
-        const url = await uploadFile(videoFile, tenantId, "hero");
-        setVideoUrl(url);
-        formData.set("videoUrl", url);
-      } catch (err) {
-        setHeroState({ success: false, error: err instanceof Error ? err.message : "Video upload failed" });
-        setHeroPending(false);
-        return;
-      }
-    } else if (videoUrl) {
-      formData.set("videoUrl", videoUrl);
-    }
-
-    formData.set("videoDesktopAlignment", videoDesktopAlignment);
-    formData.set("videoMobileAlignment", videoMobileAlignment);
-
-    const result = await updateHeroData(tenantId, heroState, formData);
-    setHeroState(result);
-    setHeroPending(false);
-
-    if (result.success) {
-      const finalVideoUrl = (formData.get("videoUrl") as string) || "";
-      if (originalVideoUrl && originalVideoUrl !== finalVideoUrl) {
-        const oldPath = extractSupabaseFilePath(originalVideoUrl);
-        if (oldPath) await deleteSupabaseFile(oldPath);
-      }
-      router.refresh();
-    }
-  }
-
-  async function handleSaveImage() {
-    setHeroPending(true);
-    setHeroState({ success: false });
-
-    const formData = new FormData();
-    const originalPosterUrl = heroData.posterUrl || "";
-
-    if (posterFile) {
-      try {
-        const url = await uploadFile(posterFile, tenantId, "hero");
-        setPosterUrl(url);
-        formData.set("posterUrl", url);
-      } catch (err) {
-        setHeroState({ success: false, error: err instanceof Error ? err.message : "Poster upload failed" });
-        setHeroPending(false);
-        return;
-      }
-    } else if (posterUrl) {
-      formData.set("posterUrl", posterUrl);
-    }
-
-    formData.set("imageDesktopAlignment", imageDesktopAlignment);
-    formData.set("imageMobileAlignment", imageMobileAlignment);
-
-    const result = await updateHeroData(tenantId, heroState, formData);
-    setHeroState(result);
-    setHeroPending(false);
-
-    if (result.success) {
-      const finalPosterUrl = (formData.get("posterUrl") as string) || "";
-      if (originalPosterUrl && originalPosterUrl !== finalPosterUrl) {
-        const oldPath = extractSupabaseFilePath(originalPosterUrl);
-        if (oldPath) await deleteSupabaseFile(oldPath);
-      }
-      router.refresh();
-    }
-  }
-
-  async function handleSaveHeroDetails(formData: FormData) {
-    setHeroPending(true);
-    setHeroState({ success: false });
-
-    const result = await updateHeroData(tenantId, heroState, formData);
-    setHeroState(result);
-    setHeroPending(false);
+    const result = await updateInfluencerData(tenantId, { success: false }, formData);
+    setProfileInfoSave({ pending: false, state: result });
     if (result.success) router.refresh();
   }
 
-  async function handleApiKeysSubmit(formData: FormData) {
+  async function handleSaveApiKeys(formData: FormData) {
     formData.set("youtubeApiKey", youtubeApiKey);
     formData.set("instagramApiKey", instagramApiKey);
-    setApiKeysPending(true);
-    setApiKeysState({ success: false });
-    const result = await updateApiKeys(tenantId, apiKeysState, formData);
-    setApiKeysState(result);
-    setApiKeysPending(false);
+    setApiKeysSave({ pending: true, state: { success: false } });
+
+    const result = await updateApiKeys(tenantId, { success: false }, formData);
+    setApiKeysSave({ pending: false, state: result });
     if (result.success) router.refresh();
   }
 
@@ -295,16 +301,16 @@ export function SettingsForm({
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
                 {alignmentButtons(videoDesktopAlignment, videoMobileAlignment, setVideoDesktopAlignment, setVideoMobileAlignment)}
               </div>
-              {heroState.success && (
+              {videoSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                   Video settings saved!
                 </div>
               )}
-              {heroState.error && (
-                <p className="text-sm text-red-400">{heroState.error}</p>
+              {videoSave.state.error && (
+                <p className="text-sm text-red-400">{videoSave.state.error}</p>
               )}
-              <button type="button" onClick={handleSaveVideo} disabled={heroPending} className="admin-btn-cyan">
-                {heroPending ? "Saving..." : "Save Video"}
+              <button type="button" onClick={handleSaveVideo} disabled={videoSave.pending} className="admin-btn-cyan">
+                {videoSave.pending ? "Saving..." : "Save Video"}
               </button>
             </div>
           </CardContent>
@@ -327,16 +333,16 @@ export function SettingsForm({
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
                 {alignmentButtons(imageDesktopAlignment, imageMobileAlignment, setImageDesktopAlignment, setImageMobileAlignment)}
               </div>
-              {heroState.success && (
+              {posterSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                   Poster settings saved!
                 </div>
               )}
-              {heroState.error && (
-                <p className="text-sm text-red-400">{heroState.error}</p>
+              {posterSave.state.error && (
+                <p className="text-sm text-red-400">{posterSave.state.error}</p>
               )}
-              <button type="button" onClick={handleSaveImage} disabled={heroPending} className="admin-btn-cyan">
-                {heroPending ? "Saving..." : "Save Poster Image"}
+              <button type="button" onClick={handleSavePoster} disabled={posterSave.pending} className="admin-btn-cyan">
+                {posterSave.pending ? "Saving..." : "Save Poster Image"}
               </button>
             </div>
           </CardContent>
@@ -345,7 +351,7 @@ export function SettingsForm({
         {/* ─── Hero Details ─── */}
         <Card>
           <CardContent>
-            <form ref={heroFormRef} action={handleSaveHeroDetails} className="space-y-6">
+            <form ref={heroDetailFormRef} action={handleSaveHeroDetails} className="space-y-6">
               <h3 className="text-lg font-semibold text-white">Hero Details</h3>
               <p className="text-sm text-gray-500">
                 Control the hero title, subtitle, call-to-action buttons, and live badge.
@@ -376,52 +382,22 @@ export function SettingsForm({
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-white">Call-to-Action Buttons</h4>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    id="ctaText"
-                    name="ctaText"
-                    label="Primary Button Text"
-                    defaultValue={heroData.ctaText}
-                    placeholder="Subscribe"
-                  />
-                  <Input
-                    id="ctaLink"
-                    name="ctaLink"
-                    label="Primary Button Link"
-                    defaultValue={heroData.ctaLink}
-                    placeholder="https://youtube.com/@..."
-                  />
-                  <Input
-                    id="ctaSecondaryText"
-                    name="ctaSecondaryText"
-                    label="Secondary Button Text"
-                    defaultValue={heroData.ctaSecondaryText}
-                    placeholder="Follow on IG"
-                  />
-                  <Input
-                    id="ctaSecondaryLink"
-                    name="ctaSecondaryLink"
-                    label="Secondary Button Link"
-                    defaultValue={heroData.ctaSecondaryLink}
-                    placeholder="https://instagram.com/..."
-                  />
+                  <Input id="ctaText" name="ctaText" label="Primary Button Text" defaultValue={heroData.ctaText} placeholder="Subscribe" />
+                  <Input id="ctaLink" name="ctaLink" label="Primary Button Link" defaultValue={heroData.ctaLink} placeholder="https://youtube.com/@..." />
+                  <Input id="ctaSecondaryText" name="ctaSecondaryText" label="Secondary Button Text" defaultValue={heroData.ctaSecondaryText} placeholder="Follow on IG" />
+                  <Input id="ctaSecondaryLink" name="ctaSecondaryLink" label="Secondary Button Link" defaultValue={heroData.ctaSecondaryLink} placeholder="https://instagram.com/..." />
                 </div>
               </div>
 
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-white">Live Badge</h4>
                 <Input
-                  id="liveBadgeText"
-                  name="liveBadgeText"
-                  label="Live Badge Text"
-                  defaultValue={heroData.liveBadgeText}
-                  placeholder="Live on YouTube"
+                  id="liveBadgeText" name="liveBadgeText" label="Live Badge Text"
+                  defaultValue={heroData.liveBadgeText} placeholder="Live on YouTube"
                   onChange={(e) => setLiveBadgeText(e.target.value)}
                 />
                 <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    name="showLiveBadge"
-                    defaultChecked={heroData.showLiveBadge}
+                  <input type="checkbox" name="showLiveBadge" defaultChecked={heroData.showLiveBadge}
                     onChange={(e) => setLiveShowBadge(e.target.checked)}
                     className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
                   />
@@ -429,25 +405,25 @@ export function SettingsForm({
                 </label>
               </div>
 
-              {heroState.success && (
+              {heroDetailsSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                   Hero details saved!
                 </div>
               )}
-              {heroState.error && (
-                <p className="text-sm text-red-400">{heroState.error}</p>
+              {heroDetailsSave.state.error && (
+                <p className="text-sm text-red-400">{heroDetailsSave.state.error}</p>
               )}
 
               <div className="pt-2">
-                <button type="submit" disabled={heroPending} className="admin-btn-cyan">
-                  {heroPending ? "Saving..." : "Save Hero Details"}
+                <button type="submit" disabled={heroDetailsSave.pending} className="admin-btn-cyan">
+                  {heroDetailsSave.pending ? "Saving..." : "Save Hero Details"}
                 </button>
               </div>
             </form>
           </CardContent>
         </Card>
 
-        {/* ─── Profile Image ─── */}
+        {/* ─── Profile Picture ─── */}
         <Card>
           <CardContent>
             <div className="space-y-4">
@@ -460,16 +436,16 @@ export function SettingsForm({
                 currentUrl={profileImage || null}
                 label="Profile Image"
               />
-              {profileState.success && (
+              {profilePicSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                   Profile picture saved!
                 </div>
               )}
-              {profileState.error && (
-                <p className="text-sm text-red-400">{profileState.error}</p>
+              {profilePicSave.state.error && (
+                <p className="text-sm text-red-400">{profilePicSave.state.error}</p>
               )}
-              <button type="button" onClick={handleSaveProfileImage} disabled={profilePending} className="admin-btn-cyan">
-                {profilePending ? "Saving..." : "Save Profile Picture"}
+              <button type="button" onClick={handleSaveProfilePicture} disabled={profilePicSave.pending} className="admin-btn-cyan">
+                {profilePicSave.pending ? "Saving..." : "Save Profile Picture"}
               </button>
             </div>
           </CardContent>
@@ -478,50 +454,30 @@ export function SettingsForm({
         {/* ─── Personal Information ─── */}
         <Card>
           <CardContent>
-            <form ref={profileFormRef} action={handleSaveProfileImage} className="space-y-6">
+            <form ref={profileInfoFormRef} action={handleSaveProfileInfo} className="space-y-6">
               <h3 className="text-lg font-semibold text-white">Personal Information</h3>
               <Input
-                id="name"
-                name="name"
-                label="Full Name"
-                defaultValue={config.name}
-                error={profileState.fieldErrors?.name?.[0]}
-                onChange={(e) => setLiveName(e.target.value)}
-                required
+                id="name" name="name" label="Full Name" defaultValue={config.name}
+                error={profileInfoSave.state.fieldErrors?.name?.[0]}
+                onChange={(e) => setLiveName(e.target.value)} required
               />
               <Input
-                id="tagline"
-                name="tagline"
-                label="Tagline"
-                defaultValue={config.tagline}
-                error={profileState.fieldErrors?.tagline?.[0]}
-                onChange={(e) => setLiveTagline(e.target.value)}
-                required
+                id="tagline" name="tagline" label="Tagline" defaultValue={config.tagline}
+                error={profileInfoSave.state.fieldErrors?.tagline?.[0]}
+                onChange={(e) => setLiveTagline(e.target.value)} required
               />
               <Textarea
-                id="bio"
-                name="bio"
-                label="Bio"
-                defaultValue={config.bio}
-                error={profileState.fieldErrors?.bio?.[0]}
-                onChange={(e) => setLiveBio(e.target.value)}
-                rows={5}
-                required
+                id="bio" name="bio" label="Bio" defaultValue={config.bio}
+                error={profileInfoSave.state.fieldErrors?.bio?.[0]}
+                onChange={(e) => setLiveBio(e.target.value)} rows={5} required
               />
 
               {role === "SUPER_ADMIN" && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Niche</h3>
                 <div>
-                  <label htmlFor="niche" className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Background Theme
-                  </label>
-                  <select
-                    id="niche"
-                    name="niche"
-                    defaultValue={config.niche || "gaming"}
-                    className="admin-select"
-                  >
+                  <label htmlFor="niche" className="block text-sm font-medium text-gray-300 mb-1.5">Background Theme</label>
+                  <select id="niche" name="niche" defaultValue={config.niche || "gaming"} className="admin-select">
                     <option value="gaming" className="bg-gray-900 text-white">Gaming</option>
                     <option value="fitness" className="bg-gray-900 text-white">Fitness</option>
                     <option value="fashion" className="bg-gray-900 text-white">Fashion</option>
@@ -530,51 +486,32 @@ export function SettingsForm({
                     <option value="food" className="bg-gray-900 text-white">Food</option>
                     <option value="lifestyle" className="bg-gray-900 text-white">Lifestyle</option>
                   </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Controls the floating background icons on the public site.
-                  </p>
+                  <p className="mt-1 text-xs text-gray-500">Controls the floating background icons on the public site.</p>
                 </div>
               </div>
               )}
 
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Social Media Links</h3>
-                <p className="text-sm text-gray-500">
-                  Leave empty to hide the icon from the public site.
-                </p>
-                <Input
-                  id="instagram"
-                  name="instagram"
-                  label="Instagram URL"
-                  defaultValue={config.social.instagram}
-                  placeholder="https://instagram.com/username"
-                />
-                <Input
-                  id="youtube"
-                  name="youtube"
-                  label="YouTube URL"
-                  defaultValue={config.social.youtube}
-                  placeholder="https://youtube.com/@username"
-                />
-                <Input
-                  id="twitter"
-                  name="twitter"
-                  label="Twitter / X URL"
-                  defaultValue={config.social.twitter}
-                  placeholder="https://twitter.com/username"
-                />
-                <Input
-                  id="tiktok"
-                  name="tiktok"
-                  label="TikTok URL"
-                  defaultValue={config.social.tiktok}
-                  placeholder="https://tiktok.com/@username"
-                />
+                <p className="text-sm text-gray-500">Leave empty to hide the icon from the public site.</p>
+                <Input id="instagram" name="instagram" label="Instagram URL" defaultValue={config.social.instagram} placeholder="https://instagram.com/username" />
+                <Input id="youtube" name="youtube" label="YouTube URL" defaultValue={config.social.youtube} placeholder="https://youtube.com/@username" />
+                <Input id="twitter" name="twitter" label="Twitter / X URL" defaultValue={config.social.twitter} placeholder="https://twitter.com/username" />
+                <Input id="tiktok" name="tiktok" label="TikTok URL" defaultValue={config.social.tiktok} placeholder="https://tiktok.com/@username" />
               </div>
 
+              {profileInfoSave.state.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Profile info saved!
+                </div>
+              )}
+              {profileInfoSave.state.error && (
+                <p className="text-sm text-red-400">{profileInfoSave.state.error}</p>
+              )}
+
               <div className="flex items-center gap-4 pt-2">
-                <button type="submit" disabled={profilePending} className="admin-btn-cyan">
-                  {profilePending ? "Saving..." : "Save Profile Info"}
+                <button type="submit" disabled={profileInfoSave.pending} className="admin-btn-cyan">
+                  {profileInfoSave.pending ? "Saving..." : "Save Profile Info"}
                 </button>
                 <button type="button" onClick={() => router.push("/admin/dashboard")} className="admin-btn-outline">
                   Back to Dashboard
@@ -587,49 +524,37 @@ export function SettingsForm({
         {/* ─── API Integrations ─── */}
         <Card>
           <CardContent>
-            <form ref={apiKeysFormRef} action={handleApiKeysSubmit} className="space-y-6">
+            <form ref={apiKeysFormRef} action={handleSaveApiKeys} className="space-y-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Developer / API Integrations</h3>
                 <p className="text-sm text-gray-400">
                   Provide your own API keys to automatically display your latest videos and posts on your live website.
                   These are stored securely and never exposed to the client.
                 </p>
-
                 <Input
-                  id="youtubeApiKey"
-                  name="youtubeApiKey"
-                  label="YouTube Data API Key"
-                  type="password"
-                  value={youtubeApiKey}
-                  onChange={(e) => setYoutubeApiKey(e.target.value)}
-                  placeholder="AIzaSyA-..."
-                  autoComplete="off"
+                  id="youtubeApiKey" name="youtubeApiKey" label="YouTube Data API Key" type="password"
+                  value={youtubeApiKey} onChange={(e) => setYoutubeApiKey(e.target.value)}
+                  placeholder="AIzaSyA-..." autoComplete="off"
                 />
-
                 <Input
-                  id="instagramApiKey"
-                  name="instagramApiKey"
-                  label="Instagram Graph API Token"
-                  type="password"
-                  value={instagramApiKey}
-                  onChange={(e) => setInstagramApiKey(e.target.value)}
-                  placeholder="EAAloQ..."
-                  autoComplete="off"
+                  id="instagramApiKey" name="instagramApiKey" label="Instagram Graph API Token" type="password"
+                  value={instagramApiKey} onChange={(e) => setInstagramApiKey(e.target.value)}
+                  placeholder="EAAloQ..." autoComplete="off"
                 />
               </div>
 
-              {apiKeysState.success && (
+              {apiKeysSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                   API keys saved successfully!
                 </div>
               )}
-              {apiKeysState.error && (
-                <p className="text-sm text-red-400">{apiKeysState.error}</p>
+              {apiKeysSave.state.error && (
+                <p className="text-sm text-red-400">{apiKeysSave.state.error}</p>
               )}
 
               <div className="pt-2">
-                <button type="submit" disabled={apiKeysPending} className="admin-btn-cyan">
-                  {apiKeysPending ? "Saving..." : "Save API Keys"}
+                <button type="submit" disabled={apiKeysSave.pending} className="admin-btn-cyan">
+                  {apiKeysSave.pending ? "Saving..." : "Save API Keys"}
                 </button>
               </div>
             </form>
