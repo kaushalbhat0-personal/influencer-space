@@ -54,16 +54,44 @@ const heroDataSchema = z.object({
   ctaSecondaryLink: z.string().optional().default(""),
   liveBadgeText: z.string().optional().default(""),
   showLiveBadge: z
-    .string()
-    .optional()
-    .transform((v) => v === "on" || v === "true"),
+    .preprocess(
+      (v) => {
+        if (v === "on" || v === "true") return true;
+        if (v === "false") return false;
+        return v;
+      },
+      z.boolean().optional().default(false),
+    ),
   videoDesktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
   videoMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
   imageDesktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
   imageMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
 });
 
-const heroPartialSchema = heroDataSchema.partial();
+const heroPartialSchema = z.object({
+  videoUrl: z.string().optional(),
+  posterUrl: z.string().optional(),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  tagline: z.string().optional(),
+  ctaText: z.string().optional(),
+  ctaLink: z.string().optional(),
+  ctaSecondaryText: z.string().optional(),
+  ctaSecondaryLink: z.string().optional(),
+  liveBadgeText: z.string().optional(),
+  showLiveBadge: z.preprocess(
+    (v) => {
+      if (v === "on" || v === "true") return true;
+      if (v === "false") return false;
+      return v;
+    },
+    z.boolean().optional(),
+  ),
+  videoDesktopAlignment: z.enum(["top", "center", "bottom"]).optional(),
+  videoMobileAlignment: z.enum(["top", "center", "bottom"]).optional(),
+  imageDesktopAlignment: z.enum(["top", "center", "bottom"]).optional(),
+  imageMobileAlignment: z.enum(["top", "center", "bottom"]).optional(),
+}).partial();
 
 const socialChannelSchema = z.object({
   youtubeChannelId: z.string().optional().default(""),
@@ -213,21 +241,30 @@ export async function updateHeroPartial(
   tenantId: string,
   partial: Record<string, unknown>,
 ): Promise<SettingsActionState> {
-  const sanitized = { ...partial };
-  if (typeof sanitized.showLiveBadge === "string") {
-    sanitized.showLiveBadge = sanitized.showLiveBadge === "on" || sanitized.showLiveBadge === "true";
-  }
+  console.log("--- START SAVE ---");
 
-  const parsed = heroPartialSchema.safeParse(sanitized);
+  const parsed = heroPartialSchema.safeParse(partial);
 
   if (!parsed.success) {
+    console.warn("updateHeroPartial — zod parse failed:", parsed.error.flatten());
     return { success: false, error: "Invalid hero data" };
   }
 
   try {
     const existing = await SettingsService.getHeroData(tenantId);
+    console.log("Existing DB Record:", JSON.stringify(existing));
+
+    console.log("Incoming Partial (parsed):", JSON.stringify(parsed.data));
+
     const merged = { ...existing, ...parsed.data };
+    console.log("Merged Object (What will be saved):", JSON.stringify(merged));
+
     await SettingsService.updateHeroData(tenantId, merged);
+
+    const fullRecord = await SettingsService.getHeroData(tenantId);
+    console.log("Full Record after save:", JSON.stringify(fullRecord));
+    console.log("--- END SAVE ---");
+
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };

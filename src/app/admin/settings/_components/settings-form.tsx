@@ -91,7 +91,7 @@ export function SettingsForm({
   const [liveTagline, setLiveTagline] = useState(config.tagline || "");
   const [liveBio, setLiveBio] = useState(config.bio || "");
   const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
-  const [liveShowBadge, setLiveShowBadge] = useState(heroData.showLiveBadge || false);
+  const [liveShowBadge, setLiveShowBadge] = useState<boolean>(!!heroData.showLiveBadge);
 
   const [heroTitle, setHeroTitle] = useState(heroData.title || "");
   const [heroSubtitle, setHeroSubtitle] = useState(heroData.subtitle || "");
@@ -109,7 +109,7 @@ export function SettingsForm({
   useEffect(() => { setCtaSecondaryText(heroData.ctaSecondaryText || ""); }, [heroData.ctaSecondaryText]);
   useEffect(() => { setCtaSecondaryLink(heroData.ctaSecondaryLink || ""); }, [heroData.ctaSecondaryLink]);
   useEffect(() => { setLiveBadgeText(heroData.liveBadgeText || ""); }, [heroData.liveBadgeText]);
-  useEffect(() => { setLiveShowBadge(heroData.showLiveBadge || false); }, [heroData.showLiveBadge]);
+  useEffect(() => { setLiveShowBadge(!!heroData.showLiveBadge); }, [heroData.showLiveBadge]);
   useEffect(() => { setVideoUrl(heroData.videoUrl || ""); }, [heroData.videoUrl]);
   useEffect(() => { setPosterUrl(heroData.posterUrl || ""); }, [heroData.posterUrl]);
   useEffect(() => { setProfileImage(config.profileImage || ""); }, [config.profileImage]);
@@ -238,9 +238,6 @@ export function SettingsForm({
     setHeroDetailsSave({ pending: true, state: { success: false } });
 
     const payload = {
-      heroTitle: heroTitle,
-      heroSubtitle: heroSubtitle,
-      heroTagline: heroTagline,
       title: heroTitle,
       subtitle: heroSubtitle,
       tagline: heroTagline,
@@ -252,9 +249,18 @@ export function SettingsForm({
       showLiveBadge: liveShowBadge,
     };
 
+    console.log("🔍 SENDING hero details payload:", JSON.stringify(payload, null, 2));
+
     const result = await updateHeroPartial(tenantId, payload);
+
+    console.log("🔍 RECEIVED updateHeroPartial result:", result);
+
+    if (result.success) {
+      console.log("🔍 Hero details saved successfully, refreshing...");
+      router.refresh();
+    }
+
     setHeroDetailsSave({ pending: false, state: result });
-    if (result.success) router.refresh();
   }
 
   async function handleSaveProfilePicture() {
