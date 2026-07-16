@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { PRODUCTS_ROUTE, AFFILIATES_ROUTE, GALLERY_ROUTE, GAMES_ROUTE, MILESTONES_ROUTE } from "@/lib/constants";
+import { PRODUCTS_ROUTE, GALLERY_ROUTE, GAMES_ROUTE, MILESTONES_ROUTE } from "@/lib/constants";
 
 interface StatCardProps {
   label: string;
@@ -103,11 +103,11 @@ export function DashboardClient({ productCount, activeProductCount, affiliateCou
   ];
 
   const quickActions = [
-    { href: `${PRODUCTS_ROUTE}/new`, label: "Add Product", color: "admin-btn-cyan" },
-    { href: `${AFFILIATES_ROUTE}/new`, label: "Add Affiliate", color: "admin-btn-gold" },
-    { href: `${GALLERY_ROUTE}/new`, label: "Add Gallery", color: "admin-btn-outline" },
-    { href: `${MILESTONES_ROUTE}/new`, label: "Add Milestone", color: "admin-btn-outline" },
-    { href: `${GAMES_ROUTE}/new`, label: "Add Game", color: "admin-btn-outline" },
+    { href: `${PRODUCTS_ROUTE}`, label: "Add Product", color: "admin-btn-cyan" },
+    { href: "/admin/links", label: "Add Link", color: "admin-btn-gold" },
+    { href: `${GALLERY_ROUTE}`, label: "Add Media", color: "admin-btn-outline" },
+    { href: `${MILESTONES_ROUTE}`, label: "Add Milestone", color: "admin-btn-outline" },
+    { href: `${GAMES_ROUTE}`, label: "Add Game", color: "admin-btn-outline" },
     { href: "/admin/settings", label: "Settings", color: "admin-btn-cyan" },
   ];
 

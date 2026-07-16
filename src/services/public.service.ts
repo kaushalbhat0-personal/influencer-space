@@ -1,4 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import { SettingsService } from "@/services/settings.service";
+
+export type PublicHeroData = {
+  videoUrl: string;
+  posterUrl: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  ctaSecondaryText: string;
+  ctaSecondaryLink: string;
+  liveBadgeText: string;
+  showLiveBadge: boolean;
+};
 
 export type PublicProfile = {
   name: string;
@@ -52,6 +65,7 @@ export type PublicMilestoneData = {
 
 export type PublicPageData = {
   profile: PublicProfile;
+  hero: PublicHeroData;
   products: PublicProductData[];
   links: PublicLinkData[];
   gallery: PublicGalleryData[];
@@ -72,6 +86,7 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     prisma.setting.findUnique({
       where: { tenantId_key: { tenantId, key: "influencer_data" } },
     }),
+    SettingsService.getHeroData(tenantId),
     prisma.product.findMany({
       where: { tenantId, isActive: true },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
@@ -94,7 +109,7 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     }),
   ]);
 
-  const [settingRow, products, links, galleryRows, milestones] = data;
+  const [settingRow, heroRaw, products, links, galleryRows, milestones] = data;
 
   const profile: PublicProfile = settingRow?.value
     ? { ...defaultProfile, ...(settingRow.value as Partial<PublicProfile>) }
@@ -107,5 +122,17 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     isVideo: g.mediaType === "video",
   }));
 
-  return { profile, products, links, gallery, milestones };
+  const hero: PublicHeroData = {
+    videoUrl: heroRaw.videoUrl || "",
+    posterUrl: heroRaw.posterUrl || "",
+    subtitle: heroRaw.subtitle || "",
+    ctaText: heroRaw.ctaText || "",
+    ctaLink: heroRaw.ctaLink || "",
+    ctaSecondaryText: heroRaw.ctaSecondaryText || "",
+    ctaSecondaryLink: heroRaw.ctaSecondaryLink || "",
+    liveBadgeText: heroRaw.liveBadgeText || "",
+    showLiveBadge: Boolean(heroRaw.showLiveBadge),
+  };
+
+  return { profile, hero, products, links, gallery, milestones };
 }

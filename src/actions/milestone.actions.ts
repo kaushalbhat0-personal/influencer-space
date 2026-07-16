@@ -111,23 +111,6 @@ export async function createMilestone(
   }
 }
 
-export type MilestoneActionState = {
-  success: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export async function createMilestoneWithState(
-  _prevState: MilestoneActionState,
-  formData: FormData,
-): Promise<MilestoneActionState> {
-  const tenant = await getTenantContext();
-  if (!tenant) return { success: false, error: "No tenant configured" };
-  const result = await createMilestone(tenant.id, formData);
-  if (!result.success) return { success: false, error: result.error };
-  return { success: true };
-}
-
 export async function updateExistingMilestone(
   tenantId: string,
   formData: FormData,
@@ -181,17 +164,6 @@ export async function updateExistingMilestone(
       error: error instanceof Error ? error.message : "Failed to update milestone",
     };
   }
-}
-
-export async function updateMilestoneWithState(
-  _prevState: MilestoneActionState,
-  formData: FormData,
-): Promise<MilestoneActionState> {
-  const tenant = await getTenantContext();
-  if (!tenant) return { success: false, error: "No tenant configured" };
-  const result = await updateExistingMilestone(tenant.id, formData);
-  if (!result.success) return { success: false, error: result.error };
-  return { success: true };
 }
 
 export async function removeMilestone(

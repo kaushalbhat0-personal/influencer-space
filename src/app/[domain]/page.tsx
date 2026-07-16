@@ -41,7 +41,7 @@ export default async function PublicPage({
   if (!pageData) notFound();
 
   const { tenantId, data } = pageData;
-  const { profile, products, links, gallery, milestones } = data;
+  const { profile, hero, products, links, gallery, milestones } = data;
   const c = profile.colors;
 
   return (
@@ -56,6 +56,19 @@ export default async function PublicPage({
       }
     >
       <div className="mx-auto max-w-2xl px-4 py-8">
+        {/* ─── Live Badge ─── */}
+        {hero.showLiveBadge && hero.liveBadgeText && (
+          <div className="mb-5 flex items-center justify-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+            </span>
+            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">
+              {hero.liveBadgeText}
+            </span>
+          </div>
+        )}
+
         {/* ─── Profile Header ─── */}
         <div className="flex flex-col items-center text-center">
           {profile.profileImage && (
@@ -71,6 +84,48 @@ export default async function PublicPage({
           {profile.tagline && (
             <p className="mt-1 text-sm text-zinc-400">{profile.tagline}</p>
           )}
+
+          {/* ─── Hero Subtitle ─── */}
+          {hero.subtitle && (
+            <p className="mt-2 max-w-xs text-base font-semibold text-zinc-300">
+              {hero.subtitle}
+            </p>
+          )}
+
+          {/* ─── CTA Buttons ─── */}
+          {(hero.ctaText || hero.ctaSecondaryText) && (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              {hero.ctaText && hero.ctaLink && (
+                <a
+                  href={hero.ctaLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--secondary)] px-5 py-2.5 text-sm font-semibold text-black transition-all hover:opacity-90 active:scale-95"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                  {hero.ctaText}
+                </a>
+              )}
+              {hero.ctaSecondaryText && hero.ctaSecondaryLink && (
+                <a
+                  href={hero.ctaSecondaryLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-white/10 active:scale-95"
+                >
+                  {hero.ctaSecondaryText}
+                </a>
+              )}
+            </div>
+          )}
+
           {profile.bio && (
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-zinc-500">
               {profile.bio}
@@ -120,6 +175,29 @@ export default async function PublicPage({
             )}
           </div>
         </div>
+
+        {/* ─── Hero Media ─── */}
+        {(hero.videoUrl || hero.posterUrl) && (
+          <div className="mt-8 overflow-hidden rounded-xl border border-white/10">
+            {hero.videoUrl ? (
+              <video
+                src={hero.videoUrl}
+                poster={hero.posterUrl || undefined}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="aspect-video w-full object-cover"
+              />
+            ) : (
+              <img
+                src={hero.posterUrl}
+                alt=""
+                className="aspect-video w-full object-cover"
+              />
+            )}
+          </div>
+        )}
 
         {/* ─── Links Section ─── */}
         {links.length > 0 && (
