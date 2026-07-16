@@ -2,7 +2,7 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { uploadFile } from "@/actions/upload.actions";
+import { supabaseClient, BUCKET } from "@/lib/supabase";
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
@@ -11,6 +11,7 @@ interface ImageUploadProps {
   folder?: string;
   label?: string;
   showDelete?: boolean;
+  tenantId: string;
 }
 
 export function ImageUpload({
@@ -20,6 +21,7 @@ export function ImageUpload({
   folder = "general",
   label = "Upload Image",
   showDelete = true,
+  tenantId,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage || null);
@@ -30,16 +32,12 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.log("🖼️ ImageUpload handleFileChange — file:", file.name, "size:", file.size, "type:", file.type);
-
     if (file.size > 5 * 1024 * 1024) {
-      console.log("🖼️ ImageUpload — file too large:", file.size);
       setError("File size must be less than 5MB");
       return;
     }
 
     if (!file.type.startsWith("image/")) {
-      console.log("🖼️ ImageUpload — invalid file type:", file.type);
       setError("Only image files are allowed");
       return;
     }
@@ -48,23 +46,32 @@ export function ImageUpload({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", folder);
-      const result = await uploadFile(formData);
-      if (result.success) {
-        const url = result.publicUrl;
-        console.log("🖼️ ImageUpload upload success — calling onUpload with:", url);
-        setPreview(url);
-        onUpload(url);
-      } else {
-        const msg = result.error;
-        console.error("🖼️ ImageUpload upload failed:", msg);
-        setError(msg);
+      const ext = file.name.split(".").pop();
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
+
+      const { data, error: uploadError } = await supabaseClient.storage
+        .from(BUCKET)
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
       }
+
+      const { data: urlData } = supabaseClient.storage
+        .from(BUCKET)
+        .getPublicUrl(data.path);
+
+      const url = urlData.publicUrl;
+      setPreview(url);
+      onUpload(url);
     } catch (err) {
-      console.error("🖼️ ImageUpload upload failed (exception):", err);
-      setError(err instanceof Error ? err.message : "Upload failed");
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setError(msg);
     } finally {
       setIsUploading(false);
     }
@@ -72,8 +79,6 @@ export function ImageUpload({
 
   const handleDelete = async () => {
     if (!preview) return;
-
-    console.log("🖼️ ImageUpload handleDelete — preview:", preview);
 
     if (onDelete) {
       await onDelete(preview);
@@ -84,13 +89,11 @@ export function ImageUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    console.log("🖼️ ImageUpload handleDelete done");
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    console.log("🖼️ ImageUpload handleDrop — file:", file?.name);
     if (file && fileInputRef.current) {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);

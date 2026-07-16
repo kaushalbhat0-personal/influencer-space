@@ -47,6 +47,7 @@ export default async function SettingsPage() {
         role={session?.user?.role ?? "ADMIN"}
         youtubeApiKey={tenant?.youtubeApiKey ?? ""}
         instagramApiKey={tenant?.instagramApiKey ?? ""}
+        tenantId={tenantId}
       />
     </div>
   );

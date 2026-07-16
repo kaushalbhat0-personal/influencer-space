@@ -213,6 +213,8 @@ export function GalleryManager({
                 isUploading={isUploading}
                 setIsUploading={setIsUploading}
                 accept={isVideo ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp"}
+                tenantId={tenantId}
+                folder="gallery"
               />
             )}
             <input

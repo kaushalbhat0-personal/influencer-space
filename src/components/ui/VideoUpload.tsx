@@ -2,7 +2,7 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { uploadFile } from "@/actions/upload.actions";
+import { supabaseClient, BUCKET } from "@/lib/supabase";
 
 interface VideoUploadProps {
   onUpload: (url: string) => void;
@@ -10,6 +10,7 @@ interface VideoUploadProps {
   currentVideo?: string | null;
   folder?: string;
   label?: string;
+  tenantId: string;
 }
 
 export function VideoUpload({
@@ -18,6 +19,7 @@ export function VideoUpload({
   currentVideo,
   folder = "hero",
   label = "Upload Video",
+  tenantId,
 }: VideoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentVideo || null);
@@ -27,8 +29,6 @@ export function VideoUpload({
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    console.log("🎬 VideoUpload handleFileChange — file:", file.name, "size:", file.size, "type:", file.type);
 
     if (file.size > 50 * 1024 * 1024) {
       setError("Video size must be less than 50MB");
@@ -44,30 +44,38 @@ export function VideoUpload({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", folder);
+      const ext = file.name.split(".").pop();
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
 
-      const result = await uploadFile(formData);
-      if (result.success) {
-        const url = result.publicUrl;
-        console.log("🎬 VideoUpload upload success — url:", url);
-        setPreview(url);
-        onUpload(url);
-      } else {
-        console.error("🎬 VideoUpload upload failed:", result.error);
-        setError(result.error || "Upload failed");
+      const { data, error: uploadError } = await supabaseClient.storage
+        .from(BUCKET)
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message);
       }
+
+      const { data: urlData } = supabaseClient.storage
+        .from(BUCKET)
+        .getPublicUrl(data.path);
+
+      const url = urlData.publicUrl;
+      setPreview(url);
+      onUpload(url);
     } catch (err) {
-      console.error("🎬 VideoUpload upload exception:", err);
-      setError(err instanceof Error ? err.message : "Upload failed");
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setError(msg);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleRemove = async () => {
-    console.log("🎬 VideoUpload handleRemove — preview:", preview);
     if (preview && onDelete) {
       await onDelete(preview);
     }

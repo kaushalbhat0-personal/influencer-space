@@ -19,12 +19,14 @@ export function SettingsForm({
   role,
   youtubeApiKey: initialYoutubeKey,
   instagramApiKey: initialInstagramKey,
+  tenantId,
 }: {
   config: InfluencerDataType;
   heroData: HeroDataType;
   role: "SUPER_ADMIN" | "ADMIN";
   youtubeApiKey: string;
   instagramApiKey: string;
+  tenantId: string;
 }) {
   const router = useRouter();
   const profileFormRef = useRef<HTMLFormElement>(null);
@@ -117,6 +119,7 @@ export function SettingsForm({
                 currentImage={profileImage || null}
                 folder="profile"
                 label="Profile Image"
+                tenantId={tenantId}
               />
             </div>
 
@@ -219,6 +222,7 @@ export function SettingsForm({
                 currentVideo={videoUrl || null}
                 folder="hero"
                 label="Hero Video"
+                tenantId={tenantId}
               />
 
               <ImageUpload
@@ -227,6 +231,7 @@ export function SettingsForm({
                 currentImage={posterUrl || null}
                 folder="hero"
                 label="Hero Poster Image"
+                tenantId={tenantId}
               />
 
               <Input

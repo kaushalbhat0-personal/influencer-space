@@ -1,12 +1,15 @@
 "use client";
 
 import { useRef, ChangeEvent, useMemo } from "react";
+import { supabaseClient, BUCKET } from "@/lib/supabase";
 
 interface ImageUploaderProps {
   onUploadSuccess: (url: string) => void;
   isUploading: boolean;
   setIsUploading: (val: boolean) => void;
   accept?: string;
+  tenantId: string;
+  folder?: string;
 }
 
 export function ImageUploader({
@@ -14,6 +17,8 @@ export function ImageUploader({
   isUploading,
   setIsUploading,
   accept = "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime",
+  tenantId,
+  folder = "gallery",
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -33,18 +38,29 @@ export function ImageUploader({
     setIsUploading(true);
 
     try {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("folder", "gallery");
+      const ext = file.name.split(".").pop();
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
 
-      const res = await fetch("/api/upload", { method: "POST", body });
-      const data = await res.json();
+      const { data, error: uploadError } = await supabaseClient.storage
+        .from(BUCKET)
+        .upload(path, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
 
-      if (res.ok && data.url) {
-        onUploadSuccess(data.url);
+      if (uploadError) {
+        throw new Error(uploadError.message);
       }
+
+      const { data: urlData } = supabaseClient.storage
+        .from(BUCKET)
+        .getPublicUrl(data.path);
+
+      onUploadSuccess(urlData.publicUrl);
     } catch {
-      // upload failed silently
+      // upload failed — UI shows the spinner stopping, managers handle errors via toast
     } finally {
       setIsUploading(false);
       if (inputRef.current) inputRef.current.value = "";

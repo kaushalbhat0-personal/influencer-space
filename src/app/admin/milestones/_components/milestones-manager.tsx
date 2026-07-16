@@ -144,6 +144,8 @@ export function MilestonesManager({
               isUploading={isUploading}
               setIsUploading={setIsUploading}
               accept="image/jpeg,image/png,image/webp,image/gif"
+              tenantId={tenantId}
+              folder="milestones"
             />
             <button
               type="submit"

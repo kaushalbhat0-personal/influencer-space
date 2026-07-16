@@ -140,7 +140,7 @@ export async function updateInfluencerData(
     return { success: true };
   } catch (error) {
     console.error("⚙️ updateInfluencerData error:", error);
-    return { success: false, error: "Failed to update settings" };
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
@@ -182,7 +182,7 @@ export async function updateThemeSettings(
     return { success: true };
   } catch (error) {
     console.error("⚙️ updateThemeSettings error:", error);
-    return { success: false, error: "Failed to update theme settings" };
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
@@ -228,7 +228,7 @@ export async function updateHeroData(
     return { success: true };
   } catch (error) {
     console.error("updateHeroData error:", error);
-    return { success: false, error: "Failed to update hero settings" };
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
@@ -255,7 +255,7 @@ export async function updateSocialChannels(
     return { success: true };
   } catch (error) {
     console.error("updateSocialChannels error:", error);
-    return { success: false, error: "Failed to update social channels" };
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
@@ -284,7 +284,7 @@ export async function updateApiKeys(
     return { success: true };
   } catch (error) {
     console.error("updateApiKeys error:", error);
-    return { success: false, error: "Failed to update API keys" };
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
