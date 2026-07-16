@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getPublicPageData } from "@/services/public.service";
 import { BuyNowButton } from "./_components/buy-now-button";
+import { HeroBanner } from "./_components/hero-banner";
 import type { PublicPageData } from "@/services/public.service";
 
 export const dynamic = "force-dynamic";
@@ -55,22 +56,25 @@ export default async function PublicPage({
         } as React.CSSProperties
       }
     >
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* ─── Live Badge ─── */}
-        {hero.showLiveBadge && hero.liveBadgeText && (
-          <div className="mb-5 flex items-center justify-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-            </span>
-            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">
-              {hero.liveBadgeText}
-            </span>
-          </div>
-        )}
+      {/* ─── Hero Banner ─── */}
+      <HeroBanner videoUrl={hero.videoUrl || undefined} posterUrl={hero.posterUrl || undefined} />
 
-        {/* ─── Profile Header ─── */}
-        <div className="flex flex-col items-center text-center">
+      <div className="mx-auto max-w-2xl px-4">
+        {/* ─── Profile Header (overlaps banner) ─── */}
+        <div className="relative z-10 -mt-16 flex flex-col items-center text-center">
+          {/* ─── Live Badge ─── */}
+          {hero.showLiveBadge && hero.liveBadgeText && (
+            <div className="mb-4 flex items-center justify-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-red-400">
+                {hero.liveBadgeText}
+              </span>
+            </div>
+          )}
+
           {profile.profileImage && (
             <div className="relative mb-4 h-24 w-24 overflow-hidden rounded-full border-2 border-white/10 ring-2 ring-white/5">
               <img
@@ -85,14 +89,12 @@ export default async function PublicPage({
             <p className="mt-1 text-sm text-zinc-400">{profile.tagline}</p>
           )}
 
-          {/* ─── Hero Subtitle ─── */}
           {hero.subtitle && (
             <p className="mt-2 max-w-xs text-base font-semibold text-zinc-300">
               {hero.subtitle}
             </p>
           )}
 
-          {/* ─── CTA Buttons ─── */}
           {(hero.ctaText || hero.ctaSecondaryText) && (
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
               {hero.ctaText && hero.ctaLink && (
@@ -175,29 +177,6 @@ export default async function PublicPage({
             )}
           </div>
         </div>
-
-        {/* ─── Hero Media ─── */}
-        {(hero.videoUrl || hero.posterUrl) && (
-          <div className="mt-8 overflow-hidden rounded-xl border border-white/10">
-            {hero.videoUrl ? (
-              <video
-                src={hero.videoUrl}
-                poster={hero.posterUrl || undefined}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="aspect-video w-full object-cover"
-              />
-            ) : (
-              <img
-                src={hero.posterUrl}
-                alt=""
-                className="aspect-video w-full object-cover"
-              />
-            )}
-          </div>
-        )}
 
         {/* ─── Links Section ─── */}
         {links.length > 0 && (
@@ -389,7 +368,7 @@ export default async function PublicPage({
         )}
 
         {/* ─── Footer ─── */}
-        <footer className="mt-12 border-t border-white/5 pt-6 text-center">
+        <footer className="mt-12 border-t border-white/5 pt-6 pb-8 text-center">
           <p className="text-xs text-zinc-700">
             Powered by{" "}
             <span className="font-semibold text-zinc-500">CreatorStore</span>

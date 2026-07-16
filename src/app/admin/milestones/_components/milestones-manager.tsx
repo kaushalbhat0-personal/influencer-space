@@ -8,6 +8,24 @@ import {
 } from "@/actions/milestone.actions";
 import type { MilestoneData } from "@/actions/milestone.actions";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
+
+async function uploadFile(file: File, tenantId: string, folder: string): Promise<string> {
+  const ext = file.name.split(".").pop();
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(7);
+  const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
+
+  const { data, error: uploadError } = await supabaseClient.storage
+    .from(BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: true });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
+  return urlData.publicUrl;
+}
 
 export function MilestonesManager({
   tenantId,
@@ -26,6 +44,7 @@ export function MilestonesManager({
   const [stats, setStats] = useState("");
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
 
   function showToast(type: "success" | "error", message: string) {
@@ -40,18 +59,33 @@ export function MilestonesManager({
     setImageUrl("");
     setStats("");
     setError("");
+    setSelectedFile(null);
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!year.trim() || !title.trim() || !description.trim()) return;
 
+    let finalImageUrl = imageUrl.trim();
+
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        finalImageUrl = await uploadFile(selectedFile, tenantId, "milestones");
+      } catch {
+        showToast("error", "Upload failed");
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
     setError("");
     const formData = new FormData();
     formData.set("year", year.trim());
     formData.set("title", title.trim());
     formData.set("description", description.trim());
-    formData.set("imageUrl", imageUrl.trim());
+    formData.set("imageUrl", finalImageUrl);
     formData.set("stats", stats.trim());
 
     startTransition(async () => {
@@ -69,12 +103,18 @@ export function MilestonesManager({
   async function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
 
+    const milestone = milestones.find((m) => m.id === id);
+
     setMilestones((prev) => prev.filter((m) => m.id !== id));
 
     startTransition(async () => {
       const result = await removeMilestone(id, tenantId);
       if (result.success) {
         showToast("success", `"${name}" deleted`);
+        if (milestone?.imageUrl) {
+          const filePath = extractSupabaseFilePath(milestone.imageUrl);
+          if (filePath) await deleteSupabaseFile(filePath);
+        }
         router.refresh();
       } else {
         setMilestones((prev) => [...prev]);
@@ -140,12 +180,9 @@ export function MilestonesManager({
           />
           <div className="flex flex-col gap-3 sm:flex-row">
             <ImageUploader
-              onUploadSuccess={(uploadedUrl) => setImageUrl(uploadedUrl)}
+              onChange={(file) => setSelectedFile(file)}
               isUploading={isUploading}
-              setIsUploading={setIsUploading}
               accept="image/jpeg,image/png,image/webp,image/gif"
-              tenantId={tenantId}
-              folder="milestones"
             />
             <button
               type="submit"

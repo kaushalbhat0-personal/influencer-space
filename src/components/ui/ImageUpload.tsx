@@ -1,34 +1,42 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
-import { motion } from "framer-motion";
-import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { useState, useRef, ChangeEvent, useEffect } from "react";
 
 interface ImageUploadProps {
-  onUpload: (url: string) => void;
+  onChange: (file: File | null, previewUrl: string) => void;
   onDelete?: (url: string) => Promise<void>;
-  currentImage?: string | null;
-  folder?: string;
+  currentUrl?: string | null;
   label?: string;
   showDelete?: boolean;
-  tenantId: string;
 }
 
 export function ImageUpload({
-  onUpload,
+  onChange,
   onDelete,
-  currentImage,
-  folder = "general",
+  currentUrl,
   label = "Upload Image",
   showDelete = true,
-  tenantId,
 }: ImageUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(currentImage || null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (currentUrl && !preview) {
+      setPreview(currentUrl);
+    }
+  }, [currentUrl, preview]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -42,50 +50,31 @@ export function ImageUpload({
       return;
     }
 
-    setIsUploading(true);
     setError(null);
 
-    try {
-      const ext = file.name.split(".").pop();
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(7);
-      const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
-
-      const { data, error: uploadError } = await supabaseClient.storage
-        .from(BUCKET)
-        .upload(path, file, {
-          cacheControl: "3600",
-          upsert: true,
-        });
-
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
-
-      const { data: urlData } = supabaseClient.storage
-        .from(BUCKET)
-        .getPublicUrl(data.path);
-
-      const url = urlData.publicUrl;
-      setPreview(url);
-      onUpload(url);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Upload failed";
-      setError(msg);
-    } finally {
-      setIsUploading(false);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
     }
+
+    const previewUrl = URL.createObjectURL(file);
+    objectUrlRef.current = previewUrl;
+    setPreview(previewUrl);
+    onChange(file, previewUrl);
   };
 
   const handleDelete = async () => {
-    if (!preview) return;
+    const urlToDelete = currentUrl || preview;
+    if (urlToDelete && onDelete) {
+      await onDelete(urlToDelete);
+    }
 
-    if (onDelete) {
-      await onDelete(preview);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
     }
 
     setPreview(null);
-    onUpload("");
+    onChange(null, "");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -110,17 +99,12 @@ export function ImageUpload({
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => fileInputRef.current?.click()}
-        className={`
-          relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center
-          rounded-lg border-2 border-dashed border-gray-300 transition-colors
-          hover:border-s8ul-cyan hover:bg-s8ul-cyan/5
-          ${isUploading ? "opacity-50" : ""}
-        `}
+        className="relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 transition-colors hover:border-s8ul-cyan hover:bg-s8ul-cyan/5"
       >
-        {preview ? (
+        {(preview || currentUrl) ? (
           <div className="relative w-full">
             <img
-              src={preview}
+              src={preview || currentUrl || ""}
               alt="Upload preview"
               className="h-auto max-h-48 w-full rounded-lg object-cover"
             />
@@ -145,7 +129,7 @@ export function ImageUpload({
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <p className="mt-2 text-sm text-gray-500">{isUploading ? "Uploading..." : "Click or drag & drop to upload"}</p>
+            <p className="mt-2 text-sm text-gray-500">Click or drag & drop to upload</p>
             <p className="text-xs text-gray-400">PNG, JPG, WebP up to 5MB</p>
           </div>
         )}
@@ -155,25 +139,10 @@ export function ImageUpload({
           accept="image/*"
           onChange={handleFileChange}
           className="hidden"
-          disabled={isUploading}
         />
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
-
-      {isUploading && (
-        <div className="flex items-center gap-2">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200">
-            <motion.div
-              className="h-full bg-s8ul-cyan"
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-            />
-          </div>
-          <span className="text-xs text-gray-500">Uploading...</span>
-        </div>
-      )}
     </div>
   );
 }

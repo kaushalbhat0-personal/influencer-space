@@ -7,11 +7,28 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { VideoUpload } from "@/components/ui/VideoUpload";
-import { StorageService } from "@/services/storage.service";
+import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
 import { updateInfluencerData, updateHeroData, updateApiKeys } from "@/actions/settings.actions";
 import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.actions";
+
+async function uploadFile(file: File, tenantId: string, folder: string): Promise<string> {
+  const ext = file.name.split(".").pop();
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(7);
+  const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
+
+  const { data, error: uploadError } = await supabaseClient.storage
+    .from(BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: true });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
+  return urlData.publicUrl;
+}
 
 export function SettingsForm({
   config,
@@ -39,35 +56,102 @@ export function SettingsForm({
   const [heroPending, setHeroPending] = useState(false);
   const [apiKeysPending, setApiKeysPending] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(config.profileImage || "");
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
+  const [posterFile, setPosterFile] = useState<File | null>(null);
   const [youtubeApiKey, setYoutubeApiKey] = useState(initialYoutubeKey);
   const [instagramApiKey, setInstagramApiKey] = useState(initialInstagramKey);
 
-  async function handleImageDelete(url: string) {
-    const path = StorageService.extractPathFromUrl(url);
-    if (path) await StorageService.delete(path);
-  }
-
   async function handleProfileSubmit(formData: FormData) {
-    if (profileImage) formData.set("profileImage", profileImage);
     setProfilePending(true);
     setProfileState({ success: false });
+
+    const originalProfileImage = config.profileImage || "";
+
+    if (profileImageFile) {
+      try {
+        const url = await uploadFile(profileImageFile, tenantId, "profile");
+        setProfileImage(url);
+        formData.set("profileImage", url);
+      } catch (err) {
+        setProfileState({ success: false, error: err instanceof Error ? err.message : "Profile image upload failed" });
+        setProfilePending(false);
+        return;
+      }
+    } else if (profileImage) {
+      formData.set("profileImage", profileImage);
+    }
+
     const result = await updateInfluencerData(tenantId, profileState, formData);
     setProfileState(result);
     setProfilePending(false);
-    if (result.success) router.refresh();
+
+    if (result.success) {
+      const finalUrl = (formData.get("profileImage") as string) || "";
+      if (originalProfileImage && originalProfileImage !== finalUrl) {
+        const oldPath = extractSupabaseFilePath(originalProfileImage);
+        if (oldPath) await deleteSupabaseFile(oldPath);
+      }
+      router.refresh();
+    }
   }
 
   async function handleHeroSubmit(formData: FormData) {
-    if (videoUrl) formData.set("videoUrl", videoUrl);
-    if (posterUrl) formData.set("posterUrl", posterUrl);
     setHeroPending(true);
     setHeroState({ success: false });
+
+    const originalVideoUrl = heroData.videoUrl || "";
+    const originalPosterUrl = heroData.posterUrl || "";
+
+    if (videoFile) {
+      try {
+        const url = await uploadFile(videoFile, tenantId, "hero");
+        setVideoUrl(url);
+        formData.set("videoUrl", url);
+      } catch (err) {
+        setHeroState({ success: false, error: err instanceof Error ? err.message : "Video upload failed" });
+        setHeroPending(false);
+        return;
+      }
+    } else if (videoUrl) {
+      formData.set("videoUrl", videoUrl);
+    }
+
+    if (posterFile) {
+      try {
+        const url = await uploadFile(posterFile, tenantId, "hero");
+        setPosterUrl(url);
+        formData.set("posterUrl", url);
+      } catch (err) {
+        setHeroState({ success: false, error: err instanceof Error ? err.message : "Poster upload failed" });
+        setHeroPending(false);
+        return;
+      }
+    } else if (posterUrl) {
+      formData.set("posterUrl", posterUrl);
+    }
+
     const result = await updateHeroData(tenantId, heroState, formData);
     setHeroState(result);
     setHeroPending(false);
-    if (result.success) router.refresh();
+
+    if (result.success) {
+      const finalVideoUrl = (formData.get("videoUrl") as string) || "";
+      if (originalVideoUrl && originalVideoUrl !== finalVideoUrl) {
+        const oldPath = extractSupabaseFilePath(originalVideoUrl);
+        if (oldPath) await deleteSupabaseFile(oldPath);
+      }
+
+      const finalPosterUrl = (formData.get("posterUrl") as string) || "";
+      if (originalPosterUrl && originalPosterUrl !== finalPosterUrl) {
+        const oldPath = extractSupabaseFilePath(originalPosterUrl);
+        if (oldPath) await deleteSupabaseFile(oldPath);
+      }
+
+      router.refresh();
+    }
   }
 
   async function handleApiKeysSubmit(formData: FormData) {
@@ -114,12 +198,12 @@ export function SettingsForm({
                 required
               />
               <ImageUpload
-                onUpload={setProfileImage}
-                onDelete={handleImageDelete}
-                currentImage={profileImage || null}
-                folder="profile"
+                onChange={(file) => {
+                  setProfileImageFile(file);
+                  if (!file) setProfileImage("");
+                }}
+                currentUrl={profileImage || null}
                 label="Profile Image"
-                tenantId={tenantId}
               />
             </div>
 
@@ -217,21 +301,21 @@ export function SettingsForm({
               </p>
 
               <VideoUpload
-                onUpload={setVideoUrl}
-                onDelete={handleImageDelete}
-                currentVideo={videoUrl || null}
-                folder="hero"
+                onChange={(file) => {
+                  setVideoFile(file);
+                  if (!file) setVideoUrl("");
+                }}
+                currentUrl={videoUrl || null}
                 label="Hero Video"
-                tenantId={tenantId}
               />
 
               <ImageUpload
-                onUpload={setPosterUrl}
-                onDelete={handleImageDelete}
-                currentImage={posterUrl || null}
-                folder="hero"
+                onChange={(file) => {
+                  setPosterFile(file);
+                  if (!file) setPosterUrl("");
+                }}
+                currentUrl={posterUrl || null}
                 label="Hero Poster Image"
-                tenantId={tenantId}
               />
 
               <Input

@@ -9,6 +9,24 @@ import {
 } from "@/actions/gallery.actions";
 import type { GalleryItemData } from "@/actions/gallery.actions";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
+
+async function uploadFile(file: File, tenantId: string, folder: string): Promise<string> {
+  const ext = file.name.split(".").pop();
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(7);
+  const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
+
+  const { data, error: uploadError } = await supabaseClient.storage
+    .from(BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: true });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
+  return urlData.publicUrl;
+}
 
 function getYouTubeEmbed(url: string): string | null {
   const match = url.match(
@@ -68,6 +86,7 @@ export function GalleryManager({
   const [videoSource, setVideoSource] = useState<"upload" | "youtube">("upload");
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
 
   function showToast(type: "success" | "error", message: string) {
@@ -81,16 +100,32 @@ export function GalleryManager({
     setIsVideo(false);
     setVideoSource("upload");
     setError("");
+    setSelectedFile(null);
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!url.trim()) return;
+
+    let finalUrl = url.trim();
+
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        finalUrl = await uploadFile(selectedFile, tenantId, "gallery");
+      } catch {
+        showToast("error", "Upload failed");
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
+    if (!finalUrl) return;
 
     setError("");
     startTransition(async () => {
       const result = await createGalleryItem(tenantId, {
-        url: url.trim(),
+        url: finalUrl,
         caption: caption.trim() || undefined,
         isVideo,
       });
@@ -126,12 +161,18 @@ export function GalleryManager({
   async function handleDelete(id: string, caption: string) {
     if (!window.confirm(`Delete "${caption || "this item"}"? This cannot be undone.`)) return;
 
+    const item = items.find((i) => i.id === id);
+
     setItems((prev) => prev.filter((item) => item.id !== id));
 
     startTransition(async () => {
       const result = await removeGalleryItem(id, tenantId);
       if (result.success) {
         showToast("success", "Item deleted");
+        if (item?.url) {
+          const filePath = extractSupabaseFilePath(item.url);
+          if (filePath) await deleteSupabaseFile(filePath);
+        }
         router.refresh();
       } else {
         setItems(items);
@@ -209,12 +250,12 @@ export function GalleryManager({
               />
             ) : (
               <ImageUploader
-                onUploadSuccess={(uploadedUrl) => setUrl(uploadedUrl)}
+                onChange={(file) => {
+                  setSelectedFile(file);
+                  setUrl(file ? "file-selected" : "");
+                }}
                 isUploading={isUploading}
-                setIsUploading={setIsUploading}
                 accept={isVideo ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp"}
-                tenantId={tenantId}
-                folder="gallery"
               />
             )}
             <input
@@ -226,7 +267,7 @@ export function GalleryManager({
             />
             <button
               type="submit"
-              disabled={pending || isUploading || !url.trim()}
+              disabled={pending || isUploading || (!selectedFile && !url.trim())}
               className="admin-btn-cyan shrink-0 px-5 py-2.5"
             >
               {pending ? "Adding..." : "Add Media"}
