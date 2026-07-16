@@ -14,6 +14,12 @@ ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "razorpaySetupComplete" BOOLEAN NO
 ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0;
 
 -- ============================================================
+-- GalleryImage table: add missing columns
+-- ============================================================
+ALTER TABLE "GalleryImage" ADD COLUMN IF NOT EXISTS "mediaType" TEXT NOT NULL DEFAULT 'image';
+ALTER TABLE "GalleryImage" ADD COLUMN IF NOT EXISTS "videoUrl" TEXT;
+
+-- ============================================================
 -- AffiliateLink table: add order column
 -- ============================================================
 ALTER TABLE "AffiliateLink" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0;
