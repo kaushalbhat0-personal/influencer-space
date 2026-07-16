@@ -57,6 +57,7 @@ const heroDataSchema = z.object({
     .string()
     .optional()
     .transform((v) => v === "on" || v === "true"),
+  alignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
 });
 
 const socialChannelSchema = z.object({
@@ -188,6 +189,7 @@ export async function updateHeroData(
     ctaSecondaryLink: (formData.get("ctaSecondaryLink") as string) || "",
     liveBadgeText: (formData.get("liveBadgeText") as string) || "",
     showLiveBadge: (formData.get("showLiveBadge") as string) || "false",
+    alignment: (formData.get("alignment") as string) || "center",
   };
 
   const parsed = heroDataSchema.safeParse(rawData);

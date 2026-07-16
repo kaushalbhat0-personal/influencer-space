@@ -5,10 +5,18 @@ import { useState } from "react";
 interface HeroBannerProps {
   videoUrl?: string;
   posterUrl?: string;
+  alignment?: "top" | "center" | "bottom";
 }
 
-export function HeroBanner({ videoUrl, posterUrl }: HeroBannerProps) {
+const alignmentClasses: Record<string, string> = {
+  top: "object-top",
+  center: "object-center",
+  bottom: "object-bottom",
+};
+
+export function HeroBanner({ videoUrl, posterUrl, alignment = "center" }: HeroBannerProps) {
   const [videoEnded, setVideoEnded] = useState(false);
+  const objectPos = alignmentClasses[alignment] || "object-center";
 
   if (!videoUrl && !posterUrl) return null;
 
@@ -24,13 +32,13 @@ export function HeroBanner({ videoUrl, posterUrl }: HeroBannerProps) {
           playsInline
           loop={false}
           onEnded={() => setVideoEnded(true)}
-          className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700"
+          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${objectPos}`}
         />
       ) : posterUrl ? (
         <img
           src={posterUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700"
+          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${objectPos}`}
         />
       ) : null}
 

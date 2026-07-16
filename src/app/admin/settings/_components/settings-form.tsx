@@ -10,6 +10,7 @@ import { VideoUpload } from "@/components/ui/VideoUpload";
 import { supabaseClient, BUCKET } from "@/lib/supabase";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
 import { updateInfluencerData, updateHeroData, updateApiKeys } from "@/actions/settings.actions";
+import { HeroPreview } from "./hero-preview";
 import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.actions";
@@ -61,6 +62,9 @@ export function SettingsForm({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
   const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [heroAlignment, setHeroAlignment] = useState<"top" | "center" | "bottom">(
+    heroData.alignment as "top" | "center" | "bottom" || "center"
+  );
   const [youtubeApiKey, setYoutubeApiKey] = useState(initialYoutubeKey);
   const [instagramApiKey, setInstagramApiKey] = useState(initialInstagramKey);
 
@@ -132,6 +136,8 @@ export function SettingsForm({
     } else if (posterUrl) {
       formData.set("posterUrl", posterUrl);
     }
+
+    formData.set("alignment", heroAlignment);
 
     const result = await updateHeroData(tenantId, heroState, formData);
     setHeroState(result);
@@ -318,6 +324,31 @@ export function SettingsForm({
                 label="Hero Poster Image"
               />
 
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Focal Point Alignment
+                </label>
+                <p className="text-xs text-gray-500">
+                  Controls which part of the image/video stays visible when cropped on different screen sizes.
+                </p>
+                <div className="flex gap-2">
+                  {(["top", "center", "bottom"] as const).map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => setHeroAlignment(a)}
+                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
+                        heroAlignment === a
+                          ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
+                          : "bg-zinc-800 text-zinc-400 hover:text-zinc-300"
+                      }`}
+                    >
+                      Align {a.charAt(0).toUpperCase() + a.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <Input
                 id="heroTitle"
                 name="heroTitle"
@@ -393,6 +424,15 @@ export function SettingsForm({
                 />
                 <span className="text-sm text-gray-300">Show Live Badge</span>
               </label>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+              <h4 className="mb-3 text-sm font-semibold text-zinc-300">Preview</h4>
+              <HeroPreview
+                mediaUrl={posterUrl || videoUrl || heroData.posterUrl || heroData.videoUrl || ""}
+                mediaType={posterUrl || heroData.posterUrl ? "image" : "video"}
+                alignment={heroAlignment}
+              />
             </div>
 
             {heroState.success && (
