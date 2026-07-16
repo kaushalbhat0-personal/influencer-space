@@ -61,7 +61,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (user.role === "ADMIN") {
-            if (!credentials.tenantId || user.tenantId !== credentials.tenantId) {
+            if (credentials.tenantId && user.tenantId !== credentials.tenantId) {
               console.log(
                 "Admin login blocked — tenant mismatch:",
                 "user.tenantId:",
