@@ -41,7 +41,7 @@ export default async function SettingsPage() {
         </p>
       </div>
       <SettingsForm
-        key={`${config.name}-${config.profileImage}-${heroData.videoUrl}`}
+        key={JSON.stringify({ config, heroData })}
         config={config}
         heroData={heroData}
         role={session?.user?.role ?? "ADMIN"}

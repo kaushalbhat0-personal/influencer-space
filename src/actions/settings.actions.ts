@@ -209,6 +209,34 @@ export async function updateHeroData(
   }
 }
 
+export async function updateHeroPartial(
+  tenantId: string,
+  partial: Record<string, unknown>,
+): Promise<SettingsActionState> {
+  const sanitized = { ...partial };
+  if (typeof sanitized.showLiveBadge === "string") {
+    sanitized.showLiveBadge = sanitized.showLiveBadge === "on" || sanitized.showLiveBadge === "true";
+  }
+
+  const parsed = heroPartialSchema.safeParse(sanitized);
+
+  if (!parsed.success) {
+    return { success: false, error: "Invalid hero data" };
+  }
+
+  try {
+    const existing = await SettingsService.getHeroData(tenantId);
+    const merged = { ...existing, ...parsed.data };
+    await SettingsService.updateHeroData(tenantId, merged);
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error) {
+    console.error("updateHeroPartial error:", error);
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
+  }
+}
+
 export async function updateSocialChannels(
   tenantId: string,
   _prevState: SettingsActionState,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -9,7 +9,7 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { VideoUpload } from "@/components/ui/VideoUpload";
 import { supabaseClient, BUCKET } from "@/lib/supabase";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
-import { updateInfluencerData, updateHeroData, updateApiKeys } from "@/actions/settings.actions";
+import { updateInfluencerData, updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
 import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
@@ -92,6 +92,27 @@ export function SettingsForm({
   const [liveBio, setLiveBio] = useState(config.bio || "");
   const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
   const [liveShowBadge, setLiveShowBadge] = useState(heroData.showLiveBadge || false);
+
+  const [heroTitle, setHeroTitle] = useState(heroData.title || "");
+  const [heroSubtitle, setHeroSubtitle] = useState(heroData.subtitle || "");
+  const [heroTagline, setHeroTagline] = useState(heroData.tagline || "");
+  const [ctaText, setCtaText] = useState(heroData.ctaText || "");
+  const [ctaLink, setCtaLink] = useState(heroData.ctaLink || "");
+  const [ctaSecondaryText, setCtaSecondaryText] = useState(heroData.ctaSecondaryText || "");
+  const [ctaSecondaryLink, setCtaSecondaryLink] = useState(heroData.ctaSecondaryLink || "");
+
+  useEffect(() => { setHeroTitle(heroData.title || ""); }, [heroData.title]);
+  useEffect(() => { setHeroSubtitle(heroData.subtitle || ""); }, [heroData.subtitle]);
+  useEffect(() => { setHeroTagline(heroData.tagline || ""); }, [heroData.tagline]);
+  useEffect(() => { setCtaText(heroData.ctaText || ""); }, [heroData.ctaText]);
+  useEffect(() => { setCtaLink(heroData.ctaLink || ""); }, [heroData.ctaLink]);
+  useEffect(() => { setCtaSecondaryText(heroData.ctaSecondaryText || ""); }, [heroData.ctaSecondaryText]);
+  useEffect(() => { setCtaSecondaryLink(heroData.ctaSecondaryLink || ""); }, [heroData.ctaSecondaryLink]);
+  useEffect(() => { setLiveBadgeText(heroData.liveBadgeText || ""); }, [heroData.liveBadgeText]);
+  useEffect(() => { setLiveShowBadge(heroData.showLiveBadge || false); }, [heroData.showLiveBadge]);
+  useEffect(() => { setVideoUrl(heroData.videoUrl || ""); }, [heroData.videoUrl]);
+  useEffect(() => { setPosterUrl(heroData.posterUrl || ""); }, [heroData.posterUrl]);
+  useEffect(() => { setProfileImage(config.profileImage || ""); }, [config.profileImage]);
 
   function alignmentButtons(
     desktopAlign: string,
@@ -213,14 +234,25 @@ export function SettingsForm({
     }
   }
 
-  async function handleSaveHeroDetails(formData: FormData) {
+  async function handleSaveHeroDetails() {
     setHeroDetailsSave({ pending: true, state: { success: false } });
 
-    if (!formData.has("showLiveBadge")) {
-      formData.append("showLiveBadge", liveShowBadge ? "true" : "false");
-    }
+    const payload = {
+      heroTitle: heroTitle,
+      heroSubtitle: heroSubtitle,
+      heroTagline: heroTagline,
+      title: heroTitle,
+      subtitle: heroSubtitle,
+      tagline: heroTagline,
+      ctaText,
+      ctaLink,
+      ctaSecondaryText,
+      ctaSecondaryLink,
+      liveBadgeText,
+      showLiveBadge: liveShowBadge,
+    };
 
-    const result = await updateHeroData(tenantId, { success: false }, formData);
+    const result = await updateHeroPartial(tenantId, payload);
     setHeroDetailsSave({ pending: false, state: result });
     if (result.success) router.refresh();
   }
@@ -355,7 +387,7 @@ export function SettingsForm({
         {/* ─── Hero Details ─── */}
         <Card>
           <CardContent>
-            <form ref={heroDetailFormRef} action={handleSaveHeroDetails} className="space-y-6">
+            <form ref={heroDetailFormRef} onSubmit={(e) => { e.preventDefault(); handleSaveHeroDetails(); }} className="space-y-6">
               <h3 className="text-lg font-semibold text-white">Hero Details</h3>
               <p className="text-sm text-gray-500">
                 Control the hero title, subtitle, call-to-action buttons, and live badge.
@@ -363,45 +395,45 @@ export function SettingsForm({
 
               <Input
                 id="heroTitle"
-                name="heroTitle"
                 label="Title"
-                defaultValue={heroData.title}
+                value={heroTitle}
+                onChange={(e) => setHeroTitle(e.target.value)}
                 placeholder="Raj 'Snax' Varma"
               />
               <Input
                 id="heroSubtitle"
-                name="heroSubtitle"
                 label="Subtitle"
-                defaultValue={heroData.subtitle}
+                value={heroSubtitle}
+                onChange={(e) => setHeroSubtitle(e.target.value)}
                 placeholder="S8UL Esports | BGMI Pro | Content Creator"
               />
               <Input
                 id="heroTagline"
-                name="heroTagline"
                 label="Tagline"
-                defaultValue={heroData.tagline}
+                value={heroTagline}
+                onChange={(e) => setHeroTagline(e.target.value)}
                 placeholder="Hyderabad ki energy — global level ka game."
               />
 
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-white">Call-to-Action Buttons</h4>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input id="ctaText" name="ctaText" label="Primary Button Text" defaultValue={heroData.ctaText} placeholder="Subscribe" />
-                  <Input id="ctaLink" name="ctaLink" label="Primary Button Link" defaultValue={heroData.ctaLink} placeholder="https://youtube.com/@..." />
-                  <Input id="ctaSecondaryText" name="ctaSecondaryText" label="Secondary Button Text" defaultValue={heroData.ctaSecondaryText} placeholder="Follow on IG" />
-                  <Input id="ctaSecondaryLink" name="ctaSecondaryLink" label="Secondary Button Link" defaultValue={heroData.ctaSecondaryLink} placeholder="https://instagram.com/..." />
+                  <Input id="ctaText" label="Primary Button Text" value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="Subscribe" />
+                  <Input id="ctaLink" label="Primary Button Link" value={ctaLink} onChange={(e) => setCtaLink(e.target.value)} placeholder="https://youtube.com/@..." />
+                  <Input id="ctaSecondaryText" label="Secondary Button Text" value={ctaSecondaryText} onChange={(e) => setCtaSecondaryText(e.target.value)} placeholder="Follow on IG" />
+                  <Input id="ctaSecondaryLink" label="Secondary Button Link" value={ctaSecondaryLink} onChange={(e) => setCtaSecondaryLink(e.target.value)} placeholder="https://instagram.com/..." />
                 </div>
               </div>
 
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-white">Live Badge</h4>
                 <Input
-                  id="liveBadgeText" name="liveBadgeText" label="Live Badge Text"
-                  defaultValue={heroData.liveBadgeText} placeholder="Live on YouTube"
+                  id="liveBadgeText" label="Live Badge Text"
+                  value={liveBadgeText} placeholder="Live on YouTube"
                   onChange={(e) => setLiveBadgeText(e.target.value)}
                 />
                 <label className="flex items-center gap-3">
-                  <input type="checkbox" name="showLiveBadge" defaultChecked={heroData.showLiveBadge}
+                  <input type="checkbox" checked={liveShowBadge}
                     onChange={(e) => setLiveShowBadge(e.target.checked)}
                     className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
                   />
@@ -419,7 +451,7 @@ export function SettingsForm({
               )}
 
               <div className="pt-2">
-                <button type="submit" disabled={heroDetailsSave.pending} className="admin-btn-cyan">
+                <button type="button" onClick={handleSaveHeroDetails} disabled={heroDetailsSave.pending} className="admin-btn-cyan">
                   {heroDetailsSave.pending ? "Saving..." : "Save Hero Details"}
                 </button>
               </div>
