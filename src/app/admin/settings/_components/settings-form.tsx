@@ -540,7 +540,9 @@ export function SettingsForm({
             Live Preview
           </p>
           <SettingsLivePreview
-            heroUrl={posterUrl || videoUrl || heroData.posterUrl || heroData.videoUrl || ""}
+            videoUrl={videoUrl || heroData.videoUrl || ""}
+            posterUrl={posterUrl || heroData.posterUrl || ""}
+            desktopAlignment={desktopAlignment}
             mobileAlignment={mobileAlignment}
             profileUrl={profileImage || config.profileImage || null}
             name={liveName}
