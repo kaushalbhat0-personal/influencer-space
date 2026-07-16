@@ -57,7 +57,7 @@ export default async function PublicPage({
       }
     >
       {/* ─── Hero Banner ─── */}
-      <HeroBanner videoUrl={hero.videoUrl || undefined} posterUrl={hero.posterUrl || undefined} alignment={hero.alignment} />
+      <HeroBanner videoUrl={hero.videoUrl || undefined} posterUrl={hero.posterUrl || undefined} desktopAlignment={hero.desktopAlignment} mobileAlignment={hero.mobileAlignment} />
 
       <div className="mx-auto max-w-2xl px-4">
         {/* ─── Profile Header (overlaps banner) ─── */}

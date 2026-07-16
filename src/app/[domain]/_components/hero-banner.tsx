@@ -2,21 +2,37 @@
 
 import { useState } from "react";
 
+type Alignment = "top" | "center" | "bottom";
+
 interface HeroBannerProps {
   videoUrl?: string;
   posterUrl?: string;
-  alignment?: "top" | "center" | "bottom";
+  desktopAlignment?: Alignment;
+  mobileAlignment?: Alignment;
 }
 
-const alignmentClasses: Record<string, string> = {
+const mobileObjectClasses: Record<Alignment, string> = {
   top: "object-top",
   center: "object-center",
   bottom: "object-bottom",
 };
 
-export function HeroBanner({ videoUrl, posterUrl, alignment = "center" }: HeroBannerProps) {
+const desktopObjectClasses: Record<Alignment, string> = {
+  top: "sm:object-top",
+  center: "sm:object-center",
+  bottom: "sm:object-bottom",
+};
+
+export function HeroBanner({
+  videoUrl,
+  posterUrl,
+  desktopAlignment = "center",
+  mobileAlignment = "center",
+}: HeroBannerProps) {
   const [videoEnded, setVideoEnded] = useState(false);
-  const objectPos = alignmentClasses[alignment] || "object-center";
+
+  const responsiveObject =
+    `${mobileObjectClasses[mobileAlignment]} ${desktopObjectClasses[desktopAlignment]}`;
 
   if (!videoUrl && !posterUrl) return null;
 
@@ -32,13 +48,13 @@ export function HeroBanner({ videoUrl, posterUrl, alignment = "center" }: HeroBa
           playsInline
           loop={false}
           onEnded={() => setVideoEnded(true)}
-          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${objectPos}`}
+          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${responsiveObject}`}
         />
       ) : posterUrl ? (
         <img
           src={posterUrl}
           alt=""
-          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${objectPos}`}
+          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${responsiveObject}`}
         />
       ) : null}
 

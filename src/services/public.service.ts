@@ -11,7 +11,8 @@ export type PublicHeroData = {
   ctaSecondaryLink: string;
   liveBadgeText: string;
   showLiveBadge: boolean;
-  alignment: "top" | "center" | "bottom";
+  desktopAlignment: "top" | "center" | "bottom";
+  mobileAlignment: "top" | "center" | "bottom";
 };
 
 export type PublicProfile = {
@@ -133,7 +134,8 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     ctaSecondaryLink: heroRaw.ctaSecondaryLink || "",
     liveBadgeText: heroRaw.liveBadgeText || "",
     showLiveBadge: Boolean(heroRaw.showLiveBadge),
-    alignment: heroRaw.alignment || "center",
+    desktopAlignment: heroRaw.desktopAlignment || "center",
+    mobileAlignment: heroRaw.mobileAlignment || "center",
   };
 
   return { profile, hero, products, links, gallery, milestones };
