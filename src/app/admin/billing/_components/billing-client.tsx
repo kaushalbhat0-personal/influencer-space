@@ -74,7 +74,7 @@ export function BillingClient({ subscription }: { subscription: SubscriptionRow 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="admin-gradient-text text-2xl font-bold font-gaming sm:text-3xl">
+        <h1 className="admin-gradient-text text-2xl font-bold font-display sm:text-3xl">
           Billing & Plans
         </h1>
         <p className="mt-1 text-sm text-gray-400">

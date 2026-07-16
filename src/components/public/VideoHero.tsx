@@ -67,7 +67,7 @@ export function VideoHero({ config, heroData }: VideoHeroProps) {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
             </span>
           </div>
-          <span className="font-gaming text-[10px] uppercase tracking-[0.15em] text-white/70">
+          <span className="font-display text-[10px] uppercase tracking-[0.15em] text-white/70">
             S8UL Esports
           </span>
         </div>
@@ -110,7 +110,7 @@ export function VideoHero({ config, heroData }: VideoHeroProps) {
                 <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-s8ul-cyan opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-s8ul-cyan" />
               </span>
-              <span className="font-gaming text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
+              <span className="font-display text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
                 {hd.liveBadgeText}
               </span>
             </motion.div>
@@ -143,7 +143,7 @@ export function VideoHero({ config, heroData }: VideoHeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="mb-1 font-gaming text-5xl font-bold text-white sm:text-6xl lg:text-7xl"
+            className="mb-1 font-display text-5xl font-bold text-white sm:text-6xl lg:text-7xl"
           >
             <span className="bg-gradient-to-r from-s8ul-cyan via-white to-s8ul-pink bg-clip-text text-transparent">
               {hd.title}
@@ -164,7 +164,7 @@ export function VideoHero({ config, heroData }: VideoHeroProps) {
                 href={hd.ctaLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-s8ul-pink to-s8ul-purple px-6 py-3 font-gaming text-xs font-bold uppercase tracking-wider text-white transition-all hover:shadow-[0_0_25px_rgba(255,0,229,0.5)]"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-s8ul-pink to-s8ul-purple px-6 py-3 font-display text-xs font-bold uppercase tracking-wider text-white transition-all hover:shadow-[0_0_25px_rgba(255,0,229,0.5)]"
               >
                 {hd.ctaText}
               </a>
@@ -174,7 +174,7 @@ export function VideoHero({ config, heroData }: VideoHeroProps) {
                 href={hd.ctaSecondaryLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-s8ul-cyan/30 bg-s8ul-cyan/10 px-6 py-3 font-gaming text-xs font-bold uppercase tracking-wider text-s8ul-cyan backdrop-blur-sm transition-all hover:bg-s8ul-cyan/20 hover:shadow-[0_0_20px_rgba(0,245,255,0.3)]"
+                className="inline-flex items-center gap-2 rounded-full border border-s8ul-cyan/30 bg-s8ul-cyan/10 px-6 py-3 font-display text-xs font-bold uppercase tracking-wider text-s8ul-cyan backdrop-blur-sm transition-all hover:bg-s8ul-cyan/20 hover:shadow-[0_0_20px_rgba(0,245,255,0.3)]"
               >
                 {hd.ctaSecondaryText}
               </a>

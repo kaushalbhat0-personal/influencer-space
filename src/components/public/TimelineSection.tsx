@@ -101,10 +101,10 @@ export function TimelineSection({ events }: TimelineSectionProps) {
           viewport={{ once: true }}
           className="mb-12 text-center"
         >
-          <span className="mb-2 inline-block font-gaming text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
+          <span className="mb-2 inline-block font-display text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
             Career Timeline
           </span>
-          <h2 className="font-gaming text-4xl font-bold text-white sm:text-5xl">
+          <h2 className="font-display text-4xl font-bold text-white sm:text-5xl">
             The Journey
           </h2>
           <p className="mt-4 text-white/50">
@@ -158,17 +158,17 @@ export function TimelineSection({ events }: TimelineSectionProps) {
                     )}
 
                     <div className="flex items-center gap-3">
-                      <span className="font-gaming text-xl font-bold text-s8ul-cyan sm:text-2xl">
+                      <span className="font-display text-xl font-bold text-s8ul-cyan sm:text-2xl">
                         {item.year}
                       </span>
                       {item.stats && (
-                        <span className="rounded-full border border-s8ul-pink/30 bg-s8ul-pink/10 px-2.5 py-0.5 font-gaming text-[10px] uppercase tracking-wider text-s8ul-pink">
+                        <span className="rounded-full border border-s8ul-pink/30 bg-s8ul-pink/10 px-2.5 py-0.5 font-display text-[10px] uppercase tracking-wider text-s8ul-pink">
                           {item.stats}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="mt-2 font-gaming text-base font-bold text-white sm:text-lg">
+                    <h3 className="mt-2 font-display text-base font-bold text-white sm:text-lg">
                       {item.title}
                     </h3>
                     <p className="mt-1 text-sm text-white/50">

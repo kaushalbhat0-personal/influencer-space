@@ -28,7 +28,7 @@ function StatCard({ label, value, subtext, icon, iconBg, iconColor }: StatCardPr
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 100, damping: 15 }}
-            className="mt-2 text-4xl font-bold font-gaming text-white"
+            className="mt-2 text-4xl font-bold font-display text-white"
           >
             {value}
           </motion.p>
@@ -115,7 +115,7 @@ export function DashboardClient({ productCount, activeProductCount, affiliateCou
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="admin-gradient-text text-2xl font-bold font-gaming sm:text-3xl">Dashboard</h1>
+          <h1 className="admin-gradient-text text-2xl font-bold font-display sm:text-3xl">Dashboard</h1>
           <p className="mt-1 text-sm text-gray-400">Welcome back to your admin panel</p>
         </div>
       </div>

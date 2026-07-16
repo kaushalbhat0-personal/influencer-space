@@ -23,7 +23,7 @@ export function AffiliateGrid({ affiliates }: AffiliateGridProps) {
   if (affiliates.length === 0) {
     return (
       <div className="text-center text-white/60">
-        <p className="font-gaming text-xl">Gear List Coming Soon</p>
+        <p className="font-display text-xl">Gear List Coming Soon</p>
         <p className="mt-1 text-sm">Curating the best peripherals for you</p>
       </div>
     );
@@ -57,7 +57,7 @@ export function AffiliateGrid({ affiliates }: AffiliateGridProps) {
               <h3 className="text-base font-semibold text-white sm:text-lg">
                 {affiliate.title}
               </h3>
-              <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-neon-purple/30 bg-neon-purple/10 px-4 py-2 font-gaming text-xs uppercase tracking-wider text-neon-purple backdrop-blur-sm sm:w-auto">
+              <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-neon-purple/30 bg-neon-purple/10 px-4 py-2 font-display text-xs uppercase tracking-wider text-neon-purple backdrop-blur-sm sm:w-auto">
                 <span>Get Gear</span>
                 <span className="text-xl">→</span>
               </div>

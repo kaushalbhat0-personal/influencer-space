@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { ScrollProgress } from "@/components/ui/ScrollProgress";
-import { NicheBackground } from "@/components/ui/NicheBackground";
-import { LiveStatus } from "@/components/ui/LiveStatus";
-import { getInfluencerConfig } from "@/config/influencer";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -18,26 +14,21 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Snax - S8UL Esports | BGMI Pro | Content Creator",
+  title: "CreatorStore | The Best Shopify Alternative for Indian Creators",
   description:
-    "Welcome to Snax's Gaming HQ. S8UL Esports content creator, BGMI pro, and Hyderabad's favorite gaming son. Join the squad.",
+    "Launch your merch store, sell digital downloads, and build your creator portfolio with zero setup fees. Native UPI checkout, Instagram/YouTube integration, and custom domains.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const config = await getInfluencerConfig();
-
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ScrollProgress />
-        <LiveStatus />
-        <NicheBackground niche={config.niche} />
         {children}
       </body>
     </html>

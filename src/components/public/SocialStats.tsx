@@ -112,7 +112,7 @@ export async function SocialStats() {
               >
                 {stat.icon}
               </div>
-              <div className="mb-1 font-gaming text-2xl font-bold text-white sm:text-3xl">
+              <div className="mb-1 font-display text-2xl font-bold text-white sm:text-3xl">
                 {stat.value}
               </div>
               <div className="text-xs text-white/40 sm:text-sm">

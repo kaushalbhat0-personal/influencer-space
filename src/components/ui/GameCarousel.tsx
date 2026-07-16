@@ -54,10 +54,10 @@ export function GameCarousel({ games }: GameCarouselProps) {
           viewport={{ once: true }}
           className="mb-12 text-center"
         >
-          <span className="mb-2 inline-block font-gaming text-xs uppercase tracking-[0.2em] text-neon-green">
+          <span className="mb-2 inline-block font-display text-xs uppercase tracking-[0.2em] text-neon-green">
             Game Library
           </span>
-          <h2 className="font-gaming text-4xl font-bold text-white sm:text-5xl">
+          <h2 className="font-display text-4xl font-bold text-white sm:text-5xl">
             Games I Play
           </h2>
           <p className="mt-4 text-white/50">
@@ -79,11 +79,11 @@ export function GameCarousel({ games }: GameCarouselProps) {
               >
                 <div className="flex flex-col items-center text-center">
                   <span className="mb-4 text-6xl">{game.logoUrl || "🎮"}</span>
-                  <h3 className="mb-2 font-gaming text-2xl font-bold text-white sm:text-3xl">
+                  <h3 className="mb-2 font-display text-2xl font-bold text-white sm:text-3xl">
                     {game.name}
                   </h3>
                   {game.genre && (
-                    <span className="mb-4 inline-block rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-3 py-1 font-gaming text-[10px] uppercase tracking-wider text-neon-cyan">
+                    <span className="mb-4 inline-block rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-3 py-1 font-display text-[10px] uppercase tracking-wider text-neon-cyan">
                       {game.genre}
                     </span>
                   )}

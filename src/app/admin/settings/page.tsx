@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   if (!tenant) {
     return (
       <div>
-        <h1 className="admin-gradient-text text-2xl font-bold font-gaming">
+        <h1 className="admin-gradient-text text-2xl font-bold font-display">
           Website Settings
         </h1>
         <p className="mt-4 text-gray-400">
@@ -31,7 +31,7 @@ export default async function SettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="admin-gradient-text text-2xl font-bold font-gaming">Website Settings</h1>
+        <h1 className="admin-gradient-text text-2xl font-bold font-display">Website Settings</h1>
         <p className="mt-1 text-sm text-gray-400">
           Update your brand information below. Changes appear on the public site instantly.
         </p>

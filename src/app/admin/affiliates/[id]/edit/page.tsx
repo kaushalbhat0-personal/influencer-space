@@ -25,7 +25,7 @@ export default async function EditAffiliatePage({
 
   return (
     <div>
-      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-gaming">Edit Affiliate</h1>
+      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-display">Edit Affiliate</h1>
       <AffiliateForm mode="edit" affiliate={affiliate} />
     </div>
   );

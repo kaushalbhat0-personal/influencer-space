@@ -15,7 +15,7 @@ export function ProductGrid({ products }: ProductGridProps) {
   if (products.length === 0) {
     return (
       <div className="text-center text-white/60">
-        <p className="font-gaming text-xl">Armory Empty</p>
+        <p className="font-display text-xl">Armory Empty</p>
         <p className="mt-1 text-sm">New merch dropping soon!</p>
       </div>
     );
@@ -52,7 +52,7 @@ export function ProductGrid({ products }: ProductGridProps) {
                 </p>
               )}
               <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-gaming text-lg font-bold text-neon-cyan sm:text-xl">
+                <span className="font-display text-lg font-bold text-neon-cyan sm:text-xl">
                   {formatCurrency(product.price)}
                 </span>
                 <Link
@@ -61,7 +61,7 @@ export function ProductGrid({ products }: ProductGridProps) {
                     e.preventDefault();
                     alert("Checkout integration coming soon!");
                   }}
-                  className="w-full rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-4 py-2 text-center font-gaming text-xs font-medium uppercase tracking-wider text-neon-cyan backdrop-blur-sm transition-colors hover:bg-neon-cyan/20 sm:w-auto"
+                  className="w-full rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-4 py-2 text-center font-display text-xs font-medium uppercase tracking-wider text-neon-cyan backdrop-blur-sm transition-colors hover:bg-neon-cyan/20 sm:w-auto"
                 >
                   Buy Now →
                 </Link>

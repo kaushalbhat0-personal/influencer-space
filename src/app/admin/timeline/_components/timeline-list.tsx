@@ -52,7 +52,7 @@ export function TimelineList({ events }: { events: TimelineEventData[] }) {
               events.map((event) => (
                 <motion.tr key={event.id} variants={rowVariants} className="group">
                   <td>
-                    <span className="admin-badge-cyan font-gaming">{event.year}</span>
+                    <span className="admin-badge-cyan font-display">{event.year}</span>
                   </td>
                   <td className="font-medium text-white">{event.title}</td>
                   <td className="hidden sm:table-cell">

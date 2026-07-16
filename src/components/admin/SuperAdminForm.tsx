@@ -12,7 +12,7 @@ export function SuperAdminForm() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-6 sm:p-10">
       <div className="mx-auto max-w-2xl">
-        <h1 className="admin-gradient-text text-3xl font-bold font-gaming">
+        <h1 className="admin-gradient-text text-3xl font-bold font-display">
           Creator Provisioning
         </h1>
         <p className="mt-2 text-sm text-gray-400">

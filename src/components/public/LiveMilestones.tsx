@@ -41,7 +41,7 @@ export async function LiveMilestones({
                   <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-gray-400">
                     YouTube
                   </p>
-                  <p className="text-2xl font-bold text-white font-gaming">
+                  <p className="text-2xl font-bold text-white font-display">
                     {formatCompact(ytStats.subscriberCount)}
                   </p>
                   <p className="text-xs text-gray-500">subscribers</p>

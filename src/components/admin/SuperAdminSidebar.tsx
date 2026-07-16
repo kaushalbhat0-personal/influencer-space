@@ -14,7 +14,7 @@ export function SuperAdminSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-56 flex-col bg-gradient-to-b from-[#0f0f0f] to-[#0a0a0a] shadow-2xl shadow-purple-500/5">
       <div className="flex h-16 items-center justify-center border-b border-white/10">
-        <Link href="/super-admin" className="text-lg font-bold font-gaming text-purple-400">
+        <Link href="/super-admin" className="text-lg font-bold font-display text-purple-400">
           Platform
         </Link>
       </div>

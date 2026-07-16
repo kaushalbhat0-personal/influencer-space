@@ -67,7 +67,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        gaming: ["Orbitron", "monospace"],
+        display: ["Orbitron", "monospace"],
       },
       animation: {
         "pulse-neon": "pulseNeon 2s ease-in-out infinite",

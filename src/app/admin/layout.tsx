@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-center border-b border-white/10">
-            <Link href="/admin/dashboard" onClick={closeSidebar} className="admin-gradient-text text-xl font-bold font-gaming">
+            <Link href="/admin/dashboard" onClick={closeSidebar} className="admin-gradient-text text-xl font-bold font-display">
               S8UL Admin
             </Link>
           </div>

@@ -55,7 +55,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="admin-gradient-text text-3xl font-bold font-gaming sm:text-4xl"
+              className="admin-gradient-text text-3xl font-bold font-display sm:text-4xl"
             >
               Admin Login
             </motion.h1>

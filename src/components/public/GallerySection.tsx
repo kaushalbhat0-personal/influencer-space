@@ -111,10 +111,10 @@ export function GallerySection({ images }: GallerySectionProps) {
           viewport={{ once: true }}
           className="mb-12 text-center"
         >
-          <span className="mb-2 inline-block font-gaming text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
+          <span className="mb-2 inline-block font-display text-xs uppercase tracking-[0.2em] text-s8ul-cyan">
             Highlights
           </span>
-          <h2 className="font-gaming text-4xl font-bold text-white sm:text-5xl">
+          <h2 className="font-display text-4xl font-bold text-white sm:text-5xl">
             Hall of Fame
           </h2>
           <p className="mt-4 text-white/50">
@@ -128,7 +128,7 @@ export function GallerySection({ images }: GallerySectionProps) {
               key={cat.label}
               onClick={() => setSelectedCategory(cat.key)}
               className={cn(
-                "rounded-full px-4 py-2 font-gaming text-xs uppercase tracking-wider transition-all",
+                "rounded-full px-4 py-2 font-display text-xs uppercase tracking-wider transition-all",
                 selectedCategory === cat.key
                   ? "bg-s8ul-cyan text-black shadow-[0_0_15px_rgba(0,245,255,0.3)]"
                   : "border border-white/10 bg-white/5 text-white/60 hover:border-s8ul-cyan/30 hover:text-s8ul-cyan",
@@ -220,7 +220,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                 className="h-auto max-h-[70vh] w-full object-contain"
               />
               <div className="border-t border-s8ul-cyan/20 bg-black/90 p-4 backdrop-blur-sm">
-                <h3 className="font-gaming text-lg font-bold text-white">
+                <h3 className="font-display text-lg font-bold text-white">
                   {selectedImage.title}
                 </h3>
                 <p className="text-sm text-white/50">
@@ -228,7 +228,7 @@ export function GallerySection({ images }: GallerySectionProps) {
                 </p>
                 <button
                   onClick={() => setSelectedImage(null)}
-                  className="mt-2 font-gaming text-xs uppercase tracking-wider text-s8ul-cyan transition-colors hover:text-white"
+                  className="mt-2 font-display text-xs uppercase tracking-wider text-s8ul-cyan transition-colors hover:text-white"
                 >
                   Close ✕
                 </button>
