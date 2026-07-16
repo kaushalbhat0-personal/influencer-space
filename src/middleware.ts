@@ -6,8 +6,8 @@ const secret =
   process.env.NEXTAUTH_SECRET ||
   "d7f8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8";
 
-const PLATFORM_DOMAINS = [
-  "localhost",
+const platformDomains = [
+  "localhost:3000",
   "influencer-space-alpha.vercel.app",
 ];
 
@@ -15,16 +15,16 @@ const DEFAULT_TENANT = process.env.DEFAULT_TENANT_SUBDOMAIN || "";
 
 function parseTenantHost(host: string): string | null {
   const hostname = host.split(":")[0]?.toLowerCase() ?? "";
-
   const stripped = hostname.replace(/^www\./, "");
 
-  if (PLATFORM_DOMAINS.includes(stripped)) {
+  if (platformDomains.some(d => d === host.toLowerCase() || stripped === d.split(":")[0])) {
     return null;
   }
 
-  for (const domain of PLATFORM_DOMAINS) {
-    if (stripped.endsWith(`.${domain}`)) {
-      return stripped.slice(0, -(domain.length + 1));
+  for (const domain of platformDomains) {
+    const domainHost = domain.split(":")[0];
+    if (stripped.endsWith(`.${domainHost}`)) {
+      return stripped.slice(0, -(domainHost.length + 1));
     }
   }
 
@@ -33,14 +33,19 @@ function parseTenantHost(host: string): string | null {
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
+  const pathname = request.nextUrl.pathname;
+
+  // Bypass tenant logic for platform root domains (marketing site)
+  if (platformDomains.some(d => d === host.toLowerCase())) {
+    return NextResponse.next();
+  }
+
   const tenantHost = parseTenantHost(host) || DEFAULT_TENANT || null;
 
   const requestHeaders = new Headers(request.headers);
   if (tenantHost) {
     requestHeaders.set("x-tenant-host", tenantHost);
   }
-
-  const pathname = request.nextUrl.pathname;
 
   if (pathname === "/admin/login") {
     return NextResponse.next({ request: { headers: requestHeaders } });
