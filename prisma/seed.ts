@@ -50,6 +50,24 @@ async function main() {
   });
 
   console.log("Admin user created: admin@snaxgaming.com / admin123");
+
+  const superAdmin = await prisma.user.findFirst({
+    where: { email: "superadmin@influencer.space" },
+  });
+
+  if (!superAdmin) {
+    await prisma.user.create({
+      data: {
+        name: "Super Admin",
+        email: "superadmin@influencer.space",
+        password,
+        role: "SUPER_ADMIN",
+      },
+    });
+    console.log("SUPER_ADMIN user created: superadmin@influencer.space / admin123");
+  } else {
+    console.log("SUPER_ADMIN already exists, skipping.");
+  }
 }
 
 main()
