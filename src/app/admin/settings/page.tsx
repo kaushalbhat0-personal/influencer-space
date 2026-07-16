@@ -2,15 +2,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
 import { SettingsForm } from "./_components/settings-form";
-import { getTenantContext } from "@/lib/tenant";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const tenant = await getTenantContext();
   const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
 
-  if (!tenant) {
+  if (!tenantId) {
     return (
       <div>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">
@@ -23,9 +23,13 @@ export default async function SettingsPage() {
     );
   }
 
-  const [config, heroData] = await Promise.all([
-    SettingsService.getInfluencerData(tenant.id),
-    SettingsService.getHeroData(tenant.id),
+  const [config, heroData, tenant] = await Promise.all([
+    SettingsService.getInfluencerData(tenantId),
+    SettingsService.getHeroData(tenantId),
+    prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { youtubeApiKey: true, instagramApiKey: true },
+    }),
   ]);
 
   return (
@@ -41,8 +45,8 @@ export default async function SettingsPage() {
         config={config}
         heroData={heroData}
         role={session?.user?.role ?? "ADMIN"}
-        youtubeApiKey={tenant.youtubeApiKey ?? ""}
-        instagramApiKey={tenant.instagramApiKey ?? ""}
+        youtubeApiKey={tenant?.youtubeApiKey ?? ""}
+        instagramApiKey={tenant?.instagramApiKey ?? ""}
       />
     </div>
   );

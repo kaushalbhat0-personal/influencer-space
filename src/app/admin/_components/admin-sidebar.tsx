@@ -30,9 +30,11 @@ const navLinks = [
 export function AdminSidebar({
   open,
   onClose,
+  siteUrl = "/",
 }: {
   open: boolean;
   onClose: () => void;
+  siteUrl?: string;
 }) {
   const pathname = usePathname();
 
@@ -102,16 +104,17 @@ export function AdminSidebar({
 
         {/* ─── Back to Site ─── */}
         <div className="border-t border-white/10 px-3 py-3">
-          <Link
-            href="/"
-            onClick={onClose}
+          <a
+            href={siteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-200"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Site
-          </Link>
+          </a>
         </div>
 
         {/* ─── Sign Out ─── */}

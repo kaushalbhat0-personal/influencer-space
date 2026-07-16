@@ -1,4 +1,5 @@
-import { getTenantContext } from "@/lib/tenant";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getLinks } from "@/actions/link.actions";
 import { LinksManager } from "./_components/links-manager";
 import type { LinkData } from "@/actions/link.actions";
@@ -6,8 +7,10 @@ import type { LinkData } from "@/actions/link.actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminLinksPage() {
-  const tenant = await getTenantContext();
-  if (!tenant) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+
+  if (!tenantId) {
     return (
       <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
         <p className="text-lg font-semibold">No tenant configured</p>
@@ -15,7 +18,7 @@ export default async function AdminLinksPage() {
     );
   }
 
-  const result = await getLinks(tenant.id);
+  const result = await getLinks(tenantId);
   const links: LinkData[] = result.success && result.data ? result.data : [];
 
   return (
@@ -26,7 +29,7 @@ export default async function AdminLinksPage() {
           Manage your affiliate links, sponsor deals, and referral URLs.
         </p>
       </div>
-      <LinksManager tenantId={tenant.id} initialLinks={links} />
+      <LinksManager tenantId={tenantId} initialLinks={links} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { getTenantContext } from "@/lib/tenant";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { fetchProducts } from "@/actions/product.actions";
 import { ProductsManager } from "./_components/products-manager";
 import type { ProductData } from "@/actions/product.actions";
@@ -6,8 +7,10 @@ import type { ProductData } from "@/actions/product.actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
-  const tenant = await getTenantContext();
-  if (!tenant) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+
+  if (!tenantId) {
     return (
       <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
         <p className="text-lg font-semibold">No tenant configured</p>
@@ -15,7 +18,7 @@ export default async function AdminProductsPage() {
     );
   }
 
-  const result = await fetchProducts(tenant.id);
+  const result = await fetchProducts(tenantId);
   const products: ProductData[] =
     result.success && result.data ? result.data : [];
 
@@ -27,7 +30,7 @@ export default async function AdminProductsPage() {
           Manage your merchandise catalog and digital products.
         </p>
       </div>
-      <ProductsManager tenantId={tenant.id} initialProducts={products} />
+      <ProductsManager tenantId={tenantId} initialProducts={products} />
     </div>
   );
 }

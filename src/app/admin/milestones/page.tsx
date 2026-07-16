@@ -1,4 +1,5 @@
-import { getTenantContext } from "@/lib/tenant";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { fetchMilestones } from "@/actions/milestone.actions";
 import { MilestonesManager } from "./_components/milestones-manager";
 import type { MilestoneData } from "@/actions/milestone.actions";
@@ -6,8 +7,10 @@ import type { MilestoneData } from "@/actions/milestone.actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMilestonesPage() {
-  const tenant = await getTenantContext();
-  if (!tenant) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+
+  if (!tenantId) {
     return (
       <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
         <p className="text-lg font-semibold">No tenant configured</p>
@@ -15,7 +18,7 @@ export default async function AdminMilestonesPage() {
     );
   }
 
-  const result = await fetchMilestones(tenant.id);
+  const result = await fetchMilestones(tenantId);
   const milestones: MilestoneData[] =
     result.success && result.data ? result.data : [];
 
@@ -27,7 +30,7 @@ export default async function AdminMilestonesPage() {
           Manage career milestones and achievements.
         </p>
       </div>
-      <MilestonesManager tenantId={tenant.id} initialMilestones={milestones} />
+      <MilestonesManager tenantId={tenantId} initialMilestones={milestones} />
     </div>
   );
 }

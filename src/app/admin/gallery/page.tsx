@@ -1,4 +1,5 @@
-import { getTenantContext } from "@/lib/tenant";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { fetchGalleryItems } from "@/actions/gallery.actions";
 import { GalleryManager } from "./_components/gallery-manager";
 import type { GalleryItemData } from "@/actions/gallery.actions";
@@ -6,8 +7,10 @@ import type { GalleryItemData } from "@/actions/gallery.actions";
 export const dynamic = "force-dynamic";
 
 export default async function AdminGalleryPage() {
-  const tenant = await getTenantContext();
-  if (!tenant) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+
+  if (!tenantId) {
     return (
       <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
         <p className="text-lg font-semibold">No tenant configured</p>
@@ -15,7 +18,7 @@ export default async function AdminGalleryPage() {
     );
   }
 
-  const result = await fetchGalleryItems(tenant.id);
+  const result = await fetchGalleryItems(tenantId);
   const items: GalleryItemData[] =
     result.success && result.data ? result.data : [];
 
@@ -27,7 +30,7 @@ export default async function AdminGalleryPage() {
           Manage images and videos celebrating your greatest moments.
         </p>
       </div>
-      <GalleryManager tenantId={tenant.id} initialItems={items} />
+      <GalleryManager tenantId={tenantId} initialItems={items} />
     </div>
   );
 }

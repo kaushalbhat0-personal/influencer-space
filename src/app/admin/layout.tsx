@@ -1,54 +1,34 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { AdminLayoutClient } from "./_components/admin-layout-client";
 
-import { Suspense, useState } from "react";
-import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
-import { AdminSidebar } from "./_components/admin-sidebar";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+const BASE_URL = process.env.NEXTAUTH_URL
+  ? process.env.NEXTAUTH_URL.replace(/https?:\/\//, "")
+  : "localhost:3000";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const pathname = usePathname();
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
 
-  const isLoginPage = pathname === "/admin/login";
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+  let siteUrl = "/";
 
-  if (isLoginPage) {
-    return <div className="min-h-dvh bg-[#0a0a0a]"><main>{children}</main></div>;
+  if (tenantId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { customDomain: true, subdomain: true },
+    });
+
+    if (tenant?.customDomain) {
+      siteUrl = `https://${tenant.customDomain}`;
+    } else if (tenant?.subdomain) {
+      siteUrl = `https://${tenant.subdomain}.${BASE_URL}`;
+    }
   }
 
-  return (
-    <div className="min-h-dvh bg-[#0a0a0a] flex">
-      <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* ─── Mobile header ─── */}
-      <div className="fixed inset-x-0 top-0 z-20 flex h-14 items-center gap-3 border-b border-white/10 bg-zinc-950/80 px-4 backdrop-blur-xl lg:hidden">
-        <button
-          onClick={toggleSidebar}
-          className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white"
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-sm font-bold text-transparent font-display">
-          CreatorStore
-        </span>
-      </div>
-
-      {/* ─── Main content ─── */}
-      <div className="flex-1 min-w-0">
-        <main className="mx-auto max-w-6xl p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8 lg:pt-8">
-          <Suspense
-            fallback={
-              <div className="flex h-64 items-center justify-center">
-                <LoadingSpinner size="lg" text="Loading..." />
-              </div>
-            }
-          >
-            {children}
-          </Suspense>
-        </main>
-      </div>
-    </div>
-  );
+  return <AdminLayoutClient siteUrl={siteUrl}>{children}</AdminLayoutClient>;
 }
