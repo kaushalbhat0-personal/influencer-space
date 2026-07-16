@@ -1,10 +1,26 @@
--- Add order column to Product (if not already present)
+-- ============================================================
+-- Tenant table: add missing columns
+-- ============================================================
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "youtubeApiKey" TEXT;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "youtubeChannelId" TEXT;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "twitchChannelId" TEXT;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "instagramApiKey" TEXT;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "razorpayAccountId" TEXT;
+ALTER TABLE "Tenant" ADD COLUMN IF NOT EXISTS "razorpaySetupComplete" BOOLEAN NOT NULL DEFAULT false;
+
+-- ============================================================
+-- Product table: add order column
+-- ============================================================
 ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0;
 
--- Add order column to AffiliateLink (if not already present)
+-- ============================================================
+-- AffiliateLink table: add order column
+-- ============================================================
 ALTER TABLE "AffiliateLink" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0;
 
--- Create ProductOrder table
+-- ============================================================
+-- ProductOrder table
+-- ============================================================
 CREATE TABLE IF NOT EXISTS "ProductOrder" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "tenantId" UUID NOT NULL REFERENCES "Tenant"("id") ON DELETE CASCADE,
