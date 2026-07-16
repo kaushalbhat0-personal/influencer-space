@@ -53,7 +53,7 @@ export function SettingsForm({
     if (profileImage) formData.set("profileImage", profileImage);
     setProfilePending(true);
     setProfileState({ success: false });
-    const result = await updateInfluencerData(profileState, formData);
+    const result = await updateInfluencerData(tenantId, profileState, formData);
     setProfileState(result);
     setProfilePending(false);
     if (result.success) router.refresh();
@@ -64,7 +64,7 @@ export function SettingsForm({
     if (posterUrl) formData.set("posterUrl", posterUrl);
     setHeroPending(true);
     setHeroState({ success: false });
-    const result = await updateHeroData(heroState, formData);
+    const result = await updateHeroData(tenantId, heroState, formData);
     setHeroState(result);
     setHeroPending(false);
     if (result.success) router.refresh();
@@ -75,7 +75,7 @@ export function SettingsForm({
     formData.set("instagramApiKey", instagramApiKey);
     setApiKeysPending(true);
     setApiKeysState({ success: false });
-    const result = await updateApiKeys(apiKeysState, formData);
+    const result = await updateApiKeys(tenantId, apiKeysState, formData);
     setApiKeysState(result);
     setApiKeysPending(false);
     if (result.success) router.refresh();

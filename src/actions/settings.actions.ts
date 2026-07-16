@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
-import { getTenantContext } from "@/lib/tenant";
 
 const socialSchema = z.object({
   instagram: z.string().optional().default(""),
@@ -76,13 +75,8 @@ export type SettingsActionState = {
   fieldErrors?: Record<string, string[]>;
 };
 
-async function requireTenant(): Promise<string> {
-  const tenant = await getTenantContext();
-  if (!tenant) throw new Error("Unauthorized — no tenant context");
-  return tenant.id;
-}
-
 export async function updateInfluencerData(
+  tenantId: string,
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
@@ -101,15 +95,9 @@ export async function updateInfluencerData(
     colors: { primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" },
   };
 
-  console.log("⚙️ updateInfluencerData called with:", rawData);
-
   const parsed = influencerDataSchema.safeParse(rawData);
 
   if (!parsed.success) {
-    console.log(
-      "⚙️ updateInfluencerData validation failed:",
-      parsed.error.flatten().fieldErrors,
-    );
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -122,7 +110,6 @@ export async function updateInfluencerData(
       return { success: false, error: "Unauthorized" };
     }
 
-    const tenantId = await requireTenant();
     if (session.user.role === "ADMIN" && session.user.tenantId !== tenantId) {
       return { success: false, error: "Unauthorized — cannot modify another tenant's data." };
     }
@@ -133,18 +120,18 @@ export async function updateInfluencerData(
         ? { ...existing, ...parsed.data }
         : { ...existing, ...parsed.data, colors: existing.colors, niche: existing.niche };
     await SettingsService.updateInfluencerData(tenantId, merged);
-    console.log("⚙️ updateInfluencerData success");
     revalidatePath("/");
     revalidatePath("/contact");
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
-    console.error("⚙️ updateInfluencerData error:", error);
+    console.error("updateInfluencerData error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
 export async function updateThemeSettings(
+  tenantId: string,
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
@@ -172,21 +159,20 @@ export async function updateThemeSettings(
       return { success: false, error: "Only Super Admins can modify theme settings." };
     }
 
-    const tenantId = await requireTenant();
     const existing = await SettingsService.getInfluencerData(tenantId);
     const merged = { ...existing, ...parsed.data };
     await SettingsService.updateInfluencerData(tenantId, merged);
-    console.log("⚙️ updateThemeSettings success");
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
-    console.error("⚙️ updateThemeSettings error:", error);
+    console.error("updateThemeSettings error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
 
 export async function updateHeroData(
+  tenantId: string,
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
@@ -204,15 +190,9 @@ export async function updateHeroData(
     showLiveBadge: (formData.get("showLiveBadge") as string) || "false",
   };
 
-  console.log("⚙️ updateHeroData called with:", rawData);
-
   const parsed = heroDataSchema.safeParse(rawData);
 
   if (!parsed.success) {
-    console.log(
-      "⚙️ updateHeroData validation failed:",
-      parsed.error.flatten().fieldErrors,
-    );
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -220,9 +200,7 @@ export async function updateHeroData(
   }
 
   try {
-    const tenantId = await requireTenant();
     await SettingsService.updateHeroData(tenantId, parsed.data);
-    console.log("⚙️ updateHeroData success");
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };
@@ -233,6 +211,7 @@ export async function updateHeroData(
 }
 
 export async function updateSocialChannels(
+  tenantId: string,
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
@@ -248,7 +227,6 @@ export async function updateSocialChannels(
   }
 
   try {
-    const tenantId = await requireTenant();
     await SettingsService.updateTenantChannels(tenantId, parsed.data);
     revalidatePath("/");
     revalidatePath("/admin/settings");
@@ -260,6 +238,7 @@ export async function updateSocialChannels(
 }
 
 export async function updateApiKeys(
+  tenantId: string,
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
@@ -278,7 +257,6 @@ export async function updateApiKeys(
   }
 
   try {
-    const tenantId = await requireTenant();
     await SettingsService.updateTenantApiKeys(tenantId, parsed.data);
     revalidatePath("/admin/settings");
     return { success: true };
@@ -287,4 +265,3 @@ export async function updateApiKeys(
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
-
