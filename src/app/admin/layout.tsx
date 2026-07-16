@@ -3,10 +3,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminLayoutClient } from "./_components/admin-layout-client";
 
-const BASE_URL = process.env.NEXTAUTH_URL
-  ? process.env.NEXTAUTH_URL.replace(/https?:\/\//, "")
-  : "localhost:3000";
-
 export default async function AdminLayout({
   children,
 }: {
@@ -26,7 +22,7 @@ export default async function AdminLayout({
     if (tenant?.customDomain) {
       siteUrl = `https://${tenant.customDomain}`;
     } else if (tenant?.subdomain) {
-      siteUrl = `https://${tenant.subdomain}.${BASE_URL}`;
+      siteUrl = `/${tenant.subdomain}`;
     }
   }
 

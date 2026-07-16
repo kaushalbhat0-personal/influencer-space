@@ -7,6 +7,7 @@ import {
   removeMilestone,
 } from "@/actions/milestone.actions";
 import type { MilestoneData } from "@/actions/milestone.actions";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export function MilestonesManager({
   tenantId,
@@ -24,6 +25,7 @@ export function MilestonesManager({
   const [imageUrl, setImageUrl] = useState("");
   const [stats, setStats] = useState("");
   const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function showToast(type: "success" | "error", message: string) {
@@ -137,16 +139,15 @@ export function MilestonesManager({
             required
           />
           <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Image URL (optional)"
-              className="admin-input flex-1"
-              disabled={pending}
+            <ImageUploader
+              onUploadSuccess={(uploadedUrl) => setImageUrl(uploadedUrl)}
+              isUploading={isUploading}
+              setIsUploading={setIsUploading}
+              accept="image/jpeg,image/png,image/webp,image/gif"
             />
             <button
               type="submit"
-              disabled={pending || !year.trim() || !title.trim() || !description.trim()}
+              disabled={pending || isUploading || !year.trim() || !title.trim() || !description.trim()}
               className="admin-btn-cyan shrink-0 px-6 py-2.5"
             >
               {pending ? "Adding..." : "Add Milestone"}

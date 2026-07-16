@@ -8,6 +8,7 @@ import {
   updateGalleryOrder,
 } from "@/actions/gallery.actions";
 import type { GalleryItemData } from "@/actions/gallery.actions";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 function getYouTubeEmbed(url: string): string | null {
   const match = url.match(
@@ -64,7 +65,9 @@ export function GalleryManager({
   const [url, setUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [isVideo, setIsVideo] = useState(false);
+  const [videoSource, setVideoSource] = useState<"upload" | "youtube">("upload");
   const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function showToast(type: "success" | "error", message: string) {
@@ -76,6 +79,7 @@ export function GalleryManager({
     setUrl("");
     setCaption("");
     setIsVideo(false);
+    setVideoSource("upload");
     setError("");
   }
 
@@ -160,31 +164,67 @@ export function GalleryManager({
               <input
                 type="checkbox"
                 checked={isVideo}
-                onChange={(e) => setIsVideo(e.target.checked)}
+                onChange={(e) => {
+                  setIsVideo(e.target.checked);
+                  setUrl("");
+                }}
                 className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/50"
               />
               <span className="text-sm text-zinc-400">Video</span>
             </label>
           </div>
+          {isVideo && (
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="videoSource"
+                  checked={videoSource === "upload"}
+                  onChange={() => { setVideoSource("upload"); setUrl(""); }}
+                  className="h-4 w-4 border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/50"
+                />
+                <span className="text-sm text-zinc-400">Upload Video File</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="videoSource"
+                  checked={videoSource === "youtube"}
+                  onChange={() => { setVideoSource("youtube"); setUrl(""); }}
+                  className="h-4 w-4 border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/50"
+                />
+                <span className="text-sm text-zinc-400">Paste YouTube URL</span>
+              </label>
+            </div>
+          )}
           <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder={isVideo ? "YouTube URL" : "Image URL"}
-              className="admin-input flex-1"
-              disabled={pending}
-              required
-            />
+            {isVideo && videoSource === "youtube" ? (
+              <input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="YouTube URL"
+                className="admin-input flex-1"
+                disabled={pending || isUploading}
+                required
+              />
+            ) : (
+              <ImageUploader
+                onUploadSuccess={(uploadedUrl) => setUrl(uploadedUrl)}
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
+                accept={isVideo ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp"}
+              />
+            )}
             <input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Caption (optional)"
               className="admin-input flex-1"
-              disabled={pending}
+              disabled={pending || isUploading}
             />
             <button
               type="submit"
-              disabled={pending || !url.trim()}
+              disabled={pending || isUploading || !url.trim()}
               className="admin-btn-cyan shrink-0 px-5 py-2.5"
             >
               {pending ? "Adding..." : "Add Media"}
