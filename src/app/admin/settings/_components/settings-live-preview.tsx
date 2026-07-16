@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type Alignment = "top" | "center" | "bottom";
 
@@ -42,9 +42,22 @@ export function SettingsLivePreview({
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   const [previewMedia, setPreviewMedia] = useState<"video" | "image">("video");
 
-  const showVideo = previewMedia === "video" && Boolean(videoUrl);
+  const lastVideoRef = useRef(videoUrl);
+  const lastPosterRef = useRef(posterUrl);
+
+  useEffect(() => {
+    if (videoUrl) lastVideoRef.current = videoUrl;
+  }, [videoUrl]);
+  useEffect(() => {
+    if (posterUrl) lastPosterRef.current = posterUrl;
+  }, [posterUrl]);
+
+  const displayVideoUrl = videoUrl || lastVideoRef.current;
+  const displayPosterUrl = posterUrl || lastPosterRef.current;
+
+  const isVideo = previewMedia === "video" || !displayPosterUrl;
   const activeAlignment =
-    showVideo
+    isVideo
       ? (previewDevice === "desktop" ? videoDesktopAlignment : videoMobileAlignment)
       : (previewDevice === "desktop" ? imageDesktopAlignment : imageMobileAlignment);
   const objectPos = objectClasses[activeAlignment] || "object-center";
@@ -83,38 +96,30 @@ export function SettingsLivePreview({
         </button>
       </div>
 
-      {Boolean(videoUrl || posterUrl) && (
-        <div className="flex justify-center gap-1 rounded-lg bg-zinc-800/50 p-1">
-          <button
-            type="button"
-            onClick={() => setPreviewMedia("video")}
-            disabled={!videoUrl}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-              previewMedia === "video"
-                ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30"
-                : videoUrl
-                  ? "text-zinc-500 hover:text-zinc-300"
-                  : "text-zinc-700 cursor-not-allowed"
-            }`}
-          >
-            Video
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewMedia("image")}
-            disabled={!posterUrl}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-              previewMedia === "image"
-                ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
-                : posterUrl
-                  ? "text-zinc-500 hover:text-zinc-300"
-                  : "text-zinc-700 cursor-not-allowed"
-            }`}
-          >
-            Poster
-          </button>
-        </div>
-      )}
+      <div className="flex justify-center gap-1 rounded-lg bg-zinc-800/50 p-1">
+        <button
+          type="button"
+          onClick={() => setPreviewMedia("video")}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+            previewMedia === "video"
+              ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Video
+        </button>
+        <button
+          type="button"
+          onClick={() => setPreviewMedia("image")}
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+            previewMedia === "image"
+              ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Poster
+        </button>
+      </div>
 
       <div
         className={`overflow-hidden shadow-2xl shadow-black/50 bg-[#0f0f13] ${
@@ -132,28 +137,31 @@ export function SettingsLivePreview({
           style={isMobile ? { height: 230 } : undefined}
         >
           <div className="relative w-full h-full overflow-hidden bg-neutral-950">
-            {showVideo ? (
+            {isVideo && displayVideoUrl ? (
               <video
-                key={`${previewDevice}-${activeAlignment}-${videoUrl}`}
-                src={videoUrl}
-                controls
+                key={`${previewDevice}-${activeAlignment}-${displayVideoUrl}`}
+                src={displayVideoUrl}
+                autoPlay
                 muted
                 playsInline
-                className={`absolute inset-0 w-full h-full object-cover ${objectPos}`}
+                controls
+                className={`absolute inset-0 w-full h-full object-cover pointer-events-auto ${objectPos}`}
               />
-            ) : posterUrl ? (
+            ) : displayPosterUrl ? (
               <img
-                src={posterUrl}
+                src={displayPosterUrl}
                 alt=""
                 className={`absolute inset-0 w-full h-full object-cover opacity-70 ${objectPos}`}
               />
             ) : (
-              <div className="absolute inset-0 bg-zinc-900" />
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                <p className="text-xs text-zinc-600">No media uploaded</p>
+              </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0f0f13]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0f0f13] pointer-events-none" />
 
             {showLiveBadge && liveBadgeText && (
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 backdrop-blur-sm">
+              <div className="absolute top-10 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 backdrop-blur-sm pointer-events-none">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
