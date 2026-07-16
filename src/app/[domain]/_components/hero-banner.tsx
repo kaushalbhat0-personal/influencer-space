@@ -7,8 +7,10 @@ type Alignment = "top" | "center" | "bottom";
 interface HeroBannerProps {
   videoUrl?: string;
   posterUrl?: string;
-  desktopAlignment?: Alignment;
-  mobileAlignment?: Alignment;
+  videoDesktopAlignment?: Alignment;
+  videoMobileAlignment?: Alignment;
+  imageDesktopAlignment?: Alignment;
+  imageMobileAlignment?: Alignment;
 }
 
 const mobileObjectClasses: Record<Alignment, string> = {
@@ -23,16 +25,27 @@ const desktopObjectClasses: Record<Alignment, string> = {
   bottom: "sm:object-bottom",
 };
 
+function alignmentClass(
+  desktopAlign?: Alignment,
+  mobileAlign?: Alignment,
+): string {
+  const m = mobileObjectClasses[mobileAlign || "center"] || "object-center";
+  const d = desktopObjectClasses[desktopAlign || "center"] || "sm:object-center";
+  return `${m} ${d}`;
+}
+
 export function HeroBanner({
   videoUrl,
   posterUrl,
-  desktopAlignment = "center",
-  mobileAlignment = "center",
+  videoDesktopAlignment,
+  videoMobileAlignment,
+  imageDesktopAlignment,
+  imageMobileAlignment,
 }: HeroBannerProps) {
   const [videoEnded, setVideoEnded] = useState(false);
 
-  const responsiveObject =
-    `${mobileObjectClasses[mobileAlignment]} ${desktopObjectClasses[desktopAlignment]}`;
+  const videoAlign = alignmentClass(videoDesktopAlignment, videoMobileAlignment);
+  const imageAlign = alignmentClass(imageDesktopAlignment, imageMobileAlignment);
 
   if (!videoUrl && !posterUrl) return null;
 
@@ -48,13 +61,13 @@ export function HeroBanner({
           playsInline
           loop={false}
           onEnded={() => setVideoEnded(true)}
-          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${responsiveObject}`}
+          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${videoAlign}`}
         />
       ) : posterUrl ? (
         <img
           src={posterUrl}
           alt=""
-          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${responsiveObject}`}
+          className={`absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity duration-700 ${imageAlign}`}
         />
       ) : null}
 

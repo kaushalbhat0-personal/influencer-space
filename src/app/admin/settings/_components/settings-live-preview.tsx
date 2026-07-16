@@ -7,8 +7,10 @@ type Alignment = "top" | "center" | "bottom";
 interface SettingsLivePreviewProps {
   videoUrl: string;
   posterUrl: string;
-  desktopAlignment: Alignment;
-  mobileAlignment: Alignment;
+  videoDesktopAlignment: Alignment;
+  videoMobileAlignment: Alignment;
+  imageDesktopAlignment: Alignment;
+  imageMobileAlignment: Alignment;
   profileUrl: string | null;
   name: string;
   tagline: string;
@@ -26,8 +28,10 @@ const objectClasses: Record<Alignment, string> = {
 export function SettingsLivePreview({
   videoUrl,
   posterUrl,
-  desktopAlignment,
-  mobileAlignment,
+  videoDesktopAlignment,
+  videoMobileAlignment,
+  imageDesktopAlignment,
+  imageMobileAlignment,
   profileUrl,
   name,
   tagline,
@@ -38,11 +42,13 @@ export function SettingsLivePreview({
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   const [previewMedia, setPreviewMedia] = useState<"video" | "image">("video");
 
-  const activeAlignment = previewDevice === "desktop" ? desktopAlignment : mobileAlignment;
+  const showVideo = previewMedia === "video" && Boolean(videoUrl);
+  const activeAlignment =
+    showVideo
+      ? (previewDevice === "desktop" ? videoDesktopAlignment : videoMobileAlignment)
+      : (previewDevice === "desktop" ? imageDesktopAlignment : imageMobileAlignment);
   const objectPos = objectClasses[activeAlignment] || "object-center";
   const isMobile = previewDevice === "mobile";
-  const showVideo = previewMedia === "video" && Boolean(videoUrl);
-  const heroHeight = isMobile ? 230 : 180;
 
   return (
     <div className="w-full max-w-[320px] mx-auto space-y-3">
@@ -121,7 +127,10 @@ export function SettingsLivePreview({
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-7 bg-zinc-800 rounded-b-2xl z-20" />
         )}
 
-        <div className="relative w-full bg-zinc-950" style={{ height: heroHeight }}>
+        <div
+          className={`relative w-full bg-zinc-950 ${isMobile ? "" : "aspect-video"}`}
+          style={isMobile ? { height: 230 } : undefined}
+        >
           <div className="relative w-full h-full overflow-hidden bg-neutral-950">
             {showVideo ? (
               <video

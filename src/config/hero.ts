@@ -10,8 +10,10 @@ export type HeroDataType = {
   ctaSecondaryLink: string;
   liveBadgeText: string;
   showLiveBadge: boolean;
-  desktopAlignment: "top" | "center" | "bottom";
-  mobileAlignment: "top" | "center" | "bottom";
+  videoDesktopAlignment: "top" | "center" | "bottom";
+  videoMobileAlignment: "top" | "center" | "bottom";
+  imageDesktopAlignment: "top" | "center" | "bottom";
+  imageMobileAlignment: "top" | "center" | "bottom";
 };
 
 export const defaultHeroData: HeroDataType = {
@@ -26,6 +28,8 @@ export const defaultHeroData: HeroDataType = {
   ctaSecondaryLink: "https://instagram.com/snaxgaming",
   liveBadgeText: "Live on YouTube",
   showLiveBadge: true,
-  desktopAlignment: "center",
-  mobileAlignment: "center",
+  videoDesktopAlignment: "center",
+  videoMobileAlignment: "center",
+  imageDesktopAlignment: "center",
+  imageMobileAlignment: "center",
 };

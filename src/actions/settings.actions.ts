@@ -57,8 +57,10 @@ const heroDataSchema = z.object({
     .string()
     .optional()
     .transform((v) => v === "on" || v === "true"),
-  desktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
-  mobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
+  videoDesktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
+  videoMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
+  imageDesktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
+  imageMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
 });
 
 const socialChannelSchema = z.object({
@@ -190,8 +192,10 @@ export async function updateHeroData(
     ctaSecondaryLink: (formData.get("ctaSecondaryLink") as string) || "",
     liveBadgeText: (formData.get("liveBadgeText") as string) || "",
     showLiveBadge: (formData.get("showLiveBadge") as string) || "false",
-    desktopAlignment: (formData.get("desktopAlignment") as string) || "center",
-    mobileAlignment: (formData.get("mobileAlignment") as string) || "center",
+    videoDesktopAlignment: (formData.get("videoDesktopAlignment") as string) || "center",
+    videoMobileAlignment: (formData.get("videoMobileAlignment") as string) || "center",
+    imageDesktopAlignment: (formData.get("imageDesktopAlignment") as string) || "center",
+    imageMobileAlignment: (formData.get("imageMobileAlignment") as string) || "center",
   };
 
   const parsed = heroDataSchema.safeParse(rawData);
@@ -204,7 +208,9 @@ export async function updateHeroData(
   }
 
   try {
-    await SettingsService.updateHeroData(tenantId, parsed.data);
+    const existing = await SettingsService.getHeroData(tenantId);
+    const merged = { ...existing, ...parsed.data };
+    await SettingsService.updateHeroData(tenantId, merged);
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };

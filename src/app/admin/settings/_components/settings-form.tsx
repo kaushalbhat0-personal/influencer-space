@@ -62,12 +62,20 @@ export function SettingsForm({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
   const [posterFile, setPosterFile] = useState<File | null>(null);
-  const [desktopAlignment, setDesktopAlignment] = useState<"top" | "center" | "bottom">(
-    heroData.desktopAlignment as "top" | "center" | "bottom" || "center"
+
+  const [videoDesktopAlignment, setVideoDesktopAlignment] = useState<"top" | "center" | "bottom">(
+    heroData.videoDesktopAlignment as "top" | "center" | "bottom" || "center"
   );
-  const [mobileAlignment, setMobileAlignment] = useState<"top" | "center" | "bottom">(
-    heroData.mobileAlignment as "top" | "center" | "bottom" || "center"
+  const [videoMobileAlignment, setVideoMobileAlignment] = useState<"top" | "center" | "bottom">(
+    heroData.videoMobileAlignment as "top" | "center" | "bottom" || "center"
   );
+  const [imageDesktopAlignment, setImageDesktopAlignment] = useState<"top" | "center" | "bottom">(
+    heroData.imageDesktopAlignment as "top" | "center" | "bottom" || "center"
+  );
+  const [imageMobileAlignment, setImageMobileAlignment] = useState<"top" | "center" | "bottom">(
+    heroData.imageMobileAlignment as "top" | "center" | "bottom" || "center"
+  );
+
   const [youtubeApiKey, setYoutubeApiKey] = useState(initialYoutubeKey);
   const [instagramApiKey, setInstagramApiKey] = useState(initialInstagramKey);
 
@@ -77,9 +85,68 @@ export function SettingsForm({
   const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
   const [liveShowBadge, setLiveShowBadge] = useState(heroData.showLiveBadge || false);
 
-  async function handleProfileSubmit(formData: FormData) {
+  function alignmentButtons(
+    desktopAlign: string,
+    mobileAlign: string,
+    onDesktop: (a: "top" | "center" | "bottom") => void,
+    onMobile: (a: "top" | "center" | "bottom") => void,
+  ) {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1.5">Desktop</label>
+          <div className="flex gap-1">
+            {(["top", "center", "bottom"] as const).map((a) => (
+              <button
+                key={`d-${a}`}
+                type="button"
+                onClick={() => onDesktop(a)}
+                className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-all ${
+                  desktopAlign === a
+                    ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
+                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1.5">Mobile</label>
+          <div className="flex gap-1">
+            {(["top", "center", "bottom"] as const).map((a) => (
+              <button
+                key={`m-${a}`}
+                type="button"
+                onClick={() => onMobile(a)}
+                className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-all ${
+                  mobileAlign === a
+                    ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
+                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  async function handleSaveProfileImage() {
     setProfilePending(true);
     setProfileState({ success: false });
+
+    const formData = new FormData();
+    formData.set("name", config.name);
+    formData.set("tagline", config.tagline);
+    formData.set("bio", config.bio);
+    formData.set("instagram", config.social.instagram);
+    formData.set("youtube", config.social.youtube);
+    formData.set("twitter", config.social.twitter);
+    formData.set("tiktok", config.social.tiktok);
 
     const originalProfileImage = config.profileImage || "";
 
@@ -89,7 +156,7 @@ export function SettingsForm({
         setProfileImage(url);
         formData.set("profileImage", url);
       } catch (err) {
-        setProfileState({ success: false, error: err instanceof Error ? err.message : "Profile image upload failed" });
+        setProfileState({ success: false, error: err instanceof Error ? err.message : "Upload failed" });
         setProfilePending(false);
         return;
       }
@@ -111,12 +178,12 @@ export function SettingsForm({
     }
   }
 
-  async function handleHeroSubmit(formData: FormData) {
+  async function handleSaveVideo() {
     setHeroPending(true);
     setHeroState({ success: false });
 
+    const formData = new FormData();
     const originalVideoUrl = heroData.videoUrl || "";
-    const originalPosterUrl = heroData.posterUrl || "";
 
     if (videoFile) {
       try {
@@ -132,6 +199,30 @@ export function SettingsForm({
       formData.set("videoUrl", videoUrl);
     }
 
+    formData.set("videoDesktopAlignment", videoDesktopAlignment);
+    formData.set("videoMobileAlignment", videoMobileAlignment);
+
+    const result = await updateHeroData(tenantId, heroState, formData);
+    setHeroState(result);
+    setHeroPending(false);
+
+    if (result.success) {
+      const finalVideoUrl = (formData.get("videoUrl") as string) || "";
+      if (originalVideoUrl && originalVideoUrl !== finalVideoUrl) {
+        const oldPath = extractSupabaseFilePath(originalVideoUrl);
+        if (oldPath) await deleteSupabaseFile(oldPath);
+      }
+      router.refresh();
+    }
+  }
+
+  async function handleSaveImage() {
+    setHeroPending(true);
+    setHeroState({ success: false });
+
+    const formData = new FormData();
+    const originalPosterUrl = heroData.posterUrl || "";
+
     if (posterFile) {
       try {
         const url = await uploadFile(posterFile, tenantId, "hero");
@@ -146,28 +237,31 @@ export function SettingsForm({
       formData.set("posterUrl", posterUrl);
     }
 
-    formData.set("desktopAlignment", desktopAlignment);
-    formData.set("mobileAlignment", mobileAlignment);
+    formData.set("imageDesktopAlignment", imageDesktopAlignment);
+    formData.set("imageMobileAlignment", imageMobileAlignment);
 
     const result = await updateHeroData(tenantId, heroState, formData);
     setHeroState(result);
     setHeroPending(false);
 
     if (result.success) {
-      const finalVideoUrl = (formData.get("videoUrl") as string) || "";
-      if (originalVideoUrl && originalVideoUrl !== finalVideoUrl) {
-        const oldPath = extractSupabaseFilePath(originalVideoUrl);
-        if (oldPath) await deleteSupabaseFile(oldPath);
-      }
-
       const finalPosterUrl = (formData.get("posterUrl") as string) || "";
       if (originalPosterUrl && originalPosterUrl !== finalPosterUrl) {
         const oldPath = extractSupabaseFilePath(originalPosterUrl);
         if (oldPath) await deleteSupabaseFile(oldPath);
       }
-
       router.refresh();
     }
+  }
+
+  async function handleSaveHeroDetails(formData: FormData) {
+    setHeroPending(true);
+    setHeroState({ success: false });
+
+    const result = await updateHeroData(tenantId, heroState, formData);
+    setHeroState(result);
+    setHeroPending(false);
+    if (result.success) router.refresh();
   }
 
   async function handleApiKeysSubmit(formData: FormData) {
@@ -184,78 +278,78 @@ export function SettingsForm({
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8 items-start">
       <div className="space-y-8">
-        {/* ─── Hero Settings ─── */}
+        {/* ─── Hero Video ─── */}
         <Card>
           <CardContent>
-            <form ref={heroFormRef} action={handleHeroSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Hero Section</h3>
-                <p className="text-sm text-gray-500">
-                  Control the hero video, title, subtitle, and call-to-action buttons on the landing page.
-                </p>
-
-                <VideoUpload
-                  onChange={(file) => {
-                    setVideoFile(file);
-                    if (!file) setVideoUrl("");
-                  }}
-                  currentUrl={videoUrl || null}
-                  label="Hero Video"
-                />
-
-                <ImageUpload
-                  onChange={(file) => {
-                    setPosterFile(file);
-                    if (!file) setPosterUrl("");
-                  }}
-                  currentUrl={posterUrl || null}
-                  label="Hero Poster Image"
-                />
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Hero Video</h3>
+              <VideoUpload
+                onChange={(file) => {
+                  setVideoFile(file);
+                  if (!file) setVideoUrl("");
+                }}
+                currentUrl={videoUrl || null}
+                label="Hero Video"
+              />
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
+                {alignmentButtons(videoDesktopAlignment, videoMobileAlignment, setVideoDesktopAlignment, setVideoMobileAlignment)}
               </div>
-
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-white">Focal Point Alignment</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Desktop</label>
-                    <div className="flex gap-1">
-                      {(["top", "center", "bottom"] as const).map((a) => (
-                        <button
-                          key={`desktop-${a}`}
-                          type="button"
-                          onClick={() => setDesktopAlignment(a)}
-                          className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-all ${
-                            desktopAlignment === a
-                              ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
-                              : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
-                          }`}
-                        >
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Mobile</label>
-                    <div className="flex gap-1">
-                      {(["top", "center", "bottom"] as const).map((a) => (
-                        <button
-                          key={`mobile-${a}`}
-                          type="button"
-                          onClick={() => setMobileAlignment(a)}
-                          className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-all ${
-                            mobileAlignment === a
-                              ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
-                              : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
-                          }`}
-                        >
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {heroState.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Video settings saved!
                 </div>
+              )}
+              {heroState.error && (
+                <p className="text-sm text-red-400">{heroState.error}</p>
+              )}
+              <button type="button" onClick={handleSaveVideo} disabled={heroPending} className="admin-btn-cyan">
+                {heroPending ? "Saving..." : "Save Video"}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ─── Hero Poster Image ─── */}
+        <Card>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Hero Poster Image</h3>
+              <ImageUpload
+                onChange={(file) => {
+                  setPosterFile(file);
+                  if (!file) setPosterUrl("");
+                }}
+                currentUrl={posterUrl || null}
+                label="Hero Poster Image"
+              />
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
+                {alignmentButtons(imageDesktopAlignment, imageMobileAlignment, setImageDesktopAlignment, setImageMobileAlignment)}
               </div>
+              {heroState.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Poster settings saved!
+                </div>
+              )}
+              {heroState.error && (
+                <p className="text-sm text-red-400">{heroState.error}</p>
+              )}
+              <button type="button" onClick={handleSaveImage} disabled={heroPending} className="admin-btn-cyan">
+                {heroPending ? "Saving..." : "Save Poster Image"}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ─── Hero Details ─── */}
+        <Card>
+          <CardContent>
+            <form ref={heroFormRef} action={handleSaveHeroDetails} className="space-y-6">
+              <h3 className="text-lg font-semibold text-white">Hero Details</h3>
+              <p className="text-sm text-gray-500">
+                Control the hero title, subtitle, call-to-action buttons, and live badge.
+              </p>
 
               <Input
                 id="heroTitle"
@@ -337,7 +431,7 @@ export function SettingsForm({
 
               {heroState.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Hero settings updated successfully!
+                  Hero details saved!
                 </div>
               )}
               {heroState.error && (
@@ -346,56 +440,74 @@ export function SettingsForm({
 
               <div className="pt-2">
                 <button type="submit" disabled={heroPending} className="admin-btn-cyan">
-                  {heroPending ? "Saving..." : "Save Hero Settings"}
+                  {heroPending ? "Saving..." : "Save Hero Details"}
                 </button>
               </div>
             </form>
           </CardContent>
         </Card>
 
+        {/* ─── Profile Image ─── */}
+        <Card>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Profile Picture</h3>
+              <ImageUpload
+                onChange={(file) => {
+                  setProfileImageFile(file);
+                  if (!file) setProfileImage("");
+                }}
+                currentUrl={profileImage || null}
+                label="Profile Image"
+              />
+              {profileState.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Profile picture saved!
+                </div>
+              )}
+              {profileState.error && (
+                <p className="text-sm text-red-400">{profileState.error}</p>
+              )}
+              <button type="button" onClick={handleSaveProfileImage} disabled={profilePending} className="admin-btn-cyan">
+                {profilePending ? "Saving..." : "Save Profile Picture"}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* ─── Personal Information ─── */}
         <Card>
           <CardContent>
-            <form ref={profileFormRef} action={handleProfileSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Personal Information</h3>
-                <Input
-                  id="name"
-                  name="name"
-                  label="Full Name"
-                  defaultValue={config.name}
-                  error={profileState.fieldErrors?.name?.[0]}
-                  onChange={(e) => setLiveName(e.target.value)}
-                  required
-                />
-                <Input
-                  id="tagline"
-                  name="tagline"
-                  label="Tagline"
-                  defaultValue={config.tagline}
-                  error={profileState.fieldErrors?.tagline?.[0]}
-                  onChange={(e) => setLiveTagline(e.target.value)}
-                  required
-                />
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  label="Bio"
-                  defaultValue={config.bio}
-                  error={profileState.fieldErrors?.bio?.[0]}
-                  onChange={(e) => setLiveBio(e.target.value)}
-                  rows={5}
-                  required
-                />
-                <ImageUpload
-                  onChange={(file) => {
-                    setProfileImageFile(file);
-                    if (!file) setProfileImage("");
-                  }}
-                  currentUrl={profileImage || null}
-                  label="Profile Image"
-                />
-              </div>
+            <form ref={profileFormRef} action={handleSaveProfileImage} className="space-y-6">
+              <h3 className="text-lg font-semibold text-white">Personal Information</h3>
+              <Input
+                id="name"
+                name="name"
+                label="Full Name"
+                defaultValue={config.name}
+                error={profileState.fieldErrors?.name?.[0]}
+                onChange={(e) => setLiveName(e.target.value)}
+                required
+              />
+              <Input
+                id="tagline"
+                name="tagline"
+                label="Tagline"
+                defaultValue={config.tagline}
+                error={profileState.fieldErrors?.tagline?.[0]}
+                onChange={(e) => setLiveTagline(e.target.value)}
+                required
+              />
+              <Textarea
+                id="bio"
+                name="bio"
+                label="Bio"
+                defaultValue={config.bio}
+                error={profileState.fieldErrors?.bio?.[0]}
+                onChange={(e) => setLiveBio(e.target.value)}
+                rows={5}
+                required
+              />
 
               {role === "SUPER_ADMIN" && (
               <div className="space-y-4">
@@ -460,18 +572,9 @@ export function SettingsForm({
                 />
               </div>
 
-              {profileState.success && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Profile updated successfully!
-                </div>
-              )}
-              {profileState.error && (
-                <p className="text-sm text-red-400">{profileState.error}</p>
-              )}
-
               <div className="flex items-center gap-4 pt-2">
                 <button type="submit" disabled={profilePending} className="admin-btn-cyan">
-                  {profilePending ? "Saving..." : "Save Profile"}
+                  {profilePending ? "Saving..." : "Save Profile Info"}
                 </button>
                 <button type="button" onClick={() => router.push("/admin/dashboard")} className="admin-btn-outline">
                   Back to Dashboard
@@ -542,8 +645,10 @@ export function SettingsForm({
           <SettingsLivePreview
             videoUrl={videoUrl || heroData.videoUrl || ""}
             posterUrl={posterUrl || heroData.posterUrl || ""}
-            desktopAlignment={desktopAlignment}
-            mobileAlignment={mobileAlignment}
+            videoDesktopAlignment={videoDesktopAlignment}
+            videoMobileAlignment={videoMobileAlignment}
+            imageDesktopAlignment={imageDesktopAlignment}
+            imageMobileAlignment={imageMobileAlignment}
             profileUrl={profileImage || config.profileImage || null}
             name={liveName}
             tagline={liveTagline}
