@@ -216,6 +216,10 @@ export function SettingsForm({
   async function handleSaveHeroDetails(formData: FormData) {
     setHeroDetailsSave({ pending: true, state: { success: false } });
 
+    if (!formData.has("showLiveBadge")) {
+      formData.append("showLiveBadge", liveShowBadge ? "true" : "false");
+    }
+
     const result = await updateHeroData(tenantId, { success: false }, formData);
     setHeroDetailsSave({ pending: false, state: result });
     if (result.success) router.refresh();

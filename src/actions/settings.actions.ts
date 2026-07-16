@@ -63,6 +63,8 @@ const heroDataSchema = z.object({
   imageMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
 });
 
+const heroPartialSchema = heroDataSchema.partial();
+
 const socialChannelSchema = z.object({
   youtubeChannelId: z.string().optional().default(""),
   twitchChannelId: z.string().optional().default(""),
@@ -180,25 +182,12 @@ export async function updateHeroData(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  const rawData = {
-    videoUrl: (formData.get("videoUrl") as string) || "",
-    posterUrl: (formData.get("posterUrl") as string) || "",
-    title: (formData.get("heroTitle") as string) || "",
-    subtitle: (formData.get("heroSubtitle") as string) || "",
-    tagline: (formData.get("heroTagline") as string) || "",
-    ctaText: (formData.get("ctaText") as string) || "",
-    ctaLink: (formData.get("ctaLink") as string) || "",
-    ctaSecondaryText: (formData.get("ctaSecondaryText") as string) || "",
-    ctaSecondaryLink: (formData.get("ctaSecondaryLink") as string) || "",
-    liveBadgeText: (formData.get("liveBadgeText") as string) || "",
-    showLiveBadge: (formData.get("showLiveBadge") as string) || "false",
-    videoDesktopAlignment: (formData.get("videoDesktopAlignment") as string) || "center",
-    videoMobileAlignment: (formData.get("videoMobileAlignment") as string) || "center",
-    imageDesktopAlignment: (formData.get("imageDesktopAlignment") as string) || "center",
-    imageMobileAlignment: (formData.get("imageMobileAlignment") as string) || "center",
-  };
+  const rawData: Record<string, unknown> = {};
+  for (const [key, value] of Array.from(formData.entries())) {
+    rawData[key] = value;
+  }
 
-  const parsed = heroDataSchema.safeParse(rawData);
+  const parsed = heroPartialSchema.safeParse(rawData);
 
   if (!parsed.success) {
     return {
