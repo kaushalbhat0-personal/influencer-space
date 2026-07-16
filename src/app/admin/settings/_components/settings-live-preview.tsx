@@ -42,7 +42,6 @@ export function SettingsLivePreview({
   const objectPos = objectClasses[activeAlignment] || "object-center";
   const isMobile = previewDevice === "mobile";
   const showVideo = previewMedia === "video" && Boolean(videoUrl);
-  const mediaUrl = showVideo ? videoUrl : posterUrl;
   const heroHeight = isMobile ? 230 : 180;
 
   return (
