@@ -9,6 +9,7 @@ import { YouTubeScraperService } from "@/services/youtube-scraper.service";
 import { VercelService } from "@/services/vercel.service";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 import { toSubdomain } from "@/lib/utils";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -284,6 +285,46 @@ export type DeleteTenantResult = {
   success: boolean;
   error?: string;
 };
+
+export type ResetPasswordResult = {
+  success: boolean;
+  error?: string;
+};
+
+export async function resetTenantAdminPassword(
+  tenantId: string,
+  newPassword: string,
+): Promise<ResetPasswordResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized — Super Admin access required." };
+  }
+
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: "Password must be at least 8 characters." };
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    const result = await prisma.user.updateMany({
+      where: { tenantId, role: "ADMIN" },
+      data: { password: hashedPassword },
+    });
+
+    if (result.count === 0) {
+      return { success: false, error: "No admin user found for this tenant." };
+    }
+
+    revalidatePath("/super-admin");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to reset password",
+    };
+  }
+}
 
 export async function deleteTenant(tenantId: string): Promise<DeleteTenantResult> {
   const session = await getServerSession(authOptions);
