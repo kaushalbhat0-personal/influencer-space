@@ -60,6 +60,16 @@ export async function middleware(request: NextRequest) {
       const loginUrl = new URL("/admin/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
+
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  if (tenantHost && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments[0] !== tenantHost) {
+      const url = new URL(`/${tenantHost}${pathname}`, request.url);
+      return NextResponse.rewrite(url);
+    }
   }
 
   return NextResponse.next({ request: { headers: requestHeaders } });

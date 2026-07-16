@@ -1,18 +1,240 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ProductService } from "@/services/product.service";
-import { StorageService } from "@/services/storage.service";
-import { PRODUCTS_ROUTE } from "@/lib/constants";
-import { getTenantContext } from "@/lib/tenant";
 
-const productSchema = z.object({
+const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(1000).optional().default(""),
-  price: z.coerce.number().positive("Price must be positive"),
+  price: z.coerce.number().positive("Price must be greater than 0"),
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
+
+export type ProductData = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  order: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+async function requireAdminAccess(tenantId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized — Admin access required");
+  }
+
+  const tenant = await getTenantContext();
+  if (!tenant || tenant.id !== tenantId) {
+    throw new Error("Unauthorized — tenant mismatch");
+  }
+
+  return tenant;
+}
+
+export async function fetchProducts(
+  tenantId: string,
+): Promise<{ success: boolean; data?: ProductData[]; error?: string }> {
+  try {
+    await requireAdminAccess(tenantId);
+
+    const products = await prisma.product.findMany({
+      where: { tenantId },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    });
+
+    return { success: true, data: products };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch products",
+    };
+  }
+}
+
+export async function createNewProduct(
+  tenantId: string,
+  formData: FormData,
+): Promise<{ success: boolean; data?: ProductData; error?: string }> {
+  try {
+    await requireAdminAccess(tenantId);
+
+    const parsed = createProductSchema.safeParse({
+      name: formData.get("name"),
+      description: formData.get("description"),
+      price: formData.get("price"),
+      imageUrl: formData.get("imageUrl"),
+    });
+
+    if (!parsed.success) {
+      const fields = parsed.error.flatten().fieldErrors;
+      const first = fields.name?.[0] || fields.price?.[0] || fields.imageUrl?.[0] || "Invalid input";
+      return { success: false, error: first };
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        tenantId,
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+        price: parsed.data.price,
+        imageUrl: parsed.data.imageUrl || null,
+      },
+    });
+
+    revalidatePath("/admin/products");
+    return { success: true, data: product };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create product",
+    };
+  }
+}
+
+export async function toggleProductStatus(
+  id: string,
+  tenantId: string,
+  isActive: boolean,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdminAccess(tenantId);
+
+    const existing = await prisma.product.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) {
+      return { success: false, error: "Product not found" };
+    }
+
+    await prisma.product.update({
+      where: { id },
+      data: { isActive },
+    });
+
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to toggle product",
+    };
+  }
+}
+
+export async function updateExistingProduct(
+  tenantId: string,
+  formData: FormData,
+): Promise<{ success: boolean; data?: ProductData; error?: string }> {
+  try {
+    await requireAdminAccess(tenantId);
+
+    const id = formData.get("id");
+    if (!id || typeof id !== "string") {
+      return { success: false, error: "Product ID is required" };
+    }
+
+    const parsed = createProductSchema.safeParse({
+      name: formData.get("name"),
+      description: formData.get("description"),
+      price: formData.get("price"),
+      imageUrl: formData.get("imageUrl"),
+    });
+
+    if (!parsed.success) {
+      const fields = parsed.error.flatten().fieldErrors;
+      const first = fields.name?.[0] || fields.price?.[0] || "Invalid input";
+      return { success: false, error: first };
+    }
+
+    const existing = await prisma.product.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) {
+      return { success: false, error: "Product not found" };
+    }
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+        price: parsed.data.price,
+        imageUrl: parsed.data.imageUrl || null,
+      },
+    });
+
+    revalidatePath("/admin/products");
+    return { success: true, data: product };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update product",
+    };
+  }
+}
+
+export async function removeProduct(
+  id: string,
+  tenantId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdminAccess(tenantId);
+
+    const existing = await prisma.product.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) {
+      return { success: false, error: "Product not found" };
+    }
+
+    await prisma.product.delete({ where: { id } });
+
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete product",
+    };
+  }
+}
+
+export async function updateProductOrder(
+  tenantId: string,
+  updates: { id: string; order: number }[],
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdminAccess(tenantId);
+
+    await prisma.$transaction(
+      updates.map((u) =>
+        prisma.product.update({
+          where: { id: u.id },
+          data: { order: u.order },
+        }),
+      ),
+    );
+
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to reorder products",
+    };
+  }
+}
+
+// ── Backward-compatible wrappers (old API) ─────────────
 
 export type ProductActionState = {
   success: boolean;
@@ -20,134 +242,45 @@ export type ProductActionState = {
   fieldErrors?: Record<string, string[]>;
 };
 
-async function requireTenant(): Promise<string> {
-  const tenant = await getTenantContext();
-  if (!tenant) throw new Error("Unauthorized — no tenant context");
-  return tenant.id;
-}
-
 export async function createProduct(
   _prevState: ProductActionState,
   formData: FormData,
 ): Promise<ProductActionState> {
-  const raw = Object.fromEntries(formData);
-  console.log("📦 createProduct called with:", raw);
-
-  const parsed = productSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-    price: formData.get("price"),
-    imageUrl: formData.get("imageUrl"),
-  });
-
-  if (!parsed.success) {
-    console.log("📦 createProduct validation failed:", parsed.error.flatten().fieldErrors);
-    return {
-      success: false,
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    const tenantId = await requireTenant();
-    const result = await ProductService.create(tenantId, {
-      name: parsed.data.name,
-      description: parsed.data.description || undefined,
-      price: parsed.data.price,
-      imageUrl: parsed.data.imageUrl || undefined,
-    });
-    console.log("📦 createProduct success:", result.id);
-    revalidatePath(PRODUCTS_ROUTE);
-    return { success: true };
-  } catch (error) {
-    console.error("📦 createProduct error:", error);
-    return { success: false, error: "Failed to create product" };
-  }
+  const tenant = await getTenantContext();
+  if (!tenant) return { success: false, error: "No tenant configured" };
+  const result = await createNewProduct(tenant.id, formData);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true };
 }
 
 export async function updateProduct(
   _prevState: ProductActionState,
   formData: FormData,
 ): Promise<ProductActionState> {
-  const id = formData.get("id") as string;
-  const raw = Object.fromEntries(formData);
-  console.log("📦 updateProduct called — id:", id, "data:", raw);
-
-  if (!id) {
-    console.log("📦 updateProduct missing id");
-    return { success: false, error: "Product ID is required" };
-  }
-
-  const parsed = productSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-    price: formData.get("price"),
-    imageUrl: formData.get("imageUrl"),
-  });
-
-  if (!parsed.success) {
-    console.log("📦 updateProduct validation failed:", parsed.error.flatten().fieldErrors);
-    return {
-      success: false,
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    const tenantId = await requireTenant();
-    await ProductService.update(id, tenantId, {
-      name: parsed.data.name,
-      description: parsed.data.description || undefined,
-      price: parsed.data.price,
-      imageUrl: parsed.data.imageUrl || undefined,
-    });
-    console.log("📦 updateProduct success — id:", id);
-    revalidatePath(PRODUCTS_ROUTE);
-    return { success: true };
-  } catch (error) {
-    console.error("📦 updateProduct error:", error);
-    return { success: false, error: "Failed to update product" };
-  }
+  const tenant = await getTenantContext();
+  if (!tenant) return { success: false, error: "No tenant configured" };
+  const result = await updateExistingProduct(tenant.id, formData);
+  if (!result.success) return { success: false, error: result.error };
+  return { success: true };
 }
 
 export async function deleteProduct(
   id: string,
-): Promise<ProductActionState> {
-  console.log("📦 deleteProduct called — id:", id);
-  try {
-    const tenantId = await requireTenant();
-    const product = await ProductService.findById(id, tenantId);
-    console.log("📦 deleteProduct found:", product?.id);
-    if (product?.imageUrl) {
-      const path = StorageService.extractPathFromUrl(product.imageUrl);
-      console.log("📦 deleteProduct extracting storage path:", path);
-      if (path) {
-        await StorageService.delete(path);
-        console.log("📦 deleteProduct storage file deleted:", path);
-      }
-    }
-    await ProductService.delete(id, tenantId);
-    console.log("📦 deleteProduct success — id:", id);
-    revalidatePath(PRODUCTS_ROUTE);
-    return { success: true };
-  } catch (error) {
-    console.error("📦 deleteProduct error:", error);
-    return { success: false, error: "Failed to delete product" };
-  }
+): Promise<{ success: boolean; error?: string }> {
+  const tenant = await getTenantContext();
+  if (!tenant) return { success: false, error: "No tenant configured" };
+  return removeProduct(id, tenant.id);
 }
 
 export async function toggleProductActive(
   id: string,
-): Promise<ProductActionState> {
-  console.log("📦 toggleProductActive called — id:", id);
-  try {
-    const tenantId = await requireTenant();
-    await ProductService.toggleActive(id, tenantId);
-    console.log("📦 toggleProductActive success — id:", id);
-    revalidatePath(PRODUCTS_ROUTE);
-    return { success: true };
-  } catch (error) {
-    console.error("📦 toggleProductActive error:", error);
-    return { success: false, error: "Failed to toggle product status" };
-  }
+): Promise<{ success: boolean; error?: string }> {
+  const tenant = await getTenantContext();
+  if (!tenant) return { success: false, error: "No tenant configured" };
+  return toggleProductStatus(id, tenant.id, !(await getCurrentActive(id, tenant.id)));
+}
+
+async function getCurrentActive(id: string, tenantId: string): Promise<boolean> {
+  const product = await prisma.product.findFirst({ where: { id, tenantId } });
+  return product?.isActive ?? false;
 }

@@ -35,6 +35,7 @@ model Tenant {
   settings           Setting[]
   contactSubmissions ContactSubmission[]
   subscription       Subscription?
+  productOrders      ProductOrder[]
 }
 
 model Subscription {
@@ -75,13 +76,35 @@ model Product {
   description String?
   price       Float
   imageUrl    String?
+  order       Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  orders ProductOrder[]
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+}
+
+model ProductOrder {
+  id                String   @id @default(cuid())
+  tenantId          String   @db.Uuid
+  productId         String   @db.Uuid
+  amount            Float
+  status            String   @default("PENDING")
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?
+  fanEmail          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([productId])
 }
 
 model AffiliateLink {
@@ -90,6 +113,7 @@ model AffiliateLink {
   title     String
   url       String
   imageUrl  String?
+  order     Int      @default(0)
   clicks    Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

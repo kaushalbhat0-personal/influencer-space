@@ -3,7 +3,7 @@ import { TimelineService } from "@/services/timeline.service";
 import { TimelineForm } from "../../_components/timeline-form";
 import { getTenantContext } from "@/lib/tenant";
 
-export default async function EditTimelinePage({
+export default async function EditMilestonePage({
   params,
 }: {
   params: { id: string };
@@ -21,7 +21,7 @@ export default async function EditTimelinePage({
 
   return (
     <div>
-      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-display">Edit Timeline Event</h1>
+      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-display">Edit Milestone</h1>
       <div className="max-w-2xl">
         <TimelineForm mode="edit" event={event} />
       </div>

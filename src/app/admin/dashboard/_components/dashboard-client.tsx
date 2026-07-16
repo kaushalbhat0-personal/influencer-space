@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { PRODUCTS_ROUTE, AFFILIATES_ROUTE, GALLERY_ROUTE, GAMES_ROUTE, TIMELINE_ROUTE } from "@/lib/constants";
+import { PRODUCTS_ROUTE, AFFILIATES_ROUTE, GALLERY_ROUTE, GAMES_ROUTE, MILESTONES_ROUTE } from "@/lib/constants";
 
 interface StatCardProps {
   label: string;
@@ -106,7 +106,7 @@ export function DashboardClient({ productCount, activeProductCount, affiliateCou
     { href: `${PRODUCTS_ROUTE}/new`, label: "Add Product", color: "admin-btn-cyan" },
     { href: `${AFFILIATES_ROUTE}/new`, label: "Add Affiliate", color: "admin-btn-gold" },
     { href: `${GALLERY_ROUTE}/new`, label: "Add Gallery", color: "admin-btn-outline" },
-    { href: `${TIMELINE_ROUTE}/new`, label: "Add Timeline", color: "admin-btn-outline" },
+    { href: `${MILESTONES_ROUTE}/new`, label: "Add Milestone", color: "admin-btn-outline" },
     { href: `${GAMES_ROUTE}/new`, label: "Add Game", color: "admin-btn-outline" },
     { href: "/admin/settings", label: "Settings", color: "admin-btn-cyan" },
   ];

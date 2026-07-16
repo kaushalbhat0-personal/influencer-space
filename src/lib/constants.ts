@@ -8,7 +8,7 @@ export const PRODUCTS_ROUTE = "/admin/products";
 export const AFFILIATES_ROUTE = "/admin/affiliates";
 export const MESSAGES_ROUTE = "/admin/messages";
 export const GALLERY_ROUTE = "/admin/gallery";
-export const TIMELINE_ROUTE = "/admin/timeline";
+export const MILESTONES_ROUTE = "/admin/milestones";
 export const GAMES_ROUTE = "/admin/games";
 
 // Public Routes
