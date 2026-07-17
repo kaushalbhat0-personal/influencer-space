@@ -34,8 +34,15 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
       }
     }
     if (openMenuId) {
+      const close = () => setOpenMenuId(null);
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", close, { passive: true });
+      window.addEventListener("resize", close);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        window.removeEventListener("scroll", close);
+        window.removeEventListener("resize", close);
+      };
     }
   }, [openMenuId]);
 
