@@ -111,7 +111,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.tenantId = (token.tenantId as string) ?? null;
-        session.user.role = token.role as "SUPER_ADMIN" | "ADMIN";
+        session.user.role = token.role as "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
       }
       return session;
     },

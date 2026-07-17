@@ -4,14 +4,16 @@ import "next-auth/jwt";
 declare module "next-auth" {
   interface User {
     tenantId: string | null;
-    role: "SUPER_ADMIN" | "ADMIN";
+    agencyId?: string | null;
+    role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
   }
 
   interface Session {
     user: {
       id: string;
       tenantId: string | null;
-      role: "SUPER_ADMIN" | "ADMIN";
+      agencyId?: string | null;
+      role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -23,6 +25,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     tenantId: string | null;
-    role: "SUPER_ADMIN" | "ADMIN";
+    agencyId?: string | null;
+    role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
   }
 }

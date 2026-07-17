@@ -9,7 +9,16 @@ datasource db {
 
 enum Role {
   SUPER_ADMIN
+  AGENCY_ADMIN
+  AGENCY_STAFF
   ADMIN
+}
+
+enum AgencyStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  EXPIRED
 }
 
 model Tenant {
@@ -34,6 +43,7 @@ model Tenant {
   updatedAt             DateTime  @updatedAt
 
   theme              Theme?  @relation(fields: [themeId], references: [id])
+  agencyTenant       AgencyTenant?
   users              User[]
   products           Product[]
   affiliateLinks     AffiliateLink[]
@@ -62,7 +72,8 @@ model Theme {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  tenants Tenant[]
+  tenants        Tenant[]
+  agencyDefaults WebsiteAgency[]   @relation("DefaultTheme")
 }
 
 model Subscription {
@@ -80,20 +91,77 @@ model Subscription {
   @@index([tenantId])
 }
 
+model WebsiteAgency {
+  id                    String        @id @default(uuid()) @db.Uuid
+  name                  String
+  subdomain             String        @unique
+  customDomain          String?
+  razorpayAccountId     String?       @unique
+  razorpaySetupComplete Boolean       @default(false)
+  defaultThemeId        String?       @db.Uuid
+  platformFeePercent    Float         @default(0)
+  status                AgencyStatus  @default(TRIAL)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  defaultTheme Theme?              @relation("DefaultTheme", fields: [defaultThemeId], references: [id])
+  users        User[]
+  tenants      AgencyTenant[]
+  subscription AgencySubscription?
+}
+
+model AgencyTenant {
+  id                     String   @id @default(uuid()) @db.Uuid
+  agencyId               String   @db.Uuid
+  tenantId               String   @db.Uuid  @unique
+  revSharePercent        Float    @default(20)
+  productRevSharePercent Float    @default(10)
+  canEditTheme           Boolean  @default(true)
+  canEditProducts        Boolean  @default(true)
+  canEditGallery         Boolean  @default(true)
+  canEditLinks           Boolean  @default(true)
+  canEditMilestones      Boolean  @default(true)
+  canEditSettings        Boolean  @default(false)
+  status                 String   @default("ACTIVE")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  agency WebsiteAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId])
+}
+
+model AgencySubscription {
+  id                      String    @id @default(uuid()) @db.Uuid
+  agencyId                String    @unique @db.Uuid
+  razorpaySubscriptionId  String?
+  status                  String    @default("FREE")
+  plan                    String    @default("STARTER")
+  maxManagedTenants       Int       @default(3)
+  currentPeriodEnd        DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  agency WebsiteAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   tenantId  String?  @db.Uuid
+  agencyId  String?  @db.Uuid
   name      String?
-  email     String
+  email     String   @unique
   password  String
   role      Role     @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  agency WebsiteAgency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
 
-  @@unique([tenantId, email])
   @@index([tenantId])
+  @@index([agencyId])
 }
 
 model Product {
@@ -124,6 +192,10 @@ model ProductOrder {
   razorpayOrderId   String   @unique
   razorpayPaymentId String?
   fanEmail          String?
+  platformFeePercent Float  @default(5)
+  agencyFeePercent   Float?
+  agencyId           String?  @db.Uuid
+  routeTransferId    String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

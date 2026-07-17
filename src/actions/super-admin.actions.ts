@@ -69,7 +69,7 @@ export async function provisionNewCreator(
       });
 
       await tx.user.upsert({
-        where: { tenantId_email: { tenantId: tenant.id, email: adminEmail } },
+        where: { email: adminEmail },
         update: { password: hashedPassword },
         create: {
           tenantId: tenant.id,
@@ -175,7 +175,7 @@ export async function magicProvisionFromYoutube(
       });
 
       await tx.user.upsert({
-        where: { tenantId_email: { tenantId: tenant.id, email: adminEmail } },
+        where: { email: adminEmail },
         update: { password: hashedPassword },
         create: {
           tenantId: tenant.id,

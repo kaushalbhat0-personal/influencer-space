@@ -47,7 +47,7 @@ export function SettingsForm({
 }: {
   config: InfluencerDataType;
   heroData: HeroDataType;
-  role: "SUPER_ADMIN" | "ADMIN";
+  role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
   youtubeKeyConfigured: boolean;
   instagramKeyConfigured: boolean;
   tenantId: string;
