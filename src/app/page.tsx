@@ -1,123 +1,125 @@
 import Link from "next/link";
+import {
+  Box,
+  Users,
+  SplitIcon as Split,
+  Palette,
+  Globe,
+  Zap,
+  Shield,
+  BarChart3,
+} from "lucide-react";
 
-const features = [
+const creatorFeatures = [
   {
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-      </svg>
-    ),
+    icon: Box,
     title: "Sell Digital & Physical Products",
     description:
-      "Upload digital downloads (PDFs, courses, presets) or ship physical merch — all from one dashboard. No inventory limits, no monthly app fees.",
+      "Upload courses, presets, merch, or PDFs. UPI, cards, net banking — your fans pay however they want, and you get paid instantly.",
   },
   {
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-      </svg>
-    ),
+    icon: Zap,
     title: "Dynamic Social Feeds",
     description:
-      "Auto-sync your latest YouTube videos and Instagram posts straight to your storefront. Connect your API keys once — content stays fresh without manual updates.",
+      "Your YouTube videos and Instagram posts auto-sync to your storefront. No manual updates — your content stays fresh 24/7.",
   },
   {
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-      </svg>
-    ),
-    title: "Affiliate Links for Sponsors",
+    icon: Globe,
+    title: "Custom Domain & White-Label",
     description:
-      "Manage sponsor deals and affiliate partnerships from a dedicated dashboard. Track clicks, conversions, and payouts — no spreadsheets needed.",
+      "Own your brand with a custom .in or .com domain. Free SSL, one-click setup. Your fans see your name, not ours.",
   },
   {
-    icon: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-      </svg>
-    ),
-    title: "Custom Domains (Pro)",
+    icon: BarChart3,
+    title: "Live Analytics Dashboard",
     description:
-      "Own your brand with a custom .in or .com domain. Free SSL, one-click setup, and no more yourbrand.storefront.app — just your name.",
+      "Track product sales, clicks, and fan engagement in real time. Know exactly what's working and double down.",
+  },
+];
+
+const agencyFeatures = [
+  {
+    icon: Users,
+    title: "Multi-Tenant Dashboard",
+    description:
+      "Manage all your creator clients from one unified dashboard. Switch between stores instantly — no logging in and out.",
+  },
+  {
+    icon: Split,
+    title: "Automated Revenue Splitting",
+    description:
+      "Razorpay Route handles the math. Every product sale auto-splits between you and your client. No spreadsheets, no chasing payments.",
+  },
+  {
+    icon: Palette,
+    title: "White-Label Themes",
+    description:
+      "Set a default theme for all your clients, or let each creator customize their own. Your agency brand, front and center.",
+  },
+  {
+    icon: Shield,
+    title: "Seat-Based Billing",
+    description:
+      "Pay only for the seats you need. Scale from 5 to unlimited creators. If a client leaves, free up the seat — no contract lock-in.",
   },
 ];
 
 const pricingPlans = [
   {
-    name: "CreatorStore Starter",
+    name: "Solo Creator",
     price: "₹0",
     period: "/mo",
-    fee: "10% per transaction",
+    description: "One store. Your brand. Zero platform fees.",
+    seats: null,
     highlight: false,
+    accent: "from-s8ul-cyan to-s8ul-pink",
     features: [
-      "Link-in-bio storefront",
+      "1 fully customizable store",
       "Unlimited products",
       "UPI, cards & net banking",
-      "Digital & physical products",
-      "Social feed integration",
-      "Community support",
+      "Custom domain (with Pro upgrade)",
+      "Social feed auto-sync",
+      "10% transaction fee",
     ],
     cta: "Start Free",
   },
   {
-    name: "CreatorStore Pro",
-    price: "₹999",
+    name: "Freelancer Agency",
+    price: "₹1,999",
     period: "/mo",
-    fee: "5% per transaction",
+    description: "For solo devs and small teams building stores for creators.",
+    seats: "5 managed seats",
     highlight: true,
+    accent: "from-purple-500 to-s8ul-cyan",
     features: [
-      "Everything in Starter",
-      "Custom domain (yourname.in)",
-      "Free SSL certificate",
-      "Priority WhatsApp support",
-      "Advanced analytics",
-      "No CreatorStore branding",
+      "5 managed creator stores",
+      "Multi-tenant dashboard",
+      "Automated revenue splitting",
+      "Default theme assignment",
+      "Creator permission controls",
+      "7% platform fee on creator sales",
+      "Email support",
     ],
-    cta: "Go Pro",
-  },
-];
-
-const comparison = [
-  {
-    feature: "Monthly plan cost",
-    us: "₹0 – ₹999",
-    them: "₹1,499 ($29/mo)",
+    cta: "Start Free Trial",
   },
   {
-    feature: "Transaction fee",
-    us: "5% – 10%",
-    them: "2% + ₹10 (Shopify Payments)",
-  },
-  {
-    feature: "App / plugin fees",
-    us: "₹0 — all features built-in",
-    them: "₹500 – ₹5,000/mo per app",
-  },
-  {
-    feature: "Indian payment gateways",
-    us: "✅ UPI, cards, net banking",
-    them: "❌ Requires paid plugin",
-  },
-  {
-    feature: "Link-in-bio page",
-    us: "✅ Included",
-    them: "❌ ₹350/mo (Linkpop)",
-  },
-  {
-    feature: "Social feed integration",
-    us: "✅ Built-in",
-    them: "❌ Requires app",
-  },
-  {
-    feature: "Custom domain with SSL",
-    us: "✅ Included in Pro",
-    them: "✅ ₹730/mo extra",
-  },
-  {
-    feature: "Dedicated India support",
-    us: "✅ Email & WhatsApp",
-    them: "❌ Email only (US hours)",
+    name: "Growth Agency",
+    price: "₹4,999",
+    period: "/mo",
+    description: "For established agencies scaling their creator portfolio.",
+    seats: "20 managed seats",
+    highlight: false,
+    accent: "from-amber-400 to-amber-600",
+    features: [
+      "20 managed creator stores",
+      "Everything in Freelancer",
+      "Custom rev-share % per creator",
+      "White-label agency dashboard",
+      "Priority WhatsApp support",
+      "API access",
+      "5% platform fee on creator sales",
+    ],
+    cta: "Contact Sales",
   },
 ];
 
@@ -131,10 +133,7 @@ export default function MarketingPage() {
             CreatorStore
           </span>
           <div className="flex items-center gap-4">
-            <Link
-              href="/admin/login"
-              className="text-sm text-gray-400 transition-colors hover:text-white"
-            >
+            <Link href="/admin/login" className="text-sm text-gray-400 transition-colors hover:text-white">
               Sign In
             </Link>
             <Link
@@ -150,65 +149,64 @@ export default function MarketingPage() {
       {/* ─── Hero ─── */}
       <section className="relative overflow-hidden px-4 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,245,255,0.12),transparent_60%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(255,0,229,0.06),transparent_50%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(168,85,247,0.08),transparent_50%)]" />
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-s8ul-cyan/20 bg-s8ul-cyan/10 px-4 py-1.5 text-xs font-medium text-s8ul-cyan">
-            🇮🇳 Built for Indian Creators
+            🇮🇳 Built for Indian Creators &amp; Agencies
           </div>
           <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl font-display">
-            The Ultimate E-commerce Platform{" "}
+            Build the Ultimate{" "}
             <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
-              for Indian Creators
+              Creator Storefront
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-zinc-400 sm:text-lg">
-            Stop paying Shopify&apos;s high monthly fees. Build your merchandise store,
-            sell digital products, and showcase your Hall of Fame for free. Native UPI
-            checkout included.
+            Whether you&apos;re a solo creator selling merch, or an agency building
+            Shopify-like stores for 20 clients — we handle the billing, the
+            routing, and the revenue splitting so you can focus on building.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
               href="/admin/login"
               className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-s8ul-cyan to-s8ul-pink px-8 py-3.5 text-sm font-bold text-black transition-all hover:shadow-[0_0_30px_rgba(0,245,255,0.4)] sm:w-auto"
             >
-              Start Building for Free
+              Start Building Free
             </Link>
             <Link
-              href="#features"
+              href="#pricing"
               className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-8 py-3.5 text-sm font-medium text-zinc-300 backdrop-blur-sm transition-all hover:bg-white/10 sm:w-auto"
             >
-              See How It Works
+              See Plans
             </Link>
           </div>
           <p className="mt-4 text-xs text-zinc-600">
-            Starter: ₹0/mo • 10% fee • Pro: ₹999/mo • 5% fee • No setup costs • Cancel anytime
+            Solo: ₹0/mo · 10% fee · Agency: ₹1,999/mo · 5 seats · No contracts · Cancel anytime
           </p>
         </div>
       </section>
 
-      {/* ─── Built for Creators (Features Grid) ─── */}
-      <section id="features" className="relative px-4 py-20 sm:px-8 sm:py-28">
+      {/* ─── For Creators ─── */}
+      <section className="relative px-4 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="mb-14 text-center">
             <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              Built for{" "}
+              For{" "}
               <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
-                Creators
+                Solo Creators
               </span>
             </h2>
             <p className="mt-3 text-zinc-500">
-              YouTubers, Instagrammers, educators, artists, streamers — one platform to
-              sell, grow, and own your brand.
+              YouTubers, Instagrammers, streamers, educators — sell products, sync socials, own your brand.
             </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feat) => (
+            {creatorFeatures.map((feat) => (
               <div
                 key={feat.title}
                 className="group rounded-2xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-sm transition-all hover:border-s8ul-cyan/20 hover:bg-zinc-900/80"
               >
                 <div className="mb-4 inline-flex rounded-xl bg-s8ul-cyan/10 p-3 text-s8ul-cyan">
-                  {feat.icon}
+                  <feat.icon className="h-6 w-6" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-white">{feat.title}</h3>
                 <p className="text-sm leading-relaxed text-zinc-400">{feat.description}</p>
@@ -218,43 +216,80 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* ─── Pricing Side-by-Side ─── */}
+      {/* ─── For Agencies ─── */}
       <section className="relative px-4 py-20 sm:px-8 sm:py-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,0,229,0.03),transparent_60%)]" />
-        <div className="relative mx-auto max-w-5xl">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.06),transparent_60%)]" />
+        <div className="relative mx-auto max-w-7xl">
           <div className="mb-14 text-center">
             <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              Simple Pricing. Zero Surprises.
+              For{" "}
+              <span className="bg-gradient-to-r from-purple-400 to-s8ul-cyan bg-clip-text text-transparent">
+                Agencies &amp; Coders
+              </span>
             </h2>
             <p className="mt-3 text-zinc-500">
-              No hidden fees, no app marketplace. What you see is what you pay.
+              Build stores for your clients. Manage everything from one dashboard. Earn automated revenue share.
             </p>
           </div>
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {agencyFeatures.map((feat) => (
+              <div
+                key={feat.title}
+                className="group rounded-2xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-sm transition-all hover:border-purple-500/20 hover:bg-zinc-900/80"
+              >
+                <div className="mb-4 inline-flex rounded-xl bg-purple-500/10 p-3 text-purple-400">
+                  <feat.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-white">{feat.title}</h3>
+                <p className="text-sm leading-relaxed text-zinc-400">{feat.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Pricing ─── */}
+      <section id="pricing" className="relative px-4 py-20 sm:px-8 sm:py-28">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,245,255,0.04),transparent_60%)]" />
+        <div className="relative mx-auto max-w-6xl">
+          <div className="mb-14 text-center">
+            <h2 className="text-3xl font-bold font-display sm:text-4xl">
+              Plans for Every Stage
+            </h2>
+            <p className="mt-3 text-zinc-500">
+              Start free as a creator. Scale to an agency when you&apos;re ready.
+            </p>
+          </div>
+          <div className="grid gap-8 lg:grid-cols-3">
             {pricingPlans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl border p-8 backdrop-blur-sm transition-all ${
+                className={`relative flex flex-col rounded-2xl border p-8 backdrop-blur-sm transition-all ${
                   plan.highlight
-                    ? "border-s8ul-cyan/30 bg-gradient-to-b from-s8ul-cyan/5 to-zinc-900/80 shadow-[0_0_40px_rgba(0,245,255,0.1)]"
+                    ? "border-purple-500/30 bg-gradient-to-b from-purple-500/5 to-zinc-900/80 shadow-[0_0_40px_rgba(168,85,247,0.1)]"
                     : "border-white/5 bg-zinc-900/50 hover:border-white/10"
                 }`}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-s8ul-cyan to-s8ul-pink px-4 py-0.5 text-xs font-semibold text-black">
-                    Best Value
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-purple-500 to-s8ul-cyan px-4 py-0.5 text-xs font-semibold text-white">
+                    Most Popular
                   </div>
                 )}
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-                <div className="mt-4 flex items-baseline gap-1">
+                <div>
+                  <h3 className="text-xl font-bold">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-zinc-500">{plan.description}</p>
+                </div>
+                <div className="mt-6">
                   <span className="text-4xl font-bold">{plan.price}</span>
                   <span className="text-zinc-500">{plan.period}</span>
                 </div>
-                <p className="mt-1 text-sm text-zinc-500">{plan.fee}</p>
-                <ul className="mt-6 space-y-3" role="list">
+                {plan.seats && (
+                  <p className="mt-1 text-sm font-medium text-purple-400">{plan.seats}</p>
+                )}
+                <ul className="mt-6 flex-1 space-y-3" role="list">
                   {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-center gap-2 text-sm text-zinc-300">
-                      <svg className="h-4 w-4 shrink-0 text-s8ul-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <li key={feat} className="flex items-start gap-2 text-sm text-zinc-300">
+                      <svg className="mt-0.5 h-4 w-4 shrink-0 text-s8ul-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {feat}
@@ -265,7 +300,7 @@ export default function MarketingPage() {
                   href="/admin/login"
                   className={`mt-8 flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold transition-all ${
                     plan.highlight
-                      ? "bg-gradient-to-r from-s8ul-cyan to-s8ul-pink text-black hover:shadow-[0_0_30px_rgba(0,245,255,0.4)]"
+                      ? `bg-gradient-to-r ${plan.accent} text-white hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]`
                       : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                   }`}
                 >
@@ -277,55 +312,16 @@ export default function MarketingPage() {
         </div>
       </section>
 
-      {/* ─── Why Us vs. Shopify ─── */}
-      <section className="relative px-4 py-20 sm:px-8 sm:py-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,245,255,0.03),transparent_60%)]" />
-        <div className="relative mx-auto max-w-5xl">
-          <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              Why Indian Creators Choose{" "}
-              <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
-                Us Over Shopify
-              </span>
-            </h2>
-            <p className="mt-3 text-zinc-500">
-              Shopify charges in dollars, adds app fees, and ignores Indian payment
-              methods. We don&apos;t.
-            </p>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-white/5">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/5 bg-zinc-900/80">
-                  <th className="px-6 py-4 font-medium text-zinc-400">Feature</th>
-                  <th className="px-6 py-4 font-semibold text-s8ul-cyan">CreatorStore</th>
-                  <th className="px-6 py-4 font-medium text-zinc-600">Shopify</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparison.map((row) => (
-                  <tr key={row.feature} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
-                    <td className="px-6 py-4 text-zinc-300">{row.feature}</td>
-                    <td className="px-6 py-4 font-medium text-s8ul-cyan">{row.us}</td>
-                    <td className="px-6 py-4 text-zinc-600">{row.them}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
       {/* ─── Final CTA ─── */}
       <section className="relative px-4 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto max-w-3xl text-center">
           <div className="rounded-3xl border border-white/5 bg-gradient-to-b from-zinc-900/50 to-transparent px-6 py-14 backdrop-blur-sm sm:px-12 sm:py-20">
             <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              Ready to Own Your Storefront?
+              Ready to Build?
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-zinc-400">
-              Join thousands of Indian creators who are done paying Silicon Valley
-              prices. Start selling today — free, forever.
+              Whether you&apos;re a solo creator or an agency with 20 clients — your
+              storefront is minutes away.
             </p>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
@@ -333,12 +329,6 @@ export default function MarketingPage() {
                 className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-s8ul-cyan to-s8ul-pink px-10 py-3.5 text-sm font-bold text-black transition-all hover:shadow-[0_0_30px_rgba(0,245,255,0.4)] sm:w-auto"
               >
                 Create Your Store — Free
-              </Link>
-              <Link
-                href="/admin/login"
-                className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-10 py-3.5 text-sm font-medium text-zinc-300 backdrop-blur-sm transition-all hover:bg-white/10 sm:w-auto"
-              >
-                Sign In
               </Link>
             </div>
           </div>
