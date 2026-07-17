@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { HeroMedia, heroAlignmentClass } from "@/components/shared/HeroMedia";
 
 type Alignment = "top" | "center" | "bottom";
 
@@ -18,12 +19,6 @@ interface SettingsLivePreviewProps {
   liveBadgeText: string;
   showLiveBadge: boolean;
 }
-
-const objectClasses: Record<Alignment, string> = {
-  top: "object-top",
-  center: "object-center",
-  bottom: "object-bottom",
-};
 
 export function SettingsLivePreview({
   videoUrl,
@@ -60,7 +55,7 @@ export function SettingsLivePreview({
     isVideo
       ? (previewDevice === "desktop" ? videoDesktopAlignment : videoMobileAlignment)
       : (previewDevice === "desktop" ? imageDesktopAlignment : imageMobileAlignment);
-  const objectPos = objectClasses[activeAlignment] || "object-center";
+  const objectPos = heroAlignmentClass(activeAlignment);
   const isMobile = previewDevice === "mobile";
 
   return (
@@ -138,20 +133,24 @@ export function SettingsLivePreview({
         >
           <div className="relative w-full h-full overflow-hidden bg-neutral-950">
             {isVideo && displayVideoUrl ? (
-              <video
+              <HeroMedia
                 key={`${previewDevice}-${activeAlignment}-${displayVideoUrl}`}
-                src={displayVideoUrl}
+                type="video"
+                url={displayVideoUrl}
+                alignmentClass={objectPos}
+                className="absolute inset-0 pointer-events-auto"
                 autoPlay
                 muted
                 playsInline
                 controls
-                className={`absolute inset-0 w-full h-full object-cover pointer-events-auto ${objectPos}`}
               />
             ) : displayPosterUrl ? (
-              <img
-                src={displayPosterUrl}
-                alt=""
-                className={`absolute inset-0 w-full h-full object-cover opacity-70 ${objectPos}`}
+              <HeroMedia
+                type="image"
+                url={displayPosterUrl}
+                alignmentClass={objectPos}
+                opacity="opacity-70"
+                className="absolute inset-0"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
