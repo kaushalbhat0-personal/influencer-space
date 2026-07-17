@@ -7,8 +7,10 @@ import {
   toggleLinkStatus,
   deleteLink,
   updateLinkOrder,
+  updateExistingLink,
 } from "@/actions/link.actions";
 import type { LinkData } from "@/actions/link.actions";
+import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 export function LinksManager({
   tenantId,
@@ -23,6 +25,9 @@ export function LinksManager({
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+  const [editingLink, setEditingLink] = useState<LinkData | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -60,11 +65,8 @@ export function LinksManager({
     });
   }
 
-  async function handleDelete(id: string, title: string) {
-    if (
-      !window.confirm(`Delete "${title}"? This cannot be undone.`)
-    )
-      return;
+  async function handleDelete(id: string, linkTitle: string) {
+    if (!window.confirm(`Delete "${linkTitle}"? This cannot be undone.`)) return;
 
     startTransition(async () => {
       const result = await deleteLink(id, tenantId);
@@ -90,8 +92,40 @@ export function LinksManager({
 
     startTransition(async () => {
       const result = await updateLinkOrder(tenantId, updates);
-      if (!result.success) {
-        setLinks(links);
+      if (!result.success) setLinks(links);
+    });
+  }
+
+  function openEdit(link: LinkData) {
+    setEditTitle(link.title);
+    setEditUrl(link.url);
+    setError("");
+    setEditingLink(link);
+  }
+
+  function closeEdit() {
+    setEditingLink(null);
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingLink || !editTitle.trim() || !editUrl.trim()) return;
+
+    setError("");
+    const formData = new FormData();
+    formData.set("id", editingLink.id);
+    formData.set("title", editTitle.trim());
+    formData.set("url", editUrl.trim());
+
+    startTransition(async () => {
+      const result = await updateExistingLink(tenantId, formData);
+      if (result.success && result.data) {
+        setLinks((prev) =>
+          prev.map((l) => (l.id === editingLink.id ? result.data! : l)),
+        );
+        closeEdit();
+      } else {
+        setError(result.error || "Failed to update link");
       }
     });
   }
@@ -100,9 +134,7 @@ export function LinksManager({
     <div className="space-y-6">
       {/* ─── Add Link Form ─── */}
       <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-300">
-          Add New Link
-        </h2>
+        <h2 className="mb-3 text-sm font-semibold text-zinc-300">Add New Link</h2>
         <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row">
           <input
             value={title}
@@ -128,9 +160,7 @@ export function LinksManager({
             {pending ? "Adding..." : "Add Link"}
           </button>
         </form>
-        {error && (
-          <p className="mt-2 text-sm text-red-400">{error}</p>
-        )}
+        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
       </div>
 
       {/* ─── Links List ─── */}
@@ -145,20 +175,14 @@ export function LinksManager({
               key={link.id}
               className="flex items-center gap-4 rounded-xl border border-white/5 bg-zinc-900/50 px-5 py-4 backdrop-blur-sm transition-all hover:border-white/10"
             >
-              {/* ─── Content ─── */}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white">
-                  {link.title}
-                </p>
+                <p className="truncate text-sm font-medium text-white">{link.title}</p>
                 <div className="mt-0.5 flex items-center gap-3 text-xs text-zinc-500">
                   <span className="truncate">{link.url}</span>
-                  <span className="shrink-0">
-                    🖱️ {link.clicks} clicks
-                  </span>
+                  <span className="shrink-0">&#x1F5B1;&#xFE0F; {link.clicks} clicks</span>
                 </div>
               </div>
 
-              {/* ─── Move ─── */}
               <div className="flex shrink-0 flex-col gap-px">
                 <button
                   onClick={() => moveLink(index, -1)}
@@ -182,14 +206,11 @@ export function LinksManager({
                 </button>
               </div>
 
-              {/* ─── Toggle ─── */}
               <button
                 onClick={() => handleToggle(link.id, link.isActive)}
                 disabled={pending}
                 className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                  link.isActive
-                    ? "bg-s8ul-cyan"
-                    : "bg-zinc-700"
+                  link.isActive ? "bg-s8ul-cyan" : "bg-zinc-700"
                 }`}
               >
                 <span
@@ -199,7 +220,17 @@ export function LinksManager({
                 />
               </button>
 
-              {/* ─── Delete ─── */}
+              <button
+                onClick={() => openEdit(link)}
+                disabled={pending}
+                className="shrink-0 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                title="Edit link"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+
               <button
                 onClick={() => handleDelete(link.id, link.title)}
                 disabled={pending}
@@ -214,6 +245,41 @@ export function LinksManager({
           ))}
         </div>
       )}
+
+      {/* ─── Edit Drawer ─── */}
+      <EditEntityDrawer open={!!editingLink} onClose={closeEdit} title="Edit Link">
+        <form onSubmit={handleUpdate} className="space-y-4">
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-zinc-400">Title</label>
+            <input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="admin-input w-full"
+              disabled={pending}
+              required
+            />
+          </div>
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-zinc-400">URL</label>
+            <input
+              value={editUrl}
+              onChange={(e) => setEditUrl(e.target.value)}
+              className="admin-input w-full"
+              disabled={pending}
+              placeholder="https://..."
+              required
+            />
+          </div>
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <button
+            type="submit"
+            disabled={pending || !editTitle.trim() || !editUrl.trim()}
+            className="admin-btn-cyan w-full py-2.5"
+          >
+            {pending ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
+      </EditEntityDrawer>
     </div>
   );
 }

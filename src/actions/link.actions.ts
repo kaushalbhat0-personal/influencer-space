@@ -151,6 +151,52 @@ export async function updateLinkOrder(
   }
 }
 
+export async function updateExistingLink(
+  tenantId: string,
+  formData: FormData,
+): Promise<{ success: boolean; data?: LinkData; error?: string }> {
+  try {
+    await requireAuth(tenantId);
+
+    const id = formData.get("id");
+    if (!id || typeof id !== "string") {
+      return { success: false, error: "Link ID is required" };
+    }
+
+    const parsed = createLinkSchema.safeParse({
+      title: formData.get("title"),
+      url: formData.get("url"),
+    });
+
+    if (!parsed.success) {
+      const first = parsed.error.flatten().fieldErrors;
+      return { success: false, error: first.title?.[0] || first.url?.[0] || "Invalid input" };
+    }
+
+    const existing = await prisma.affiliateLink.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) return { success: false, error: "Link not found" };
+
+    const link = await prisma.affiliateLink.update({
+      where: { id },
+      data: {
+        title: parsed.data.title,
+        url: parsed.data.url,
+      },
+    });
+
+    await logAction(tenantId, "updateLink", { linkId: id });
+    revalidatePath("/admin/links");
+    return { success: true, data: link };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update link",
+    };
+  }
+}
+
 export async function deleteLink(
   id: string,
   tenantId: string,
