@@ -249,14 +249,9 @@ export function SettingsForm({
       showLiveBadge: liveShowBadge,
     };
 
-    console.log("🔍 SENDING hero details payload:", JSON.stringify(payload, null, 2));
-
     const result = await updateHeroPartial(tenantId, payload);
 
-    console.log("🔍 RECEIVED updateHeroPartial result:", result);
-
     if (result.success) {
-      console.log("🔍 Hero details saved successfully, refreshing...");
       router.refresh();
     }
 

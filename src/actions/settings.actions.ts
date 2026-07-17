@@ -241,29 +241,16 @@ export async function updateHeroPartial(
   tenantId: string,
   partial: Record<string, unknown>,
 ): Promise<SettingsActionState> {
-  console.log("--- START SAVE ---");
-
   const parsed = heroPartialSchema.safeParse(partial);
 
   if (!parsed.success) {
-    console.warn("updateHeroPartial — zod parse failed:", parsed.error.flatten());
     return { success: false, error: "Invalid hero data" };
   }
 
   try {
     const existing = await SettingsService.getHeroData(tenantId);
-    console.log("Existing DB Record:", JSON.stringify(existing));
-
-    console.log("Incoming Partial (parsed):", JSON.stringify(parsed.data));
-
     const merged = { ...existing, ...parsed.data };
-    console.log("Merged Object (What will be saved):", JSON.stringify(merged));
-
     await SettingsService.updateHeroData(tenantId, merged);
-
-    const fullRecord = await SettingsService.getHeroData(tenantId);
-    console.log("Full Record after save:", JSON.stringify(fullRecord));
-    console.log("--- END SAVE ---");
 
     revalidatePath("/");
     revalidatePath("/admin/settings");
