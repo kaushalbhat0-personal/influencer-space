@@ -31,6 +31,7 @@ export const authOptions: NextAuthOptions = {
         try {
           const user = await prisma.user.findFirst({
             where: { email: credentials.email },
+            include: { tenant: { select: { id: true, subdomain: true } } },
           });
 
           console.log("User found:", !!user, "role:", user?.role);
