@@ -7,7 +7,6 @@ import {
   checkDomainStatus,
   verifyDomain,
 } from "@/actions/domain.actions";
-import type { DomainActionState } from "@/actions/domain.actions";
 import type { VercelVerificationRecord } from "@/services/vercel.service";
 
 export function DomainSettings({
