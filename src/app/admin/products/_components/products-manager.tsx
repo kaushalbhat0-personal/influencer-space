@@ -46,6 +46,8 @@ export function ProductsManager({
   const [editDescription, setEditDescription] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
+  const editUploaderRef = useRef<ImageUploaderHandle>(null);
+  const [editIsUploading, setEditIsUploading] = useState(false);
 
   function resetForm() {
     setName("");
@@ -145,11 +147,21 @@ export function ProductsManager({
 
   function closeEdit() {
     setEditingProduct(null);
+    editUploaderRef.current?.reset();
   }
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
     if (!editingProduct || !editName.trim() || !editPrice.trim()) return;
+
+    let finalImageUrl = editImageUrl.trim();
+    try {
+      const uploaded = await editUploaderRef.current?.upload();
+      if (uploaded) finalImageUrl = uploaded;
+    } catch {
+      setError("Image upload failed");
+      return;
+    }
 
     setError("");
     const formData = new FormData();
@@ -157,7 +169,7 @@ export function ProductsManager({
     formData.set("name", editName.trim());
     formData.set("description", editDescription.trim());
     formData.set("price", editPrice);
-    formData.set("imageUrl", editImageUrl.trim());
+    formData.set("imageUrl", finalImageUrl);
 
     startTransition(async () => {
       const result = await updateExistingProduct(tenantId, formData);
@@ -410,13 +422,17 @@ export function ProductsManager({
           />
         </div>
         <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Image URL</label>
-          <input
-            value={editImageUrl}
-            onChange={(e) => setEditImageUrl(e.target.value)}
-            className="admin-input w-full"
-            disabled={pending}
-            placeholder="https://..."
+          <label className="block text-xs font-medium text-zinc-400">Image</label>
+          {editImageUrl && (
+            <div className="h-20 w-full overflow-hidden rounded-lg bg-zinc-800">
+              <img src={editImageUrl} alt="" className="h-full w-full object-cover" />
+            </div>
+          )}
+          <ImageUploader
+            ref={editUploaderRef}
+            tenantId={tenantId}
+            folder="products"
+            onUploadingChange={setEditIsUploading}
           />
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
