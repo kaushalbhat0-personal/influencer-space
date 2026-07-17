@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -26,25 +25,19 @@ export type ProductData = {
   updatedAt: Date;
 };
 
-async function requireAdminAccess(tenantId: string) {
+async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized — Admin access required");
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+    throw new Error("Forbidden");
   }
-
-  const tenant = await getTenantContext();
-  if (!tenant || tenant.id !== tenantId) {
-    throw new Error("Unauthorized — tenant mismatch");
-  }
-
-  return tenant;
 }
 
 export async function fetchProducts(
   tenantId: string,
 ): Promise<{ success: boolean; data?: ProductData[]; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const products = await prisma.product.findMany({
       where: { tenantId },
@@ -65,7 +58,7 @@ export async function createNewProduct(
   formData: FormData,
 ): Promise<{ success: boolean; data?: ProductData; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const parsed = createProductSchema.safeParse({
       name: formData.get("name"),
@@ -106,7 +99,7 @@ export async function toggleProductStatus(
   isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.product.findFirst({
       where: { id, tenantId },
@@ -135,7 +128,7 @@ export async function updateExistingProduct(
   formData: FormData,
 ): Promise<{ success: boolean; data?: ProductData; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const id = formData.get("id");
     if (!id || typeof id !== "string") {
@@ -187,7 +180,7 @@ export async function removeProduct(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.product.findFirst({
       where: { id, tenantId },
@@ -213,7 +206,7 @@ export async function updateProductOrder(
   updates: { id: string; order: number }[],
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     await prisma.$transaction(
       updates.map((u) =>

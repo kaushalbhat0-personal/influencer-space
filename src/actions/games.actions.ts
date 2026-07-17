@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { GameService } from "@/services/games.service";
 import { GAMES_ROUTE } from "@/lib/constants";
-import { getTenantContext } from "@/lib/tenant";
 
 const gameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -19,10 +20,11 @@ export type GameActionState = {
   fieldErrors?: Record<string, string[]>;
 };
 
-async function requireTenant(): Promise<string> {
-  const tenant = await getTenantContext();
-  if (!tenant) throw new Error("Unauthorized — no tenant context");
-  return tenant.id;
+async function requireAuth(): Promise<string> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session.user.tenantId) throw new Error("No tenant associated with account");
+  return session.user.tenantId;
 }
 
 export async function createGame(
@@ -48,7 +50,7 @@ export async function createGame(
   }
 
   try {
-    const tenantId = await requireTenant();
+    const tenantId = await requireAuth();
     const result = await GameService.create(tenantId, {
       name: parsed.data.name,
       logoUrl: parsed.data.logoUrl || undefined,
@@ -93,7 +95,7 @@ export async function updateGame(
   }
 
   try {
-    const tenantId = await requireTenant();
+    const tenantId = await requireAuth();
     await GameService.update(id, tenantId, {
       name: parsed.data.name,
       logoUrl: parsed.data.logoUrl || undefined,
@@ -112,7 +114,7 @@ export async function updateGame(
 export async function deleteGame(id: string): Promise<GameActionState> {
   console.log("🎮 deleteGame called — id:", id);
   try {
-    const tenantId = await requireTenant();
+    const tenantId = await requireAuth();
     await GameService.delete(id, tenantId);
     console.log("🎮 deleteGame success — id:", id);
     revalidatePath(GAMES_ROUTE);

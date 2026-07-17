@@ -3,29 +3,22 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import type { FeedItemRow } from "@/services/content-feed.service";
 
-async function requireAdminAccess(tenantId: string) {
+async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized — Admin access required");
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+    throw new Error("Forbidden");
   }
-
-  const tenant = await getTenantContext();
-  if (!tenant || tenant.id !== tenantId) {
-    throw new Error("Unauthorized — tenant mismatch");
-  }
-
-  return tenant;
 }
 
 export async function fetchContentFeedItems(
   tenantId: string,
 ): Promise<{ success: boolean; data?: FeedItemRow[]; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const rows = await prisma.contentFeedItem.findMany({
       where: { tenantId },
@@ -46,7 +39,7 @@ export async function togglePinItem(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const item = await prisma.contentFeedItem.findFirst({
       where: { id, tenantId },
@@ -74,7 +67,7 @@ export async function toggleHideItem(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const item = await prisma.contentFeedItem.findFirst({
       where: { id, tenantId },
@@ -102,7 +95,7 @@ export async function deleteFeedItem(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.contentFeedItem.findFirst({
       where: { id, tenantId },

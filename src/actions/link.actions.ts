@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -24,25 +23,19 @@ export type LinkData = {
   updatedAt: Date;
 };
 
-async function requireAdminAccess(tenantId: string) {
+async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized — Admin access required");
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+    throw new Error("Forbidden");
   }
-
-  const tenant = await getTenantContext();
-  if (!tenant || tenant.id !== tenantId) {
-    throw new Error("Unauthorized — tenant mismatch");
-  }
-
-  return tenant;
 }
 
 export async function getLinks(
   tenantId: string,
 ): Promise<{ success: boolean; data?: LinkData[]; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const links = await prisma.affiliateLink.findMany({
       where: { tenantId },
@@ -63,7 +56,7 @@ export async function createLink(
   formData: FormData,
 ): Promise<{ success: boolean; data?: LinkData; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const parsed = createLinkSchema.safeParse({
       title: formData.get("title"),
@@ -104,7 +97,7 @@ export async function toggleLinkStatus(
   isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.affiliateLink.findFirst({
       where: { id, tenantId },
@@ -133,7 +126,7 @@ export async function updateLinkOrder(
   updates: { id: string; order: number }[],
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     await prisma.$transaction(
       updates.map((u) =>
@@ -159,7 +152,7 @@ export async function deleteLink(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.affiliateLink.findFirst({
       where: { id, tenantId },

@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -28,25 +27,19 @@ export type MilestoneData = {
   updatedAt: Date;
 };
 
-async function requireAdminAccess(tenantId: string) {
+async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized — Admin access required");
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+    throw new Error("Forbidden");
   }
-
-  const tenant = await getTenantContext();
-  if (!tenant || tenant.id !== tenantId) {
-    throw new Error("Unauthorized — tenant mismatch");
-  }
-
-  return tenant;
 }
 
 export async function fetchMilestones(
   tenantId: string,
 ): Promise<{ success: boolean; data?: MilestoneData[]; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const events = await prisma.timelineEvent.findMany({
       where: { tenantId },
@@ -67,7 +60,7 @@ export async function createMilestone(
   formData: FormData,
 ): Promise<{ success: boolean; data?: MilestoneData; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const parsed = createMilestoneSchema.safeParse({
       year: formData.get("year"),
@@ -116,7 +109,7 @@ export async function updateExistingMilestone(
   formData: FormData,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const id = formData.get("id");
     if (!id || typeof id !== "string") {
@@ -171,7 +164,7 @@ export async function removeMilestone(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.timelineEvent.findFirst({
       where: { id, tenantId },

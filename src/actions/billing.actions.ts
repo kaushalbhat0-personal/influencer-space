@@ -2,7 +2,6 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTenantContext } from "@/lib/tenant";
 
 export type BillingActionResult = {
   success: boolean;
@@ -16,9 +15,8 @@ export async function createSubscriptionCheckout(): Promise<BillingActionResult>
     return { success: false, error: "Unauthorized" };
   }
 
-  const tenant = await getTenantContext();
-  if (!tenant) {
-    return { success: false, error: "No tenant context" };
+  if (!session.user?.tenantId) {
+    return { success: false, error: "No tenant associated with account" };
   }
 
   return { success: true, checkoutUrl: "#" };

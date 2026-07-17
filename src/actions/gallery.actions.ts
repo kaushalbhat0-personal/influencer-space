@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getTenantContext } from "@/lib/tenant";
 import { revalidatePath } from "next/cache";
 
 export type GalleryItemData = {
@@ -15,18 +14,12 @@ export type GalleryItemData = {
   createdAt: Date;
 };
 
-async function requireAdminAccess(tenantId: string) {
+async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    throw new Error("Unauthorized — Admin access required");
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+    throw new Error("Forbidden");
   }
-
-  const tenant = await getTenantContext();
-  if (!tenant || tenant.id !== tenantId) {
-    throw new Error("Unauthorized — tenant mismatch");
-  }
-
-  return tenant;
 }
 
 function toItem(row: {
@@ -53,7 +46,7 @@ export async function fetchGalleryItems(
   tenantId: string,
 ): Promise<{ success: boolean; data?: GalleryItemData[]; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const rows = await prisma.galleryImage.findMany({
       where: { tenantId },
@@ -74,7 +67,7 @@ export async function createGalleryItem(
   data: { url: string; caption?: string; isVideo: boolean },
 ): Promise<{ success: boolean; data?: GalleryItemData; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     if (!data.url) {
       return { success: false, error: "URL is required" };
@@ -113,7 +106,7 @@ export async function removeGalleryItem(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     const existing = await prisma.galleryImage.findFirst({
       where: { id, tenantId },
@@ -139,7 +132,7 @@ export async function updateGalleryOrder(
   updates: { id: string; order: number }[],
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdminAccess(tenantId);
+    await requireAuth(tenantId);
 
     await prisma.$transaction(
       updates.map((u) =>
