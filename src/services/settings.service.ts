@@ -136,6 +136,33 @@ export const SettingsService = {
     });
   },
 
+  async patchThemeConfig(
+    tenantId: string,
+    updates: Record<string, unknown>,
+    tx?: SqlExecutor,
+  ): Promise<void> {
+    const client = tx || prisma;
+    const jsonString = JSON.stringify(updates);
+    await client.$executeRawUnsafe(
+      `INSERT INTO "Setting" ("id", "tenantId", "key", "value", "updatedAt")
+       VALUES (gen_random_uuid(), $1, 'theme_config', $2::jsonb, NOW())
+       ON CONFLICT ("tenantId", "key")
+       DO UPDATE SET
+         "value" = COALESCE("Setting"."value", '{}'::jsonb) || EXCLUDED."value",
+         "updatedAt" = NOW()`,
+      tenantId,
+      jsonString,
+    );
+  },
+
+  async getThemeConfig(tenantId: string): Promise<Record<string, unknown>> {
+    try {
+      const data = await SettingsService.getSettingByKey(tenantId, "theme_config");
+      if (data) return data as Record<string, unknown>;
+    } catch {}
+    return {};
+  },
+
   async updateTenantApiKeys(
     tenantId: string,
     data: { youtubeApiKey?: string; instagramApiKey?: string },

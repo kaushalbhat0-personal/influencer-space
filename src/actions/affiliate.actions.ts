@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { AffiliateService } from "@/services/affiliate.service";
 import { StorageService } from "@/services/storage.service";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
+import { logAction } from "@/lib/audit";
 
 const affiliateSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -59,6 +60,7 @@ export async function createAffiliate(
       isActive: parsed.data.isActive,
     });
     console.log("🔗 createAffiliate success:", result.id);
+    await logAction(tenantId, "createAffiliate", { affiliateId: result.id });
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");
     return { success: true };
@@ -105,6 +107,7 @@ export async function updateAffiliate(
       isActive: parsed.data.isActive,
     });
     console.log("🔗 updateAffiliate success — id:", id);
+    await logAction(tenantId, "updateAffiliate", { affiliateId: id });
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");
     return { success: true };
@@ -132,6 +135,7 @@ export async function deleteAffiliate(
     }
     await AffiliateService.delete(id, tenantId);
     console.log("🔗 deleteAffiliate success — id:", id);
+    await logAction(tenantId, "deleteAffiliate", { affiliateId: id, title: affiliate?.title ?? null });
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");
     return { success: true };
@@ -149,6 +153,7 @@ export async function incrementAffiliateClicks(
     const tenantId = await requireAuth();
     await AffiliateService.incrementClicks(id, tenantId);
     console.log("🔗 incrementAffiliateClicks success — id:", id);
+    await logAction(tenantId, "incrementAffiliateClicks", { affiliateId: id });
     return { success: true };
   } catch (error) {
     console.error("🔗 incrementAffiliateClicks error:", error);
@@ -164,6 +169,7 @@ export async function toggleAffiliateActive(
     const tenantId = await requireAuth();
     await AffiliateService.toggleActive(id, tenantId);
     console.log("🔗 toggleAffiliateActive success — id:", id);
+    await logAction(tenantId, "toggleAffiliateActive", { affiliateId: id });
     revalidatePath(AFFILIATES_ROUTE);
     revalidatePath("/");
     return { success: true };

@@ -27,7 +27,22 @@ function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>): number 
   return width;
 }
 
-export function PreviewShell({ children }: { children: React.ReactNode }) {
+export type ThemeOverrides = Partial<{
+  primary: string;
+  secondary: string;
+  accent: string;
+  font: string;
+  borderRadius: string;
+  layoutDensity: "compact" | "comfortable" | "spacious";
+}>;
+
+export function PreviewShell({
+  children,
+  theme,
+}: {
+  children: React.ReactNode;
+  theme?: ThemeOverrides;
+}) {
   const [device, setDevice] = useState<Device>("mobile");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const containerWidth = useContainerWidth(containerRef);
@@ -72,7 +87,18 @@ export function PreviewShell({ children }: { children: React.ReactNode }) {
             transformOrigin: "top left",
           }}
         >
-          <div className="min-h-full bg-zinc-950 px-4">
+          <div
+            className="min-h-full bg-zinc-950 px-4"
+            style={
+              theme
+                ? {
+                    "--accent": theme.accent,
+                    "--primary": theme.primary,
+                    "--secondary": theme.secondary,
+                  } as React.CSSProperties
+                : undefined
+            }
+          >
             {children}
           </div>
         </div>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { logAction } from "@/lib/audit";
 import type { FeedItemRow } from "@/services/content-feed.service";
 
 async function requireAuth(tenantId: string): Promise<void> {
@@ -47,11 +48,13 @@ export async function togglePinItem(
     });
     if (!item) return { success: false, error: "Content item not found" };
 
+    const newPinned = !item.pinned;
     await prisma.contentFeedItem.update({
       where: { id },
-      data: { pinned: !item.pinned },
+      data: { pinned: newPinned },
     });
 
+    await logAction(tenantId, "togglePinItem", { itemId: id, pinned: newPinned });
     revalidatePath("/admin/settings/content");
     return { success: true };
   } catch (error) {
@@ -75,11 +78,13 @@ export async function toggleHideItem(
     });
     if (!item) return { success: false, error: "Content item not found" };
 
+    const newHidden = !item.hidden;
     await prisma.contentFeedItem.update({
       where: { id },
-      data: { hidden: !item.hidden },
+      data: { hidden: newHidden },
     });
 
+    await logAction(tenantId, "toggleHideItem", { itemId: id, hidden: newHidden });
     revalidatePath("/admin/settings/content");
     return { success: true };
   } catch (error) {
@@ -104,6 +109,7 @@ export async function deleteFeedItem(
 
     await prisma.contentFeedItem.delete({ where: { id } });
 
+    await logAction(tenantId, "deleteFeedItem", { itemId: id, caption: existing.caption ?? null, platform: existing.platform });
     revalidatePath("/admin/settings/content");
     return { success: true };
   } catch (error) {

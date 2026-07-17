@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 
 export type BillingActionResult = {
   success: boolean;
@@ -19,5 +20,6 @@ export async function createSubscriptionCheckout(): Promise<BillingActionResult>
     return { success: false, error: "No tenant associated with account" };
   }
 
+  await logAction(session.user.tenantId, "createSubscriptionCheckout", {});
   return { success: true, checkoutUrl: "#" };
 }

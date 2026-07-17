@@ -15,6 +15,7 @@ import {
   LogOut,
   X,
   Rss,
+  Globe,
 } from "lucide-react";
 
 const navLinks = [
@@ -25,6 +26,7 @@ const navLinks = [
   { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
   { href: "/admin/milestones", label: "Milestones", icon: Trophy },
   { href: "/admin/appearance", label: "Appearance", icon: Palette },
+  { href: "/admin/settings/domain", label: "Domain", icon: Globe },
   { href: "/admin/billing", label: "Billing", icon: CreditCard },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

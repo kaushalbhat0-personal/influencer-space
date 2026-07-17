@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   createNewProduct,
@@ -12,6 +12,8 @@ import type { ProductData } from "@/actions/product.actions";
 import type { PublicProductData } from "@/services/public.service";
 import { PreviewShell } from "@/components/admin/PreviewShell";
 import { ProductGrid } from "@/components/public/ProductGrid";
+import { ImageUploader } from "@/components/admin/ImageUploader";
+import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
 
 function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -32,28 +34,39 @@ export function ProductsManager({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
+  const [pendingFilePreview, setPendingFilePreview] = useState<string | null>(null);
+  const uploaderRef = useRef<ImageUploaderHandle>(null);
 
   function resetForm() {
     setName("");
     setDescription("");
     setPrice("");
-    setImageUrl("");
     setError("");
+    setPendingFilePreview(null);
+    uploaderRef.current?.reset();
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !price.trim()) return;
 
+    let imageUrl = "";
+    try {
+      imageUrl = (await uploaderRef.current?.upload()) ?? "";
+    } catch {
+      setError("Image upload failed");
+      return;
+    }
+
     setError("");
     const formData = new FormData();
     formData.set("name", name.trim());
     formData.set("description", description.trim());
     formData.set("price", price);
-    formData.set("imageUrl", imageUrl.trim());
+    formData.set("imageUrl", imageUrl);
 
     startTransition(async () => {
       const result = await createNewProduct(tenantId, formData);
@@ -114,15 +127,29 @@ export function ProductsManager({
     });
   }
 
-  const previewProducts: PublicProductData[] = products
-    .filter((p) => p.isActive)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price,
-      imageUrl: p.imageUrl,
-    }));
+  const previewProducts: PublicProductData[] = (() => {
+    const mapped = products
+      .filter((p) => p.isActive)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        imageUrl: p.imageUrl,
+      }));
+
+    if (name.trim() || price.trim() || pendingFilePreview) {
+      mapped.unshift({
+        id: "pending",
+        name: name.trim() || "New Product",
+        description: description.trim() || null,
+        price: price ? parseFloat(price) : 0,
+        imageUrl: pendingFilePreview,
+      });
+    }
+
+    return mapped;
+  })();
 
   return (
     <div className="flex gap-6">
@@ -163,19 +190,19 @@ export function ProductsManager({
             rows={2}
           />
           <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Image URL (optional)"
-              className="admin-input flex-1"
-              disabled={pending}
+            <ImageUploader
+              ref={uploaderRef}
+              tenantId={tenantId}
+              folder="products"
+              onFileSelect={(_, previewUrl) => setPendingFilePreview(previewUrl)}
+              onUploadingChange={setIsUploading}
             />
             <button
               type="submit"
-              disabled={pending || !name.trim() || !price.trim()}
+              disabled={pending || isUploading || !name.trim() || !price.trim()}
               className="admin-btn-cyan shrink-0 px-6 py-2.5"
             >
-              {pending ? "Adding..." : "Add Product"}
+              {pending || isUploading ? "Adding..." : "Add Product"}
             </button>
           </div>
         </form>

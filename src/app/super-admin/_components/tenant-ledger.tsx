@@ -5,153 +5,208 @@ import { useRouter } from "next/navigation";
 import {
   deleteTenant,
   resetTenantAdminPassword,
+  generateLoginAsToken,
+  updateSubscriptionPlan,
+  triggerTenantContentSync,
+  reVerifyAdminDomain,
+  purgeContentFeed,
 } from "@/actions/super-admin.actions";
 import type { TenantWithDetails } from "@/services/super-admin.service";
 
-export function TenantLedger({
-  tenants,
-}: {
-  tenants: TenantWithDetails[];
-}) {
+export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
   const router = useRouter();
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [resetModalOpen, setResetModalOpen] = useState(false);
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
-  const [selectedTenantName, setSelectedTenantName] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [resetting, setResetting] = useState(false);
-  const [resetError, setResetError] = useState("");
+  const [search, setSearch] = useState("");
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [resetModal, setResetModal] = useState<{ tenantId: string; name: string } | null>(null);
+  const [planModal, setPlanModal] = useState<{ tenantId: string; name: string; currentPlan: string } | null>(null);
+  const [password, setPassword] = useState("");
 
-  async function handleDelete(tenantId: string, name: string) {
-    if (
-      !window.confirm(
-        `Delete "${name}"? This removes their site, users, products, and settings permanently.`,
-      )
-    )
-      return;
-    setDeleting(tenantId);
-    const result = await deleteTenant(tenantId);
-    setDeleting(null);
-    if (result.success) {
-      router.refresh();
+  const filtered = tenants.filter((t) =>
+    t.name.toLowerCase().includes(search.toLowerCase()) ||
+    t.subdomain.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  async function handleLoginAs(tenantId: string) {
+    setLoading(tenantId);
+    const result = await generateLoginAsToken(tenantId);
+    setLoading(null);
+    if (result.success && result.loginUrl) {
+      window.open(result.loginUrl, "_blank");
+      showToast(`Logged in as tenant`);
+    } else {
+      showToast(result.error || "Failed");
     }
   }
 
-  function openResetModal(tenantId: string, tenantName: string) {
-    setSelectedTenantId(tenantId);
-    setSelectedTenantName(tenantName);
-    setNewPassword("");
-    setResetError("");
-    setResetModalOpen(true);
+  async function handleSync(tenantId: string) {
+    setLoading(tenantId);
+    const result = await triggerTenantContentSync(tenantId);
+    setLoading(null);
+    showToast(result.success ? "Sync triggered" : result.error || "Failed");
   }
 
-  function closeResetModal() {
-    setResetModalOpen(false);
-    setSelectedTenantId(null);
-    setSelectedTenantName("");
-    setNewPassword("");
-    setResetError("");
+  async function handleReVerify(tenantId: string) {
+    setLoading(tenantId);
+    const result = await reVerifyAdminDomain(tenantId);
+    setLoading(null);
+    showToast(result.success ? "Domain verified" : result.error || "Not verified");
+  }
+
+  async function handlePurge(tenantId: string, name: string) {
+    if (!window.confirm(`Purge ALL content feed items for "${name}"?`)) return;
+    setLoading(tenantId);
+    const result = await purgeContentFeed(tenantId);
+    setLoading(null);
+    showToast(result.success ? "Content feed purged" : result.error || "Failed");
+    router.refresh();
+  }
+
+  async function handleDelete(tenantId: string, name: string) {
+    if (!window.confirm(`DELETE "${name}" permanently? This removes everything.`)) return;
+    setLoading(tenantId);
+    const result = await deleteTenant(tenantId);
+    setLoading(null);
+    if (result.success) {
+      showToast(`${name} deleted`);
+      router.refresh();
+    } else {
+      showToast(result.error || "Failed");
+    }
   }
 
   async function handleReset() {
-    if (!selectedTenantId || !newPassword.trim()) return;
-
-    setResetting(true);
-    setResetError("");
-
-    const result = await resetTenantAdminPassword(
-      selectedTenantId,
-      newPassword,
-    );
-    setResetting(false);
-
+    if (!resetModal || !password.trim()) return;
+    setLoading(resetModal.tenantId);
+    const result = await resetTenantAdminPassword(resetModal.tenantId, password);
+    setLoading(null);
     if (result.success) {
-      alert(`Password updated for ${selectedTenantName}. Share the new credentials securely.`);
-      closeResetModal();
+      showToast(`Password reset for ${resetModal.name}`);
+      setResetModal(null);
+      setPassword("");
+    } else {
+      showToast(result.error || "Failed");
+    }
+  }
+
+  async function handlePlanUpdate(plan: "STARTER" | "PRO", status: "FREE" | "ACTIVE") {
+    if (!planModal) return;
+    setLoading(planModal.tenantId);
+    const result = await updateSubscriptionPlan(planModal.tenantId, plan, status);
+    setLoading(null);
+    if (result.success) {
+      showToast(`Plan updated to ${plan}`);
+      setPlanModal(null);
       router.refresh();
     } else {
-      setResetError(result.error || "Failed to reset password.");
+      showToast(result.error || "Failed");
     }
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* ─── Search ─── */}
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search tenants..."
+        className="admin-input w-full max-w-md"
+      />
+
+      {/* ─── Toast ─── */}
+      {toast && (
+        <div className="fixed right-4 top-4 z-50 rounded-lg bg-emerald-500/90 px-4 py-3 text-sm font-medium text-black shadow-lg">
+          {toast}
+        </div>
+      )}
+
+      {/* ─── Table ─── */}
       <div className="rounded-xl border border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="admin-table w-full">
             <thead>
               <tr>
-                <th>Creator / Tenant</th>
+                <th>Creator</th>
                 <th>Admin Email</th>
                 <th>Domain</th>
                 <th>Plan</th>
-                <th>Actions</th>
+                <th>Products</th>
+                <th className="w-10">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {tenants.map((t) => {
-                const adminEmail =
-                  t.users.find((u) => u.email)?.email || "—";
-                const domain = t.customDomain || t.subdomain;
+              {filtered.map((t) => {
+                const adminEmail = t.users.find((u) => u.email)?.email || "—";
+                const domain = t.customDomain || `${t.subdomain}.creatorshop.io`;
+                const plan = t.subscription?.plan || "STARTER";
 
                 return (
                   <tr key={t.id}>
                     <td className="font-medium text-white">{t.name}</td>
+                    <td><span className="text-zinc-400 text-xs">{adminEmail}</span></td>
+                    <td><code className="text-xs text-s8ul-cyan">{domain}</code></td>
                     <td>
-                      <span className="text-zinc-400 text-xs">{adminEmail}</span>
-                    </td>
-                    <td>
-                      <code className="text-xs text-s8ul-cyan">{domain}</code>
-                    </td>
-                    <td>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          t.subscription?.plan === "PRO"
-                            ? "bg-purple-500/20 text-purple-400"
-                            : "bg-s8ul-cyan/10 text-s8ul-cyan"
-                        }`}
-                      >
-                        {t.subscription?.plan || "STARTER"}
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        plan === "PRO" ? "bg-purple-500/20 text-purple-400" : "bg-s8ul-cyan/10 text-s8ul-cyan"
+                      }`}>
+                        {plan}
                       </span>
                     </td>
+                    <td><span className="text-zinc-400 text-xs">{t._count.products}</span></td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={`http://${t.subdomain}.localhost:3000`}
-                          target="_blank"
-                          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                          rel="noreferrer"
-                        >
-                          Preview
-                        </a>
-                        <span className="text-zinc-700">|</span>
-                        <button className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-                          Edit
-                        </button>
-                        <span className="text-zinc-700">|</span>
+                      <div className="relative">
                         <button
-                          onClick={() => openResetModal(t.id, t.name)}
-                          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                          onClick={() => setOpenMenu(openMenu === t.id ? null : t.id)}
+                          disabled={loading === t.id}
+                          className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-white"
                         >
-                          Reset Password
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
                         </button>
-                        <span className="text-zinc-700">|</span>
-                        <button
-                          onClick={() => handleDelete(t.id, t.name)}
-                          disabled={deleting === t.id}
-                          className="text-xs text-red-500 hover:text-red-400 transition-colors disabled:opacity-40"
-                        >
-                          {deleting === t.id ? "..." : "Delete"}
-                        </button>
+                        {openMenu === t.id && (
+                          <div className="absolute right-0 z-50 mt-1 w-48 rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-2xl backdrop-blur-xl">
+                            <button onClick={() => { handleLoginAs(t.id); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
+                              Login as Tenant
+                            </button>
+                            <button onClick={() => { setPlanModal({ tenantId: t.id, name: t.name, currentPlan: plan }); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
+                              Manage Plan
+                            </button>
+                            <button onClick={() => { setResetModal({ tenantId: t.id, name: t.name }); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
+                              Reset Password
+                            </button>
+                            <button onClick={() => { handleSync(t.id); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
+                              Sync Content
+                            </button>
+                            {t.customDomain && (
+                              <button onClick={() => { handleReVerify(t.id); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
+                                Re-verify Domain
+                              </button>
+                            )}
+                            <button onClick={() => { handlePurge(t.id, t.name); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-amber-400 hover:bg-amber-500/10">
+                              Purge Content Feed
+                            </button>
+                            <hr className="my-1 border-white/5" />
+                            <button onClick={() => { handleDelete(t.id, t.name); setOpenMenu(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-red-400 hover:bg-red-500/10">
+                              Delete Tenant
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              {tenants.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center text-zinc-600 py-8">
-                    No tenants yet. Use the YouTube provisioner above to create one.
+                  <td colSpan={6} className="text-center text-zinc-600 py-8">
+                    No tenants found.
                   </td>
                 </tr>
               )}
@@ -160,64 +215,46 @@ export function TenantLedger({
         </div>
       </div>
 
-      {/* ─── Reset Password Modal ─── */}
-      {resetModalOpen && (
+      {/* ─── Plan Modal ─── */}
+      {planModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={closeResetModal}
-          />
-          <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/90 p-6 shadow-2xl backdrop-blur-xl">
-            <h3 className="text-lg font-semibold text-white">
-              Reset Password — {selectedTenantName}
-            </h3>
-            <p className="mt-1 text-sm text-zinc-500">
-              Set a new admin password for this creator&apos;s account.
-            </p>
-
-            <div className="mt-5">
-              <label
-                htmlFor="reset-password"
-                className="mb-1.5 block text-xs font-medium text-zinc-400"
-              >
-                New Password
-              </label>
-              <input
-                id="reset-password"
-                type="text"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password (min 8 chars)"
-                className="admin-input w-full"
-                disabled={resetting}
-                autoFocus
-                onKeyDown={(e) => e.key === "Enter" && handleReset()}
-              />
-            </div>
-
-            {resetError && (
-              <p className="mt-3 text-sm text-red-400">{resetError}</p>
-            )}
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
-                onClick={closeResetModal}
-                disabled={resetting}
-                className="admin-btn-outline px-5 py-2 text-sm"
-              >
-                Cancel
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setPlanModal(null)} />
+          <div className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900/90 p-6 shadow-2xl backdrop-blur-xl">
+            <h3 className="text-lg font-semibold text-white">Manage Plan — {planModal.name}</h3>
+            <p className="text-xs text-zinc-500">Current: {planModal.currentPlan}</p>
+            <div className="mt-5 space-y-2">
+              <button onClick={() => handlePlanUpdate("STARTER", "FREE")} className="w-full rounded-lg border border-white/10 px-4 py-3 text-sm text-zinc-300 hover:bg-white/5">
+                Set to STARTER (Free)
               </button>
-              <button
-                onClick={handleReset}
-                disabled={resetting || !newPassword.trim() || newPassword.trim().length < 8}
-                className="admin-btn-cyan px-5 py-2 text-sm"
-              >
-                {resetting ? "Resetting..." : "Reset Password"}
+              <button onClick={() => handlePlanUpdate("PRO", "ACTIVE")} className="w-full rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-3 text-sm text-purple-400 hover:bg-purple-500/20">
+                Set to PRO (Active)
               </button>
             </div>
           </div>
         </div>
       )}
-    </>
+
+      {/* ─── Reset Password Modal ─── */}
+      {resetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setResetModal(null)} />
+          <div className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900/90 p-6 shadow-2xl backdrop-blur-xl">
+            <h3 className="text-lg font-semibold text-white">Reset Password — {resetModal.name}</h3>
+            <input
+              type="text"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              className="admin-input mt-4 w-full"
+              onKeyDown={(e) => e.key === "Enter" && handleReset()}
+            />
+            <div className="mt-4 flex justify-end gap-3">
+              <button onClick={() => setResetModal(null)} className="admin-btn-outline px-5 py-2 text-sm">Cancel</button>
+              <button onClick={handleReset} disabled={!password.trim() || password.length < 8} className="admin-btn-cyan px-5 py-2 text-sm">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

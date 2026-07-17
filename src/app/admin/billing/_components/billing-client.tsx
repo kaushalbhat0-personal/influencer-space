@@ -14,6 +14,12 @@ interface SubscriptionRow {
   currentPeriodEnd: Date | null;
 }
 
+interface PlanInfo {
+  plan: string;
+  status: string;
+  limits: { maxProducts: number; customDomain: boolean; customBranding: boolean };
+}
+
 const plans = [
   {
     id: "STARTER",
@@ -24,10 +30,11 @@ const plans = [
     description: "Best for getting started",
     features: [
       { text: "10% transaction fee", included: true },
+      { text: "Up to 5 products", included: true },
       { text: "Platform subdomain", included: true },
       { text: "Standard Support", included: true },
-      { text: "Custom Domain Support", included: false },
-      { text: "Dynamic API Integrations", included: false },
+      { text: "Custom Domain", included: false },
+      { text: "Custom Branding & Themes", included: false },
       { text: "No Platform Branding", included: false },
     ],
     cta: "Current Plan",
@@ -42,10 +49,11 @@ const plans = [
     description: "For serious creators",
     features: [
       { text: "5% transaction fee", included: true },
+      { text: "Unlimited products", included: true },
       { text: "Platform subdomain", included: true },
-      { text: "Standard Support", included: true },
-      { text: "Custom Domain Support", included: true },
-      { text: "Dynamic API Integrations", included: true },
+      { text: "Priority Support", included: true },
+      { text: "Custom Domain", included: true },
+      { text: "Custom Branding & Themes", included: true },
       { text: "No Platform Branding", included: true },
     ],
     cta: "Upgrade to Pro",
@@ -53,7 +61,15 @@ const plans = [
   },
 ];
 
-export function BillingClient({ subscription }: { subscription: SubscriptionRow }) {
+export function BillingClient({
+  subscription,
+  productCount,
+  planInfo,
+}: {
+  subscription: SubscriptionRow;
+  productCount: number;
+  planInfo: PlanInfo;
+}) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<BillingActionResult | null>(null);
 
@@ -80,6 +96,34 @@ export function BillingClient({ subscription }: { subscription: SubscriptionRow 
         <p className="mt-1 text-sm text-gray-400">
           Choose the plan that fits your brand. Upgrade anytime to unlock more features.
         </p>
+      </div>
+
+      {/* ─── Current Usage ─── */}
+      <div className="mb-8 rounded-xl border border-white/10 bg-zinc-900/50 p-5 backdrop-blur-sm">
+        <h3 className="text-sm font-semibold text-zinc-300">Current Usage</h3>
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-500">Products</span>
+            <span className="text-white">
+              {productCount}{" "}
+              <span className="text-zinc-600">
+                / {planInfo.limits.maxProducts === Infinity ? "∞" : planInfo.limits.maxProducts}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-500">Custom Domain</span>
+            <span className={planInfo.limits.customDomain ? "text-emerald-400" : "text-zinc-600"}>
+              {planInfo.limits.customDomain ? "Enabled" : "Pro only"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-500">Custom Branding</span>
+            <span className={planInfo.limits.customBranding ? "text-emerald-400" : "text-zinc-600"}>
+              {planInfo.limits.customBranding ? "Enabled" : "Pro only"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {isPro && subscription.currentPeriodEnd && (

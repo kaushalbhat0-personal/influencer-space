@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { SignJWT } from "jose";
 import { defaultConfig } from "@/config/influencer";
 import { defaultHeroData } from "@/config/hero";
 import { YouTubeScraperService } from "@/services/youtube-scraper.service";
@@ -11,6 +12,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { toSubdomain } from "@/lib/utils";
+import { purgeOldAuditLogs } from "@/lib/audit";
 import type { Prisma } from "@/generated/prisma/client";
 
 const DEFAULT_PASSWORD = "CreatorLaunch2026!";
@@ -358,5 +360,166 @@ export async function deleteTenant(tenantId: string): Promise<DeleteTenantResult
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete tenant",
     };
+  }
+}
+
+export type LoginAsTokenResult = { success: boolean; loginUrl?: string; error?: string };
+
+export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTokenResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { id: true, subdomain: true },
+  });
+  if (!tenant) return { success: false, error: "Tenant not found" };
+
+  const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+  const token = await new SignJWT({ tenantId, type: "superadmin-impersonation" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("5m")
+    .sign(secret);
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };
+}
+
+export type PlanUpdateResult = { success: boolean; error?: string };
+
+export async function updateSubscriptionPlan(
+  tenantId: string,
+  plan: "STARTER" | "PRO",
+  status: "FREE" | "ACTIVE" | "CANCELLED",
+): Promise<PlanUpdateResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.subscription.upsert({
+      where: { tenantId },
+      update: { plan, status },
+      create: { tenantId, plan, status },
+    });
+    revalidatePath("/super-admin");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update plan" };
+  }
+}
+
+export type SyncResult = { success: boolean; error?: string };
+
+export async function triggerTenantContentSync(tenantId: string): Promise<SyncResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: { updatedAt: new Date() },
+    });
+    revalidatePath("/super-admin");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Sync trigger failed" };
+  }
+}
+
+export async function reVerifyAdminDomain(tenantId: string): Promise<SyncResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { customDomain: true },
+    });
+    if (!tenant?.customDomain) return { success: false, error: "No custom domain configured" };
+
+    const status = await VercelService.verifyDomain(tenant.customDomain);
+    return { success: status.verified };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Domain re-verify failed" };
+  }
+}
+
+export async function purgeContentFeed(tenantId: string): Promise<SyncResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.contentFeedItem.deleteMany({ where: { tenantId } });
+    revalidatePath("/super-admin");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Purge failed" };
+  }
+}
+
+export async function togglePlatformFlag(
+  key: string,
+  value: boolean,
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const platformTenant = await prisma.tenant.findFirst({
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!platformTenant) return { success: false, error: "No tenant found" };
+
+    const current = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId: platformTenant.id, key: "platform_config" } },
+    });
+
+    const config = (current?.value as Record<string, unknown>) || {};
+    config[key] = value;
+
+    await prisma.setting.upsert({
+      where: { tenantId_key: { tenantId: platformTenant.id, key: "platform_config" } },
+      update: { value: config as Prisma.InputJsonValue },
+      create: { tenantId: platformTenant.id, key: "platform_config", value: config as Prisma.InputJsonValue },
+    });
+
+    revalidatePath("/super-admin/features");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed" };
+  }
+}
+
+export async function purgeOldAuditLogsAction(
+  olderThanDays: number = 90,
+): Promise<{ success: boolean; deleted?: number; error?: string }> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  if (olderThanDays < 7) {
+    return { success: false, error: "Cannot purge logs newer than 7 days." };
+  }
+
+  try {
+    const { deleted } = await purgeOldAuditLogs(olderThanDays);
+    revalidatePath("/super-admin/audit");
+    return { success: true, deleted };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Purge failed" };
   }
 }

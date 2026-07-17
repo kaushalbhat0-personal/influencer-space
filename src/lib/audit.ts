@@ -57,3 +57,16 @@ export async function logAction(
     JSON.stringify(sanitizeMetadata(metadata)),
   );
 }
+
+export async function purgeOldAuditLogs(
+  olderThanDays: number = 90,
+): Promise<{ deleted: number }> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - olderThanDays);
+
+  const result = await prisma.auditLog.deleteMany({
+    where: { createdAt: { lt: cutoff } },
+  });
+
+  return { deleted: result.count };
+}

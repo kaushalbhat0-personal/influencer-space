@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getTenantContext } from "@/lib/tenant";
+import { getPlanLimits } from "@/lib/feature-gate";
 import { BillingClient } from "./_components/billing-client";
 
 export const dynamic = "force-dynamic";
@@ -31,5 +32,8 @@ export default async function BillingPage() {
     };
   }
 
-  return <BillingClient subscription={subscription} />;
+  const productCount = await prisma.product.count({ where: { tenantId: tenant.id } });
+  const plan = await getPlanLimits(tenant.id);
+
+  return <BillingClient subscription={subscription} productCount={productCount} planInfo={plan} />;
 }

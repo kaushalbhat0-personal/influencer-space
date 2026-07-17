@@ -1,31 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   createMilestone,
   removeMilestone,
 } from "@/actions/milestone.actions";
 import type { MilestoneData } from "@/actions/milestone.actions";
-import { ImageUploader } from "@/components/ui/image-uploader";
-import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { ImageUploader } from "@/components/admin/ImageUploader";
+import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
-
-async function uploadFile(file: File, tenantId: string, folder: string): Promise<string> {
-  const ext = file.name.split(".").pop();
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(7);
-  const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
-
-  const { data, error: uploadError } = await supabaseClient.storage
-    .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: true });
-
-  if (uploadError) throw new Error(uploadError.message);
-
-  const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
-  return urlData.publicUrl;
-}
 
 export function MilestonesManager({
   tenantId,
@@ -40,12 +24,11 @@ export function MilestonesManager({
   const [year, setYear] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [stats, setStats] = useState("");
   const [error, setError] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
+  const uploaderRef = useRef<ImageUploaderHandle>(null);
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
@@ -56,28 +39,21 @@ export function MilestonesManager({
     setYear("");
     setTitle("");
     setDescription("");
-    setImageUrl("");
     setStats("");
     setError("");
-    setSelectedFile(null);
+    uploaderRef.current?.reset();
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!year.trim() || !title.trim() || !description.trim()) return;
 
-    let finalImageUrl = imageUrl.trim();
-
-    if (selectedFile) {
-      setIsUploading(true);
-      try {
-        finalImageUrl = await uploadFile(selectedFile, tenantId, "milestones");
-      } catch {
-        showToast("error", "Upload failed");
-        setIsUploading(false);
-        return;
-      }
-      setIsUploading(false);
+    let finalImageUrl = "";
+    try {
+      finalImageUrl = (await uploaderRef.current?.upload()) ?? "";
+    } catch {
+      showToast("error", "Upload failed");
+      return;
     }
 
     setError("");
@@ -180,16 +156,17 @@ export function MilestonesManager({
           />
           <div className="flex flex-col gap-3 sm:flex-row">
             <ImageUploader
-              onChange={(file) => setSelectedFile(file)}
-              isUploading={isUploading}
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              ref={uploaderRef}
+              tenantId={tenantId}
+              folder="milestones"
+              onUploadingChange={setIsUploading}
             />
             <button
               type="submit"
               disabled={pending || isUploading || !year.trim() || !title.trim() || !description.trim()}
               className="admin-btn-cyan shrink-0 px-6 py-2.5"
             >
-              {pending ? "Adding..." : "Add Milestone"}
+              {pending || isUploading ? "Adding..." : "Add Milestone"}
             </button>
           </div>
         </form>

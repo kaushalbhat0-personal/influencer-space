@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { GameService } from "@/services/games.service";
 import { GAMES_ROUTE } from "@/lib/constants";
+import { logAction } from "@/lib/audit";
 
 const gameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -58,6 +59,7 @@ export async function createGame(
       genre: parsed.data.genre || undefined,
     });
     console.log("🎮 createGame success:", result.id);
+    await logAction(tenantId, "createGame", { gameId: result.id, name: result.name });
     revalidatePath(GAMES_ROUTE);
     return { success: true };
   } catch (error) {
@@ -103,6 +105,7 @@ export async function updateGame(
       genre: parsed.data.genre || undefined,
     });
     console.log("🎮 updateGame success — id:", id);
+    await logAction(tenantId, "updateGame", { gameId: id });
     revalidatePath(GAMES_ROUTE);
     return { success: true };
   } catch (error) {
@@ -117,6 +120,7 @@ export async function deleteGame(id: string): Promise<GameActionState> {
     const tenantId = await requireAuth();
     await GameService.delete(id, tenantId);
     console.log("🎮 deleteGame success — id:", id);
+    await logAction(tenantId, "deleteGame", { gameId: id });
     revalidatePath(GAMES_ROUTE);
     return { success: true };
   } catch (error) {

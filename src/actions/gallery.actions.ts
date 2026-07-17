@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { logAction } from "@/lib/audit";
 
 export type GalleryItemData = {
   id: string;
@@ -91,6 +92,7 @@ export async function createGalleryItem(
       },
     });
 
+    await logAction(tenantId, "createGalleryItem", { itemId: row.id, caption: data.caption ?? null });
     revalidatePath("/admin/gallery");
     return { success: true, data: toItem(row) };
   } catch (error) {
@@ -117,6 +119,7 @@ export async function removeGalleryItem(
 
     await prisma.galleryImage.delete({ where: { id } });
 
+    await logAction(tenantId, "deleteGalleryItem", { itemId: id });
     revalidatePath("/admin/gallery");
     return { success: true };
   } catch (error) {
@@ -143,6 +146,7 @@ export async function updateGalleryOrder(
       ),
     );
 
+    await logAction(tenantId, "reorderGallery", { count: updates.length });
     revalidatePath("/admin/gallery");
     return { success: true };
   } catch (error) {

@@ -280,3 +280,52 @@ export async function updateApiKeys(
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
+
+const themeConfigSchema = z.object({
+  primary: z.string().optional(),
+  secondary: z.string().optional(),
+  accent: z.string().optional(),
+  font: z.string().optional(),
+  borderRadius: z.string().optional(),
+  layoutDensity: z.enum(["compact", "comfortable", "spacious"]).optional(),
+});
+
+export type ThemeConfigInput = Partial<z.infer<typeof themeConfigSchema>>;
+
+export async function updateThemeConfig(
+  tenantId: string,
+  data: ThemeConfigInput,
+): Promise<SettingsActionState> {
+  const parsed = themeConfigSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: "Invalid theme config" };
+  }
+
+  const sparseData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(parsed.data)) {
+    if (value !== undefined && value !== null && value !== "") {
+      sparseData[key] = value;
+    }
+  }
+
+  if (Object.keys(sparseData).length === 0) return { success: true };
+
+  try {
+    await requireAuth(tenantId);
+
+    await prisma.$transaction(async (tx) => {
+      await SettingsService.patchThemeConfig(tenantId, sparseData, tx);
+      await logAction(tenantId, "updateThemeConfig", { fields: Object.keys(sparseData) }, tx);
+    });
+
+    revalidatePath("/admin/appearance");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
+    console.error("updateThemeConfig error:", error);
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
+  }
+}

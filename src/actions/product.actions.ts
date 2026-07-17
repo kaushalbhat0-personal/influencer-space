@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAction } from "@/lib/audit";
+import { gateFeature } from "@/lib/feature-gate";
 
 const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -73,6 +75,12 @@ export async function createNewProduct(
       return { success: false, error: first };
     }
 
+    const productCount = await prisma.product.count({ where: { tenantId } });
+    const gate = await gateFeature(tenantId, "maxProducts", productCount);
+    if (!gate.allowed) {
+      return { success: false, error: gate.error };
+    }
+
     const product = await prisma.product.create({
       data: {
         tenantId,
@@ -83,6 +91,7 @@ export async function createNewProduct(
       },
     });
 
+    await logAction(tenantId, "createProduct", { productId: product.id, name: product.name });
     revalidatePath("/admin/products");
     return { success: true, data: product };
   } catch (error) {
@@ -113,6 +122,7 @@ export async function toggleProductStatus(
       data: { isActive },
     });
 
+    await logAction(tenantId, "toggleProductStatus", { productId: id, isActive });
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error) {
@@ -165,6 +175,7 @@ export async function updateExistingProduct(
       },
     });
 
+    await logAction(tenantId, "updateProduct", { productId: id });
     revalidatePath("/admin/products");
     return { success: true, data: product };
   } catch (error) {
@@ -191,6 +202,7 @@ export async function removeProduct(
 
     await prisma.product.delete({ where: { id } });
 
+    await logAction(tenantId, "deleteProduct", { productId: id, name: existing.name });
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error) {
@@ -217,6 +229,7 @@ export async function updateProductOrder(
       ),
     );
 
+    await logAction(tenantId, "reorderProducts", { count: updates.length });
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error) {

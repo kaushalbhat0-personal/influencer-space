@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getPublicPageData } from "@/services/public.service";
 import { HeroBanner } from "./_components/hero-banner";
@@ -7,6 +8,7 @@ import { ContentFeed } from "@/components/public/ContentFeed";
 import { ProductGrid } from "@/components/public/ProductGrid";
 import { TimelineSection } from "@/components/public/TimelineSection";
 import { GallerySection } from "@/components/public/GallerySection";
+import { generateProfileJsonLd, generateProductListJsonLd } from "@/lib/json-ld";
 import type { PublicPageData } from "@/services/public.service";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +24,44 @@ async function getPageData(slug: string): Promise<{ tenantId: string; data: Publ
   return { tenantId: tenant.id, data };
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { domain: string };
+}): Promise<Metadata> {
+  const pageData = await getPageData(params.domain);
+  if (!pageData) return {};
+
+  const domain = params.domain;
+  const { profile } = pageData.data;
+  const title = profile.name
+    ? `${profile.name} — CreatorStore`
+    : "CreatorStore";
+  const description = profile.tagline || profile.bio || "Creator profile on CreatorStore";
+  const canonical = `https://${domain}`;
+
+  return {
+    title,
+    description,
+    robots: { index: true, follow: true },
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "CreatorStore",
+      type: "profile",
+      ...(profile.profileImage && { images: [{ url: profile.profileImage, width: 800, height: 800 }] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(profile.profileImage && { images: [profile.profileImage] }),
+    },
+  };
+}
+
 export default async function PublicPage({
   params,
 }: {
@@ -34,6 +74,10 @@ export default async function PublicPage({
   const { profile, hero, products, links, gallery, milestones, feed } = data;
   const c = profile.colors;
 
+  const socialUrls = [profile.social.instagram, profile.social.youtube, profile.social.twitter, profile.social.tiktok];
+  const profileJsonLd = generateProfileJsonLd(profile, `https://${params.domain}`, socialUrls);
+  const productListJsonLd = generateProductListJsonLd(products);
+
   return (
     <main
       className="min-h-screen bg-zinc-950 text-white"
@@ -45,6 +89,16 @@ export default async function PublicPage({
         } as React.CSSProperties
       }
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+      />
+      {productListJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productListJsonLd) }}
+        />
+      )}
       {/* ─── Hero Banner ─── */}
       <HeroBanner
         videoUrl={hero.videoUrl || undefined}
@@ -249,7 +303,14 @@ export default async function PublicPage({
         <footer className="mt-12 border-t border-white/5 pt-6 pb-8 text-center">
           <p className="text-xs text-zinc-700">
             Powered by{" "}
-            <span className="font-semibold text-zinc-500">CreatorStore</span>
+            <a
+              href={process.env.NEXT_PUBLIC_APP_URL || "https://creatorshop.io"}
+              target="_blank"
+              rel="follow"
+              className="font-semibold text-zinc-500 transition-colors hover:text-zinc-300"
+            >
+              CreatorStore
+            </a>
           </p>
         </footer>
       </div>

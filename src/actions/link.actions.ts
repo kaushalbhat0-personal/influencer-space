@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAction } from "@/lib/audit";
 
 const createLinkSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -81,6 +82,7 @@ export async function createLink(
       },
     });
 
+    await logAction(tenantId, "createLink", { linkId: link.id, title: link.title });
     revalidatePath("/admin/links");
     return { success: true, data: link };
   } catch (error) {
@@ -111,6 +113,7 @@ export async function toggleLinkStatus(
       data: { isActive },
     });
 
+    await logAction(tenantId, "toggleLinkStatus", { linkId: id, isActive });
     revalidatePath("/admin/links");
     return { success: true };
   } catch (error) {
@@ -137,6 +140,7 @@ export async function updateLinkOrder(
       ),
     );
 
+    await logAction(tenantId, "reorderLinks", { count: updates.length });
     revalidatePath("/admin/links");
     return { success: true };
   } catch (error) {
@@ -163,6 +167,7 @@ export async function deleteLink(
 
     await prisma.affiliateLink.delete({ where: { id } });
 
+    await logAction(tenantId, "deleteLink", { linkId: id, title: existing.title });
     revalidatePath("/admin/links");
     return { success: true };
   } catch (error) {

@@ -3,9 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import {
+  LayoutDashboard,
+  Users,
+  ScrollText,
+  Activity,
+  ToggleRight,
+  Zap,
+  ArrowLeft,
+  LogOut,
+} from "lucide-react";
 
 const links = [
-  { href: "/super-admin", label: "Dashboard", icon: "🏠" },
+  { href: "/super-admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/super-admin/audit", label: "Audit Log", icon: ScrollText },
+  { href: "/super-admin/health", label: "System Health", icon: Activity },
+  { href: "/super-admin/features", label: "Feature Flags", icon: ToggleRight },
 ];
 
 export function SuperAdminSidebar() {
@@ -18,9 +31,10 @@ export function SuperAdminSidebar() {
           Platform
         </Link>
       </div>
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-4">
         {links.map((link) => {
           const isActive = pathname === link.href;
+          const Icon = link.icon;
           return (
             <Link
               key={link.href}
@@ -31,7 +45,7 @@ export function SuperAdminSidebar() {
                   : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span>{link.icon}</span>
+              <Icon className="h-4 w-4 shrink-0" />
               <span>{link.label}</span>
             </Link>
           );
@@ -42,18 +56,14 @@ export function SuperAdminSidebar() {
           href="/admin/dashboard"
           className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
+          <ArrowLeft className="h-4 w-4 shrink-0" />
           Influencer View
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/admin/login" })}
           className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <LogOut className="h-4 w-4 shrink-0" />
           Sign Out
         </button>
       </div>

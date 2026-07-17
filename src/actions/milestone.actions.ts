@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAction } from "@/lib/audit";
 
 const createMilestoneSchema = z.object({
   year: z.string().min(1, "Year is required").max(10),
@@ -94,6 +95,7 @@ export async function createMilestone(
       },
     });
 
+    await logAction(tenantId, "createMilestone", { milestoneId: event.id, title: event.title });
     revalidatePath("/admin/milestones");
     return { success: true, data: event };
   } catch (error) {
@@ -149,6 +151,7 @@ export async function updateExistingMilestone(
       },
     });
 
+    await logAction(tenantId, "updateMilestone", { milestoneId: id });
     revalidatePath("/admin/milestones");
     return { success: true };
   } catch (error) {
@@ -175,6 +178,7 @@ export async function removeMilestone(
 
     await prisma.timelineEvent.delete({ where: { id } });
 
+    await logAction(tenantId, "deleteMilestone", { milestoneId: id, title: existing.title });
     revalidatePath("/admin/milestones");
     return { success: true };
   } catch (error) {
