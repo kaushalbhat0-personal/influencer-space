@@ -25,6 +25,7 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ planId, amount }),
       });
 

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized — please log in" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     const razorpay = getRazorpayInstance();
-    const orderAmount = Math.round(amount * 100); // paise
+    const orderAmount = Math.round(amount * 100);
 
     const order = await razorpay.orders.create({
       amount: orderAmount,
