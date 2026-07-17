@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       email: adminUser.email,
       role: adminUser.role,
       tenantId: adminUser.tenantId,
+      agencyId: adminUser.agencyId,
     },
     secret: process.env.NEXTAUTH_SECRET!,
   });

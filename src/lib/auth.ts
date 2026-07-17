@@ -56,7 +56,20 @@ export const authOptions: NextAuthOptions = {
               id: user.id,
               email: user.email,
               name: user.name,
-              tenantId: user.tenantId ?? null,
+              tenantId: null,
+              agencyId: null,
+              role: user.role,
+            };
+          }
+
+          if (user.role === "AGENCY_ADMIN" || user.role === "AGENCY_STAFF") {
+            console.log("Agency login approved:", user.role, "agency:", user.agencyId);
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              tenantId: null,
+              agencyId: user.agencyId,
               role: user.role,
             };
           }
@@ -64,7 +77,7 @@ export const authOptions: NextAuthOptions = {
           if (user.role === "ADMIN") {
             if (credentials.tenantId && user.tenantId !== credentials.tenantId) {
               console.log(
-                "Admin login blocked — tenant mismatch:",
+                "Creator login blocked — tenant mismatch:",
                 "user.tenantId:",
                 user.tenantId,
                 "credential.tenantId:",
@@ -73,12 +86,13 @@ export const authOptions: NextAuthOptions = {
               return null;
             }
 
-            console.log("Admin login approved for tenant:", user.tenantId);
+            console.log("Creator login approved for tenant:", user.tenantId);
             return {
               id: user.id,
               email: user.email,
               name: user.name,
               tenantId: user.tenantId,
+              agencyId: user.agencyId,
               role: user.role,
             };
           }
@@ -103,6 +117,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.tenantId = user.tenantId;
+        token.agencyId = user.agencyId;
         token.role = user.role;
       }
       return token;
@@ -111,6 +126,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.tenantId = (token.tenantId as string) ?? null;
+        session.user.agencyId = (token.agencyId as string) ?? null;
         session.user.role = token.role as "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
       }
       return session;

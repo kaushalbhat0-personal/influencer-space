@@ -13,11 +13,13 @@ const platformDomains = [
 
 const DEFAULT_TENANT = process.env.DEFAULT_TENANT_SUBDOMAIN || "";
 
+// ─── Tenant Host Resolution ──────────────────────────────────────────────────
+
 function parseTenantHost(host: string): string | null {
   const hostname = host.split(":")[0]?.toLowerCase() ?? "";
   const stripped = hostname.replace(/^www\./, "");
 
-  if (platformDomains.some(d => d === host.toLowerCase() || stripped === d.split(":")[0])) {
+  if (platformDomains.some((d) => d === host.toLowerCase() || stripped === d.split(":")[0])) {
     return null;
   }
 
@@ -31,12 +33,57 @@ function parseTenantHost(host: string): string | null {
   return stripped;
 }
 
+// ─── Role-Based Route Guards ─────────────────────────────────────────────────
+
+type AllowedRole = "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "ADMIN";
+
+const routeGuards: Array<{
+  prefix: string;
+  roles: AllowedRole[];
+  redirectTo: string;
+}> = [
+  { prefix: "/super-admin", roles: ["SUPER_ADMIN"], redirectTo: "/admin/login" },
+  { prefix: "/agency",       roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF"], redirectTo: "/admin/login" },
+  { prefix: "/admin/dashboard", roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login" },
+  { prefix: "/admin",        roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login" },
+];
+
+async function checkRouteAccess(
+  pathname: string,
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const guard = routeGuards.find((g) => pathname.startsWith(g.prefix));
+  if (!guard) return null;
+
+  // Allow login page through
+  if (pathname === "/admin/login") return null;
+
+  const token = await getToken({ req: request, secret });
+
+  if (!token) {
+    const loginUrl = new URL(guard.redirectTo, request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  const userRole = token.role as AllowedRole | undefined;
+
+  if (!userRole || !guard.roles.includes(userRole)) {
+    return new NextResponse("Unauthorized", { status: 403 });
+  }
+
+  return null; // Access allowed
+}
+
+// ─── Main Middleware ──────────────────────────────────────────────────────────
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
 
-  // Bypass tenant logic for platform root domains (marketing site)
-  if (platformDomains.some(d => d === host.toLowerCase())) {
+  // Platform root — bypass tenant logic
+  if (platformDomains.some((d) => d === host.toLowerCase())) {
+    const accessCheck = await checkRouteAccess(pathname, request);
+    if (accessCheck) return accessCheck;
     return NextResponse.next();
   }
 
@@ -47,28 +94,14 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-tenant-host", tenantHost);
   }
 
-  if (pathname === "/admin/login") {
+  // Check role-based access for admin/agency/dashboard routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin") || pathname.startsWith("/agency")) {
+    const accessCheck = await checkRouteAccess(pathname, request);
+    if (accessCheck) return accessCheck;
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin")) {
-    const token = await getToken({
-      req: request,
-      secret: secret,
-    });
-
-    console.log(
-      `Middleware - Path: ${pathname}, Token exists: ${!!token}`,
-    );
-
-    if (!token) {
-      const loginUrl = new URL("/admin/login", request.url);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  }
-
+  // Tenant rewrite for public pages
   if (tenantHost && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
     const segments = pathname.split("/").filter(Boolean);
     if (segments[0] !== tenantHost) {
