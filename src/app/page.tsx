@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PricingCTA } from "@/components/marketing/pricing-cta";
 import {
   Box,
   Users,
@@ -82,6 +83,8 @@ const pricingPlans = [
       "10% transaction fee",
     ],
     cta: "Start Free",
+    planId: "solo",
+    amountNum: 0,
   },
   {
     name: "Freelancer Agency",
@@ -101,6 +104,8 @@ const pricingPlans = [
       "Email support",
     ],
     cta: "Start Free Trial",
+    planId: "freelancer",
+    amountNum: 1999,
   },
   {
     name: "Growth Agency",
@@ -120,6 +125,8 @@ const pricingPlans = [
       "5% platform fee on creator sales",
     ],
     cta: "Contact Sales",
+    planId: "growth",
+    amountNum: 4999,
   },
 ];
 
@@ -296,16 +303,17 @@ export default function MarketingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
+                <PricingCTA
+                  planId={plan.planId}
+                  amount={plan.amountNum}
+                  label={plan.cta}
                   href="/admin/login"
                   className={`mt-8 flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold transition-all ${
                     plan.highlight
                       ? `bg-gradient-to-r ${plan.accent} text-white hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]`
                       : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                   }`}
-                >
-                  {plan.cta}
-                </Link>
+                />
               </div>
             ))}
           </div>
