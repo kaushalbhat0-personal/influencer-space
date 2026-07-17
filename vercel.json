@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "src/app/admin/settings/**/*": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "src/actions/**/*.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
+}
