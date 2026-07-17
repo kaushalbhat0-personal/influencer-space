@@ -127,7 +127,7 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
       )}
 
       {/* ─── Table ─── */}
-      <div className="rounded-xl border border-white/10 overflow-hidden">
+      <div className="w-full rounded-xl border border-white/10 overflow-visible">
         <div className="overflow-x-auto">
           <table className="admin-table w-full">
             <thead>
