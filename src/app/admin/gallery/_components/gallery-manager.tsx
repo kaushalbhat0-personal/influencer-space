@@ -6,11 +6,13 @@ import {
   createGalleryItem,
   removeGalleryItem,
   updateGalleryOrder,
+  updateExistingGalleryItem,
 } from "@/actions/gallery.actions";
 import type { GalleryItemData } from "@/actions/gallery.actions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
+import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 function getYouTubeEmbed(url: string): string | null {
   const match = url.match(
@@ -72,6 +74,10 @@ export function GalleryManager({
   const [pending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const uploaderRef = useRef<ImageUploaderHandle>(null);
+  const [editingItem, setEditingItem] = useState<GalleryItemData | null>(null);
+  const [editCaption, setEditCaption] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editIsVideo, setEditIsVideo] = useState(false);
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
@@ -163,8 +169,45 @@ export function GalleryManager({
     });
   }
 
+  function openEdit(item: GalleryItemData) {
+    setEditCaption(item.caption ?? "");
+    setEditUrl(item.url);
+    setEditIsVideo(item.isVideo);
+    setError("");
+    setEditingItem(item);
+  }
+
+  function closeEdit() {
+    setEditingItem(null);
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    setError("");
+    startTransition(async () => {
+      const result = await updateExistingGalleryItem(tenantId, {
+        id: editingItem.id,
+        caption: editCaption.trim() || undefined,
+        url: editUrl.trim() || undefined,
+        isVideo: editIsVideo,
+      });
+      if (result.success && result.data) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === editingItem.id ? result.data! : i)),
+        );
+        showToast("success", "Item updated");
+        closeEdit();
+      } else {
+        setError(result.error || "Failed to update item");
+      }
+    });
+  }
+
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* ── Toast ── */}
       {toast && (
         <div
@@ -315,21 +358,56 @@ export function GalleryManager({
                   )}
                 </div>
 
-                <button
-                  onClick={() => handleDelete(item.id, item.caption ?? "")}
-                  disabled={pending}
-                  className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
-                  title="Delete item"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEdit(item)}
+                    disabled={pending}
+                    className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                    title="Edit item"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id, item.caption ?? "")}
+                    disabled={pending}
+                    className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                    title="Delete item"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
     </div>
+
+    {/* ── Edit Drawer ── */}
+    <EditEntityDrawer open={!!editingItem} onClose={closeEdit} title="Edit Media">
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Caption</label>
+          <input value={editCaption} onChange={(e) => setEditCaption(e.target.value)} className="admin-input w-full" disabled={pending} />
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">URL</label>
+          <input value={editUrl} onChange={(e) => setEditUrl(e.target.value)} className="admin-input w-full" disabled={pending} placeholder="Image or YouTube URL" />
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={editIsVideo} onChange={(e) => setEditIsVideo(e.target.checked)} className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/50" />
+          <span className="text-sm text-zinc-400">Video</span>
+        </label>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <button type="submit" disabled={pending} className="admin-btn-cyan w-full py-2.5">
+          {pending ? "Saving..." : "Save Changes"}
+        </button>
+      </form>
+    </EditEntityDrawer>
+    </>
   );
 }

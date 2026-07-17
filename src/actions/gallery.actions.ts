@@ -157,4 +157,40 @@ export async function updateGalleryOrder(
   }
 }
 
+export async function updateExistingGalleryItem(
+  tenantId: string,
+  data: { id: string; caption?: string; url?: string; isVideo?: boolean },
+): Promise<{ success: boolean; data?: GalleryItemData; error?: string }> {
+  try {
+    await requireAuth(tenantId);
+
+    if (!data.id) return { success: false, error: "Item ID is required" };
+
+    const existing = await prisma.galleryImage.findFirst({
+      where: { id: data.id, tenantId },
+    });
+    if (!existing) return { success: false, error: "Gallery item not found" };
+
+    const row = await prisma.galleryImage.update({
+      where: { id: data.id },
+      data: {
+        title: data.caption ?? existing.title,
+        description: data.caption ?? existing.description,
+        imageUrl: data.isVideo ? existing.imageUrl : (data.url ?? existing.imageUrl),
+        videoUrl: data.isVideo ? (data.url ?? existing.videoUrl) : existing.videoUrl,
+        mediaType: data.isVideo !== undefined ? (data.isVideo ? "video" : "image") : existing.mediaType,
+      },
+    });
+
+    await logAction(tenantId, "updateGalleryItem", { itemId: data.id });
+    revalidatePath("/admin/gallery");
+    return { success: true, data: toItem(row) };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update gallery item",
+    };
+  }
+}
+
 

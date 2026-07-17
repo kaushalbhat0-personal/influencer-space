@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import {
   createMilestone,
   removeMilestone,
+  updateExistingMilestone,
 } from "@/actions/milestone.actions";
 import type { MilestoneData } from "@/actions/milestone.actions";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
+import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 export function MilestonesManager({
   tenantId,
@@ -29,6 +31,12 @@ export function MilestonesManager({
   const [pending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const uploaderRef = useRef<ImageUploaderHandle>(null);
+  const [editingMilestone, setEditingMilestone] = useState<MilestoneData | null>(null);
+  const [editYear, setEditYear] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editStats, setEditStats] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
@@ -99,8 +107,54 @@ export function MilestonesManager({
     });
   }
 
+  function openEdit(m: MilestoneData) {
+    setEditYear(m.year);
+    setEditTitle(m.title);
+    setEditDescription(m.description);
+    setEditStats(m.stats ?? "");
+    setEditImageUrl(m.imageUrl ?? "");
+    setError("");
+    setEditingMilestone(m);
+  }
+
+  function closeEdit() {
+    setEditingMilestone(null);
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingMilestone || !editYear.trim() || !editTitle.trim() || !editDescription.trim()) return;
+
+    setError("");
+    const formData = new FormData();
+    formData.set("id", editingMilestone.id);
+    formData.set("year", editYear.trim());
+    formData.set("title", editTitle.trim());
+    formData.set("description", editDescription.trim());
+    formData.set("stats", editStats.trim());
+    formData.set("imageUrl", editImageUrl.trim());
+
+    startTransition(async () => {
+      const result = await updateExistingMilestone(tenantId, formData);
+      if (result.success) {
+        setMilestones((prev) =>
+          prev.map((m) =>
+            m.id === editingMilestone.id
+              ? { ...m, year: editYear.trim(), title: editTitle.trim(), description: editDescription.trim(), stats: editStats.trim() || null, imageUrl: editImageUrl.trim() || null }
+              : m,
+          ),
+        );
+        showToast("success", "Milestone updated");
+        closeEdit();
+      } else {
+        setError(result.error || "Failed to update milestone");
+      }
+    });
+  }
+
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {/* ── Toast ── */}
       {toast && (
         <div
@@ -227,8 +281,18 @@ export function MilestonesManager({
                   )}
                 </div>
 
-                {/* ── Delete ── */}
-                <div className="mt-3 flex items-center justify-end border-t border-white/5 pt-3">
+                {/* ── Controls ── */}
+                <div className="mt-3 flex items-center justify-end gap-1 border-t border-white/5 pt-3">
+                  <button
+                    onClick={() => openEdit(milestone)}
+                    disabled={pending}
+                    className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                    title="Edit milestone"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
                   <button
                     onClick={() => handleDelete(milestone.id, milestone.title)}
                     disabled={pending}
@@ -246,5 +310,38 @@ export function MilestonesManager({
         </div>
       )}
     </div>
+
+    {/* ── Edit Drawer ── */}
+    <EditEntityDrawer open={!!editingMilestone} onClose={closeEdit} title="Edit Milestone">
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-zinc-400">Year</label>
+            <input value={editYear} onChange={(e) => setEditYear(e.target.value)} className="admin-input w-full" disabled={pending} required />
+          </div>
+          <div className="space-y-3">
+            <label className="block text-xs font-medium text-zinc-400">Stats Badge</label>
+            <input value={editStats} onChange={(e) => setEditStats(e.target.value)} className="admin-input w-full" disabled={pending} placeholder="e.g. 100K Subscribers" />
+          </div>
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Title</label>
+          <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="admin-input w-full" disabled={pending} required />
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Description</label>
+          <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="admin-input w-full min-h-[80px] resize-none" disabled={pending} rows={3} required />
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Image URL</label>
+          <input value={editImageUrl} onChange={(e) => setEditImageUrl(e.target.value)} className="admin-input w-full" disabled={pending} placeholder="https://..." />
+        </div>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <button type="submit" disabled={pending || !editYear.trim() || !editTitle.trim()} className="admin-btn-cyan w-full py-2.5">
+          {pending ? "Saving..." : "Save Changes"}
+        </button>
+      </form>
+    </EditEntityDrawer>
+    </>
   );
 }
