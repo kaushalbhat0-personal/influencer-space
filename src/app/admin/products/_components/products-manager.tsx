@@ -47,7 +47,6 @@ export function ProductsManager({
   const [editPrice, setEditPrice] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const editUploaderRef = useRef<ImageUploaderHandle>(null);
-  const [editIsUploading, setEditIsUploading] = useState(false);
 
   function resetForm() {
     setName("");
@@ -432,7 +431,6 @@ export function ProductsManager({
             ref={editUploaderRef}
             tenantId={tenantId}
             folder="products"
-            onUploadingChange={setEditIsUploading}
           />
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
