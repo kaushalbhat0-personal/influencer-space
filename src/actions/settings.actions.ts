@@ -247,9 +247,20 @@ export async function updateHeroPartial(
     return { success: false, error: "Invalid hero data" };
   }
 
+  const sparseData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(parsed.data)) {
+    if (value !== undefined && value !== null && value !== "") {
+      sparseData[key] = value;
+    }
+  }
+
+  if (Object.keys(sparseData).length === 0) {
+    return { success: true };
+  }
+
   try {
     const existing = await SettingsService.getHeroData(tenantId);
-    const merged = { ...existing, ...parsed.data };
+    const merged = { ...existing, ...sparseData };
     await SettingsService.updateHeroData(tenantId, merged);
 
     revalidatePath("/");

@@ -195,7 +195,7 @@ export function SettingsForm({
         const oldPath = extractSupabaseFilePath(originalVideoUrl);
         if (oldPath) await deleteSupabaseFile(oldPath);
       }
-      router.refresh();
+      setTimeout(() => router.refresh(), 50);
     }
   }
 
@@ -230,7 +230,7 @@ export function SettingsForm({
         const oldPath = extractSupabaseFilePath(originalPosterUrl);
         if (oldPath) await deleteSupabaseFile(oldPath);
       }
-      router.refresh();
+      setTimeout(() => router.refresh(), 50);
     }
   }
 
@@ -252,7 +252,7 @@ export function SettingsForm({
     const result = await updateHeroPartial(tenantId, payload);
 
     if (result.success) {
-      router.refresh();
+      setTimeout(() => router.refresh(), 50);
     }
 
     setHeroDetailsSave({ pending: false, state: result });
@@ -294,7 +294,7 @@ export function SettingsForm({
         const oldPath = extractSupabaseFilePath(originalProfileImage);
         if (oldPath) await deleteSupabaseFile(oldPath);
       }
-      router.refresh();
+      setTimeout(() => router.refresh(), 50);
     }
   }
 
