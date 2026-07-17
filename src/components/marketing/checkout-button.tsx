@@ -54,6 +54,7 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         description: `${planId} plan — Agency Seat`,
         order_id: order.id,
         handler: function (_response: RazorpayPaymentResponse) {
+          void _response;
           // Webhook handles provisioning — no client-side action needed
           window.location.href = "/agency";
         },
