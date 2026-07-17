@@ -1,75 +1,79 @@
-"use client";
+import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
+import type { PublicProductData } from "@/services/public.service";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { TiltCard } from "@/components/ui/TiltCard";
-import { formatCurrency } from "@/lib/utils";
-import type { ProductData } from "@/services/product.service";
-
-interface ProductGridProps {
-  products: ProductData[];
+function formatINR(amount: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
-export function ProductGrid({ products }: ProductGridProps) {
-  if (products.length === 0) {
-    return (
-      <div className="text-center text-white/60">
-        <p className="font-display text-xl">Armory Empty</p>
-        <p className="mt-1 text-sm">New merch dropping soon!</p>
-      </div>
-    );
-  }
+function PreviewBuyButton() {
+  return (
+    <button
+      disabled
+      className="mt-1.5 w-full rounded-lg bg-white/10 py-2 text-xs font-semibold text-white opacity-50"
+    >
+      Buy Now
+    </button>
+  );
+}
+
+export function ProductGrid({
+  products,
+  preview = false,
+  tenantId,
+  themeColor = "#00f5ff",
+}: {
+  products: PublicProductData[];
+  preview?: boolean;
+  tenantId?: string;
+  themeColor?: string;
+}) {
+  if (products.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((product, index) => (
-        <motion.div
+    <div className="grid grid-cols-2 gap-3">
+      {products.map((product) => (
+        <div
           key={product.id}
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: index * 0.08, duration: 0.5 }}
+          className="group overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition-all hover:border-white/20"
         >
-          <TiltCard tiltDegree={4} className="h-full">
-          <GlassCard className="flex h-full flex-col overflow-hidden">
-            {product.imageUrl && (
-              <div className="aspect-square w-full overflow-hidden rounded-xl bg-white/5">
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                />
-              </div>
-            )}
-            <div className="mt-4 flex flex-1 flex-col">
-              <h3 className="text-base font-semibold text-white sm:text-lg">
-                {product.name}
-              </h3>
-              {product.description && (
-                <p className="mt-1 line-clamp-2 text-sm text-white/60">
-                  {product.description}
-                </p>
-              )}
-              <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-display text-lg font-bold text-neon-cyan sm:text-xl">
-                  {formatCurrency(product.price)}
-                </span>
-                <Link
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert("Checkout integration coming soon!");
-                  }}
-                  className="w-full rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-4 py-2 text-center font-display text-xs font-medium uppercase tracking-wider text-neon-cyan backdrop-blur-sm transition-colors hover:bg-neon-cyan/20 sm:w-auto"
-                >
-                  Buy Now →
-                </Link>
-              </div>
+          {product.imageUrl && (
+            <div className="aspect-square w-full overflow-hidden bg-zinc-800">
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
             </div>
-          </GlassCard>
-          </TiltCard>
-        </motion.div>
+          )}
+          <div className="space-y-1.5 p-3">
+            <p className="line-clamp-1 text-sm font-medium text-white">
+              {product.name}
+            </p>
+            {product.description && (
+              <p className="line-clamp-2 text-xs text-zinc-500">
+                {product.description}
+              </p>
+            )}
+            <p className="font-display text-base font-bold text-[var(--secondary)]">
+              {formatINR(product.price)}
+            </p>
+            {preview ? (
+              <PreviewBuyButton />
+            ) : (
+              <BuyNowButton
+                productId={product.id}
+                tenantId={tenantId!}
+                productName={product.name}
+                imageUrl={product.imageUrl}
+                themeColor={themeColor}
+              />
+            )}
+          </div>
+        </div>
       ))}
     </div>
   );

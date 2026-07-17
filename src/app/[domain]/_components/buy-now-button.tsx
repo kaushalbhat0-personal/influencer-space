@@ -48,11 +48,13 @@ export function BuyNowButton({
   tenantId,
   productName,
   imageUrl,
+  themeColor = "#00f5ff",
 }: {
   productId: string;
   tenantId: string;
   productName: string;
   imageUrl?: string | null;
+  themeColor?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -110,7 +112,7 @@ export function BuyNowButton({
       modal: {
         ondismiss: () => setLoading(false),
       },
-      theme: { color: "#00f5ff" },
+      theme: { color: themeColor },
     };
 
     const rzp = new window.Razorpay(options);

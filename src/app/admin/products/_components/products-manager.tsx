@@ -9,6 +9,9 @@ import {
   updateProductOrder,
 } from "@/actions/product.actions";
 import type { ProductData } from "@/actions/product.actions";
+import type { PublicProductData } from "@/services/public.service";
+import { PreviewShell } from "@/components/admin/PreviewShell";
+import { ProductGrid } from "@/components/public/ProductGrid";
 
 function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -111,8 +114,19 @@ export function ProductsManager({
     });
   }
 
+  const previewProducts: PublicProductData[] = products
+    .filter((p) => p.isActive)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      imageUrl: p.imageUrl,
+    }));
+
   return (
-    <div className="space-y-6">
+    <div className="flex gap-6">
+      <div className="min-w-0 flex-1 space-y-6">
       {/* ─── Add Product Form ─── */}
       <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
         <h2 className="mb-3 text-sm font-semibold text-zinc-300">
@@ -270,5 +284,11 @@ export function ProductsManager({
         </div>
       )}
     </div>
-  );
+
+    {/* ─── Live Preview ─── */}
+    <PreviewShell>
+      <ProductGrid products={previewProducts} preview />
+    </PreviewShell>
+  </div>
+);
 }

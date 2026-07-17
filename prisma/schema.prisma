@@ -23,6 +23,12 @@ model Tenant {
   twitchChannelId       String?
   youtubeApiKey         String?
   instagramApiKey       String?
+  instagramAccessToken  String?   @db.Text
+  instagramRefreshToken String?   @db.Text
+  instagramTokenExpiry  DateTime?
+  twitchAccessToken     String?   @db.Text
+  twitchRefreshToken    String?   @db.Text
+  twitchTokenExpiry     DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -36,6 +42,9 @@ model Tenant {
   contactSubmissions ContactSubmission[]
   subscription       Subscription?
   productOrders      ProductOrder[]
+  socialStats        SocialStats[]
+  auditLogs          AuditLog[]
+  contentFeedItems   ContentFeedItem[]
 }
 
 model Subscription {
@@ -203,4 +212,54 @@ model Game {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+}
+
+model SocialStats {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  platform  String
+  followers Int      @default(0)
+  views     Int      @default(0)
+  posts     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, platform])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @db.Uuid
+  action    String
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+}
+
+model ContentFeedItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  platform     String   // "instagram" | "twitch" | "youtube"
+  mediaType    String   // "image" | "video"
+  url          String   @db.Text
+  thumbnailUrl String?  @db.Text
+  caption      String?  @db.Text
+  permalink    String?  @db.Text
+  pinned       Boolean  @default(false)
+  hidden       Boolean  @default(false)
+  externalId   String?  // platform's native post ID (dedup key)
+  order        Int      @default(0)
+  syncedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, externalId])
+  @@index([tenantId, pinned, hidden, order])
 }

@@ -23,7 +23,7 @@ export default async function SettingsPage() {
     );
   }
 
-  const [config, heroData, tenant] = await Promise.all([
+  const [config, heroData, tenantKeys] = await Promise.all([
     SettingsService.getInfluencerData(tenantId),
     SettingsService.getHeroData(tenantId),
     prisma.tenant.findUnique({
@@ -45,8 +45,8 @@ export default async function SettingsPage() {
         config={config}
         heroData={heroData}
         role={session?.user?.role ?? "ADMIN"}
-        youtubeApiKey={tenant?.youtubeApiKey ?? ""}
-        instagramApiKey={tenant?.instagramApiKey ?? ""}
+        youtubeKeyConfigured={!!tenantKeys?.youtubeApiKey}
+        instagramKeyConfigured={!!tenantKeys?.instagramApiKey}
         tenantId={tenantId}
       />
     </div>

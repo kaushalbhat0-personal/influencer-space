@@ -41,15 +41,15 @@ export function SettingsForm({
   config,
   heroData,
   role,
-  youtubeApiKey: initialYoutubeKey,
-  instagramApiKey: initialInstagramKey,
+  youtubeKeyConfigured,
+  instagramKeyConfigured,
   tenantId,
 }: {
   config: InfluencerDataType;
   heroData: HeroDataType;
   role: "SUPER_ADMIN" | "ADMIN";
-  youtubeApiKey: string;
-  instagramApiKey: string;
+  youtubeKeyConfigured: boolean;
+  instagramKeyConfigured: boolean;
   tenantId: string;
 }) {
   const router = useRouter();
@@ -84,8 +84,8 @@ export function SettingsForm({
     heroData.imageMobileAlignment as "top" | "center" | "bottom" || "center"
   );
 
-  const [youtubeApiKey, setYoutubeApiKey] = useState(initialYoutubeKey);
-  const [instagramApiKey, setInstagramApiKey] = useState(initialInstagramKey);
+  const [youtubeApiKey, setYoutubeApiKey] = useState("");
+  const [instagramApiKey, setInstagramApiKey] = useState("");
 
   const [liveName, setLiveName] = useState(config.name || "");
   const [liveTagline, setLiveTagline] = useState(config.tagline || "");
@@ -262,14 +262,6 @@ export function SettingsForm({
     setProfilePicSave({ pending: true, state: { success: false } });
 
     const formData = new FormData();
-    formData.set("name", config.name);
-    formData.set("tagline", config.tagline);
-    formData.set("bio", config.bio);
-    formData.set("instagram", config.social.instagram);
-    formData.set("youtube", config.social.youtube);
-    formData.set("twitter", config.social.twitter);
-    formData.set("tiktok", config.social.tiktok);
-
     const originalProfileImage = config.profileImage || "";
 
     if (profileImageFile) {
@@ -283,6 +275,11 @@ export function SettingsForm({
       }
     } else if (profileImage) {
       formData.set("profileImage", profileImage);
+    }
+
+    if (!formData.has("profileImage")) {
+      setProfilePicSave({ pending: false, state: { success: false, error: "No image to save" } });
+      return;
     }
 
     const result = await updateInfluencerData(tenantId, { success: false }, formData);
@@ -571,12 +568,14 @@ export function SettingsForm({
                 <Input
                   id="youtubeApiKey" name="youtubeApiKey" label="YouTube Data API Key" type="password"
                   value={youtubeApiKey} onChange={(e) => setYoutubeApiKey(e.target.value)}
-                  placeholder="AIzaSyA-..." autoComplete="off"
+                  placeholder={youtubeKeyConfigured ? "Configured — type to replace" : "Enter YouTube API Key"}
+                  autoComplete="off"
                 />
                 <Input
                   id="instagramApiKey" name="instagramApiKey" label="Instagram Graph API Token" type="password"
                   value={instagramApiKey} onChange={(e) => setInstagramApiKey(e.target.value)}
-                  placeholder="EAAloQ..." autoComplete="off"
+                  placeholder={instagramKeyConfigured ? "Configured — type to replace" : "Enter Instagram Graph Token"}
+                  autoComplete="off"
                 />
               </div>
 

@@ -5,41 +5,23 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
+import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/audit";
 
-const socialSchema = z.object({
-  instagram: z.string().optional().default(""),
-  youtube: z.string().optional().default(""),
-  twitter: z.string().optional().default(""),
-  tiktok: z.string().optional().default(""),
-});
+async function requireAuth(tenantId: string): Promise<void> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+    throw new Error("Forbidden");
+  }
+}
 
-const influencerDataSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  tagline: z.string().min(1, "Tagline is required"),
-  bio: z.string().min(10, "Bio must be at least 10 characters"),
-  social: socialSchema,
-  profileImage: z.string().optional().default(""),
-  niche: z.string().optional().default("gaming"),
-  colors: z
-    .object({
-      primary: z.string().optional().default("#d4a843"),
-      secondary: z.string().optional().default("#fbbf24"),
-      accent: z.string().optional().default("#b45309"),
-    })
-    .optional()
-    .default({ primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" }),
-});
-
-const themeSettingsSchema = z.object({
-  niche: z.string().optional().default("gaming"),
-  colors: z
-    .object({
-      primary: z.string().optional().default("#d4a843"),
-      secondary: z.string().optional().default("#fbbf24"),
-      accent: z.string().optional().default("#b45309"),
-    })
-    .optional()
-    .default({ primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" }),
+const influencerPartialSchema = z.object({
+  name: z.string().min(1).optional(),
+  tagline: z.string().min(1).optional(),
+  bio: z.string().min(10).optional(),
+  profileImage: z.string().optional(),
+  niche: z.string().optional(),
 });
 
 const heroPartialSchema = z.object({
@@ -68,13 +50,13 @@ const heroPartialSchema = z.object({
 }).partial();
 
 const socialChannelSchema = z.object({
-  youtubeChannelId: z.string().optional().default(""),
-  twitchChannelId: z.string().optional().default(""),
+  youtubeChannelId: z.string().optional(),
+  twitchChannelId: z.string().optional(),
 });
 
 const apiKeysSchema = z.object({
-  youtubeApiKey: z.string().optional().default(""),
-  instagramApiKey: z.string().optional().default(""),
+  youtubeApiKey: z.string().optional(),
+  instagramApiKey: z.string().optional(),
 });
 
 export type SettingsActionState = {
@@ -88,23 +70,12 @@ export async function updateInfluencerData(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  const rawData = {
-    name: formData.get("name") as string,
-    tagline: formData.get("tagline") as string,
-    bio: formData.get("bio") as string,
-    social: {
-      instagram: (formData.get("instagram") as string) || "",
-      youtube: (formData.get("youtube") as string) || "",
-      twitter: (formData.get("twitter") as string) || "",
-      tiktok: (formData.get("tiktok") as string) || "",
-    },
-    profileImage: (formData.get("profileImage") as string) || "",
-    niche: (formData.get("niche") as string) || "gaming",
-    colors: { primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" },
-  };
+  const rawData: Record<string, unknown> = {};
+  for (const [key, value] of Array.from(formData.entries())) {
+    rawData[key] = value;
+  }
 
-  const parsed = influencerDataSchema.safeParse(rawData);
-
+  const parsed = influencerPartialSchema.safeParse(rawData);
   if (!parsed.success) {
     return {
       success: false,
@@ -113,68 +84,34 @@ export async function updateInfluencerData(
   }
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    if (session.user.role === "ADMIN" && session.user.tenantId !== tenantId) {
-      return { success: false, error: "Unauthorized — cannot modify another tenant's data." };
-    }
+    await requireAuth(tenantId);
 
     const existing = await SettingsService.getInfluencerData(tenantId);
-    const merged =
-      session.user.role === "SUPER_ADMIN"
-        ? { ...existing, ...parsed.data }
-        : { ...existing, ...parsed.data, colors: existing.colors, niche: existing.niche };
-    await SettingsService.updateInfluencerData(tenantId, merged);
+
+    const merged: Record<string, unknown> = { ...existing };
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value !== undefined) {
+        merged[key] = value;
+      }
+    }
+
+    const socialKeys = ["instagram", "youtube", "twitter", "tiktok"] as const;
+    for (const key of socialKeys) {
+      if (formData.has(key)) {
+        merged.social = { ...((merged.social as object) || {}), [key]: formData.get(key) as string };
+      }
+    }
+
+    await SettingsService.updateInfluencerData(tenantId, merged as Parameters<typeof SettingsService.updateInfluencerData>[1]);
+
     revalidatePath("/");
-    revalidatePath("/contact");
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
     console.error("updateInfluencerData error:", error);
-    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
-  }
-}
-
-export async function updateThemeSettings(
-  tenantId: string,
-  _prevState: SettingsActionState,
-  formData: FormData,
-): Promise<SettingsActionState> {
-  const rawData = {
-    niche: (formData.get("niche") as string) || "gaming",
-    colors: {
-      primary: (formData.get("colors.primary") as string) || "#d4a843",
-      secondary: (formData.get("colors.secondary") as string) || "#fbbf24",
-      accent: (formData.get("colors.accent") as string) || "#b45309",
-    },
-  };
-
-  const parsed = themeSettingsSchema.safeParse(rawData);
-
-  if (!parsed.success) {
-    return {
-      success: false,
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "SUPER_ADMIN") {
-      return { success: false, error: "Only Super Admins can modify theme settings." };
-    }
-
-    const existing = await SettingsService.getInfluencerData(tenantId);
-    const merged = { ...existing, ...parsed.data };
-    await SettingsService.updateInfluencerData(tenantId, merged);
-    revalidatePath("/");
-    revalidatePath("/admin/settings");
-    return { success: true };
-  } catch (error) {
-    console.error("updateThemeSettings error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
@@ -190,7 +127,6 @@ export async function updateHeroData(
   }
 
   const parsed = heroPartialSchema.safeParse(rawData);
-
   if (!parsed.success) {
     return {
       success: false,
@@ -199,13 +135,32 @@ export async function updateHeroData(
   }
 
   try {
-    const existing = await SettingsService.getHeroData(tenantId);
-    const merged = { ...existing, ...parsed.data };
-    await SettingsService.updateHeroData(tenantId, merged);
+    await requireAuth(tenantId);
+
+    const sparseData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value !== undefined && value !== null && value !== "") {
+        sparseData[key] = value;
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await SettingsService.patchHeroData(tenantId, sparseData, tx);
+      await logAction(
+        tenantId,
+        "updateHeroData",
+        { fields: Object.keys(sparseData) },
+        tx,
+      );
+    });
+
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
     console.error("updateHeroData error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
@@ -216,7 +171,6 @@ export async function updateHeroPartial(
   partial: Record<string, unknown>,
 ): Promise<SettingsActionState> {
   const parsed = heroPartialSchema.safeParse(partial);
-
   if (!parsed.success) {
     return { success: false, error: "Invalid hero data" };
   }
@@ -233,14 +187,25 @@ export async function updateHeroPartial(
   }
 
   try {
-    const existing = await SettingsService.getHeroData(tenantId);
-    const merged = { ...existing, ...sparseData };
-    await SettingsService.updateHeroData(tenantId, merged);
+    await requireAuth(tenantId);
+
+    await prisma.$transaction(async (tx) => {
+      await SettingsService.patchHeroData(tenantId, sparseData, tx);
+      await logAction(
+        tenantId,
+        "updateHeroPartial",
+        { fields: Object.keys(sparseData) },
+        tx,
+      );
+    });
 
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
     console.error("updateHeroPartial error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
@@ -257,17 +222,20 @@ export async function updateSocialChannels(
   };
 
   const parsed = socialChannelSchema.safeParse(rawData);
-
   if (!parsed.success) {
     return { success: false, error: "Invalid channel ID" };
   }
 
   try {
+    await requireAuth(tenantId);
     await SettingsService.updateTenantChannels(tenantId, parsed.data);
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
     console.error("updateSocialChannels error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
@@ -284,7 +252,6 @@ export async function updateApiKeys(
   };
 
   const parsed = apiKeysSchema.safeParse(rawData);
-
   if (!parsed.success) {
     return {
       success: false,
@@ -293,10 +260,22 @@ export async function updateApiKeys(
   }
 
   try {
-    await SettingsService.updateTenantApiKeys(tenantId, parsed.data);
+    await requireAuth(tenantId);
+
+    const updates: { youtubeApiKey?: string; instagramApiKey?: string } = {};
+    if (parsed.data.youtubeApiKey) updates.youtubeApiKey = parsed.data.youtubeApiKey;
+    if (parsed.data.instagramApiKey) updates.instagramApiKey = parsed.data.instagramApiKey;
+
+    if (Object.keys(updates).length > 0) {
+      await SettingsService.updateTenantApiKeys(tenantId, updates);
+    }
+
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
     console.error("updateApiKeys error:", error);
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }

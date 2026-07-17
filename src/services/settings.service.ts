@@ -5,6 +5,10 @@ import type { HeroDataType } from "@/config/hero";
 import { defaultHeroData } from "@/config/hero";
 import type { Prisma } from "@/generated/prisma/client";
 
+type SqlExecutor = {
+  $executeRawUnsafe: (query: string, ...params: unknown[]) => Promise<number>;
+};
+
 export const SettingsService = {
   async getSettingByKey(tenantId: string, key: string): Promise<unknown> {
     try {
@@ -97,6 +101,25 @@ export const SettingsService = {
       tenantId,
       "hero_data",
       data as Prisma.InputJsonValue,
+    );
+  },
+
+  async patchHeroData(
+    tenantId: string,
+    updates: Record<string, unknown>,
+    tx?: SqlExecutor,
+  ): Promise<void> {
+    const client = tx || prisma;
+    const jsonString = JSON.stringify(updates);
+    await client.$executeRawUnsafe(
+      `INSERT INTO "Setting" ("id", "tenantId", "key", "value", "updatedAt")
+       VALUES (gen_random_uuid(), $1, 'hero_data', $2::jsonb, NOW())
+       ON CONFLICT ("tenantId", "key")
+       DO UPDATE SET
+         "value" = COALESCE("Setting"."value", '{}'::jsonb) || EXCLUDED."value",
+         "updatedAt" = NOW()`,
+      tenantId,
+      jsonString,
     );
   },
 

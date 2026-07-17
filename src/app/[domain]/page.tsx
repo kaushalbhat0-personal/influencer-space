@@ -1,26 +1,15 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getPublicPageData } from "@/services/public.service";
-import { BuyNowButton } from "./_components/buy-now-button";
 import { HeroBanner } from "./_components/hero-banner";
+import { EditableSection } from "@/components/public/EditableSection";
+import { ContentFeed } from "@/components/public/ContentFeed";
+import { ProductGrid } from "@/components/public/ProductGrid";
+import { TimelineSection } from "@/components/public/TimelineSection";
+import { GallerySection } from "@/components/public/GallerySection";
 import type { PublicPageData } from "@/services/public.service";
 
 export const dynamic = "force-dynamic";
-
-function formatINR(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function getYouTubeEmbed(url: string): string | null {
-  const m = url.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/,
-  );
-  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
-}
 
 async function getPageData(slug: string): Promise<{ tenantId: string; data: PublicPageData } | null> {
   const tenant = await prisma.tenant.findFirst({
@@ -42,7 +31,7 @@ export default async function PublicPage({
   if (!pageData) notFound();
 
   const { tenantId, data } = pageData;
-  const { profile, hero, products, links, gallery, milestones } = data;
+  const { profile, hero, products, links, gallery, milestones, feed } = data;
   const c = profile.colors;
 
   return (
@@ -228,150 +217,32 @@ export default async function PublicPage({
         {/* ─── Products Section ─── */}
         {products.length > 0 && (
           <section className="mt-10">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Store
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="group overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition-all hover:border-white/20"
-                >
-                  {product.imageUrl && (
-                    <div className="aspect-square w-full overflow-hidden bg-zinc-800">
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-                  <div className="space-y-1.5 p-3">
-                    <p className="line-clamp-1 text-sm font-medium text-white">
-                      {product.name}
-                    </p>
-                    {product.description && (
-                      <p className="line-clamp-2 text-xs text-zinc-500">
-                        {product.description}
-                      </p>
-                    )}
-                    <p className="font-display text-base font-bold text-[var(--secondary)]">
-                      {formatINR(product.price)}
-                    </p>
-                    <BuyNowButton
-                      productId={product.id}
-                      tenantId={tenantId}
-                      productName={product.name}
-                      imageUrl={product.imageUrl}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ProductGrid
+              products={products}
+              tenantId={tenantId}
+              themeColor={data.profile.colors.secondary}
+            />
           </section>
         )}
 
         {/* ─── Milestones Section ─── */}
         {milestones.length > 0 && (
-          <section className="mt-10">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Journey
-            </h2>
-            <div className="relative space-y-6 pl-8 before:absolute before:left-3 before:top-2 before:h-[calc(100%-16px)] before:w-px before:bg-zinc-800">
-              {milestones.map((m) => (
-                <div key={m.id} className="relative">
-                  <span className="absolute -left-5 top-1.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[var(--secondary)] ring-4 ring-zinc-950" />
-                  <div className="rounded-xl border border-white/[0.06] bg-zinc-900/50 p-4">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="rounded-md px-2 py-0.5 font-display text-xs font-bold"
-                        style={{
-                          backgroundColor: `${c.secondary}20`,
-                          color: c.secondary,
-                        }}
-                      >
-                        {m.year}
-                      </span>
-                      {m.stats && (
-                        <span
-                          className="rounded-md px-2 py-0.5 text-xs font-semibold"
-                          style={{
-                            backgroundColor: `${c.accent}20`,
-                            color: c.accent,
-                          }}
-                        >
-                          {m.stats}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mt-2 text-sm font-semibold text-white">
-                      {m.title}
-                    </h3>
-                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-                      {m.description}
-                    </p>
-                    {m.imageUrl && (
-                      <img
-                        src={m.imageUrl}
-                        alt={m.title}
-                        className="mt-3 w-full rounded-lg object-cover"
-                      />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <TimelineSection milestones={milestones} colors={c} />
         )}
 
         {/* ─── Gallery Section ─── */}
         {gallery.length > 0 && (
-          <section className="mt-10">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Gallery
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {gallery.map((item) => (
-                <div
-                  key={item.id}
-                  className="group aspect-square overflow-hidden rounded-xl bg-zinc-900"
-                >
-                  {item.isVideo ? (
-                    <div className="relative h-full w-full">
-                      {(() => {
-                        const embed = getYouTubeEmbed(item.url);
-                        if (embed) {
-                          return (
-                            <iframe
-                              src={embed}
-                              className="h-full w-full"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              title={item.caption ?? ""}
-                            />
-                          );
-                        }
-                        return (
-                          <video
-                            src={item.url}
-                            className="h-full w-full object-cover"
-                            controls
-                            preload="metadata"
-                          />
-                        );
-                      })()}
-                    </div>
-                  ) : (
-                    <img
-                      src={item.url}
-                      alt={item.caption ?? ""}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
+          <GallerySection items={gallery} />
+        )}
+
+        {/* ─── Content Feed Section ─── */}
+        {feed.length > 0 && (
+          <EditableSection
+            className="mt-10"
+            editHref="/admin/settings/content"
+          >
+            <ContentFeed items={feed} />
+          </EditableSection>
         )}
 
         {/* ─── Footer ─── */}

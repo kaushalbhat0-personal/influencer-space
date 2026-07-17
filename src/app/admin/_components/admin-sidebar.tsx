@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   X,
+  Rss,
 } from "lucide-react";
 
 const navLinks = [
@@ -21,6 +22,7 @@ const navLinks = [
   { href: "/admin/products", label: "Storefront", icon: ShoppingBag },
   { href: "/admin/links", label: "Links & Affiliates", icon: Link2 },
   { href: "/admin/gallery", label: "Hall of Fame", icon: ImageIcon },
+  { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
   { href: "/admin/milestones", label: "Milestones", icon: Trophy },
   { href: "/admin/appearance", label: "Appearance", icon: Palette },
   { href: "/admin/billing", label: "Billing", icon: CreditCard },

@@ -4,5 +4,11 @@
       "maxDuration": 30,
       "memory": 1024
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sync-socials",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }

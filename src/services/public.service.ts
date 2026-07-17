@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { defaultConfig } from "@/config/influencer";
 import { SettingsService } from "@/services/settings.service";
+import { getContentFeed } from "@/services/content-feed.service";
+import type { PublicFeedItemData } from "@/components/public/ContentFeed";
 
 export type PublicHeroData = {
   videoUrl: string;
@@ -74,15 +77,16 @@ export type PublicPageData = {
   links: PublicLinkData[];
   gallery: PublicGalleryData[];
   milestones: PublicMilestoneData[];
+  feed: PublicFeedItemData[];
 };
 
-const defaultProfile: PublicProfile = {
-  name: "Creator",
-  tagline: "",
-  bio: "",
-  profileImage: null,
-  social: { instagram: "", youtube: "", twitter: "", tiktok: "" },
-  colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" },
+const profileDefaults: PublicProfile = {
+  name: defaultConfig.name,
+  tagline: defaultConfig.tagline,
+  bio: defaultConfig.bio,
+  profileImage: defaultConfig.profileImage,
+  social: { ...defaultConfig.social },
+  colors: { ...defaultConfig.colors },
 };
 
 export async function getPublicPageData(tenantId: string): Promise<PublicPageData> {
@@ -111,13 +115,14 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
       orderBy: { year: "desc" },
       select: { id: true, year: true, title: true, description: true, imageUrl: true, stats: true },
     }),
+    getContentFeed(tenantId),
   ]);
 
-  const [settingRow, heroRaw, products, links, galleryRows, milestones] = data;
+  const [settingRow, heroRaw, products, links, galleryRows, milestones, feed] = data;
 
   const profile: PublicProfile = settingRow?.value
-    ? { ...defaultProfile, ...(settingRow.value as Partial<PublicProfile>) }
-    : defaultProfile;
+    ? { ...profileDefaults, ...(settingRow.value as Partial<PublicProfile>) }
+    : profileDefaults;
 
   const gallery: PublicGalleryData[] = galleryRows.map((g) => ({
     id: g.id,
@@ -142,5 +147,5 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     imageMobileAlignment: heroRaw.imageMobileAlignment || "center",
   };
 
-  return { profile, hero, products, links, gallery, milestones };
+  return { profile, hero, products, links, gallery, milestones, feed };
 }
