@@ -134,7 +134,6 @@ export function SettingsLivePreview({
           <div className="relative w-full h-full overflow-hidden bg-neutral-950">
             {isVideo && displayVideoUrl ? (
               <HeroMedia
-                key={`${previewDevice}-${activeAlignment}-${displayVideoUrl}`}
                 type="video"
                 url={displayVideoUrl}
                 alignmentClass={objectPos}

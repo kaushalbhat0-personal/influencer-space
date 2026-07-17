@@ -38,7 +38,6 @@ export function HeroBanner({
           alignmentClass={videoAlign}
           opacity="opacity-40"
           className="absolute inset-0 transition-opacity duration-700"
-          key={videoUrl}
           autoPlay
           muted
           playsInline

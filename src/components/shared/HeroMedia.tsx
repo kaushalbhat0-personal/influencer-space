@@ -39,7 +39,6 @@ interface HeroMediaProps {
   alignmentClass: string;
   opacity?: string;
   className?: string;
-  key?: string;
   autoPlay?: boolean;
   muted?: boolean;
   playsInline?: boolean;
@@ -55,7 +54,6 @@ export function HeroMedia({
   alignmentClass,
   opacity = "",
   className = "",
-  key,
   autoPlay = true,
   muted = true,
   playsInline = true,
@@ -69,7 +67,7 @@ export function HeroMedia({
   if (type === "video") {
     return (
       <video
-        key={key}
+        key={`${url}-${alignmentClass}`}
         src={url}
         poster={poster}
         autoPlay={autoPlay}
