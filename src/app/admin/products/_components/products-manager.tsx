@@ -7,6 +7,7 @@ import {
   toggleProductStatus,
   removeProduct,
   updateProductOrder,
+  updateExistingProduct,
 } from "@/actions/product.actions";
 import type { ProductData } from "@/actions/product.actions";
 import type { PublicProductData } from "@/services/public.service";
@@ -14,6 +15,7 @@ import { PreviewShell } from "@/components/admin/PreviewShell";
 import { ProductGrid } from "@/components/public/ProductGrid";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
+import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 function formatINR(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -39,6 +41,11 @@ export function ProductsManager({
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFilePreview, setPendingFilePreview] = useState<string | null>(null);
   const uploaderRef = useRef<ImageUploaderHandle>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
 
   function resetForm() {
     setName("");
@@ -123,6 +130,44 @@ export function ProductsManager({
       const result = await updateProductOrder(tenantId, updates);
       if (!result.success) {
         setProducts(products);
+      }
+    });
+  }
+
+  function openEdit(product: ProductData) {
+    setEditName(product.name);
+    setEditDescription(product.description ?? "");
+    setEditPrice(String(product.price));
+    setEditImageUrl(product.imageUrl ?? "");
+    setError("");
+    setEditingProduct(product);
+  }
+
+  function closeEdit() {
+    setEditingProduct(null);
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingProduct || !editName.trim() || !editPrice.trim()) return;
+
+    setError("");
+    const formData = new FormData();
+    formData.set("id", editingProduct.id);
+    formData.set("name", editName.trim());
+    formData.set("description", editDescription.trim());
+    formData.set("price", editPrice);
+    formData.set("imageUrl", editImageUrl.trim());
+
+    startTransition(async () => {
+      const result = await updateExistingProduct(tenantId, formData);
+      if (result.success && result.data) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? result.data! : p)),
+        );
+        closeEdit();
+      } else {
+        setError(result.error || "Failed to update product");
       }
     });
   }
@@ -294,16 +339,28 @@ export function ProductsManager({
                     </button>
                   </div>
 
-                  <button
-                    onClick={() => handleDelete(product.id, product.name)}
-                    disabled={pending}
-                    className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
-                    title="Delete product"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEdit(product)}
+                      disabled={pending}
+                      className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                      title="Edit product"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id, product.name)}
+                      disabled={pending}
+                      className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                      title="Delete product"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -311,6 +368,67 @@ export function ProductsManager({
         </div>
       )}
     </div>
+
+    {/* ─── Edit Drawer ─── */}
+    <EditEntityDrawer
+      open={!!editingProduct}
+      onClose={closeEdit}
+      title="Edit Product"
+    >
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Name</label>
+          <input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="admin-input w-full"
+            disabled={pending}
+            required
+          />
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Price (₹)</label>
+          <input
+            value={editPrice}
+            onChange={(e) => setEditPrice(e.target.value)}
+            type="number"
+            step="0.01"
+            min="0"
+            className="admin-input w-full"
+            disabled={pending}
+            required
+          />
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Description</label>
+          <textarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            className="admin-input w-full min-h-[80px] resize-none"
+            disabled={pending}
+            rows={3}
+          />
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-zinc-400">Image URL</label>
+          <input
+            value={editImageUrl}
+            onChange={(e) => setEditImageUrl(e.target.value)}
+            className="admin-input w-full"
+            disabled={pending}
+            placeholder="https://..."
+          />
+        </div>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <button
+          type="submit"
+          disabled={pending || !editName.trim() || !editPrice.trim()}
+          className="admin-btn-cyan w-full py-2.5"
+        >
+          {pending ? "Saving..." : "Save Changes"}
+        </button>
+      </form>
+    </EditEntityDrawer>
 
     {/* ─── Live Preview ─── */}
     <PreviewShell>
