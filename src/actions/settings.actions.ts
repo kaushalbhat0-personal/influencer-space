@@ -42,32 +42,6 @@ const themeSettingsSchema = z.object({
     .default({ primary: "#d4a843", secondary: "#fbbf24", accent: "#b45309" }),
 });
 
-const heroDataSchema = z.object({
-  videoUrl: z.string().optional().default(""),
-  posterUrl: z.string().optional().default(""),
-  title: z.string().optional().default(""),
-  subtitle: z.string().optional().default(""),
-  tagline: z.string().optional().default(""),
-  ctaText: z.string().optional().default(""),
-  ctaLink: z.string().optional().default(""),
-  ctaSecondaryText: z.string().optional().default(""),
-  ctaSecondaryLink: z.string().optional().default(""),
-  liveBadgeText: z.string().optional().default(""),
-  showLiveBadge: z
-    .preprocess(
-      (v) => {
-        if (v === "on" || v === "true") return true;
-        if (v === "false") return false;
-        return v;
-      },
-      z.boolean().optional().default(false),
-    ),
-  videoDesktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
-  videoMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
-  imageDesktopAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
-  imageMobileAlignment: z.enum(["top", "center", "bottom"]).optional().default("center"),
-});
-
 const heroPartialSchema = z.object({
   videoUrl: z.string().optional(),
   posterUrl: z.string().optional(),
