@@ -60,7 +60,10 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
     const btn = buttonRefs.current[tenantId];
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 4, left: rect.right - 192 });
+    const menuHeight = 320;
+    const fitsBelow = rect.bottom + 4 + menuHeight <= window.innerHeight;
+    const top = fitsBelow ? rect.bottom + 4 : rect.top - menuHeight - 4;
+    setMenuPos({ top, left: rect.right - 192 });
     setOpenMenuId(openMenuId === tenantId ? null : tenantId);
   }
 

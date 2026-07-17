@@ -18,7 +18,7 @@ export default async function SuperAdminLayout({
     <div className="min-h-dvh bg-[#0a0a0a] flex">
       <SuperAdminSidebar />
       <div className="flex-1 ml-56 min-w-0">
-        <main className="p-6 sm:p-8">{children}</main>
+        <main className="p-6 sm:p-8 pb-48">{children}</main>
       </div>
     </div>
   );
