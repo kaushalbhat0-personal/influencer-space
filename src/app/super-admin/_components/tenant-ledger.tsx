@@ -18,7 +18,7 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; left: number }>({ top: 0, left: 0 });
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [resetModal, setResetModal] = useState<{ tenantId: string; name: string } | null>(null);
@@ -60,10 +60,12 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
     const btn = buttonRefs.current[tenantId];
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const menuHeight = 320;
-    const fitsBelow = rect.bottom + 4 + menuHeight <= window.innerHeight;
-    const top = fitsBelow ? rect.bottom + 4 : rect.top - menuHeight - 4;
-    setMenuPos({ top, left: rect.right - 192 });
+    const fitsBelow = rect.bottom + 240 <= window.innerHeight;
+    setMenuPos({
+      top: fitsBelow ? rect.bottom + 4 : undefined,
+      bottom: fitsBelow ? undefined : window.innerHeight - rect.top + 4,
+      left: rect.right - 192,
+    });
     setOpenMenuId(openMenuId === tenantId ? null : tenantId);
   }
 
@@ -229,7 +231,11 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
           <div
             ref={menuRef}
             className="fixed z-[9999] w-48 rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-2xl backdrop-blur-xl"
-            style={{ top: menuPos.top, left: menuPos.left }}
+            style={{
+              top: menuPos.top ?? "auto",
+              bottom: menuPos.bottom ?? "auto",
+              left: menuPos.left,
+            }}
           >
             <button onClick={() => handleLoginAs(openMenuId)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
               Login as Tenant
