@@ -1,6 +1,6 @@
 import { getPlatformStats, getAllTenants } from "@/services/super-admin.service";
-import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
 import { TenantLedger } from "./_components/tenant-ledger";
+import { ProvisionTrigger } from "./_components/provision-trigger";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +36,16 @@ export default async function SuperAdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white font-display">Platform Dashboard</h1>
-      <p className="mt-1 text-sm text-zinc-400">
-        Monitor platform health, manage creators, and configure domains.
-      </p>
+      {/* ─── Header ─── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white font-display">Platform Dashboard</h1>
+          <p className="mt-1 text-sm text-zinc-400">
+            Monitor platform health, manage creators, and configure domains.
+          </p>
+        </div>
+        <ProvisionTrigger tenants={tenants} />
+      </div>
 
       {/* ─── Stat Cards ─── */}
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -73,11 +79,6 @@ export default async function SuperAdminPage() {
             </svg>
           }
         />
-      </div>
-
-      {/* ─── Provisioning Card ─── */}
-      <div className="mt-8">
-        <SuperAdminDashboard tenants={tenants} />
       </div>
 
       {/* ─── Tenant Ledger ─── */}
