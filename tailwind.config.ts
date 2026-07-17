@@ -10,6 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        brand: {
+          primary: "var(--brand-primary, #2D1B69)",
+          secondary: "var(--brand-secondary, #00f5ff)",
+          accent: "var(--brand-accent, #ff00e5)",
+          bg: "var(--brand-bg, #09090b)",
+          text: "var(--brand-text, #ffffff)",
+        },
         primary: {
           50: "#ede6ff",
           100: "#c4b0ff",

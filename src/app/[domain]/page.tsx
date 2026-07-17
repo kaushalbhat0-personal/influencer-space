@@ -13,15 +13,16 @@ import type { PublicPageData } from "@/services/public.service";
 
 export const dynamic = "force-dynamic";
 
-async function getPageData(slug: string): Promise<{ tenantId: string; data: PublicPageData } | null> {
+async function getPageData(slug: string): Promise<{ tenantId: string; data: PublicPageData; theme: { primaryColor: string; secondaryColor: string; accentColor: string; backgroundColor: string; textColor: string; fontFamily: string; borderRadius: string } | null } | null> {
   const tenant = await prisma.tenant.findFirst({
     where: {
       OR: [{ subdomain: slug }, { customDomain: slug }],
     },
+    include: { theme: true },
   });
   if (!tenant) return null;
   const data = await getPublicPageData(tenant.id);
-  return { tenantId: tenant.id, data };
+  return { tenantId: tenant.id, data, theme: tenant.theme ?? null };
 }
 
 export async function generateMetadata({
@@ -70,7 +71,7 @@ export default async function PublicPage({
   const pageData = await getPageData(params.domain);
   if (!pageData) notFound();
 
-  const { tenantId, data } = pageData;
+  const { tenantId, data, theme } = pageData;
   const { profile, hero, products, links, gallery, milestones, feed } = data;
   const c = profile.colors;
 
@@ -86,6 +87,11 @@ export default async function PublicPage({
           "--accent": c.accent,
           "--primary": c.primary,
           "--secondary": c.secondary,
+          "--brand-primary": theme?.primaryColor ?? "#2D1B69",
+          "--brand-secondary": theme?.secondaryColor ?? "#00f5ff",
+          "--brand-accent": theme?.accentColor ?? "#ff00e5",
+          "--brand-bg": theme?.backgroundColor ?? "#09090b",
+          "--brand-text": theme?.textColor ?? "#ffffff",
         } as React.CSSProperties
       }
     >

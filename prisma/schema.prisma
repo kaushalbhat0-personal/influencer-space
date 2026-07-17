@@ -29,9 +29,11 @@ model Tenant {
   twitchAccessToken     String?   @db.Text
   twitchRefreshToken    String?   @db.Text
   twitchTokenExpiry     DateTime?
+  themeId               String?   @db.Uuid
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  theme              Theme?  @relation(fields: [themeId], references: [id])
   users              User[]
   products           Product[]
   affiliateLinks     AffiliateLink[]
@@ -45,6 +47,22 @@ model Tenant {
   socialStats        SocialStats[]
   auditLogs          AuditLog[]
   contentFeedItems   ContentFeedItem[]
+}
+
+model Theme {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @unique
+  primaryColor    String   @default("#2D1B69")
+  secondaryColor  String   @default("#00f5ff")
+  accentColor     String   @default("#ff00e5")
+  backgroundColor String   @default("#09090b")
+  textColor       String   @default("#ffffff")
+  fontFamily      String   @default("Inter")
+  borderRadius    String   @default("8px")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenants Tenant[]
 }
 
 model Subscription {
