@@ -16,6 +16,7 @@ import {
   X,
   Rss,
   Globe,
+  Gamepad2,
 } from "lucide-react";
 
 const navLinks = [
@@ -25,6 +26,7 @@ const navLinks = [
   { href: "/admin/gallery", label: "Hall of Fame", icon: ImageIcon },
   { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
   { href: "/admin/milestones", label: "Milestones", icon: Trophy },
+  { href: "/admin/games", label: "Games", icon: Gamepad2 },
   { href: "/admin/appearance", label: "Appearance", icon: Palette },
   { href: "/admin/settings/domain", label: "Domain", icon: Globe },
   { href: "/admin/billing", label: "Billing", icon: CreditCard },

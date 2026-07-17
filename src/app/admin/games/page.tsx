@@ -1,15 +1,18 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { GameService } from "@/services/games.service";
 import { GamesList } from "./_components/games-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { GAMES_ROUTE } from "@/lib/constants";
-import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminGamesPage() {
-  const tenant = await getTenantContext();
-  if (!tenant) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+
+  if (!tenantId) {
     return (
       <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
         <p className="text-lg font-semibold">No tenant configured</p>
@@ -21,7 +24,7 @@ export default async function AdminGamesPage() {
   let error: string | null = null;
 
   try {
-    games = await GameService.findAll(tenant.id);
+    games = await GameService.findAll(tenantId);
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load games";
   }
