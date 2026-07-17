@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   attachCustomDomain,
   removeCustomDomain,
@@ -21,42 +21,65 @@ export function DomainSettings({
   verified: boolean;
   verification: VercelVerificationRecord[];
 }) {
-  const [attachState, attachAction] = useActionState(attachCustomDomain, {
-    success: false,
-    customDomain: currentDomain,
-    verified: initialVerified,
-    verification: initialVerification,
-  } as DomainActionState);
-
-  const [statusState, checkStatus] = useActionState(checkDomainStatus, {
-    success: false,
-    customDomain: currentDomain,
-    verified: initialVerified,
-    verification: initialVerification,
-  } as DomainActionState);
-
-  const [verifyState, verifyDispatch] = useActionState(verifyDomain, {
-    success: false,
-    customDomain: currentDomain,
-    verified: initialVerified,
-    verification: initialVerification,
-  } as DomainActionState);
-
-  const [removeState, removeAction] = useActionState(removeCustomDomain, {
-    success: false,
-    customDomain: currentDomain,
-    verified: false,
-  } as DomainActionState);
-
+  const [domain, setDomain] = useState(currentDomain);
+  const [verified, setVerified] = useState(initialVerified);
+  const [records, setRecords] = useState<VercelVerificationRecord[]>(initialVerification);
+  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const domain = attachState.customDomain ?? removeState.customDomain ?? currentDomain;
-  const verified = domain === currentDomain
-    ? (statusState.verified ?? verifyState.verified ?? initialVerified)
-    : (attachState.verified ?? false);
-  const records = domain === currentDomain
-    ? (statusState.verification ?? verifyState.verification ?? initialVerification)
-    : (attachState.verification ?? []);
+  async function handleAttach(formData: FormData) {
+    setError(null);
+    startTransition(async () => {
+      const result = await attachCustomDomain({ success: false }, formData);
+      if (result.success && result.customDomain) {
+        setDomain(result.customDomain);
+        setVerified(result.verified ?? false);
+        setRecords(result.verification ?? []);
+      } else {
+        setError(result.error ?? "Failed to attach domain");
+      }
+    });
+  }
+
+  async function handleCheckStatus() {
+    setError(null);
+    startTransition(async () => {
+      const result = await checkDomainStatus();
+      if (result.success) {
+        setVerified(result.verified ?? false);
+        setRecords(result.verification ?? []);
+      } else {
+        setError(result.error ?? "Failed to check status");
+      }
+    });
+  }
+
+  async function handleVerify() {
+    setError(null);
+    startTransition(async () => {
+      const result = await verifyDomain();
+      if (result.success) {
+        setVerified(result.verified ?? false);
+        setRecords(result.verification ?? []);
+      } else {
+        setError(result.error ?? "Verification failed");
+      }
+    });
+  }
+
+  async function handleRemove() {
+    setError(null);
+    startTransition(async () => {
+      const result = await removeCustomDomain();
+      if (result.success) {
+        setDomain(null);
+        setVerified(false);
+        setRecords([]);
+      } else {
+        setError(result.error ?? "Failed to remove domain");
+      }
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -87,14 +110,8 @@ export function DomainSettings({
               </span>
             </div>
 
-            {/* ─── Error ─── */}
-            {(attachState.error || statusState.error || verifyState.error || removeState.error) && (
-              <p className="text-sm text-red-400">
-                {attachState.error || statusState.error || verifyState.error || removeState.error}
-              </p>
-            )}
+            {error && <p className="text-sm text-red-400">{error}</p>}
 
-            {/* ─── DNS Instructions ─── */}
             {!verified && records.length > 0 && (
               <div className="space-y-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
                 <div className="flex items-center gap-2">
@@ -123,11 +140,10 @@ export function DomainSettings({
               </div>
             )}
 
-            {/* ─── Actions ─── */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => startTransition(() => checkStatus())}
+                onClick={handleCheckStatus}
                 disabled={isPending}
                 className="rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-700 disabled:opacity-50"
               >
@@ -136,7 +152,7 @@ export function DomainSettings({
               {!verified && (
                 <button
                   type="button"
-                  onClick={() => startTransition(() => verifyDispatch())}
+                  onClick={handleVerify}
                   disabled={isPending}
                   className="rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-700 disabled:opacity-50"
                 >
@@ -147,7 +163,7 @@ export function DomainSettings({
                 type="button"
                 onClick={() => {
                   if (window.confirm("Remove this custom domain? Your site will fall back to the subdomain.")) {
-                    startTransition(() => removeAction());
+                    handleRemove();
                   }
                 }}
                 disabled={isPending}
@@ -158,7 +174,7 @@ export function DomainSettings({
             </div>
           </div>
         ) : (
-          <form action={attachAction} className="mt-4 space-y-3">
+          <form action={handleAttach} className="mt-4 space-y-3">
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 name="domain"
@@ -179,7 +195,7 @@ export function DomainSettings({
             <p className="text-xs text-zinc-600">
               Enter your domain without `http://` or `www` (e.g., store.yourdomain.com)
             </p>
-            {attachState.error && <p className="text-sm text-red-400">{attachState.error}</p>}
+            {error && <p className="text-sm text-red-400">{error}</p>}
           </form>
         )}
       </div>

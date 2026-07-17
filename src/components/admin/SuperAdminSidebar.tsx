@@ -5,11 +5,9 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
-  Users,
   ScrollText,
   Activity,
   ToggleRight,
-  Zap,
   ArrowLeft,
   LogOut,
 } from "lucide-react";

@@ -4,12 +4,11 @@ import { getPlatformStats } from "@/services/super-admin.service";
 export const dynamic = "force-dynamic";
 
 export default async function HealthPage() {
-  const [stats, auditCount24h, feedItemCount, failedStatTenants] = await Promise.all([
+  const [stats, auditCount24h, failedStatTenants] = await Promise.all([
     getPlatformStats(),
     prisma.auditLog.count({
       where: { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
     }),
-    prisma.contentFeedItem.count(),
     prisma.socialStats.groupBy({
       by: ["tenantId"],
       where: { updatedAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
