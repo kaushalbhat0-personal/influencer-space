@@ -9,6 +9,12 @@ interface CheckoutButtonProps {
   className?: string;
 }
 
+interface RazorpayPaymentResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
 export function CheckoutButton({ planId, amount, label, className }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +22,6 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
     setLoading(true);
 
     try {
-      // 1. Create order on server
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31,7 +36,7 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
 
       const order = await res.json();
 
-      // 2. Load Razorpay checkout script
+      // Load Razorpay checkout script
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -40,7 +45,7 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         document.body.appendChild(script);
       });
 
-      // 3. Open Razorpay modal
+      // Open Razorpay modal
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
         amount: order.amount,
@@ -48,7 +53,7 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         name: "CreatorStore",
         description: `${planId} plan — Agency Seat`,
         order_id: order.id,
-        handler: function (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) {
+        handler: function (_response: RazorpayPaymentResponse) {
           // Webhook handles provisioning — no client-side action needed
           window.location.href = "/agency";
         },
@@ -59,7 +64,7 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         theme: { color: "#00f5ff" },
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const rzp = new window.Razorpay(options);
       rzp.on("payment.failed", function () {
         setLoading(false);
       });
