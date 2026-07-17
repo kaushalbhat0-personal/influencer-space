@@ -20,6 +20,18 @@ function PreviewBuyButton() {
   );
 }
 
+function EmptyProducts() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-800 py-12">
+      <svg className="mb-3 h-10 w-10 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      <p className="text-sm font-medium text-zinc-600">Your store is empty</p>
+      <p className="mt-1 text-xs text-zinc-700">Add products to start selling merchandise</p>
+    </div>
+  );
+}
+
 export function ProductGrid({
   products,
   preview = false,
@@ -31,7 +43,9 @@ export function ProductGrid({
   tenantId?: string;
   themeColor?: string;
 }) {
-  if (products.length === 0) return null;
+  if (products.length === 0) {
+    return preview ? <EmptyProducts /> : null;
+  }
 
   return (
     <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Smartphone, Tablet, Monitor } from "lucide-react";
 
 type Device = "mobile" | "tablet" | "desktop";
@@ -11,17 +11,34 @@ const deviceConfig: Record<Device, { width: number; label: string; icon: React.C
   desktop: { width: 1200, label: "Desktop", icon: Monitor },
 };
 
-function scaleFor(width: number, containerWidth: number): number {
-  if (width <= containerWidth) return 1;
-  return containerWidth / width;
+function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>): number {
+  const [width, setWidth] = useState(340);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
 }
 
 export function PreviewShell({ children }: { children: React.ReactNode }) {
   const [device, setDevice] = useState<Device>("mobile");
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerWidth = useContainerWidth(containerRef);
   const cfg = deviceConfig[device];
 
+  const gutter = 16;
+  const availWidth = containerWidth - gutter * 2;
+  const scale = cfg.width > availWidth ? availWidth / cfg.width : 1;
+
   return (
-    <div className="sticky top-4 w-[340px] shrink-0 lg:w-[420px]">
+    <div ref={containerRef} className="sticky top-4 w-[300px] shrink-0 lg:w-[380px]">
       {/* ─── Device Toggle ─── */}
       <div className="mb-3 flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900 p-1">
         {(Object.entries(deviceConfig) as [Device, typeof cfg][]).map(([key, conf]) => {
@@ -45,15 +62,13 @@ export function PreviewShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ─── Scaled Frame ─── */}
-      <div
-        className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950"
-        style={{ height: device === "mobile" ? 640 : device === "tablet" ? 900 : 600 }}
-      >
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
         <div
           className="overflow-y-auto"
           style={{
             width: cfg.width,
-            transform: `scale(${scaleFor(cfg.width, device === "mobile" ? 322 : device === "tablet" ? 402 : 402)})`,
+            height: cfg.width * 1.6,
+            transform: `scale(${scale})`,
             transformOrigin: "top left",
           }}
         >

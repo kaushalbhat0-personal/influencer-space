@@ -1,13 +1,29 @@
 import type { PublicMilestoneData } from "@/services/public.service";
 
+function EmptyTimeline() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-800 py-12">
+      <svg className="mb-3 h-10 w-10 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p className="text-sm font-medium text-zinc-600">No milestones yet</p>
+      <p className="mt-1 text-xs text-zinc-700">Add career milestones to showcase your journey</p>
+    </div>
+  );
+}
+
 export function TimelineSection({
   milestones,
   colors,
+  preview = false,
 }: {
   milestones: PublicMilestoneData[];
   colors: { primary: string; secondary: string; accent: string };
+  preview?: boolean;
 }) {
-  if (milestones.length === 0) return null;
+  if (milestones.length === 0) {
+    return preview ? <EmptyTimeline /> : null;
+  }
 
   const c = colors;
 

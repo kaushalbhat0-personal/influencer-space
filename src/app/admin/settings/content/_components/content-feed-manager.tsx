@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   togglePinItem,
   toggleHideItem,
@@ -52,7 +51,6 @@ export function ContentFeedManager({
   tenantId: string;
   initialItems: FeedItem[];
 }) {
-  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
