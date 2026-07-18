@@ -31,8 +31,12 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
     }
 
     const session = await getSession();
-    if (session?.user?.role === "SUPER_ADMIN") {
+
+    const role = session?.user?.role;
+    if (role === "SUPER_ADMIN") {
       router.push("/super-admin");
+    } else if (role === "AGENCY_ADMIN" || role === "AGENCY_STAFF") {
+      router.push("/agency");
     } else {
       router.push("/admin/dashboard");
     }
