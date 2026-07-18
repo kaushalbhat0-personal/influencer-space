@@ -29,6 +29,11 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         body: JSON.stringify({ planId, amount }),
       });
 
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
+
       if (!res.ok) {
         alert("Failed to create order. Please try again.");
         setLoading(false);
