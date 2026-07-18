@@ -10,14 +10,10 @@ const SEAT_QUOTAS: Record<string, { plan: string; seats: number }> = {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized — please log in" }, { status: 401 });
-    }
-
     const body = await req.json();
     const planId: string = body.planId;
     const amount: number = body.amount;
+    const guestEmail: string | undefined = body.email;
 
     if (!planId || !amount) {
       return NextResponse.json({ error: "planId and amount are required" }, { status: 400 });
@@ -27,18 +23,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Unknown planId: ${planId}` }, { status: 400 });
     }
 
+    // Try session first. If no session, require guestEmail for guest checkout.
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id || null;
+
+    if (!userId && !guestEmail) {
+      return NextResponse.json({ error: "Login required or provide an email for guest checkout" }, { status: 400 });
+    }
+
     const razorpay = getRazorpayInstance();
     const orderAmount = Math.round(amount * 100);
+
+    const notes: Record<string, string | number> = {
+      planId,
+      seats: SEAT_QUOTAS[planId].seats,
+    };
+    if (userId) notes.userId = userId;
+    if (guestEmail) notes.email = guestEmail;
 
     const order = await razorpay.orders.create({
       amount: orderAmount,
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
-      notes: {
-        planId,
-        userId: session.user.id,
-        seats: SEAT_QUOTAS[planId].seats,
-      },
+      notes,
     });
 
     return NextResponse.json(order);

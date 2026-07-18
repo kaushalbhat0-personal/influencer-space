@@ -16,23 +16,47 @@ interface RazorpayPaymentResponse {
 }
 
 export function CheckoutButton({ planId, amount, label, className }: CheckoutButtonProps) {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+
+  if (showEmail) {
+    return (
+      <div className="space-y-3">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          className="w-full rounded-xl border border-white/10 bg-zinc-900/50 px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:border-s8ul-cyan/50 focus:outline-none"
+          autoFocus
+          onKeyDown={(e) => e.key === "Enter" && email && handleCheckout()}
+        />
+        <button
+          onClick={handleCheckout}
+          disabled={loading || !email}
+          className={className}
+        >
+          {loading ? "Processing..." : "Continue to Payment"}
+        </button>
+      </div>
+    );
+  }
 
   async function handleCheckout() {
+    if (!email) {
+      setShowEmail(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ planId, amount }),
+        body: JSON.stringify({ planId, amount, email }),
       });
-
-      if (res.status === 401) {
-        window.location.href = "/admin/login";
-        return;
-      }
 
       if (!res.ok) {
         alert("Failed to create order. Please try again.");
@@ -42,7 +66,6 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
 
       const order = await res.json();
 
-      // Load Razorpay checkout script
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -51,7 +74,6 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         document.body.appendChild(script);
       });
 
-      // Open Razorpay modal
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
         amount: order.amount,
@@ -59,14 +81,10 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         name: "CreatorStore",
         description: `${planId} plan — Agency Seat`,
         order_id: order.id,
+        prefill: { email, contact: "" },
         handler: function (_response: RazorpayPaymentResponse) {
           void _response;
-          // Webhook handles provisioning — no client-side action needed
           window.location.href = "/agency";
-        },
-        prefill: {
-          email: "",
-          contact: "",
         },
         theme: { color: "#00f5ff" },
       };
