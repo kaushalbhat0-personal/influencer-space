@@ -84,7 +84,9 @@ export function CheckoutButton({ planId, amount, label, className }: CheckoutBut
         prefill: { email, contact: "" },
         handler: function (_response: RazorpayPaymentResponse) {
           void _response;
-          window.location.href = "/agency";
+          // Auto-login after payment: webhook creates the account, this polls for it
+          const encoded = encodeURIComponent(email);
+          window.location.href = `/api/auth/auto-login?email=${encoded}`;
         },
         theme: { color: "#00f5ff" },
       };
