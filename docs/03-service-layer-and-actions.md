@@ -187,9 +187,54 @@ await prisma.$transaction(async (tx) => {
 | `product.service.ts` | Products CRUD + toggleActive |
 | `public.service.ts` | Assembles full public page data (profile + hero + 5 sections) |
 | `razorpay.service.ts` | Creates linked Razorpay route accounts |
-| `settings.service.ts` | Settings key-value store, hero_data, influencer_data, API keys |
+| `razorpay-route.service.ts` | Calculates Route split (platform cut retained, agency + creator transfers only) |
+| `settings.service.ts` | Settings key-value store, hero_data, influencer_data, API keys, theme_config |
 | `social-api.service.ts` | YouTube/Twitch stat fetching |
 | `storage.service.ts` | Supabase file upload (requires SERVICE_ROLE_KEY) + path extraction |
 | `super-admin.service.ts` | Platform-level stats + tenant listing |
 | `timeline.service.ts` | Timeline events CRUD |
 | `vercel.service.ts` | Vercel domain CRUD + status check |
+
+## Registration & Onboarding Flow
+
+### Email/Password Signup (`/api/auth/register`)
+
+```
+1. POST /api/auth/register { email, password }
+2. Validate email uniqueness (409 if exists), hash password (bcrypt)
+3. prisma.$transaction:
+   a. tx.user.create({ email, password, role: "AGENCY_ADMIN" })
+   b. tx.websiteAgency.create({ name, subdomain: "agency_{userId[:8]}", status: "ACTIVE" })
+   c. tx.user.update({ agencyId: agency.id })
+   d. tx.agencySubscription.create({ agencyId, plan: "STARTER", maxManagedTenants: 1, status: "FREE" })
+4. Client: signIn("credentials", { email, password }) → redirect to /agency
+```
+
+### Guest Checkout via Razorpay (`/api/checkout` → Webhook)
+
+```
+1. POST /api/checkout { planId, amount, email } (no auth required)
+2. Razorpay order created with notes: { planId, email, seats }
+3. Payment captured → webhook fires
+4. Webhook: if notes.email exists but notes.userId is missing:
+   a. prisma.$transaction:
+      - bcrypt.hash(randomPassword)
+      - tx.user.create({ email, password, role: "AGENCY_ADMIN" })
+      - tx.websiteAgency.create(...)
+      - tx.user.update({ agencyId })
+      - tx.agencySubscription.upsert({ plan, maxManagedTenants })
+5. Client: redirect to /api/auth/auto-login?email=xxx
+6. Auto-login: polls for user → generates NextAuth JWT → sets session cookie → /agency
+```
+
+## Seat Quota Guard
+
+`src/lib/seat-quota-guard.ts` — prevents agencies from exceeding their `AgencySubscription.maxManagedTenants`:
+
+```typescript
+export async function checkSeatQuota(agencyId: string) {
+  // Queries AgencySubscription.maxManagedTenants
+  // Counts active AgencyTenant rows
+  // Returns { allowed: boolean, currentCount, maxAllowed }
+}
+```

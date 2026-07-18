@@ -7,20 +7,12 @@ PostgreSQL (via Prisma) with UUID primary keys, JSONB for settings, and `CASCADE
 ## Entity Relationship Diagram (Simplified)
 
 ```
-Tenant (1) ───────< User (N)
-   │
-   ├── (1) ─── Subscription (1)
-   ├── (1) ───< Product (N)
-   ├── (1) ───< ProductOrder (N)
-   ├── (1) ───< AffiliateLink (N)
-   ├── (1) ───< ContactSubmission (N)
-   ├── (1) ───< GalleryImage (N)
-   ├── (1) ───< TimelineEvent (N)
-   ├── (1) ───< Game (N)
-   ├── (1) ───< Setting (N)        ← key-value JSON store
-   ├── (1) ───< SocialStats (N)
-   ├── (1) ───< AuditLog (N)
-   └── (1) ───< ContentFeedItem (N)
+WebsiteAgency (1) ───< AgencyTenant (N) >─── Tenant (1)
+       │                                            │
+       ├── (1) ─── AgencySubscription (1)           ├── (1) ─── Subscription (1)
+       └── (1) ───< User (N)                        └── (1) ───< User (N)
+                                                             └── (1) ───< Product (N)
+                                                                        └── (1) ───< ProductOrder (N)
 ```
 
 ## Full Schema

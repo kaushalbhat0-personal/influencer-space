@@ -208,3 +208,44 @@ Admin Panel                      PreviewShell
 ```
 
 **Key principle:** The PreviewShell is NOT a sandbox or iframe. It's a direct React child that renders the SAME public components from the SAME local state. This guarantees visual parity — what you see in the preview is what the public page renders.
+
+## Marketing & Onboarding Components
+
+### SignupForm (`src/components/marketing/signup-form.tsx`)
+
+Self-contained, structurally agnostic registration form. Accepts optional `className` prop for external styling. Uses `useId()` for unique input IDs.
+
+**Flow:**
+1. User enters email + password
+2. `POST /api/auth/register` — creates User + Agency + Subscription
+3. `signIn("credentials")` via NextAuth
+4. `window.location.href = "/agency"`
+
+**Props:** `className?: string`
+
+### SignupModal (`src/components/marketing/signup-modal.tsx`)
+
+Framer-motion modal wrapping `SignupForm`. Children-as-trigger pattern.
+
+**Usage:**
+```tsx
+<SignupModal>
+  <button>Start for Free</button>
+</SignupModal>
+```
+
+### PricingCTA (`src/components/marketing/pricing-cta.tsx`)
+
+Routes pricing plan CTAs to the correct destination:
+- `planId === "growth"` → `<Link href="/contact">` (contact sales)
+- All other plans → `<SignupModal>` (self-serve registration)
+
+Removes email input and guest checkout from marketing pages entirely.
+
+### CheckoutButton (`src/components/marketing/checkout-button.tsx`)
+
+Razorpay checkout for in-app plan upgrades. Auto-detects `res.status === 401` and redirects to login.
+
+### Agency Dashboard (`src/app/agency/[agencyId]/layout.tsx`)
+
+Sidebar shell with 5 nav links: Dashboard, Creators, Stores, Analytics, Settings. Points to dynamic `/{agencyId}/...` routes. Dark theme, 56px sidebar.
