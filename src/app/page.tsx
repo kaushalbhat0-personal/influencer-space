@@ -84,7 +84,6 @@ const pricingPlans = [
     ],
     cta: "Start Free",
     planId: "solo",
-    amountNum: 0,
   },
   {
     name: "Freelancer Agency",
@@ -103,9 +102,8 @@ const pricingPlans = [
       "7% platform fee on creator sales",
       "Email support",
     ],
-    cta: "Start Free Trial",
+    cta: "Start for Free",
     planId: "freelancer",
-    amountNum: 1999,
   },
   {
     name: "Growth Agency",
@@ -126,7 +124,6 @@ const pricingPlans = [
     ],
     cta: "Contact Sales",
     planId: "growth",
-    amountNum: 4999,
   },
 ];
 
@@ -305,9 +302,7 @@ export default function MarketingPage() {
                 </ul>
                 <PricingCTA
                   planId={plan.planId}
-                  amount={plan.amountNum}
                   label={plan.cta}
-                  href="/admin/login"
                   className={`mt-8 flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold transition-all ${
                     plan.highlight
                       ? `bg-gradient-to-r ${plan.accent} text-white hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]`

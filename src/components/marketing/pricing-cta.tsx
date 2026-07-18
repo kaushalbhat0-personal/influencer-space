@@ -1,24 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { CheckoutButton } from "./checkout-button";
+import { SignupModal } from "./signup-modal";
 
 interface PricingCTAProps {
   planId: string;
-  amount: number;
   label: string;
-  href: string;
   className?: string;
 }
 
-export function PricingCTA({ planId, amount, label, href, className }: PricingCTAProps) {
-  if (amount === 0) {
+export function PricingCTA({ planId, label, className }: PricingCTAProps) {
+  if (planId === "growth") {
     return (
-      <Link href={href} className={className}>
+      <Link href="/contact" className={className}>
         {label}
       </Link>
     );
   }
 
-  return <CheckoutButton planId={planId} amount={amount} label={label} className={className} />;
+  return (
+    <SignupModal>
+      <button className={className}>{label}</button>
+    </SignupModal>
+  );
 }
