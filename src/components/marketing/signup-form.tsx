@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useId } from "react";
 import { signIn } from "next-auth/react";
 
-export function SignupForm() {
+interface SignupFormProps {
+  className?: string;
+}
+
+export function SignupForm({ className = "" }: SignupFormProps) {
+  const id = useId();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +20,6 @@ export function SignupForm() {
     setLoading(true);
 
     try {
-      // 1. Register
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -30,7 +34,6 @@ export function SignupForm() {
         return;
       }
 
-      // 2. Auto-login via NextAuth
       const signInResult = await signIn("credentials", {
         email: email.trim(),
         password,
@@ -43,7 +46,6 @@ export function SignupForm() {
         return;
       }
 
-      // 3. Redirect to agency dashboard
       window.location.href = "/agency";
     } catch {
       setError("Network error. Please try again.");
@@ -52,13 +54,13 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className={`space-y-4 ${className}`}>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
+        <label htmlFor={`${id}-email`} className="block text-sm font-medium text-zinc-300">
           Email
         </label>
         <input
-          id="email"
+          id={`${id}-email`}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -68,11 +70,11 @@ export function SignupForm() {
         />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-zinc-300">
+        <label htmlFor={`${id}-password`} className="block text-sm font-medium text-zinc-300">
           Password
         </label>
         <input
-          id="password"
+          id={`${id}-password`}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
