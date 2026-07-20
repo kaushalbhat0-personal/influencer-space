@@ -1,0 +1,15 @@
+export type { DragStatus, DropZone, CanvasEdge, DragPosition, DragSource, DragTarget, DragSession, DragContext, SelectionSnapshot, DragDiagnostics } from "./types";
+export { DragController, dragController } from "./controller";
+export { moveStrategy, copyStrategy, reorderStrategy, insertStrategy, selectStrategy } from "./strategies";
+export type { DragStrategy } from "./strategies";
+export type { SnapPoint, SnapResult, SnapGuide, SnapConfig } from "./snap";
+export { snapEngine } from "./snap";
+export { animationProfiles, getAnimation, createAnimationStyle } from "./animation";
+export type { AnimationAction, AnimationProfile } from "./animation";
+export { DragPerformanceMonitor, dragPerfMonitor } from "./perf";
+export type { FrameMetrics, OperationMetrics, PerfReport } from "./perf";
+export { SpatialIndex, DragBenchmark, dragBenchmark } from "./benchmark";
+export { DragA11y } from "./a11y";
+export type { A11yAnnouncement, A11yDiagnostics } from "./a11y";
+export { DRAG_SCENARIOS, runScenarios, getScalingReport } from "./scenarios";
+export type { BenchmarkScenario } from "./scenarios";

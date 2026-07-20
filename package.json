@@ -12,6 +12,7 @@
     "setup-storage": "tsx scripts/setup-storage.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:arch": "vitest run tests/architecture/",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

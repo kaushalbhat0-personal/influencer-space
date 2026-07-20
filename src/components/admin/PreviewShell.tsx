@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Smartphone, Tablet, Monitor } from "lucide-react";
+import type { ThemeOverrides } from "@/lib/theme";
+
+export type { ThemeOverrides } from "@/lib/theme";
 
 type Device = "mobile" | "tablet" | "desktop";
 
@@ -26,15 +29,6 @@ function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>): number 
   }, [ref]);
   return width;
 }
-
-export type ThemeOverrides = Partial<{
-  primary: string;
-  secondary: string;
-  accent: string;
-  font: string;
-  borderRadius: string;
-  layoutDensity: "compact" | "comfortable" | "spacious";
-}>;
 
 export function PreviewShell({
   children,
