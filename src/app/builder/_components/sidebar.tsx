@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Layers, Image, Palette, Search, Package, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { registryFacade } from "@/lib/registry/facade";
+import { ThemeInspector } from "./theme";
 
 type Tab = "modules" | "pages" | "layers" | "assets" | "theme";
 
@@ -64,12 +65,12 @@ export function BuilderSidebar({ onToggle }: { collapsed: boolean; onToggle: () 
         </>
       )}
 
-      {activeTab !== "modules" && (
+      {activeTab === "theme" && <ThemeInspector />}
+      {activeTab !== "modules" && activeTab !== "theme" && (
         <div className="flex flex-1 items-center justify-center text-xs text-zinc-700">
           {activeTab === "pages" && "Pages panel — coming soon"}
           {activeTab === "layers" && "Layers panel — coming soon"}
           {activeTab === "assets" && "Assets panel — coming soon"}
-          {activeTab === "theme" && "Theme panel — coming soon"}
         </div>
       )}
     </div>
