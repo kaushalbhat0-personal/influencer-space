@@ -1,12 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { getTenantContext } from "@/lib/tenant";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getPlanLimits } from "@/lib/feature-gate";
 import { BillingClient } from "./_components/billing-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
-  const tenant = await getTenantContext();
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+
+  if (!tenantId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-400">No tenant configured.</p>
+      </div>
+    );
+  }
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) {
     return (
       <div className="flex items-center justify-center h-64">

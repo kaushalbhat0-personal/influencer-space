@@ -74,3 +74,34 @@ describe("Fitness: Error Boundaries", () => {
     expect(fs.existsSync("src/components/ui/EmptyState.tsx")).toBe(true);
   });
 });
+
+describe("Fitness: Tenant Resolution Policy (ADR-007)", () => {
+  const ADMIN_PATHS = ["src/app/admin", "src/app/super-admin", "src/app/agency", "src/app/builder"];
+  const ALLOWED_PATHS = ["src/app/[domain]", "src/middleware.ts", "src/lib/tenant.ts", "src/app/admin/login"];
+  const FORBIDDEN_IMPORT = "getTenantContext";
+
+  it("should not import getTenantContext in authenticated admin routes", () => {
+    const violations: string[] = [];
+
+    function scanDir(dir: string) {
+      if (!fs.existsSync(dir)) return;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = dir + "/" + entry.name;
+        if (entry.isDirectory()) { scanDir(full); continue; }
+        if (!entry.name.endsWith(".tsx") && !entry.name.endsWith(".ts")) continue;
+        const content = fs.readFileSync(full, "utf-8");
+        if (content.includes(FORBIDDEN_IMPORT)) {
+          const isAllowed = ALLOWED_PATHS.some((p) => full.startsWith(p));
+          if (!isAllowed) violations.push(full);
+        }
+      }
+    }
+
+    for (const p of ADMIN_PATHS) scanDir(p);
+
+    if (violations.length > 0) {
+      expect(`getTenantContext imported in admin routes:\n${violations.join("\n")}`).toBe("");
+    }
+    expect(true).toBe(true);
+  });
+});

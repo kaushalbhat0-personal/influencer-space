@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { MessagesList } from "./_components/messages-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { getTenantContext } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMessagesPage() {
-  const tenant = await getTenantContext();
-  if (!tenant) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) {
     return (
       <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
         <p className="text-lg font-semibold">No tenant configured</p>
@@ -20,7 +22,7 @@ export default async function AdminMessagesPage() {
 
   try {
     messages = await prisma.contactSubmission.findMany({
-      where: { tenantId: tenant.id },
+      where: { tenantId },
       orderBy: { createdAt: "desc" },
     });
   } catch (e) {

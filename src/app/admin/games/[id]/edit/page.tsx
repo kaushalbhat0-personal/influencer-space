@@ -1,15 +1,16 @@
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GameForm } from "../../_components/games-form";
-import { getTenantContext } from "@/lib/tenant";
 
 export default async function EditGamePage({
   params,
 }: {
   params: { id: string };
 }) {
-  const tenant = await getTenantContext();
-  if (!tenant) notFound();
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.tenantId) notFound();
 
   let game;
   try {
