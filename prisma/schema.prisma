@@ -353,3 +353,121 @@ model ContentFeedItem {
   @@unique([tenantId, externalId])
   @@index([tenantId, pinned, hidden, order])
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Billing v2 — Phase 1 Foundation (additive — legacy tables preserved)
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Billing account — single billable entity for creators and agencies.
+/// Replaces the polymorphic subscription pattern.
+model BillingAccount {
+  id          String   @id @default(uuid()) @db.Uuid
+  accountType String   // "tenant" | "agency"
+  accountId   String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions BillingSubscription[]
+
+  @@unique([accountType, accountId])
+}
+
+/// Immutable plan catalog entry.
+/// Plans are versioned — never edited after customers subscribe.
+model BillingPlan {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique // "creator_free", "creator_pro", "agency_starter", etc.
+  family    String            // "creator" | "agency"
+  name      String
+  price     Float    @default(0)
+  currency  String   @default("INR")
+  cycle     String   @default("monthly") // "monthly" | "annual"
+  status    String   @default("ACTIVE")  // "ACTIVE" | "DEPRECATED" | "GRANDFATHERED"
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  features   BillingPlanFeature[]
+  subscriptions BillingSubscription[]
+}
+
+/// Typed feature definitions.
+/// New features are added to this table, never edited.
+model BillingFeature {
+  id          String @id @default(uuid()) @db.Uuid
+  key         String @unique // "max_products", "custom_domain", "max_clients", etc.
+  description String
+  valueType   String @default("integer") // "integer" | "boolean" | "string"
+
+  planFeatures BillingPlanFeature[]
+}
+
+/// Join table with typed feature values.
+/// JSON reserved for future complex configurations only.
+model BillingPlanFeature {
+  planId    String @db.Uuid
+  featureId String @db.Uuid
+  intValue  Int?
+  boolValue Boolean?
+  strValue  String?
+
+  plan    BillingPlan  @relation(fields: [planId], references: [id])
+  feature BillingFeature @relation(fields: [featureId], references: [id])
+
+  @@id([planId, featureId])
+}
+
+/// Unified subscription — one table for all billing.
+/// Separation: Payment → Billing Event → Subscription State → Feature Gate
+model BillingSubscription {
+  id          String    @id @default(uuid()) @db.Uuid
+  accountId   String    @db.Uuid
+  planId      String    @db.Uuid
+  status      String    @default("ACTIVE") // "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED"
+  trialEndsAt DateTime?
+  renewsAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  account BillingAccount @relation(fields: [accountId], references: [id])
+  plan    BillingPlan    @relation(fields: [planId], references: [id])
+
+  @@index([accountId])
+  @@index([planId])
+}
+
+/// Immutable billing event log. Append-only, never edited.
+/// Provides idempotency key for webhook processing.
+model BillingEvent {
+  id           String   @id @default(uuid()) @db.Uuid
+  accountId    String   @db.Uuid
+  type         String   // SUBSCRIPTION_CREATED, CHECKOUT_STARTED, PAYMENT_SUCCEEDED, PAYMENT_FAILED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_RENEWED, SUBSCRIPTION_CANCELLED, REFUND_CREATED, REFUND_COMPLETED, INVOICE_ISSUED, INVOICE_PAID
+  idempotencyKey String? @unique // Prevents duplicate webhook processing
+  payload      Json?
+  createdAt    DateTime @default(now())
+
+  @@index([accountId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+/// Financial source of truth. Immutable after payment.
+/// Created before checkout, finalized after payment success.
+model BillingInvoice {
+  id               String    @id @default(uuid()) @db.Uuid
+  accountId        String    @db.Uuid
+  subscriptionId   String?   @db.Uuid
+  planCode         String    // Plan code at time of invoice (grandfathering)
+  planVersion      Int       @default(1)
+  amount           Float
+  currency         String    @default("INR")
+  status           String    @default("PENDING") // PENDING, PAID, FAILED, REFUNDED, VOID
+  provider         String?   // "razorpay" | "stripe" | "manual"
+  providerReference String?  // Razorpay order_id / Stripe payment_intent_id
+  issuedAt         DateTime  @default(now())
+  paidAt           DateTime?
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+
+  @@index([accountId])
+  @@index([status])
+}

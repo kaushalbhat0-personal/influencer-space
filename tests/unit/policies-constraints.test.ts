@@ -23,11 +23,11 @@ describe("PoliciesAndConstraints", () => {
       expect(interactionPolicy.canExecute("canDelete", { ...ctx, isLocked: true })).toBe(false);
     });
 
-    it("should deny publish for STARTER plan", () => {
-      expect(interactionPolicy.canExecute("canPublish", { ...ctx, plan: "STARTER" })).toBe(false);
+    it("should allow publish regardless of plan (entitlement check moved to EntitlementService)", () => {
+      expect(interactionPolicy.canExecute("canPublish", { ...ctx, plan: "STARTER" })).toBe(true);
     });
 
-    it("should allow publish for PRO plan", () => {
+    it("should allow publish for any plan (builder gated at application level)", () => {
       expect(interactionPolicy.canExecute("canPublish", { ...ctx, plan: "PRO" })).toBe(true);
     });
   });

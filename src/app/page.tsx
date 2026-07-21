@@ -1,73 +1,11 @@
 import Link from "next/link";
-import { PricingCTA } from "@/components/marketing/pricing-cta";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
 import { CreatorFeatures } from "@/components/marketing/CreatorFeatures";
 import { AgencyFeatures } from "@/components/marketing/AgencyFeatures";
 import { StoreExamples } from "@/components/marketing/StoreExamples";
 import { WhyCreatorStore } from "@/components/marketing/WhyCreatorStore";
-
-const pricingPlans = [
-  {
-    name: "Solo Creator",
-    price: "₹0",
-    period: "/mo",
-    description: "One store. Your brand. Zero platform fees.",
-    seats: null,
-    highlight: false,
-    accent: "from-s8ul-cyan to-s8ul-pink",
-    features: [
-      "1 fully customizable store",
-      "Unlimited products",
-      "UPI, cards & net banking",
-      "Custom domain (with Pro upgrade)",
-      "Social feed auto-sync",
-      "10% transaction fee",
-    ],
-    cta: "Start Free",
-    planId: "solo",
-  },
-  {
-    name: "Freelancer Agency",
-    price: "₹1,999",
-    period: "/mo",
-    description: "For solo devs and small teams building stores for creators.",
-    seats: "5 managed seats",
-    highlight: true,
-    accent: "from-purple-500 to-s8ul-cyan",
-    features: [
-      "5 managed creator stores",
-      "Multi-tenant dashboard",
-      "Automated revenue splitting",
-      "Default theme assignment",
-      "Creator permission controls",
-      "7% platform fee on creator sales",
-      "Email support",
-    ],
-    cta: "Start for Free",
-    planId: "freelancer",
-  },
-  {
-    name: "Growth Agency",
-    price: "₹4,999",
-    period: "/mo",
-    description: "For established agencies scaling their creator portfolio.",
-    seats: "20 managed seats",
-    highlight: false,
-    accent: "from-amber-400 to-amber-600",
-    features: [
-      "20 managed creator stores",
-      "Everything in Freelancer",
-      "Custom rev-share % per creator",
-      "White-label agency dashboard",
-      "Priority WhatsApp support",
-      "API access",
-      "5% platform fee on creator sales",
-    ],
-    cta: "Contact Sales",
-    planId: "growth",
-  },
-];
+import { Pricing } from "@/components/marketing/Pricing";
 
 export default function MarketingPage() {
   return (
@@ -208,68 +146,7 @@ export default function MarketingPage() {
 
       <WhyCreatorStore />
 
-      {/* ─── Pricing ─── */}
-      <section id="pricing" className="relative px-4 py-20 sm:px-8 sm:py-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,245,255,0.04),transparent_60%)]" />
-        <div className="relative mx-auto max-w-6xl">
-          <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              Plans for Every Stage
-            </h2>
-            <p className="mt-3 text-zinc-500">
-              Start free as a creator. Scale to an agency when you&apos;re ready.
-            </p>
-          </div>
-          <div className="grid gap-8 lg:grid-cols-3">
-            {pricingPlans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative flex flex-col rounded-2xl border p-8 backdrop-blur-sm transition-all ${
-                  plan.highlight
-                    ? "border-purple-500/30 bg-gradient-to-b from-purple-500/5 to-zinc-900/80 shadow-[0_0_40px_rgba(168,85,247,0.1)]"
-                    : "border-white/5 bg-zinc-900/50 hover:border-white/10"
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-purple-500 to-s8ul-cyan px-4 py-0.5 text-xs font-semibold text-white">
-                    Most Popular
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-xl font-bold">{plan.name}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">{plan.description}</p>
-                </div>
-                <div className="mt-6">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-zinc-500">{plan.period}</span>
-                </div>
-                {plan.seats && (
-                  <p className="mt-1 text-sm font-medium text-purple-400">{plan.seats}</p>
-                )}
-                <ul className="mt-6 flex-1 space-y-3" role="list">
-                  {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2 text-sm text-zinc-300">
-                      <svg className="mt-0.5 h-4 w-4 shrink-0 text-s8ul-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
-                <PricingCTA
-                  planId={plan.planId}
-                  label={plan.cta}
-                  className={`mt-8 flex w-full items-center justify-center rounded-xl py-3 text-sm font-bold transition-all ${
-                    plan.highlight
-                      ? `bg-gradient-to-r ${plan.accent} text-white hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]`
-                      : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                  }`}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Pricing />
 
       {/* ─── Final CTA ─── */}
       <section className="relative px-4 py-20 sm:px-8 sm:py-28">

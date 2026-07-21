@@ -63,6 +63,29 @@ export async function POST(req: Request) {
         },
       });
 
+      // Billing v2 — create BillingAccount + Subscription with selected plan
+      const billingAccount = await tx.billingAccount.create({
+        data: {
+          accountType: "agency",
+          accountId: agency.id,
+        },
+      });
+
+      const requestedPlanCode = body.planCode || "creator_free";
+      const billingPlan = await tx.billingPlan.findUnique({
+        where: { code: requestedPlanCode },
+      });
+
+      if (billingPlan) {
+        await tx.billingSubscription.create({
+          data: {
+            accountId: billingAccount.id,
+            planId: billingPlan.id,
+            status: billingPlan.price === 0 ? "ACTIVE" : "TRIALING",
+          },
+        });
+      }
+
       return { userId: user.id, agencyId: agency.id };
     });
 

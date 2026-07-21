@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { getRazorpayInstance } from "@/lib/razorpay";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-const SEAT_QUOTAS: Record<string, { plan: string; seats: number }> = {
-  freelancer: { plan: "FREELANCER", seats: 5 },
-  growth: { plan: "GROWTH", seats: 20 },
-};
+import { PLANS } from "@/lib/billing/plan-catalog";
 
 export async function POST(req: Request) {
   try {
@@ -19,11 +15,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "planId and amount are required" }, { status: 400 });
     }
 
-    if (!SEAT_QUOTAS[planId]) {
-      return NextResponse.json({ error: `Unknown planId: ${planId}` }, { status: 400 });
+    // Resolve plan from v2 catalog (falls back to legacy map)
+    const plan = PLANS.find((p) => p.code === planId);
+    if (!plan) {
+      return NextResponse.json({ error: `Unknown plan: ${planId}` }, { status: 400 });
     }
 
-    // Try session first. If no session, require guestEmail for guest checkout.
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id || null;
 
@@ -32,18 +29,20 @@ export async function POST(req: Request) {
     }
 
     const razorpay = getRazorpayInstance();
-    const orderAmount = Math.round(amount * 100);
+    const orderAmount = Math.round(plan.price * 100);
 
     const notes: Record<string, string | number> = {
-      planId,
-      seats: SEAT_QUOTAS[planId].seats,
+      planId: plan.code,
+      planName: plan.name,
+      price: plan.price,
+      currency: plan.currency,
     };
     if (userId) notes.userId = userId;
     if (guestEmail) notes.email = guestEmail;
 
     const order = await razorpay.orders.create({
       amount: orderAmount,
-      currency: "INR",
+      currency: plan.currency,
       receipt: `rcpt_${Date.now()}`,
       notes,
     });

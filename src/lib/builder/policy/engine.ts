@@ -43,7 +43,8 @@ const baseRules: Record<PolicyName, (ctx: InteractionContext) => PolicyResult> =
     return allow("canEdit");
   },
   canPublish: (ctx) => {
-    if (ctx.plan !== "PRO") return deny("canPublish", "Publishing requires PRO plan");
+    if (ctx.isReadOnly) return deny("canPublish", "Canvas is read-only");
+    if (ctx.isLocked) return deny("canPublish", "Element is locked");
     return allow("canPublish");
   },
   canPreview: () => allow("canPreview"),
