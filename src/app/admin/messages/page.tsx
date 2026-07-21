@@ -1,4 +1,4 @@
-import { ContactService } from "@/services/contact.service";
+import { prisma } from "@/lib/prisma";
 import { MessagesList } from "./_components/messages-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { getTenantContext } from "@/lib/tenant";
@@ -15,11 +15,14 @@ export default async function AdminMessagesPage() {
     );
   }
 
-  let messages: Awaited<ReturnType<typeof ContactService.findAll>> = [];
+  let messages: Awaited<ReturnType<typeof prisma.contactSubmission.findMany>> = [];
   let error: string | null = null;
 
   try {
-    messages = await ContactService.findAll(tenant.id);
+    messages = await prisma.contactSubmission.findMany({
+      where: { tenantId: tenant.id },
+      orderBy: { createdAt: "desc" },
+    });
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load messages";
   }

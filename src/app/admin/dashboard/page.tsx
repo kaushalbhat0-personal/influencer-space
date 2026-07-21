@@ -1,10 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ProductService } from "@/services/product.service";
-import { AffiliateService } from "@/services/affiliate.service";
-import { GalleryService } from "@/services/gallery.service";
-import { GameService } from "@/services/games.service";
-import { DashboardClient } from "./_components/dashboard-client";
+import { dashboardAppService } from "@/lib/application/dashboard-app.service";
+import { ContentContainer, PageHeader, MetricGrid } from "@/components/layout";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { MetricCard } from "@/components/data/MetricCard";
+import { ShoppingBag, Image, Gamepad2, Link2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -14,41 +14,52 @@ export default async function AdminDashboardPage() {
 
   if (!tenantId) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-[#0a0a0a] p-8">
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
-          <p className="text-lg text-red-400">
-            Error: Tenant ID is missing or not configured for this account. Please contact support.
-          </p>
+      <ContentContainer>
+        <PageHeader title="Dashboard" description="Welcome back to your admin panel" />
+        <div className="admin-card p-8 text-center">
+          <p className="text-red-400">Error: Tenant ID is missing or not configured.</p>
         </div>
-      </div>
+      </ContentContainer>
     );
   }
 
-  let products: Awaited<ReturnType<typeof ProductService.findAll>> = [];
-  let affiliates: Awaited<ReturnType<typeof AffiliateService.findAll>> = [];
-  let gallery: Awaited<ReturnType<typeof GalleryService.findAll>> = [];
-  let games: Awaited<ReturnType<typeof GameService.findAll>> = [];
+  const statsResult = await dashboardAppService.getStats(tenantId);
 
-  try {
-    [products, affiliates, gallery, games] = await Promise.all([
-      ProductService.findAll(tenantId),
-      AffiliateService.findAll(tenantId),
-      GalleryService.findAll(tenantId),
-      GameService.findAll(tenantId),
-    ]);
-  } catch {}
+  if (!statsResult.success || !statsResult.data) {
+    return (
+      <ContentContainer>
+        <PageHeader title="Dashboard" description="Welcome back to your admin panel" />
+        <div className="admin-card p-8 text-center">
+          <p className="text-red-400">{statsResult.error?.message ?? "Failed to load dashboard stats"}</p>
+        </div>
+      </ContentContainer>
+    );
+  }
 
-  const totalClicks = affiliates.reduce((sum, a) => sum + (a.clicks ?? 0), 0);
-  const activeProducts = products.filter((p) => p.isActive).length;
+  const stats = statsResult.data;
 
   return (
-    <DashboardClient
-      productCount={products.length}
-      activeProductCount={activeProducts}
-      affiliateCount={affiliates.length}
-      totalClicks={totalClicks}
-      galleryCount={gallery.length}
-      gamesCount={games.length}
-    />
+    <ContentContainer>
+      <PageHeader title="Dashboard" description="Welcome back to your admin panel" />
+
+      <ErrorBoundary>
+        <MetricGrid>
+          <MetricCard
+            label="Products"
+            value={stats.productCount}
+            subtext={`${stats.activeProductCount} active`}
+            icon={ShoppingBag}
+          />
+          <MetricCard
+            label="Affiliate Links"
+            value={stats.affiliateCount}
+            subtext={`${stats.totalClicks} total clicks`}
+            icon={Link2}
+          />
+          <MetricCard label="Gallery Items" value={stats.galleryCount} icon={Image} />
+          <MetricCard label="Games" value={stats.gamesCount} icon={Gamepad2} />
+        </MetricGrid>
+      </ErrorBoundary>
+    </ContentContainer>
   );
 }

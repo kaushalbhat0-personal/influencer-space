@@ -1,97 +1,52 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
+import { builderStore } from "@/lib/builder/store";
 import { builderCommands } from "@/lib/builder/commands";
-import { builderQuery } from "@/lib/builder/query";
-import { DragA11y } from "@/lib/builder/drag/a11y";
 
-type KeyHandler = (e: KeyboardEvent) => void;
-type Shortcut = { key: string; ctrl?: boolean; shift?: boolean; alt?: boolean; handler: KeyHandler; description: string };
+interface ShortcutEntry {
+  key: string;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+  description: string;
+  handler: () => void;
+}
 
-const shortcuts: Shortcut[] = [];
+let shortcuts: ShortcutEntry[] = [];
 
-export function useKeyboard() {
-  const register = useCallback((shortcut: Shortcut) => {
-    shortcuts.push(shortcut);
-    return () => { const idx = shortcuts.indexOf(shortcut); if (idx >= 0) shortcuts.splice(idx, 1); };
-  }, []);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const match = shortcuts.find(
-        (s) =>
-          s.key.toLowerCase() === e.key.toLowerCase() &&
-          !!s.ctrl === e.ctrlKey &&
-          !!s.shift === e.shiftKey &&
-          !!s.alt === e.altKey
-      );
-      if (match) { e.preventDefault(); match.handler(e); }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  return { register };
+export function useKeyboard(): { shortcuts: ShortcutEntry[] } {
+  return { shortcuts };
 }
 
 export function useKeyboardShortcuts() {
-  const { register } = useKeyboard();
   useEffect(() => {
-    const unsubs = [
-      register({ key: "z", ctrl: true, description: "Undo", handler: () => builderCommands.undo() }),
-      register({ key: "y", ctrl: true, description: "Redo", handler: () => builderCommands.redo() }),
-      register({ key: "c", ctrl: true, description: "Copy", handler: () => {} }),
-      register({ key: "v", ctrl: true, description: "Paste", handler: () => {} }),
-      register({ key: "x", ctrl: true, description: "Cut", handler: () => {} }),
-      register({ key: "d", ctrl: true, description: "Duplicate", handler: () => {
-        const sel = builderQuery.getSelection();
-        if (sel.ids.length === 1) builderCommands.execute("duplicateNode", { elementId: sel.ids[0]! });
-      }}),
-      register({ key: "Delete", description: "Delete", handler: () => {
-        const sel = builderQuery.getSelection();
-        for (const id of sel.ids) builderCommands.execute("deleteNode", { elementId: id });
-      }}),
-      register({ key: "f", ctrl: true, description: "Search modules", handler: () => {} }),
-      register({ key: "ArrowUp", description: "Move element up", handler: () => {
-        const sel = builderQuery.getSelection();
-        if (sel.ids.length === 1) {
-          const node = builderQuery.getSelectedNode();
-          if (node.slot && node.section) {
-            const idx = node.section.slots.findIndex((s) => s.id === node.slot!.id);
-            if (idx > 0) builderCommands.execute("reorderNode", { elementId: sel.ids[0]!, targetSectionId: node.section.id, index: idx - 1 });
-          }
-        }
-      }}),
-      register({ key: "ArrowDown", description: "Move element down", handler: () => {
-        const sel = builderQuery.getSelection();
-        if (sel.ids.length === 1) {
-          const node = builderQuery.getSelectedNode();
-          if (node.slot && node.section) {
-            const idx = node.section.slots.findIndex((s) => s.id === node.slot!.id);
-            if (idx < node.section.slots.length - 1) builderCommands.execute("reorderNode", { elementId: sel.ids[0]!, targetSectionId: node.section.id, index: idx + 1 });
-          }
-        }
-      }}),
-      register({ key: "Enter", description: "Pick up or drop selected element (keyboard drag)", handler: () => {
-        const sel = builderQuery.getSelection();
-        if (sel.ids.length !== 1) return;
-        if (DragA11y.isKeyboardDragActive()) {
-          const elementName = DragA11y.getKeyboardDragElement() ?? "element";
-          DragA11y.announceKeyboardDrop(elementName, "current position");
-        } else {
-          const node = builderQuery.getSelectedNode();
-          if (node.slot) {
-            DragA11y.announceKeyboardPickup(node.slot.moduleId.split(".").pop() ?? "element");
-          }
-        }
-      }}),
-      register({ key: "Escape", description: "Cancel keyboard drag", handler: () => {
-        if (DragA11y.isKeyboardDragActive()) {
-          DragA11y.announceKeyboardCancel();
-        }
-      }}),
+    const allShortcuts: ShortcutEntry[] = [
+      { key: "z", ctrlKey: true, description: "Undo", handler: () => { if (builderStore.canUndo) builderStore.undo(); } },
+      { key: "Z", ctrlKey: true, shiftKey: true, description: "Redo", handler: () => { if (builderStore.canRedo) builderStore.redo(); } },
+      { key: "y", ctrlKey: true, description: "Redo (alt)", handler: () => { if (builderStore.canRedo) builderStore.redo(); } },
+      { key: "d", ctrlKey: true, description: "Duplicate", handler: () => { const ids = builderStore.getSelectedIds(); if (ids.length === 1) { const id = ids[0]; if (id) builderStore.duplicate(id); } } },
+      { key: "Delete", description: "Delete", handler: () => { for (const id of builderStore.getSelectedIds()) builderStore.removeElement(id); } },
+      { key: "a", ctrlKey: true, description: "Select all", handler: () => builderStore.selectAll() },
+      { key: "s", ctrlKey: true, description: "Save draft", handler: () => builderCommands.execute("save", {}) },
+      { key: "Escape", description: "Deselect all", handler: () => builderStore.clearSelection() },
     ];
-    return () => unsubs.forEach((u) => u());
-  }, [register]);
-}
 
+    shortcuts = allShortcuts;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      for (const s of allShortcuts) {
+        const ctrlMatch = s.ctrlKey ? (e.ctrlKey || e.metaKey) : true;
+        const shiftMatch = s.shiftKey ? e.shiftKey : !e.shiftKey;
+        if (e.key === s.key && ctrlMatch && shiftMatch) {
+          e.preventDefault();
+          s.handler();
+          return;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+}

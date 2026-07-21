@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { GameService } from "@/services/games.service";
+import { prisma } from "@/lib/prisma";
 import { GamesList } from "./_components/games-list";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { GAMES_ROUTE } from "@/lib/constants";
@@ -20,11 +20,14 @@ export default async function AdminGamesPage() {
     );
   }
 
-  let games: Awaited<ReturnType<typeof GameService.findAll>> = [];
+  let games: Awaited<ReturnType<typeof prisma.game.findMany>> = [];
   let error: string | null = null;
 
   try {
-    games = await GameService.findAll(tenantId);
+    games = await prisma.game.findMany({
+      where: { tenantId },
+      orderBy: { order: "asc" },
+    });
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load games";
   }

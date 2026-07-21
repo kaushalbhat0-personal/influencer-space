@@ -2,9 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ContactService } from "@/services/contact.service";
+import { prisma } from "@/lib/prisma";
 import { MESSAGES_ROUTE } from "@/lib/constants";
 import { getTenantContext } from "@/lib/tenant";
+
+export type ContactData = {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  isRead: boolean;
+  createdAt: Date;
+};
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -43,10 +52,13 @@ export async function submitContact(
 
   try {
     const tenantId = await requireTenant();
-    await ContactService.create(tenantId, {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      message: parsed.data.message,
+    await prisma.contactSubmission.create({
+      data: {
+        tenantId,
+        name: parsed.data.name,
+        email: parsed.data.email,
+        message: parsed.data.message,
+      },
     });
     revalidatePath(MESSAGES_ROUTE);
     return { success: true };
@@ -59,8 +71,11 @@ export async function markMessageAsRead(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const tenantId = await requireTenant();
-    await ContactService.markAsRead(id, tenantId);
+    await requireTenant();
+    await prisma.contactSubmission.update({
+      where: { id },
+      data: { isRead: true },
+    });
     revalidatePath(MESSAGES_ROUTE);
     return { success: true };
   } catch {
@@ -72,8 +87,8 @@ export async function deleteMessage(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const tenantId = await requireTenant();
-    await ContactService.delete(id, tenantId);
+    await requireTenant();
+    await prisma.contactSubmission.delete({ where: { id } });
     revalidatePath(MESSAGES_ROUTE);
     return { success: true };
   } catch {

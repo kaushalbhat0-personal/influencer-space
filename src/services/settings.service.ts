@@ -136,6 +136,11 @@ export const SettingsService = {
     });
   },
 
+  /**
+   * @deprecated Use platform.theme.transaction (ThemeTransactionManager) instead.
+   *   This legacy method writes to the theme_config Setting key via JSONB patch.
+   *   Migrate to themeAdapter.updateThemeConfig() for unified theme editing.
+   */
   async patchThemeConfig(
     tenantId: string,
     updates: Record<string, unknown>,

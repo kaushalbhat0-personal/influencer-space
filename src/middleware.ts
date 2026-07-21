@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const secret =
-  process.env.NEXTAUTH_SECRET ||
-  "d7f8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8";
+const secret = process.env.NEXTAUTH_SECRET;
+if (!secret && process.env.NODE_ENV === "production") {
+  throw new Error("NEXTAUTH_SECRET is required in production");
+}
 
 const platformDomains = [
   "localhost:3000",

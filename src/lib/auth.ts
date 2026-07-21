@@ -5,13 +5,11 @@ import { prisma } from "@/lib/prisma";
 
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
-  console.warn("WARNING: NEXTAUTH_SECRET is missing in production!");
+  throw new Error("NEXTAUTH_SECRET is required in production");
 }
 
-const fallbackSecret =
-  "d7f8e9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8";
-
 export const authOptions: NextAuthOptions = {
+  secret: secret ?? undefined,
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -22,11 +20,8 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("Login attempt missing email or password");
           return null;
         }
-
-        console.log("Login attempt for:", credentials.email, "tenant:", credentials.tenantId);
 
         try {
           const user = await prisma.user.findFirst({
@@ -34,19 +29,12 @@ export const authOptions: NextAuthOptions = {
             include: { tenant: { select: { id: true, subdomain: true } } },
           });
 
-          console.log("User found:", !!user, "role:", user?.role);
-
-          if (!user) {
-            console.log("No user found with email:", credentials.email);
-            return null;
-          }
+          if (!user) return null;
 
           const passwordMatch = await bcrypt.compare(
             credentials.password,
             user.password,
           );
-
-          console.log("Password match:", passwordMatch);
 
           if (!passwordMatch) return null;
 
@@ -63,7 +51,6 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (user.role === "AGENCY_ADMIN" || user.role === "AGENCY_STAFF") {
-            console.log("Agency login approved:", user.role, "agency:", user.agencyId);
             return {
               id: user.id,
               email: user.email,
@@ -76,17 +63,9 @@ export const authOptions: NextAuthOptions = {
 
           if (user.role === "ADMIN") {
             if (credentials.tenantId && user.tenantId !== credentials.tenantId) {
-              console.log(
-                "Creator login blocked — tenant mismatch:",
-                "user.tenantId:",
-                user.tenantId,
-                "credential.tenantId:",
-                credentials.tenantId,
-              );
               return null;
             }
 
-            console.log("Creator login approved for tenant:", user.tenantId);
             return {
               id: user.id,
               email: user.email,
@@ -107,8 +86,11 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
   },
-  secret: secret || fallbackSecret,
+  jwt: {
+    maxAge: 7 * 24 * 60 * 60,
+  },
   pages: {
     signIn: "/admin/login",
   },

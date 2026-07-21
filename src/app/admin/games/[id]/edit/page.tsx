@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { GameService } from "@/services/games.service";
+import { prisma } from "@/lib/prisma";
 import { GameForm } from "../../_components/games-form";
 import { getTenantContext } from "@/lib/tenant";
 
@@ -13,7 +13,9 @@ export default async function EditGamePage({
 
   let game;
   try {
-    game = await GameService.findById(params.id, tenant.id);
+    game = await prisma.game.findUnique({
+      where: { id: params.id },
+    });
   } catch {
     notFound();
   }

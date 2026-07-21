@@ -4,9 +4,22 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { GameService } from "@/services/games.service";
+import { prisma } from "@/lib/prisma";
 import { GAMES_ROUTE } from "@/lib/constants";
 import { logAction } from "@/lib/audit";
+
+export type GameData = {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  description: string | null;
+  genre: string | null;
+  order: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  tenantId: string;
+};
 
 const gameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -32,9 +45,6 @@ export async function createGame(
   _prevState: GameActionState,
   formData: FormData,
 ): Promise<GameActionState> {
-  const raw = Object.fromEntries(formData);
-  console.log("🎮 createGame called with:", raw);
-
   const parsed = gameSchema.safeParse({
     name: formData.get("name"),
     logoUrl: formData.get("logoUrl"),
@@ -43,7 +53,6 @@ export async function createGame(
   });
 
   if (!parsed.success) {
-    console.log("🎮 createGame validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -52,18 +61,26 @@ export async function createGame(
 
   try {
     const tenantId = await requireAuth();
-    const result = await GameService.create(tenantId, {
-      name: parsed.data.name,
-      logoUrl: parsed.data.logoUrl || undefined,
-      description: parsed.data.description || undefined,
-      genre: parsed.data.genre || undefined,
+    const maxSort = await prisma.game.aggregate({
+      where: { tenantId },
+      _max: { order: true },
     });
-    console.log("🎮 createGame success:", result.id);
+
+    const result = await prisma.game.create({
+      data: {
+        tenantId,
+        name: parsed.data.name,
+        logoUrl: parsed.data.logoUrl || null,
+        description: parsed.data.description || null,
+        genre: parsed.data.genre || null,
+        order: (maxSort._max.order ?? 0) + 1,
+      },
+    });
+
     await logAction(tenantId, "createGame", { gameId: result.id, name: result.name });
     revalidatePath(GAMES_ROUTE);
     return { success: true };
-  } catch (error) {
-    console.error("🎮 createGame error:", error);
+  } catch {
     return { success: false, error: "Failed to create game" };
   }
 }
@@ -73,11 +90,8 @@ export async function updateGame(
   formData: FormData,
 ): Promise<GameActionState> {
   const id = formData.get("id") as string;
-  const raw = Object.fromEntries(formData);
-  console.log("🎮 updateGame called — id:", id, "data:", raw);
 
   if (!id) {
-    console.log("🎮 updateGame missing id");
     return { success: false, error: "Game ID is required" };
   }
 
@@ -89,7 +103,6 @@ export async function updateGame(
   });
 
   if (!parsed.success) {
-    console.log("🎮 updateGame validation failed:", parsed.error.flatten().fieldErrors);
     return {
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
@@ -98,33 +111,32 @@ export async function updateGame(
 
   try {
     const tenantId = await requireAuth();
-    await GameService.update(id, tenantId, {
-      name: parsed.data.name,
-      logoUrl: parsed.data.logoUrl || undefined,
-      description: parsed.data.description || undefined,
-      genre: parsed.data.genre || undefined,
+    await prisma.game.update({
+      where: { id },
+      data: {
+        name: parsed.data.name,
+        logoUrl: parsed.data.logoUrl || null,
+        description: parsed.data.description || null,
+        genre: parsed.data.genre || null,
+      },
     });
-    console.log("🎮 updateGame success — id:", id);
+
     await logAction(tenantId, "updateGame", { gameId: id });
     revalidatePath(GAMES_ROUTE);
     return { success: true };
-  } catch (error) {
-    console.error("🎮 updateGame error:", error);
+  } catch {
     return { success: false, error: "Failed to update game" };
   }
 }
 
 export async function deleteGame(id: string): Promise<GameActionState> {
-  console.log("🎮 deleteGame called — id:", id);
   try {
     const tenantId = await requireAuth();
-    await GameService.delete(id, tenantId);
-    console.log("🎮 deleteGame success — id:", id);
+    await prisma.game.delete({ where: { id } });
     await logAction(tenantId, "deleteGame", { gameId: id });
     revalidatePath(GAMES_ROUTE);
     return { success: true };
-  } catch (error) {
-    console.error("🎮 deleteGame error:", error);
+  } catch {
     return { success: false, error: "Failed to delete game" };
   }
 }

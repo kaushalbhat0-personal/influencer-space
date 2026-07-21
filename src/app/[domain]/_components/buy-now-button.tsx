@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { createCheckoutOrder, verifyPayment } from "@/actions/checkout.actions";
+import { createCheckout, verifyPayment } from "@/actions/checkout.actions";
 
 declare global {
   interface Window {
@@ -45,13 +45,11 @@ async function loadRazorpayScript(): Promise<boolean> {
 
 export function BuyNowButton({
   productId,
-  tenantId,
   productName,
   imageUrl,
   themeColor = "#00f5ff",
 }: {
   productId: string;
-  tenantId: string;
   productName: string;
   imageUrl?: string | null;
   themeColor?: string;
@@ -75,8 +73,8 @@ export function BuyNowButton({
       return;
     }
 
-    const result = await createCheckoutOrder(productId, tenantId);
-    if (!result.success || !result.orderId) {
+    const result = await createCheckout(productId, "");
+    if (!result.success || !result.razorpayOrderId) {
       showToast("error", result.error || "Failed to initiate payment");
       setLoading(false);
       return;
@@ -89,7 +87,7 @@ export function BuyNowButton({
       name: productName,
       description: `Purchase from ${productName}`,
       image: imageUrl || undefined,
-      order_id: result.orderId,
+      order_id: result.razorpayOrderId,
       handler: async function (response) {
         const vr = await verifyPayment(
           response.razorpay_order_id,

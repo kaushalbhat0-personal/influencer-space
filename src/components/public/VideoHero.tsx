@@ -54,7 +54,7 @@ export function VideoHero({ config, heroData }: VideoHeroProps) {
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30" />
 
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(45,27,105,0.2),_transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(45,27,105,0.2),transparent_70%)]" />
 
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-s8ul-cyan to-transparent opacity-50" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-s8ul-pink to-transparent opacity-50" />

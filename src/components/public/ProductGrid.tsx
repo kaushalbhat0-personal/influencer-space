@@ -35,12 +35,10 @@ function EmptyProducts() {
 export function ProductGrid({
   products,
   preview = false,
-  tenantId,
   themeColor = "#00f5ff",
 }: {
   products: PublicProductData[];
   preview?: boolean;
-  tenantId?: string;
   themeColor?: string;
 }) {
   if (products.length === 0) {
@@ -80,7 +78,6 @@ export function ProductGrid({
             ) : (
               <BuyNowButton
                 productId={product.id}
-                tenantId={tenantId!}
                 productName={product.name}
                 imageUrl={product.imageUrl}
                 themeColor={themeColor}

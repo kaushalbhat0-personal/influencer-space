@@ -1,6 +1,8 @@
 import { registryFacade } from "@/lib/registry/facade";
 import { platformBootstrap } from "@/lib/platform/bootstrap";
 import type { ModuleDefinition } from "@/lib/module/types";
+import { contentAPI } from "@/lib/content/api";
+import { productRegistration } from "@/lib/content/entities/product/manifest";
 import { heroModule } from "./hero/definition";
 import { productsModule } from "./products/definition";
 import {
@@ -47,7 +49,13 @@ export function registerAllModules(): {
   return { registered, failed };
 }
 
+function registerContentModules(): void {
+  contentAPI.registerModule(productRegistration);
+}
+
 platformBootstrap.onStartup(() => {
+  registerContentModules();
+
   const result = registerAllModules();
   console.log(
     `[Modules] Registered ${result.registered}/${PLATFORM_MODULES.length} platform modules` +

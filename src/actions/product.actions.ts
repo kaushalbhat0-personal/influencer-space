@@ -7,7 +7,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
 import { gateFeature } from "@/lib/feature-gate";
-
 const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(1000).optional().default(""),
@@ -239,5 +238,3 @@ export async function updateProductOrder(
     };
   }
 }
-
-

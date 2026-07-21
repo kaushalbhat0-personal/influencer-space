@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { GAMES_ROUTE } from "@/lib/constants";
 import { deleteGame } from "@/actions/games.actions";
-import type { GameData } from "@/services/games.service";
+import type { GameData } from "@/actions/games.actions";
 
 const rowVariants = {
   hidden: { opacity: 0, x: -20 },

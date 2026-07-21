@@ -5,9 +5,85 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── DESIGN TOKENS (CSS Custom Properties) ─────────────────────────── */
+
+:root {
+  --surface-root: #09090b;
+  --surface-base: #18181b;
+  --surface-raised: #27272a;
+  --surface-overlay: #3f3f46;
+  --surface-glass: rgba(9, 9, 11, 0.92);
+
+  --brand-primary: #6366F1;
+  --brand-secondary: #8B5CF6;
+  --brand-accent: #00F5FF;
+
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  --neon-cyan: #00F5FF;
+  --neon-pink: #FF00E5;
+  --neon-gold: #FFD700;
+  --neon-red: #FF0040;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  --focus-ring: 0 0 0 2px var(--surface-root), 0 0 0 4px var(--brand-primary);
+}
+
+/* ── ACCESSIBILITY ──────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── FOCUS RING ─────────────────────────────────────────────────────── */
+
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* ── BODY ───────────────────────────────────────────────────────────── */
+
 body {
   font-family: "Inter", sans-serif;
+  background-color: var(--surface-root);
+  color: #ffffff;
 }
+
+/* ── COMPONENT LAYER ────────────────────────────────────────────────── */
 
 @layer components {
   .admin-card {
@@ -38,7 +114,7 @@ body {
     @apply bg-gradient-to-br from-s8ul-cyan to-s8ul-purple;
   }
   .admin-gradient-text {
-    @apply bg-gradient-to-r from-s8ul-cyan to-s8ul-gold bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-[var(--neon-cyan)] to-s8ul-gold bg-clip-text text-transparent;
   }
   .admin-badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
@@ -75,23 +151,35 @@ body {
   }
 }
 
+/* ── UTILITY LAYER ──────────────────────────────────────────────────── */
+
 @layer utilities {
   .neon-cyan {
-    text-shadow: 0 0 7px #00f5ff, 0 0 10px #00f5ff, 0 0 21px #00f5ff;
+    text-shadow: 0 0 7px var(--neon-cyan), 0 0 10px var(--neon-cyan),
+      0 0 21px var(--neon-cyan);
   }
   .neon-pink {
-    text-shadow: 0 0 7px #ff00e5, 0 0 10px #ff00e5, 0 0 21px #ff00e5;
+    text-shadow: 0 0 7px var(--neon-pink), 0 0 10px var(--neon-pink),
+      0 0 21px var(--neon-pink);
   }
   .neon-gold {
-    text-shadow: 0 0 7px #FFD700, 0 0 10px #FFD700, 0 0 21px #FFD700;
+    text-shadow: 0 0 7px var(--neon-gold), 0 0 10px var(--neon-gold),
+      0 0 21px var(--neon-gold);
   }
   .glow-cyan {
-    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3), 0 0 30px rgba(0, 245, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3),
+      0 0 30px rgba(0, 245, 255, 0.1);
   }
   .glow-pink {
-    box-shadow: 0 0 15px rgba(255, 0, 229, 0.3), 0 0 30px rgba(255, 0, 229, 0.1);
+    box-shadow: 0 0 15px rgba(255, 0, 229, 0.3),
+      0 0 30px rgba(255, 0, 229, 0.1);
   }
   .glow-gold {
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), 0 0 30px rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3),
+      0 0 30px rgba(255, 215, 0, 0.1);
+  }
+  .glow-purple {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.3),
+      0 0 30px rgba(168, 85, 247, 0.1);
   }
 }

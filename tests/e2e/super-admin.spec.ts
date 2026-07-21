@@ -1,13 +1,52 @@
-import { test, expect } from "@playwright/test";
+/**
+ * Super Admin E2E Tests v1.0.0
+ */
 
-test("Super Admin can log in and view dashboard", async ({ page }) => {
-  await page.goto("http://localhost:3000/admin/login");
+import { test, expect } from "../fixtures/auth";
+import { SuperAdminDashboard } from "../pages/super-admin";
 
-  await page.fill('input[type="email"]', "superadmin@INFS.com");
-  await page.fill('input[type="password"]', "admin123");
-  await page.click('button:has-text("Sign in")');
+test.describe("Super Admin", () => {
+  test("Dashboard shows metrics", async ({ superAdminPage }) => {
+    const sa = new SuperAdminDashboard(superAdminPage);
+    await sa.goto();
+    await expect(superAdminPage.locator("h1")).toContainText(/Dashboard/);
+  });
 
-  await expect(page).toHaveURL(/\/super-admin/, { timeout: 10000 });
+  test("Has feature flags page", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/features");
+    await superAdminPage.waitForLoadState("networkidle");
+    const hasFeatures = await new SuperAdminDashboard(superAdminPage).hasFeatureFlags();
+    expect(hasFeatures).toBe(true);
+  });
 
-  await expect(page.locator("text=Active Creators")).toBeVisible({ timeout: 5000 });
+  test("Has audit log page", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/audit");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toContainText(/Audit/);
+  });
+
+  test("Has health monitoring page", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/health");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toContainText(/Health/);
+  });
+
+  test("Revenue page loads", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/revenue");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toContainText(/Revenue/);
+  });
+
+  test("Tenants page shows data", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/tenants");
+    await superAdminPage.waitForLoadState("networkidle");
+    const rows = await new SuperAdminDashboard(superAdminPage).getTenantCount();
+    expect(rows).toBeGreaterThan(0);
+  });
+
+  test("Agencies page loads", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/agencies");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toContainText(/Agencies/);
+  });
 });
