@@ -1,69 +1,11 @@
 import Link from "next/link";
 import { PricingCTA } from "@/components/marketing/pricing-cta";
-import {
-  Box,
-  Users,
-  SplitIcon as Split,
-  Palette,
-  Globe,
-  Zap,
-  Shield,
-  BarChart3,
-} from "lucide-react";
-
-const creatorFeatures = [
-  {
-    icon: Box,
-    title: "Sell Digital & Physical Products",
-    description:
-      "Upload courses, presets, merch, or PDFs. UPI, cards, net banking — your fans pay however they want, and you get paid instantly.",
-  },
-  {
-    icon: Zap,
-    title: "Dynamic Social Feeds",
-    description:
-      "Your YouTube videos and Instagram posts auto-sync to your storefront. No manual updates — your content stays fresh 24/7.",
-  },
-  {
-    icon: Globe,
-    title: "Custom Domain & White-Label",
-    description:
-      "Own your brand with a custom .in or .com domain. Free SSL, one-click setup. Your fans see your name, not ours.",
-  },
-  {
-    icon: BarChart3,
-    title: "Live Analytics Dashboard",
-    description:
-      "Track product sales, clicks, and fan engagement in real time. Know exactly what's working and double down.",
-  },
-];
-
-const agencyFeatures = [
-  {
-    icon: Users,
-    title: "Multi-Tenant Dashboard",
-    description:
-      "Manage all your creator clients from one unified dashboard. Switch between stores instantly — no logging in and out.",
-  },
-  {
-    icon: Split,
-    title: "Automated Revenue Splitting",
-    description:
-      "Razorpay Route handles the math. Every product sale auto-splits between you and your client. No spreadsheets, no chasing payments.",
-  },
-  {
-    icon: Palette,
-    title: "White-Label Themes",
-    description:
-      "Set a default theme for all your clients, or let each creator customize their own. Your agency brand, front and center.",
-  },
-  {
-    icon: Shield,
-    title: "Seat-Based Billing",
-    description:
-      "Pay only for the seats you need. Scale from 5 to unlimited creators. If a client leaves, free up the seat — no contract lock-in.",
-  },
-];
+import { MarketingNav } from "@/components/marketing/MarketingNav";
+import { HowItWorks } from "@/components/marketing/HowItWorks";
+import { CreatorFeatures } from "@/components/marketing/CreatorFeatures";
+import { AgencyFeatures } from "@/components/marketing/AgencyFeatures";
+import { StoreExamples } from "@/components/marketing/StoreExamples";
+import { WhyCreatorStore } from "@/components/marketing/WhyCreatorStore";
 
 const pricingPlans = [
   {
@@ -129,128 +71,142 @@ const pricingPlans = [
 
 export default function MarketingPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
-      {/* ─── Navigation ─── */}
-      <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-8">
-          <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-lg font-bold text-transparent font-display">
-            CreatorStore
-          </span>
-          <div className="flex items-center gap-4">
-            <Link href="/admin/login" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Sign In
-            </Link>
-            <Link
-              href="/admin/login"
-              className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-medium text-black transition-all hover:bg-s8ul-cyan/80"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
+      <MarketingNav />
 
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden px-4 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,245,255,0.12),transparent_60%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(168,85,247,0.08),transparent_50%)]" />
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-s8ul-cyan/20 bg-s8ul-cyan/10 px-4 py-1.5 text-xs font-medium text-s8ul-cyan">
-            🇮🇳 Built for Indian Creators &amp; Agencies
-          </div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl font-display">
-            Build the Ultimate{" "}
-            <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
-              Creator Storefront
-            </span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base text-zinc-400 sm:text-lg">
-            Whether you&apos;re a solo creator selling merch, or an agency building
-            Shopify-like stores for 20 clients — we handle the billing, the
-            routing, and the revenue splitting so you can focus on building.
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link
-              href="/admin/login"
-              className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-s8ul-cyan to-s8ul-pink px-8 py-3.5 text-sm font-bold text-black transition-all hover:shadow-[0_0_30px_rgba(0,245,255,0.4)] sm:w-auto"
-            >
-              Start Building Free
-            </Link>
-            <Link
-              href="#pricing"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-8 py-3.5 text-sm font-medium text-zinc-300 backdrop-blur-sm transition-all hover:bg-white/10 sm:w-auto"
-            >
-              See Plans
-            </Link>
-          </div>
-          <p className="mt-4 text-xs text-zinc-600">
-            Solo: ₹0/mo · 10% fee · Agency: ₹1,999/mo · 5 seats · No contracts · Cancel anytime
-          </p>
-        </div>
-      </section>
-
-      {/* ─── For Creators ─── */}
-      <section className="relative px-4 py-20 sm:px-8 sm:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              For{" "}
-              <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent">
-                Solo Creators
-              </span>
-            </h2>
-            <p className="mt-3 text-zinc-500">
-              YouTubers, Instagrammers, streamers, educators — sell products, sync socials, own your brand.
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {creatorFeatures.map((feat) => (
-              <div
-                key={feat.title}
-                className="group rounded-2xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-sm transition-all hover:border-s8ul-cyan/20 hover:bg-zinc-900/80"
-              >
-                <div className="mb-4 inline-flex rounded-xl bg-s8ul-cyan/10 p-3 text-s8ul-cyan">
-                  <feat.icon className="h-6 w-6" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{feat.title}</h3>
-                <p className="text-sm leading-relaxed text-zinc-400">{feat.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── For Agencies ─── */}
-      <section className="relative px-4 py-20 sm:px-8 sm:py-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.06),transparent_60%)]" />
+      <section className="relative overflow-hidden px-4 pt-32 pb-20 sm:px-8 sm:pt-44 sm:pb-32">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(139,92,246,0.05),transparent_50%)]" />
         <div className="relative mx-auto max-w-7xl">
-          <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold font-display sm:text-4xl">
-              For{" "}
-              <span className="bg-gradient-to-r from-purple-400 to-s8ul-cyan bg-clip-text text-transparent">
-                Agencies &amp; Coders
-              </span>
-            </h2>
-            <p className="mt-3 text-zinc-500">
-              Build stores for your clients. Manage everything from one dashboard. Earn automated revenue share.
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {agencyFeatures.map((feat) => (
-              <div
-                key={feat.title}
-                className="group rounded-2xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-sm transition-all hover:border-purple-500/20 hover:bg-zinc-900/80"
-              >
-                <div className="mb-4 inline-flex rounded-xl bg-purple-500/10 p-3 text-purple-400">
-                  <feat.icon className="h-6 w-6" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{feat.title}</h3>
-                <p className="text-sm leading-relaxed text-zinc-400">{feat.description}</p>
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+            {/* Left — Copy */}
+            <div>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-400">
+                AI-Powered Creator Platform
               </div>
-            ))}
+              <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+                Your content built<br />
+                the audience.
+                <br />
+                <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+                  We build the business.
+                </span>
+              </h1>
+              <p className="mt-5 max-w-lg text-base text-zinc-400 sm:text-lg leading-relaxed">
+                Paste your YouTube or Instagram link. CreatorStore builds your
+                storefront, products, gallery, and checkout — ready to sell in
+                under two minutes.
+              </p>
+              <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+                <Link
+                  href="/signup"
+                  className="btn-primary px-8 py-3.5 text-sm"
+                >
+                  Start Free
+                </Link>
+                <Link
+                  href="#features"
+                  className="btn-secondary px-8 py-3.5 text-sm"
+                >
+                  See how it works
+                </Link>
+              </div>
+              <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-3.5 w-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  No credit card required
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-3.5 w-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  AI-powered
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-3.5 w-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  2-minute setup
+                </span>
+              </div>
+            </div>
+
+            {/* Right — Product Preview */}
+            <div className="hidden lg:block">
+              <div className="relative rounded-2xl border border-white/[0.08] bg-[var(--surface-base)] p-4 shadow-2xl">
+                {/* Browser chrome */}
+                <div className="flex items-center gap-1.5 mb-3 pb-3 border-b border-white/[0.06]">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
+                  <span className="ml-3 text-[10px] text-zinc-600 font-medium">creator.creatorspace.app</span>
+                </div>
+
+                {/* AI Pipeline visual */}
+                <div className="space-y-3">
+                  {/* URL input */}
+                  <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[var(--surface-root)] px-3 py-2.5">
+                    <svg className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                    <span className="text-xs text-zinc-600">youtube.com/@creator</span>
+                    <span className="ml-auto rounded bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400">Analyze</span>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="h-4 w-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                  </div>
+
+                  {/* AI Analysis */}
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse-warm" />
+                      <span className="text-[10px] font-medium text-amber-400">AI Analysis</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="h-1.5 rounded bg-amber-500/20 w-3/4" />
+                      <div className="h-1.5 rounded bg-amber-500/10 w-2/3" />
+                      <div className="h-1.5 rounded bg-amber-500/20 w-1/2" />
+                      <div className="h-1.5 rounded bg-amber-500/10 w-3/4" />
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="h-4 w-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                  </div>
+
+                  {/* Generated Website */}
+                  <div className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="h-3 w-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      <span className="text-[10px] font-medium text-emerald-400">Website Ready</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="h-5 rounded bg-indigo-500/20 flex items-center px-2">
+                        <span className="text-[10px] text-indigo-400 font-medium">Creator Store</span>
+                      </div>
+                      <div className="h-2 rounded bg-white/[0.06] w-3/4" />
+                      <div className="h-2 rounded bg-white/[0.06] w-1/2" />
+                      <div className="grid grid-cols-3 gap-1.5 mt-2">
+                        <div className="h-8 rounded bg-white/[0.04]" />
+                        <div className="h-8 rounded bg-white/[0.04]" />
+                        <div className="h-8 rounded bg-white/[0.04]" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      <HowItWorks />
+
+      <CreatorFeatures />
+
+      <AgencyFeatures />
+
+      <StoreExamples />
+
+      <WhyCreatorStore />
 
       {/* ─── Pricing ─── */}
       <section id="pricing" className="relative px-4 py-20 sm:px-8 sm:py-28">

@@ -13,7 +13,8 @@ describe("Fitness: Design Token Compliance", () => {
     const css = fs.readFileSync("src/app/globals.css", "utf-8");
     expect(css).toContain("--surface-root");
     expect(css).toContain("--brand-primary");
-    expect(css).toContain("--neon-cyan");
+    expect(css).toContain("--brand-secondary");
+    expect(css).toContain("--brand-accent");
     expect(css).toContain("--focus-ring");
   });
 });

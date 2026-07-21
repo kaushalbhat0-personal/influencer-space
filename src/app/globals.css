@@ -1,5 +1,4 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -8,25 +7,20 @@
 /* ── DESIGN TOKENS (CSS Custom Properties) ─────────────────────────── */
 
 :root {
-  --surface-root: #09090b;
-  --surface-base: #18181b;
-  --surface-raised: #27272a;
-  --surface-overlay: #3f3f46;
-  --surface-glass: rgba(9, 9, 11, 0.92);
+  --surface-root: #0A0A0B;
+  --surface-base: #18181B;
+  --surface-raised: #27272A;
+  --surface-overlay: #3F3F46;
+  --surface-glass: rgba(10, 10, 11, 0.88);
 
   --brand-primary: #6366F1;
   --brand-secondary: #8B5CF6;
-  --brand-accent: #00F5FF;
+  --brand-accent: #F59E0B;
 
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
   --color-info: #3B82F6;
-
-  --neon-cyan: #00F5FF;
-  --neon-pink: #FF00E5;
-  --neon-gold: #FFD700;
-  --neon-red: #FF0040;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -87,65 +81,110 @@ body {
 
 @layer components {
   .admin-card {
-    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-md;
+    @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm;
   }
+
   .admin-card-hover {
-    @apply admin-card transition-all duration-300 hover:border-s8ul-cyan/30 hover:shadow-[0_0_30px_rgba(0,245,255,0.15)];
+    @apply admin-card transition-all duration-300 hover:border-indigo-400/30;
   }
+
   .admin-table {
     @apply w-full;
   }
+
   .admin-table th {
-    @apply bg-white/5 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400;
+    @apply bg-white/5 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400;
   }
+
   .admin-table td {
     @apply border-t border-white/5 px-4 py-4 text-sm;
   }
+
   .admin-table tbody tr {
     @apply transition-colors duration-150;
   }
+
   .admin-table tbody tr:nth-child(even) {
     @apply bg-white/[0.02];
   }
+
   .admin-table tbody tr:hover {
-    @apply bg-s8ul-cyan/5;
+    @apply bg-indigo-500/5;
   }
+
+  /* Gradient utilities */
   .admin-gradient {
-    @apply bg-gradient-to-br from-s8ul-cyan to-s8ul-purple;
+    @apply bg-gradient-to-br from-indigo-500 to-violet-500;
   }
+
   .admin-gradient-text {
-    @apply bg-gradient-to-r from-[var(--neon-cyan)] to-s8ul-gold bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent;
   }
+
+  /* Badges */
   .admin-badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
+
   .admin-badge-active {
-    @apply admin-badge bg-green-500/20 text-green-400;
+    @apply admin-badge bg-emerald-500/20 text-emerald-400;
   }
+
   .admin-badge-inactive {
-    @apply admin-badge bg-gray-500/20 text-gray-400;
+    @apply admin-badge bg-zinc-800 text-zinc-400;
   }
+
   .admin-badge-gold {
     @apply admin-badge bg-amber-500/20 text-amber-400;
   }
+
   .admin-badge-cyan {
-    @apply admin-badge bg-s8ul-cyan/20 text-s8ul-cyan;
+    @apply admin-badge bg-indigo-500/20 text-indigo-400;
   }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_30px_rgba(99,102,241,0.25)] disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:border-indigo-400/40 hover:bg-white/5;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 transition-all duration-200 hover:bg-white/5 hover:text-white;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-lg bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-400 transition-all duration-200 hover:bg-red-500/30 disabled:opacity-50;
+  }
+
+  .btn-ai {
+    @apply inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-amber-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)] disabled:opacity-50;
+  }
+
+  /* Legacy button aliases — maps old class names to new design */
   .admin-btn-cyan {
-    @apply inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black transition-all duration-200 hover:bg-s8ul-cyan/80 hover:shadow-[0_0_20px_rgba(0,245,255,0.3)] disabled:opacity-50;
+    @apply btn-primary;
   }
+
   .admin-btn-outline {
-    @apply inline-flex items-center justify-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:border-s8ul-cyan/50 hover:bg-white/5;
+    @apply btn-secondary;
   }
+
   .admin-btn-danger {
-    @apply inline-flex items-center justify-center rounded-lg bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-400 transition-all duration-200 hover:bg-red-500/30 hover:shadow-[0_0_20px_rgba(255,0,64,0.2)] disabled:opacity-50;
+    @apply btn-danger;
   }
+
   .admin-btn-gold {
-    @apply inline-flex items-center justify-center rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-400 transition-all duration-200 hover:bg-amber-500/30 hover:shadow-[0_0_20px_rgba(255,215,0,0.2)] disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-400 transition-all duration-200 hover:bg-amber-500/30 disabled:opacity-50;
   }
+
+  /* Inputs */
   .admin-input {
-    @apply block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 transition-all duration-200 focus:border-s8ul-cyan focus:outline-none focus:ring-2 focus:ring-s8ul-cyan/30;
+    @apply block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30;
   }
+
   .admin-select {
     @apply admin-input appearance-none;
   }
@@ -154,32 +193,25 @@ body {
 /* ── UTILITY LAYER ──────────────────────────────────────────────────── */
 
 @layer utilities {
-  .neon-cyan {
-    text-shadow: 0 0 7px var(--neon-cyan), 0 0 10px var(--neon-cyan),
-      0 0 21px var(--neon-cyan);
+  /* Glow utilities — only 2 variants allowed */
+  .glow-brand {
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.2), 0 0 40px rgba(99, 102, 241, 0.08);
   }
-  .neon-pink {
-    text-shadow: 0 0 7px var(--neon-pink), 0 0 10px var(--neon-pink),
-      0 0 21px var(--neon-pink);
+
+  .glow-ai {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2), 0 0 40px rgba(245, 158, 11, 0.08);
   }
-  .neon-gold {
-    text-shadow: 0 0 7px var(--neon-gold), 0 0 10px var(--neon-gold),
-      0 0 21px var(--neon-gold);
-  }
-  .glow-cyan {
-    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3),
-      0 0 30px rgba(0, 245, 255, 0.1);
-  }
-  .glow-pink {
-    box-shadow: 0 0 15px rgba(255, 0, 229, 0.3),
-      0 0 30px rgba(255, 0, 229, 0.1);
-  }
-  .glow-gold {
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3),
-      0 0 30px rgba(255, 215, 0, 0.1);
-  }
-  .glow-purple {
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.3),
-      0 0 30px rgba(168, 85, 247, 0.1);
-  }
+
+  /* Legacy glow aliases — maps old class names to new design */
+  .glow-cyan { box-shadow: 0 0 15px rgba(99, 102, 241, 0.2), 0 0 30px rgba(99, 102, 241, 0.08); }
+  .glow-pink { box-shadow: 0 0 15px rgba(139, 92, 246, 0.2), 0 0 30px rgba(139, 92, 246, 0.08); }
+  .glow-gold { box-shadow: 0 0 15px rgba(245, 158, 11, 0.2), 0 0 30px rgba(245, 158, 11, 0.08); }
+  .glow-purple { box-shadow: 0 0 15px rgba(139, 92, 246, 0.2), 0 0 30px rgba(139, 92, 246, 0.08); }
+
+  /* Neon text shadows — preserved as no-op aliases for legacy classes.
+     The gaming neon text-shadow aesthetic is deprecated but classes remain
+     so existing components don't break during migration. */
+  .neon-cyan { }
+  .neon-pink { }
+  .neon-gold { }
 }
