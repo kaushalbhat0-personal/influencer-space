@@ -1,10 +1,16 @@
 import type { IntelligenceEngine } from "./interface";
 import { HeuristicIntelligenceEngine } from "./heuristic";
+import { LlmIntelligenceEngine } from "./llm-engine";
 
-// Register available engines. Future: add LLMIntelligenceEngine here.
-const engines: IntelligenceEngine[] = [
-  new HeuristicIntelligenceEngine(),
-];
+const engines: IntelligenceEngine[] = [];
+
+// Register engines in priority order
+// LLM engine is primary if OPENAI_API_KEY is set, otherwise heuristic
+const openAiKey = typeof process !== "undefined" ? process.env.OPENAI_API_KEY : undefined;
+if (openAiKey) {
+  engines.push(new LlmIntelligenceEngine({ fallbackOnFailure: true }));
+}
+engines.push(new HeuristicIntelligenceEngine());
 
 /**
  * AI Analysis Engine — Facade over all registered IntelligenceEngines.
