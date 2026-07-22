@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getPublicPageData } from "@/services/public.service";
 import { themeAdapter } from "@/lib/compatibility";
 import { buildStorefrontMetadata, buildStorefrontJsonLd } from "@/lib/storefront/metadata";
+import { buildStorefrontUrl } from "@/lib/config/platform";
 import { sectionRegistry } from "@/lib/storefront";
 import { HeroBanner } from "./_components/hero-banner";
 import { ContentFeed } from "@/components/public/ContentFeed";
@@ -85,10 +86,14 @@ async function getPageData(slug: string): Promise<{ tenantId: string; data: Publ
   return { tenantId: tenant.id, data: await getPublicPageData(tenant.id) };
 }
 
+function getCanonicalUrl(slug: string): string {
+  return slug.includes(".") ? `https://${slug}` : buildStorefrontUrl(slug);
+}
+
 export async function generateMetadata({ params }: { params: { domain: string } }): Promise<Metadata> {
   const pd = await getPageData(params.domain);
   if (!pd) return {};
-  return buildStorefrontMetadata(pd.data, params.domain);
+  return buildStorefrontMetadata(pd.data, getCanonicalUrl(params.domain));
 }
 
 export default async function PublicPage({ params }: { params: { domain: string } }) {
@@ -98,7 +103,8 @@ export default async function PublicPage({ params }: { params: { domain: string 
   const { tenantId, data } = pd;
   const { profile, hero } = data;
   const colors = themeAdapter.getColors();
-  const { profileLd, productListLd } = buildStorefrontJsonLd(data, params.domain);
+  const canonicalUrl = getCanonicalUrl(params.domain);
+  const { profileLd, productListLd } = buildStorefrontJsonLd(data, canonicalUrl);
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white" style={{ "--accent": colors.accent, "--primary": colors.primary, "--secondary": colors.secondary, "--brand-primary": colors.primary, "--brand-secondary": colors.secondary, "--brand-accent": colors.accent, "--brand-bg": colors.background, "--brand-text": colors.text } as React.CSSProperties}>

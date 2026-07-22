@@ -8,11 +8,11 @@
 import type { Metadata } from "next";
 import type { PublicPageData } from "@/services/public.service";
 
-export function buildStorefrontMetadata(data: PublicPageData, domain: string): Metadata {
+export function buildStorefrontMetadata(data: PublicPageData, canonicalUrl: string): Metadata {
   const { profile } = data;
   const title = profile.name ? `${profile.name} — CreatorStore` : "CreatorStore";
   const description = profile.tagline || profile.bio || "Creator profile on CreatorStore";
-  const canonical = `https://${domain}`;
+  const canonical = canonicalUrl.startsWith("http") ? canonicalUrl : `https://${canonicalUrl}`;
 
   return {
     title,
@@ -38,7 +38,7 @@ export function buildStorefrontMetadata(data: PublicPageData, domain: string): M
   };
 }
 
-export function buildStorefrontJsonLd(data: PublicPageData, domain: string) {
+export function buildStorefrontJsonLd(data: PublicPageData, canonicalUrl: string) {
   const { profile, products } = data;
 
   const sameAs = [
@@ -55,7 +55,7 @@ export function buildStorefrontJsonLd(data: PublicPageData, domain: string) {
     description: profile.tagline || profile.bio || undefined,
     ...(profile.profileImage && { image: profile.profileImage }),
     ...(sameAs.length > 0 && { sameAs }),
-    url: `https://${domain}`,
+    url: canonicalUrl,
   };
 
   let productListLd = null;
