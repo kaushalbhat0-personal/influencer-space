@@ -18,9 +18,31 @@ export class BuilderStore {
     this.state = this.createInitialState();
   }
 
+  private createDefaultPage(): BuilderPage {
+    const pageId = `page_${uid()}`;
+    const sections: BuilderSection[] = [
+      {
+        id: `sec_${uid()}`, name: "Hero", order: 0, visible: true, locked: false,
+        slots: [
+          { id: `slot_${uid()}`, moduleId: "hero.default", parentId: null, order: 0, visible: true, locked: false, config: {}, metadata: {} },
+        ],
+        metadata: {},
+      },
+      {
+        id: `sec_${uid()}`, name: "About", order: 1, visible: true, locked: false,
+        slots: [
+          { id: `slot_${uid()}`, moduleId: "about.default", parentId: null, order: 0, visible: true, locked: false, config: {}, metadata: {} },
+        ],
+        metadata: {},
+      },
+    ];
+    return { id: pageId, name: "Home", slug: "/", order: 0, isHome: true, sections, theme: "default", metadata: {} };
+  }
+
   private createInitialState(): BuilderState {
+    const defaultPage = this.createDefaultPage();
     return {
-      canvas: { pages: [], activePageId: null, selectedElementIds: new Set(), hoveredElementId: null, focusedElementId: null, zoom: 1, device: "desktop" },
+      canvas: { pages: [defaultPage], activePageId: defaultPage.id, selectedElementIds: new Set(), hoveredElementId: null, focusedElementId: null, zoom: 1, device: "desktop" },
       selection: { selectedIds: new Set(), mode: "single", anchorId: null, focusId: null, groupId: null },
       drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null },
       clipboard: [],
