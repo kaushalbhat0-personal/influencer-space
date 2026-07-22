@@ -4,7 +4,6 @@ import { randomBytes } from "crypto";
 import { tenantSlugService } from "@/lib/slug/tenant-slug.service";
 import { buildStorefrontUrl, buildDashboardUrl, buildAdminEmail } from "@/lib/config/platform";
 import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./provisioning-state";
-import type { Prisma } from "@/generated/prisma/client";
 
 export interface ProvisioningInput {
   creatorName: string;
@@ -110,89 +109,67 @@ export class ProvisioningService {
     await this.logEvent(runId, ProvisionStep.PROVISIONING, ProvisionEventType.STARTED, "Starting resource provisioning");
 
     try {
-      // ── TRANSACTION: only core DB writes ────────────────────────────────
-      const result = await prisma.$transaction(async (tx) => {
-        const tenant = await tx.tenant.create({
-          data: { name: creatorName, subdomain: slug },
-        });
-
-        const settingUpsert = (key: string, value: Prisma.InputJsonValue) =>
-          tx.setting.upsert({
-            where: { tenantId_key: { tenantId: tenant.id, key } },
-            create: { tenantId: tenant.id, key, value },
-            update: { value },
-          });
-
-        await settingUpsert("brand_config", {
-          name: creatorName,
-          tagline: input.generatedContent?.tagline || "",
-          bio: input.generatedContent?.aboutSection || "",
-          heroTitle: input.generatedContent?.heroTitle || creatorName,
-          aboutText: input.generatedContent?.aboutSection || "",
-          palette: {
-            primary: input.generatedTheme?.colors?.primary || "#6366f1",
-            secondary: input.generatedTheme?.colors?.secondary || "#a78bfa",
-          },
-        } as Prisma.InputJsonValue);
-
-        await settingUpsert("seo", {
-          title: input.generatedContent?.seoTitle || creatorName,
-          description: input.generatedContent?.seoDescription || "",
-        } as Prisma.InputJsonValue);
-
-        await settingUpsert("influencer_data", {
-          name: creatorName,
-          source: input.sourcePlatform || "manual",
-          sourceUrl: input.sourceUrl || "",
-          tagline: input.generatedContent?.tagline || "",
-          bio: input.generatedContent?.aboutSection || "",
-        } as Prisma.InputJsonValue);
-
-        await settingUpsert("hero_data", {
-          title: input.generatedContent?.heroTitle || creatorName,
-          subtitle: input.generatedContent?.heroSubtitle || "",
-          tagline: input.generatedContent?.tagline || "",
-          videoUrl: "",
-        } as Prisma.InputJsonValue);
-
-        await settingUpsert("provisioning_meta", {
-          templateId: input.templateId || null,
-          strategyId: input.strategyId || null,
-          sourcePlatform: input.sourcePlatform || "manual",
-          sourceUrl: input.sourceUrl || "",
-          provisionedAt: new Date().toISOString(),
-        } as Prisma.InputJsonValue);
-
-        const adminEmail = buildAdminEmail(slug);
-
-        await tx.user.create({
-          data: {
-            tenantId: tenant.id,
-            name: creatorName,
-            email: adminEmail,
-            password: hashedPassword,
-            role: "ADMIN",
-          },
-        });
-
-        await tx.setting.upsert({
-          where: { tenantId_key: { tenantId: tenant.id, key: "demo_metadata" } },
-          create: {
-            tenantId: tenant.id, key: "demo_metadata",
-            value: { published: true, publishedAt: new Date().toISOString(), provisionedBy: "creator-import" } as Prisma.InputJsonValue,
-          },
-          update: {
-            value: { published: true, publishedAt: new Date().toISOString(), provisionedBy: "creator-import" } as Prisma.InputJsonValue,
-          },
-        });
-
-        return { tenantId: tenant.id, slug, adminEmail };
+      // ── TRANSACTION: single raw SQL query (1 round trip) ────────────────
+      const adminEmail = buildAdminEmail(slug);
+      const brandConfigJson = JSON.stringify({
+        name: creatorName,
+        tagline: input.generatedContent?.tagline || "",
+        bio: input.generatedContent?.aboutSection || "",
+        heroTitle: input.generatedContent?.heroTitle || creatorName,
+        aboutText: input.generatedContent?.aboutSection || "",
+        palette: {
+          primary: input.generatedTheme?.colors?.primary || "#6366f1",
+          secondary: input.generatedTheme?.colors?.secondary || "#a78bfa",
+        },
       });
+      const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || creatorName, description: input.generatedContent?.seoDescription || "" });
+      const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || "", bio: input.generatedContent?.aboutSection || "" });
+      const heroJson = JSON.stringify({ title: input.generatedContent?.heroTitle || creatorName, subtitle: input.generatedContent?.heroSubtitle || "", tagline: input.generatedContent?.tagline || "", videoUrl: "" });
+      const metaJson = JSON.stringify({ templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() });
+      const demoMetaJson = JSON.stringify({ published: true, publishedAt: new Date().toISOString(), provisionedBy: "creator-import" });
+
+      const [rawResult] = await prisma.$queryRawUnsafe<{ tenant_id: string }[]>(
+        `WITH t AS (
+          INSERT INTO "Tenant" ("name", "subdomain", "createdAt", "updatedAt")
+          VALUES ($1, $2, NOW(), NOW())
+          RETURNING id
+        ), s AS (
+          INSERT INTO "Setting" ("id", "tenantId", "key", "value", "updatedAt")
+          SELECT gen_random_uuid(), t.id, v.key, v.value::jsonb, NOW()
+          FROM t, (VALUES
+            ('brand_config', $3::jsonb),
+            ('seo', $4::jsonb),
+            ('influencer_data', $5::jsonb),
+            ('hero_data', $6::jsonb),
+            ('provisioning_meta', $7::jsonb),
+            ('demo_metadata', $8::jsonb)
+          ) AS v(key, value)
+        )
+        INSERT INTO "User" ("id", "tenantId", "name", "email", "password", "role", "createdAt", "updatedAt")
+        SELECT gen_random_uuid(), t.id, $9, $10, $11, CAST($12 AS "public"."Role"), NOW(), NOW()
+        FROM t
+        RETURNING (SELECT id FROM t) as tenant_id;`,
+        creatorName,
+        slug,
+        brandConfigJson,
+        seoJson,
+        influencerJson,
+        heroJson,
+        metaJson,
+        demoMetaJson,
+        creatorName,
+        adminEmail,
+        hashedPassword,
+        "ADMIN"
+      );
+
+      const tenantId = rawResult?.tenant_id;
+      if (!tenantId) throw new Error("Failed to create tenant");
 
       // ── AFTER TRANSACTION: events, URLs, cleanup ────────────────────────
       await this.logEvent(runId, ProvisionStep.TENANT_CREATED, ProvisionEventType.COMPLETED, `Tenant "${slug}" created`);
       await this.logEvent(runId, ProvisionStep.WORKSPACE_CREATED, ProvisionEventType.COMPLETED, "Workspace settings configured");
-      await this.logEvent(runId, ProvisionStep.ADMIN_CREATED, ProvisionEventType.COMPLETED, `Admin ${result.adminEmail} created`);
+      await this.logEvent(runId, ProvisionStep.ADMIN_CREATED, ProvisionEventType.COMPLETED, `Admin ${adminEmail} created`);
       await this.logEvent(runId, ProvisionStep.WEBSITE_CREATED, ProvisionEventType.COMPLETED, "Website provisioned");
       await this.logEvent(runId, ProvisionStep.PUBLISHED, ProvisionEventType.COMPLETED, "Storefront published");
       await this.logEvent(runId, ProvisionStep.READY, ProvisionEventType.COMPLETED, "All resources ready");
@@ -203,18 +180,18 @@ export class ProvisioningService {
       const elapsed = await this.completeRun(runId, ProvisionStep.READY, null);
       await prisma.creatorProvisionRun.update({
         where: { id: runId },
-        data: { tenantId: result.tenantId, tenantSlug: slug, durationMs: elapsed ?? undefined },
+        data: { tenantId, tenantSlug: slug, durationMs: elapsed ?? undefined },
       });
 
       return {
         success: true,
-        tenantId: result.tenantId,
+        tenantId,
         tenantSlug: slug,
-        workspaceId: result.tenantId,
-        websiteId: result.tenantId,
+        workspaceId: tenantId,
+        websiteId: tenantId,
         storefrontUrl,
         dashboardUrl,
-        adminEmail: result.adminEmail,
+        adminEmail,
         temporaryPassword: tempPassword,
         websiteStatus: "published",
         tenantStatus: "active",
