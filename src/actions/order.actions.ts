@@ -11,7 +11,7 @@ export type OrderRow = {
   status: string;
   fanEmail: string | null;
   razorpayOrderId: string;
-  createdAt: Date;
+  createdAt: string;
 };
 
 async function requireTenant(): Promise<string> {
@@ -37,7 +37,7 @@ export async function fetchOrders(tenantId: string): Promise<OrderRow[]> {
     status: o.status,
     fanEmail: o.fanEmail,
     razorpayOrderId: o.razorpayOrderId,
-    createdAt: o.createdAt,
+    createdAt: o.createdAt.toISOString(),
   }));
 }
 

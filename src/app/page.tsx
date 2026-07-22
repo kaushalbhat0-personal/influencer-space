@@ -6,8 +6,28 @@ import { AgencyFeatures } from "@/components/marketing/AgencyFeatures";
 import { StoreExamples } from "@/components/marketing/StoreExamples";
 import { WhyCreatorStore } from "@/components/marketing/WhyCreatorStore";
 import { Pricing } from "@/components/marketing/Pricing";
+import { showcaseService } from "@/lib/showcase/service";
+import type { StoreExample } from "@/components/marketing/StoreExamples/data";
 
-export default function MarketingPage() {
+export const dynamic = "force-dynamic";
+
+const GRADIENTS = ["from-indigo-900 via-zinc-900 to-zinc-950", "from-emerald-900 via-zinc-900 to-zinc-950", "from-blue-900 via-zinc-900 to-zinc-950", "from-violet-900 via-zinc-900 to-zinc-950", "from-amber-900 via-zinc-900 to-zinc-950", "from-rose-900 via-zinc-900 to-zinc-950"];
+
+async function getDemoStoreExamples(): Promise<StoreExample[]> {
+  try {
+    const sites = await showcaseService.getPublished();
+    if (sites.length === 0) return [];
+    return sites.slice(0, 6).map((s, i) => ({
+      id: s.id, name: s.name, category: s.category, description: s.description,
+      placeholder: GRADIENTS[i % GRADIENTS.length],
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export default async function MarketingPage() {
+  const demoExamples = await getDemoStoreExamples();
   return (
     <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
       <MarketingNav />
@@ -142,7 +162,7 @@ export default function MarketingPage() {
 
       <AgencyFeatures />
 
-      <StoreExamples />
+      <StoreExamples demos={demoExamples.length > 0 ? demoExamples : undefined} />
 
       <WhyCreatorStore />
 

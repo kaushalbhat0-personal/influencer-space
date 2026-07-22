@@ -4,7 +4,7 @@ import { DataTable } from "@/components/data/DataTable";
 import { BillingStatusBadge } from "@/components/admin/BillingStatusBadge";
 import type { Column } from "@/components/data/DataTable";
 
-interface PaymentRow { id: string; product: string; amount: number; status: string; fanEmail: string | null; createdAt: Date; }
+interface PaymentRow { id: string; product: string; amount: number; status: string; fanEmail: string | null; createdAt: string; }
 
 const columns: Column<PaymentRow>[] = [
   { key: "product", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.product}</span> },

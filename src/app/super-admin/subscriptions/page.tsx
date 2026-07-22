@@ -11,7 +11,7 @@ interface SubscriptionRow {
   tenantName: string;
   plan: string;
   status: string;
-  currentPeriodEnd: Date | null;
+  currentPeriodEnd: string | null;
 }
 
 const columns: Column<SubscriptionRow>[] = [
@@ -38,7 +38,7 @@ export default async function SubscriptionsPage() {
       tenantName: s.tenant?.name ?? "Unknown",
       plan: s.plan,
       status: s.status === "FREE" ? "FREE" : "ACTIVE",
-      currentPeriodEnd: s.currentPeriodEnd,
+      currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,
     }));
   } catch { /* empty */ }
 

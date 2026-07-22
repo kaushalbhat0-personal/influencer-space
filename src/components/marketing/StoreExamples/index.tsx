@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { EXAMPLES } from "./data";
+import type { StoreExample } from "./data";
 import { ExternalLink } from "lucide-react";
 
-export function StoreExamples() {
+export function StoreExamples({ demos }: { demos?: StoreExample[] }) {
+  const examples = (demos && demos.length > 0) ? demos : EXAMPLES;
   return (
     <section className="relative px-4 py-20 sm:px-8 sm:py-28">
       <div className="mx-auto max-w-7xl">
@@ -19,7 +21,7 @@ export function StoreExamples() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {EXAMPLES.map((example) => (
+          {examples.map((example) => (
             <div
               key={example.id}
               className="group rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/50 overflow-hidden transition-all hover:border-white/[0.12] hover:shadow-xl hover:shadow-black/20 cursor-default"

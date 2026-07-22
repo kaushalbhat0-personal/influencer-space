@@ -4,7 +4,7 @@ import type { Column } from "@/components/data/DataTable";
 
 export const dynamic = "force-dynamic";
 
-interface WebhookRow { id: string; action: string; metadata: string; createdAt: Date; }
+interface WebhookRow { id: string; action: string; metadata: string; createdAt: string; }
 
 export default async function WebhooksPage() {
   let hooks: WebhookRow[] = [];
@@ -16,7 +16,7 @@ export default async function WebhooksPage() {
     hooks = raw.map((a) => ({
       id: a.id, action: a.action,
       metadata: JSON.stringify(a.metadata).slice(0, 80),
-      createdAt: a.createdAt,
+      createdAt: a.createdAt.toISOString(),
     }));
   } catch { /* */ }
 

@@ -9,7 +9,7 @@ export default async function UsersPage() {
     select: { id: true, name: true, email: true, role: true, tenant: { select: { name: true } }, createdAt: true },
     orderBy: { createdAt: "desc" }, take: 200,
   });
-  const users = raw.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, tenantName: u.tenant?.name ?? null, createdAt: u.createdAt }));
+  const users = raw.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, tenantName: u.tenant?.name ?? null, createdAt: u.createdAt.toISOString() }));
 
   const roleCounts = {
     super_admin: users.filter((u) => u.role === "SUPER_ADMIN").length,

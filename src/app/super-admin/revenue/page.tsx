@@ -23,7 +23,7 @@ export default async function RevenuePage() {
   const proCount = subData.filter((s) => s.plan === "PRO").length;
   const mrr = proCount * 999;
 
-  interface PaymentRow { id: string; productName: string; amount: number; status: string; createdAt: Date; }
+  interface PaymentRow { id: string; productName: string; amount: number; status: string; createdAt: string; }
   const payCols: Column<PaymentRow>[] = [
     { key: "productName", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.productName}</span> },
     { key: "amount", header: "Amount", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">₹{r.amount}</span> },
@@ -32,7 +32,7 @@ export default async function RevenuePage() {
   ];
 
   const paymentRows: PaymentRow[] = recentPayments.map((o) => ({
-    id: o.id, productName: o.product?.name ?? "Unknown", amount: o.amount, status: o.status, createdAt: o.createdAt,
+    id: o.id, productName: o.product?.name ?? "Unknown", amount: o.amount, status: o.status, createdAt: o.createdAt.toISOString(),
   }));
 
   return (

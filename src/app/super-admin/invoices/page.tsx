@@ -8,7 +8,7 @@ import { FileText, IndianRupee, CheckCircle2, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-interface InvoiceRow { id: string; creator: string; product: string; amount: number; status: string; createdAt: Date; }
+interface InvoiceRow { id: string; creator: string; product: string; amount: number; status: string; createdAt: string; }
 
 export default async function InvoicesPage() {
   let invoices: InvoiceRow[] = [];
@@ -19,7 +19,7 @@ export default async function InvoicesPage() {
     });
     invoices = raw.map((o) => ({
       id: o.id, creator: o.tenant?.name ?? "—", product: o.product?.name ?? "—",
-      amount: o.amount, status: o.status, createdAt: o.createdAt,
+      amount: o.amount, status: o.status, createdAt: o.createdAt.toISOString(),
     }));
   } catch { /* */ }
 

@@ -5,7 +5,7 @@ import type { Column } from "@/components/data/DataTable";
 
 export const dynamic = "force-dynamic";
 
-interface TxnRow { id: string; type: string; creator: string; amount: string; status: string; createdAt: Date; }
+interface TxnRow { id: string; type: string; creator: string; amount: string; status: string; createdAt: string; }
 
 export default async function TransactionsPage() {
   let txns: TxnRow[] = [];
@@ -16,7 +16,7 @@ export default async function TransactionsPage() {
     });
     txns = orders.map((o) => ({
       id: o.id, type: "order", creator: o.product?.name ?? "—",
-      amount: `₹${o.amount}`, status: o.status, createdAt: o.createdAt,
+      amount: `₹${o.amount}`, status: o.status, createdAt: o.createdAt.toISOString(),
     }));
   } catch { /* */ }
 

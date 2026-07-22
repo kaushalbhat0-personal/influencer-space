@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PaymentsPage() {
   const raw = await prisma.productOrder.findMany({ orderBy: { createdAt: "desc" }, take: 200, include: { product: { select: { name: true } } } });
-  const payments = raw.map((o) => ({ id: o.id, product: o.product?.name ?? "—", amount: o.amount, status: o.status, fanEmail: o.fanEmail, createdAt: o.createdAt }));
+  const payments = raw.map((o) => ({ id: o.id, product: o.product?.name ?? "—", amount: o.amount, status: o.status, fanEmail: o.fanEmail, createdAt: o.createdAt.toISOString() }));
   const succeeded = payments.filter((p) => p.status === "COMPLETED" || p.status === "PAID").length;
   const pending = payments.filter((p) => p.status === "PENDING").length;
   const failed = payments.filter((p) => p.status === "FAILED").length;

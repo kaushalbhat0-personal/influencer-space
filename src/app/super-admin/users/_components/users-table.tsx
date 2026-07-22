@@ -4,7 +4,7 @@ import { DataTable } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import type { Column } from "@/components/data/DataTable";
 
-interface UserRow { id: string; name: string | null; email: string; role: string; tenantName: string | null; createdAt: Date; }
+interface UserRow { id: string; name: string | null; email: string; role: string; tenantName: string | null; createdAt: string; }
 
 const ROLE_VARIANT: Record<string, "cyan" | "success" | "warning" | "gold" | "default"> = {
   SUPER_ADMIN: "gold", AGENCY_ADMIN: "cyan", AGENCY_STAFF: "warning", ADMIN: "success",

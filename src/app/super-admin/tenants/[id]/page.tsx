@@ -29,13 +29,13 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
     take: 20,
   });
 
-  interface OrderRow { id: string; productName: string; amount: number; status: string; createdAt: Date; }
+  interface OrderRow { id: string; productName: string; amount: number; status: string; createdAt: string; }
   const orderRows: OrderRow[] = orders.map((o) => ({
     id: o.id,
     productName: o.product?.name ?? "Unknown",
     amount: o.amount,
     status: o.status,
-    createdAt: o.createdAt,
+    createdAt: o.createdAt.toISOString(),
   }));
   const orderCols: Column<OrderRow>[] = [
     { key: "productName", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.productName}</span> },
