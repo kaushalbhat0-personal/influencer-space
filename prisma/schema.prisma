@@ -57,6 +57,48 @@ model Tenant {
   socialStats        SocialStats[]
   auditLogs          AuditLog[]
   contentFeedItems   ContentFeedItem[]
+  website            Website?
+}
+
+/// One Website per Tenant — the aggregate root for storefront content.
+/// Replaces the implicit website stored across Setting rows.
+model Website {
+  id               String        @id @default(uuid()) @db.Uuid
+  tenantId         String        @unique @db.Uuid
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  brand            Brand?
+  publishStatus    PublishStatus?
+
+  @@index([tenantId])
+}
+
+/// Brand identity — replaces brand_config + influencer_data settings.
+model Brand {
+  id          String   @id @default(uuid()) @db.Uuid
+  websiteId   String   @unique @db.Uuid
+  name        String
+  tagline     String   @default("")
+  bio         String   @default("")
+  avatarUrl   String?
+  bannerUrl   String?
+  socialLinks Json     @default("[]")
+
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+}
+
+/// Publish lifecycle — replaces demo_metadata setting.
+model PublishStatus {
+  id          String    @id @default(uuid()) @db.Uuid
+  websiteId   String    @unique @db.Uuid
+  state       String    @default("draft")  // "draft" | "preview" | "live" | "archived"
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
 }
 
 model Theme {

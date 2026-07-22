@@ -99,7 +99,7 @@ function ShowcaseCard({ site }: { site: ShowcaseSite }) {
         </div>
         <h3 className="text-base font-semibold text-white">{site.name}</h3>
         <p className="text-sm text-zinc-500 mt-1 line-clamp-2">{site.description}</p>
-        {site.products.length > 0 && (
+        {site.products && site.products.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {site.products.map((p) => (
               <span key={p.name} className="rounded-md bg-white/[0.03] border border-white/[0.04] px-2 py-0.5 text-[10px] text-zinc-500">{p.name} · ₹{p.price}</span>

@@ -111,52 +111,62 @@ export class ProvisioningService {
     try {
       // ── TRANSACTION: single raw SQL query (1 round trip) ────────────────
       const adminEmail = buildAdminEmail(slug);
+      const socialLinksJson = JSON.stringify(input.sourceUrl ? [{ platform: input.sourcePlatform || "youtube", url: input.sourceUrl }] : []);
+
       const brandConfigJson = JSON.stringify({
         name: creatorName,
         tagline: input.generatedContent?.tagline || "",
         bio: input.generatedContent?.aboutSection || "",
         heroTitle: input.generatedContent?.heroTitle || creatorName,
         aboutText: input.generatedContent?.aboutSection || "",
-        palette: {
-          primary: input.generatedTheme?.colors?.primary || "#6366f1",
-          secondary: input.generatedTheme?.colors?.secondary || "#a78bfa",
-        },
+        palette: { primary: "#6366f1", secondary: "#a78bfa" },
       });
       const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || creatorName, description: input.generatedContent?.seoDescription || "" });
       const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || "", bio: input.generatedContent?.aboutSection || "" });
       const heroJson = JSON.stringify({ title: input.generatedContent?.heroTitle || creatorName, subtitle: input.generatedContent?.heroSubtitle || "", tagline: input.generatedContent?.tagline || "", videoUrl: "" });
       const metaJson = JSON.stringify({ templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() });
-      const demoMetaJson = JSON.stringify({ published: true, publishedAt: new Date().toISOString(), provisionedBy: "creator-import" });
 
       const [rawResult] = await prisma.$queryRawUnsafe<{ tenant_id: string }[]>(
         `WITH t AS (
           INSERT INTO "Tenant" ("name", "subdomain", "createdAt", "updatedAt")
           VALUES ($1, $2, NOW(), NOW())
           RETURNING id
+        ), w AS (
+          INSERT INTO "Website" ("tenantId", "createdAt", "updatedAt")
+          SELECT t.id, NOW(), NOW() FROM t
+          RETURNING id
+        ), b AS (
+          INSERT INTO "Brand" ("websiteId", "name", "tagline", "bio", "socialLinks")
+          SELECT w.id, $3, $4, $5, $6::jsonb FROM w
+        ), ps AS (
+          INSERT INTO "PublishStatus" ("websiteId", "state", "publishedAt")
+          SELECT w.id, 'live', NOW() FROM w
         ), s AS (
           INSERT INTO "Setting" ("id", "tenantId", "key", "value", "updatedAt")
           SELECT gen_random_uuid(), t.id, v.key, v.value::jsonb, NOW()
           FROM t, (VALUES
-            ('brand_config', $3::jsonb),
-            ('seo', $4::jsonb),
-            ('influencer_data', $5::jsonb),
-            ('hero_data', $6::jsonb),
-            ('provisioning_meta', $7::jsonb),
-            ('demo_metadata', $8::jsonb)
+            ('brand_config', $7::jsonb),
+            ('seo', $8::jsonb),
+            ('influencer_data', $9::jsonb),
+            ('hero_data', $10::jsonb),
+            ('provisioning_meta', $11::jsonb)
           ) AS v(key, value)
         )
         INSERT INTO "User" ("id", "tenantId", "name", "email", "password", "role", "createdAt", "updatedAt")
-        SELECT gen_random_uuid(), t.id, $9, $10, $11, CAST($12 AS "public"."Role"), NOW(), NOW()
+        SELECT gen_random_uuid(), t.id, $12, $13, $14, CAST($15 AS "public"."Role"), NOW(), NOW()
         FROM t
         RETURNING (SELECT id FROM t) as tenant_id;`,
         creatorName,
         slug,
+        creatorName,
+        input.generatedContent?.tagline || "",
+        input.generatedContent?.aboutSection || "",
+        socialLinksJson,
         brandConfigJson,
         seoJson,
         influencerJson,
         heroJson,
         metaJson,
-        demoMetaJson,
         creatorName,
         adminEmail,
         hashedPassword,
