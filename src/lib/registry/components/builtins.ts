@@ -1,6 +1,13 @@
 import { componentRegistry } from "./registry";
 import type { ComponentDefinition } from "./types";
-import { HeroRenderer, AboutRenderer, FooterRenderer } from "./renderers";
+import {
+  HeroRenderer, AboutRenderer, FooterRenderer,
+  GalleryRenderer, ProductsRenderer, TimelineRenderer,
+  LinksRenderer, TestimonialsRenderer, FaqRenderer,
+  ContactRenderer, NewsletterRenderer, PricingRenderer,
+  CoursesRenderer, SpotifyRenderer, YouTubeRenderer,
+  DiscordRenderer, InstagramRenderer,
+} from "./renderers";
 
 const BUILTIN_COMPONENTS: ComponentDefinition[] = [
   // ── Heroes ───────────────────────────────────────────────
@@ -71,6 +78,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { layout: "grid", columns: 3, images: [] },
+    renderer: GalleryRenderer,
   },
   {
     id: "products.grid", type: "products", name: "Products", category: "products",
@@ -81,6 +89,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { layout: "grid", columns: 3 },
+    renderer: ProductsRenderer,
   },
   {
     id: "timeline.default", type: "timeline", name: "Timeline", category: "timeline",
@@ -91,6 +100,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "My Journey" },
+    renderer: TimelineRenderer,
   },
   {
     id: "links.default", type: "links", name: "Social Links", category: "links",
@@ -100,6 +110,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "Connect With Me" },
+    renderer: LinksRenderer,
   },
   {
     id: "footer.default", type: "footer", name: "Footer", category: "footer",
@@ -120,6 +131,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "What People Say" },
+    renderer: TestimonialsRenderer,
   },
   {
     id: "faq.default", type: "faq", name: "FAQ", category: "faq",
@@ -129,6 +141,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "FAQ", items: [] },
+    renderer: FaqRenderer,
   },
   {
     id: "contact.default", type: "contact", name: "Contact", category: "contact",
@@ -138,6 +151,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "Get In Touch", email: "" },
+    renderer: ContactRenderer,
   },
   {
     id: "newsletter.default", type: "newsletter", name: "Newsletter", category: "newsletter",
@@ -147,6 +161,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "Subscribe", placeholder: "Your email" },
+    renderer: NewsletterRenderer,
   },
   {
     id: "pricing.default", type: "pricing", name: "Pricing", category: "pricing",
@@ -157,6 +172,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "Plans", plans: [] },
+    renderer: PricingRenderer,
   },
   {
     id: "courses.default", type: "courses", name: "Courses", category: "courses",
@@ -167,6 +183,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { title: "My Courses" },
+    renderer: CoursesRenderer,
   },
   {
     id: "embed.spotify", type: "embed", name: "Spotify Player", category: "embed",
@@ -176,6 +193,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { url: "", height: "352" },
+    renderer: SpotifyRenderer,
   },
   {
     id: "embed.youtube", type: "embed", name: "YouTube Video", category: "embed",
@@ -185,6 +203,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { url: "", autoplay: false },
+    renderer: YouTubeRenderer,
   },
   {
     id: "social.discord", type: "social", name: "Discord Widget", category: "social",
@@ -194,6 +213,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { serverId: "", label: "Join Discord" },
+    renderer: DiscordRenderer,
   },
   {
     id: "social.instagram", type: "social", name: "Instagram Feed", category: "social",
@@ -204,6 +224,7 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
     defaultProps: { username: "", limit: 6 },
+    renderer: InstagramRenderer,
   },
 ];
 
