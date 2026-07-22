@@ -17,20 +17,63 @@ import {
   Rss,
   Globe,
   Gamepad2,
+  Layout,
+  FileText,
+  Menu,
+  Search,
 } from "lucide-react";
 
-const navLinks = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Storefront", icon: ShoppingBag },
-  { href: "/admin/links", label: "Links & Affiliates", icon: Link2 },
-  { href: "/admin/gallery", label: "Hall of Fame", icon: ImageIcon },
-  { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
-  { href: "/admin/milestones", label: "Milestones", icon: Trophy },
-  { href: "/admin/games", label: "Games", icon: Gamepad2 },
-  { href: "/admin/appearance", label: "Appearance", icon: Palette },
-  { href: "/admin/settings/domain", label: "Domain", icon: Globe },
-  { href: "/admin/billing", label: "Billing", icon: CreditCard },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    items: [
+      { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: "Store",
+    items: [
+      { href: "/admin/products", label: "Products", icon: ShoppingBag },
+      { href: "/admin/links", label: "Links & Affiliates", icon: Link2 },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      { href: "/admin/gallery", label: "Hall of Fame", icon: ImageIcon },
+      { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
+      { href: "/admin/milestones", label: "Milestones", icon: Trophy },
+      { href: "/admin/games", label: "Games", icon: Gamepad2 },
+    ],
+  },
+  {
+    label: "Website",
+    items: [
+      { href: "/builder", label: "Builder", icon: Layout },
+      { href: "/admin/website/pages", label: "Pages", icon: FileText },
+      { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
+      { href: "/admin/website/seo", label: "SEO", icon: Search },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { href: "/admin/appearance", label: "Appearance", icon: Palette },
+      { href: "/admin/settings/domain", label: "Domain", icon: Globe },
+      { href: "/admin/billing", label: "Billing", icon: CreditCard },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
 export function AdminSidebar({
@@ -83,29 +126,40 @@ export function AdminSidebar({
         </div>
 
         {/* ─── Navigation ─── */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navLinks.map((link) => {
-            const active = isActive(link.href);
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={onClose}
-                className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
-                  active
-                    ? "bg-s8ul-cyan/10 text-s8ul-cyan shadow-[0_0_12px_rgba(0,245,255,0.06)]"
-                    : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{link.label}</span>
-                {active && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-s8ul-cyan" />
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-3 overflow-y-auto p-3">
+          {navGroups.map((group, gi) => (
+            <div key={gi}>
+              {group.label && (
+                <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map((link) => {
+                  const active = isActive(link.href);
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={onClose}
+                      className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? "bg-s8ul-cyan/10 text-s8ul-cyan shadow-[0_0_12px_rgba(0,245,255,0.06)]"
+                          : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span>{link.label}</span>
+                      {active && (
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-s8ul-cyan" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* ─── Back to Site ─── */}
