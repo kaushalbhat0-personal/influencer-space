@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { getPlatformConfig } from "@/lib/config/platform";
+import { buildStorefrontUrlWithTenant, buildPreviewUrl } from "@/lib/config/platform";
 import { BaseAppService } from "@/lib/application/base";
 import type { ServiceResult, CommandResult } from "@/lib/application/types";
 
@@ -33,10 +33,7 @@ export class PublishingService extends BaseAppService {
       });
       if (!tenant) throw new Error("Tenant not found");
 
-      const { baseDomain } = getPlatformConfig();
-      const storeRoot = tenant.customDomain
-        ? `https://${tenant.customDomain}`
-        : `https://${tenant.subdomain}.${baseDomain}`;
+      const storeRoot = buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain);
 
       return {
         state: "published",
@@ -78,12 +75,7 @@ export class PublishingService extends BaseAppService {
       });
       if (!tenant) throw new Error("Tenant not found");
 
-      const { baseDomain } = getPlatformConfig();
-      const base = tenant.customDomain
-        ? `https://${tenant.customDomain}`
-        : `https://${tenant.subdomain}.${baseDomain}`;
-
-      return `${base}?preview=true`;
+      return buildPreviewUrl(tenant.subdomain, tenant.customDomain);
     }, "Preview");
   }
 

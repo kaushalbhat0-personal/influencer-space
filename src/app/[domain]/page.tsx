@@ -71,7 +71,7 @@ function registerSections() {
     isVisible: () => true,
     render: () => (
       <footer className="mt-12 border-t border-white/5 pt-6 pb-8 text-center">
-        <p className="text-xs text-zinc-700">Powered by <a href={process.env.NEXT_PUBLIC_APP_URL || "https://creatorshop.io"} target="_blank" rel="follow" className="font-semibold text-zinc-500 transition-colors hover:text-zinc-300">CreatorStore</a></p>
+        <p className="text-xs text-zinc-700">Powered by <a href={process.env.NEXT_PUBLIC_APP_URL || "https://influencer-space-alpha.vercel.app"} target="_blank" rel="follow" className="font-semibold text-zinc-500 transition-colors hover:text-zinc-300">CreatorStore</a></p>
       </footer>
     ),
   });

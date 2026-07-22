@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getPlatformConfig } from "@/lib/config/platform";
 
 export default function robots(): MetadataRoute.Robots {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://creatorshop.io";
+  const appUrl = getPlatformConfig().appUrl;
 
   return {
     rules: {

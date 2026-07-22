@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { getPlatformConfig } from "@/lib/config/platform";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
   themeColor: "#09090b",
 };
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://creatorshop.io";
+const APP_URL = getPlatformConfig().appUrl;
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),

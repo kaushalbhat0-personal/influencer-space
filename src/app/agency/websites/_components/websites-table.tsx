@@ -9,7 +9,7 @@ export function WebsitesTable({ data }: { data: WebsiteRow[] }) {
   const cols: Column<WebsiteRow>[] = [
     { key: "name", header: "Creator", sortable: true, cell: (r) => <span className="text-white text-sm">{r.name}</span> },
     { key: "url", header: "URL", sortable: true, cell: (r) => (
-      <a href={`https://${r.url}`} target="_blank" rel="noopener noreferrer" className="text-s8ul-cyan hover:underline text-xs font-mono">{r.url}</a>
+      <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-s8ul-cyan hover:underline text-xs font-mono">{r.url}</a>
     )},
     { key: "products", header: "Products", sortable: true, cell: (r) => <span className="text-zinc-300">{r.products}</span> },
     { key: "isActive", header: "Active", sortable: true, cell: (r) => (

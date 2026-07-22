@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getPlatformConfig } from "@/lib/config/platform";
+import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { dashboardAppService } from "@/lib/application/dashboard-app.service";
 import { ContentContainer, MetricGrid, DashboardGrid, DashboardGridMain, DashboardGridSide } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
@@ -34,7 +34,7 @@ export default async function AdminDashboardPage() {
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { customDomain: true } }),
   ]);
 
-  const storefront = tenant?.customDomain ?? `${tenant?.subdomain}.${getPlatformConfig().baseDomain}`;
+  const storefront = buildStorefrontUrlWithTenant(tenant?.customDomain, tenant?.subdomain ?? "");
   const hasCustomDomain = !!domainCheck?.customDomain;
   const websitePublished = true; // SSR storefront is always live
   const stats = statsResult.success ? statsResult.data : { productCount: 0, activeProductCount: 0, affiliateCount: 0, totalClicks: 0, galleryCount: 0, gamesCount: 0 };
@@ -75,7 +75,7 @@ export default async function AdminDashboardPage() {
             productCount={productCount}
             hasCustomDomain={hasCustomDomain}
             planName="Starter"
-            storefrontUrl={`https://${storefront}`}
+            storefrontUrl={storefront}
           />
 
           <MetricGrid>

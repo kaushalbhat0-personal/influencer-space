@@ -105,7 +105,7 @@ export default function DemoPublishingPage() {
                     </td>
                     <td>
                       {pub.storefrontUrl ? (
-                        <a href={`https://${pub.storefrontUrl}`} target="_blank" rel="noopener" className="text-indigo-400 hover:underline text-xs font-mono flex items-center gap-1">
+                        <a href={pub.storefrontUrl} target="_blank" rel="noopener" className="text-indigo-400 hover:underline text-xs font-mono flex items-center gap-1">
                           {pub.storefrontUrl} <ExternalLink className="h-3 w-3" />
                         </a>
                       ) : <span className="text-zinc-600 text-xs">—</span>}

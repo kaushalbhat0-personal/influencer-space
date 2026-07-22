@@ -7,7 +7,7 @@
 
 import { DEMO_SEEDS } from "./seeds";
 import { SHOWCASE_REGISTRY } from "./showcase";
-import { getPlatformConfig } from "@/lib/config/platform";
+import { buildStorefrontUrl } from "@/lib/config/platform";
 
 export type PublicationStatus = "draft" | "review" | "approved" | "published" | "featured" | "archived";
 
@@ -69,7 +69,7 @@ export function getPublication(seedId: string): DemoPublication {
   const initial: DemoPublication = {
     seedId,
     status: showcase?.published ? "published" : "draft",
-    storefrontUrl: `${seedId}.${getPlatformConfig().baseDomain}`,
+    storefrontUrl: buildStorefrontUrl(seedId),
   };
   publications.set(seedId, initial);
   return initial;

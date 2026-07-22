@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { getPlatformConfig } from "@/lib/config/platform";
+import { getPlatformConfig, buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 
 export const revalidate = 3600; // ISR: regenerate every hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://creatorshop.io";
+  const appUrl = getPlatformConfig().appUrl;
 
   const tenants = await prisma.tenant.findMany({
     select: { subdomain: true, customDomain: true, updatedAt: true },
@@ -15,9 +15,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const tenantUrls = tenants
     .filter((t) => t.subdomain || t.customDomain)
     .map((t) => {
-      const domain = t.customDomain ?? `${t.subdomain}.${getPlatformConfig().baseDomain}`;
+      const url = buildStorefrontUrlWithTenant(t.customDomain, t.subdomain);
       return {
-        url: `https://${domain}`,
+        url,
         lastModified: t.updatedAt,
         changeFrequency: "weekly" as const,
         priority: 0.8,

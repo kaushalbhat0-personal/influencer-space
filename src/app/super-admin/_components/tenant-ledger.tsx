@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { getPlatformConfig } from "@/lib/config/platform";
 import {
   deleteTenant,
   resetTenantAdminPassword,
@@ -183,7 +184,7 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
           <tbody>
             {filtered.map((t) => {
               const adminEmail = t.users.find((u) => u.email)?.email || "\u2014";
-              const domain = t.customDomain || `${t.subdomain}.creatorshop.io`;
+              const domain = t.customDomain || `${t.subdomain}.${getPlatformConfig().baseDomain}`;
               const planLabel = t.subscription?.plan || "STARTER";
 
               return (

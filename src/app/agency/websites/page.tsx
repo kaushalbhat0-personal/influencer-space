@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getPlatformConfig } from "@/lib/config/platform";
+import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { ContentContainer, PageHeader } from "@/components/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Globe } from "lucide-react";
@@ -23,7 +23,7 @@ export default async function AgencyWebsitesPage() {
     });
     sites = raw.map((at) => ({
       name: at.tenant.name,
-      url: at.tenant.customDomain ?? `${at.tenant.subdomain}.${getPlatformConfig().baseDomain}`,
+      url: buildStorefrontUrlWithTenant(at.tenant.customDomain, at.tenant.subdomain),
       products: at.tenant._count.products,
       isActive: at.status === "ACTIVE",
     }));

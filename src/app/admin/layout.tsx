@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildSiteUrlForAdmin } from "@/lib/config/platform";
 import { AdminLayoutClient } from "./_components/admin-layout-client";
 
 export default async function AdminLayout({
@@ -19,10 +20,8 @@ export default async function AdminLayout({
       select: { customDomain: true, subdomain: true },
     });
 
-    if (tenant?.customDomain) {
-      siteUrl = `https://${tenant.customDomain}`;
-    } else if (tenant?.subdomain) {
-      siteUrl = `/${tenant.subdomain}`;
+    if (tenant) {
+      siteUrl = buildSiteUrlForAdmin(tenant.customDomain, tenant.subdomain);
     }
   }
 

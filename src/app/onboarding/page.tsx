@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { getPlatformConfig } from "@/lib/config/platform";
+import { buildStorefrontUrl } from "@/lib/config/platform";
 import {
   defaultState, saveOnboarding, loadOnboarding, clearOnboarding, trackOnboarding,
   CREATOR_STEPS, AGENCY_STEPS,
@@ -66,7 +66,7 @@ export default function OnboardingPage() {
       update({
         generatedContent: { heroTitle: state.brandName || "Your Store", heroSubtitle: "Welcome to your creator website" },
         generatedTheme: { preset: "indigo", primaryColor: "#6366F1" },
-        storefrontUrl: `${state.brandName.toLowerCase().replace(/\s+/g, "-")}.${getPlatformConfig().baseDomain}`,
+        storefrontUrl: buildStorefrontUrl(state.brandName.toLowerCase().replace(/\s+/g, "-")),
         dashboardUrl: "/admin/dashboard",
       });
       trackOnboarding("onboarding:generation:completed", { persona: state.persona });
@@ -128,7 +128,7 @@ export default function OnboardingPage() {
                 Go to Dashboard
               </button>
               {state.storefrontUrl && (
-                <a href={`https://${state.storefrontUrl}`} target="_blank" rel="noopener" className="btn-secondary w-full py-3 inline-flex items-center justify-center gap-2">
+                <a href={state.storefrontUrl} target="_blank" rel="noopener" className="btn-secondary w-full py-3 inline-flex items-center justify-center gap-2">
                   <Globe className="h-4 w-4" /> View Website
                 </a>
               )}

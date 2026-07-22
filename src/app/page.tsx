@@ -7,6 +7,7 @@ import { StoreExamples } from "@/components/marketing/StoreExamples";
 import { WhyCreatorStore } from "@/components/marketing/WhyCreatorStore";
 import { Pricing } from "@/components/marketing/Pricing";
 import { showcaseService } from "@/lib/showcase/service";
+import { getPlatformConfig } from "@/lib/config/platform";
 import type { StoreExample } from "@/components/marketing/StoreExamples/data";
 
 export const dynamic = "force-dynamic";
@@ -94,7 +95,7 @@ export default async function MarketingPage() {
                   <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
-                  <span className="ml-3 text-[10px] text-zinc-600 font-medium">creator.creatorspace.app</span>
+                  <span className="ml-3 text-[10px] text-zinc-600 font-medium">creator.{getPlatformConfig().baseDomain}</span>
                 </div>
 
                 {/* AI Pipeline visual */}

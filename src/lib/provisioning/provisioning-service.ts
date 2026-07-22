@@ -93,8 +93,11 @@ export class ProvisioningService {
       throw new Error("Creator name must be at least 2 characters");
     }
 
+    // ── BEFORE TRANSACTION: expensive work + preparation ──────────────────
     const tempPassword = generateTemporaryPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
+
+    const slug = await tenantSlugService.generate(creatorName);
 
     await prisma.creatorProvisionRun.update({
       where: { id: runId },
@@ -103,21 +106,15 @@ export class ProvisioningService {
 
     await this.logEvent(runId, ProvisionStep.IMPORT_REQUESTED, ProvisionEventType.COMPLETED, "Import requested");
     await this.logEvent(runId, ProvisionStep.ANALYZING, ProvisionEventType.COMPLETED, `Profile analyzed for ${creatorName}`);
-
-    let slug: string;
-
     await this.logEvent(runId, ProvisionStep.PROFILE_READY, ProvisionEventType.COMPLETED, `Profile ready for ${creatorName}`);
     await this.logEvent(runId, ProvisionStep.PROVISIONING, ProvisionEventType.STARTED, "Starting resource provisioning");
 
     try {
+      // ── TRANSACTION: only core DB writes ────────────────────────────────
       const result = await prisma.$transaction(async (tx) => {
-        slug = await tenantSlugService.generate(creatorName);
-
         const tenant = await tx.tenant.create({
           data: { name: creatorName, subdomain: slug },
         });
-
-        await this.logEvent(runId, ProvisionStep.TENANT_CREATED, ProvisionEventType.COMPLETED, `Tenant "${slug}" created`);
 
         const settingUpsert = (key: string, value: Prisma.InputJsonValue) =>
           tx.setting.upsert({
@@ -166,8 +163,6 @@ export class ProvisioningService {
           provisionedAt: new Date().toISOString(),
         } as Prisma.InputJsonValue);
 
-        await this.logEvent(runId, ProvisionStep.WORKSPACE_CREATED, ProvisionEventType.COMPLETED, "Workspace settings configured");
-
         const adminEmail = buildAdminEmail(slug);
 
         await tx.user.create({
@@ -180,8 +175,6 @@ export class ProvisioningService {
           },
         });
 
-        await this.logEvent(runId, ProvisionStep.ADMIN_CREATED, ProvisionEventType.COMPLETED, `Admin ${adminEmail} created`);
-
         await tx.setting.upsert({
           where: { tenantId_key: { tenantId: tenant.id, key: "demo_metadata" } },
           create: {
@@ -193,37 +186,41 @@ export class ProvisioningService {
           },
         });
 
-        await this.logEvent(runId, ProvisionStep.WEBSITE_CREATED, ProvisionEventType.COMPLETED, "Website provisioned");
-        await this.logEvent(runId, ProvisionStep.PUBLISHED, ProvisionEventType.COMPLETED, "Storefront published");
-        await this.logEvent(runId, ProvisionStep.READY, ProvisionEventType.COMPLETED, "All resources ready");
-
-        const storefrontUrl = buildStorefrontUrl(slug);
-        const dashboardUrl = buildDashboardUrl(slug);
-
-        return {
-          success: true,
-          tenantId: tenant.id,
-          tenantSlug: slug,
-          workspaceId: tenant.id,
-          websiteId: tenant.id,
-          storefrontUrl,
-          dashboardUrl,
-          adminEmail,
-          temporaryPassword: tempPassword,
-          websiteStatus: "published",
-          tenantStatus: "active",
-          publicationStatus: "published",
-          runId,
-        };
+        return { tenantId: tenant.id, slug, adminEmail };
       });
+
+      // ── AFTER TRANSACTION: events, URLs, cleanup ────────────────────────
+      await this.logEvent(runId, ProvisionStep.TENANT_CREATED, ProvisionEventType.COMPLETED, `Tenant "${slug}" created`);
+      await this.logEvent(runId, ProvisionStep.WORKSPACE_CREATED, ProvisionEventType.COMPLETED, "Workspace settings configured");
+      await this.logEvent(runId, ProvisionStep.ADMIN_CREATED, ProvisionEventType.COMPLETED, `Admin ${result.adminEmail} created`);
+      await this.logEvent(runId, ProvisionStep.WEBSITE_CREATED, ProvisionEventType.COMPLETED, "Website provisioned");
+      await this.logEvent(runId, ProvisionStep.PUBLISHED, ProvisionEventType.COMPLETED, "Storefront published");
+      await this.logEvent(runId, ProvisionStep.READY, ProvisionEventType.COMPLETED, "All resources ready");
+
+      const storefrontUrl = buildStorefrontUrl(slug);
+      const dashboardUrl = buildDashboardUrl(slug);
 
       const elapsed = await this.completeRun(runId, ProvisionStep.READY, null);
       await prisma.creatorProvisionRun.update({
         where: { id: runId },
-        data: { tenantId: result.tenantId, tenantSlug: result.tenantSlug, durationMs: elapsed ?? undefined },
+        data: { tenantId: result.tenantId, tenantSlug: slug, durationMs: elapsed ?? undefined },
       });
 
-      return result;
+      return {
+        success: true,
+        tenantId: result.tenantId,
+        tenantSlug: slug,
+        workspaceId: result.tenantId,
+        websiteId: result.tenantId,
+        storefrontUrl,
+        dashboardUrl,
+        adminEmail: result.adminEmail,
+        temporaryPassword: tempPassword,
+        websiteStatus: "published",
+        tenantStatus: "active",
+        publicationStatus: "published",
+        runId,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Provisioning failed";
       const failureStep = provisionStateMachine.failureStep(

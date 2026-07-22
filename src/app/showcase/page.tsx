@@ -106,7 +106,7 @@ function ShowcaseCard({ site }: { site: ShowcaseSite }) {
             ))}
           </div>
         )}
-        <a href={`https://${site.storefrontUrl}`} target="_blank" rel="noopener" className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+        <a href={site.storefrontUrl} target="_blank" rel="noopener" className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
           View Website <ExternalLink className="h-3 w-3" />
         </a>
       </div>
