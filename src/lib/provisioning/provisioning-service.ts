@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { tenantSlugService } from "@/lib/slug/tenant-slug.service";
 import { buildStorefrontUrl, buildDashboardUrl, buildAdminEmail } from "@/lib/config/platform";
 import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./provisioning-state";
+import { templateService } from "@/lib/template";
 
 export interface ProvisioningInput {
   creatorName: string;
@@ -174,6 +175,15 @@ export class ProvisioningService {
 
       const tenantId = rawResult?.tenant_id;
       if (!tenantId) throw new Error("Failed to create tenant");
+
+      // Apply template based on creator name
+      const website = await prisma.website.findUnique({ where: { tenantId } });
+      if (website) {
+        const template = input.templateId ? templateService.getTemplate(input.templateId) : templateService.inferTemplate(creatorName);
+        if (template) {
+          await templateService.apply(website.id, template.id);
+        }
+      }
 
       // ── AFTER TRANSACTION: events, URLs, cleanup ────────────────────────
       await this.logEvent(runId, ProvisionStep.TENANT_CREATED, ProvisionEventType.COMPLETED, `Tenant "${slug}" created`);
