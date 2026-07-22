@@ -58,6 +58,7 @@ model Tenant {
   auditLogs          AuditLog[]
   contentFeedItems   ContentFeedItem[]
   assets             Asset[]
+  assetReferences    AssetReference[]
   website            Website?
 
   @@index([customDomain])
@@ -808,13 +809,37 @@ model Asset {
   largeUrl         String?
   altText          String?
   referenceCount   Int      @default(0)
+  status           String   @default("ACTIVE") // ACTIVE | DELETED
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  references AssetReference[]
 
   @@index([tenantId])
   @@index([checksum])
   @@index([mimeType])
+  @@index([status])
   @@index([tenantId, createdAt])
+}
+
+/// Tracks which page/section/block references which asset.
+model AssetReference {
+  id        String   @id @default(uuid()) @db.Uuid
+  assetId   String   @db.Uuid
+  tenantId  String   @db.Uuid
+  pageId    String?
+  sectionId String?
+  blockId   String?
+  field     String?  // e.g. "imageUrl", "avatarUrl", "bannerUrl"
+  createdAt DateTime @default(now())
+
+  asset  Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([tenantId])
+  @@index([pageId])
+  @@index([sectionId])
+  @@index([blockId])
 }

@@ -218,3 +218,31 @@ DO $$ BEGIN
     ALTER TABLE "Asset" ADD CONSTRAINT "Asset_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+ALTER TABLE "Asset" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'ACTIVE';
+CREATE INDEX IF NOT EXISTS "Asset_status_idx" ON "Asset"("status");
+
+CREATE TABLE IF NOT EXISTS "AssetReference" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "assetId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "pageId" UUID,
+    "sectionId" UUID,
+    "blockId" UUID,
+    "field" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "AssetReference_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "AssetReference_assetId_idx" ON "AssetReference"("assetId");
+CREATE INDEX IF NOT EXISTS "AssetReference_tenantId_idx" ON "AssetReference"("tenantId");
+CREATE INDEX IF NOT EXISTS "AssetReference_pageId_idx" ON "AssetReference"("pageId");
+CREATE INDEX IF NOT EXISTS "AssetReference_sectionId_idx" ON "AssetReference"("sectionId");
+CREATE INDEX IF NOT EXISTS "AssetReference_blockId_idx" ON "AssetReference"("blockId");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AssetReference_assetId_fkey') THEN
+    ALTER TABLE "AssetReference" ADD CONSTRAINT "AssetReference_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AssetReference_tenantId_fkey') THEN
+    ALTER TABLE "AssetReference" ADD CONSTRAINT "AssetReference_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
