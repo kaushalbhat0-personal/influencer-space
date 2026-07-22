@@ -12,7 +12,7 @@ export type ContactData = {
   email: string;
   message: string;
   isRead: boolean;
-  createdAt: Date;
+  createdAt: string;
 };
 
 const contactSchema = z.object({

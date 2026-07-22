@@ -11,7 +11,7 @@ interface SubscriptionRow {
   razorpaySubscriptionId: string | null;
   status: string;
   plan: string;
-  currentPeriodEnd: Date | null;
+  currentPeriodEnd: string | null;
 }
 
 interface PlanInfo {

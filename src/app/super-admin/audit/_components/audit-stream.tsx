@@ -8,7 +8,7 @@ interface LogRow {
   tenantId: string;
   action: string;
   metadata: unknown;
-  createdAt: Date;
+  createdAt: string;
   tenant: { name: string; subdomain: string } | null;
 }
 

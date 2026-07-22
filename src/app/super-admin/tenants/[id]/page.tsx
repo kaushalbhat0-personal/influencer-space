@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { MetricGrid } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { DataTable } from "@/components/data/DataTable";
-import type { Column } from "@/components/data/DataTable";
+import { TenantOrdersTable } from "./_components/tenant-orders-table";
 import { Building, ShoppingBag, Image, Users } from "lucide-react";
 import Link from "next/link";
 
@@ -29,20 +28,13 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
     take: 20,
   });
 
-  interface OrderRow { id: string; productName: string; amount: number; status: string; createdAt: string; }
-  const orderRows: OrderRow[] = orders.map((o) => ({
+  const orderRows = orders.map((o) => ({
     id: o.id,
     productName: o.product?.name ?? "Unknown",
     amount: o.amount,
     status: o.status,
     createdAt: o.createdAt.toISOString(),
   }));
-  const orderCols: Column<OrderRow>[] = [
-    { key: "productName", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.productName}</span> },
-    { key: "amount", header: "Amount", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">₹{r.amount}</span> },
-    { key: "status", header: "Status", sortable: true, cell: (r) => <span className="text-zinc-400 text-sm">{r.status}</span> },
-    { key: "createdAt", header: "Date", sortable: true, cell: (r) => <span className="text-zinc-500 text-xs">{new Date(r.createdAt).toLocaleDateString("en-IN")}</span> },
-  ];
 
   return (
     <div>
@@ -69,12 +61,7 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-white">Recent Orders</h2>
       </div>
-      <DataTable
-        columns={orderCols}
-        data={orderRows}
-        pageSize={10}
-        emptyMessage="No orders yet for this tenant."
-      />
+      <TenantOrdersTable data={orderRows} />
     </div>
   );
 }

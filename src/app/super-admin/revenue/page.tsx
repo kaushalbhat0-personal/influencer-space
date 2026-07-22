@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MetricGrid, PageSection, DashboardGrid, DashboardGridMain, DashboardGridSide } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { DataTable } from "@/components/data/DataTable";
-import { BillingStatusBadge } from "@/components/admin/BillingStatusBadge";
-import type { Column } from "@/components/data/DataTable";
+import { RevenueTable } from "./_components/revenue-table";
 import { Building, CreditCard, IndianRupee, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -23,15 +21,7 @@ export default async function RevenuePage() {
   const proCount = subData.filter((s) => s.plan === "PRO").length;
   const mrr = proCount * 999;
 
-  interface PaymentRow { id: string; productName: string; amount: number; status: string; createdAt: string; }
-  const payCols: Column<PaymentRow>[] = [
-    { key: "productName", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.productName}</span> },
-    { key: "amount", header: "Amount", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">₹{r.amount}</span> },
-    { key: "status", header: "Status", sortable: true, cell: (r) => <BillingStatusBadge status={r.status} /> },
-    { key: "createdAt", header: "Date", sortable: true, cell: (r) => <span className="text-zinc-500 text-xs">{new Date(r.createdAt).toLocaleDateString("en-IN")}</span> },
-  ];
-
-  const paymentRows: PaymentRow[] = recentPayments.map((o) => ({
+  const paymentRows = recentPayments.map((o) => ({
     id: o.id, productName: o.product?.name ?? "Unknown", amount: o.amount, status: o.status, createdAt: o.createdAt.toISOString(),
   }));
 
@@ -92,7 +82,7 @@ export default async function RevenuePage() {
 
       <div className="mt-8">
         <h3 className="text-sm font-medium text-zinc-400 mb-4">Recent Payments</h3>
-        <DataTable columns={payCols} data={paymentRows} pageSize={10} emptyMessage="No payments recorded yet." />
+        <RevenueTable data={paymentRows} />
       </div>
     </div>
   );

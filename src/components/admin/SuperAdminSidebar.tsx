@@ -12,7 +12,7 @@ const GROUP_LABELS: Record<AdminGroup, string> = {
   overview: "Overview",
   operations: "Operations",
   billing: "Billing",
-  "ai-platform": "AI Platform",
+  "ai-platform": "Creator Platform",
   platform: "Platform",
   system: "System",
 };

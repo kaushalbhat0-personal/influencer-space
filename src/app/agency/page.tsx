@@ -3,10 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { DataTable } from "@/components/data/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Building, Globe, Users, IndianRupee } from "lucide-react";
-import type { Column } from "@/components/data/DataTable";
+import { AgencyClientsTable } from "./_components/agency-clients-table";
 
 export const dynamic = "force-dynamic";
 
@@ -44,15 +43,6 @@ export default async function AgencyDashboard() {
     }
   } catch { /* empty */ }
 
-  const cols: Column<ClientRow>[] = [
-    { key: "name", header: "Client", sortable: true, cell: (r) => <span className="text-white text-sm">{r.name}</span> },
-    { key: "subdomain", header: "Domain", sortable: true, cell: (r) => <span className="text-zinc-400 text-xs font-mono">{r.subdomain ?? "—"}</span> },
-    { key: "products", header: "Products", sortable: true, cell: (r) => <span className="text-zinc-300">{r.products}</span> },
-    { key: "status", header: "Status", sortable: true, cell: (r) => (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${r.status === "ACTIVE" ? "bg-green-500/20 text-green-400" : "bg-zinc-800 text-zinc-400"}`}>{r.status}</span>
-    )},
-  ];
-
   return (
     <ContentContainer>
       <PageHeader title="Agency Dashboard" description="Manage your clients, websites, and revenue." />
@@ -71,8 +61,7 @@ export default async function AgencyDashboard() {
           </PageSection>
 
           <div className="mb-4"><h2 className="text-lg font-semibold text-white">Recent Clients</h2></div>
-          <DataTable columns={cols} data={clients} pageSize={15} searchable searchPlaceholder="Search clients..."
-            emptyMessage="No clients found." />
+          <AgencyClientsTable data={clients} />
         </>
       )}
     </ContentContainer>

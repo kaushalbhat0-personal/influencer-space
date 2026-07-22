@@ -1,30 +1,13 @@
 import { getAllTenants } from "@/services/super-admin.service";
 import { MetricGrid } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { DataTable } from "@/components/data/DataTable";
-import type { Column } from "@/components/data/DataTable";
+import { TenantsTable } from "./_components/tenants-table";
 import { Building } from "lucide-react";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-interface TenantRow {
-  id: string;
-  name: string;
-  subdomain: string | null;
-  customDomain: string | null;
-}
-
-const columns: Column<TenantRow>[] = [
-  { key: "name", header: "Name", sortable: true, cell: (r) => (
-    <Link href={`/super-admin/tenants/${r.id}`} className="text-s8ul-cyan hover:underline text-sm">{r.name}</Link>
-  )},
-  { key: "subdomain", header: "Subdomain", sortable: true, cell: (r) => <span className="text-zinc-300 text-sm font-mono">{r.subdomain ?? "—"}</span> },
-  { key: "customDomain", header: "Custom Domain", sortable: true, cell: (r) => <span className="text-zinc-400 text-sm">{r.customDomain ?? "—"}</span> },
-];
-
 export default async function TenantsPage() {
-  let tenants: TenantRow[] = [];
+  let tenants: { id: string; name: string; subdomain: string | null; customDomain: string | null }[] = [];
   try { tenants = await getAllTenants(); } catch { /* empty */ }
 
   return (
@@ -42,14 +25,7 @@ export default async function TenantsPage() {
         </MetricGrid>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={tenants}
-        pageSize={25}
-        searchable
-        searchPlaceholder="Search tenants by name or domain..."
-        emptyMessage="No tenants provisioned yet."
-      />
+      <TenantsTable data={tenants} />
     </div>
   );
 }

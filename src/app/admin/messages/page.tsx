@@ -38,5 +38,11 @@ export default async function AdminMessagesPage() {
     );
   }
 
-  return <ErrorBoundary><MessagesList messages={messages} /></ErrorBoundary>;
+  return (
+    <ErrorBoundary>
+      <MessagesList
+        messages={messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))}
+      />
+    </ErrorBoundary>
+  );
 }

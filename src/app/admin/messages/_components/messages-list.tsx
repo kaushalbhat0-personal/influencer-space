@@ -9,7 +9,7 @@ const rowVariants = {
   show: { opacity: 1, x: 0 },
 };
 
-function formatDate(date: Date): string {
+function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",

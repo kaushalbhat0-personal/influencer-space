@@ -35,7 +35,14 @@ export default async function ContentFeedSettingsPage() {
           Manage synced social media content. Pin important posts, hide irrelevant ones, or delete items.
         </p>
       </div>
-      <ContentFeedManager tenantId={tenantId} initialItems={items} />
+      <ContentFeedManager
+        tenantId={tenantId}
+        initialItems={items.map((item) => ({
+          ...item,
+          syncedAt: item.syncedAt.toISOString(),
+          createdAt: item.createdAt.toISOString(),
+        }))}
+      />
     </div>
   );
 }

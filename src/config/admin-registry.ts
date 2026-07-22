@@ -142,7 +142,7 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
 
-  // ── AI Platform ─────────────────────────────────────────────────────────────
+  // ── Creator Platform ────────────────────────────────────────────────────────
   {
     id: "demo-publishing", title: "Publishing", group: "ai-platform",
     href: "/super-admin/demo-publishing", icon: CheckCircle2, permission: "super_admin",
@@ -165,7 +165,7 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
-    id: "generate", title: "AI Generation", group: "ai-platform",
+    id: "generate", title: "Creator Import", group: "ai-platform",
     href: "/super-admin/generate", icon: Bot, permission: "super_admin",
     searchable: true, keywords: ["website", "create", "auto", "pipeline", "magic"],
     auditCategory: "ai", analyticsKey: "generation:viewed",

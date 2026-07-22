@@ -2,10 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ContentContainer, PageHeader } from "@/components/layout";
-import { DataTable } from "@/components/data/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Globe } from "lucide-react";
-import type { Column } from "@/components/data/DataTable";
+import { WebsitesTable } from "./_components/websites-table";
 
 export const dynamic = "force-dynamic";
 
@@ -29,22 +28,11 @@ export default async function AgencyWebsitesPage() {
     }));
   } catch { /* empty */ }
 
-  const cols: Column<WebsiteRow>[] = [
-    { key: "name", header: "Creator", sortable: true, cell: (r) => <span className="text-white text-sm">{r.name}</span> },
-    { key: "url", header: "URL", sortable: true, cell: (r) => (
-      <a href={`https://${r.url}`} target="_blank" rel="noopener noreferrer" className="text-s8ul-cyan hover:underline text-xs font-mono">{r.url}</a>
-    )},
-    { key: "products", header: "Products", sortable: true, cell: (r) => <span className="text-zinc-300">{r.products}</span> },
-    { key: "isActive", header: "Active", sortable: true, cell: (r) => (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${r.isActive ? "bg-green-500/20 text-green-400" : "bg-zinc-800 text-zinc-400"}`}>{r.isActive ? "Active" : "Inactive"}</span>
-    )},
-  ];
-
   return (
     <ContentContainer>
       <PageHeader title="Websites" description="All managed creator websites." breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Websites" }]} />
       {sites.length === 0 ? <EmptyState title="No websites" description="Generate websites for your clients." icon={Globe} /> : (
-        <DataTable columns={cols} data={sites} pageSize={20} searchable searchPlaceholder="Search websites..." />
+        <WebsitesTable data={sites} />
       )}
     </ContentContainer>
   );

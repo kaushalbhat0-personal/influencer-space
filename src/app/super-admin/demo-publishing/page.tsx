@@ -39,10 +39,8 @@ export default function DemoPublishingPage() {
   return (
     <div className="max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Demo Publishing</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          {counts.draft} drafts · {counts.review} in review · {counts.published} published
-        </p>
+        <h1 className="text-2xl font-bold text-white">Publishing</h1>
+        <p className="mt-1 text-sm text-zinc-400">Review, approve and publish creator websites.</p>
       </div>
 
       {/* Filter Tabs */}

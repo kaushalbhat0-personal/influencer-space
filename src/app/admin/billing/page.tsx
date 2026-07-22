@@ -47,5 +47,18 @@ export default async function BillingPage() {
   const productCount = await prisma.product.count({ where: { tenantId: tenant.id } });
   const plan = await getPlanLimits(tenant.id);
 
-  return <BillingClient subscription={subscription} productCount={productCount} planInfo={plan} />;
+  return (
+    <BillingClient
+      subscription={{
+        id: subscription.id,
+        tenantId: subscription.tenantId,
+        razorpaySubscriptionId: subscription.razorpaySubscriptionId,
+        status: subscription.status,
+        plan: subscription.plan,
+        currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
+      }}
+      productCount={productCount}
+      planInfo={plan}
+    />
+  );
 }

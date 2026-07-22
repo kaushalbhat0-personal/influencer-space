@@ -119,7 +119,7 @@ export const SUPER_ADMIN_NAV: DashboardNav = {
       label: "Operations",
       roles: allRoles("SUPER_ADMIN"),
       items: [
-        { label: "AI Generation", href: "/super-admin/generate", icon: Bot, roles: allRoles("SUPER_ADMIN") },
+        { label: "Creator Import", href: "/super-admin/generate", icon: Bot, roles: allRoles("SUPER_ADMIN") },
         { label: "Subscriptions", href: "/super-admin/subscriptions", icon: Gift, roles: allRoles("SUPER_ADMIN"), badge: "new" },
         { label: "Themes", href: "/super-admin/themes", icon: Palette, roles: allRoles("SUPER_ADMIN"), badge: "new" },
         { label: "API Keys", href: "/super-admin/api-keys", icon: Key, roles: allRoles("SUPER_ADMIN"), badge: "new" },
@@ -154,7 +154,7 @@ export const AGENCY_NAV: DashboardNav = {
       label: "Tools",
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
-        { label: "AI Generation", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Creator Import", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
         { label: "Templates", href: "/agency/templates", icon: Layers, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
         { label: "Analytics", href: "/agency/analytics", icon: BarChart3, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
       ],

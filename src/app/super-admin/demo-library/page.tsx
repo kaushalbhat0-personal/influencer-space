@@ -13,15 +13,11 @@ export default function DemoLibraryPage() {
     return true;
   });
 
-  const generatedCount = 0; // Future: track from DB
-
   return (
     <div className="max-w-6xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Demo Library</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          {DEMO_SEEDS.length} seed definitions available. {generatedCount} demos generated.
-        </p>
+        <p className="mt-1 text-sm text-zinc-400">Manage reusable industry presets and demo seeds.</p>
       </div>
 
       <div className="flex gap-3 mb-6">

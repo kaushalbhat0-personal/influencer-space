@@ -31,8 +31,8 @@ export default function DemoStudioPage() {
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Demo Content Studio</h1>
-        <p className="mt-1 text-sm text-zinc-400">Generate complete demo creator websites from industry presets.</p>
+        <h1 className="text-2xl font-bold text-white">Demo Studio</h1>
+        <p className="mt-1 text-sm text-zinc-400">Generate internal demo websites for testing, showcase and sales demonstrations.</p>
       </div>
 
       {/* Progress */}

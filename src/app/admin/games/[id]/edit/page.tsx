@@ -26,7 +26,14 @@ export default async function EditGamePage({
     <div>
       <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-display">Edit Game</h1>
       <div className="max-w-2xl">
-        <GameForm mode="edit" game={game} />
+        <GameForm
+          mode="edit"
+          game={{
+            ...game,
+            createdAt: game.createdAt.toISOString(),
+            updatedAt: game.updatedAt.toISOString(),
+          }}
+        />
       </div>
     </div>
   );

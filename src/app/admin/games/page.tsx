@@ -61,7 +61,13 @@ export default async function AdminGamesPage() {
         </Link>
       </div>
       <ErrorBoundary>
-        <GamesList games={games} />
+        <GamesList
+          games={games.map((g) => ({
+            ...g,
+            createdAt: g.createdAt.toISOString(),
+            updatedAt: g.updatedAt.toISOString(),
+          }))}
+        />
       </ErrorBoundary>
     </div>
   );

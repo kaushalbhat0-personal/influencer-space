@@ -16,8 +16,8 @@ export type GameData = {
   genre: string | null;
   order: number;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   tenantId: string;
 };
 

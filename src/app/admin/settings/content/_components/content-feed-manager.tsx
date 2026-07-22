@@ -20,8 +20,8 @@ type FeedItem = {
   hidden: boolean;
   externalId: string | null;
   order: number;
-  syncedAt: Date;
-  createdAt: Date;
+  syncedAt: string;
+  createdAt: string;
 };
 
 const platformIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -36,7 +36,7 @@ const platformColors: Record<string, string> = {
   twitch: "text-purple-400",
 };
 
-function formatDate(d: Date) {
+function formatDate(d: string | Date) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",
     month: "short",

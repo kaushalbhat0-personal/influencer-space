@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { DataTable } from "@/components/data/DataTable";
-import type { Column } from "@/components/data/DataTable";
+import { AgencyTenantsTable } from "./_components/agency-tenants-table";
 import { Building, Users, Globe, IndianRupee } from "lucide-react";
 import Link from "next/link";
 
@@ -21,13 +20,6 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
     name: at.tenant.name,
     subdomain: at.tenant.subdomain,
   }));
-
-  const cols: Column<{ id: string; name: string; subdomain: string | null }>[] = [
-    { key: "name", header: "Creator", sortable: true, cell: (r) => (
-      <Link href={`/super-admin/tenants/${r.id}`} className="text-indigo-400 hover:underline text-sm">{r.name}</Link>
-    )},
-    { key: "subdomain", header: "Domain", sortable: true, cell: (r) => <span className="text-zinc-400 text-xs font-mono">{r.subdomain ?? "—"}</span> },
-  ];
 
   return (
     <div>
@@ -47,7 +39,7 @@ export default async function AgencyDetailPage({ params }: { params: { id: strin
       </PageSection>
 
       <div className="mb-4"><h2 className="text-lg font-semibold text-white">Managed Creators</h2></div>
-      <DataTable columns={cols} data={tenantRows} pageSize={20} emptyMessage="No creators managed by this agency." />
+      <AgencyTenantsTable data={tenantRows} />
     </div>
   );
 }

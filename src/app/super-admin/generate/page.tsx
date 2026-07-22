@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { MotionDiv, MotionPresence } from "@/components/ui/MotionSafe";
 import { generateWebsite } from "@/actions/generate-website.action";
+import { PageHeader } from "@/components/layout/PageHeader";
 import type { StepperStep, StrategyOption, ChecklistItem, SectionToggle, DeploymentStep } from "@/components/ai";
 import type { WebsiteGenerationResult } from "@/lib/ai-generation/types";
 import {
@@ -169,7 +170,12 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-[var(--surface-root)] p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <PageHeader
+          title="Creator Import"
+          description="Import creators from YouTube, Demo Seeds or Manual setup and provision complete CreatorStore websites."
+          breadcrumbs={[{ label: "Dashboard", href: "/super-admin" }, { label: "Creator Platform" }, { label: "Creator Import" }]}
+        />
         <Stepper steps={flowSteps(step)} currentStep={step} size="compact" />
 
         <MotionPresence>

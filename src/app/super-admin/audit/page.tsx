@@ -37,7 +37,12 @@ export default async function AuditLogPage({
       <p className="mt-1 text-sm text-zinc-400">
         Every mutation across the platform. {total} entries total.
       </p>
-      <AuditStream logs={logs} tenants={tenants} page={page} totalPages={totalPages} />
+      <AuditStream
+        logs={logs.map((log) => ({ ...log, createdAt: log.createdAt.toISOString() }))}
+        tenants={tenants}
+        page={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }
