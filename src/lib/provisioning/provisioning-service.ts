@@ -143,8 +143,8 @@ export class ProvisioningService {
           INSERT INTO "Brand" ("websiteId", "name", "tagline", "bio", "socialLinks")
           SELECT w.id, $3, $4, $5, $6::jsonb FROM w
         ), ps AS (
-          INSERT INTO "PublishStatus" ("websiteId", "state", "publishedAt")
-          SELECT w.id, 'live', NOW() FROM w
+          INSERT INTO "PublishStatus" ("websiteId", "state", "publishedAt", "createdAt", "updatedAt")
+          SELECT w.id, 'live', NOW(), NOW(), NOW() FROM w
         ), s AS (
           INSERT INTO "Setting" ("id", "tenantId", "key", "value", "updatedAt")
           SELECT gen_random_uuid(), t.id, v.key, v.value::jsonb, NOW()
