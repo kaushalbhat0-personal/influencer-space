@@ -5,6 +5,7 @@ import { tenantSlugService } from "@/lib/slug/tenant-slug.service";
 import { buildStorefrontUrl, buildDashboardUrl, buildAdminEmail } from "@/lib/config/platform";
 import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./provisioning-state";
 import { templateService } from "@/lib/template";
+import { websitePersonalizer } from "@/lib/personalization";
 
 export interface ProvisioningInput {
   creatorName: string;
@@ -93,6 +94,9 @@ export class ProvisioningService {
       throw new Error("Creator name must be at least 2 characters");
     }
 
+    // Personalize the website based on creator name/source
+    const personalization = websitePersonalizer.personalize(creatorName, input.sourceUrl);
+
     // ── BEFORE TRANSACTION: expensive work + preparation ──────────────────
     const tempPassword = generateTemporaryPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
@@ -121,9 +125,9 @@ export class ProvisioningService {
         heroTitle: input.generatedContent?.heroTitle || creatorName,
         aboutText: input.generatedContent?.aboutSection || "",
       });
-      const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || creatorName, description: input.generatedContent?.seoDescription || "" });
-      const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || "", bio: input.generatedContent?.aboutSection || "" });
-      const heroJson = JSON.stringify({ title: input.generatedContent?.heroTitle || creatorName, subtitle: input.generatedContent?.heroSubtitle || "", tagline: input.generatedContent?.tagline || "", videoUrl: "" });
+      const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription });
+      const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio });
+      const heroJson = JSON.stringify({ title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" });
       const metaJson = JSON.stringify({ templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() });
 
       const [rawResult] = await prisma.$queryRawUnsafe<{ tenant_id: string }[]>(
@@ -159,8 +163,8 @@ export class ProvisioningService {
         creatorName,
         slug,
         creatorName,
-        input.generatedContent?.tagline || "",
-        input.generatedContent?.aboutSection || "",
+        input.generatedContent?.tagline || personalization.tagline,
+        input.generatedContent?.aboutSection || personalization.bio,
         socialLinksJson,
         brandConfigJson,
         seoJson,
@@ -176,13 +180,17 @@ export class ProvisioningService {
       const tenantId = rawResult?.tenant_id;
       if (!tenantId) throw new Error("Failed to create tenant");
 
-      // Apply template based on creator name
+      // Apply personalized template and theme
       const website = await prisma.website.findUnique({ where: { tenantId } });
       if (website) {
-        const template = input.templateId ? templateService.getTemplate(input.templateId) : templateService.inferTemplate(creatorName);
+        const templateId = input.templateId || personalization.templateId;
+        const template = templateService.getTemplate(templateId);
         if (template) {
           await templateService.apply(website.id, template.id);
         }
+        // Apply theme
+        const { themeService } = await import("@/lib/theme");
+        await themeService.apply(website.id, { packageId: personalization.themePackageId }).catch(() => {});
       }
 
       // ── AFTER TRANSACTION: events, URLs, cleanup ────────────────────────
