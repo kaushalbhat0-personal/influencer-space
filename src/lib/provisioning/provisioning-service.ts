@@ -119,60 +119,52 @@ export class ProvisioningService {
 
         await this.logEvent(runId, ProvisionStep.TENANT_CREATED, ProvisionEventType.COMPLETED, `Tenant "${slug}" created`);
 
-        const workspaceSettings: Prisma.SettingCreateManyInput[] = [
-          {
-            tenantId: tenant.id, key: "brand_config",
-            value: {
-              name: creatorName,
-              tagline: input.generatedContent?.tagline || "",
-              bio: input.generatedContent?.aboutSection || "",
-              heroTitle: input.generatedContent?.heroTitle || creatorName,
-              aboutText: input.generatedContent?.aboutSection || "",
-              palette: {
-                primary: input.generatedTheme?.colors?.primary || "#6366f1",
-                secondary: input.generatedTheme?.colors?.secondary || "#a78bfa",
-              },
-            } as Prisma.InputJsonValue,
-          },
-          {
-            tenantId: tenant.id, key: "seo",
-            value: {
-              title: input.generatedContent?.seoTitle || creatorName,
-              description: input.generatedContent?.seoDescription || "",
-            } as Prisma.InputJsonValue,
-          },
-          {
-            tenantId: tenant.id, key: "influencer_data",
-            value: {
-              name: creatorName,
-              source: input.sourcePlatform || "manual",
-              sourceUrl: input.sourceUrl || "",
-              tagline: input.generatedContent?.tagline || "",
-              bio: input.generatedContent?.aboutSection || "",
-            } as Prisma.InputJsonValue,
-          },
-          {
-            tenantId: tenant.id, key: "hero_data",
-            value: {
-              title: input.generatedContent?.heroTitle || creatorName,
-              subtitle: input.generatedContent?.heroSubtitle || "",
-              tagline: input.generatedContent?.tagline || "",
-              videoUrl: "",
-            } as Prisma.InputJsonValue,
-          },
-          {
-            tenantId: tenant.id, key: "provisioning_meta",
-            value: {
-              templateId: input.templateId || null,
-              strategyId: input.strategyId || null,
-              sourcePlatform: input.sourcePlatform || "manual",
-              sourceUrl: input.sourceUrl || "",
-              provisionedAt: new Date().toISOString(),
-            } as Prisma.InputJsonValue,
-          },
-        ];
+        const settingUpsert = (key: string, value: Prisma.InputJsonValue) =>
+          tx.setting.upsert({
+            where: { tenantId_key: { tenantId: tenant.id, key } },
+            create: { tenantId: tenant.id, key, value },
+            update: { value },
+          });
 
-        await tx.setting.createMany({ data: workspaceSettings });
+        await settingUpsert("brand_config", {
+          name: creatorName,
+          tagline: input.generatedContent?.tagline || "",
+          bio: input.generatedContent?.aboutSection || "",
+          heroTitle: input.generatedContent?.heroTitle || creatorName,
+          aboutText: input.generatedContent?.aboutSection || "",
+          palette: {
+            primary: input.generatedTheme?.colors?.primary || "#6366f1",
+            secondary: input.generatedTheme?.colors?.secondary || "#a78bfa",
+          },
+        } as Prisma.InputJsonValue);
+
+        await settingUpsert("seo", {
+          title: input.generatedContent?.seoTitle || creatorName,
+          description: input.generatedContent?.seoDescription || "",
+        } as Prisma.InputJsonValue);
+
+        await settingUpsert("influencer_data", {
+          name: creatorName,
+          source: input.sourcePlatform || "manual",
+          sourceUrl: input.sourceUrl || "",
+          tagline: input.generatedContent?.tagline || "",
+          bio: input.generatedContent?.aboutSection || "",
+        } as Prisma.InputJsonValue);
+
+        await settingUpsert("hero_data", {
+          title: input.generatedContent?.heroTitle || creatorName,
+          subtitle: input.generatedContent?.heroSubtitle || "",
+          tagline: input.generatedContent?.tagline || "",
+          videoUrl: "",
+        } as Prisma.InputJsonValue);
+
+        await settingUpsert("provisioning_meta", {
+          templateId: input.templateId || null,
+          strategyId: input.strategyId || null,
+          sourcePlatform: input.sourcePlatform || "manual",
+          sourceUrl: input.sourceUrl || "",
+          provisionedAt: new Date().toISOString(),
+        } as Prisma.InputJsonValue);
 
         await this.logEvent(runId, ProvisionStep.WORKSPACE_CREATED, ProvisionEventType.COMPLETED, "Workspace settings configured");
 
