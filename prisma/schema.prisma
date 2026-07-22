@@ -57,6 +57,7 @@ model Tenant {
   socialStats        SocialStats[]
   auditLogs          AuditLog[]
   contentFeedItems   ContentFeedItem[]
+  assets             Asset[]
   website            Website?
 
   @@index([customDomain])
@@ -782,4 +783,38 @@ model CreatorImport {
   @@index([createdAt])
   @@index([provider])
   @@index([creatorName])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Media Library — Asset Management
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Every uploaded asset (image, video, file) — first-class domain object.
+model Asset {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  filename         String
+  originalFilename String
+  mimeType         String
+  size             Int      @default(0)
+  width            Int?
+  height           Int?
+  checksum         String?
+  storageProvider  String   @default("local")
+  storageKey       String
+  publicUrl        String?
+  thumbnailUrl     String?
+  mediumUrl        String?
+  largeUrl         String?
+  altText          String?
+  referenceCount   Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([checksum])
+  @@index([mimeType])
+  @@index([tenantId, createdAt])
 }

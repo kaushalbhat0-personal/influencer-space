@@ -185,3 +185,36 @@ DO $$ BEGIN
     ALTER TABLE "PublishSnapshot" ADD CONSTRAINT "PublishSnapshot_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- Step 8: Asset table for Media Library
+CREATE TABLE IF NOT EXISTS "Asset" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenantId" UUID NOT NULL,
+    "filename" TEXT NOT NULL,
+    "originalFilename" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL DEFAULT 0,
+    "width" INTEGER,
+    "height" INTEGER,
+    "checksum" TEXT,
+    "storageProvider" TEXT NOT NULL DEFAULT 'local',
+    "storageKey" TEXT NOT NULL,
+    "publicUrl" TEXT,
+    "thumbnailUrl" TEXT,
+    "mediumUrl" TEXT,
+    "largeUrl" TEXT,
+    "altText" TEXT,
+    "referenceCount" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Asset_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "Asset_tenantId_idx" ON "Asset"("tenantId");
+CREATE INDEX IF NOT EXISTS "Asset_checksum_idx" ON "Asset"("checksum");
+CREATE INDEX IF NOT EXISTS "Asset_mimeType_idx" ON "Asset"("mimeType");
+CREATE INDEX IF NOT EXISTS "Asset_tenantId_createdAt_idx" ON "Asset"("tenantId", "createdAt");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Asset_tenantId_fkey') THEN
+    ALTER TABLE "Asset" ADD CONSTRAINT "Asset_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
