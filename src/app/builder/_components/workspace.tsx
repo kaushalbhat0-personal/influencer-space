@@ -14,7 +14,7 @@ import { BuilderStatusBar } from "./status-bar";
 import { builderStore } from "@/lib/builder/store";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { useKeyboardShortcuts } from "./keyboard";
-import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
+import { loadBuilderPages, saveBuilderPages, publishWebsite } from "@/actions/builder.actions";
 
 export function BuilderWorkspace() {
   useKeyboardShortcuts();
@@ -26,6 +26,8 @@ export function BuilderWorkspace() {
   const [showGrid, setShowGrid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [liveVersion, setLiveVersion] = useState<number | null>(null);
   const [statusMsg, setStatusMsg] = useState("");
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,6 +64,22 @@ export function BuilderWorkspace() {
     };
   }, [builderStore.isDirty, loading]);
 
+  const handlePublish = useCallback(async () => {
+    setPublishing(true);
+    setStatusMsg("Publishing...");
+    const pages = builderStore.serialize();
+    const res = await publishWebsite(pages);
+    if (res.success) {
+      builderStore.markClean();
+      setLiveVersion(res.version ?? null);
+      setStatusMsg(`Published v${res.version}`);
+    } else {
+      setStatusMsg("Publish failed");
+    }
+    setPublishing(false);
+    setTimeout(() => setStatusMsg(""), 3000);
+  }, []);
+
   const selectedCount = builderStore.selection.selectedIds.size;
   const isDirty = builderStore.isDirty;
 
@@ -97,7 +115,7 @@ export function BuilderWorkspace() {
             <PropertyInspector />
           </ResizablePanel>
         </div>
-        <BuilderStatusBar selectedCount={selectedCount} zoom={zoom} isDirty={isDirty} saving={saving} statusMsg={statusMsg} />
+        <BuilderStatusBar selectedCount={selectedCount} zoom={zoom} isDirty={isDirty} saving={saving} statusMsg={statusMsg} onPublish={handlePublish} publishing={publishing} liveVersion={liveVersion} />
         <CanvasMinimap />
         <InlineEditorOverlay />
       </div>

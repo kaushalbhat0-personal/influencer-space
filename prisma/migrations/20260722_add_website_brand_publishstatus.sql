@@ -162,3 +162,26 @@ ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themePackageId" TEXT NOT NULL DE
 ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themeColors" JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themeFonts" JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themeConfig" JSONB NOT NULL DEFAULT '{}';
+
+-- Step 7: PublishSnapshot table + liveVersion on PublishStatus
+ALTER TABLE "PublishStatus" ADD COLUMN IF NOT EXISTS "liveVersion" INTEGER;
+
+CREATE TABLE IF NOT EXISTS "PublishSnapshot" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "websiteId" UUID NOT NULL,
+    "version" INTEGER NOT NULL,
+    "state" TEXT NOT NULL DEFAULT 'live',
+    "snapshot" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PublishSnapshot_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "PublishSnapshot_websiteId_version_key" ON "PublishSnapshot"("websiteId", "version");
+CREATE INDEX IF NOT EXISTS "PublishSnapshot_websiteId_idx" ON "PublishSnapshot"("websiteId");
+CREATE INDEX IF NOT EXISTS "PublishStatus_websiteId_idx" ON "PublishStatus"("websiteId");
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PublishSnapshot_websiteId_fkey') THEN
+    ALTER TABLE "PublishSnapshot" ADD CONSTRAINT "PublishSnapshot_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

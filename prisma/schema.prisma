@@ -99,11 +99,31 @@ model PublishStatus {
   id          String    @id @default(uuid()) @db.Uuid
   websiteId   String    @unique @db.Uuid
   state       String    @default("draft")  // "draft" | "preview" | "live" | "archived"
+  liveVersion Int?
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  website   Website           @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  snapshots PublishSnapshot[]
+
+  @@index([websiteId])
+}
+
+/// Immutable snapshot of website state at the time of publishing.
+/// Enables rollback, preview, and version history.
+model PublishSnapshot {
+  id          String   @id @default(uuid()) @db.Uuid
+  websiteId   String   @db.Uuid
+  version     Int
+  state       String   // "live" | "preview" | "archived"
+  snapshot    Json     // full copy of pages + sections + blocks + theme
+  createdAt   DateTime @default(now())
+
+  publishStatus PublishStatus @relation(fields: [websiteId], references: [websiteId], onDelete: Cascade, map: "PublishSnapshot_websiteId_fkey")
+
+  @@unique([websiteId, version])
+  @@index([websiteId])
 }
 
 model Theme {
