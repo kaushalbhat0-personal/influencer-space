@@ -7,7 +7,7 @@ import { BuilderSidebar } from "./sidebar";
 import { InteractiveCanvas } from "./canvas/interactive-canvas";
 import { BuilderBreadcrumbs } from "./canvas/breadcrumbs";
 import { CanvasMinimap } from "./canvas/minimap";
-import { PropertyInspector } from "./property-inspector";
+import { PropertyInspector } from "./inspector/panel";
 import { InlineEditProvider } from "./inline-edit";
 import { InlineEditorOverlay } from "./canvas/inline-editor-overlay";
 import { BuilderStatusBar } from "./status-bar";

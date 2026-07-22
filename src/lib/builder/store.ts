@@ -234,6 +234,20 @@ export class BuilderStore {
     this.updatePageSections(page.id, updatedSections);
   }
 
+  /** Update a single config key on a block — used by the Property Inspector. */
+  updateBlockConfig(elementId: ElementId, key: string, value: unknown): void {
+    const page = this.activePage; if (!page) return;
+    const updatedSections = page.sections.map((s) => ({
+      ...s,
+      slots: s.slots.map((sl) =>
+        sl.id === elementId
+          ? { ...sl, config: { ...sl.config, [key]: value } }
+          : sl
+      ),
+    }));
+    this.updatePageSections(page.id, updatedSections);
+  }
+
   moveElementTo(slotId: ElementId, targetSectionId: SectionId, index: number): void {
     const page = this.activePage; if (!page) return;
     const slot = this.findSlotById(slotId); if (!slot) return;
