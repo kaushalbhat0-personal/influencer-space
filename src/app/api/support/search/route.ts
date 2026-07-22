@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPlatformConfig } from "@/lib/config/platform";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -51,7 +52,7 @@ export async function GET(req: Request) {
 
   for (const t of tenants) {
     results.push({
-      type: "tenant", id: t.id, label: t.name, sublabel: t.customDomain || `${t.subdomain}.creatorspace.app`,
+      type: "tenant", id: t.id, label: t.name, sublabel: t.customDomain || `${t.subdomain}.${getPlatformConfig().baseDomain}`,
       href: `/super-admin/tenants/${t.id}`,
     });
   }

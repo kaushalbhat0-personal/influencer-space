@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   Stepper,
   TemplateCard,
@@ -10,7 +10,6 @@ import {
   ChecklistGrid,
   RecommendationCard,
   SectionToggleGrid,
-  DeploymentCard,
   DevicePreview,
   WizardStep,
 } from "@/components/ai";
@@ -19,12 +18,14 @@ import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { MotionDiv, MotionPresence } from "@/components/ui/MotionSafe";
 import { generateWebsite } from "@/actions/generate-website.action";
+import { provisionCreator } from "@/actions/provision.actions";
 import { PageHeader } from "@/components/layout/PageHeader";
-import type { StepperStep, StrategyOption, ChecklistItem, SectionToggle, DeploymentStep } from "@/components/ai";
+import { ProvisioningSummary } from "@/components/provisioning/ProvisioningSummary";
+import type { StepperStep, StrategyOption, ChecklistItem, SectionToggle } from "@/components/ai";
 import type { WebsiteGenerationResult } from "@/lib/ai-generation/types";
 import {
   ShoppingBag, Camera, Gamepad2, Music, Dumbbell,
-  Package, Building2, User, Sparkles, CheckCircle2
+  Package, Building2, User, Sparkles,
 } from "lucide-react";
 
 type FlowStep = "template" | "strategy" | "url" | "analyzing" | "report" | "preview" | "provisioning" | "done";
@@ -83,14 +84,22 @@ function flowSteps(step: FlowStep): StepperStep[] {
 }
 
 export default function GeneratePage() {
-  const router = useRouter();
   const [step, setStep] = useState<FlowStep>("template");
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [strategyId, setStrategyId] = useState<string>("balanced");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [result, setResult] = useState<WebsiteGenerationResult | null>(null);
+  const [provisionResult, setProvisionResult] = useState<{
+    tenantId: string;
+    tenantSlug: string;
+    storefrontUrl: string;
+    dashboardUrl: string;
+    adminEmail: string;
+    temporaryPassword: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const nextStep = useCallback((next: FlowStep) => {
@@ -134,6 +143,40 @@ export default function GeneratePage() {
     }
   }, [sourceUrl, strategyId, sections]);
 
+  const handleDeploy = useCallback(async () => {
+    if (!result) return;
+    setStep("provisioning");
+    setProvisioning(true);
+    setError(null);
+
+    try {
+      const response = await provisionCreator({
+        creatorName: result.creatorName,
+        sourceUrl: sourceUrl,
+        sourcePlatform: result.sourcePlatform ?? "manual",
+        templateId: templateId ?? undefined,
+        strategyId: strategyId,
+        sections: sections.filter((s) => s.enabled).map((s) => s.id),
+        generatedContent: result.generatedContent ?? undefined,
+        generatedTheme: result.generatedTheme ?? undefined,
+      });
+
+      if (!response.success || !response.data) {
+        setError(response.error ?? "Provisioning failed");
+        setStep("preview");
+        return;
+      }
+
+      setProvisionResult(response.data);
+      setStep("done");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Provisioning failed");
+      setStep("preview");
+    } finally {
+      setProvisioning(false);
+    }
+  }, [result, sourceUrl, templateId, strategyId, sections]);
+
   const reportChecklist: ChecklistItem[] = result
     ? [
         { id: "brand", label: "Brand Name", status: "detected" },
@@ -154,19 +197,6 @@ export default function GeneratePage() {
   const completedStages = result?.stages.filter((s) => s.status === "completed").length ?? 0;
   const totalStages = result?.stages.length ?? 8;
   const reportScore = Math.round((completedStages / totalStages) * 100);
-
-  const deploySteps: DeploymentStep[] = result
-    ? result.stages.map((s) => ({
-        id: s.stage,
-        label: s.stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        status: s.status === "completed" ? "completed" as const
-          : s.status === "failed" ? "failed" as const
-          : s.status === "running" ? "running" as const
-          : "pending" as const,
-        durationMs: s.durationMs ?? undefined,
-        error: s.error ?? undefined,
-      }))
-    : [];
 
   return (
     <div className="min-h-screen bg-[var(--surface-root)] p-4 md:p-8">
@@ -308,7 +338,7 @@ export default function GeneratePage() {
                   <Button variant="outline" onClick={() => nextStep("report")}>← Back</Button>
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={handleGenerate}>🔄 Regenerate</Button>
-                    <Button onClick={() => nextStep("provisioning")}>Deploy Website →</Button>
+                    <Button onClick={handleDeploy} disabled={provisioning}>Deploy Website →</Button>
                   </div>
                 </div>
               </WizardStep>
@@ -317,57 +347,46 @@ export default function GeneratePage() {
 
           {/* STEP 7: Provisioning */}
           {step === "provisioning" && (
-            <MotionDiv key="provisioning" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-              <DeploymentCard
-                subtitle={result?.storefrontUrl ?? undefined}
-                steps={deploySteps.length > 0 ? deploySteps : [
-                  { id: "tenant", label: "Creating Tenant", status: "completed", durationMs: 1200 },
-                  { id: "db", label: "Creating Database", status: "completed", durationMs: 800 },
-                  { id: "theme", label: "Generating Theme", status: "completed", durationMs: 1500 },
-                  { id: "pages", label: "Generating Pages", status: "completed", durationMs: 2100 },
-                  { id: "content", label: "Generating Content", status: "completed", durationMs: 1800 },
-                  { id: "dashboard", label: "Creating Dashboard", status: "completed", durationMs: 900 },
-                  { id: "domain", label: "Creating Domain", status: "completed", durationMs: 600 },
-                  { id: "finalize", label: "Finalizing", status: "completed", durationMs: 400 },
-                ]}
-              />
-              <div className="flex justify-center mt-8">
-                <Button onClick={() => nextStep("done")}>Continue →</Button>
+            <MotionDiv key="provisioning" className="flex flex-col items-center justify-center py-24">
+              <div className="animate-spin h-10 w-10 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full mb-6" />
+              <h2 className="text-xl font-semibold text-white">Provisioning Creator Workspace</h2>
+              <p className="text-sm text-zinc-500 mt-2 text-center max-w-md">
+                Creating tenant, workspace, admin account, and publishing the storefront...
+              </p>
+              <div className="mt-8 w-full max-w-sm space-y-3">
+                {[
+                  "Validating creator profile",
+                  "Generating unique tenant slug",
+                  "Creating tenant",
+                  "Creating workspace",
+                  "Creating admin account",
+                  "Generating secure credentials",
+                  "Provisioning website",
+                  "Publishing storefront",
+                  "Persisting all records",
+                ].map((label, i) => (
+                  <div key={label} className="flex items-center gap-3 text-sm">
+                    <div className={cn(
+                      "h-5 w-5 rounded-full flex items-center justify-center shrink-0",
+                      provisioning && i < 4 ? "border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" : "bg-zinc-800"
+                    )}>
+                      {!provisioning && <span className="text-[10px] text-zinc-600">{i + 1}</span>}
+                    </div>
+                    <span className={cn(
+                      provisioning && i < 4 ? "text-zinc-300" : "text-zinc-600"
+                    )}>
+                      {label}
+                    </span>
+                  </div>
+                ))}
               </div>
             </MotionDiv>
           )}
 
           {/* STEP 8: Done */}
-          {step === "done" && result && (
-            <MotionDiv key="done" className="text-center py-12 space-y-6">
-              <CheckCircle2 className="h-16 w-16 text-green-400 mx-auto" />
-              <div>
-                <h2 className="text-2xl font-bold text-white">🎉 Website is Ready!</h2>
-                <p className="text-zinc-400 mt-2">{result.creatorName}</p>
-              </div>
-
-              <div className="admin-card p-6 space-y-3 max-w-md mx-auto">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-500">Dashboard</span>
-                  <span className="text-s8ul-cyan font-mono text-xs">{result.dashboardUrl ?? "—"}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-500">Storefront</span>
-                  <span className="text-s8ul-cyan font-mono text-xs">{result.storefrontUrl ?? "—"}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-center gap-3">
-                <Button variant="outline" onClick={() => {
-                  const url = `https://${result.storefrontUrl}`;
-                  navigator.clipboard?.writeText(url);
-                }}>
-                  📋 Copy Link
-                </Button>
-                <Button variant="outline" onClick={() => router.push("/super-admin")}>
-                  ← Back to Dashboard
-                </Button>
-              </div>
+          {step === "done" && provisionResult && (
+            <MotionDiv key="done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <ProvisioningSummary data={provisionResult} />
             </MotionDiv>
           )}
         </MotionPresence>

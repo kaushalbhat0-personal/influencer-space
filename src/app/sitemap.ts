@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { getPlatformConfig } from "@/lib/config/platform";
 
 export const revalidate = 3600; // ISR: regenerate every hour
 
@@ -14,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const tenantUrls = tenants
     .filter((t) => t.subdomain || t.customDomain)
     .map((t) => {
-      const domain = t.customDomain ?? `${t.subdomain}.creatorspace.app`;
+      const domain = t.customDomain ?? `${t.subdomain}.${getPlatformConfig().baseDomain}`;
       return {
         url: `https://${domain}`,
         lastModified: t.updatedAt,

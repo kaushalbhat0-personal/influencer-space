@@ -6,6 +6,7 @@
  */
 
 import { BaseAppService } from "@/lib/application/base";
+import { buildAdminEmail } from "@/lib/config/platform";
 import type { ServiceResult } from "@/lib/application/types";
 import type { CreatorProfile, TenantProvisioning } from "./types";
 
@@ -21,7 +22,7 @@ export class TenantProvisioner extends BaseAppService {
     return this.wrapAsync(async () => {
       const slug = profile.username.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
       const subdomain = options?.subdomain ?? slug;
-      const adminEmail = options?.adminEmail ?? `admin@${subdomain}.creatorspace.app`;
+      const adminEmail = options?.adminEmail ?? buildAdminEmail(subdomain);
       const planId = options?.planId ?? "STARTER";
       const tenantId = `t_${Date.now()}_${slug.substring(0, 8)}`;
 

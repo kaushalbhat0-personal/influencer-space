@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DEMO_SEEDS } from "@/lib/demo/seeds";
+import { getPlatformConfig } from "@/lib/config/platform";
 import type { DemoSeed } from "@/lib/demo/types";
 
 export interface ShowcaseSite {
@@ -70,9 +71,9 @@ export class ShowcaseService {
           name: t.name,
           industry: seed?.industry || "Creator",
           category: seedCategory(seed),
-          description: seed?.content.bio || `${t.subdomain}.creatorspace.app`,
+          description: seed?.content.bio || `${t.subdomain}.${getPlatformConfig().baseDomain}`,
           products: seed?.products.slice(0, 3).map((p) => ({ name: p.name, price: p.price })) || [],
-          storefrontUrl: `${t.subdomain}.creatorspace.app`,
+          storefrontUrl: `${t.subdomain}.${getPlatformConfig().baseDomain}`,
           featured: seedFeatured(seed, seeds.indexOf(seed!)),
         };
       });
@@ -86,7 +87,7 @@ export class ShowcaseService {
         category: seedCategory(seed),
         description: seed.content.bio,
         products: seed.products.slice(0, 3).map((p) => ({ name: p.name, price: p.price })),
-        storefrontUrl: `${seed.id}.creatorspace.app`,
+        storefrontUrl: `${seed.id}.${getPlatformConfig().baseDomain}`,
         featured: i < 3,
       }));
     }

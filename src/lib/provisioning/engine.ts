@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { buildStorefrontUrl } from "@/lib/config/platform";
 import type { Prisma } from "@/generated/prisma/client";
 
 export type ImportSource = "demo_seed" | "manual" | "youtube" | "instagram" | "twitch" | "website" | "tiktok" | "unknown";
@@ -100,7 +101,7 @@ export class CreatorProvisioningEngine {
         return {
           success: true,
           tenantId: tenant.id,
-          storefrontUrl: `${tenant.subdomain}.creatorspace.app`,
+          storefrontUrl: buildStorefrontUrl(tenant.subdomain),
           productCount,
           errors: [],
         };

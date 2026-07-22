@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { getPlatformConfig } from "@/lib/config/platform";
 import {
   defaultState, saveOnboarding, loadOnboarding, clearOnboarding, trackOnboarding,
   CREATOR_STEPS, AGENCY_STEPS,
@@ -65,7 +66,7 @@ export default function OnboardingPage() {
       update({
         generatedContent: { heroTitle: state.brandName || "Your Store", heroSubtitle: "Welcome to your creator website" },
         generatedTheme: { preset: "indigo", primaryColor: "#6366F1" },
-        storefrontUrl: `${state.brandName.toLowerCase().replace(/\s+/g, "-")}.creatorspace.app`,
+        storefrontUrl: `${state.brandName.toLowerCase().replace(/\s+/g, "-")}.${getPlatformConfig().baseDomain}`,
         dashboardUrl: "/admin/dashboard",
       });
       trackOnboarding("onboarding:generation:completed", { persona: state.persona });

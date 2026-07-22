@@ -18,6 +18,7 @@ type AnalyticsEvent =
   | "signup:started" | "signup:completed"
   | "onboarding:started" | "onboarding:step:completed" | "onboarding:completed"
   | "generation:started" | "generation:completed"
+  | "provisioning:started" | "provisioning:completed" | "provisioning:failed"
   | "publish:started" | "publish:completed"
   | "dashboard:opened"
   | "product:created"

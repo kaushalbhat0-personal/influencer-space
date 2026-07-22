@@ -21,6 +21,7 @@ import { contentGenerationService } from "./content-generator";
 import { themeSelectionStrategy } from "./theme-strategy";
 import { websiteComposer } from "./website-composer";
 import { tenantProvisioner } from "./tenant-provisioner";
+import { buildStorefrontUrl, buildDashboardUrl } from "@/lib/config/platform";
 
 export class WebsiteGenerationPipeline extends BaseAppService {
   constructor() {
@@ -344,10 +345,10 @@ export class WebsiteGenerationPipeline extends BaseAppService {
         ctx.generatedContent?.suggestedSections.map((s) => s.type) ??
         [],
       dashboardUrl: ctx.tenantProvisioning
-        ? `https://${ctx.tenantProvisioning.subdomain}.creatorspace.app/admin`
+        ? buildDashboardUrl(ctx.tenantProvisioning.subdomain)
         : null,
       storefrontUrl: ctx.tenantProvisioning
-        ? `https://${ctx.tenantProvisioning.subdomain}.creatorspace.app`
+        ? buildStorefrontUrl(ctx.tenantProvisioning.subdomain)
         : null,
       stages: ctx.stageResults,
       totalDurationMs: Date.now() - ctx.startTime,
