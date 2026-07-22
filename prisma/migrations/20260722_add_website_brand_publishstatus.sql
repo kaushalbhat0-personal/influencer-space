@@ -374,3 +374,20 @@ DO $$ BEGIN
     ALTER TABLE "WorkflowExecution" ADD CONSTRAINT "WorkflowExecution_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- Step 12: Analytics & Insights Platform
+CREATE TABLE IF NOT EXISTS "AnalyticsEvent" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenantId" UUID,
+    "source" TEXT NOT NULL,
+    "eventType" TEXT NOT NULL,
+    "entityId" TEXT,
+    "payload" JSONB NOT NULL DEFAULT '{}',
+    "occurredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "AnalyticsEvent_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "AnalyticsEvent_tenantId_occurredAt_idx" ON "AnalyticsEvent"("tenantId", "occurredAt");
+CREATE INDEX IF NOT EXISTS "AnalyticsEvent_source_eventType_idx" ON "AnalyticsEvent"("source", "eventType");
+CREATE INDEX IF NOT EXISTS "AnalyticsEvent_eventType_occurredAt_idx" ON "AnalyticsEvent"("eventType", "occurredAt");
+CREATE INDEX IF NOT EXISTS "AnalyticsEvent_occurredAt_idx" ON "AnalyticsEvent"("occurredAt");

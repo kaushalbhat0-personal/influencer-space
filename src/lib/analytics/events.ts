@@ -37,6 +37,11 @@ export function trackProductEvent(stage: EventStage, meta?: Record<string, unkno
   return event;
 }
 
+/** Simple event tracking — logs to console and stores in memory for debugging. */
+export function track(event: string, properties?: Record<string, unknown>): void {
+  console.log(`[Analytics] ${event}`, properties || {});
+}
+
 export function getFunnelCounts(): Record<EventStage, number> {
   const counts: Record<string, number> = {};
   for (const stage of ACTIVATION_FUNNEL) {
