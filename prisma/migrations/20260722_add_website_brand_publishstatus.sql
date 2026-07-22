@@ -246,3 +246,24 @@ DO $$ BEGIN
     ALTER TABLE "AssetReference" ADD CONSTRAINT "AssetReference_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- Step 9: DesignTheme table for Theme Studio
+CREATE TABLE IF NOT EXISTS "DesignTheme" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "mode" TEXT NOT NULL DEFAULT 'light',
+    "active" BOOLEAN NOT NULL DEFAULT false,
+    "tokens" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "DesignTheme_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "DesignTheme_tenantId_idx" ON "DesignTheme"("tenantId");
+CREATE INDEX IF NOT EXISTS "DesignTheme_tenantId_active_idx" ON "DesignTheme"("tenantId", "active");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'DesignTheme_tenantId_fkey') THEN
+    ALTER TABLE "DesignTheme" ADD CONSTRAINT "DesignTheme_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
