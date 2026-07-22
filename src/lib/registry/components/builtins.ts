@@ -1,7 +1,9 @@
 import { componentRegistry } from "./registry";
 import type { ComponentDefinition } from "./types";
+import { HeroRenderer, AboutRenderer, FooterRenderer } from "./renderers";
 
 const BUILTIN_COMPONENTS: ComponentDefinition[] = [
+  // ── Heroes ───────────────────────────────────────────────
   {
     id: "hero.default", type: "hero", name: "Hero", category: "hero",
     icon: "Layout", description: "Full-width hero banner with title, subtitle, and CTA",
@@ -9,7 +11,9 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "fade", name: "Fade In" }, { id: "slide", name: "Slide Up" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Welcome", subtitle: "", buttonText: "Get Started", buttonLink: "#", alignment: "center" },
+    validation: { schema: {} },
+    defaultProps: { title: "Welcome", subtitle: "", buttonText: "Get Started", buttonLink: "#", alignment: "center" },
+    renderer: HeroRenderer,
   },
   {
     id: "hero.gaming", type: "hero", name: "Gaming Hero", category: "hero",
@@ -18,7 +22,9 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "fade", name: "Fade In" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Live Now", subtitle: "", showLiveBadge: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Live Now", subtitle: "", showLiveBadge: true },
+    renderer: HeroRenderer,
   },
   {
     id: "hero.fitness", type: "hero", name: "Fitness Hero", category: "hero",
@@ -27,7 +33,9 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "fade", name: "Fade In" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Transform Your Body", subtitle: "", cta: "Join Now" },
+    validation: { schema: {} },
+    defaultProps: { title: "Transform Your Body", subtitle: "", cta: "Join Now" },
+    renderer: HeroRenderer,
   },
   {
     id: "hero.education", type: "hero", name: "Education Hero", category: "hero",
@@ -36,16 +44,24 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "fade", name: "Fade In" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Learn Something New", subtitle: "", cta: "Start Learning" },
+    validation: { schema: {} },
+    defaultProps: { title: "Learn Something New", subtitle: "", cta: "Start Learning" },
+    renderer: HeroRenderer,
   },
+
+  // ── About ────────────────────────────────────────────────
   {
     id: "about.default", type: "about", name: "About", category: "about",
     icon: "User", description: "About section with bio, image, and social links",
     version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: true,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "About Me", content: "", imageUrl: "" },
+    validation: { schema: {} },
+    defaultProps: { title: "About Me", content: "", imageUrl: "" },
+    renderer: AboutRenderer,
   },
+
+  // ── Gallery ──────────────────────────────────────────────
   {
     id: "gallery.grid", type: "gallery", name: "Image Gallery", category: "gallery",
     icon: "Image", description: "Grid layout for images and videos",
@@ -53,7 +69,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: false,
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { layout: "grid", columns: 3, images: [] },
+    validation: { schema: {} },
+    defaultProps: { layout: "grid", columns: 3, images: [] },
   },
   {
     id: "products.grid", type: "products", name: "Products", category: "products",
@@ -62,7 +79,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { layout: "grid", columns: 3 },
+    validation: { schema: {} },
+    defaultProps: { layout: "grid", columns: 3 },
   },
   {
     id: "timeline.default", type: "timeline", name: "Timeline", category: "timeline",
@@ -71,7 +89,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "slide", name: "Slide In" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "My Journey" },
+    validation: { schema: {} },
+    defaultProps: { title: "My Journey" },
   },
   {
     id: "links.default", type: "links", name: "Social Links", category: "links",
@@ -79,7 +98,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Connect With Me" },
+    validation: { schema: {} },
+    defaultProps: { title: "Connect With Me" },
   },
   {
     id: "footer.default", type: "footer", name: "Footer", category: "footer",
@@ -87,7 +107,9 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { copyright: "© All rights reserved" },
+    validation: { schema: {} },
+    defaultProps: { copyright: "© All rights reserved" },
+    renderer: FooterRenderer,
   },
   {
     id: "testimonials.default", type: "testimonials", name: "Testimonials", category: "testimonials",
@@ -96,7 +118,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "fade", name: "Fade In" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "What People Say" },
+    validation: { schema: {} },
+    defaultProps: { title: "What People Say" },
   },
   {
     id: "faq.default", type: "faq", name: "FAQ", category: "faq",
@@ -104,7 +127,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: true,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "FAQ", items: [] },
+    validation: { schema: {} },
+    defaultProps: { title: "FAQ", items: [] },
   },
   {
     id: "contact.default", type: "contact", name: "Contact", category: "contact",
@@ -112,7 +136,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Get In Touch", email: "" },
+    validation: { schema: {} },
+    defaultProps: { title: "Get In Touch", email: "" },
   },
   {
     id: "newsletter.default", type: "newsletter", name: "Newsletter", category: "newsletter",
@@ -120,7 +145,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Subscribe", placeholder: "Your email" },
+    validation: { schema: {} },
+    defaultProps: { title: "Subscribe", placeholder: "Your email" },
   },
   {
     id: "pricing.default", type: "pricing", name: "Pricing", category: "pricing",
@@ -129,7 +155,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "Plans", plans: [] },
+    validation: { schema: {} },
+    defaultProps: { title: "Plans", plans: [] },
   },
   {
     id: "courses.default", type: "courses", name: "Courses", category: "courses",
@@ -138,7 +165,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: true,
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { title: "My Courses" },
+    validation: { schema: {} },
+    defaultProps: { title: "My Courses" },
   },
   {
     id: "embed.spotify", type: "embed", name: "Spotify Player", category: "embed",
@@ -146,7 +174,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: false, supportsTheme: false, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { url: "", height: "352" },
+    validation: { schema: {} },
+    defaultProps: { url: "", height: "352" },
   },
   {
     id: "embed.youtube", type: "embed", name: "YouTube Video", category: "embed",
@@ -154,7 +183,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: false, supportsTheme: false, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { url: "", autoplay: false },
+    validation: { schema: {} },
+    defaultProps: { url: "", autoplay: false },
   },
   {
     id: "social.discord", type: "social", name: "Discord Widget", category: "social",
@@ -162,7 +192,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     version: "1.0.0", supportsAI: false, supportsTheme: false, supportsAnimation: false,
     supportsResponsive: true, supportsSEO: false,
     animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { serverId: "", label: "Join Discord" },
+    validation: { schema: {} },
+    defaultProps: { serverId: "", label: "Join Discord" },
   },
   {
     id: "social.instagram", type: "social", name: "Instagram Feed", category: "social",
@@ -171,7 +202,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     supportsResponsive: true, supportsSEO: false,
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
-    schema: {}, defaultProps: { username: "", limit: 6 },
+    validation: { schema: {} },
+    defaultProps: { username: "", limit: 6 },
   },
 ];
 
