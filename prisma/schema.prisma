@@ -642,3 +642,114 @@ model BillingInvoice {
   @@index([accountId])
   @@index([status])
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Creator Intelligence Engine — Provider Accounts, Profiles, AI Analysis
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Normalized provider account — one per external creator source.
+model ProviderAccount {
+  id          String   @id @default(uuid()) @db.Uuid
+  provider    String   // "youtube" | "instagram" | "twitch" | "tiktok"
+  externalId  String
+  handle      String?
+  name        String?
+  profileData Json     @default("{}")
+  fetchedAt   DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fetchLogs ProviderFetchLog[]
+
+  @@unique([provider, externalId])
+  @@index([provider])
+  @@index([handle])
+}
+
+/// Log of every provider API fetch — used for debugging and quota tracking.
+model ProviderFetchLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  provider    String   // "youtube" | "instagram" | ...
+  accountId   String?  @db.Uuid
+  endpoint    String
+  quotaUnits  Int      @default(1)
+  latencyMs   Int      @default(0)
+  status      String   // "success" | "error" | "cached"
+  cached      Boolean  @default(false)
+  error       String?
+  createdAt   DateTime @default(now())
+
+  account ProviderAccount? @relation(fields: [accountId], references: [id])
+
+  @@index([provider, createdAt])
+  @@index([accountId])
+}
+
+/// Daily YouTube API quota usage tracking.
+model YouTubeQuotaUsage {
+  id           String   @id @default(uuid()) @db.Uuid
+  date         DateTime
+  unitsUsed    Int      @default(0)
+  calls        Int      @default(0)
+  failures     Int      @default(0)
+  avgLatencyMs Float    @default(0)
+  createdAt    DateTime @default(now())
+
+  @@unique([date])
+}
+
+/// Normalized creator profile — output of any provider, input to AI.
+model CreatorProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String?
+  description String?
+  avatarUrl   String?
+  bannerUrl   String?
+  followers   Int      @default(0)
+  videoCount  Int      @default(0)
+  viewCount   BigInt   @default(0)
+  country     String?
+  platform    String   // "youtube" | "instagram" | ...
+  handle      String?
+  externalId  String?
+  socialLinks Json     @default("[]")
+  latestContent Json   @default("[]")
+  categories  Json     @default("[]")
+  keywords    Json     @default("[]")
+  language    String?
+  rawResponse Json?    // stored for debugging
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  intelligence CreatorIntelligence?
+
+  @@index([platform, handle])
+}
+
+/// AI-derived analysis of a CreatorProfile.
+model CreatorIntelligence {
+  id                    String   @id @default(uuid()) @db.Uuid
+  profileId             String   @unique @db.Uuid
+  niche                 String
+  subNiche              String?
+  audience              String?
+  brandPersonality      String?
+  brandTone             String?
+  visualStyle           String?
+  contentStyle          String?
+  websiteGoal           String?
+  monetization          String?
+  recommendedTheme      String?
+  recommendedTemplate   String?
+  recommendedSections   Json     @default("[]")
+  seoKeywords           Json     @default("[]")
+  confidence            Float    @default(0)
+  reasoning             String?
+  model                 String   @default("gpt-4")
+  createdAt             DateTime @default(now())
+
+  profile CreatorProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
