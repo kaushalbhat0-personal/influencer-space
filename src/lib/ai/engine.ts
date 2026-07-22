@@ -1,13 +1,12 @@
 import type { IntelligenceEngine } from "./interface";
 import { HeuristicIntelligenceEngine } from "./heuristic";
 import { LlmIntelligenceEngine } from "./llm-engine";
+import { aiProviderRegistry } from "./providers/registry";
 
 const engines: IntelligenceEngine[] = [];
 
-// Register engines in priority order
-// LLM engine is primary if OPENAI_API_KEY is set, otherwise heuristic
-const openAiKey = typeof process !== "undefined" ? process.env.OPENAI_API_KEY : undefined;
-if (openAiKey) {
+// Register LLM engine as primary if any AI provider is configured
+if (aiProviderRegistry.getAll().length > 0) {
   engines.push(new LlmIntelligenceEngine({ fallbackOnFailure: true }));
 }
 engines.push(new HeuristicIntelligenceEngine());
@@ -20,12 +19,10 @@ engines.push(new HeuristicIntelligenceEngine());
 export class AIAnalysisEngine {
   private engines = engines;
 
-  /** Returns the primary (first) engine. */
   getEngine(): IntelligenceEngine {
     return this.engines[0];
   }
 
-  /** Returns all registered engines. */
   getAllEngines(): IntelligenceEngine[] {
     return this.engines;
   }

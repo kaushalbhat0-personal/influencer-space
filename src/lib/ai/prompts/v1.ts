@@ -79,3 +79,12 @@ export function buildPrompt(profile: {
     ],
   };
 }
+
+// Auto-register in prompt registry
+import { promptRegistry } from "./registry";
+promptRegistry.register({
+  id: "creator-intelligence",
+  version: VERSION,
+  description: "Analyze creator profile and produce structured website intelligence",
+  build: buildPrompt,
+});
