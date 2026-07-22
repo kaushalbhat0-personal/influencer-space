@@ -358,46 +358,21 @@ model ContentFeedItem {
 // Creator Provisioning — State Machine + Event Log
 // ──────────────────────────────────────────────────────────────────────────────
 
-enum ProvisionStep {
-  IMPORT_REQUESTED
-  ANALYZING
-  PROFILE_READY
-  PROVISIONING
-  TENANT_CREATED
-  WORKSPACE_CREATED
-  ADMIN_CREATED
-  WEBSITE_CREATED
-  PUBLISHED
-  READY
-  DOMAIN_FAILED
-  ADMIN_FAILED
-  WEBSITE_FAILED
-  PUBLISH_FAILED
-  PROVISION_FAILED
-}
-
-enum ProvisionRunStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
 /// One row per provisioning run — tracks overall status and current step.
 model CreatorProvisionRun {
-  id              String             @id @default(uuid()) @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
   creatorName     String
   sourceUrl       String?
   sourcePlatform  String?
-  tenantId        String?            @db.Uuid
+  tenantId        String?  @db.Uuid
   tenantSlug      String?
-  status          ProvisionRunStatus @default(PENDING)
-  currentStep     ProvisionStep      @default(IMPORT_REQUESTED)
+  status          String   @default("PENDING")
+  currentStep     String   @default("IMPORT_REQUESTED")
   error           String?
-  startedAt       DateTime           @default(now())
+  startedAt       DateTime @default(now())
   completedAt     DateTime?
   durationMs      Int?
-  metadata        Json               @default("{}")
+  metadata        Json     @default("{}")
 
   events CreatorProvisionEvent[]
 
@@ -408,12 +383,12 @@ model CreatorProvisionRun {
 
 /// Append-only event log — every state transition is recorded here.
 model CreatorProvisionEvent {
-  id        String         @id @default(uuid()) @db.Uuid
-  runId     String         @db.Uuid
-  step      ProvisionStep
-  event     String         // "started" | "completed" | "failed"
+  id        String   @id @default(uuid()) @db.Uuid
+  runId     String   @db.Uuid
+  step      String
+  event     String   // "started" | "completed" | "failed"
   message   String?
-  timestamp DateTime       @default(now())
+  timestamp DateTime @default(now())
 
   run CreatorProvisionRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
