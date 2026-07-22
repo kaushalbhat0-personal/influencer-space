@@ -345,7 +345,7 @@ export class WebsiteGenerationPipeline extends BaseAppService {
         ctx.generatedContent?.suggestedSections.map((s) => s.type) ??
         [],
       dashboardUrl: ctx.tenantProvisioning
-        ? buildDashboardUrl(ctx.tenantProvisioning.subdomain)
+        ? buildDashboardUrl()
         : null,
       storefrontUrl: ctx.tenantProvisioning
         ? buildStorefrontUrl(ctx.tenantProvisioning.subdomain)

@@ -95,7 +95,7 @@ export default async function MarketingPage() {
                   <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
-                  <span className="ml-3 text-[10px] text-zinc-600 font-medium">creator.{getPlatformConfig().baseDomain}</span>
+                  <span className="ml-3 text-[10px] text-zinc-600 font-medium">{getPlatformConfig().appUrl}/creator-name</span>
                 </div>
 
                 {/* AI Pipeline visual */}

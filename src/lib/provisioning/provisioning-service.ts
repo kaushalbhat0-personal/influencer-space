@@ -175,7 +175,7 @@ export class ProvisioningService {
       await this.logEvent(runId, ProvisionStep.READY, ProvisionEventType.COMPLETED, "All resources ready");
 
       const storefrontUrl = buildStorefrontUrl(slug);
-      const dashboardUrl = buildDashboardUrl(slug);
+      const dashboardUrl = buildDashboardUrl();
 
       const elapsed = await this.completeRun(runId, ProvisionStep.READY, null);
       await prisma.creatorProvisionRun.update({

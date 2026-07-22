@@ -1,59 +1,56 @@
+let cachedConfig: { appUrl: string } | null = null;
+
 function getConfig() {
-  return {
-    baseDomain: process.env.NEXT_PUBLIC_PLATFORM_BASE_DOMAIN || process.env.PLATFORM_BASE_DOMAIN || "creatorspace.app",
-    appUrl: (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, ""),
-  };
+  if (!cachedConfig) {
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+    cachedConfig = { appUrl };
+  }
+  return cachedConfig;
 }
 
 export class PlatformUrlService {
-  getBaseDomain(): string {
-    return getConfig().baseDomain;
-  }
-
   getAppUrl(): string {
     return getConfig().appUrl;
   }
 
+  getAppDomain(): string {
+    return new URL(getConfig().appUrl).hostname;
+  }
+
   buildStorefrontUrl(slug: string): string {
-    const { baseDomain } = getConfig();
-    return `https://${slug}.${baseDomain}`;
+    return `${getConfig().appUrl}/${slug}`;
   }
 
   buildStorefrontUrlWithTenant(customDomain: string | null | undefined, slug: string): string {
-    const { baseDomain } = getConfig();
-    return customDomain
-      ? `https://${customDomain}`
-      : `https://${slug}.${baseDomain}`;
+    return customDomain ? `https://${customDomain}` : `${getConfig().appUrl}/${slug}`;
   }
 
-  buildDashboardUrl(slug: string): string {
-    const { baseDomain } = getConfig();
-    return `https://${slug}.${baseDomain}/admin/dashboard`;
+  buildDashboardUrl(): string {
+    return `${getConfig().appUrl}/admin/dashboard`;
   }
 
   buildAdminEmail(slug: string): string {
-    const { baseDomain } = getConfig();
-    return `admin@${slug}.${baseDomain}`;
+    return `admin-${slug}@${this.getAppDomain()}`;
   }
 
   buildAdminLoginUrl(): string {
-    return `${this.getAppUrl()}/admin/login`;
+    return `${getConfig().appUrl}/admin/login`;
   }
 
   buildSuperAdminUrl(): string {
-    return `${this.getAppUrl()}/super-admin`;
+    return `${getConfig().appUrl}/super-admin`;
   }
 
   buildTenantAdminUrl(tenantId: string): string {
-    return `${this.getAppUrl()}/super-admin/tenants/${tenantId}`;
+    return `${getConfig().appUrl}/super-admin/tenants/${tenantId}`;
   }
 
-  buildCreatorDashboardUrl(slug: string): string {
-    return this.buildDashboardUrl(slug);
+  buildCreatorDashboardUrl(): string {
+    return this.buildDashboardUrl();
   }
 
   buildShowcaseUrl(): string {
-    return `${this.getAppUrl()}/showcase`;
+    return `${getConfig().appUrl}/showcase`;
   }
 
   buildPreviewUrl(slug: string, customDomain?: string | null): string {
@@ -61,9 +58,7 @@ export class PlatformUrlService {
   }
 
   buildSiteUrlForAdmin(customDomain: string | null | undefined, slug: string): string {
-    return customDomain
-      ? `https://${customDomain}`
-      : `/${slug}`;
+    return customDomain ? `https://${customDomain}` : `/${slug}`;
   }
 }
 
