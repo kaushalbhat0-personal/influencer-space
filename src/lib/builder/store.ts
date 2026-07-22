@@ -261,6 +261,56 @@ export class BuilderStore {
     this.updatePageSections(page.id, updatedSections);
   }
 
+  /** Move a section to a new position within its page. */
+  reorderSections(pageId: PageId, fromIndex: number, toIndex: number): void {
+    const page = this.getPage(pageId); if (!page) return;
+    this.pushHistory("reorder");
+    const sections = [...page.sections];
+    const [moved] = sections.splice(fromIndex, 1);
+    if (!moved) return;
+    sections.splice(toIndex, 0, moved);
+    this.updatePageSections(pageId, sections.map((s, i) => ({ ...s, order: i })));
+  }
+
+  /** Remove an entire section and all its blocks. */
+  removeSection(sectionId: SectionId, pageId?: PageId): void {
+    const pid = pageId ?? this.state.canvas.activePageId; if (!pid) return;
+    const page = this.getPage(pid); if (!page) return;
+    this.pushHistory("remove-section");
+    this.updatePageSections(pid, page.sections.filter((s) => s.id !== sectionId));
+  }
+
+  /** Duplicate a section with all its blocks. */
+  duplicateSection(sectionId: SectionId, pageId?: PageId): void {
+    const pid = pageId ?? this.state.canvas.activePageId; if (!pid) return;
+    const page = this.getPage(pid); if (!page) return;
+    const section = page.sections.find((s) => s.id === sectionId); if (!section) return;
+    this.pushHistory("duplicate-section");
+    const cloned: BuilderSection = JSON.parse(JSON.stringify(section));
+    cloned.id = uid();
+    cloned.order = section.order + 0.5;
+    cloned.slots = cloned.slots.map((sl) => ({ ...sl, id: uid() }));
+    const sections = [...page.sections, cloned].sort((a, b) => a.order - b.order).map((s, i) => ({ ...s, order: i }));
+    this.updatePageSections(pid, sections);
+  }
+
+  /** Insert a new block (slot) from a component ID using default props from the registry. */
+  insertComponent(componentId: string, sectionId: SectionId, index?: number): void {
+    const page = this.activePage; if (!page) return;
+    const section = page.sections.find((s) => s.id === sectionId); if (!section) return;
+    this.pushHistory("insert-component");
+    const slot: BuilderSlot = {
+      id: uid(), moduleId: componentId, parentId: sectionId,
+      order: index ?? section.slots.length, visible: true, locked: false,
+      config: {}, metadata: {},
+    };
+    const sIdx = page.sections.findIndex((s) => s.id === sectionId);
+    const slots = [...section.slots];
+    slots.splice(index ?? slots.length, 0, slot);
+    const sections = [...page.sections]; sections[sIdx] = { ...section, slots };
+    this.updatePageSections(page.id, sections);
+  }
+
   setDevice(device: BuilderCanvas["device"]): void { this.state = { ...this.state, canvas: { ...this.state.canvas, device } }; }
   setZoom(zoom: number): void { this.state = { ...this.state, canvas: { ...this.state.canvas, zoom: Math.max(0.25, Math.min(2, zoom)) } }; }
   setHovered(id: ElementId | null): void { this.state = { ...this.state, canvas: { ...this.state.canvas, hoveredElementId: id } }; }
