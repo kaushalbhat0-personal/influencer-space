@@ -62,6 +62,8 @@ model Tenant {
   designThemes       DesignTheme[]
   offerings          Offering[]
   purchases          Purchase[]
+  workflows          Workflow[]
+  workflowExecutions WorkflowExecution[]
   website            Website?
 
   @@index([customDomain])
@@ -921,4 +923,53 @@ model Purchase {
   @@index([tenantId])
   @@index([status])
   @@index([customerEmail])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Workflow & Automation Engine
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// A workflow that reacts to an event and executes actions.
+model Workflow {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  name        String
+  description String?
+  trigger     String   // Event type that activates this workflow
+  enabled     Boolean  @default(true)
+  actions     Json     @default("[]") // Ordered list of action configurations
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  executions  WorkflowExecution[]
+
+  @@index([tenantId])
+  @@index([trigger])
+  @@index([enabled])
+}
+
+/// Immutable execution log for every workflow run.
+model WorkflowExecution {
+  id          String   @id @default(uuid()) @db.Uuid
+  workflowId  String   @db.Uuid
+  tenantId    String   @db.Uuid
+  trigger     String   // Which event triggered this execution
+  status      String   @default("pending") // "pending" | "running" | "completed" | "failed"
+  actions     Json     @default("[]")      // Snapshot of actions at execution time
+  results     Json     @default("[]")      // Per-action results (success, error, duration)
+  retries     Int      @default(0)
+  maxRetries  Int      @default(1)
+  durationMs  Int?
+  error       String?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
 }

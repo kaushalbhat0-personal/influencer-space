@@ -323,3 +323,54 @@ DO $$ BEGIN
     ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- Step 11: Workflow & Automation Engine
+CREATE TABLE IF NOT EXISTS "Workflow" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "trigger" TEXT NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "actions" JSONB NOT NULL DEFAULT '[]',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Workflow_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "Workflow_tenantId_idx" ON "Workflow"("tenantId");
+CREATE INDEX IF NOT EXISTS "Workflow_trigger_idx" ON "Workflow"("trigger");
+CREATE INDEX IF NOT EXISTS "Workflow_enabled_idx" ON "Workflow"("enabled");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Workflow_tenantId_fkey') THEN
+    ALTER TABLE "Workflow" ADD CONSTRAINT "Workflow_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "WorkflowExecution" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "workflowId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "trigger" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "actions" JSONB NOT NULL DEFAULT '[]',
+    "results" JSONB NOT NULL DEFAULT '[]',
+    "retries" INTEGER NOT NULL DEFAULT 0,
+    "maxRetries" INTEGER NOT NULL DEFAULT 1,
+    "durationMs" INTEGER,
+    "error" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    CONSTRAINT "WorkflowExecution_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "WorkflowExecution_workflowId_idx" ON "WorkflowExecution"("workflowId");
+CREATE INDEX IF NOT EXISTS "WorkflowExecution_tenantId_idx" ON "WorkflowExecution"("tenantId");
+CREATE INDEX IF NOT EXISTS "WorkflowExecution_status_idx" ON "WorkflowExecution"("status");
+CREATE INDEX IF NOT EXISTS "WorkflowExecution_createdAt_idx" ON "WorkflowExecution"("createdAt");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'WorkflowExecution_workflowId_fkey') THEN
+    ALTER TABLE "WorkflowExecution" ADD CONSTRAINT "WorkflowExecution_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "Workflow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'WorkflowExecution_tenantId_fkey') THEN
+    ALTER TABLE "WorkflowExecution" ADD CONSTRAINT "WorkflowExecution_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
