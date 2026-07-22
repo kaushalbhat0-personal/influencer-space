@@ -120,6 +120,7 @@ export const SUPER_ADMIN_NAV: DashboardNav = {
       roles: allRoles("SUPER_ADMIN"),
       items: [
         { label: "Creator Import", href: "/super-admin/generate", icon: Bot, roles: allRoles("SUPER_ADMIN") },
+        { label: "Showcase", href: "/showcase", icon: Store, roles: allRoles("SUPER_ADMIN") },
         { label: "Subscriptions", href: "/super-admin/subscriptions", icon: Gift, roles: allRoles("SUPER_ADMIN"), badge: "new" },
         { label: "Themes", href: "/super-admin/themes", icon: Palette, roles: allRoles("SUPER_ADMIN"), badge: "new" },
         { label: "API Keys", href: "/super-admin/api-keys", icon: Key, roles: allRoles("SUPER_ADMIN"), badge: "new" },

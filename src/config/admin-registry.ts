@@ -144,6 +144,20 @@ export const ADMIN_REGISTRY: AdminModule[] = [
 
   // ── Creator Platform ────────────────────────────────────────────────────────
   {
+    id: "generate", title: "Creator Import", group: "ai-platform",
+    href: "/super-admin/generate", icon: Bot, permission: "super_admin",
+    searchable: true, keywords: ["import", "website", "create", "auto", "pipeline", "generation"],
+    auditCategory: "ai", analyticsKey: "generation:viewed",
+    productionReady: true,
+  },
+  {
+    id: "demo-studio", title: "Demo Studio", group: "ai-platform",
+    href: "/super-admin/demo-studio", icon: Sparkles, permission: "super_admin",
+    searchable: true, keywords: ["demo", "generate", "showcase", "sample", "industry"],
+    auditCategory: "demo", analyticsKey: "demo:viewed",
+    productionReady: true,
+  },
+  {
     id: "demo-publishing", title: "Publishing", group: "ai-platform",
     href: "/super-admin/demo-publishing", icon: CheckCircle2, permission: "super_admin",
     searchable: true, keywords: ["review", "approve", "publish", "workflow", "pipeline"],
@@ -158,17 +172,10 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
-    id: "demo-studio", title: "Demo Studio", group: "ai-platform",
-    href: "/super-admin/demo-studio", icon: Sparkles, permission: "super_admin",
-    searchable: true, keywords: ["demo", "generate", "showcase", "sample", "industry"],
-    auditCategory: "demo", analyticsKey: "demo:viewed",
-    productionReady: true,
-  },
-  {
-    id: "generate", title: "Creator Import", group: "ai-platform",
-    href: "/super-admin/generate", icon: Bot, permission: "super_admin",
-    searchable: true, keywords: ["website", "create", "auto", "pipeline", "magic"],
-    auditCategory: "ai", analyticsKey: "generation:viewed",
+    id: "showcase", title: "Showcase", group: "ai-platform",
+    href: "/showcase", icon: Globe, permission: "super_admin",
+    searchable: true, keywords: ["gallery", "portfolio", "published", "storefront", "live", "featured"],
+    auditCategory: "demo", analyticsKey: "showcase:viewed",
     productionReady: true,
   },
   {
