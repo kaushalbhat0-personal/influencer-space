@@ -4,29 +4,32 @@ import type { z } from "zod";
 export interface GeneratorInput {
   profile: CreatorProfile;
   intelligence: CreatorIntelligence;
-  /** Optional existing content for merging/regeneration */
   existing?: Record<string, unknown>;
 }
 
-export interface GeneratorResult {
-  /** The content produced by this generator */
-  content: Record<string, unknown>;
-  /** Which component IDs this content can populate */
-  componentIds: string[];
-  /** Whether this result came from cache */
+export interface GeneratorProvenance {
+  generator: string;
+  promptVersion: string;
+  generatedAt: string;
   cached: boolean;
-  /** Latency in milliseconds */
   latencyMs: number;
 }
 
-/**
- * A Content Generator produces structured content for one or more component types.
- * Each generator is independently registered and discoverable.
- */
+export interface GeneratorResult {
+  content: Record<string, unknown>;
+  componentIds: string[];
+  cached: boolean;
+  latencyMs: number;
+  /** Provenance metadata — does not affect rendering */
+  provenance?: GeneratorProvenance;
+}
+
 export interface ContentGenerator {
   readonly id: string;
   readonly description: string;
   readonly schema: z.ZodTypeAny;
   readonly componentIds: string[];
+  /** Generators that must run before this one. Empty array = no dependencies. */
+  readonly dependsOn: string[];
   generate(input: GeneratorInput): Promise<GeneratorResult>;
 }

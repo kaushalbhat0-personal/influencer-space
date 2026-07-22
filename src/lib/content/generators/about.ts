@@ -6,6 +6,7 @@ export class AboutGenerator implements ContentGenerator {
   readonly description = "Generate about section content";
   readonly schema = AboutContentSchema;
   readonly componentIds = ["about.default"];
+  readonly dependsOn: string[] = ["hero"];
 
   async generate(input: GeneratorInput): Promise<GeneratorResult> {
     const t0 = performance.now();
@@ -25,6 +26,7 @@ export class AboutGenerator implements ContentGenerator {
       componentIds: this.componentIds,
       cached: false,
       latencyMs: Math.round(performance.now() - t0),
+      provenance: { generator: this.id, promptVersion: "v1.0.0", generatedAt: new Date().toISOString(), cached: false, latencyMs: Math.round(performance.now() - t0) },
     };
   }
 }

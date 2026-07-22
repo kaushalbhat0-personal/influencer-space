@@ -8,13 +8,20 @@ export class HeroGenerator implements ContentGenerator {
   readonly description = "Generate hero section content";
   readonly schema = HeroContentSchema;
   readonly componentIds = ["hero.default", "hero.gaming", "hero.fitness", "hero.education"];
+  readonly dependsOn: string[] = [];
 
   async generate(input: GeneratorInput): Promise<GeneratorResult> {
     const t0 = performance.now();
 
     const cached = intelligenceCache.get(input.profile);
     if (cached) {
-      return { content: cached.intelligence as unknown as Record<string, unknown>, componentIds: this.componentIds, cached: true, latencyMs: Math.round(performance.now() - t0) };
+      return {
+        content: cached.intelligence as unknown as Record<string, unknown>,
+        componentIds: this.componentIds,
+        cached: true,
+        latencyMs: Math.round(performance.now() - t0),
+        provenance: { generator: this.id, promptVersion: "v1.0.0", generatedAt: new Date().toISOString(), cached: true, latencyMs: Math.round(performance.now() - t0) },
+      };
     }
 
     const engine = aiEngine.getEngine();
@@ -37,6 +44,7 @@ export class HeroGenerator implements ContentGenerator {
       componentIds: this.componentIds,
       cached: false,
       latencyMs: Math.round(performance.now() - t0),
+      provenance: { generator: this.id, promptVersion: "v1.0.0", generatedAt: new Date().toISOString(), cached: false, latencyMs: Math.round(performance.now() - t0) },
     };
   }
 }

@@ -7,6 +7,7 @@ export class SeoGenerator implements ContentGenerator {
   readonly description = "Generate SEO metadata";
   readonly schema = SeoContentSchema;
   readonly componentIds = [];
+  readonly dependsOn: string[] = ["hero", "about"];
 
   async generate(input: GeneratorInput): Promise<GeneratorResult> {
     const t0 = performance.now();
@@ -28,6 +29,7 @@ export class SeoGenerator implements ContentGenerator {
       componentIds: this.componentIds,
       cached: false,
       latencyMs: Math.round(performance.now() - t0),
+      provenance: { generator: this.id, promptVersion: "v1.0.0", generatedAt: new Date().toISOString(), cached: false, latencyMs: Math.round(performance.now() - t0) },
     };
   }
 }
