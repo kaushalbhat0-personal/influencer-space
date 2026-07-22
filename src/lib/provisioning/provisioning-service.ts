@@ -119,7 +119,6 @@ export class ProvisioningService {
         bio: input.generatedContent?.aboutSection || "",
         heroTitle: input.generatedContent?.heroTitle || creatorName,
         aboutText: input.generatedContent?.aboutSection || "",
-        palette: { primary: "#6366f1", secondary: "#a78bfa" },
       });
       const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || creatorName, description: input.generatedContent?.seoDescription || "" });
       const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || "", bio: input.generatedContent?.aboutSection || "" });
@@ -132,8 +131,8 @@ export class ProvisioningService {
           VALUES ($1, $2, NOW(), NOW())
           RETURNING id
         ), w AS (
-          INSERT INTO "Website" ("tenantId", "createdAt", "updatedAt")
-          SELECT t.id, NOW(), NOW() FROM t
+          INSERT INTO "Website" ("tenantId", "themePackageId", "createdAt", "updatedAt")
+          SELECT t.id, 'neon-dark', NOW(), NOW() FROM t
           RETURNING id
         ), b AS (
           INSERT INTO "Brand" ("websiteId", "name", "tagline", "bio", "socialLinks")

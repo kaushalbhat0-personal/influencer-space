@@ -156,3 +156,9 @@ DO $$ BEGIN
     ALTER TABLE "Block" ADD CONSTRAINT "Block_sectionId_fkey" FOREIGN KEY ("sectionId") REFERENCES "Section"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- Step 6: Add theme columns to Website
+ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themePackageId" TEXT NOT NULL DEFAULT 'neon-dark';
+ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themeColors" JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themeFonts" JSONB NOT NULL DEFAULT '{}';
+ALTER TABLE "Website" ADD COLUMN IF NOT EXISTS "themeConfig" JSONB NOT NULL DEFAULT '{}';

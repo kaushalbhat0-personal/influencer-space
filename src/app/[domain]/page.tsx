@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getPublicPageData } from "@/services/public.service";
-import { themeAdapter } from "@/lib/compatibility";
+import { themeService } from "@/lib/theme/service";
 import { buildStorefrontMetadata, buildStorefrontJsonLd } from "@/lib/storefront/metadata";
 import { buildStorefrontUrl } from "@/lib/config/platform";
 import { sectionRegistry } from "@/lib/storefront";
@@ -102,12 +102,16 @@ export default async function PublicPage({ params }: { params: { domain: string 
 
   const { tenantId, data } = pd;
   const { profile, hero } = data;
-  const colors = themeAdapter.getColors();
   const canonicalUrl = getCanonicalUrl(params.domain);
   const { profileLd, productListLd } = buildStorefrontJsonLd(data, canonicalUrl);
 
+  // Resolve theme from website
+  const website = await prisma.website.findUnique({ where: { tenantId } });
+  const resolvedTheme = website ? await themeService.getResolved(website) : themeService.getPreset("neon-dark")!;
+  const themeStyle = resolvedTheme ? themeService.toStyle(resolvedTheme) : {};
+
   return (
-    <main className="min-h-screen bg-zinc-950 text-white" style={{ "--accent": colors.accent, "--primary": colors.primary, "--secondary": colors.secondary, "--brand-primary": colors.primary, "--brand-secondary": colors.secondary, "--brand-accent": colors.accent, "--brand-bg": colors.background, "--brand-text": colors.text } as React.CSSProperties}>
+    <main className="min-h-screen bg-zinc-950 text-white" style={themeStyle as React.CSSProperties}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profileLd) }} />
       {productListLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productListLd) }} />}
 

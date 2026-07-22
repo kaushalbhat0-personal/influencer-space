@@ -65,6 +65,10 @@ model Tenant {
 model Website {
   id               String        @id @default(uuid()) @db.Uuid
   tenantId         String        @unique @db.Uuid
+  themePackageId   String        @default("neon-dark")
+  themeColors      Json          @default("{}")
+  themeFonts       Json          @default("{}")
+  themeConfig      Json          @default("{}")
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
