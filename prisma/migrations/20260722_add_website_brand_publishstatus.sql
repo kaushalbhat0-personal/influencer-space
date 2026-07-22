@@ -267,3 +267,59 @@ DO $$ BEGIN
     ALTER TABLE "DesignTheme" ADD CONSTRAINT "DesignTheme_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- Step 10: Creator Commerce — Offerings & Purchases
+CREATE TABLE IF NOT EXISTS "Offering" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "tenantId" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Offering_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "Offering_tenantId_slug_key" ON "Offering"("tenantId", "slug");
+CREATE INDEX IF NOT EXISTS "Offering_tenantId_idx" ON "Offering"("tenantId");
+CREATE INDEX IF NOT EXISTS "Offering_tenantId_status_idx" ON "Offering"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "Offering_type_idx" ON "Offering"("type");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Offering_tenantId_fkey') THEN
+    ALTER TABLE "Offering" ADD CONSTRAINT "Offering_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "Purchase" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "offeringId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "customerEmail" TEXT,
+    "customerName" TEXT,
+    "amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "checkoutProvider" TEXT,
+    "providerSessionId" TEXT,
+    "providerPaymentId" TEXT,
+    "fulfilledAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Purchase_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "Purchase_offeringId_idx" ON "Purchase"("offeringId");
+CREATE INDEX IF NOT EXISTS "Purchase_tenantId_idx" ON "Purchase"("tenantId");
+CREATE INDEX IF NOT EXISTS "Purchase_status_idx" ON "Purchase"("status");
+CREATE INDEX IF NOT EXISTS "Purchase_customerEmail_idx" ON "Purchase"("customerEmail");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_offeringId_fkey') THEN
+    ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_offeringId_fkey" FOREIGN KEY ("offeringId") REFERENCES "Offering"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_tenantId_fkey') THEN
+    ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

@@ -60,6 +60,8 @@ model Tenant {
   assets             Asset[]
   assetReferences    AssetReference[]
   designThemes       DesignTheme[]
+  offerings          Offering[]
+  purchases          Purchase[]
   website            Website?
 
   @@index([customDomain])
@@ -865,4 +867,58 @@ model DesignTheme {
 
   @@index([tenantId])
   @@index([tenantId, active])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Creator Commerce — Offerings & Purchases
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// A monetizable offering — course, digital product, membership, coaching, etc.
+model Offering {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  type        String   // "course" | "digital_product" | "membership" | "coaching" | "webinar" | "affiliate" | "donation" | "merchandise"
+  title       String
+  slug        String
+  description String?
+  status      String   @default("draft") // "draft" | "published" | "archived"
+  price       Float    @default(0)
+  currency    String   @default("INR")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  purchases Purchase[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([type])
+}
+
+/// A purchase transaction — tracks the full lifecycle.
+model Purchase {
+  id              String   @id @default(uuid()) @db.Uuid
+  offeringId      String   @db.Uuid
+  tenantId        String   @db.Uuid
+  customerEmail   String?
+  customerName    String?
+  amount          Float    @default(0)
+  currency        String   @default("INR")
+  status          String   @default("pending") // "pending" | "completed" | "fulfilled" | "refunded" | "cancelled"
+  checkoutProvider String? // "stripe" | "razorpay" | "paddle" | "lemonsqueezy"
+  providerSessionId String?
+  providerPaymentId  String?
+  fulfilledAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  offering Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([offeringId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([customerEmail])
 }
