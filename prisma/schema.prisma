@@ -753,3 +753,33 @@ model CreatorIntelligence {
 
   @@index([profileId])
 }
+
+/// Aggregate root for every creator onboarding — traceable import lifecycle.
+model CreatorImport {
+  id                  String    @id @default(uuid()) @db.Uuid
+  creatorName         String
+  sourceUrl           String?
+  sourcePlatform      String?
+  provider            String?
+  providerAccountId   String?   @db.Uuid
+  creatorProfileId    String?   @db.Uuid
+  creatorIntelligenceId String? @db.Uuid
+  tenantId            String?   @db.Uuid
+  websiteId           String?   @db.Uuid
+  status              String    @default("STARTED") // STARTED | FETCHING | ANALYZING | GENERATING | COMPLETED | FAILED
+  cacheHit            Boolean   @default(false)
+  durationMs          Int?
+  warnings            Json      @default("[]")
+  errors              Json      @default("[]")
+  correlationId       String?
+  startedAt           DateTime  @default(now())
+  completedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  createdBy           String?   // userId who triggered the import
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([provider])
+  @@index([creatorName])
+}

@@ -112,3 +112,33 @@ DO $$ BEGIN
     ALTER TABLE "CreatorIntelligence" ADD CONSTRAINT "CreatorIntelligence_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "CreatorProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+-- CreatorImport
+CREATE TABLE IF NOT EXISTS "CreatorImport" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "creatorName" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "sourcePlatform" TEXT,
+    "provider" TEXT,
+    "providerAccountId" UUID,
+    "creatorProfileId" UUID,
+    "creatorIntelligenceId" UUID,
+    "tenantId" UUID,
+    "websiteId" UUID,
+    "status" TEXT NOT NULL DEFAULT 'STARTED',
+    "cacheHit" BOOLEAN NOT NULL DEFAULT false,
+    "durationMs" INTEGER,
+    "warnings" JSONB NOT NULL DEFAULT '[]',
+    "errors" JSONB NOT NULL DEFAULT '[]',
+    "correlationId" TEXT,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+    CONSTRAINT "CreatorImport_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "CreatorImport_status_idx" ON "CreatorImport"("status");
+CREATE INDEX IF NOT EXISTS "CreatorImport_createdAt_idx" ON "CreatorImport"("createdAt");
+CREATE INDEX IF NOT EXISTS "CreatorImport_provider_idx" ON "CreatorImport"("provider");
+CREATE INDEX IF NOT EXISTS "CreatorImport_creatorName_idx" ON "CreatorImport"("creatorName");
