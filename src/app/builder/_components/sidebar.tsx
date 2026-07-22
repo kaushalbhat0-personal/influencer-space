@@ -3,7 +3,7 @@
 import { useState, memo } from "react";
 import { Layers, Image, Palette, Search, Package, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { registryFacade } from "@/lib/registry/facade";
+import { componentRegistry } from "@/lib/registry/components";
 import { ThemeInspector } from "./theme";
 
 type Tab = "modules" | "pages" | "layers" | "assets" | "theme";
@@ -12,8 +12,17 @@ export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { colla
   const [activeTab, setActiveTab] = useState<Tab>("modules");
   const [search, setSearch] = useState("");
 
-  const modules = registryFacade.module.list();
-  const filtered = modules.filter((m) => m.definition.identity.name.toLowerCase().includes(search.toLowerCase()));
+  const categories = componentRegistry.getCategories();
+  const filteredCategories = search
+    ? categories
+        .map((cat) => ({
+          ...cat,
+          components: cat.components.filter((c) =>
+            c.name.toLowerCase().includes(search.toLowerCase())
+          ),
+        }))
+        .filter((cat) => cat.components.length > 0)
+    : categories;
 
   const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
     { id: "modules", label: "Modules", icon: Package },
@@ -50,17 +59,27 @@ export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { colla
           <div className="border-b border-white/5 px-2 py-1.5">
             <div className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-2 py-1">
               <Search className="h-3 w-3 text-zinc-600" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search modules..." className="flex-1 bg-transparent text-xs text-zinc-400 outline-none placeholder:text-zinc-700" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search components..." className="flex-1 bg-transparent text-xs text-zinc-400 outline-none placeholder:text-zinc-700" />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {filtered.map((m) => (
-              <div key={m.definition.identity.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200">
-                <Package className="h-3.5 w-3.5 text-zinc-600" />
-                <span className="truncate">{m.definition.identity.name}</span>
+          <div className="flex-1 overflow-y-auto p-2 space-y-3">
+            {filteredCategories.map(({ category, components }) => (
+              <div key={category}>
+                <p className="px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{category}</p>
+                <div className="space-y-0.5">
+                  {components.map((comp) => (
+                    <div key={comp.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200">
+                      <Package className="h-3.5 w-3.5 text-zinc-600" />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate">{comp.name}</p>
+                        <p className="truncate text-[10px] text-zinc-600">{comp.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
-            {filtered.length === 0 && <p className="px-2 py-4 text-center text-xs text-zinc-700">No modules found</p>}
+            {filteredCategories.length === 0 && <p className="px-2 py-4 text-center text-xs text-zinc-700">No components found</p>}
           </div>
         </>
       )}
