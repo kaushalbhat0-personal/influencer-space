@@ -4,6 +4,8 @@ import type {
   HistoryEntry, PublishEntry, BuilderState,
   ElementId, SectionId, PageId,
 } from "./types";
+import { builderEvents } from "./events";
+import { builderQuery } from "./query";
 
 let idCounter = Date.now();
 function uid(): string { return `el_${++idCounter}_${Math.random().toString(36).slice(2, 6)}`; }
@@ -113,6 +115,7 @@ export class BuilderStore {
     const idx = this.state.historyIndex - 1;
     const entry = this.state.history[idx]!;
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
+    builderQuery.invalidate();
     return true;
   }
 
@@ -121,6 +124,7 @@ export class BuilderStore {
     const idx = this.state.historyIndex + 1;
     const entry = this.state.history[idx]!;
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
+    builderQuery.invalidate();
     return true;
   }
 
@@ -128,6 +132,10 @@ export class BuilderStore {
     const newSet = multi ? new Set(this.state.selection.selectedIds) : new Set<ElementId>();
     if (multi && newSet.has(id)) newSet.delete(id); else newSet.add(id);
     this.state = { ...this.state, selection: { ...this.state.selection, selectedIds: newSet, mode: multi ? "multi" : "single", anchorId: id, focusId: id }, canvas: { ...this.state.canvas, selectedElementIds: newSet } };
+    const selIds = Array.from(newSet);
+    builderEvents.emit("node:selected", { elementId: id, multi, selectedIds: selIds });
+    builderEvents.emit("selection:changed", { selectedIds: selIds, mode: multi ? "multi" : "single" });
+    builderQuery.invalidate();
   }
 
   selectRange(from: ElementId, to: ElementId): void {
@@ -149,6 +157,8 @@ export class BuilderStore {
 
   clearSelection(): void {
     this.state = { ...this.state, selection: { selectedIds: new Set(), mode: "single", anchorId: null, focusId: null, groupId: null }, canvas: { ...this.state.canvas, selectedElementIds: new Set() } };
+    builderEvents.emit("selection:changed", { selectedIds: [], mode: "single" });
+    builderQuery.invalidate();
   }
 
   copy(): void { const selectedIds = this.getSelectedIds(); if (selectedIds.length === 0) return; const entries: ClipboardEntry[] = []; for (const id of selectedIds) { const slot = this.findSlotById(id); if (slot) entries.push({ type: "slot", data: { ...slot, id: uid() }, sourcePageId: this.state.canvas.activePageId ?? "", timestamp: Date.now() }); } if (entries.length > 0) this.state = { ...this.state, clipboard: [...this.state.clipboard, ...entries].slice(-20) }; }
@@ -181,6 +191,7 @@ export class BuilderStore {
     const updatedSection = { ...page.sections[sIdx]!, slots: [...page.sections[sIdx]!.slots, newSlot] };
     const sections = [...page.sections]; sections[sIdx] = updatedSection;
     this.updatePageSections(page.id, sections);
+    builderQuery.invalidate();
   }
 
   startDrag(sourceId: ElementId, sourceType: "slot" | "section"): void {
@@ -197,6 +208,7 @@ export class BuilderStore {
     this.pushHistory("move");
     this.moveElementTo(d.sourceId, d.targetSectionId, d.insertionIndex);
     this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } };
+    builderQuery.invalidate();
   }
 
   cancelDrag(): void { this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } }; }
@@ -213,6 +225,7 @@ export class BuilderStore {
     this.pushHistory("add-section");
     const section: BuilderSection = { id: uid(), name, order: page.sections.length, visible: true, locked: false, slots: [], metadata: {} };
     this.updatePageSections(pid, [...page.sections, section]);
+    builderQuery.invalidate();
     return section;
   }
 
@@ -224,6 +237,7 @@ export class BuilderStore {
     const sIdx = this.getPage(pid)!.sections.findIndex((s) => s.id === sectionId);
     const sections = [...this.getPage(pid)!.sections]; sections[sIdx] = { ...section, slots: [...section.slots, slot] };
     this.updatePageSections(pid, sections);
+    builderQuery.invalidate();
     return slot;
   }
 
@@ -232,6 +246,7 @@ export class BuilderStore {
     this.pushHistory("remove");
     const updatedSections = page.sections.map((s) => ({ ...s, slots: s.slots.filter((sl) => sl.id !== id) }));
     this.updatePageSections(page.id, updatedSections);
+    builderQuery.invalidate();
   }
 
   /** Update a single config key on a block — used by the Property Inspector. */
@@ -246,6 +261,8 @@ export class BuilderStore {
       ),
     }));
     this.updatePageSections(page.id, updatedSections);
+    builderEvents.emit("selection:changed", { selectedIds: this.getSelectedIds(), mode: this.state.selection.mode });
+    builderQuery.invalidate();
   }
 
   moveElementTo(slotId: ElementId, targetSectionId: SectionId, index: number): void {
@@ -270,6 +287,7 @@ export class BuilderStore {
     if (!moved) return;
     sections.splice(toIndex, 0, moved);
     this.updatePageSections(pageId, sections.map((s, i) => ({ ...s, order: i })));
+    builderQuery.invalidate();
   }
 
   /** Remove an entire section and all its blocks. */
@@ -278,6 +296,7 @@ export class BuilderStore {
     const page = this.getPage(pid); if (!page) return;
     this.pushHistory("remove-section");
     this.updatePageSections(pid, page.sections.filter((s) => s.id !== sectionId));
+    builderQuery.invalidate();
   }
 
   /** Duplicate a section with all its blocks. */
@@ -292,6 +311,7 @@ export class BuilderStore {
     cloned.slots = cloned.slots.map((sl) => ({ ...sl, id: uid() }));
     const sections = [...page.sections, cloned].sort((a, b) => a.order - b.order).map((s, i) => ({ ...s, order: i }));
     this.updatePageSections(pid, sections);
+    builderQuery.invalidate();
   }
 
   /** Insert a new block (slot) from a component ID using default props from the registry. */
@@ -309,6 +329,7 @@ export class BuilderStore {
     slots.splice(index ?? slots.length, 0, slot);
     const sections = [...page.sections]; sections[sIdx] = { ...section, slots };
     this.updatePageSections(page.id, sections);
+    builderQuery.invalidate();
   }
 
   setDevice(device: BuilderCanvas["device"]): void { this.state = { ...this.state, canvas: { ...this.state.canvas, device } }; }

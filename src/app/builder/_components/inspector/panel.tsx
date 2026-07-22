@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { builderStore } from "@/lib/builder/store";
 import { builderQuery } from "@/lib/builder/query";
+import { builderEvents } from "@/lib/builder/events";
 import { getComponentSchema } from "@/lib/inspector/schemas";
 import { FieldRenderer } from "@/lib/inspector/fields";
 import { responsiveResolver } from "@/lib/responsive/resolver";
@@ -25,10 +26,23 @@ export const PropertyInspector = memo(function PropertyInspector() {
   const storeDevice = builderStore.canvas.device;
 
   const [activeViewport, setActiveViewport] = useState<Viewport>(storeDevice);
+  const [, forceUpdate] = useState(0);
+
+  // Subscribe to selection and mutation events to stay synchronized with the canvas
+  useEffect(() => {
+    const handler = () => forceUpdate((n) => n + 1);
+    const unsubs = [
+      builderEvents.subscribe("selection:changed", handler),
+      builderEvents.subscribe("node:selected", handler),
+      builderEvents.subscribe("node:deselected", handler),
+      builderEvents.subscribe("node:inserted", handler),
+      builderEvents.subscribe("node:deleted", handler),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
   const schema = getComponentSchema(componentId);
   const currentProps = selectedSlot?.config || {};
-
-  const [, forceUpdate] = useState(0);
 
   const handleChange = useCallback((key: string, value: unknown) => {
     if (!selectedId) return;

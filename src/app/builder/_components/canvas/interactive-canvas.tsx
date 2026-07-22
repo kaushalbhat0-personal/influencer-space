@@ -7,6 +7,8 @@ import { builderCommands } from "@/lib/builder/commands";
 import { builderEvents } from "@/lib/builder/events";
 import { dragController } from "@/lib/builder/drag";
 import { propertyResolver } from "@/lib/builder/properties";
+import { ComponentRenderer } from "@/lib/renderer";
+import { builderStore } from "@/lib/builder/store";
 import { useInlineEdit } from "../inline-edit";
 import { SelectionOverlay } from "./selection-overlay";
 import { HoverOverlay } from "./hover-overlay";
@@ -30,6 +32,7 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [, forceUpdate] = useState(0);
   const dragRef = useRef(false);
   const dragStartRef = useRef<{ x: number; y: number; elementId: string } | null>(null);
   const DRAG_THRESHOLD = 3;
@@ -40,10 +43,11 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
   const slotElements = hierarchy.slots.filter((s) => s.visible);
 
   useEffect(() => {
-    const handler = () => {};
+    const handler = () => forceUpdate((n) => n + 1);
     const unsubs = [
       builderEvents.subscribe("node:selected", handler),
       builderEvents.subscribe("node:deselected", handler),
+      builderEvents.subscribe("selection:changed", handler),
       builderEvents.subscribe("node:inserted", handler),
       builderEvents.subscribe("node:deleted", handler),
     ];
@@ -88,12 +92,6 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
       dragRef.current = false;
     }
     dragStartRef.current = null;
-  }, []);
-
-  const handleModuleMouseDown = useCallback((elementId: string, e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    dragStartRef.current = { x: e.clientX, y: e.clientY, elementId };
-    e.preventDefault();
   }, []);
 
   const handleModuleClick = useCallback((elementId: string, e: React.MouseEvent) => {
@@ -157,20 +155,18 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
                 key={slot.id}
                 data-element-id={slot.id}
                 data-module={slot.moduleId}
-                className="relative mb-2 cursor-grab rounded border border-transparent transition-colors hover:border-s8ul-cyan/30 active:cursor-grabbing"
+                className="relative mb-2 cursor-pointer rounded border border-transparent transition-colors hover:border-s8ul-cyan/30"
                 onClick={(e) => handleModuleClick(slot.id, e)}
-                onMouseDown={(e) => handleModuleMouseDown(slot.id, e)}
                 onDoubleClick={(e) => handleModuleDoubleClick(slot.id, e)}
                 onMouseEnter={() => handleModuleHover(slot.id)}
                 onMouseLeave={() => handleModuleHover(null)}
               >
-                <div className="flex items-center gap-2 rounded bg-zinc-900/80 px-3 py-2">
-                  <div className="h-6 w-6 rounded bg-zinc-800" />
-                  <div>
-                    <p className="text-xs font-medium text-zinc-400">{slot.moduleId.split(".").pop()}</p>
-                    <p className="text-[10px] text-zinc-600">{slot.id}</p>
-                  </div>
-                </div>
+                <ComponentRenderer
+                  componentId={slot.moduleId}
+                  props={slot.config}
+                  elementId={slot.id}
+                  viewport={builderStore.canvas.device}
+                />
               </div>
             ))}
 
