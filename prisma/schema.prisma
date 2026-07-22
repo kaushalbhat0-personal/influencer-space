@@ -58,6 +58,8 @@ model Tenant {
   auditLogs          AuditLog[]
   contentFeedItems   ContentFeedItem[]
   website            Website?
+
+  @@index([customDomain])
 }
 
 /// One Website per Tenant — the aggregate root for storefront content.
@@ -397,7 +399,6 @@ model AuditLog {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, createdAt])
-  @@index([customDomain])
 }
 
 model ContentFeedItem {
