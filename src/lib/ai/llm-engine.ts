@@ -93,7 +93,7 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
         const validated = CreatorIntelligenceSchema.parse(parsed);
 
         // Cache the valid result keyed by profile hash
-        intelligenceCache.set(profile, {
+        const result = {
           niche: validated.niche,
           subNiche: validated.subNiche,
           audience: validated.audience,
@@ -107,9 +107,13 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
           recommendedTemplate: validated.recommendedTemplate,
           recommendedSections: validated.recommendedSections,
           seoKeywords: validated.seoKeywords,
+          suggestedCta: validated.suggestedCta,
+          trustSignals: validated.trustSignals,
+          contentPillars: validated.contentPillars,
           confidence: validated.confidence,
           reasoning: validated.reasoning,
-        });
+        };
+        intelligenceCache.set(profile, result);
 
         // Confidence threshold check
         if (validated.confidence < this.config.confidenceThreshold) {
@@ -119,23 +123,7 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
           return this.heuristic.analyze(profile, correlationId);
         }
 
-        return {
-          niche: validated.niche,
-          subNiche: validated.subNiche,
-          audience: validated.audience,
-          brandPersonality: validated.brandPersonality,
-          brandTone: validated.brandTone,
-          visualStyle: validated.visualStyle,
-          contentStyle: validated.contentStyle,
-          websiteGoal: validated.websiteGoal,
-          monetization: validated.monetization,
-          recommendedTheme: validated.recommendedTheme,
-          recommendedTemplate: validated.recommendedTemplate,
-          recommendedSections: validated.recommendedSections,
-          seoKeywords: validated.seoKeywords,
-          confidence: validated.confidence,
-          reasoning: validated.reasoning,
-        };
+        return result;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 

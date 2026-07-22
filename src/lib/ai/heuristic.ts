@@ -16,6 +16,9 @@ const AnalysisSchema = z.object({
   recommendedTemplate: z.string(),
   recommendedSections: z.array(z.string()),
   seoKeywords: z.array(z.string()),
+  suggestedCta: z.string().nullable(),
+  trustSignals: z.array(z.string()),
+  contentPillars: z.array(z.string()),
   confidence: z.number().min(0).max(1),
   reasoning: z.string().nullable(),
 });
@@ -83,6 +86,9 @@ export class HeuristicIntelligenceEngine implements IntelligenceEngine {
       recommendedTemplate: template,
       recommendedSections: [],
       seoKeywords: profile.keywords.slice(0, 10),
+      suggestedCta: null,
+      trustSignals: [],
+      contentPillars: [],
       confidence: 0.75,
       reasoning: `Analyzed via heuristic engine: name="${profile.name}", keywords="${profile.keywords.join(",")}"`,
     };

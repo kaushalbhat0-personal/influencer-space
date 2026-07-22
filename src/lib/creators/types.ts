@@ -40,6 +40,9 @@ export interface CreatorIntelligence {
   recommendedTemplate: string;
   recommendedSections: string[];
   seoKeywords: string[];
+  suggestedCta: string | null;
+  trustSignals: string[];
+  contentPillars: string[];
   confidence: number;
   reasoning: string | null;
 }
