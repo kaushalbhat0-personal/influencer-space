@@ -1,16 +1,19 @@
 "use client";
 
 import { componentRegistry } from "@/lib/registry/components";
+import { responsiveResolver } from "@/lib/responsive/resolver";
 
 /** Renders a component from the registry using its OWN renderer. No switch statements. */
 export function ComponentRenderer({
   componentId,
   props = {},
   elementId,
+  viewport = "desktop",
 }: {
   componentId: string;
   props?: Record<string, unknown>;
   elementId?: string;
+  viewport?: "desktop" | "tablet" | "mobile";
 }) {
   const def = componentRegistry.get(componentId);
   if (!def) {
@@ -32,7 +35,10 @@ export function ComponentRenderer({
     );
   }
 
-  return <Renderer props={props} elementId={elementId} definition={def} />;
+  // Resolve responsive values for the active viewport
+  const resolvedProps = responsiveResolver.resolve(props, viewport);
+
+  return <Renderer props={resolvedProps} elementId={elementId} definition={def} />;
 }
 
 /** Renders a list of component instances — used by template rendering and page preview. */

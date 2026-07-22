@@ -5,7 +5,15 @@ import { builderStore } from "@/lib/builder/store";
 import { builderQuery } from "@/lib/builder/query";
 import { getComponentSchema } from "@/lib/inspector/schemas";
 import { FieldRenderer } from "@/lib/inspector/fields";
-import { Settings, Sparkles, RefreshCw, AlertCircle } from "lucide-react";
+import { responsiveResolver } from "@/lib/responsive/resolver";
+import type { Viewport } from "@/lib/responsive/resolver";
+import { Settings, Sparkles, RefreshCw, AlertCircle, Monitor, Tablet, Smartphone } from "lucide-react";
+
+const VIEWPORTS: { id: Viewport; icon: typeof Monitor }[] = [
+  { id: "desktop", icon: Monitor },
+  { id: "tablet", icon: Tablet },
+  { id: "mobile", icon: Smartphone },
+];
 
 export const PropertyInspector = memo(function PropertyInspector() {
   const selection = builderQuery.getSelection();
@@ -14,7 +22,9 @@ export const PropertyInspector = memo(function PropertyInspector() {
   const selectedId = selection.ids[0];
   const selectedSlot = selectedId ? hierarchy.slots.find((s) => s.id === selectedId) : null;
   const componentId = selectedSlot?.moduleId || "";
+  const storeDevice = builderStore.canvas.device;
 
+  const [activeViewport, setActiveViewport] = useState<Viewport>(storeDevice);
   const schema = getComponentSchema(componentId);
   const currentProps = selectedSlot?.config || {};
 
@@ -22,11 +32,24 @@ export const PropertyInspector = memo(function PropertyInspector() {
 
   const handleChange = useCallback((key: string, value: unknown) => {
     if (!selectedId) return;
-    // Update the block config in the store
-    builderStore.updateBlockConfig(selectedId, key, value);
+
+    // Check if this field is responsive in the schema
+    const field = schema?.groups.flatMap((g) => g.fields).find((f) => f.key === key);
+    const isResponsive = field?.responsive?.desktop || field?.responsive?.tablet || field?.responsive?.mobile;
+
+    if (isResponsive) {
+      // Store as viewport-specific override
+      const newConfig = responsiveResolver.setValue(currentProps, key, value, activeViewport);
+      for (const [k, v] of Object.entries(newConfig)) {
+        builderStore.updateBlockConfig(selectedId, k, v);
+      }
+    } else {
+      builderStore.updateBlockConfig(selectedId, key, value);
+    }
+
     forceUpdate((n) => n + 1);
     builderStore.markDirty();
-  }, [selectedId]);
+  }, [selectedId, activeViewport, currentProps, schema]);
 
   if (!selectedId) {
     return (
@@ -70,6 +93,24 @@ export const PropertyInspector = memo(function PropertyInspector() {
         <p className="text-xs font-medium text-zinc-300">{componentId}</p>
       </div>
 
+      {/* Viewport selector for responsive fields */}
+      <div className="flex border-b border-white/5">
+        {VIEWPORTS.map((vp) => (
+          <button
+            key={vp.id}
+            onClick={() => setActiveViewport(vp.id)}
+            className={`flex-1 py-1.5 text-[10px] font-medium transition-colors ${
+              activeViewport === vp.id
+                ? "border-b border-s8ul-cyan text-s8ul-cyan"
+                : "text-zinc-600 hover:text-zinc-400"
+            }`}
+          >
+            <vp.icon className="mx-auto mb-0.5 h-3.5 w-3.5" />
+            {vp.id}
+          </button>
+        ))}
+      </div>
+
       {/* Fields */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {schema.groups.map((group) => (
@@ -77,9 +118,19 @@ export const PropertyInspector = memo(function PropertyInspector() {
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{group.label}</p>
             <div className="space-y-3">
               {group.fields.map((field) => {
-                const value = currentProps[field.key] ?? field.defaultValue;
+                const isResponsive = field.responsive?.desktop || field.responsive?.tablet || field.responsive?.mobile;
+                const value = isResponsive
+                  ? responsiveResolver.resolveValue(currentProps, field.key, activeViewport) ?? field.defaultValue
+                  : currentProps[field.key] ?? field.defaultValue;
                 return (
                   <div key={field.key} className="relative">
+                    {isResponsive && (
+                      <div className="mb-1 flex items-center gap-1">
+                        <span className="text-[9px] text-zinc-700 uppercase tracking-wider">{activeViewport}</span>
+                        <span className="text-[9px] text-zinc-800">·</span>
+                        <span className="text-[9px] text-zinc-700">responsive</span>
+                      </div>
+                    )}
                     <FieldRenderer def={field} value={value} onChange={handleChange} />
                     {field.aiRegenerate && (
                       <button
