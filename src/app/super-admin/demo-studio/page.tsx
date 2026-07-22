@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { INDUSTRIES, type DemoIndustry } from "@/lib/demo/industries";
+import { generateDemoWebsite } from "@/actions/demo.actions";
 import { Sparkles, CheckCircle2, ArrowLeft, Play } from "lucide-react";
 
 type Step = "industry" | "brand" | "generate" | "done";
@@ -19,11 +20,8 @@ export default function DemoStudioPage() {
     setStep("generate");
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 2500));
-      setResult({
-        tenantId: `demo_${industry.id}_${Date.now()}`,
-        storefront: `${industry.id}.creatorspace.app`,
-      });
+      const data = await generateDemoWebsite(industry.id);
+      setResult({ tenantId: data.tenantId, storefront: data.storefrontUrl });
       setStep("done");
     } catch { setStep("brand"); } finally { setLoading(false); }
   }, [industry]);
