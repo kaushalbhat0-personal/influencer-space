@@ -3,7 +3,8 @@ export interface StoreExample {
   name: string;
   category: string;
   description: string;
-  placeholder: string; // CSS gradient as placeholder until real screenshots
+  placeholder: string;
+  url?: string;
 }
 
 export const EXAMPLES: StoreExample[] = [

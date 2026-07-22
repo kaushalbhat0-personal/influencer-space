@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { buildStorefrontUrl } from "@/lib/config/platform";
 import {
@@ -189,9 +190,17 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
 
               return (
                 <tr key={t.id}>
-                  <td className="font-medium text-white">{t.name}</td>
+                  <td className="font-medium text-white">
+                    <Link href={`/super-admin/tenants/${t.id}`} className="hover:text-indigo-400 transition-colors">
+                      {t.name}
+                    </Link>
+                  </td>
                   <td><span className="text-zinc-400 text-xs">{adminEmail}</span></td>
-                  <td><code className="text-xs text-s8ul-cyan">{domain}</code></td>
+                  <td>
+                    <a href={domain} target="_blank" rel="noopener noreferrer" className="text-xs text-s8ul-cyan hover:text-indigo-400 transition-colors underline underline-offset-2 decoration-white/10 hover:decoration-indigo-400/30">
+                      {domain}
+                    </a>
+                  </td>
                   <td>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       planLabel === "PRO" ? "bg-purple-500/20 text-purple-400" : "bg-s8ul-cyan/10 text-s8ul-cyan"

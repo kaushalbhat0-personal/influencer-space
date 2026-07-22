@@ -3,6 +3,47 @@ import { EXAMPLES } from "./data";
 import type { StoreExample } from "./data";
 import { ExternalLink } from "lucide-react";
 
+function ExampleCard({ example }: { example: StoreExample }) {
+  const href = example.url || "/showcase";
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/50 overflow-hidden transition-all hover:border-white/[0.12] hover:shadow-xl hover:shadow-black/20"
+    >
+      <div className={`relative h-48 bg-gradient-to-br ${example.placeholder} flex items-center justify-center overflow-hidden`}>
+        <div className="absolute top-0 left-0 right-0 flex items-center gap-1.5 px-4 py-3 border-b border-white/[0.04] bg-black/20">
+          <span className="h-2 w-2 rounded-full bg-red-500/40" />
+          <span className="h-2 w-2 rounded-full bg-amber-500/40" />
+          <span className="h-2 w-2 rounded-full bg-emerald-500/40" />
+        </div>
+        <div className="w-3/4 space-y-2 mt-4">
+          <div className="h-2 rounded bg-white/[0.08] w-1/2 mx-auto" />
+          <div className="h-2 rounded bg-white/[0.05] w-3/4 mx-auto" />
+          <div className="grid grid-cols-2 gap-2 px-6 mt-3">
+            <div className="h-10 rounded bg-white/[0.04]" />
+            <div className="h-10 rounded bg-white/[0.04]" />
+            <div className="h-10 rounded bg-white/[0.04]" />
+            <div className="h-10 rounded bg-white/[0.04]" />
+          </div>
+        </div>
+        <span className="absolute top-14 left-4 rounded-md bg-black/40 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-white/80">
+          {example.category}
+        </span>
+      </div>
+      <div className="p-5">
+        <h3 className="text-base font-semibold text-white">{example.name}</h3>
+        <p className="mt-1 text-sm text-zinc-500 leading-relaxed">{example.description}</p>
+        <div className="mt-4 flex items-center gap-1 text-xs font-medium text-indigo-400 group-hover:text-indigo-300 transition-colors">
+          <span>View Demo</span>
+          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+        </div>
+      </div>
+    </a>
+  );
+}
+
 export function StoreExamples({ demos }: { demos?: StoreExample[] }) {
   const examples = (demos && demos.length > 0) ? demos : EXAMPLES;
   return (
@@ -22,52 +63,10 @@ export function StoreExamples({ demos }: { demos?: StoreExample[] }) {
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {examples.map((example) => (
-            <div
-              key={example.id}
-              className="group rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/50 overflow-hidden transition-all hover:border-white/[0.12] hover:shadow-xl hover:shadow-black/20 cursor-default"
-            >
-              {/* Placeholder preview */}
-              <div className={`relative h-48 bg-gradient-to-br ${example.placeholder} flex items-center justify-center overflow-hidden`}>
-                {/* Simulated browser chrome inside card preview */}
-                <div className="absolute top-0 left-0 right-0 flex items-center gap-1.5 px-4 py-3 border-b border-white/[0.04] bg-black/20">
-                  <span className="h-2 w-2 rounded-full bg-red-500/40" />
-                  <span className="h-2 w-2 rounded-full bg-amber-500/40" />
-                  <span className="h-2 w-2 rounded-full bg-emerald-500/40" />
-                </div>
-
-                {/* Simulated content */}
-                <div className="w-3/4 space-y-2 mt-4">
-                  <div className="h-2 rounded bg-white/[0.08] w-1/2 mx-auto" />
-                  <div className="h-2 rounded bg-white/[0.05] w-3/4 mx-auto" />
-                  <div className="grid grid-cols-2 gap-2 px-6 mt-3">
-                    <div className="h-10 rounded bg-white/[0.04]" />
-                    <div className="h-10 rounded bg-white/[0.04]" />
-                    <div className="h-10 rounded bg-white/[0.04]" />
-                    <div className="h-10 rounded bg-white/[0.04]" />
-                  </div>
-                </div>
-
-                {/* Category badge */}
-                <span className="absolute top-14 left-4 rounded-md bg-black/40 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium text-white/80">
-                  {example.category}
-                </span>
-              </div>
-
-              {/* Content */}
-              <div className="p-5">
-                <h3 className="text-base font-semibold text-white">{example.name}</h3>
-                <p className="mt-1 text-sm text-zinc-500 leading-relaxed">{example.description}</p>
-
-                <div className="mt-4 flex items-center gap-1 text-xs font-medium text-indigo-400 group-hover:text-indigo-300 transition-colors">
-                  <span>View Demo</span>
-                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                </div>
-              </div>
-            </div>
+            <ExampleCard key={example.id} example={example} />
           ))}
         </div>
 
-        {/* CTA */}
         <div className="mt-14 text-center">
           <Link href="/signup" className="btn-primary px-10 py-3.5 text-sm">
             Create Your Website

@@ -21,6 +21,7 @@ async function getDemoStoreExamples(): Promise<StoreExample[]> {
     return sites.slice(0, 6).map((s, i) => ({
       id: s.id, name: s.name, category: s.category, description: s.description,
       placeholder: GRADIENTS[i % GRADIENTS.length],
+      url: s.storefrontUrl,
     }));
   } catch {
     return [];
