@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ResizablePanel } from "./panel";
 import { BuilderToolbar } from "./toolbar";
 import { BuilderSidebar } from "./sidebar";
@@ -14,6 +14,7 @@ import { BuilderStatusBar } from "./status-bar";
 import { builderStore } from "@/lib/builder/store";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { useKeyboardShortcuts } from "./keyboard";
+import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 
 export function BuilderWorkspace() {
   useKeyboardShortcuts();
@@ -23,6 +24,43 @@ export function BuilderWorkspace() {
   const [device, setDevice] = useState<BuilderCanvasType["device"]>("desktop");
   const [zoom, setZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+  const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load builder state from DB on mount
+  useEffect(() => {
+    loadBuilderPages().then((res) => {
+      if (res.success && res.pages && res.pages.length > 0) {
+        builderStore.hydrate(res.pages);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  // Auto-save when isDirty changes (debounced)
+  useEffect(() => {
+    if (!builderStore.isDirty || loading) return;
+    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    autoSaveRef.current = setTimeout(async () => {
+      setSaving(true);
+      setStatusMsg("Saving...");
+      const pages = builderStore.serialize();
+      const res = await saveBuilderPages(pages);
+      if (res.success) {
+        builderStore.markClean();
+        setStatusMsg("Saved");
+      } else {
+        setStatusMsg("Save failed");
+      }
+      setSaving(false);
+      setTimeout(() => setStatusMsg(""), 2000);
+    }, 2000);
+    return () => {
+      if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    };
+  }, [builderStore.isDirty, loading]);
 
   const selectedCount = builderStore.selection.selectedIds.size;
   const isDirty = builderStore.isDirty;
@@ -36,6 +74,14 @@ export function BuilderWorkspace() {
     setZoom(z);
     builderStore.setZoom(z);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <p className="text-sm text-zinc-500">Loading workspace...</p>
+      </div>
+    );
+  }
 
   return (
     <InlineEditProvider>
@@ -51,7 +97,7 @@ export function BuilderWorkspace() {
             <PropertyInspector />
           </ResizablePanel>
         </div>
-        <BuilderStatusBar selectedCount={selectedCount} zoom={zoom} isDirty={isDirty} />
+        <BuilderStatusBar selectedCount={selectedCount} zoom={zoom} isDirty={isDirty} saving={saving} statusMsg={statusMsg} />
         <CanvasMinimap />
         <InlineEditorOverlay />
       </div>

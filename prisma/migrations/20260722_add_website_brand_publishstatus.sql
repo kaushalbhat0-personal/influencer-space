@@ -97,3 +97,62 @@ SELECT
   NOW()
 FROM "Website" w
 WHERE NOT EXISTS (SELECT 1 FROM "PublishStatus" ps WHERE ps."websiteId" = w.id);
+
+-- Step 5: Builder tables — Page, Section, Block
+CREATE TABLE IF NOT EXISTS "Page" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "websiteId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isHome" BOOLEAN NOT NULL DEFAULT false,
+    "theme" TEXT NOT NULL DEFAULT 'default',
+    "config" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Page_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Section" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "pageId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "visible" BOOLEAN NOT NULL DEFAULT true,
+    "locked" BOOLEAN NOT NULL DEFAULT false,
+    "config" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Section_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Block" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "sectionId" UUID NOT NULL,
+    "moduleId" TEXT NOT NULL,
+    "parentId" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "visible" BOOLEAN NOT NULL DEFAULT true,
+    "locked" BOOLEAN NOT NULL DEFAULT false,
+    "config" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "Block_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Page_websiteId_slug_key" ON "Page"("websiteId", "slug");
+CREATE INDEX IF NOT EXISTS "Page_websiteId_idx" ON "Page"("websiteId");
+CREATE INDEX IF NOT EXISTS "Section_pageId_idx" ON "Section"("pageId");
+CREATE INDEX IF NOT EXISTS "Block_sectionId_idx" ON "Block"("sectionId");
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Page_websiteId_fkey') THEN
+    ALTER TABLE "Page" ADD CONSTRAINT "Page_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Section_pageId_fkey') THEN
+    ALTER TABLE "Section" ADD CONSTRAINT "Section_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "Page"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Block_sectionId_fkey') THEN
+    ALTER TABLE "Block" ADD CONSTRAINT "Block_sectionId_fkey" FOREIGN KEY ("sectionId") REFERENCES "Section"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

@@ -71,6 +71,7 @@ model Website {
   tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   brand            Brand?
   publishStatus    PublishStatus?
+  pages            Page[]
 
   @@index([tenantId])
 }
@@ -394,6 +395,66 @@ model ContentFeedItem {
 
   @@unique([tenantId, externalId])
   @@index([tenantId, pinned, hidden, order])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Builder — Pages, Sections, Blocks (persisted workspace state)
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// A page within a website's builder workspace.
+model Page {
+  id        String   @id @default(uuid()) @db.Uuid
+  websiteId String   @db.Uuid
+  name      String
+  slug      String
+  order     Int      @default(0)
+  isHome    Boolean  @default(false)
+  theme     String   @default("default")
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  website  Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  sections Section[]
+
+  @@unique([websiteId, slug])
+  @@index([websiteId])
+}
+
+/// A section within a page — holds blocks.
+model Section {
+  id        String   @id @default(uuid()) @db.Uuid
+  pageId    String   @db.Uuid
+  name      String
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  locked    Boolean  @default(false)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blocks Block[]
+
+  @@index([pageId])
+}
+
+/// A content block within a section — the atomic unit a creator edits.
+model Block {
+  id        String   @id @default(uuid()) @db.Uuid
+  sectionId String   @db.Uuid
+  moduleId  String
+  parentId  String?
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  locked    Boolean  @default(false)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

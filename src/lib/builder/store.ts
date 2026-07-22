@@ -18,6 +18,36 @@ export class BuilderStore {
     this.state = this.createInitialState();
   }
 
+  /** Replace store state with pages loaded from DB. */
+  hydrate(pages: BuilderPage[]): void {
+    if (pages.length === 0) return;
+    this.state = {
+      ...this.state,
+      canvas: {
+        ...this.state.canvas,
+        pages,
+        activePageId: pages[0].id,
+        selectedElementIds: new Set(),
+        hoveredElementId: null,
+        focusedElementId: null,
+      },
+      isDirty: false,
+      history: [],
+      historyIndex: -1,
+    };
+  }
+
+  /** Serialize current pages (without ephemeral state) for persistence. */
+  serialize(): BuilderPage[] {
+    return this.state.canvas.pages.map(clonePage);
+  }
+
+  /** Mark the store as dirty (unsaved changes). */
+  markDirty(): void { this.state = { ...this.state, isDirty: true }; }
+
+  /** Mark the store as clean (changes saved). */
+  markClean(): void { this.state = { ...this.state, isDirty: false }; }
+
   private createDefaultPage(): BuilderPage {
     const pageId = `page_${uid()}`;
     const sections: BuilderSection[] = [
