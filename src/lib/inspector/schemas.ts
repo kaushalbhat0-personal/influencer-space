@@ -7,9 +7,9 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       {
         id: "content", label: "Content",
         fields: [
-          { key: "title", label: "Title", type: "text", defaultValue: "Welcome", aiEditable: true, aiRegenerate: true },
-          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", aiEditable: true, aiRegenerate: true },
-          { key: "buttonText", label: "Button Text", type: "text", defaultValue: "Get Started" },
+          { key: "title", label: "Title", type: "text", defaultValue: "Welcome", inlineEditable: true, aiEditable: true, aiRegenerate: true },
+          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", inlineEditable: true, aiEditable: true, aiRegenerate: true },
+          { key: "buttonText", label: "Button Text", type: "text", defaultValue: "Get Started", inlineEditable: true },
           { key: "buttonLink", label: "Button Link", type: "url", defaultValue: "#" },
         ],
       },
@@ -37,8 +37,8 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       {
         id: "content", label: "Content",
         fields: [
-          { key: "title", label: "Title", type: "text", defaultValue: "Live Now", aiEditable: true, aiRegenerate: true },
-          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", aiEditable: true },
+          { key: "title", label: "Title", type: "text", defaultValue: "Live Now", inlineEditable: true, aiEditable: true, aiRegenerate: true },
+          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", inlineEditable: true, aiEditable: true },
           { key: "showLiveBadge", label: "Live Badge", type: "boolean", defaultValue: true },
         ],
       },
@@ -57,9 +57,9 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       {
         id: "content", label: "Content",
         fields: [
-          { key: "title", label: "Title", type: "text", defaultValue: "Transform Your Body", aiEditable: true, aiRegenerate: true },
-          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", aiEditable: true },
-          { key: "cta", label: "CTA", type: "text", defaultValue: "Join Now" },
+          { key: "title", label: "Title", type: "text", defaultValue: "Transform Your Body", inlineEditable: true, aiEditable: true, aiRegenerate: true },
+          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", inlineEditable: true, aiEditable: true },
+          { key: "cta", label: "CTA", type: "text", defaultValue: "Join Now", inlineEditable: true },
         ],
       },
     ],
@@ -69,9 +69,9 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       {
         id: "content", label: "Content",
         fields: [
-          { key: "title", label: "Title", type: "text", defaultValue: "Learn Something New", aiEditable: true, aiRegenerate: true },
-          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", aiEditable: true },
-          { key: "cta", label: "CTA", type: "text", defaultValue: "Start Learning" },
+          { key: "title", label: "Title", type: "text", defaultValue: "Learn Something New", inlineEditable: true, aiEditable: true, aiRegenerate: true },
+          { key: "subtitle", label: "Subtitle", type: "text", defaultValue: "", inlineEditable: true, aiEditable: true },
+          { key: "cta", label: "CTA", type: "text", defaultValue: "Start Learning", inlineEditable: true },
         ],
       },
     ],
@@ -81,8 +81,8 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       {
         id: "content", label: "Content",
         fields: [
-          { key: "title", label: "Title", type: "text", defaultValue: "About Me", aiEditable: true },
-          { key: "content", label: "Bio", type: "textarea", defaultValue: "", aiEditable: true, aiRegenerate: true },
+          { key: "title", label: "Title", type: "text", defaultValue: "About Me", inlineEditable: true, aiEditable: true },
+          { key: "content", label: "Bio", type: "textarea", defaultValue: "", inlineEditable: true, aiEditable: true, aiRegenerate: true },
           { key: "imageUrl", label: "Profile Image", type: "url", defaultValue: "" },
         ],
       },

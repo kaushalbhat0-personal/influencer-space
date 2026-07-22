@@ -6,9 +6,11 @@ import { componentRegistry } from "@/lib/registry/components";
 export function ComponentRenderer({
   componentId,
   props = {},
+  elementId,
 }: {
   componentId: string;
   props?: Record<string, unknown>;
+  elementId?: string;
 }) {
   const def = componentRegistry.get(componentId);
   if (!def) {
@@ -21,7 +23,6 @@ export function ComponentRenderer({
 
   const Renderer = def.renderer;
   if (!Renderer) {
-    // Fallback when no renderer is registered — show metadata placeholder
     return (
       <div className="rounded border border-white/10 bg-zinc-900/30 p-6">
         <p className="text-xs font-medium text-zinc-400">{def.name}</p>
@@ -31,7 +32,7 @@ export function ComponentRenderer({
     );
   }
 
-  return <Renderer props={props} />;
+  return <Renderer props={props} elementId={elementId} definition={def} />;
 }
 
 /** Renders a list of component instances — used by template rendering and page preview. */

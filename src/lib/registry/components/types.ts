@@ -61,7 +61,7 @@ export interface ComponentDefinition {
 
   // ── Pluggable Components ────────────────────────────────
   /** Storefront renderer — the registry owns the render function */
-  renderer?: ComponentType<{ props: Record<string, unknown> }>;
+  renderer?: ComponentType<{ props: Record<string, unknown>; elementId?: string; definition?: ComponentDefinition }>;
   /** Builder settings panel */
   settingsPanel?: ComponentType<{ props: Record<string, unknown>; onChange: (props: Record<string, unknown>) => void }>;
   /** Builder toolbar actions (duplicate, delete, move up/down) */

@@ -25,6 +25,7 @@ export interface FieldDefinition {
   defaultValue?: unknown;
   options?: { label: string; value: string }[]; // for select/multiselect
   validation?: FieldValidation;
+  inlineEditable?: boolean; // Click-to-edit on canvas
   aiEditable?: boolean;
   aiRegenerate?: boolean;
   /** Responsive overrides per breakpoint */
