@@ -2,10 +2,13 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { DEMO_SEEDS } from "@/lib/demo/seeds";
-import { provisioningEngine, CreatorProvisioningEngine } from "@/lib/provisioning/engine";
+import { DemoSeedAdapter } from "@/lib/import/adapters/demo-seed";
+import { provisioningEngine } from "@/lib/provisioning/engine";
 import { QualityGate } from "@/lib/provisioning/quality-gate";
+import { track } from "@/lib/analytics";
 import type { DemoGenerationResult } from "@/lib/demo/types";
+
+const demoSeedAdapter = new DemoSeedAdapter();
 
 export async function generateDemoWebsite(seedId: string): Promise<DemoGenerationResult> {
   const session = await getServerSession(authOptions);
@@ -13,13 +16,14 @@ export async function generateDemoWebsite(seedId: string): Promise<DemoGeneratio
     return { seedId, status: "failed", tenantId: "", storefrontUrl: "", productCount: 0, seedVersion: "1.0", generatorVersion: "1.0", generatedAt: "", generatedBy: "", error: "Unauthorized" };
   }
 
-  const seed = DEMO_SEEDS.find((s) => s.id === seedId);
-  if (!seed) {
-    return { seedId, status: "failed", tenantId: "", storefrontUrl: "", productCount: 0, seedVersion: "1.0", generatorVersion: "1.0", generatedAt: "", generatedBy: "", error: "Seed not found" };
+  const validation = demoSeedAdapter.validate(seedId);
+  if (!validation.valid) {
+    return { seedId, status: "failed", tenantId: "", storefrontUrl: "", productCount: 0, seedVersion: "1.0", generatorVersion: "1.0", generatedAt: "", generatedBy: "", error: validation.error || "Invalid seed" };
   }
 
-  // Step 1: Provision inside a transaction
-  const profile = CreatorProvisioningEngine.fromSeed(seed);
+  const analysis = await demoSeedAdapter.analyze(seedId);
+  const profile = analysis.creatorProfile;
+
   const result = await provisioningEngine.provision(profile, session.user.id ?? "");
 
   if (!result.success) {
@@ -33,12 +37,11 @@ export async function generateDemoWebsite(seedId: string): Promise<DemoGeneratio
     };
   }
 
-  // Step 2: Run quality gate
   const qualityReport = await QualityGate.run(result.tenantId);
-
-  // Step 3: If quality < 100%, stay draft; otherwise published
   const status = qualityReport.published ? "published" : "failed";
   const error = qualityReport.published ? undefined : `Quality score ${qualityReport.score}% — ${qualityReport.checks.filter((c) => !c.passed).map((c) => c.label).join(", ")}`;
+
+  track("publish:completed", { source: "demo_seed", status, seedId });
 
   return {
     seedId, status,

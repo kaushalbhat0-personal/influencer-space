@@ -1,13 +1,32 @@
 import { prisma } from "@/lib/prisma";
-import type { DemoSeed } from "@/lib/demo/types";
 import type { Prisma } from "@/generated/prisma/client";
 
+export type ImportSource = "demo_seed" | "manual" | "youtube" | "instagram" | "twitch" | "website" | "tiktok" | "unknown";
+
 export interface CreatorProfile {
-  name: string; tagline: string; bio: string; heroTitle: string;
-  aboutText: string; seoTitle: string; seoDesc: string;
-  palette: { primary: string; secondary: string; };
-  products: { name: string; price: number; description: string; }[];
-  isDemo?: boolean; seedId?: string;
+  source: ImportSource;
+  creatorName: string;
+  brandName: string;
+  tagline: string;
+  bio: string;
+  heroTitle: string;
+  aboutText: string;
+  tone: string;
+  niche: string;
+  audience: string;
+  products: { name: string; price: number; description: string }[];
+  services: string[];
+  socialLinks: { platform: string; url: string }[];
+  seoTitle: string;
+  seoDesc: string;
+  palette: { primary: string; secondary: string };
+  logoUrl?: string;
+  faq: { q: string; a: string }[];
+  testimonials: { name: string; text: string }[];
+  pages: string[];
+  isDemo?: boolean;
+  seedId?: string;
+  channelId?: string;
 }
 
 export interface ProvisionResult {
@@ -20,8 +39,14 @@ export interface ProvisionResult {
 
 class TenantProvisioner {
   async provision(tx: Prisma.TransactionClient, profile: CreatorProfile) {
-    const subdomain = profile.name.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 40);
-    return tx.tenant.create({ data: { name: profile.name, subdomain } });
+    const subdomain = profile.brandName.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 40);
+    return tx.tenant.create({
+      data: {
+        name: profile.brandName,
+        subdomain,
+        ...(profile.channelId ? { youtubeChannelId: profile.channelId } : {}),
+      },
+    });
   }
 }
 
@@ -39,7 +64,7 @@ class ProductProvisioner {
 class BrandProvisioner {
   async provision(tx: Prisma.TransactionClient, tenantId: string, profile: CreatorProfile) {
     await tx.setting.create({
-      data: { tenantId, key: "brand_config", value: { name: profile.name, tagline: profile.tagline, bio: profile.bio, heroTitle: profile.heroTitle, aboutText: profile.aboutText, palette: profile.palette } as Prisma.InputJsonValue },
+      data: { tenantId, key: "brand_config", value: { name: profile.brandName, tagline: profile.tagline, bio: profile.bio, heroTitle: profile.heroTitle, aboutText: profile.aboutText, palette: profile.palette } as Prisma.InputJsonValue },
     });
   }
 }
@@ -83,16 +108,6 @@ export class CreatorProvisioningEngine {
     } catch (e) {
       return { success: false, tenantId: "", storefrontUrl: "", productCount: 0, errors: [String(e)] };
     }
-  }
-
-  static fromSeed(seed: DemoSeed): CreatorProfile {
-    return {
-      name: seed.brand.name, tagline: seed.brand.tagline, bio: seed.content.bio,
-      heroTitle: seed.content.hero, aboutText: seed.content.about,
-      seoTitle: seed.content.seoTitle, seoDesc: seed.content.seoDesc,
-      palette: seed.brand.palette, products: seed.products,
-      isDemo: true, seedId: seed.id,
-    };
   }
 }
 
