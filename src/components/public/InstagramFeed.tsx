@@ -107,7 +107,7 @@ export function InstagramFeed({
               rel="noopener noreferrer"
               className="text-s8ul-cyan hover:underline"
             >
-               {instagramUrl.split("/").pop() || "snaxgaming"}
+               {instagramUrl.split("/").pop() || "creator"}
             </a>{" "}
             for daily gaming content 🎮
           </p>
