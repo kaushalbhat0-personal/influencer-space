@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Layers, Image, Palette, Search, Package, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { registryFacade } from "@/lib/registry/facade";
@@ -8,7 +8,7 @@ import { ThemeInspector } from "./theme";
 
 type Tab = "modules" | "pages" | "layers" | "assets" | "theme";
 
-export function BuilderSidebar({ onToggle }: { collapsed: boolean; onToggle: () => void }) {
+export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>("modules");
   const [search, setSearch] = useState("");
 
@@ -75,4 +75,4 @@ export function BuilderSidebar({ onToggle }: { collapsed: boolean; onToggle: () 
       )}
     </div>
   );
-}
+});

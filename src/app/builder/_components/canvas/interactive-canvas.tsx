@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, memo } from "react";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { builderQuery } from "@/lib/builder/query";
 import { builderCommands } from "@/lib/builder/commands";
@@ -18,7 +18,7 @@ type Device = BuilderCanvasType["device"];
 
 const DEVICE_WIDTHS: Record<Device, number> = { mobile: 375, tablet: 768, desktop: 1200 };
 
-export function InteractiveCanvas({
+export const InteractiveCanvas = memo(function InteractiveCanvas({
   device,
   zoom,
   showGrid,
@@ -199,4 +199,4 @@ export function InteractiveCanvas({
       )}
     </div>
   );
-}
+});

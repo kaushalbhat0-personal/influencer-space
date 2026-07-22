@@ -108,6 +108,7 @@ model PublishStatus {
   snapshots PublishSnapshot[]
 
   @@index([websiteId])
+  @@index([state])
 }
 
 /// Immutable snapshot of website state at the time of publishing.
@@ -396,6 +397,7 @@ model AuditLog {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, createdAt])
+  @@index([customDomain])
 }
 
 model ContentFeedItem {
