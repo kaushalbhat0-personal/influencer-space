@@ -10,6 +10,7 @@ import type { ProvisioningInput } from "@/lib/provisioning/provisioning-service"
 export type ProvisionActionResult = {
   success: boolean;
   data?: {
+    runId: string;
     tenantId: string;
     tenantSlug: string;
     workspaceId: string;
@@ -25,8 +26,34 @@ export type ProvisionActionResult = {
   error?: string;
 };
 
+export async function createProvisionRun(input: { creatorName: string; sourceUrl?: string; sourcePlatform?: string }): Promise<{ success: boolean; runId?: string; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+    const runId = await provisioningService.createRun(input);
+    return { success: true, runId };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function getProvisionRun(runId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "SUPER_ADMIN") {
+      return { success: false as const, error: "Unauthorized" };
+    }
+    const run = await provisioningService.getRun(runId);
+    return { success: true as const, data: run };
+  } catch (error) {
+    return { success: false as const, error: String(error) };
+  }
+}
+
 export async function provisionCreator(
-  input: ProvisioningInput,
+  input: ProvisioningInput & { runId: string },
 ): Promise<ProvisionActionResult> {
   try {
     const session = await getServerSession(authOptions);
@@ -56,6 +83,7 @@ export async function provisionCreator(
     return {
       success: true,
       data: {
+        runId: result.runId,
         tenantId: result.tenantId,
         tenantSlug: result.tenantSlug,
         workspaceId: result.workspaceId,

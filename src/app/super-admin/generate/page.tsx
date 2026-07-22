@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { cn } from "@/lib/utils";
 import {
   Stepper,
   TemplateCard,
@@ -21,6 +20,7 @@ import { generateWebsite } from "@/actions/generate-website.action";
 import { provisionCreator } from "@/actions/provision.actions";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProvisioningSummary } from "@/components/provisioning/ProvisioningSummary";
+import { ProvisioningTimeline } from "@/components/provisioning/ProvisioningTimeline";
 import type { StepperStep, StrategyOption, ChecklistItem, SectionToggle } from "@/components/ai";
 import type { WebsiteGenerationResult } from "@/lib/ai-generation/types";
 import {
@@ -98,6 +98,8 @@ export default function GeneratePage() {
     adminEmail: string;
     temporaryPassword: string;
   } | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [provisionError, setProvisionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,9 +150,26 @@ export default function GeneratePage() {
     setStep("provisioning");
     setProvisioning(true);
     setError(null);
+    setProvisionError(null);
 
     try {
-      const response = await provisionCreator({
+      const { createProvisionRun } = await import("@/actions/provision.actions");
+      const run = await createProvisionRun({
+        creatorName: result.creatorName,
+        sourceUrl: sourceUrl,
+        sourcePlatform: result.sourcePlatform ?? "manual",
+      });
+
+      if (!run.success || !run.runId) {
+        setError(run.error || "Failed to start provisioning");
+        setStep("preview");
+        setProvisioning(false);
+        return;
+      }
+
+      setRunId(run.runId);
+
+      provisionCreator({
         creatorName: result.creatorName,
         sourceUrl: sourceUrl,
         sourcePlatform: result.sourcePlatform ?? "manual",
@@ -159,23 +178,28 @@ export default function GeneratePage() {
         sections: sections.filter((s) => s.enabled).map((s) => s.id),
         generatedContent: result.generatedContent ?? undefined,
         generatedTheme: result.generatedTheme ?? undefined,
+        runId: run.runId,
+      }).then((response) => {
+        setProvisioning(false);
+        if (response.success && response.data) {
+          setProvisionResult(response.data);
+        }
       });
-
-      if (!response.success || !response.data) {
-        setError(response.error ?? "Provisioning failed");
-        setStep("preview");
-        return;
-      }
-
-      setProvisionResult(response.data);
-      setStep("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Provisioning failed");
       setStep("preview");
-    } finally {
       setProvisioning(false);
     }
   }, [result, sourceUrl, templateId, strategyId, sections]);
+
+  const handleProvisionComplete = useCallback(() => {
+    setProvisioning(false);
+  }, []);
+
+  const handleProvisionError = useCallback((err: string) => {
+    setProvisionError(err);
+    setProvisioning(false);
+  }, []);
 
   const reportChecklist: ChecklistItem[] = result
     ? [
@@ -346,40 +370,32 @@ export default function GeneratePage() {
           )}
 
           {/* STEP 7: Provisioning */}
-          {step === "provisioning" && (
-            <MotionDiv key="provisioning" className="flex flex-col items-center justify-center py-24">
-              <div className="animate-spin h-10 w-10 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full mb-6" />
-              <h2 className="text-xl font-semibold text-white">Provisioning Creator Workspace</h2>
-              <p className="text-sm text-zinc-500 mt-2 text-center max-w-md">
-                Creating tenant, workspace, admin account, and publishing the storefront...
-              </p>
-              <div className="mt-8 w-full max-w-sm space-y-3">
-                {[
-                  "Validating creator profile",
-                  "Generating unique tenant slug",
-                  "Creating tenant",
-                  "Creating workspace",
-                  "Creating admin account",
-                  "Generating secure credentials",
-                  "Provisioning website",
-                  "Publishing storefront",
-                  "Persisting all records",
-                ].map((label, i) => (
-                  <div key={label} className="flex items-center gap-3 text-sm">
-                    <div className={cn(
-                      "h-5 w-5 rounded-full flex items-center justify-center shrink-0",
-                      provisioning && i < 4 ? "border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" : "bg-zinc-800"
-                    )}>
-                      {!provisioning && <span className="text-[10px] text-zinc-600">{i + 1}</span>}
-                    </div>
-                    <span className={cn(
-                      provisioning && i < 4 ? "text-zinc-300" : "text-zinc-600"
-                    )}>
-                      {label}
-                    </span>
-                  </div>
-                ))}
+          {step === "provisioning" && runId && (
+            <MotionDiv key="provisioning" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="py-8">
+                <ProvisioningTimeline
+                  runId={runId}
+                  onComplete={handleProvisionComplete}
+                  onError={handleProvisionError}
+                />
               </div>
+              {(provisionResult || provisionError) && (
+                <div className="flex justify-center mt-6">
+                  {provisionResult && !provisionError && (
+                    <Button onClick={() => setStep("done")}>
+                      Continue →
+                    </Button>
+                  )}
+                  {provisionError && (
+                    <div className="text-center">
+                      <p className="text-sm text-red-400 mb-3">{provisionError}</p>
+                      <Button variant="outline" onClick={() => setStep("preview")}>
+                        ← Back to Preview
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </MotionDiv>
           )}
 
