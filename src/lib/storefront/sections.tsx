@@ -2,6 +2,7 @@ import { ProductGrid } from "@/components/public/ProductGrid";
 import { GallerySection } from "@/components/public/GallerySection";
 import { AffiliateGrid } from "@/components/public/AffiliateGrid";
 import { ContentFeed } from "@/components/public/ContentFeed";
+import { TimelineSection } from "@/components/public/TimelineSection";
 import { HeroBanner } from "@/app/[domain]/_components/hero-banner";
 import { sectionRegistry } from "./registry";
 import type { PublicPageData } from "@/services/public.service";
@@ -53,6 +54,40 @@ export function registerDefaultSections() {
         <section id="links" className="py-8">
           <div className="mb-6"><h2 className="text-lg font-semibold text-white">Links</h2></div>
           <AffiliateGrid affiliates={data.links as never} />
+        </section>
+      </Suspense>
+    ),
+  });
+
+  sectionRegistry.register({
+    type: "milestones", name: "Timeline", priority: 35,
+    isVisible: (data: PublicPageData) => data.milestones.length > 0,
+    render: (data: PublicPageData) => (
+      <Suspense key="milestones" fallback={<div className="py-8 flex justify-center"><LoadingSpinner size="sm" /></div>}>
+        <section id="milestones" className="py-8">
+          <div className="mb-6"><h2 className="text-lg font-semibold text-white">Milestones</h2></div>
+          <TimelineSection milestones={data.milestones} colors={data.profile.colors} />
+        </section>
+      </Suspense>
+    ),
+  });
+
+  sectionRegistry.register({
+    type: "games", name: "Games", priority: 37,
+    isVisible: (data: PublicPageData) => data.games.length > 0,
+    render: (data: PublicPageData) => (
+      <Suspense key="games" fallback={<div className="py-8 flex justify-center"><LoadingSpinner size="sm" /></div>}>
+        <section id="games" className="py-8">
+          <div className="mb-6"><h2 className="text-lg font-semibold text-white">Games</h2></div>
+          <div className="grid grid-cols-2 gap-3">
+            {data.games.map((game) => (
+              <div key={game.id} className="rounded-xl border border-white/10 bg-zinc-900 p-4 text-center">
+                {game.logoUrl && <img src={game.logoUrl} alt={game.name} className="mx-auto mb-2 h-12 w-12 rounded-full object-cover" />}
+                <p className="text-sm font-medium text-white">{game.name}</p>
+                {game.genre && <p className="text-xs text-zinc-500">{game.genre}</p>}
+              </div>
+            ))}
+          </div>
         </section>
       </Suspense>
     ),

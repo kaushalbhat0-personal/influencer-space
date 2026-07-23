@@ -67,7 +67,14 @@ export type PublicMilestoneData = {
   title: string;
   description: string;
   imageUrl: string | null;
-  stats: string | null;
+  stats?: string | null;
+};
+
+export type PublicGameData = {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  genre: string | null;
 };
 
 export type PublicPageData = {
@@ -77,6 +84,7 @@ export type PublicPageData = {
   links: PublicLinkData[];
   gallery: PublicGalleryData[];
   milestones: PublicMilestoneData[];
+  games: { id: string; name: string; logoUrl: string | null; genre: string | null }[];
   feed: PublicFeedItemData[];
 };
 
@@ -115,10 +123,15 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
       orderBy: { year: "desc" },
       select: { id: true, year: true, title: true, description: true, imageUrl: true, stats: true },
     }),
+    prisma.game.findMany({
+      where: { tenantId, isActive: true },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      select: { id: true, name: true, logoUrl: true, genre: true },
+    }),
     getContentFeed(tenantId),
   ]);
 
-  const [settingRow, heroRaw, products, links, galleryRows, milestones, feed] = data;
+  const [settingRow, heroRaw, products, links, galleryRows, milestones, games, feed] = data;
 
   const profile: PublicProfile = settingRow?.value
     ? { ...profileDefaults, ...(settingRow.value as Partial<PublicProfile>) }
@@ -147,5 +160,5 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     imageMobileAlignment: heroRaw.imageMobileAlignment || "center",
   };
 
-  return { profile, hero, products, links, gallery, milestones, feed };
+  return { profile, hero, products, links, gallery, milestones, games, feed };
 }
