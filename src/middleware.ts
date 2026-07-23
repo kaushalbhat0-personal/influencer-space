@@ -89,7 +89,7 @@ export async function middleware(request: NextRequest) {
   if (platformDomains.some((d) => d === host.toLowerCase())) {
     const accessCheck = await checkRouteAccess(pathname, request);
     if (accessCheck) return accessCheck;
-    const headers = new Headers();
+    const headers = new Headers(request.headers);
     if (workspaceId) headers.set("x-workspace-id", workspaceId);
     return NextResponse.next({ request: { headers } });
   }
