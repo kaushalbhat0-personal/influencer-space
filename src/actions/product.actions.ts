@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
 import { gateFeature } from "@/lib/feature-gate";
+import { workspaceService } from "@/lib/workspace/service";
 const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(1000).optional().default(""),
@@ -29,7 +30,9 @@ export type ProductData = {
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
-  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
+  const resolvedTenantId = await workspaceService.resolveTenantId();
+  const effectiveTenantId = resolvedTenantId ?? session.user.tenantId;
+  if (session.user.role !== "SUPER_ADMIN" && effectiveTenantId !== tenantId) {
     throw new Error("Forbidden");
   }
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { encode } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
+import { workspaceRepository } from "@/lib/workspace/repository";
+import { WorkspaceCookie } from "@/lib/workspace/cookie";
 
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get("token");
@@ -53,6 +55,22 @@ export async function GET(request: NextRequest) {
     path: "/",
     maxAge: 3600,
   });
+
+  // Set workspace cookie
+  if (adminUser.tenantId) {
+    const ws = await workspaceRepository.findByTenantId(adminUser.tenantId);
+    if (ws) {
+      const member = await workspaceRepository.findMember(ws.id, adminUser.id);
+      if (member) {
+        const wsCookie = WorkspaceCookie.encode({
+          wid: ws.id,
+          role: member.role,
+          type: ws.type,
+        });
+        response.cookies.set(WorkspaceCookie.cookieName, wsCookie, WorkspaceCookie.cookieOptions);
+      }
+    }
+  }
 
   return response;
 }

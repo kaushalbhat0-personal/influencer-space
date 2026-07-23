@@ -6,6 +6,9 @@ declare module "next-auth" {
     tenantId: string | null;
     agencyId?: string | null;
     role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+    workspaceId?: string | null;
+    workspaceType?: string | null;
+    workspaceRole?: string | null;
   }
 
   interface Session {
@@ -14,6 +17,9 @@ declare module "next-auth" {
       tenantId: string | null;
       agencyId?: string | null;
       role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+      workspaceId?: string | null;
+      workspaceType?: string | null;
+      workspaceRole?: string | null;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -27,5 +33,8 @@ declare module "next-auth/jwt" {
     tenantId: string | null;
     agencyId?: string | null;
     role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+    workspaceId?: string | null;
+    workspaceType?: string | null;
+    workspaceRole?: string | null;
   }
 }

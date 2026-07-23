@@ -7,6 +7,7 @@ import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./prov
 import { templateService } from "@/lib/template";
 import { websitePersonalizer } from "@/lib/personalization";
 import { seedStarterData } from "@/lib/data/seeder";
+import { workspaceRepository } from "@/lib/workspace/repository";
 
 export interface ProvisioningInput {
   creatorName: string;
@@ -181,6 +182,22 @@ export class ProvisioningService {
       const tenantId = rawResult?.tenant_id;
       if (!tenantId) throw new Error("Failed to create tenant");
 
+      // Create Workspace for the new tenant
+      const provisionedUser = await prisma.user.findFirst({ where: { tenantId }, select: { id: true } });
+      if (provisionedUser) {
+        const ws = await workspaceRepository.create({
+          type: "TENANT",
+          name: creatorName,
+          slug: slug,
+          tenantId,
+        });
+        await workspaceRepository.addMember({
+          workspaceId: ws.id,
+          userId: provisionedUser.id,
+          role: "OWNER",
+        });
+      }
+
       // Apply personalized template and theme
       const website = await prisma.website.findUnique({ where: { tenantId } });
       if (website) {
@@ -222,11 +239,13 @@ export class ProvisioningService {
         data: { tenantId, tenantSlug: slug, durationMs: elapsed ?? undefined },
       });
 
+      const provisionedWs = await workspaceRepository.findByTenantId(tenantId);
+
       return {
         success: true,
         tenantId,
         tenantSlug: slug,
-        workspaceId: tenantId,
+        workspaceId: provisionedWs?.id ?? tenantId,
         websiteId: tenantId,
         storefrontUrl,
         dashboardUrl,
