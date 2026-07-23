@@ -6,7 +6,8 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
-import { gateFeature } from "@/lib/feature-gate";
+import { entitlement } from "@/lib/billing/entitlements";
+import { billingService } from "@/lib/billing/service";
 import { workspaceService } from "@/lib/workspace/service";
 const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -78,9 +79,12 @@ export async function createNewProduct(
     }
 
     const productCount = await prisma.product.count({ where: { tenantId } });
-    const gate = await gateFeature(tenantId, "maxProducts", productCount);
-    if (!gate.allowed) {
-      return { success: false, error: gate.error };
+    const ws = await workspaceService.resolveTenantId().then(() => workspaceService.getCurrent());
+    const sub = ws ? await billingService.getSubscriptionStatus(ws.id) : null;
+    const planCode = sub?.planCode ?? "creator_free";
+    const productLimit = entitlement.limit(planCode, "max_products");
+    if (productLimit !== -1 && productLimit > 0 && productCount >= productLimit) {
+      return { success: false, error: `You've reached the ${productLimit} product limit. Upgrade to add more.` };
     }
 
     const product = await prisma.$transaction(async (tx) => {

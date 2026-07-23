@@ -266,6 +266,9 @@ model Workspace {
   tenant Tenant?        @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   agency WebsiteAgency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
   members WorkspaceMember[]
+  billingSubscription BillingSubscription?
+  billingEvents       BillingEvent[]
+  billingInvoices     BillingInvoice[]
 
   @@index([type])
   @@index([status])
@@ -679,18 +682,23 @@ model BillingPlanFeature {
 model BillingSubscription {
   id          String    @id @default(uuid()) @db.Uuid
   accountId   String    @db.Uuid
+  workspaceId String?   @unique @db.Uuid
   planId      String    @db.Uuid
   status      String    @default("ACTIVE") // "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED"
   trialEndsAt DateTime?
   renewsAt    DateTime?
+  cancelledAt DateTime?
+  cancellationReason String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  account BillingAccount @relation(fields: [accountId], references: [id])
-  plan    BillingPlan    @relation(fields: [planId], references: [id])
+  account  BillingAccount @relation(fields: [accountId], references: [id])
+  plan     BillingPlan    @relation(fields: [planId], references: [id])
+  workspace Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([accountId])
   @@index([planId])
+  @@index([workspaceId])
 }
 
 /// Immutable billing event log. Append-only, never edited.
@@ -698,12 +706,16 @@ model BillingSubscription {
 model BillingEvent {
   id           String   @id @default(uuid()) @db.Uuid
   accountId    String   @db.Uuid
+  workspaceId  String?  @db.Uuid
   type         String   // SUBSCRIPTION_CREATED, CHECKOUT_STARTED, PAYMENT_SUCCEEDED, PAYMENT_FAILED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_RENEWED, SUBSCRIPTION_CANCELLED, REFUND_CREATED, REFUND_COMPLETED, INVOICE_ISSUED, INVOICE_PAID
   idempotencyKey String? @unique // Prevents duplicate webhook processing
   payload      Json?
   createdAt    DateTime @default(now())
 
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
   @@index([accountId])
+  @@index([workspaceId])
   @@index([type])
   @@index([createdAt])
 }
@@ -713,21 +725,29 @@ model BillingEvent {
 model BillingInvoice {
   id               String    @id @default(uuid()) @db.Uuid
   accountId        String    @db.Uuid
+  workspaceId      String?   @db.Uuid
   subscriptionId   String?   @db.Uuid
-  planCode         String    // Plan code at time of invoice (grandfathering)
+  planCode         String
   planVersion      Int       @default(1)
   amount           Float
+  taxAmount        Float     @default(0)
   currency         String    @default("INR")
-  status           String    @default("PENDING") // PENDING, PAID, FAILED, REFUNDED, VOID
-  provider         String?   // "razorpay" | "stripe" | "manual"
-  providerReference String?  // Razorpay order_id / Stripe payment_intent_id
+  status           String    @default("PENDING")
+  lineItems        Json?     @default("[]")
+  provider         String?
+  providerReference String?
+  invoiceUrl       String?
   issuedAt         DateTime  @default(now())
   paidAt           DateTime?
+  dueAt            DateTime?
   metadata         Json?
   createdAt        DateTime  @default(now())
 
-  @@index([accountId])
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
   @@index([status])
+  @@index([dueAt])
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

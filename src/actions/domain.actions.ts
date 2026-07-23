@@ -7,7 +7,9 @@ import { logAction } from "@/lib/audit";
 import { VercelService } from "@/services/vercel.service";
 import type { VercelVerificationRecord } from "@/services/vercel.service";
 import { revalidatePath } from "next/cache";
-import { gateFeature } from "@/lib/feature-gate";
+import { entitlement } from "@/lib/billing/entitlements";
+import { billingService } from "@/lib/billing/service";
+import { workspaceService } from "@/lib/workspace/service";
 
 export type DomainActionState = {
   success: boolean;
@@ -38,9 +40,12 @@ export async function attachCustomDomain(
   try {
     const tenantId = await requireAuth();
 
-    const domainGate = await gateFeature(tenantId, "customDomain");
+    const ws = await workspaceService.resolveTenantId().then(() => workspaceService.getCurrent());
+    const sub = ws ? await billingService.getSubscriptionStatus(ws.id) : null;
+    const planCode = sub?.planCode ?? "creator_free";
+    const domainGate = entitlement.can(planCode, "custom_domain");
     if (!domainGate.allowed) {
-      return { success: false, error: domainGate.error };
+      return { success: false, error: `Custom domains require an upgraded plan. Current plan: ${planCode}` };
     }
 
     const vercelResult = await VercelService.addDomain(domain);
