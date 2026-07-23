@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getPlanLimits } from "@/lib/feature-gate";
+import { entitlement } from "@/lib/billing/entitlements";
+import { workspaceRepository } from "@/lib/workspace/repository";
+import { prisma } from "@/lib/prisma";
 import { themeAdapter } from "@/lib/compatibility";
 import { AppearanceManager } from "./_components/appearance-manager";
 import Link from "next/link";
@@ -20,8 +22,16 @@ export default async function AppearancePage() {
     );
   }
 
-  const plan = await getPlanLimits(tenantId);
-  if (!plan.limits.customBranding) {
+  const workspace = await workspaceRepository.findByTenantId(tenantId);
+  let canCustomBranding = false;
+  if (workspace) {
+    const sub = await prisma.billingSubscription.findUnique({ where: { workspaceId: workspace.id } });
+    if (sub) {
+      const plan = await prisma.billingPlan.findUnique({ where: { id: sub.planId } });
+      if (plan) canCustomBranding = entitlement.has(plan.code, "custom_branding");
+    }
+  }
+  if (!canCustomBranding) {
     return (
       <div>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance</h1>

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getPlanLimits } from "@/lib/feature-gate";
+import { entitlement } from "@/lib/billing/entitlements";
+import { workspaceRepository } from "@/lib/workspace/repository";
 import { BillingClient } from "./_components/billing-client";
 
 export const dynamic = "force-dynamic";
@@ -27,38 +28,58 @@ export default async function BillingPage() {
     );
   }
 
-  let subscription = await prisma.subscription.findUnique({
-    where: { tenantId: tenant.id },
-  });
+  let legacyPlan = "STARTER";
+  let planStatus = "ACTIVE";
+  let periodEnd: string | null = null;
+  let subscriptionId = "";
+  let v2PlanCode = "creator_free";
 
-  if (!subscription) {
-    subscription = {
-      id: "",
-      tenantId: tenant.id,
-      razorpaySubscriptionId: null,
-      status: "FREE",
-      plan: "STARTER",
-      currentPeriodEnd: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  const workspace = await workspaceRepository.findByTenantId(tenant.id);
+  if (workspace) {
+    const billingSub = await prisma.billingSubscription.findUnique({ where: { workspaceId: workspace.id } });
+    if (billingSub) {
+      const plan = await prisma.billingPlan.findUnique({ where: { id: billingSub.planId } });
+      v2PlanCode = plan?.code ?? "creator_free";
+      planStatus = billingSub.status;
+      periodEnd = billingSub.renewsAt?.toISOString() ?? null;
+      subscriptionId = billingSub.id;
+    }
   }
 
+  if (!workspace || subscriptionId === "") {
+    const legacySub = await prisma.subscription.findUnique({ where: { tenantId: tenant.id } });
+    if (legacySub) {
+      v2PlanCode = legacySub.plan === "STARTER" ? "creator_free" : "creator_pro";
+      legacyPlan = legacySub.plan;
+      planStatus = legacySub.status;
+      periodEnd = legacySub.currentPeriodEnd?.toISOString() ?? null;
+    }
+  }
+
+  const planDisplayName = legacyPlan === "PRO" ? "PRO" : (v2PlanCode === "creator_pro" ? "PRO" : "STARTER");
+
   const productCount = await prisma.product.count({ where: { tenantId: tenant.id } });
-  const plan = await getPlanLimits(tenant.id);
 
   return (
     <BillingClient
       subscription={{
-        id: subscription.id,
-        tenantId: subscription.tenantId,
-        razorpaySubscriptionId: subscription.razorpaySubscriptionId,
-        status: subscription.status,
-        plan: subscription.plan,
-        currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
+        id: subscriptionId,
+        tenantId: tenant.id,
+        razorpaySubscriptionId: null,
+        status: planStatus,
+        plan: planDisplayName,
+        currentPeriodEnd: periodEnd,
       }}
       productCount={productCount}
-      planInfo={plan}
+      planInfo={{
+        plan: planDisplayName,
+        status: planStatus,
+        limits: {
+          maxProducts: entitlement.limit(v2PlanCode, "max_products"),
+          customDomain: entitlement.has(v2PlanCode, "custom_domain"),
+          customBranding: entitlement.has(v2PlanCode, "custom_branding"),
+        },
+      }}
     />
   );
 }

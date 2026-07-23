@@ -252,3 +252,19 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
 export function getComponentSchema(componentId: string): ComponentSchema | undefined {
   return COMPONENT_SCHEMAS[componentId];
 }
+
+/** Maps data-bound components to their entity type for the DataResolver bridge. */
+export const ENTITY_TYPE_MAP: Record<string, string> = {
+  "gallery.grid": "gallery",
+  "products.grid": "product",
+  "timeline.default": "timeline",
+  "links.default": "affiliate",
+  "testimonials.default": "testimonial",
+  "faq.default": "faq",
+  "pricing.default": "pricing",
+  "courses.default": "course",
+};
+
+export function getEntityType(componentId: string): string | undefined {
+  return ENTITY_TYPE_MAP[componentId];
+}

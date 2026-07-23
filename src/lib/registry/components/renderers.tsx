@@ -92,7 +92,7 @@ export function AboutRenderer({ props, elementId, definition }: RendererProps) {
 
 export function GalleryRenderer({ props }: RendererProps) {
   const p = props as Record<string, unknown>;
-  const images = (p.resolvedData as Record<string, unknown>[]) || (Array.isArray(p.images) ? p.images : []);
+  const images = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || "Gallery";
   const columns = Math.min(Math.max(Number(p.columns) || 3, 1), 6);
   if (!useVisibility(props, images.length > 0)) return null;

@@ -6,6 +6,7 @@ import type {
 } from "./types";
 import { builderEvents } from "./events";
 import { builderQuery } from "./query";
+import { getEntityType } from "@/lib/inspector/schemas";
 
 let idCounter = Date.now();
 function uid(): string { return `el_${++idCounter}_${Math.random().toString(36).slice(2, 6)}`; }
@@ -330,10 +331,11 @@ export class BuilderStore {
     const page = this.activePage; if (!page) return;
     const section = page.sections.find((s) => s.id === sectionId); if (!section) return;
     this.pushHistory("insert-component");
+    const entityType = getEntityType(componentId);
     const slot: BuilderSlot = {
       id: uid(), moduleId: componentId, parentId: sectionId,
       order: index ?? section.slots.length, visible: true, locked: false,
-      config: {}, metadata: {},
+      config: entityType ? { entityType } : {}, metadata: {},
     };
     const sIdx = page.sections.findIndex((s) => s.id === sectionId);
     const slots = [...section.slots];
