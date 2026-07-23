@@ -52,6 +52,17 @@ export async function seedDatabase() {
     await prisma.productOrder.create({ data: { tenantId: tcId, productId: prod.id, amount: 4999, status: "COMPLETED", razorpayOrderId: "order_test_001", razorpayPaymentId: "pay_test_001", fanEmail: "fan@example.com" } });
   }
   await prisma.subscription.upsert({ where: { tenantId: tcId }, update: {}, create: { tenantId: tcId, plan: "PRO", status: "ACTIVE" } });
+  const tcWorkspace = await prisma.workspace.findUnique({ where: { tenantId: tcId } });
+  if (tcWorkspace) {
+    const proPlan = await prisma.billingPlan.findFirst({ where: { code: "creator_pro" } });
+    if (proPlan) {
+      await prisma.billingSubscription.upsert({
+        where: { workspaceId: tcWorkspace.id },
+        update: { planId: proPlan.id, status: "ACTIVE" },
+        create: { workspaceId: tcWorkspace.id, accountId: tcWorkspace.id, planId: proPlan.id, status: "ACTIVE" },
+      });
+    }
+  }
   await prisma.setting.upsert({ where: { tenantId_key: { tenantId: tcId, key: "hero" } }, update: {}, create: { tenantId: tcId, key: "hero", value: { title: "Welcome", subtitle: "Test Creator Store" } } });
 
   return { ok: true };

@@ -1,7 +1,9 @@
 import { seedDatabase } from "@/lib/testing/seed";
+import { seedBillingCatalog } from "@/lib/billing/catalog-seed";
 
 export async function POST() {
   try {
+    await seedBillingCatalog();
     const result = await seedDatabase();
     return Response.json(result);
   } catch (e: unknown) {

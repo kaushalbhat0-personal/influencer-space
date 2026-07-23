@@ -14,10 +14,9 @@ export class BillingRepository {
         data,
       });
     }
-    const account = await prisma.billingAccount.findFirst({ where: { accountId: workspaceId }, orderBy: { createdAt: "desc" } });
     return prisma.billingSubscription.create({
       data: {
-        accountId: account?.id ?? workspaceId,
+        accountId: workspaceId,
         workspaceId,
         ...data,
       },
