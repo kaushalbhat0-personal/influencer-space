@@ -528,10 +528,10 @@ export function SettingsForm({
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Social Media Links</h3>
                 <p className="text-sm text-gray-500">Leave empty to hide the icon from the public site.</p>
-                <Input id="instagram" name="instagram" label="Instagram URL" defaultValue={config.social.instagram} placeholder="https://instagram.com/username" />
-                <Input id="youtube" name="youtube" label="YouTube URL" defaultValue={config.social.youtube} placeholder="https://youtube.com/@username" />
-                <Input id="twitter" name="twitter" label="Twitter / X URL" defaultValue={config.social.twitter} placeholder="https://twitter.com/username" />
-                <Input id="tiktok" name="tiktok" label="TikTok URL" defaultValue={config.social.tiktok} placeholder="https://tiktok.com/@username" />
+                <Input id="instagram" name="instagram" label="Instagram URL" defaultValue={config.social?.instagram || ""} placeholder="https://instagram.com/username" />
+                <Input id="youtube" name="youtube" label="YouTube URL" defaultValue={config.social?.youtube || ""} placeholder="https://youtube.com/@username" />
+                <Input id="twitter" name="twitter" label="Twitter / X URL" defaultValue={config.social?.twitter || ""} placeholder="https://twitter.com/username" />
+                <Input id="tiktok" name="tiktok" label="TikTok URL" defaultValue={config.social?.tiktok || ""} placeholder="https://tiktok.com/@username" />
               </div>
 
               {profileInfoSave.state.success && (

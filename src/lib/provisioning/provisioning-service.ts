@@ -128,7 +128,7 @@ export class ProvisioningService {
         aboutText: input.generatedContent?.aboutSection || "",
       });
       const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription });
-      const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio });
+      const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: null, niche: input.sourcePlatform || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } });
       const heroJson = JSON.stringify({ title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" });
       const metaJson = JSON.stringify({ templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() });
 
