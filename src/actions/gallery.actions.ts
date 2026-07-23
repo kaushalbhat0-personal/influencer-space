@@ -79,20 +79,23 @@ export async function createGalleryItem(
       _max: { order: true },
     });
 
-    const row = await prisma.galleryImage.create({
-      data: {
-        tenantId,
-        title: data.caption || "Untitled",
-        description: data.caption || null,
-        imageUrl: data.isVideo ? "" : data.url,
-        mediaType: data.isVideo ? "video" : "image",
-        videoUrl: data.isVideo ? data.url : null,
-        category: "general",
-        order: (maxOrder._max.order ?? 0) + 1,
-      },
+    const row = await prisma.$transaction(async (tx) => {
+      const r = await tx.galleryImage.create({
+        data: {
+          tenantId,
+          title: data.caption || "Untitled",
+          description: data.caption || null,
+          imageUrl: data.isVideo ? "" : data.url,
+          mediaType: data.isVideo ? "video" : "image",
+          videoUrl: data.isVideo ? data.url : null,
+          category: "general",
+          order: (maxOrder._max.order ?? 0) + 1,
+        },
+      });
+      await logAction(tenantId, "createGalleryItem", { itemId: r.id, caption: data.caption ?? null }, tx);
+      return r;
     });
 
-    await logAction(tenantId, "createGalleryItem", { itemId: row.id, caption: data.caption ?? null });
     revalidatePath("/admin/gallery");
     return { success: true, data: toItem(row) };
   } catch (error) {
@@ -117,9 +120,11 @@ export async function removeGalleryItem(
       return { success: false, error: "Gallery item not found" };
     }
 
-    await prisma.galleryImage.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.galleryImage.delete({ where: { id } });
+      await logAction(tenantId, "deleteGalleryItem", { itemId: id }, tx);
+    });
 
-    await logAction(tenantId, "deleteGalleryItem", { itemId: id });
     revalidatePath("/admin/gallery");
     return { success: true };
   } catch (error) {
@@ -171,18 +176,21 @@ export async function updateExistingGalleryItem(
     });
     if (!existing) return { success: false, error: "Gallery item not found" };
 
-    const row = await prisma.galleryImage.update({
-      where: { id: data.id },
-      data: {
-        title: data.caption ?? existing.title,
-        description: data.caption ?? existing.description,
-        imageUrl: data.isVideo ? existing.imageUrl : (data.url ?? existing.imageUrl),
-        videoUrl: data.isVideo ? (data.url ?? existing.videoUrl) : existing.videoUrl,
-        mediaType: data.isVideo !== undefined ? (data.isVideo ? "video" : "image") : existing.mediaType,
-      },
+    const row = await prisma.$transaction(async (tx) => {
+      const r = await tx.galleryImage.update({
+        where: { id: data.id },
+        data: {
+          title: data.caption ?? existing.title,
+          description: data.caption ?? existing.description,
+          imageUrl: data.isVideo ? existing.imageUrl : (data.url ?? existing.imageUrl),
+          videoUrl: data.isVideo ? (data.url ?? existing.videoUrl) : existing.videoUrl,
+          mediaType: data.isVideo !== undefined ? (data.isVideo ? "video" : "image") : existing.mediaType,
+        },
+      });
+      await logAction(tenantId, "updateGalleryItem", { itemId: data.id }, tx);
+      return r;
     });
 
-    await logAction(tenantId, "updateGalleryItem", { itemId: data.id });
     revalidatePath("/admin/gallery");
     return { success: true, data: toItem(row) };
   } catch (error) {

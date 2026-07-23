@@ -72,17 +72,20 @@ export async function createLink(
       };
     }
 
-    const link = await prisma.affiliateLink.create({
-      data: {
-        tenantId,
-        title: parsed.data.title,
-        url: parsed.data.url,
-        clicks: 0,
-        isActive: true,
-      },
+    const link = await prisma.$transaction(async (tx) => {
+      const l = await tx.affiliateLink.create({
+        data: {
+          tenantId,
+          title: parsed.data.title,
+          url: parsed.data.url,
+          clicks: 0,
+          isActive: true,
+        },
+      });
+      await logAction(tenantId, "createLink", { linkId: l.id, title: l.title }, tx);
+      return l;
     });
 
-    await logAction(tenantId, "createLink", { linkId: link.id, title: link.title });
     revalidatePath("/admin/links");
     return { success: true, data: link };
   } catch (error) {
@@ -108,12 +111,14 @@ export async function toggleLinkStatus(
       return { success: false, error: "Link not found" };
     }
 
-    await prisma.affiliateLink.update({
-      where: { id },
-      data: { isActive },
+    await prisma.$transaction(async (tx) => {
+      await tx.affiliateLink.update({
+        where: { id },
+        data: { isActive },
+      });
+      await logAction(tenantId, "toggleLinkStatus", { linkId: id, isActive }, tx);
     });
 
-    await logAction(tenantId, "toggleLinkStatus", { linkId: id, isActive });
     revalidatePath("/admin/links");
     return { success: true };
   } catch (error) {
@@ -178,15 +183,18 @@ export async function updateExistingLink(
     });
     if (!existing) return { success: false, error: "Link not found" };
 
-    const link = await prisma.affiliateLink.update({
-      where: { id },
-      data: {
-        title: parsed.data.title,
-        url: parsed.data.url,
-      },
+    const link = await prisma.$transaction(async (tx) => {
+      const l = await tx.affiliateLink.update({
+        where: { id },
+        data: {
+          title: parsed.data.title,
+          url: parsed.data.url,
+        },
+      });
+      await logAction(tenantId, "updateLink", { linkId: id }, tx);
+      return l;
     });
 
-    await logAction(tenantId, "updateLink", { linkId: id });
     revalidatePath("/admin/links");
     return { success: true, data: link };
   } catch (error) {
@@ -211,9 +219,11 @@ export async function deleteLink(
       return { success: false, error: "Link not found" };
     }
 
-    await prisma.affiliateLink.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.affiliateLink.delete({ where: { id } });
+      await logAction(tenantId, "deleteLink", { linkId: id, title: existing.title }, tx);
+    });
 
-    await logAction(tenantId, "deleteLink", { linkId: id, title: existing.title });
     revalidatePath("/admin/links");
     return { success: true };
   } catch (error) {

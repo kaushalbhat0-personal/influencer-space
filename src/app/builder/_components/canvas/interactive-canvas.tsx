@@ -8,6 +8,7 @@ import { builderEvents } from "@/lib/builder/events";
 import { dragController } from "@/lib/builder/drag";
 import { propertyResolver } from "@/lib/builder/properties";
 import { ComponentRenderer } from "@/lib/renderer";
+import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { builderStore } from "@/lib/builder/store";
 import { useInlineEdit } from "../inline-edit";
 import { SelectionOverlay } from "./selection-overlay";
@@ -161,12 +162,14 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
                 onMouseEnter={() => handleModuleHover(slot.id)}
                 onMouseLeave={() => handleModuleHover(null)}
               >
-                <ComponentRenderer
-                  componentId={slot.moduleId}
-                  props={slot.config}
-                  elementId={slot.id}
-                  viewport={builderStore.canvas.device}
-                />
+                <ComponentErrorBoundary componentId={slot.moduleId}>
+                  <ComponentRenderer
+                    componentId={slot.moduleId}
+                    props={slot.config}
+                    elementId={slot.id}
+                    viewport={builderStore.canvas.device}
+                  />
+                </ComponentErrorBoundary>
               </div>
             ))}
 

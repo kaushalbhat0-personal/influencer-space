@@ -7,6 +7,18 @@ interface BoundSlot {
   tenantId?: string;
 }
 
+function logResolverError(entityType: unknown, moduleId: string, error: unknown): void {
+  console.error(
+    JSON.stringify({
+      event: "resolver.failed",
+      entityType,
+      moduleId,
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    })
+  );
+}
+
 /**
  * Server-side data resolver + ComponentRenderer.
  * Resolves dashboard domain data (products, gallery, timeline, etc.)
@@ -23,10 +35,12 @@ export async function DataBoundRenderer({ slot, tenantId }: { slot: BoundSlot; t
         merged.resolvedData = resolved.items;
         merged.resolvedTitle = resolved.title;
       }
-    } catch {
-      // Fall back to inline config
+    } catch (error) {
+      logResolverError(slot.config.entityType, slot.moduleId, error);
     }
   }
+
+  merged.tenantId = tenantId;
 
   return <ComponentRenderer componentId={slot.moduleId} props={merged} />;
 }

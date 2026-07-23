@@ -8,8 +8,10 @@ export type BuilderEventType =
   | "node:moved"
   | "node:duplicated"
   | "selection:changed"
+  | "config:changed"
   | "zoom:changed"
   | "device:changed"
+  | "hover:changed"
   | "save:requested"
   | "preview:requested"
   | "publish:requested"
@@ -30,12 +32,14 @@ export interface BuilderEventPayloads {
   "node:moved": { elementId: ElementId; fromSectionId: SectionId; toSectionId: SectionId; index: number };
   "node:duplicated": { originalId: ElementId; newId: ElementId; sectionId: SectionId };
   "selection:changed": { selectedIds: ElementId[]; mode: string };
+  "config:changed": { elementId: ElementId; key: string; value: unknown };
   "zoom:changed": { previous: number; current: number };
   "device:changed": { previous: BuilderCanvas["device"]; current: BuilderCanvas["device"] };
+  "hover:changed": { elementId: ElementId | null };
   "save:requested": { timestamp: number };
   "preview:requested": { timestamp: number };
   "publish:requested": { timestamp: number };
-  "history:changed": { canUndo: boolean; canRedo: boolean; undoDepth: number; redoDepth: number };
+  "history:changed": { action: string; index: number };
   "transaction:committed": { transactionId: string; commandCount: number };
   "drag:started": { elementId: ElementId; parentSectionId: SectionId };
   "drag:updated": { x: number; y: number; targetId: ElementId | null };

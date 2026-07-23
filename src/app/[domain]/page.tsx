@@ -7,6 +7,7 @@ import { themeService } from "@/lib/theme/service";
 import { getPublishedPageData, extractSeoFromPages } from "@/services/published.service";
 import { buildStorefrontMetadata, buildStorefrontJsonLd } from "@/lib/storefront/metadata";
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
+import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { HeroBanner } from "./_components/hero-banner";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
@@ -68,7 +69,9 @@ export default async function PublicPage({ params }: { params: { domain: string 
         {productListLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productListLd) }} />}
         <div className="mx-auto max-w-2xl px-4">
           {allSlots.map((slot, i) => (
-            <DataBoundRenderer key={`${slot.id}-${i}`} slot={{ moduleId: slot.moduleId, config: slot.config }} tenantId={tenantId} />
+            <ComponentErrorBoundary key={`${slot.id}-${i}`} componentId={slot.moduleId}>
+              <DataBoundRenderer slot={{ moduleId: slot.moduleId, config: slot.config }} tenantId={tenantId} />
+            </ComponentErrorBoundary>
           ))}
         </div>
       </main>

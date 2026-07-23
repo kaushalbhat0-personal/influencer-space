@@ -8,6 +8,9 @@ function toJson(val: unknown): JsonValue {
   return JSON.parse(JSON.stringify(val));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TxClient = any;
+
 export class BuilderService {
   async load(websiteId: string): Promise<BuilderPage[]> {
     const dbPages = await prisma.page.findMany({
@@ -45,11 +48,12 @@ export class BuilderService {
     }));
   }
 
-  async save(websiteId: string, pages: BuilderPage[]): Promise<void> {
-    await prisma.page.deleteMany({ where: { websiteId } });
+  async save(websiteId: string, pages: BuilderPage[], tx?: TxClient): Promise<void> {
+    const client = tx || prisma;
+    await client.page.deleteMany({ where: { websiteId } });
 
     for (const page of pages) {
-      const created = await prisma.page.create({
+      const created = await client.page.create({
         data: {
           websiteId,
           name: page.name,
@@ -62,7 +66,7 @@ export class BuilderService {
       });
 
       for (const section of page.sections) {
-        const createdSection = await prisma.section.create({
+        const createdSection = await client.section.create({
           data: {
             pageId: created.id,
             name: section.name,
@@ -74,7 +78,7 @@ export class BuilderService {
         });
 
         if (section.slots.length > 0) {
-          await prisma.block.createMany({
+          await client.block.createMany({
             data: section.slots.map((slot) => ({
               sectionId: createdSection.id,
               moduleId: slot.moduleId,

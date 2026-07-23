@@ -43,21 +43,26 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
 export async function publishWebsite(pages: BuilderPage[]): Promise<{ success: boolean; version?: number; error?: string }> {
   try {
     const websiteId = await getWebsiteId();
-
-    // Save first, then publish
-    await builderService.save(websiteId, pages);
-
     const { prisma } = await import("@/lib/prisma");
-    const website = await prisma.website.findUnique({
-      where: { id: websiteId },
-      select: { themePackageId: true, themeColors: true, themeFonts: true },
-    });
 
-    const result = await publishSnapshotService.publish(websiteId, {
-      pages,
-      themePackageId: website?.themePackageId || "neon-dark",
-      themeColors: (website?.themeColors || {}) as Record<string, string>,
-      themeFonts: (website?.themeFonts || {}) as Record<string, string>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await prisma.$transaction(async (tx: any) => {
+      // Save builder state
+      await builderService.save(websiteId, pages, tx);
+
+      // Fetch theme info
+      const website = await tx.website.findUnique({
+        where: { id: websiteId },
+        select: { themePackageId: true, themeColors: true, themeFonts: true },
+      });
+
+      // Publish snapshot
+      return publishSnapshotService.publish(websiteId, {
+        pages,
+        themePackageId: website?.themePackageId || "neon-dark",
+        themeColors: (website?.themeColors || {}) as Record<string, string>,
+        themeFonts: (website?.themeFonts || {}) as Record<string, string>,
+      });
     });
 
     return { success: true, version: result.version };

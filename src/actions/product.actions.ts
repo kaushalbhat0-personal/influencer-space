@@ -80,17 +80,20 @@ export async function createNewProduct(
       return { success: false, error: gate.error };
     }
 
-    const product = await prisma.product.create({
-      data: {
-        tenantId,
-        name: parsed.data.name,
-        description: parsed.data.description || null,
-        price: parsed.data.price,
-        imageUrl: parsed.data.imageUrl || null,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.create({
+        data: {
+          tenantId,
+          name: parsed.data.name,
+          description: parsed.data.description || null,
+          price: parsed.data.price,
+          imageUrl: parsed.data.imageUrl || null,
+        },
+      });
+      await logAction(tenantId, "createProduct", { productId: p.id, name: p.name }, tx);
+      return p;
     });
 
-    await logAction(tenantId, "createProduct", { productId: product.id, name: product.name });
     revalidatePath("/admin/products");
     return { success: true, data: product };
   } catch (error) {
@@ -116,12 +119,14 @@ export async function toggleProductStatus(
       return { success: false, error: "Product not found" };
     }
 
-    await prisma.product.update({
-      where: { id },
-      data: { isActive },
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id },
+        data: { isActive },
+      });
+      await logAction(tenantId, "toggleProductStatus", { productId: id, isActive }, tx);
     });
 
-    await logAction(tenantId, "toggleProductStatus", { productId: id, isActive });
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error) {
@@ -164,17 +169,20 @@ export async function updateExistingProduct(
       return { success: false, error: "Product not found" };
     }
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        name: parsed.data.name,
-        description: parsed.data.description || null,
-        price: parsed.data.price,
-        imageUrl: parsed.data.imageUrl || null,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.update({
+        where: { id },
+        data: {
+          name: parsed.data.name,
+          description: parsed.data.description || null,
+          price: parsed.data.price,
+          imageUrl: parsed.data.imageUrl || null,
+        },
+      });
+      await logAction(tenantId, "updateProduct", { productId: id }, tx);
+      return p;
     });
 
-    await logAction(tenantId, "updateProduct", { productId: id });
     revalidatePath("/admin/products");
     return { success: true, data: product };
   } catch (error) {
@@ -199,9 +207,11 @@ export async function removeProduct(
       return { success: false, error: "Product not found" };
     }
 
-    await prisma.product.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.product.delete({ where: { id } });
+      await logAction(tenantId, "deleteProduct", { productId: id, name: existing.name }, tx);
+    });
 
-    await logAction(tenantId, "deleteProduct", { productId: id, name: existing.name });
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error) {

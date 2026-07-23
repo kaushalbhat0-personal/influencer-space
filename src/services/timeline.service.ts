@@ -65,12 +65,14 @@ export const TimelineService = {
         where: { tenantId },
         _max: { order: true },
       });
-      return await prisma.timelineEvent.create({
-        data: {
-          tenantId,
-          ...data,
-          order: data.order ?? (maxOrder._max.order ?? 0) + 1,
-        },
+      return await prisma.$transaction(async (tx) => {
+        return tx.timelineEvent.create({
+          data: {
+            tenantId,
+            ...data,
+            order: data.order ?? (maxOrder._max.order ?? 0) + 1,
+          },
+        });
       });
     } catch (error) {
       console.error("TimelineService.create error:", error);
@@ -96,7 +98,9 @@ export const TimelineService = {
         where: { id, tenantId },
       });
       if (!existing) throw new Error("Timeline event not found");
-      return await prisma.timelineEvent.update({ where: { id }, data });
+      return await prisma.$transaction(async (tx) => {
+        return tx.timelineEvent.update({ where: { id }, data });
+      });
     } catch (error) {
       console.error("TimelineService.update error:", error);
       throw error;
@@ -109,7 +113,9 @@ export const TimelineService = {
         where: { id, tenantId },
       });
       if (!existing) throw new Error("Timeline event not found");
-      await prisma.timelineEvent.delete({ where: { id } });
+      await prisma.$transaction(async (tx) => {
+        await tx.timelineEvent.delete({ where: { id } });
+      });
     } catch (error) {
       console.error("TimelineService.delete error:", error);
       throw error;

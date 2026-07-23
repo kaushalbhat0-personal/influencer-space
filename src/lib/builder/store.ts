@@ -113,8 +113,10 @@ export class BuilderStore {
   undo(): boolean {
     if (!this.canUndo) return false;
     const idx = this.state.historyIndex - 1;
-    const entry = this.state.history[idx]!;
+    const entry = this.state.history[idx];
+    if (!entry) return false;
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
+    builderEvents.emit("history:changed", { action: "undo", index: idx });
     builderQuery.invalidate();
     return true;
   }
@@ -122,8 +124,10 @@ export class BuilderStore {
   redo(): boolean {
     if (!this.canRedo) return false;
     const idx = this.state.historyIndex + 1;
-    const entry = this.state.history[idx]!;
+    const entry = this.state.history[idx];
+    if (!entry) return false;
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
+    builderEvents.emit("history:changed", { action: "redo", index: idx });
     builderQuery.invalidate();
     return true;
   }
@@ -234,8 +238,11 @@ export class BuilderStore {
     const section = this.getSection(pid, sectionId); if (!section) throw new Error("Section not found");
     this.pushHistory("add-slot");
     const slot: BuilderSlot = { id: uid(), moduleId, parentId: sectionId, order: section.slots.length, visible: true, locked: false, config: {}, metadata: {} };
-    const sIdx = this.getPage(pid)!.sections.findIndex((s) => s.id === sectionId);
-    const sections = [...this.getPage(pid)!.sections]; sections[sIdx] = { ...section, slots: [...section.slots, slot] };
+    const page = this.getPage(pid);
+    if (!page) throw new Error("Page not found");
+    const sIdx = page.sections.findIndex((s) => s.id === sectionId);
+    if (sIdx < 0) throw new Error("Section index not found");
+    const sections = [...page.sections]; sections[sIdx] = { ...section, slots: [...section.slots, slot] };
     this.updatePageSections(pid, sections);
     builderQuery.invalidate();
     return slot;
@@ -252,6 +259,7 @@ export class BuilderStore {
   /** Update a single config key on a block — used by the Property Inspector. */
   updateBlockConfig(elementId: ElementId, key: string, value: unknown): void {
     const page = this.activePage; if (!page) return;
+    this.pushHistory("config-change");
     const updatedSections = page.sections.map((s) => ({
       ...s,
       slots: s.slots.map((sl) =>
@@ -262,6 +270,7 @@ export class BuilderStore {
     }));
     this.updatePageSections(page.id, updatedSections);
     builderEvents.emit("selection:changed", { selectedIds: this.getSelectedIds(), mode: this.state.selection.mode });
+    builderEvents.emit("config:changed", { elementId, key, value });
     builderQuery.invalidate();
   }
 
@@ -283,7 +292,9 @@ export class BuilderStore {
     const page = this.getPage(pageId); if (!page) return;
     this.pushHistory("reorder");
     const sections = [...page.sections];
-    const [moved] = sections.splice(fromIndex, 1);
+    const removed = sections.splice(fromIndex, 1);
+    if (removed.length === 0) return;
+    const moved = removed[0];
     if (!moved) return;
     sections.splice(toIndex, 0, moved);
     this.updatePageSections(pageId, sections.map((s, i) => ({ ...s, order: i })));
@@ -332,9 +343,22 @@ export class BuilderStore {
     builderQuery.invalidate();
   }
 
-  setDevice(device: BuilderCanvas["device"]): void { this.state = { ...this.state, canvas: { ...this.state.canvas, device } }; }
-  setZoom(zoom: number): void { this.state = { ...this.state, canvas: { ...this.state.canvas, zoom: Math.max(0.25, Math.min(2, zoom)) } }; }
-  setHovered(id: ElementId | null): void { this.state = { ...this.state, canvas: { ...this.state.canvas, hoveredElementId: id } }; }
+  setDevice(device: BuilderCanvas["device"]): void {
+    const previous = this.state.canvas.device;
+    this.state = { ...this.state, canvas: { ...this.state.canvas, device } };
+    builderEvents.emit("device:changed", { previous, current: device });
+    builderQuery.invalidate();
+  }
+  setZoom(zoom: number): void {
+    const previous = this.state.canvas.zoom;
+    this.state = { ...this.state, canvas: { ...this.state.canvas, zoom: Math.max(0.25, Math.min(2, zoom)) } };
+    builderEvents.emit("zoom:changed", { previous, current: this.state.canvas.zoom });
+    builderQuery.invalidate();
+  }
+  setHovered(id: ElementId | null): void {
+    this.state = { ...this.state, canvas: { ...this.state.canvas, hoveredElementId: id } };
+    builderEvents.emit("hover:changed", { elementId: id });
+  }
 
   private updatePageSections(pageId: PageId, sections: BuilderSection[]): void {
     const pages = this.state.canvas.pages.map((p) => p.id === pageId ? { ...p, sections } : p);
