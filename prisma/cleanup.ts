@@ -11,8 +11,8 @@ if (!process.env.DATABASE_URL) {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
-async function census(label: string, count: number) {
-  console.log(`  ${label.padEnd(30)} ${count}`);
+async function census(label: string, val: number | string) {
+  console.log(`  ${label.padEnd(30)} ${val}`);
 }
 
 async function main() {
@@ -66,70 +66,85 @@ async function main() {
   // ── Phase 3: Deletion (FK-safe order) ───────────────────────────────
   console.log("\n--- Deleting Test/Demo/Generated Data ---");
 
+  async function safeDelete(name: string, fn: () => Promise<unknown>) {
+    try {
+      const result = await fn();
+      const count = typeof result === 'object' && result !== null && 'count' in result ? (result as { count: number }).count : 0;
+      console.log(`  ${name.padEnd(35)} ${count} rows`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('does not exist') || msg.includes('TableDoesNotExist')) {
+        console.log(`  ${name.padEnd(35)} SKIP (table not in remote DB)`);
+      } else {
+        console.log(`  ${name.padEnd(35)} SKIP (${msg.slice(0, 60)})`);
+      }
+    }
+  }
+
   // Leaf tables first (no dependent children)
-  console.log("\n  [1/6] Leaf entities (blocks, snapshots, child records)...");
-  await prisma.block.deleteMany();
-  await prisma.section.deleteMany();
-  await prisma.publishSnapshot.deleteMany();
-  await prisma.brand.deleteMany();
-  await prisma.publishStatus.deleteMany();
+  console.log("\n  [1/6] Leaf entities...");
+  await safeDelete("Block", () => prisma.block.deleteMany());
+  await safeDelete("Section", () => prisma.section.deleteMany());
+  await safeDelete("PublishSnapshot", () => prisma.publishSnapshot.deleteMany());
+  await safeDelete("Brand", () => prisma.brand.deleteMany());
+  await safeDelete("PublishStatus", () => prisma.publishStatus.deleteMany());
 
   // Non-essential independent entities
   console.log("\n  [2/6] Non-essential entities...");
-  await prisma.analyticsEvent.deleteMany();
-  await prisma.auditLog.deleteMany();
-  await prisma.contactSubmission.deleteMany();
-  await prisma.newsletterSubscriber.deleteMany();
-  await prisma.socialStats.deleteMany();
-  await prisma.contentFeedItem.deleteMany();
-  await prisma.creatorProvisionEvent.deleteMany();
-  await prisma.creatorProvisionRun.deleteMany();
-  await prisma.creatorImport.deleteMany();
-  await prisma.creatorProfile.deleteMany();
-  await prisma.creatorIntelligence.deleteMany();
-  await prisma.providerFetchLog.deleteMany();
-  await prisma.youTubeQuotaUsage.deleteMany();
-  await prisma.providerAccount.deleteMany();
-  await prisma.designTheme.deleteMany();
-  await prisma.workflowExecution.deleteMany();
-  await prisma.workflow.deleteMany();
-  await prisma.assetReference.deleteMany();
-  await prisma.asset.deleteMany();
-  await prisma.offering.deleteMany();
-  await prisma.purchase.deleteMany();
+  await safeDelete("AnalyticsEvent", () => prisma.analyticsEvent.deleteMany());
+  await safeDelete("AuditLog", () => prisma.auditLog.deleteMany());
+  await safeDelete("ContactSubmission", () => prisma.contactSubmission.deleteMany());
+  await safeDelete("NewsletterSubscriber", () => prisma.newsletterSubscriber.deleteMany());
+  await safeDelete("SocialStats", () => prisma.socialStats.deleteMany());
+  await safeDelete("ContentFeedItem", () => prisma.contentFeedItem.deleteMany());
+  await safeDelete("CreatorProvisionEvent", () => prisma.creatorProvisionEvent.deleteMany());
+  await safeDelete("CreatorProvisionRun", () => prisma.creatorProvisionRun.deleteMany());
+  await safeDelete("CreatorImport", () => prisma.creatorImport.deleteMany());
+  await safeDelete("CreatorProfile", () => prisma.creatorProfile.deleteMany());
+  await safeDelete("CreatorIntelligence", () => prisma.creatorIntelligence.deleteMany());
+  await safeDelete("ProviderFetchLog", () => prisma.providerFetchLog.deleteMany());
+  await safeDelete("YouTubeQuotaUsage", () => prisma.youTubeQuotaUsage.deleteMany());
+  await safeDelete("ProviderAccount", () => prisma.providerAccount.deleteMany());
+  await safeDelete("DesignTheme", () => prisma.designTheme.deleteMany());
+  await safeDelete("WorkflowExecution", () => prisma.workflowExecution.deleteMany());
+  await safeDelete("Workflow", () => prisma.workflow.deleteMany());
+  await safeDelete("AssetReference", () => prisma.assetReference.deleteMany());
+  await safeDelete("Asset", () => prisma.asset.deleteMany());
+  await safeDelete("Offering", () => prisma.offering.deleteMany());
+  await safeDelete("Purchase", () => prisma.purchase.deleteMany());
 
   // Billing v2 (workspace-scoped)
   console.log("\n  [3/6] Billing v2 records...");
-  await prisma.billingInvoice.deleteMany();
-  await prisma.billingEvent.deleteMany();
-  await prisma.billingSubscription.deleteMany();
-  await prisma.billingAccount.deleteMany();
+  await safeDelete("BillingInvoice", () => prisma.billingInvoice.deleteMany());
+  await safeDelete("BillingEvent", () => prisma.billingEvent.deleteMany());
+  await safeDelete("BillingSubscription", () => prisma.billingSubscription.deleteMany());
+  await safeDelete("BillingAccount", () => prisma.billingAccount.deleteMany());
 
   // Content entities (tenant-scoped)
   console.log("\n  [4/6] Content entities...");
-  await prisma.productOrder.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.game.deleteMany();
-  await prisma.affiliateLink.deleteMany();
-  await prisma.timelineEvent.deleteMany();
-  await prisma.galleryImage.deleteMany();
-  await prisma.setting.deleteMany();
-  await prisma.page.deleteMany();
-  await prisma.website.deleteMany();
+  await safeDelete("ProductOrder", () => prisma.productOrder.deleteMany());
+  await safeDelete("Product", () => prisma.product.deleteMany());
+  await safeDelete("Game", () => prisma.game.deleteMany());
+  await safeDelete("AffiliateLink", () => prisma.affiliateLink.deleteMany());
+  await safeDelete("TimelineEvent", () => prisma.timelineEvent.deleteMany());
+  await safeDelete("GalleryImage", () => prisma.galleryImage.deleteMany());
+  await safeDelete("Setting", () => prisma.setting.deleteMany());
+  await safeDelete("Page", () => prisma.page.deleteMany());
+  await safeDelete("Website", () => prisma.website.deleteMany());
 
   // Workspace + membership
   console.log("\n  [5/6] Workspace + membership...");
-  await prisma.workspaceMember.deleteMany();
-  await prisma.workspace.deleteMany();
+  await safeDelete("WorkspaceMember", () => prisma.workspaceMember.deleteMany());
+  await safeDelete("Workspace", () => prisma.workspace.deleteMany());
 
   // Legacy billing + tenant-adjacent
-  await prisma.agencySubscription.deleteMany();
-  await prisma.subscription.deleteMany();
+  await safeDelete("AgencySubscription", () => prisma.agencySubscription.deleteMany());
+  await safeDelete("Subscription", () => prisma.subscription.deleteMany());
 
   // Agencies + tenants + users (preserve super admins)
   console.log("\n  [6/6] Agencies, tenants, non-admin users...");
-  await prisma.agencyTenant.deleteMany();
-  await prisma.websiteAgency.deleteMany();
+  await safeDelete("AgencyTenant", () => prisma.agencyTenant.deleteMany());
+  await safeDelete("WebsiteAgency", () => prisma.websiteAgency.deleteMany());
 
   if (preservedTenantIds.length > 0) {
     await prisma.tenant.deleteMany({ where: { id: { notIn: preservedTenantIds } } });
@@ -147,8 +162,10 @@ async function main() {
       const table = m as string;
       const result = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`SELECT COUNT(*) FROM "${table}"`);
       post[m] = Number(result[0]?.count ?? 0);
-    } catch { post[m] = 0; }
-    census(m, post[m]);
+      census(m, post[m] ?? 0);
+    } catch {
+      census(m, "SKIP");
+    }
   }
 
   // ── Phase 5: Verification ────────────────────────────────────────────
