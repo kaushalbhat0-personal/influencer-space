@@ -68,40 +68,63 @@ export function AboutRenderer({ props, elementId, definition }: RendererProps) {
 
 export function GalleryRenderer({ props }: RendererProps) {
   const p = props as Record<string, unknown>;
-  const images = Array.isArray(p.images) ? p.images : [];
+  const images = (p.resolvedData as Record<string, unknown>[]) || (Array.isArray(p.images) ? p.images : []);
+  const title = (p.resolvedTitle as string) || "Gallery";
   const columns = Math.min(Math.max(Number(p.columns) || 3, 1), 6);
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
-      <h2 className="mb-6 text-center text-2xl font-bold text-white">Gallery</h2>
-      {images.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-white/10 p-8 text-center text-sm text-zinc-600">Add images to your gallery</div>
-      ) : (
-        <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
-          {images.slice(0, 6).map((img: Record<string, unknown>, i: number) => (
+
+  if (images.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-12">
+        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(images.length, columns)}, 1fr)` } as React.CSSProperties}>
+          {images.slice(0, 12).map((img: Record<string, unknown>, i: number) => (
             <div key={i} className="aspect-square overflow-hidden rounded-lg bg-zinc-800">
-              {img.url ? <img src={img.url as string} alt={String(img.caption || "")} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-700">Image {i + 1}</div>}
+              {img.url ? <img src={img.url as string} alt={String(img.caption || "")} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-700">Image</div>}
             </div>
           ))}
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  return <div className="mx-auto max-w-5xl px-4 py-12 text-center"><div className="rounded-lg border border-dashed border-white/10 p-8 text-sm text-zinc-600">Add images to your gallery</div></div>;
 }
 
 /* ─── Products ─────────────────────────────────────────── */
 
 export function ProductsRenderer({ props }: RendererProps) {
   const p = props as Record<string, unknown>;
+  const products = (p.resolvedData as Record<string, unknown>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Products");
   const columns = Math.min(Math.max(Number(p.columns) || 3, 1), 6);
+
+  if (products.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-12">
+        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(products.length, columns)}, 1fr)` } as React.CSSProperties}>
+          {products.map((prod: Record<string, unknown>, idx: number) => (
+            <div key={idx} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4">
+              {prod.imageUrl ? <img src={String(prod.imageUrl)} alt={String(prod.name || "")} className="mb-2 aspect-video w-full rounded object-cover" /> : <div className="mb-2 aspect-video rounded bg-zinc-800" />}
+              <p className="text-sm font-medium text-zinc-300">{String(prod.name || "")}</p>
+              <p className="text-xs text-zinc-500">{prod.price ? `₹${Number(prod.price).toLocaleString()}` : ""}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Placeholder when no products
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
-      <h2 className="mb-6 text-center text-2xl font-bold text-white">Products</h2>
-      <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+      <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
         {[1, 2, 3].slice(0, columns).map((i) => (
           <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4">
             <div className="mb-2 aspect-video rounded bg-zinc-800" />
-            <p className="text-sm font-medium text-zinc-300">Product {i}</p>
-            <p className="text-xs text-zinc-500">₹{(i * 499).toLocaleString()}</p>
+            <p className="text-sm font-medium text-zinc-300">No products yet</p>
+            <p className="text-xs text-zinc-500">Add products in Dashboard</p>
           </div>
         ))}
       </div>
@@ -112,17 +135,39 @@ export function ProductsRenderer({ props }: RendererProps) {
 /* ─── Timeline ─────────────────────────────────────────── */
 
 export function TimelineRenderer({ props }: RendererProps) {
-  const p = props as Record<string, string>;
-  const milestones = [
+  const p = props as Record<string, unknown>;
+  const milestones = (p.resolvedData as Record<string, string>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Timeline");
+
+  if (milestones.length > 0) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <div className="space-y-6">
+          {milestones.map((m: Record<string, string>, i: number) => (
+            <div key={i} className="relative border-l-2 border-zinc-800 pl-6">
+              <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-zinc-950" />
+              <p className="text-xs font-semibold text-s8ul-cyan">{m.year}</p>
+              <p className="mt-1 text-sm font-medium text-white">{m.title || m.name}</p>
+              <p className="text-xs text-zinc-500">{m.description || ""}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Sample timeline as fallback
+  const samples = [
     { year: "2023", title: "Started", desc: "Began the journey" },
     { year: "2024", title: "First Milestone", desc: "Reached 10K followers" },
     { year: "2025", title: "Growing", desc: "Expanded to new platforms" },
   ];
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <h2 className="mb-8 text-center text-2xl font-bold text-white">{p.title || "Timeline"}</h2>
+      <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
       <div className="space-y-6">
-        {milestones.map((m, i) => (
+        {samples.map((m, i) => (
           <div key={i} className="relative border-l-2 border-zinc-800 pl-6">
             <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-zinc-950" />
             <p className="text-xs font-semibold text-s8ul-cyan">{m.year}</p>
@@ -138,18 +183,36 @@ export function TimelineRenderer({ props }: RendererProps) {
 /* ─── Social Links ─────────────────────────────────────── */
 
 export function LinksRenderer({ props }: RendererProps) {
-  const p = props as Record<string, string>;
-  const links = [
-    { platform: "YouTube", url: "#", color: "bg-red-600" },
-    { platform: "Instagram", url: "#", color: "bg-pink-600" },
-    { platform: "Twitter", url: "#", color: "bg-blue-500" },
-    { platform: "Discord", url: "#", color: "bg-indigo-600" },
+  const p = props as Record<string, unknown>;
+  const links = (p.resolvedData as Record<string, string>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Connect With Me");
+
+  if (links.length > 0) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-12 text-center">
+        <h2 className="mb-6 text-xl font-bold text-white">{title}</h2>
+        <div className="space-y-3">
+          {links.map((link: Record<string, string>, i: number) => (
+            <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg bg-white/5 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-white/10 transition-colors">
+              <span>{link.platform || link.label || "Link"}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Sample links as fallback
+  const samples = [
+    { platform: "YouTube", color: "bg-red-600" },
+    { platform: "Instagram", color: "bg-pink-600" },
+    { platform: "Twitter", color: "bg-blue-500" },
   ];
   return (
     <div className="mx-auto max-w-md px-4 py-12 text-center">
-      <h2 className="mb-6 text-xl font-bold text-white">{p.title || "Connect With Me"}</h2>
+      <h2 className="mb-6 text-xl font-bold text-white">{title}</h2>
       <div className="space-y-3">
-        {links.map((link, i) => (
+        {samples.map((link, i) => (
           <div key={i} className={`flex items-center gap-3 rounded-lg ${link.color}/10 px-4 py-3 text-sm font-medium text-zinc-300`}>
             <div className={`h-2 w-2 rounded-full ${link.color}`} />
             {link.platform}
