@@ -8,7 +8,6 @@ import { getPublishedPageData, extractSeoFromPages } from "@/services/published.
 import { buildStorefrontMetadata, buildStorefrontJsonLd } from "@/lib/storefront/metadata";
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
-import { HeroBanner } from "./_components/hero-banner";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
@@ -80,20 +79,12 @@ export default async function PublicPage({ params }: { params: { domain: string 
 
   // ── LEGACY FALLBACK (no published snapshot) ──────────────
   const { profile, hero } = legacy;
-  const sectionRegistry = (await import("@/lib/storefront")).sectionRegistry;
+  const [{ registerDefaultSections }, { sectionRegistry }] = await Promise.all([
+    import("@/lib/storefront/sections"),
+    import("@/lib/storefront"),
+  ]);
 
-  if (sectionRegistry.size === 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dAny = (d: any) => d;
-    sectionRegistry.register({
-      type: "hero", name: "Hero", priority: 1, isVisible: () => true,
-      render: (d) => { const h = dAny(d).hero; return <HeroBanner videoUrl={h.videoUrl || undefined} posterUrl={h.posterUrl || undefined} videoDesktopAlignment={h.videoDesktopAlignment} videoMobileAlignment={h.videoMobileAlignment} imageDesktopAlignment={h.imageDesktopAlignment} imageMobileAlignment={h.imageMobileAlignment} />; },
-    });
-    sectionRegistry.register({
-      type: "footer", name: "Footer", priority: 99, isVisible: () => true,
-      render: () => (<footer className="mt-12 border-t border-white/5 pt-6 pb-8 text-center"><p className="text-xs text-zinc-700">Powered by <a href={process.env.NEXT_PUBLIC_APP_URL || "https://influencer-space-alpha.vercel.app"} target="_blank" rel="follow" className="font-semibold text-zinc-500 transition-colors hover:text-zinc-300">CreatorStore</a></p></footer>),
-    });
-  }
+  registerDefaultSections();
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white" style={themeStyle as React.CSSProperties}>
