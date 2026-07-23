@@ -6,8 +6,8 @@ const ADMIN_PASSWORD = "admin123";
 test.describe("Admin Products – CRUD & Data Reflection", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/admin/login");
-    await page.fill('input[type="email"]', ADMIN_EMAIL);
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input#email', ADMIN_EMAIL);
+    await page.fill('input#password', ADMIN_PASSWORD);
     await page.click('button:has-text("Sign in")');
     await page.waitForURL("/admin/dashboard");
   });

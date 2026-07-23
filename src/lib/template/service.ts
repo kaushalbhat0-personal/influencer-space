@@ -2,6 +2,53 @@ import { prisma } from "@/lib/prisma";
 import { templateRegistry } from "./registry";
 import type { Template } from "./registry";
 
+export interface ApplyTemplateInput {
+  websiteId: string;
+  templateId: string;
+  generatedContent?: GeneratedContentInput;
+}
+
+export interface GeneratedContentInput {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroCta?: string;
+  aboutSection?: string;
+  tagline?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  keywords?: string[];
+}
+
+function injectContent(
+  moduleId: string,
+  config: Record<string, unknown>,
+  content?: GeneratedContentInput,
+): Record<string, unknown> {
+  if (!content) return config;
+
+  const result = { ...config };
+
+  if (moduleId.startsWith("hero.")) {
+    if (content.heroTitle) result.title = content.heroTitle;
+    if (content.heroSubtitle) result.subtitle = content.heroSubtitle;
+    if (content.heroCta) {
+      result.cta = content.heroCta;
+      result.buttonText = content.heroCta;
+    }
+  }
+
+  if (moduleId.startsWith("about.")) {
+    if (content.aboutSection) result.content = content.aboutSection;
+    if (content.tagline) result.title = content.tagline;
+  }
+
+  if (moduleId.startsWith("footer.")) {
+    if (content.tagline) result.copyright = `\u00A9 ${content.tagline}`;
+  }
+
+  return result;
+}
+
 export class TemplateService {
   listTemplates(): Template[] {
     return templateRegistry.getAll();
@@ -15,14 +62,15 @@ export class TemplateService {
     return templateRegistry.inferFromName(name);
   }
 
-  async apply(websiteId: string, templateId: string): Promise<void> {
+  async apply(input: ApplyTemplateInput): Promise<void> {
+    const { websiteId, templateId, generatedContent } = input;
     const template = templateRegistry.getById(templateId);
     if (!template) throw new Error(`Template "${templateId}" not found`);
 
     // Delete existing builder data
     await prisma.page.deleteMany({ where: { websiteId } });
 
-    // Create pages from template
+    // Create pages from template with injected generated content
     for (const tplPage of template.pages) {
       const page = await prisma.page.create({
         data: {
@@ -53,7 +101,7 @@ export class TemplateService {
               order: b.order,
               visible: true,
               locked: false,
-              config: JSON.parse(JSON.stringify(b.config || {})),
+              config: JSON.parse(JSON.stringify(injectContent(b.moduleId, b.config || {}, generatedContent))),
             })),
           });
         }

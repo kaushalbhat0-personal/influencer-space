@@ -39,41 +39,19 @@ export const authOptions: NextAuthOptions = {
           if (!passwordMatch) return null;
 
           if (user.role === "SUPER_ADMIN") {
-            console.log("Super admin login approved");
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              tenantId: null,
-              agencyId: null,
-              role: user.role,
-            };
+            return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: null, role: user.role };
           }
 
           if (user.role === "AGENCY_ADMIN" || user.role === "AGENCY_STAFF") {
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              tenantId: null,
-              agencyId: user.agencyId,
-              role: user.role,
-            };
+            return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: user.agencyId, role: user.role };
           }
 
           if (user.role === "ADMIN") {
-            if (credentials.tenantId && user.tenantId !== credentials.tenantId) {
-              return null;
+            if (credentials.tenantId && user.tenant) {
+              const match = user.tenant.id === credentials.tenantId || user.tenant.subdomain === credentials.tenantId;
+              if (!match) return null;
             }
-
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              tenantId: user.tenantId,
-              agencyId: user.agencyId,
-              role: user.role,
-            };
+            return { id: user.id, email: user.email, name: user.name, tenantId: user.tenantId, agencyId: user.agencyId, role: user.role };
           }
 
           return null;

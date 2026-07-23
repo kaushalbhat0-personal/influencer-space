@@ -6,20 +6,19 @@ const ADMIN_PASSWORD = "admin123";
 test.describe("Admin Navigation", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/admin/login");
-    await page.fill('input[type="email"]', ADMIN_EMAIL);
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input#email', ADMIN_EMAIL);
+    await page.fill('input#password', ADMIN_PASSWORD);
     await page.click('button:has-text("Sign in")');
     await page.waitForURL("/admin/dashboard");
   });
 
   const pages = [
-    { name: "Gallery", path: "/admin/gallery", heading: "Gallery" },
-    { name: "Timeline", path: "/admin/timeline", heading: "Timeline" },
+    { name: "Hall of Fame", path: "/admin/gallery", heading: "Hall of Fame" },
     { name: "Games", path: "/admin/games", heading: "Games" },
     { name: "Products", path: "/admin/products", heading: "Products" },
-    { name: "Affiliates", path: "/admin/affiliates", heading: "Affiliate Links" },
-    { name: "Messages", path: "/admin/messages", heading: "Messages" },
+    { name: "Links & Affiliates", path: "/admin/links", heading: "Links" },
     { name: "Settings", path: "/admin/settings", heading: "Settings" },
+    { name: "Dashboard", path: "/admin/dashboard", heading: "Dashboard" },
   ];
 
   for (const pageInfo of pages) {
@@ -37,12 +36,12 @@ test.describe("Admin Navigation", () => {
 
   test("should show hamburger menu on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await expect(page.locator("button[aria-label*='Open sidebar']")).toBeVisible();
+    await expect(page.locator("button[aria-label='Toggle sidebar']")).toBeVisible();
   });
 
   test("should open sidebar on mobile when hamburger clicked", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.click("button[aria-label*='Open sidebar']");
+    await page.click("button[aria-label='Toggle sidebar']");
     await expect(page.locator("aside")).toBeVisible();
   });
 });

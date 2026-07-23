@@ -6,10 +6,18 @@
  * Run: npx tsx tests/fixtures/test-seed.ts
  */
 
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "../../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { loadEnvConfig } from "@next/env";
 import bcrypt from "bcryptjs";
 
-const PASSWORD = await bcrypt.hash("TestPass123!", 12);
+loadEnvConfig(process.cwd());
+const DATABASE_URL = process.env.DATABASE_URL!;
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
+
+async function hashPassword() {
+  return bcrypt.hash("TestPass123!", 12);
+}
 
 export const TEST_IDS = {
   superAdmin: "test-super-admin",
@@ -31,7 +39,7 @@ async function main() {
     create: {
       id: TEST_IDS.superAdmin,
       email: "admin@creatorstore.test",
-      password: PASSWORD,
+      password: await hashPassword(),
       name: "Super Admin",
       role: "SUPER_ADMIN",
     },
@@ -54,7 +62,7 @@ async function main() {
     update: {},
     create: {
       email: "agency@creatorstore.test",
-      password: PASSWORD,
+      password: await hashPassword(),
       name: "Agency Admin",
       role: "AGENCY_ADMIN",
       agencyId: TEST_IDS.agency,
@@ -77,7 +85,7 @@ async function main() {
     update: {},
     create: {
       email: "creator@creatorstore.test",
-      password: PASSWORD,
+      password: await hashPassword(),
       name: "Test Creator",
       role: "ADMIN",
       tenantId: TEST_IDS.creatorTenant,

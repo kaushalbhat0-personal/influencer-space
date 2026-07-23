@@ -188,7 +188,7 @@ export class BuilderStore {
   duplicate(id: ElementId): void {
     const slot = this.findSlotById(id); if (!slot) return;
     const section = this.findSectionForSlot(id); if (!section) return;
-    const page = this.activePage; if (!page) return;
+    const page = this.findPageForSlot(id); if (!page) return;
     this.pushHistory("duplicate");
     const newSlot: BuilderSlot = { ...JSON.parse(JSON.stringify(slot)), id: uid(), order: section.slots.length };
     const sIdx = page.sections.findIndex((s) => s.id === section.id); if (sIdx < 0) return;
@@ -249,7 +249,7 @@ export class BuilderStore {
   }
 
   removeElement(id: ElementId): void {
-    const page = this.activePage; if (!page) return;
+    const page = this.findPageForSlot(id); if (!page) return;
     this.pushHistory("remove");
     const updatedSections = page.sections.map((s) => ({ ...s, slots: s.slots.filter((sl) => sl.id !== id) }));
     this.updatePageSections(page.id, updatedSections);
@@ -275,7 +275,7 @@ export class BuilderStore {
   }
 
   moveElementTo(slotId: ElementId, targetSectionId: SectionId, index: number): void {
-    const page = this.activePage; if (!page) return;
+    const page = this.findPageForSlot(slotId); if (!page) return;
     const slot = this.findSlotById(slotId); if (!slot) return;
     const fromSection = this.findSectionForSlot(slotId); if (!fromSection) return;
     const updatedSections = page.sections.map((s) => {
@@ -368,6 +368,10 @@ export class BuilderStore {
   private findSlotById(id: ElementId): BuilderSlot | null {
     for (const page of this.state.canvas.pages) for (const section of page.sections) { const slot = section.slots.find((s) => s.id === id); if (slot) return slot; }
     return null;
+  }
+
+  private findPageForSlot(slotId: ElementId): BuilderPage | null {
+    return this.state.canvas.pages.find((p) => p.sections.some((s) => s.slots.some((sl) => sl.id === slotId))) ?? null;
   }
 
   private findSectionForSlot(slotId: ElementId): BuilderSection | null {

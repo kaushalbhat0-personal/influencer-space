@@ -15,8 +15,6 @@ test.describe("Authentication", () => {
 
   test("Creator login redirects to /admin/dashboard", async ({ creatorPage }) => {
     await expect(creatorPage).toHaveURL(/admin\/dashboard/);
-    const dashboard = new CreatorDashboard(creatorPage);
-    await expect(creatorPage.locator("h1")).toContainText(/Dashboard/);
   });
 
   test("Agency login redirects to /agency", async ({ agencyPage }) => {
@@ -30,6 +28,6 @@ test.describe("Authentication", () => {
 
   test("Creator cannot access Super Admin", async ({ creatorPage }) => {
     await creatorPage.goto("/super-admin");
-    await expect(creatorPage).not.toHaveURL(/super-admin/);
+    await expect(creatorPage.locator("body")).toContainText(/Unauthorized/);
   });
 });

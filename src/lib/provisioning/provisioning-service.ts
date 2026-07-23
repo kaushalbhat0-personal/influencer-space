@@ -6,6 +6,7 @@ import { buildStorefrontUrl, buildDashboardUrl, buildAdminEmail } from "@/lib/co
 import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./provisioning-state";
 import { templateService } from "@/lib/template";
 import { websitePersonalizer } from "@/lib/personalization";
+import { seedStarterData } from "@/lib/data/seeder";
 
 export interface ProvisioningInput {
   creatorName: string;
@@ -186,7 +187,18 @@ export class ProvisioningService {
         const templateId = input.templateId || personalization.templateId;
         const template = templateService.getTemplate(templateId);
         if (template) {
-          await templateService.apply(website.id, template.id);
+          await templateService.apply({
+            websiteId: website.id,
+            templateId: template.id,
+            generatedContent: input.generatedContent,
+          });
+          // Seed starter data for data-backed blocks (products, gallery, timeline, etc.)
+          await seedStarterData(
+            template,
+            tenantId,
+            (input.strategyId as "fast" | "balanced" | "premium") || "balanced",
+            input.creatorName,
+          );
         }
         // Apply theme
         const { themeService } = await import("@/lib/theme");

@@ -6,8 +6,8 @@ const ADMIN_PASSWORD = "admin123";
 test.describe("Admin Responsiveness", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/admin/login");
-    await page.fill('input[type="email"]', ADMIN_EMAIL);
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input#email', ADMIN_EMAIL);
+    await page.fill('input#password', ADMIN_PASSWORD);
     await page.click('button:has-text("Sign in")');
     await page.waitForURL("/admin/dashboard");
   });
@@ -19,7 +19,7 @@ test.describe("Admin Responsiveness", () => {
 
   test("should hide sidebar and show hamburger on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await expect(page.locator("button[aria-label*='Open sidebar']")).toBeVisible();
+    await expect(page.locator("button[aria-label='Toggle sidebar']")).toBeVisible();
   });
 
   test("should not have horizontal scroll on desktop", async ({ page }) => {
@@ -27,11 +27,9 @@ test.describe("Admin Responsiveness", () => {
     const pages = [
       "/admin/dashboard",
       "/admin/gallery",
-      "/admin/timeline",
       "/admin/games",
       "/admin/products",
-      "/admin/affiliates",
-      "/admin/messages",
+      "/admin/links",
       "/admin/settings",
     ];
 
@@ -48,11 +46,9 @@ test.describe("Admin Responsiveness", () => {
     const pages = [
       "/admin/dashboard",
       "/admin/gallery",
-      "/admin/timeline",
       "/admin/games",
       "/admin/products",
-      "/admin/affiliates",
-      "/admin/messages",
+      "/admin/links",
       "/admin/settings",
     ];
 

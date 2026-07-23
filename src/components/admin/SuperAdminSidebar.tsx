@@ -17,7 +17,7 @@ const GROUP_LABELS: Record<AdminGroup, string> = {
   system: "System",
 };
 
-const DEFAULT_OPEN: AdminGroup[] = ["overview"];
+const DEFAULT_OPEN: AdminGroup[] = ["overview", "ai-platform", "platform", "system"];
 
 export function SuperAdminSidebar() {
   const pathname = usePathname();

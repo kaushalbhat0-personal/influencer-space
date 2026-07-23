@@ -291,7 +291,7 @@ export function ContactRenderer({ props }: RendererProps) {
       <div className="mx-auto max-w-lg px-4 py-12 text-center">
         <h2 className="mb-2 text-2xl font-bold text-white">{p.title || "Get In Touch"}</h2>
         <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-6">
-          <p className="text-sm text-zinc-400">Thanks for reaching out! I'll get back to you soon.</p>
+          <p className="text-sm text-zinc-400">Thanks for reaching out! I&apos;ll get back to you soon.</p>
         </div>
       </div>
     );
@@ -342,7 +342,7 @@ export function NewsletterRenderer({ props }: RendererProps) {
       <div className="mx-auto max-w-lg px-4 py-12 text-center">
         <h2 className="mb-2 text-2xl font-bold text-white">{p.title || "Subscribe"}</h2>
         <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-6">
-          <p className="text-sm text-zinc-400">You're subscribed! Stay tuned for updates.</p>
+          <p className="text-sm text-zinc-400">You&apos;re subscribed! Stay tuned for updates.</p>
         </div>
       </div>
     );

@@ -14,8 +14,8 @@ test.describe("Multi-Tenant Data Isolation", () => {
     const tenantAPage = await tenantAContext.newPage();
 
     await tenantAPage.goto(`http://${TENANT_A}.localhost:3000/admin/login`);
-    await tenantAPage.fill('input[type="email"]', ADMIN_EMAIL);
-    await tenantAPage.fill('input[type="password"]', ADMIN_PASSWORD);
+    await tenantAPage.fill('input#email', ADMIN_EMAIL);
+    await tenantAPage.fill('input#password', ADMIN_PASSWORD);
     await tenantAPage.click('button:has-text("Sign in")');
     await tenantAPage.waitForURL("**/admin/dashboard");
 
@@ -62,8 +62,8 @@ test.describe("Multi-Tenant Data Isolation", () => {
     const tenantAAgainPage = await tenantAAgain.newPage();
 
     await tenantAAgainPage.goto(`http://${TENANT_A}.localhost:3000/admin/login`);
-    await tenantAAgainPage.fill('input[type="email"]', ADMIN_EMAIL);
-    await tenantAAgainPage.fill('input[type="password"]', ADMIN_PASSWORD);
+    await tenantAAgainPage.fill('input#email', ADMIN_EMAIL);
+    await tenantAAgainPage.fill('input#password', ADMIN_PASSWORD);
     await tenantAAgainPage.click('button:has-text("Sign in")');
     await tenantAAgainPage.waitForURL("**/admin/dashboard");
     await tenantAAgainPage.click('a:has-text("Products")');

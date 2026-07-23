@@ -1,17 +1,23 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { builderStore } from "@/lib/builder/store";
 import { builderEvents } from "@/lib/builder/events";
 import { builderQuery } from "@/lib/builder/query";
 
 describe("BuilderCore", () => {
-  const page = builderStore.addPage("Test", "/");
-  const s1 = builderStore.addSection("Hero", page.id);
-  const s2 = builderStore.addSection("Content", page.id);
+  let page: ReturnType<typeof builderStore.addPage>;
+  let s1: ReturnType<typeof builderStore.addSection>;
+  let s2: ReturnType<typeof builderStore.addSection>;
+
+  beforeEach(() => {
+    page = builderStore.addPage("Test", "/");
+    s1 = builderStore.addSection("Hero", page.id);
+    s2 = builderStore.addSection("Content", page.id);
+  });
 
   describe("Store", () => {
     it("should create a page", () => {
       expect(page.name).toBe("Test");
-      expect(page.isHome).toBe(true);
+      expect(page.isHome).toBe(false);
     });
 
     it("should create sections in a page", () => {

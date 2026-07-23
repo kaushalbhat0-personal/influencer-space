@@ -29,6 +29,6 @@ export class Storefront {
   }
 
   async getNotFoundText(): Promise<string | null> {
-    return this.page.locator("main p").first().textContent();
+    return this.page.locator("main h1").first().textContent();
   }
 }

@@ -11,8 +11,8 @@ test.describe("Admin Authentication", () => {
 
   test("should login with valid credentials", async ({ page }) => {
     await page.goto("/admin/login");
-    await page.fill('input[type="email"]', ADMIN_EMAIL);
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input#email', ADMIN_EMAIL);
+    await page.fill('input#password', ADMIN_PASSWORD);
     await page.click('button:has-text("Sign in")');
     await page.waitForURL("/admin/dashboard");
     await expect(page.locator("h1")).toContainText("Dashboard");
@@ -20,8 +20,8 @@ test.describe("Admin Authentication", () => {
 
   test("should show error with invalid credentials", async ({ page }) => {
     await page.goto("/admin/login");
-    await page.fill('input[type="email"]', "wrong@example.com");
-    await page.fill('input[type="password"]', "wrongpass");
+    await page.fill('input#email', "wrong@example.com");
+    await page.fill('input#password', "wrongpass");
     await page.click('button:has-text("Sign in")');
     await expect(page.locator("text=Invalid email or password")).toBeVisible();
   });
