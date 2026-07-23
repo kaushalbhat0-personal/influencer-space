@@ -3,6 +3,7 @@ import { defaultConfig } from "@/config/influencer";
 import { SettingsService } from "@/services/settings.service";
 import { getContentFeed } from "@/services/content-feed.service";
 import type { PublicFeedItemData } from "@/components/public/ContentFeed";
+import { loadProductsForStorefront, loadGalleryForStorefront, loadTimelineForStorefront, loadAffiliatesForStorefront, loadGamesForStorefront } from "@/lib/data/loaders";
 
 export type PublicHeroData = {
   videoUrl: string;
@@ -103,31 +104,11 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
       where: { tenantId_key: { tenantId, key: "influencer_data" } },
     }),
     SettingsService.getHeroData(tenantId),
-    prisma.product.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, name: true, description: true, price: true, imageUrl: true },
-    }),
-    prisma.affiliateLink.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, title: true, url: true, imageUrl: true, clicks: true },
-    }),
-    prisma.galleryImage.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, title: true, description: true, imageUrl: true, mediaType: true, videoUrl: true },
-    }),
-    prisma.timelineEvent.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: { year: "desc" },
-      select: { id: true, year: true, title: true, description: true, imageUrl: true, stats: true },
-    }),
-    prisma.game.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, name: true, logoUrl: true, genre: true },
-    }),
+    loadProductsForStorefront(tenantId),
+    loadAffiliatesForStorefront(tenantId),
+    loadGalleryForStorefront(tenantId),
+    loadTimelineForStorefront(tenantId),
+    loadGamesForStorefront(tenantId),
     getContentFeed(tenantId),
   ]);
 
@@ -137,12 +118,7 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     ? { ...profileDefaults, ...(settingRow.value as Partial<PublicProfile>) }
     : profileDefaults;
 
-  const gallery: PublicGalleryData[] = galleryRows.map((g) => ({
-    id: g.id,
-    url: g.mediaType === "video" && g.videoUrl ? g.videoUrl : g.imageUrl,
-    caption: g.description || g.title,
-    isVideo: g.mediaType === "video",
-  }));
+  const gallery: PublicGalleryData[] = galleryRows;
 
   const hero: PublicHeroData = {
     videoUrl: heroRaw.videoUrl || "",

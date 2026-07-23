@@ -1,108 +1,35 @@
+import { loadProducts, loadGallery, loadTimeline, loadAffiliates } from "./loaders";
 import { prisma } from "@/lib/prisma";
+import type { ResolvedComponentData } from "./loaders";
 
-export interface ResolvedComponentData {
-  /** Title/heading for the section */
-  title?: string;
-  /** Display items (products, gallery images, timeline events, etc.) */
-  items?: Record<string, unknown>[];
-  /** Fallback when no domain data exists */
-  empty: boolean;
-}
+export { ResolvedComponentData };
 
 /**
  * Resolves dashboard domain data for Builder components.
- * Components store entityType + tenantId. This service fetches the real data.
+ * Components store entityType + tenantId. Delegates to canonical loaders.
  */
 export class DataResolver {
   async resolve(config: Record<string, unknown>, tenantId?: string): Promise<ResolvedComponentData> {
     const entityType = config.entityType as string | undefined;
-    const entityId = config.entityId as string | undefined;
 
     if (entityType === "product" && tenantId) {
-      return this.resolveProducts(tenantId, entityId);
+      const entityId = config.entityId as string | undefined;
+      return loadProducts(tenantId, entityId);
     }
     if (entityType === "gallery" && tenantId) {
-      return this.resolveGallery(tenantId, entityId);
+      return loadGallery(tenantId);
     }
     if (entityType === "timeline" && tenantId) {
-      return this.resolveTimeline(tenantId, entityId);
+      return loadTimeline(tenantId);
     }
     if (entityType === "affiliate" && tenantId) {
-      return this.resolveAffiliateLinks(tenantId, entityId);
+      return loadAffiliates(tenantId);
     }
     if (entityType === "social" && tenantId) {
       return this.resolveSocialProfiles(tenantId);
     }
 
-    // No entity type specified — return empty
     return { empty: true };
-  }
-
-  private async resolveProducts(tenantId: string, productId?: string): Promise<ResolvedComponentData> {
-    const where: Record<string, unknown> = { tenantId, isActive: true };
-    if (productId) where.id = productId;
-
-    const products = await prisma.product.findMany({
-      where: JSON.parse(JSON.stringify(where)),
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, name: true, description: true, price: true, imageUrl: true },
-    });
-
-    return {
-      title: "Products",
-      items: products.map((p) => ({ ...p, price: p.price })),
-      empty: products.length === 0,
-    };
-  }
-
-  private async resolveGallery(tenantId: string, _galleryId?: string): Promise<ResolvedComponentData> {
-    void _galleryId;
-    const images = await prisma.galleryImage.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, title: true, description: true, imageUrl: true, mediaType: true, videoUrl: true },
-    });
-
-    return {
-      title: "Gallery",
-      items: images.map((g) => ({
-        id: g.id,
-        url: g.mediaType === "video" && g.videoUrl ? g.videoUrl : g.imageUrl,
-        caption: g.description || g.title,
-        isVideo: g.mediaType === "video",
-      })),
-      empty: images.length === 0,
-    };
-  }
-
-  private async resolveTimeline(tenantId: string, _eventId?: string): Promise<ResolvedComponentData> {
-    void _eventId;
-    const events = await prisma.timelineEvent.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: { year: "desc" },
-      select: { id: true, year: true, title: true, description: true, imageUrl: true },
-    });
-
-    return {
-      title: "Timeline",
-      items: events,
-      empty: events.length === 0,
-    };
-  }
-
-  private async resolveAffiliateLinks(tenantId: string, _linkId?: string): Promise<ResolvedComponentData> {
-    void _linkId;
-    const links = await prisma.affiliateLink.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-      select: { id: true, title: true, url: true, imageUrl: true },
-    });
-
-    return {
-      title: "Links",
-      items: links,
-      empty: links.length === 0,
-    };
   }
 
   private async resolveSocialProfiles(tenantId: string): Promise<ResolvedComponentData> {
@@ -114,11 +41,7 @@ export class DataResolver {
     const rawLinks = website?.brand?.socialLinks;
     const socialLinks: { platform: string; url: string }[] = Array.isArray(rawLinks) ? rawLinks as { platform: string; url: string }[] : [];
 
-    return {
-      title: "Social",
-      items: socialLinks,
-      empty: socialLinks.length === 0,
-    };
+    return { title: "Social", items: socialLinks, empty: socialLinks.length === 0 };
   }
 }
 
