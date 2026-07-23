@@ -7,6 +7,7 @@ import { AdminSidebar } from "./admin-sidebar";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 
 export function AdminLayoutClient({
   children,
@@ -58,6 +59,7 @@ export function AdminLayoutClient({
 
       {/* Desktop topbar */}
       <div className="fixed inset-x-0 top-0 z-20 hidden h-14 items-center gap-4 border-b border-white/10 bg-zinc-950/80 px-6 backdrop-blur-xl lg:flex ml-64">
+        <WorkspaceSwitcher />
         <button
           onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
           className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-500 hover:border-white/20 hover:text-zinc-300 transition-colors"

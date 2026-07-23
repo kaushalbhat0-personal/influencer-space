@@ -101,8 +101,15 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set("x-tenant-host", tenantHost);
   }
 
-  // Check role-based access for admin/agency/dashboard routes
-  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin") || pathname.startsWith("/agency")) {
+  // Redirect /agency/* to /workspace/* (Phase 1: compatibility redirect)
+  if (pathname.startsWith("/agency")) {
+    const newPath = pathname.replace("/agency", "/workspace");
+    const url = new URL(newPath, request.url);
+    return NextResponse.redirect(url, { status: 308 });
+  }
+
+  // Check role-based access for admin routes
+  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin")) {
     const accessCheck = await checkRouteAccess(pathname, request);
     if (accessCheck) return accessCheck;
     return NextResponse.next({ request: { headers: requestHeaders } });
