@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { WorkspaceCookie } from "@/lib/workspace/cookie";
 
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
@@ -82,10 +81,9 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
 
-  // Set workspace header from cookie
-  const cookieHeader = request.headers.get("cookie") || "";
-  const wsMatch = cookieHeader.match(new RegExp(`(?:^|;\\s*)${WorkspaceCookie.cookieName}=([^;]*)`));
-  const workspaceId = wsMatch ? WorkspaceCookie.decode(wsMatch[1])?.wid ?? null : null;
+  // Read workspaceId from JWT token (available in all roles)
+  const token = await getToken({ req: request, secret }).catch(() => null);
+  const workspaceId = (token?.workspaceId as string) ?? null;
 
   // Platform root — bypass tenant logic
   if (platformDomains.some((d) => d === host.toLowerCase())) {
