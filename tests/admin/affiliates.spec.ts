@@ -12,33 +12,33 @@ test.describe("Admin Affiliates – CRUD & Data Reflection", () => {
     await page.waitForURL("/admin/dashboard");
   });
 
-  test("should show affiliates list", async ({ page }) => {
-    await page.click('a:has-text("Affiliates")');
-    await page.waitForURL("/admin/affiliates");
-    await expect(page.locator("h1")).toContainText("Affiliate");
+  test("should show links page", async ({ page }) => {
+    await page.click('a:has-text("Links & Affiliates")');
+    await page.waitForURL("/admin/links");
+    await expect(page.locator("h1")).toContainText(/Links?|Affiliate/);
   });
 
-  test("should create + edit + delete an affiliate with data reflecting after each step", async ({ page }) => {
+  test("should create + edit + delete an affiliate link with data reflecting after each step", async ({ page }) => {
     const createTitle = "AffCreate " + Date.now();
     const editTitle = "AffEdit " + Date.now();
 
     // CREATE
-    await page.click('a:has-text("Affiliates")');
-    await page.waitForURL("/admin/affiliates");
-    await page.click('a:has-text("New Affiliate")');
-    await page.waitForURL("/admin/affiliates/new");
+    await page.click('a:has-text("Links & Affiliates")');
+    await page.waitForURL("/admin/links");
+    await page.click('a:has-text("New Link")');
+    await page.waitForURL("/admin/links/new");
     await page.fill('input[name="title"]', createTitle);
     await page.fill('input[name="url"]', "https://example.com/test");
-    await page.click('button:has-text("Create Affiliate")');
-    await page.waitForURL("/admin/affiliates");
+    await page.click('button:has-text("Create")');
+    await page.waitForURL("/admin/links");
     await expect(page.locator(`text=${createTitle}`)).toBeVisible({ timeout: 8000 });
 
     // EDIT
     await page.locator('a:has-text("Edit")').first().click();
-    await page.waitForURL(/\/admin\/affiliates\/.+\/edit/);
+    await page.waitForURL(/\/admin\/links\/.+\/edit/);
     await page.fill('input[name="title"]', editTitle);
-    await page.click('button:has-text("Save Changes")');
-    await page.waitForURL("/admin/affiliates");
+    await page.click('button:has-text("Save")');
+    await page.waitForURL("/admin/links");
     await expect(page.locator(`text=${editTitle}`)).toBeVisible({ timeout: 8000 });
     await expect(page.locator(`text=${createTitle}`)).not.toBeVisible();
 

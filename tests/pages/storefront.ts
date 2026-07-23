@@ -21,11 +21,11 @@ export class Storefront {
   }
 
   async hasProducts(): Promise<boolean> {
-    return this.page.locator('[data-product]').first().isVisible().catch(() => false);
+    return this.page.locator('.grid.grid-cols-2.gap-3 > div').first().isVisible().catch(() => false);
   }
 
   async hasGallery(): Promise<boolean> {
-    return this.page.locator('[data-gallery]').first().isVisible().catch(() => false);
+    return this.page.locator('h2:has-text("Gallery"), h2:has-text("Hall of Fame")').first().isVisible().catch(() => false);
   }
 
   async getNotFoundText(): Promise<string | null> {

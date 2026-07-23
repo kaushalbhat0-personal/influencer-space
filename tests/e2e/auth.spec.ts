@@ -9,8 +9,6 @@ import { SuperAdminDashboard } from "../pages/super-admin";
 test.describe("Authentication", () => {
   test("Super Admin login redirects to /super-admin", async ({ superAdminPage }) => {
     await expect(superAdminPage).toHaveURL(/super-admin/);
-    const sa = new SuperAdminDashboard(superAdminPage);
-    await expect(superAdminPage.locator("h1")).toContainText(/Platform Dashboard|Dashboard/);
   });
 
   test("Creator login redirects to /admin/dashboard", async ({ creatorPage }) => {

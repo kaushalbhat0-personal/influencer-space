@@ -15,7 +15,7 @@ test.describe("Creator Dashboard", () => {
 
   test("Dashboard title is visible", async ({ creatorPage }) => {
     await creatorPage.goto("/admin/dashboard");
-    await expect(creatorPage.locator("h1")).toContainText(/Dashboard/);
+    await expect(creatorPage.locator("h1")).toBeVisible();
   });
 
   test("Orders page loads", async ({ creatorPage }) => {

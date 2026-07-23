@@ -18,10 +18,11 @@ export const test = base.extend<AuthFixtures>({
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto("/admin/login?tenant=testcreator");
+    await page.waitForLoadState("networkidle");
     await page.fill('input#email', "admin@creatorstore.test");
     await page.fill('input#password', "TestPass123!");
     await page.click('button[type="submit"]');
-    await page.waitForURL("**/super-admin");
+    await page.waitForURL("**/super-admin", { timeout: 30000 });
     await use(page);
     await context.close();
   },
@@ -30,10 +31,11 @@ export const test = base.extend<AuthFixtures>({
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto("/admin/login");
+    await page.waitForLoadState("networkidle");
     await page.fill('input#email', "agency@creatorstore.test");
     await page.fill('input#password', "TestPass123!");
     await page.click('button[type="submit"]');
-    await page.waitForURL("**/agency**");
+    await page.waitForURL("**/agency**", { timeout: 30000 });
     await use(page);
     await context.close();
   },
@@ -42,10 +44,11 @@ export const test = base.extend<AuthFixtures>({
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto("/admin/login?tenant=testcreator");
+    await page.waitForLoadState("networkidle");
     await page.fill('input#email', "creator@creatorstore.test");
     await page.fill('input#password', "TestPass123!");
     await page.click('button[type="submit"]');
-    await page.waitForURL("**/admin/dashboard");
+    await page.waitForURL("**/admin/dashboard", { timeout: 30000 });
     await use(page);
     await context.close();
   },

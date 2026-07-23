@@ -13,9 +13,9 @@ test.describe("Admin Timeline – CRUD & Data Reflection", () => {
   });
 
   test("should show timeline list", async ({ page }) => {
-    await page.click('a:has-text("Timeline")');
+    await page.goto("/admin/timeline");
     await page.waitForURL("/admin/timeline");
-    await expect(page.locator("h1")).toContainText("Timeline");
+    await expect(page.locator("h1")).toContainText(/Timeline|Milestones/);
   });
 
   test("should create + edit + delete a timeline event with data reflecting after each step", async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe("Admin Timeline – CRUD & Data Reflection", () => {
     const editTitle = "TimeEdit " + Date.now();
 
     // CREATE
-    await page.click('a:has-text("Timeline")');
+    await page.goto("/admin/timeline");
     await page.waitForURL("/admin/timeline");
     await page.click('a:has-text("New Event")');
     await page.waitForURL("/admin/timeline/new");
