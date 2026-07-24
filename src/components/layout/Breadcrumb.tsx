@@ -1,13 +1,10 @@
-"use client";
-
-import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface BreadcrumbItem {
   label: string;
   href?: string;
-  icon?: "home" | React.ReactNode;
 }
 
 interface BreadcrumbProps {
@@ -16,23 +13,25 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
+  if (items.length === 0) return null;
+
   return (
-    <nav className={cn("flex items-center gap-1.5 text-sm", className)} aria-label="Breadcrumb">
-      <Link href="/admin/dashboard" className="text-zinc-500 hover:text-zinc-300 transition-colors" aria-label="Home">
-        <Home className="h-3.5 w-3.5" />
-      </Link>
-      {items.map((item, i) => (
-        <span key={i} className="flex items-center gap-1.5">
-          <ChevronRight className="h-3 w-3 text-zinc-600" aria-hidden="true" />
-          {item.href ? (
-            <Link href={item.href} className="text-zinc-500 hover:text-zinc-300 transition-colors">
-              {item.label}
-            </Link>
-          ) : (
-            <span className="text-zinc-300">{item.label}</span>
-          )}
-        </span>
-      ))}
+    <nav aria-label="Breadcrumb" className={cn("flex items-center gap-1 text-xs text-zinc-500", className)}>
+      {items.map((item, i) => {
+        const isLast = i === items.length - 1;
+        return (
+          <span key={item.href ?? item.label} className="flex items-center gap-1">
+            {i > 0 && <ChevronRight className="h-3 w-3 text-zinc-700" />}
+            {item.href && !isLast ? (
+              <Link href={item.href} className="transition-colors hover:text-zinc-300">
+                {item.label}
+              </Link>
+            ) : (
+              <span className={isLast ? "text-zinc-300" : ""}>{item.label}</span>
+            )}
+          </span>
+        );
+      })}
     </nav>
   );
 }
