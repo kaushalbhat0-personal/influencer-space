@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getRazorpayInstance } from "@/lib/razorpay";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PLANS } from "@/lib/billing/plan-catalog";
+import { PLANS } from "@/modules/billing/domain/plan-catalog";
 
 export async function POST(req: Request) {
   try {

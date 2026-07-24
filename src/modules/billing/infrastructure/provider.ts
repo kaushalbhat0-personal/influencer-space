@@ -7,7 +7,7 @@
  * Phase 1: Interface only. RazorpayProvider implementation in Phase 2.
  */
 
-import type { BillingProvider, CheckoutParams, CheckoutResult } from "./types";
+import type { BillingProvider, CheckoutParams, CheckoutResult } from "../domain/types";
 
 export type { BillingProvider, CheckoutParams, CheckoutResult };
 

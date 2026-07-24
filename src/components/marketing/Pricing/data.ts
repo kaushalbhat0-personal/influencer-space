@@ -6,10 +6,10 @@
  * No hardcoded prices, features, or routes.
  */
 
-import { PLANS } from "@/lib/billing/plan-catalog";
-import { FEATURES } from "@/lib/billing/plan-catalog";
-import { entitlement } from "@/lib/billing/entitlements";
-import type { PlanDefinition, FeatureDefinition } from "@/lib/billing/types";
+import { PLANS } from "@/modules/billing/domain/plan-catalog";
+import { FEATURES } from "@/modules/billing/domain/plan-catalog";
+import { entitlement } from "@/modules/billing/application/entitlements";
+import type { PlanDefinition, FeatureDefinition } from "@/modules/billing/domain/types";
 
 export interface PlanWithMeta {
   plan: PlanDefinition;

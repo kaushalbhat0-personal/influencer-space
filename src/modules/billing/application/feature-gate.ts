@@ -10,8 +10,8 @@
  * Phase 2+: Reads from database (BillingPlanFeature table).
  */
 
-import { PLANS } from "./plan-catalog";
-import type { EntitlementCheck } from "./types";
+import { PLANS } from "../domain/plan-catalog";
+import type { EntitlementCheck } from "../domain/types";
 
 export class FeatureGateService {
   /**

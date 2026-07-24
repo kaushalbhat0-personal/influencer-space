@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PLANS, FEATURES } from "./plan-catalog";
+import { PLANS, FEATURES } from "../domain/plan-catalog";
 
 /**
  * Idempotently populate BillingPlan, BillingFeature, and BillingPlanFeature

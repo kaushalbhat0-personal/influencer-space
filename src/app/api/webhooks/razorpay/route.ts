@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { billingService } from "@/lib/billing/service";
+import { billingService } from "@/modules/billing/application/service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 export async function POST(req: Request) {

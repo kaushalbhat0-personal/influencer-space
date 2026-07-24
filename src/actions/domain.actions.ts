@@ -7,8 +7,8 @@ import { logAction } from "@/lib/audit";
 import { VercelService } from "@/services/vercel.service";
 import type { VercelVerificationRecord } from "@/services/vercel.service";
 import { revalidatePath } from "next/cache";
-import { entitlement } from "@/lib/billing/entitlements";
-import { billingService } from "@/lib/billing/service";
+import { entitlement } from "@/modules/billing/application/entitlements";
+import { billingService } from "@/modules/billing/application/service";
 import { workspaceService } from "@/modules/workspace/application/service";
 
 export type DomainActionState = {

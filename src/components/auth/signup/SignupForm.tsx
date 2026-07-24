@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { PLANS } from "@/lib/billing/plan-catalog";
+import { PLANS } from "@/modules/billing/domain/plan-catalog";
 import type { SignupState, Persona } from "./types";
 import { STEP_ORDER } from "./types";
 import { User, Building2, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";

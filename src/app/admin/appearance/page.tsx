@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { entitlement } from "@/lib/billing/entitlements";
+import { entitlement } from "@/modules/billing/application/entitlements";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { prisma } from "@/lib/prisma";
 import { themeAdapter } from "@/lib/compatibility";

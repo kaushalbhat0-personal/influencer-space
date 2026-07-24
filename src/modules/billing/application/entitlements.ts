@@ -11,8 +11,8 @@
  *   entitlement.can("custom_branding")
  */
 
-import { PLANS } from "./plan-catalog";
-import type { EntitlementCheck } from "./types";
+import { PLANS } from "../domain/plan-catalog";
+import type { EntitlementCheck } from "../domain/types";
 
 export interface EntitlementAuditRow {
   accountId: string;

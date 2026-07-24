@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { entitlement } from "@/lib/billing/entitlements";
+import { entitlement } from "@/modules/billing/application/entitlements";
 
 export async function checkSeatQuota(
   agencyId: string,

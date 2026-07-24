@@ -1,10 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { PLANS } from "@/lib/billing/plan-catalog";
-import { entitlement } from "@/lib/billing/entitlements";
-import { FEATURES } from "@/lib/billing/plan-catalog";
-import type { PlanFamily } from "@/lib/billing/types";
+import { PLANS } from "@/modules/billing/domain/plan-catalog";
+import { entitlement } from "@/modules/billing/application/entitlements";
+import { FEATURES } from "@/modules/billing/domain/plan-catalog";
+import type { PlanFamily } from "@/modules/billing/domain/types";
 import { Check, Minus } from "lucide-react";
 
 interface ComparisonProps {

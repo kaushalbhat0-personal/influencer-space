@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { FeatureGateService, featureGate } from "@/lib/billing/feature-gate";
-import { PLANS, FEATURES } from "@/lib/billing/plan-catalog";
-import { v2FeatureGate } from "@/lib/billing/compat";
+import { FeatureGateService, featureGate } from "@/modules/billing/application/feature-gate";
+import { PLANS, FEATURES } from "@/modules/billing/domain/plan-catalog";
+import { v2FeatureGate } from "@/modules/billing/infrastructure/compat";
 
 describe("Plan Catalog", () => {
   it("should have at least 5 plans defined", () => {
@@ -135,10 +135,10 @@ describe("FeatureGateService — singleton", () => {
 
 import {
   canTransition, validateTransition, getAllowedTransitions, LIFECYCLE_STATES,
-} from "@/lib/billing/lifecycle";
-import { statusAfterEvent } from "@/lib/billing/events";
-import { BillingIdempotency } from "@/lib/billing/idempotency";
-import { EntitlementService, entitlement } from "@/lib/billing/entitlements";
+} from "@/modules/billing/domain/lifecycle";
+import { statusAfterEvent } from "@/modules/billing/domain/events";
+import { BillingIdempotency } from "@/modules/billing/infrastructure/idempotency";
+import { EntitlementService, entitlement } from "@/modules/billing/application/entitlements";
 
 describe("EntitlementService", () => {
   const svc = new EntitlementService();

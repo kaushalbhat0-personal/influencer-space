@@ -13,22 +13,22 @@ export type {
   CheckoutParams,
   CheckoutResult,
   BillingProvider,
-} from "./types";
+} from "../domain/types";
 
-export { FEATURES, PLANS, RESERVED_CODES } from "./plan-catalog";
+export { FEATURES, PLANS, RESERVED_CODES } from "../domain/plan-catalog";
 export { EntitlementService, entitlement } from "./entitlements";
 export { FeatureGateService, featureGate } from "./feature-gate";
-export { billingProviders } from "./provider";
-export { razorpayProvider } from "./providers/razorpay";
-export { v2FeatureGate } from "./compat";
+export { billingProviders } from "../infrastructure/provider";
+export { razorpayProvider } from "../infrastructure/providers/razorpay";
+export { v2FeatureGate } from "../infrastructure/compat";
 export {
   canTransition,
   validateTransition,
   getAllowedTransitions,
   LIFECYCLE_STATES,
-} from "./lifecycle";
+} from "../domain/lifecycle";
 export {
   statusAfterEvent,
-} from "./events";
-export type { BillingEventType } from "./events";
-export { BillingIdempotency, billingIdempotency } from "./idempotency";
+} from "../domain/events";
+export type { BillingEventType } from "../domain/events";
+export { BillingIdempotency, billingIdempotency } from "../infrastructure/idempotency";

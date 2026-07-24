@@ -8,7 +8,7 @@
  * Phase 2B: Wired to entitlement service (not featureGate).
  */
 
-import { entitlement } from "./entitlements";
+import { entitlement } from "../application/entitlements";
 
 function legacyToV2(plan: string): string {
   const map: Record<string, string> = {

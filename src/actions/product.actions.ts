@@ -6,8 +6,8 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
-import { entitlement } from "@/lib/billing/entitlements";
-import { billingService } from "@/lib/billing/service";
+import { entitlement } from "@/modules/billing/application/entitlements";
+import { billingService } from "@/modules/billing/application/service";
 import { workspaceService } from "@/modules/workspace/application/service";
 const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),

@@ -1,8 +1,8 @@
-import { billingRepository } from "./repository";
-import { razorpayProvider } from "./providers/razorpay";
-import { PLANS } from "./plan-catalog";
-import { validateTransition } from "./lifecycle";
-import type { CheckoutResult } from "./types";
+import { billingRepository } from "../infrastructure/repository";
+import { razorpayProvider } from "../infrastructure/providers/razorpay";
+import { PLANS } from "../domain/plan-catalog";
+import { validateTransition } from "../domain/lifecycle";
+import type { CheckoutResult } from "../domain/types";
 
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {

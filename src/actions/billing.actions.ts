@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { billingService } from "@/lib/billing/service";
+import { billingService } from "@/modules/billing/application/service";
 import { workspaceService } from "@/modules/workspace/application/service";
 
 export type BillingActionResult = {
@@ -22,7 +22,7 @@ export async function createSubscriptionCheckout(planCode: string = "creator_pro
   const result = await billingService.createCheckout(workspaceId, planCode, session.user.email ?? undefined);
   if (!result.success) return result;
 
-  const plan = (await import("@/lib/billing/plan-catalog")).PLANS.find((p) => p.code === planCode);
+  const plan = (await import("@/modules/billing/domain/plan-catalog")).PLANS.find((p) => p.code === planCode);
   const amount = plan?.price ?? 0;
   const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 

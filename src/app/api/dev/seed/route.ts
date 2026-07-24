@@ -1,5 +1,5 @@
 import { seedDatabase } from "@/lib/testing/seed";
-import { seedBillingCatalog } from "@/lib/billing/catalog-seed";
+import { seedBillingCatalog } from "@/modules/billing/infrastructure/catalog-seed";
 
 export async function POST() {
   try {

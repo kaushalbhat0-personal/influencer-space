@@ -5,7 +5,7 @@
  * Application code depends on BillingProvider — never on this class directly.
  */
 
-import type { BillingProvider, CheckoutParams, CheckoutResult } from "../types";
+import type { BillingProvider, CheckoutParams, CheckoutResult } from "../../domain/types";
 import crypto from "crypto";
 
 export class RazorpayProvider implements BillingProvider {
