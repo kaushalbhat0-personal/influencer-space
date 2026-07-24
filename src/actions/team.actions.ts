@@ -2,8 +2,8 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { workspaceRepository } from "@/lib/workspace/repository";
-import { authorizationService } from "@/lib/workspace/authorization";
+import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { authorizationService } from "@/modules/workspace/domain/authorization";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 

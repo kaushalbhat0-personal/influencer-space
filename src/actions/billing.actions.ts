@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { billingService } from "@/lib/billing/service";
-import { workspaceService } from "@/lib/workspace/service";
+import { workspaceService } from "@/modules/workspace/application/service";
 
 export type BillingActionResult = {
   success: boolean;

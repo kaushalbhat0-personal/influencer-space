@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useWorkspace } from "@/lib/workspace/context";
+import { useWorkspace } from "@/modules/workspace/presentation/context";
 import { Building2, User, ChevronDown, Check } from "lucide-react";
 
 export function WorkspaceSwitcher() {

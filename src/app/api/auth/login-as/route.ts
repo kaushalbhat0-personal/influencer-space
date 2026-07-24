@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { encode } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
-import { workspaceRepository } from "@/lib/workspace/repository";
-import { WorkspaceCookie } from "@/lib/workspace/cookie";
+import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { WorkspaceCookie } from "@/modules/workspace/infrastructure/cookie";
 
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get("token");

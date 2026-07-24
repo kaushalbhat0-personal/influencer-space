@@ -9,7 +9,7 @@ import type { VercelVerificationRecord } from "@/services/vercel.service";
 import { revalidatePath } from "next/cache";
 import { entitlement } from "@/lib/billing/entitlements";
 import { billingService } from "@/lib/billing/service";
-import { workspaceService } from "@/lib/workspace/service";
+import { workspaceService } from "@/modules/workspace/application/service";
 
 export type DomainActionState = {
   success: boolean;

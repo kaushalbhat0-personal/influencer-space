@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { switchWorkspace as switchWorkspaceAction, listWorkspaces } from "@/actions/workspace.actions";
-import type { ActiveWorkspace } from "@/lib/workspace/service";
+import type { ActiveWorkspace } from "@/modules/workspace/application/service";
 
 interface WorkspaceContextValue {
   workspace: ActiveWorkspace | null;

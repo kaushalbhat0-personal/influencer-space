@@ -1,5 +1,5 @@
-import { workspaceService } from "./service";
-import type { ActiveWorkspace } from "./service";
+import { workspaceService } from "../application/service";
+import type { ActiveWorkspace } from "../application/service";
 
 export type Permission =
   | "workspace:manage"

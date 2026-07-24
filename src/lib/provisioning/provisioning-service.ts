@@ -7,7 +7,7 @@ import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./prov
 import { templateService } from "@/lib/template";
 import { websitePersonalizer } from "@/lib/personalization";
 import { seedStarterData } from "@/lib/data/seeder";
-import { workspaceRepository } from "@/lib/workspace/repository";
+import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 export interface ProvisioningInput {
   creatorName: string;

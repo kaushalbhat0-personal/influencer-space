@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { billingService } from "@/lib/billing/service";
-import { workspaceRepository } from "@/lib/workspace/repository";
+import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 export async function POST(req: Request) {
   const rawBody = await req.text();

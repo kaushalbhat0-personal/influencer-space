@@ -8,7 +8,7 @@ import { z } from "zod";
 import { logAction } from "@/lib/audit";
 import { entitlement } from "@/lib/billing/entitlements";
 import { billingService } from "@/lib/billing/service";
-import { workspaceService } from "@/lib/workspace/service";
+import { workspaceService } from "@/modules/workspace/application/service";
 const createProductSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(1000).optional().default(""),

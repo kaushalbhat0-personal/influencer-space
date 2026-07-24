@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { entitlement } from "@/lib/billing/entitlements";
-import { workspaceRepository } from "@/lib/workspace/repository";
+import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { BillingClient } from "./_components/billing-client";
 
 export const dynamic = "force-dynamic";

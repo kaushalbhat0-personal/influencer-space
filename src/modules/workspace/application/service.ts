@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { workspaceRepository } from "./repository";
-import { WorkspaceCookie } from "./cookie";
+import { workspaceRepository } from "../infrastructure/repository";
+import { WorkspaceCookie } from "../infrastructure/cookie";
 import type { Workspace, WorkspaceMember } from "@/generated/prisma/client";
 
 export interface ActiveWorkspace {

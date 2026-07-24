@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { workspaceService } from "@/lib/workspace/service";
-import { WorkspaceCookie } from "@/lib/workspace/cookie";
+import { workspaceService } from "@/modules/workspace/application/service";
+import { WorkspaceCookie } from "@/modules/workspace/infrastructure/cookie";
 
 export async function switchWorkspace(workspaceId: string) {
   const session = await getServerSession(authOptions);
