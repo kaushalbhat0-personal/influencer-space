@@ -1,12 +1,18 @@
 import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
-import { PLANS } from "../domain/plan-catalog";
+import { getPlan } from "@/lib/capabilities";
 import { validateTransition } from "../domain/lifecycle";
+import { capabilityService } from "@/lib/capabilities";
+import { commissionService } from "@/lib/commission";
+import { partnerService } from "@/lib/partners";
+import { logAction } from "@/lib/audit";
+import { platformEventBus } from "@/lib/events";
+import { prisma } from "@/lib/prisma";
 import type { CheckoutResult } from "../domain/types";
 
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
-    const plan = PLANS.find((p) => p.code === planCode);
+    const plan = getPlan(planCode);
     if (!plan) return { success: false, error: `Unknown plan: ${planCode}` };
 
     const order = await razorpayProvider.createCheckout({
@@ -50,13 +56,68 @@ export class BillingService {
       payload: { planCode, providerReference, previousStatus: sub.status, newStatus: "ACTIVE" },
     });
 
-    await billingRepository.createInvoice({
+    const invoice = await billingRepository.createInvoice({
       workspaceId,
       accountId: workspaceId,
       planCode,
-      amount: PLANS.find((p) => p.code === planCode)?.price ?? 0,
+      amount: getPlan(planCode)?.price ?? 0,
       status: "PAID",
     });
+
+    // ── Capability Activation ───────────────────────────────────────────
+    capabilityService.can(planCode, "custom_domain");
+
+    // ── Partner Commission ──────────────────────────────────────────────
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { agencyId: true, tenantId: true },
+    });
+
+    if (workspace?.agencyId) {
+      const partnerRecord = await partnerService.get(workspace.agencyId);
+      if (partnerRecord) {
+        try {
+          commissionService.processCommission({
+            invoiceId: invoice.id,
+            partnerId: workspace.agencyId,
+            subscriptionId: sub.id,
+            planCode,
+            gross: getPlan(planCode)?.price ?? 0,
+            currency: "INR",
+          });
+        } catch (err) {
+          console.error("Commission processing failed:", err);
+        }
+      }
+    }
+
+    // ── Event ─────────────────────────────────────────────────────────────
+    platformEventBus.publish("PaymentCaptured", {
+      workspaceId,
+      planCode,
+      amount: getPlan(planCode)?.price ?? 0,
+      currency: "INR",
+      invoiceId: invoice.id,
+      subscriptionId: sub.id,
+    });
+
+    platformEventBus.publish("SubscriptionActivated", {
+      workspaceId,
+      planCode,
+      previousStatus: sub.status,
+    });
+
+    // ── Audit ───────────────────────────────────────────────────────────
+    const tenantId = workspace?.tenantId;
+    if (tenantId) {
+      await logAction(tenantId, "payment:captured", {
+        workspaceId,
+        planCode,
+        invoiceId: invoice.id,
+        subscriptionId: sub.id,
+        providerReference,
+      }).catch(() => {});
+    }
   }
 
   async cancelSubscription(workspaceId: string, reason?: string): Promise<void> {
@@ -75,6 +136,12 @@ export class BillingService {
       accountId: workspaceId,
       type: "SUBSCRIPTION_CANCELLED",
       payload: { previousStatus: sub.status, newStatus: "CANCELLED", reason },
+    });
+
+    platformEventBus.publish("SubscriptionCancelled", {
+      workspaceId,
+      planCode: sub.planId,
+      reason,
     });
   }
 

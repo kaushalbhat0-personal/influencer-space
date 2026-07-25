@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { findStorefrontProducts } from "@/lib/products/queries";
+import { toPublicProductList } from "@/lib/products/mapper";
 
 export interface ResolvedComponentData {
   title?: string;
@@ -8,8 +10,6 @@ export interface ResolvedComponentData {
 
 // ── Product Loader ─────────────────────────────────────────────────
 
-const PRODUCT_SELECT = { id: true, name: true, description: true, price: true, imageUrl: true } as const;
-
 export async function loadProducts(tenantId: string, productId?: string): Promise<ResolvedComponentData> {
   const where: Record<string, unknown> = { tenantId, isActive: true };
   if (productId) where.id = productId;
@@ -17,51 +17,32 @@ export async function loadProducts(tenantId: string, productId?: string): Promis
   const products = await prisma.product.findMany({
     where: JSON.parse(JSON.stringify(where)) as never,
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: PRODUCT_SELECT,
+    select: { id: true, name: true, description: true, price: true, imageUrl: true } as never,
   });
 
   return { title: "Products", items: products as never[], empty: products.length === 0 };
 }
 
 export async function loadProductsForStorefront(tenantId: string) {
-  return prisma.product.findMany({
-    where: { tenantId, isActive: true },
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: PRODUCT_SELECT,
-  });
+  const products = await findStorefrontProducts(tenantId);
+  return toPublicProductList(products as unknown as Parameters<typeof toPublicProductList>[0]);
 }
 
 // ── Gallery Loader ─────────────────────────────────────────────────
 
-const GALLERY_SELECT = { id: true, title: true, description: true, imageUrl: true, mediaType: true, videoUrl: true } as const;
-
 export async function loadGallery(tenantId: string): Promise<ResolvedComponentData> {
-  const images = await prisma.galleryImage.findMany({
-    where: { tenantId, isActive: true },
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: GALLERY_SELECT,
-  });
-
-  const items = images.map((g) => ({
-    id: g.id, url: g.mediaType === "video" && g.videoUrl ? g.videoUrl : g.imageUrl,
-    caption: g.description || g.title, isVideo: g.mediaType === "video",
-  }));
-
+  const { findStorefrontGallery } = await import("@/lib/gallery/queries");
+  const { toStorefrontList } = await import("@/lib/gallery/mapper");
+  const rows = await findStorefrontGallery(tenantId);
+  const items = toStorefrontList(rows as unknown as Parameters<typeof toStorefrontList>[0]);
   return { title: "Gallery", items, empty: items.length === 0 };
 }
 
 export async function loadGalleryForStorefront(tenantId: string) {
-  const rows = await prisma.galleryImage.findMany({
-    where: { tenantId, isActive: true },
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: { ...GALLERY_SELECT },
-  });
-  return rows.map((g) => ({
-    id: g.id,
-    url: g.mediaType === "video" && g.videoUrl ? g.videoUrl : g.imageUrl,
-    caption: g.description || g.title,
-    isVideo: g.mediaType === "video",
-  }));
+  const { findStorefrontGallery } = await import("@/lib/gallery/queries");
+  const { toStorefrontList } = await import("@/lib/gallery/mapper");
+  const rows = await findStorefrontGallery(tenantId);
+  return toStorefrontList(rows as unknown as Parameters<typeof toStorefrontList>[0]);
 }
 
 // ── Timeline Loader ────────────────────────────────────────────────

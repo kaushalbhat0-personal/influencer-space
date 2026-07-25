@@ -6,10 +6,9 @@
  * No hardcoded prices, features, or routes.
  */
 
-import { PLANS } from "@/modules/billing/domain/plan-catalog";
-import { FEATURES } from "@/modules/billing/domain/plan-catalog";
+import { getPlansByFamily, getFeatureInfo, getAllFeatureIds, DEFAULT_CURRENCY } from "@/lib/capabilities";
 import { entitlement } from "@/modules/billing/application/entitlements";
-import type { PlanDefinition, FeatureDefinition } from "@/modules/billing/domain/types";
+import type { PlanDefinition } from "@/lib/capabilities";
 
 export interface PlanWithMeta {
   plan: PlanDefinition;
@@ -17,15 +16,13 @@ export interface PlanWithMeta {
 }
 
 export function getCreatorPlans(): PlanWithMeta[] {
-  return PLANS
-    .filter((p) => p.family === "creator")
+  return getPlansByFamily("creator")
     .sort((a, b) => a.price - b.price)
     .map((plan) => ({ plan, highlights: getHighlights(plan.code) }));
 }
 
 export function getAgencyPlans(): PlanWithMeta[] {
-  return PLANS
-    .filter((p) => p.family === "agency")
+  return getPlansByFamily("agency")
     .sort((a, b) => a.price - b.price)
     .map((plan) => ({ plan, highlights: getHighlights(plan.code) }));
 }
@@ -38,7 +35,7 @@ export function getEnterprisePlan(): Partial<PlanDefinition> {
     description: "For large agencies with custom requirements.",
     targetAudience: "Large agencies",
     price: 0,
-    currency: "INR",
+    currency: DEFAULT_CURRENCY,
     cycle: "monthly",
     ctaLabel: "Contact Sales",
     ctaType: "contact",
@@ -50,11 +47,14 @@ export function getEnterpriseHighlights(): string[] {
   return ["Unlimited clients", "Custom integrations", "Dedicated support", "SLA guarantee", "SSO + Audit logs"];
 }
 
-export function getComparisonFeatures(): FeatureDefinition[] {
-  return FEATURES.filter((f) => f.valueType !== "string");
+export function getComparisonFeatures(): Array<{ key: string; description: string; valueType: string }> {
+  return getAllFeatureIds().map((id) => {
+    const info = getFeatureInfo(id);
+    return { key: id, description: info.label, valueType: info.valueType };
+  });
 }
 
-export function getFeatureLabel(feature: PlanDefinition["features"][string], featureDef: FeatureDefinition): string {
+export function getFeatureLabel(feature: number | boolean | string, featureDef: { valueType: string }): string {
   if (featureDef.valueType === "boolean") return feature ? "✓" : "—";
   if (typeof feature === "number" && feature === -1) return "Unlimited";
   if (typeof feature === "number") return String(feature);

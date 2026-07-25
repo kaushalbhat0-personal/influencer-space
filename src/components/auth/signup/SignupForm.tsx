@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { PLANS } from "@/modules/billing/domain/plan-catalog";
+import { getPlansByFamily, DEFAULT_CREATOR_PLAN } from "@/lib/capabilities";
 import type { SignupState, Persona } from "./types";
 import { STEP_ORDER } from "./types";
 import { User, Building2, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -23,12 +23,13 @@ const DEFAULT_STATE: SignupState = {
 export function SignupForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const socialUrl = params.get("url") || "";
   const [state, setState] = useState<SignupState>(() => {
     const planParam = params.get("plan");
     return {
       ...DEFAULT_STATE,
       selectedPlan: planParam || null,
-      step: planParam ? "plan" : "welcome",
+      step: planParam || socialUrl ? "plan" : "welcome",
     };
   });
 
@@ -51,7 +52,7 @@ export function SignupForm() {
   }, []);
 
   const selectPersona = useCallback((persona: Persona) => {
-    const defaultPlan = persona === "creator" ? "creator_free" : "agency_starter";
+    const defaultPlan = persona === "creator" ? DEFAULT_CREATOR_PLAN : "agency_free";
     update({ persona, selectedPlan: state.selectedPlan || defaultPlan });
   }, [update, state.selectedPlan]);
 
@@ -86,7 +87,7 @@ export function SignupForm() {
   }, [state.email, state.password, state.name, state.persona, state.selectedPlan, update]);
 
   const currentIdx = STEP_ORDER.indexOf(state.step) + 1;
-  const isFreePlan = PLANS.find((p) => p.code === state.selectedPlan)?.price === 0;
+  const isFreePlan = getPlansByFamily("creator").concat(getPlansByFamily("agency")).find((p) => p.code === state.selectedPlan)?.price === 0;
 
   return (
     <div className="min-h-screen bg-[var(--surface-root)] flex items-center justify-center px-4 py-12">
@@ -172,7 +173,7 @@ export function SignupForm() {
               </p>
             </div>
             <div className="space-y-2">
-              {PLANS.filter((p) => p.family === (state.persona === "agency" ? "agency" : "creator")).map((plan) => (
+              {getPlansByFamily(state.persona === "agency" ? "agency" : "creator").sort((a, b) => a.price - b.price).map((plan) => (
                 <button
                   key={plan.code}
                   onClick={() => update({ selectedPlan: plan.code })}
@@ -259,14 +260,19 @@ export function SignupForm() {
                 {state.persona === "creator" ? "Let's build your website." : "Let's onboard your first creator."}
               </h2>
               <p className="text-sm text-zinc-500 mt-2">
-                Your account is ready. {state.selectedPlan === "creator_free" ? "You're on the Free Forever plan." : ""}
+                Your account is ready. {state.selectedPlan === DEFAULT_CREATOR_PLAN ? "You're on the Free Forever plan." : ""}
               </p>
             </div>
             <button
-              onClick={() => router.push("/admin/dashboard")}
+              onClick={() => {
+                const target = socialUrl
+                  ? `/onboarding?url=${encodeURIComponent(socialUrl)}&persona=${state.persona}&plan=${state.selectedPlan}`
+                  : "/admin/dashboard";
+                router.push(target);
+              }}
               className="btn-primary w-full py-3"
             >
-              {state.persona === "creator" ? "Continue to Dashboard" : "Continue to Agency Workspace"}
+              {socialUrl ? "Continue to Onboarding" : state.persona === "creator" ? "Continue to Dashboard" : "Continue to Agency Workspace"}
             </button>
           </div>
         )}

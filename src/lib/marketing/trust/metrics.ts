@@ -1,0 +1,83 @@
+import type { TrustMetric } from "./types";
+
+export const SEED_METRICS: TrustMetric[] = [
+  {
+    id: "m-storefronts",
+    label: "Storefronts Generated",
+    value: "10000",
+    suffix: "+",
+    description: "AI-powered storefronts built from creator content",
+    category: "growth",
+    sortOrder: 1,
+  },
+  {
+    id: "m-creators",
+    label: "Creators Onboarded",
+    value: "5000",
+    suffix: "+",
+    description: "Active creators using CreatorStore daily",
+    category: "growth",
+    sortOrder: 2,
+  },
+  {
+    id: "m-platforms",
+    label: "Platforms Supported",
+    value: "8",
+    description: "YouTube, Instagram, TikTok, X, LinkedIn, Twitch, and more",
+    category: "trust",
+    sortOrder: 3,
+  },
+  {
+    id: "m-setup-time",
+    label: "Setup Time",
+    value: "<2",
+    suffix: " min",
+    description: "From profile URL to live storefront",
+    category: "performance",
+    sortOrder: 4,
+  },
+  {
+    id: "m-uptime",
+    label: "Platform Uptime",
+    value: "99.9",
+    suffix: "%",
+    description: "Reliable infrastructure for your business",
+    category: "trust",
+    sortOrder: 5,
+  },
+  {
+    id: "m-revenue",
+    label: "Revenue Processed",
+    value: "5",
+    prefix: "₹",
+    suffix: "Cr+",
+    description: "Total payments processed through CreatorStore",
+    category: "commerce",
+    sortOrder: 6,
+  },
+  {
+    id: "m-domains",
+    label: "Custom Domains",
+    value: "2000",
+    suffix: "+",
+    description: "Creators using their own domain with free SSL",
+    category: "growth",
+    sortOrder: 7,
+  },
+  {
+    id: "m-satisfaction",
+    label: "Creator Satisfaction",
+    value: "94",
+    suffix: "%",
+    description: "Would recommend CreatorStore to other creators",
+    category: "trust",
+    sortOrder: 8,
+  },
+];
+
+export const METRIC_CATEGORY_LABELS: Record<TrustMetric["category"], string> = {
+  growth: "Growth",
+  performance: "Performance",
+  trust: "Trust & Reliability",
+  commerce: "Commerce",
+};

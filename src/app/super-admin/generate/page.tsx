@@ -22,7 +22,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ProvisioningSummary } from "@/components/provisioning/ProvisioningSummary";
 import { ProvisioningTimeline } from "@/components/provisioning/ProvisioningTimeline";
 import type { StepperStep, StrategyOption, ChecklistItem, SectionToggle } from "@/components/ai";
-import type { WebsiteGenerationResult } from "@/lib/ai-generation/types";
+import type { GenerateWebsiteResult } from "@/lib/generation/operations";
 import {
   ShoppingBag, Camera, Gamepad2, Music, Dumbbell,
   Package, Building2, User, Sparkles,
@@ -89,7 +89,7 @@ export default function GeneratePage() {
   const [strategyId, setStrategyId] = useState<string>("balanced");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
-  const [result, setResult] = useState<WebsiteGenerationResult | null>(null);
+  const [result, setResult] = useState<GenerateWebsiteResult | null>(null);
   const [provisionResult, setProvisionResult] = useState<{
     tenantId: string;
     tenantSlug: string;

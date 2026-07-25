@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getRazorpayInstance } from "@/lib/razorpay";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { PLANS } from "@/modules/billing/domain/plan-catalog";
+import { getPlan } from "@/lib/capabilities";
 
 export async function POST(req: Request) {
   try {
@@ -15,8 +15,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "planId and amount are required" }, { status: 400 });
     }
 
-    // Resolve plan from v2 catalog (falls back to legacy map)
-    const plan = PLANS.find((p) => p.code === planId);
+    // Resolve plan from canonical catalog
+    const plan = getPlan(planId);
     if (!plan) {
       return NextResponse.json({ error: `Unknown plan: ${planId}` }, { status: 400 });
     }

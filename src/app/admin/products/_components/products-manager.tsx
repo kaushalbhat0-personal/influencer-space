@@ -1,191 +1,70 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   createNewProduct,
-  toggleProductStatus,
-  removeProduct,
-  updateProductOrder,
   updateExistingProduct,
+  removeProduct,
+  duplicateProduct,
+  archiveProduct,
+  restoreProduct,
+  publishProduct,
+  unpublishProduct,
+  bulkPublish,
+  bulkArchive,
+  bulkDelete,
 } from "@/actions/product.actions";
 import type { ProductData } from "@/actions/product.actions";
-import type { PublicProductData } from "@/services/public.service";
+import { ProductCard, ProductCardSkeleton, ProductCardEmpty } from "@/components/products/ProductCard";
+import { ProductEditor } from "@/components/products/ProductEditor";
+import { ProductsToolbar } from "@/components/products/ProductsToolbar";
 import { PreviewShell } from "@/components/admin/PreviewShell";
 import { ProductGrid } from "@/components/public/ProductGrid";
-import { ImageUploader } from "@/components/admin/ImageUploader";
-import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
-import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
+import type { PublicProductData } from "@/services/public.service";
 
-function formatINR(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-  }).format(amount);
-}
+const ITEMS_PER_PAGE = 24;
 
 export function ProductsManager({
   tenantId,
   initialProducts,
+  initialTotal,
 }: {
   tenantId: string;
   initialProducts: ProductData[];
+  initialTotal: number;
 }) {
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [error, setError] = useState("");
+  const [total, setTotal] = useState(initialTotal);
   const [pending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
-  const [pendingFilePreview, setPendingFilePreview] = useState<string | null>(null);
-  const uploaderRef = useRef<ImageUploaderHandle>(null);
+
+  // Search & filters
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sort, setSort] = useState("order");
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Bulk selection
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Editor
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editPrice, setEditPrice] = useState("");
-  const [editImageUrl, setEditImageUrl] = useState("");
-  const editUploaderRef = useRef<ImageUploaderHandle>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  function resetForm() {
-    setName("");
-    setDescription("");
-    setPrice("");
-    setError("");
-    setPendingFilePreview(null);
-    uploaderRef.current?.reset();
-  }
+  // Preview
+  const [previewProducts, setPreviewProducts] = useState<PublicProductData[]>([]);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || !price.trim()) return;
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
-    let imageUrl = "";
-    try {
-      imageUrl = (await uploaderRef.current?.upload()) ?? "";
-    } catch {
-      setError("Image upload failed");
-      return;
-    }
-
-    setError("");
-    const formData = new FormData();
-    formData.set("name", name.trim());
-    formData.set("description", description.trim());
-    formData.set("price", price);
-    formData.set("imageUrl", imageUrl);
-
-    startTransition(async () => {
-      const result = await createNewProduct(tenantId, formData);
-      if (result.success && result.data) {
-        setProducts((prev) => [result.data!, ...prev]);
-        resetForm();
-      } else {
-        setError(result.error || "Failed to create product");
-      }
-    });
-  }
-
-  async function handleToggle(id: string, currentActive: boolean) {
-    startTransition(async () => {
-      const result = await toggleProductStatus(id, tenantId, !currentActive);
-      if (result.success) {
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.id === id ? { ...p, isActive: !currentActive } : p,
-          ),
-        );
-      } else {
-        alert(result.error || "Failed to toggle product");
-      }
-    });
-  }
-
-  async function handleDelete(id: string, name: string) {
-    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
-
-    startTransition(async () => {
-      const result = await removeProduct(id, tenantId);
-      if (result.success) {
-        setProducts((prev) => prev.filter((p) => p.id !== id));
-        router.refresh();
-      } else {
-        alert(result.error || "Failed to delete product");
-      }
-    });
-  }
-
-  function moveProduct(index: number, direction: -1 | 1) {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= products.length) return;
-
-    const reordered = [...products];
-    const [moved] = reordered.splice(index, 1);
-    reordered.splice(newIndex, 0, moved);
-
-    const updates = reordered.map((p, i) => ({ id: p.id, order: i }));
-    setProducts(reordered);
-
-    startTransition(async () => {
-      const result = await updateProductOrder(tenantId, updates);
-      if (!result.success) {
-        setProducts(products);
-      }
-    });
-  }
-
-  function openEdit(product: ProductData) {
-    setEditName(product.name);
-    setEditDescription(product.description ?? "");
-    setEditPrice(String(product.price));
-    setEditImageUrl(product.imageUrl ?? "");
-    setError("");
-    setEditingProduct(product);
-  }
-
-  function closeEdit() {
-    setEditingProduct(null);
-    editUploaderRef.current?.reset();
-  }
-
-  async function handleUpdate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingProduct || !editName.trim() || !editPrice.trim()) return;
-
-    let finalImageUrl = editImageUrl.trim();
-    try {
-      const uploaded = await editUploaderRef.current?.upload();
-      if (uploaded) finalImageUrl = uploaded;
-    } catch {
-      setError("Image upload failed");
-      return;
-    }
-
-    setError("");
-    const formData = new FormData();
-    formData.set("id", editingProduct.id);
-    formData.set("name", editName.trim());
-    formData.set("description", editDescription.trim());
-    formData.set("price", editPrice);
-    formData.set("imageUrl", finalImageUrl);
-
-    startTransition(async () => {
-      const result = await updateExistingProduct(tenantId, formData);
-      if (result.success && result.data) {
-        setProducts((prev) =>
-          prev.map((p) => (p.id === editingProduct.id ? result.data! : p)),
-        );
-        closeEdit();
-      } else {
-        setError(result.error || "Failed to update product");
-      }
-    });
-  }
-
-  const previewProducts: PublicProductData[] = (() => {
+  // Build preview
+  useEffect(() => {
     const mapped = products
-      .filter((p) => p.isActive)
+      .filter((p) => p.status === "PUBLISHED")
       .map((p) => ({
         id: p.id,
         name: p.name,
@@ -193,261 +72,304 @@ export function ProductsManager({
         price: p.price,
         imageUrl: p.imageUrl,
       }));
+    setPreviewProducts(mapped);
+  }, [products]);
 
-    if (name.trim() || price.trim() || pendingFilePreview) {
-      mapped.unshift({
-        id: "pending",
-        name: name.trim() || "New Product",
-        description: description.trim() || null,
-        price: price ? parseFloat(price) : 0,
-        imageUrl: pendingFilePreview,
+  const refreshProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (statusFilter) params.set("status", statusFilter);
+      if (sort) params.set("sort", sort);
+      params.set("page", String(page));
+      params.set("limit", String(ITEMS_PER_PAGE));
+
+      const { fetchProducts } = await import("@/actions/product.actions");
+      const result = await fetchProducts({
+        tenantId,
+        search: search || undefined,
+        status: statusFilter || undefined,
+        sort: sort || undefined,
+        page,
+        limit: ITEMS_PER_PAGE,
       });
+      if (result.success && result.data) {
+        setProducts(result.data.products);
+        setTotal(result.data.total);
+      }
+    } finally {
+      setLoading(false);
     }
+  }, [tenantId, search, statusFilter, sort, page]);
 
-    return mapped;
-  })();
+  // Debounced search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter, sort]);
+
+  useEffect(() => {
+    refreshProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, statusFilter, sort]);
+
+  // Bulk actions
+  const handleSelect = useCallback((id: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selected.size === products.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(products.map((p) => p.id)));
+    }
+  }, [products, selected]);
+
+  const handleBulkPublish = useCallback(async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    startTransition(async () => {
+      await bulkPublish(ids, tenantId);
+      setSelected(new Set());
+      await refreshProducts();
+    });
+  }, [selected, tenantId, refreshProducts]);
+
+  const handleBulkArchive = useCallback(async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    startTransition(async () => {
+      await bulkArchive(ids, tenantId);
+      setSelected(new Set());
+      await refreshProducts();
+    });
+  }, [selected, tenantId, refreshProducts]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    if (!window.confirm(`Delete ${ids.length} products? This cannot be undone.`)) return;
+    startTransition(async () => {
+      await bulkDelete(ids, tenantId);
+      setSelected(new Set());
+      await refreshProducts();
+    });
+  }, [selected, tenantId, refreshProducts]);
+
+  // Single product actions
+  const handleEdit = useCallback((product: ProductData) => {
+    setEditingProduct(product);
+    setEditorOpen(true);
+  }, []);
+
+  const handleCreate = useCallback(() => {
+    setEditingProduct(null);
+    setEditorOpen(true);
+  }, []);
+
+  const handleSave = useCallback(async (formData: FormData) => {
+    setSaving(true);
+    try {
+      if (editingProduct) {
+        await updateExistingProduct(tenantId, formData);
+      } else {
+        await createNewProduct(tenantId, formData);
+      }
+      setEditorOpen(false);
+      setEditingProduct(null);
+      await refreshProducts();
+    } finally {
+      setSaving(false);
+    }
+  }, [editingProduct, tenantId, refreshProducts]);
+
+  const handleDuplicate = useCallback(async (id: string) => {
+    startTransition(async () => {
+      await duplicateProduct(id, tenantId);
+      await refreshProducts();
+    });
+  }, [tenantId, refreshProducts]);
+
+  const handleArchive = useCallback(async (id: string) => {
+    startTransition(async () => {
+      await archiveProduct(id, tenantId);
+      await refreshProducts();
+    });
+  }, [tenantId, refreshProducts]);
+
+  const handleRestore = useCallback(async (id: string) => {
+    startTransition(async () => {
+      await restoreProduct(id, tenantId);
+      await refreshProducts();
+    });
+  }, [tenantId, refreshProducts]);
+
+  const handleDelete = useCallback(async (id: string, name: string) => {
+    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    startTransition(async () => {
+      await removeProduct(id, tenantId);
+      await refreshProducts();
+      router.refresh();
+    });
+  }, [tenantId, refreshProducts, router]);
+
+  const handlePublish = useCallback(async (id: string) => {
+    startTransition(async () => {
+      await publishProduct(id, tenantId);
+      await refreshProducts();
+    });
+  }, [tenantId, refreshProducts]);
+
+  const handleUnpublish = useCallback(async (id: string) => {
+    startTransition(async () => {
+      await unpublishProduct(id, tenantId);
+      await refreshProducts();
+    });
+  }, [tenantId, refreshProducts]);
 
   return (
     <div className="flex gap-6">
       <div className="min-w-0 flex-1 space-y-6">
-      {/* ─── Add Product Form ─── */}
-      <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-300">
-          Add New Product
-        </h2>
-        <form onSubmit={handleAdd} className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Product name"
-              className="admin-input"
-              disabled={pending}
-              required
-            />
-            <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="Price (₹)"
-              className="admin-input"
-              disabled={pending}
-              required
-            />
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-white sm:text-2xl">Products</h1>
+            <p className="mt-1 text-sm text-zinc-500">Manage your merchandise catalog and digital products.</p>
           </div>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description (optional)"
-            className="admin-input min-h-[60px] resize-none"
-            disabled={pending}
-            rows={2}
-          />
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <ImageUploader
-              ref={uploaderRef}
-              tenantId={tenantId}
-              folder="products"
-              onFileSelect={(_, previewUrl) => setPendingFilePreview(previewUrl)}
-              onUploadingChange={setIsUploading}
+          <button onClick={handleCreate} className="admin-btn-cyan px-4 py-2 text-xs shrink-0">
+            Add Product
+          </button>
+        </div>
+
+        {/* Toolbar */}
+        <ProductsToolbar
+          search={search}
+          onSearchChange={setSearch}
+          statusFilter={statusFilter}
+          onStatusFilterChange={(v) => { setStatusFilter(v); setPage(1); }}
+          sort={sort}
+          onSortChange={(v) => { setSort(v); setPage(1); }}
+          total={total}
+          selectedCount={selected.size}
+          onBulkPublish={handleBulkPublish}
+          onBulkArchive={handleBulkArchive}
+          onBulkDelete={handleBulkDelete}
+        />
+
+        {/* Select all */}
+        {products.length > 0 && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.size === products.length && products.length > 0}
+              onChange={handleSelectAll}
+              className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/30"
             />
-            <button
-              type="submit"
-              disabled={pending || isUploading || !name.trim() || !price.trim()}
-              className="admin-btn-cyan shrink-0 px-6 py-2.5"
-            >
-              {pending || isUploading ? "Adding..." : "Add Product"}
-            </button>
+            <span className="text-xs text-zinc-500">
+              {selected.size === products.length ? "Deselect all" : "Select all"}
+            </span>
+          </label>
+        )}
+
+        {/* Loading */}
+        {loading && products.length === 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
           </div>
-        </form>
-        {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+        )}
+
+        {/* Empty */}
+        {!loading && products.length === 0 && (
+          <ProductCardEmpty onCreate={handleCreate} />
+        )}
+
+        {/* Grid */}
+        {!loading && products.length > 0 && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  selected={selected.has(product.id)}
+                  onSelect={handleSelect}
+                  onEdit={handleEdit}
+                  onDuplicate={handleDuplicate}
+                  onArchive={product.status !== "ARCHIVED" ? handleArchive : undefined}
+                  onRestore={product.status === "ARCHIVED" ? handleRestore : undefined}
+                  onDelete={handleDelete}
+                  onPublish={product.status === "DRAFT" ? handlePublish : undefined}
+                  onUnpublish={product.status === "PUBLISHED" ? handleUnpublish : undefined}
+                  loading={pending}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="admin-btn-outline px-3 py-1.5 text-xs disabled:opacity-30"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                      p === page
+                        ? "bg-s8ul-cyan/10 text-s8ul-cyan"
+                        : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="admin-btn-outline px-3 py-1.5 text-xs disabled:opacity-30"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* ─── Products Grid ─── */}
-      {products.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/5 p-10 text-center text-sm text-zinc-600">
-          No products yet. Add your first product above.
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product, index) => (
-            <div
-              key={product.id}
-              className="group relative overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 backdrop-blur-sm transition-all hover:border-white/10"
-            >
-              {/* ─── Thumbnail ─── */}
-              {product.imageUrl ? (
-                <div className="aspect-[16/9] w-full overflow-hidden bg-zinc-800">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-              ) : (
-                <div className="flex aspect-[16/9] w-full items-center justify-center bg-zinc-800/50">
-                  <svg className="h-8 w-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-              )}
-
-              {/* ─── Body ─── */}
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold text-white">
-                      {product.name}
-                    </h3>
-                    {product.description && (
-                      <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">
-                        {product.description}
-                      </p>
-                    )}
-                  </div>
-                  <span className="shrink-0 font-display text-sm font-bold text-s8ul-cyan">
-                    {formatINR(product.price)}
-                  </span>
-                </div>
-
-                {/* ─── Controls ─── */}
-                <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => moveProduct(index, -1)}
-                      disabled={pending || index === 0}
-                      className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-zinc-700/50 hover:text-zinc-300 disabled:pointer-events-none disabled:opacity-20"
-                      title="Move up"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => moveProduct(index, 1)}
-                      disabled={pending || index === products.length - 1}
-                      className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-zinc-700/50 hover:text-zinc-300 disabled:pointer-events-none disabled:opacity-20"
-                      title="Move down"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleToggle(product.id, product.isActive)}
-                      disabled={pending}
-                      className={`relative ml-2 h-5 w-9 rounded-full transition-colors ${
-                        product.isActive ? "bg-s8ul-cyan" : "bg-zinc-700"
-                      }`}
-                    >
-                      <span
-                        className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-black transition-transform ${
-                          product.isActive ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEdit(product)}
-                      disabled={pending}
-                      className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
-                      title="Edit product"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id, product.name)}
-                      disabled={pending}
-                      className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
-                      title="Delete product"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Live Preview */}
+      {previewProducts.length > 0 && (
+        <PreviewShell>
+          <ProductGrid products={previewProducts} preview />
+        </PreviewShell>
       )}
+
+      {/* Product Editor Drawer */}
+      <ProductEditor
+        product={editingProduct}
+        tenantId={tenantId}
+        open={editorOpen}
+        onClose={() => { setEditorOpen(false); setEditingProduct(null); }}
+        onSave={handleSave}
+        saving={saving}
+      />
     </div>
-
-    {/* ─── Edit Drawer ─── */}
-    <EditEntityDrawer
-      open={!!editingProduct}
-      onClose={closeEdit}
-      title="Edit Product"
-    >
-      <form onSubmit={handleUpdate} className="space-y-4">
-        <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Name</label>
-          <input
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            className="admin-input w-full"
-            disabled={pending}
-            required
-          />
-        </div>
-        <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Price (₹)</label>
-          <input
-            value={editPrice}
-            onChange={(e) => setEditPrice(e.target.value)}
-            type="number"
-            step="0.01"
-            min="0"
-            className="admin-input w-full"
-            disabled={pending}
-            required
-          />
-        </div>
-        <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Description</label>
-          <textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            className="admin-input w-full min-h-[80px] resize-none"
-            disabled={pending}
-            rows={3}
-          />
-        </div>
-        <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Image</label>
-          {editImageUrl && (
-            <div className="h-20 w-full overflow-hidden rounded-lg bg-zinc-800">
-              <img src={editImageUrl} alt="" className="h-full w-full object-cover" />
-            </div>
-          )}
-          <ImageUploader
-            ref={editUploaderRef}
-            tenantId={tenantId}
-            folder="products"
-          />
-        </div>
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        <button
-          type="submit"
-          disabled={pending || !editName.trim() || !editPrice.trim()}
-          className="admin-btn-cyan w-full py-2.5"
-        >
-          {pending ? "Saving..." : "Save Changes"}
-        </button>
-      </form>
-    </EditEntityDrawer>
-
-    {/* ─── Live Preview ─── */}
-    <PreviewShell>
-      <ProductGrid products={previewProducts} preview />
-    </PreviewShell>
-  </div>
-);
+  );
 }

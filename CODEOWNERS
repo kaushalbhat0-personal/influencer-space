@@ -1,0 +1,25 @@
+# Platform Ownership
+
+* @creatorstore/platform
+
+# Core Libraries
+/src/lib/capabilities/ @creatorstore/platform
+/src/lib/billing/ @creatorstore/platform
+/src/lib/partners/ @creatorstore/platform
+/src/lib/commission/ @creatorstore/platform
+/src/lib/payouts/ @creatorstore/platform
+
+# Infrastructure
+/src/middleware.ts @creatorstore/platform
+/src/lib/auth.ts @creatorstore/platform
+/prisma/ @creatorstore/platform
+
+# UI Components
+/src/components/ @creatorstore/ux
+
+# API Routes
+/src/app/api/ @creatorstore/platform
+
+# Documentation
+/docs/ @creatorstore/product
+README.md @creatorstore/product

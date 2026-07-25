@@ -1,85 +1,54 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { entitlement } from "@/modules/billing/application/entitlements";
+import { ContentContainer } from "@/components/layout";
+import { BillingPageClient } from "@/components/billing/BillingPageClient";
+import { billingService } from "@/lib/billing/service";
+import { getPlan, getCreatorPlans } from "@/lib/billing/mapper";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
-import { BillingClient } from "./_components/billing-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions).catch(() => null);
   const tenantId = session?.user?.tenantId;
 
   if (!tenantId) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400">No tenant configured.</p>
-      </div>
-    );
+    return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
   }
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
   if (!tenant) {
+    return <ContentContainer><p className="text-red-400">No tenant configured.</p></ContentContainer>;
+  }
+
+  const workspace = await workspaceRepository.findByTenantId(tenant.id).catch(() => null);
+
+  if (workspace) {
+    const [billingData, plans] = await Promise.all([
+      billingService.getBillingInfo(workspace.id, tenant.id).catch(() => null),
+      Promise.resolve(billingService.getPlans()).catch(() => []),
+    ]);
+    if (!billingData) {
+      return <ContentContainer><p className="text-red-400">Failed to load billing data.</p></ContentContainer>;
+    }
+    const upgradeUrl = process.env.NEXT_PUBLIC_UPGRADE_URL;
+
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400">No tenant configured.</p>
-      </div>
+      <BillingPageClient billingData={billingData} availablePlans={plans} upgradeUrl={upgradeUrl} />
     );
   }
 
-  let legacyPlan = "STARTER";
-  let planStatus = "ACTIVE";
-  let periodEnd: string | null = null;
-  let subscriptionId = "";
-  let v2PlanCode = "creator_free";
+  const productCount = await prisma.product.count({ where: { tenantId: tenant.id } }).catch(() => 0);
+  const plan = getPlan("creator_free") ?? { code: "creator_free", family: "creator" as const, name: "Free Forever", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" };
+  const plans = getCreatorPlans();
 
-  const workspace = await workspaceRepository.findByTenantId(tenant.id);
-  if (workspace) {
-    const billingSub = await prisma.billingSubscription.findUnique({ where: { workspaceId: workspace.id } });
-    if (billingSub) {
-      const plan = await prisma.billingPlan.findUnique({ where: { id: billingSub.planId } });
-      v2PlanCode = plan?.code ?? "creator_free";
-      planStatus = billingSub.status;
-      periodEnd = billingSub.renewsAt?.toISOString() ?? null;
-      subscriptionId = billingSub.id;
-    }
-  }
+  const billingData = {
+    plan: { ...plan, name: "Free Forever", price: 0 },
+    subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_free", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
+    invoices: [], paymentMethods: [], usage: [],
+    activeProducts: productCount, activeGallery: 0, storageUsed: 0, ordersProcessed: 0, messagesSent: 0,
+  };
 
-  if (!workspace || subscriptionId === "") {
-    const legacySub = await prisma.subscription.findUnique({ where: { tenantId: tenant.id } });
-    if (legacySub) {
-      v2PlanCode = legacySub.plan === "STARTER" ? "creator_free" : "creator_pro";
-      legacyPlan = legacySub.plan;
-      planStatus = legacySub.status;
-      periodEnd = legacySub.currentPeriodEnd?.toISOString() ?? null;
-    }
-  }
-
-  const planDisplayName = legacyPlan === "PRO" ? "PRO" : (v2PlanCode === "creator_pro" ? "PRO" : "STARTER");
-
-  const productCount = await prisma.product.count({ where: { tenantId: tenant.id } });
-
-  return (
-    <BillingClient
-      subscription={{
-        id: subscriptionId,
-        tenantId: tenant.id,
-        razorpaySubscriptionId: null,
-        status: planStatus,
-        plan: planDisplayName,
-        currentPeriodEnd: periodEnd,
-      }}
-      productCount={productCount}
-      planInfo={{
-        plan: planDisplayName,
-        status: planStatus,
-        limits: {
-          maxProducts: entitlement.limit(v2PlanCode, "max_products"),
-          customDomain: entitlement.has(v2PlanCode, "custom_domain"),
-          customBranding: entitlement.has(v2PlanCode, "custom_branding"),
-        },
-      }}
-    />
-  );
+  return <BillingPageClient billingData={billingData} availablePlans={plans} />;
 }

@@ -220,6 +220,25 @@ export class ProvisioningService {
         // Apply theme
         const { themeService } = await import("@/lib/theme");
         await themeService.apply(website.id, { packageId: personalization.themePackageId }).catch(() => {});
+
+        // Store AI-generated theme colors
+        if (input.generatedTheme?.colors) {
+          const colors = input.generatedTheme.colors;
+          await prisma.website.update({
+            where: { id: website.id },
+            data: {
+              themeColors: {
+                "--brand-primary": colors.primary ?? "#6366F1",
+                "--brand-secondary": colors.secondary ?? "#8B5CF6",
+                "--brand-accent": colors.accent ?? "#10B981",
+                "--surface-root": "#09090b",
+                "--surface-base": "#18181b",
+                "--text-primary": "#fafafa",
+                "--text-secondary": "#a1a1aa",
+              },
+            },
+          }).catch(() => {});
+        }
       }
 
       // ── AFTER TRANSACTION: events, URLs, cleanup ────────────────────────

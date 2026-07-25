@@ -1,10 +1,43 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { fetchProducts } from "@/actions/product.actions";
+import { ContentContainer } from "@/components/layout";
 import { ProductsManager } from "./_components/products-manager";
-import type { ProductData } from "@/actions/product.actions";
+import { ProductCardSkeleton } from "@/components/products/ProductCard";
+import { DashboardWidgetError } from "@/components/ui/DashboardWidget";
 
 export const dynamic = "force-dynamic";
+
+async function ProductsContent({ tenantId }: { tenantId: string }) {
+  const { fetchProducts } = await import("@/actions/product.actions");
+  const result = await fetchProducts({ tenantId, page: 1, limit: 24 });
+
+  if (!result.success) {
+    return <DashboardWidgetError message={result.error || "Failed to load products"} />;
+  }
+
+  return (
+    <ProductsManager
+      tenantId={tenantId}
+      initialProducts={result.data?.products ?? []}
+      initialTotal={result.data?.total ?? 0}
+    />
+  );
+}
+
+function ProductsFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="h-8 w-48 rounded bg-white/5 animate-pulse" />
+      <div className="h-10 rounded bg-white/5 animate-pulse" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default async function AdminProductsPage() {
   const session = await getServerSession(authOptions);
@@ -12,25 +45,17 @@ export default async function AdminProductsPage() {
 
   if (!tenantId) {
     return (
-      <div className="rounded-lg bg-red-500/10 p-6 text-center text-red-400">
-        <p className="text-lg font-semibold">No tenant configured</p>
-      </div>
+      <ContentContainer>
+        <DashboardWidgetError message="No tenant configured. Please contact support." />
+      </ContentContainer>
     );
   }
 
-  const result = await fetchProducts(tenantId);
-  const products: ProductData[] =
-    result.success && result.data ? result.data : [];
-
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Storefront</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Manage your merchandise catalog and digital products.
-        </p>
-      </div>
-      <ProductsManager tenantId={tenantId} initialProducts={products} />
-    </div>
+    <ContentContainer>
+      <Suspense fallback={<ProductsFallback />}>
+        <ProductsContent tenantId={tenantId} />
+      </Suspense>
+    </ContentContainer>
   );
 }

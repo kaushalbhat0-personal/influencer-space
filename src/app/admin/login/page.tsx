@@ -19,7 +19,7 @@ export default async function LoginPage({
         ],
       },
       select: { id: true },
-    });
+    }).catch(() => null);
     if (lookedUp) {
       return (
         <Suspense>

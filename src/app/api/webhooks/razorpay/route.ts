@@ -3,8 +3,12 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { billingService } from "@/modules/billing/application/service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for") ?? "webhook";
+  const rateCheck = checkRateLimit(`webhook:${ip}`, "/api/webhooks/razorpay");
+  if (!rateCheck.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const rawBody = await req.text();
   const signature = req.headers.get("x-razorpay-signature") || "";
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;

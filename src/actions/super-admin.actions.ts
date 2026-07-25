@@ -391,7 +391,7 @@ export type PlanUpdateResult = { success: boolean; error?: string };
 
 export async function updateSubscriptionPlan(
   tenantId: string,
-  plan: "STARTER" | "PRO",
+  plan: string,
   status: "FREE" | "ACTIVE" | "CANCELLED",
 ): Promise<PlanUpdateResult> {
   const session = await getServerSession(authOptions);

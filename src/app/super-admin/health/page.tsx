@@ -5,24 +5,23 @@ export const dynamic = "force-dynamic";
 
 export default async function HealthPage() {
   const [stats, auditCount24h, failedStatTenants] = await Promise.all([
-    getPlatformStats(),
+    getPlatformStats().catch(() => ({ totalTenants: 0, totalProducts: 0, activeProSubscriptions: 0 })),
     prisma.auditLog.count({
       where: { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
     }),
     prisma.socialStats.groupBy({
       by: ["tenantId"],
       where: { updatedAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-    }).then((r) =>
-      Promise.all(
-        r.map(async (row) => {
-          const t = await prisma.tenant.findUnique({
-            where: { id: row.tenantId },
-            select: { name: true, subdomain: true },
-          });
-          return { ...row, tenant: t };
-        }),
-      ),
-    ),
+    }).then(async (r) => {
+      if (r.length === 0) return [];
+      const tenantIds = r.map((row) => row.tenantId);
+      const tenants = await prisma.tenant.findMany({
+        where: { id: { in: tenantIds } },
+        select: { id: true, name: true, subdomain: true },
+      });
+      const tenantMap = new Map(tenants.map((t) => [t.id, t]));
+      return r.map((row) => ({ ...row, tenant: tenantMap.get(row.tenantId) ?? null }));
+    }),
   ]);
 
   return (

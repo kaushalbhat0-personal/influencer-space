@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { publishingService } from "@/lib/publishing/service";
+import { platformEventBus } from "@/lib/events";
+import { prisma } from "@/lib/prisma";
 import type { PublishStatus } from "@/lib/publishing/service";
 
 export type PublishActionResult = {
@@ -25,6 +27,18 @@ export async function publishWebsite(): Promise<PublishActionResult> {
     const tenantId = await requireTenant();
     const result = await publishingService.publish(tenantId);
     if (!result.success) return { success: false, error: result.error?.message };
+
+    const website = await prisma.website.findUnique({
+      where: { tenantId },
+      select: { id: true },
+    });
+
+    platformEventBus.publish("WebsitePublished", {
+      tenantId,
+      websiteId: website?.id ?? tenantId,
+      version: 1,
+      storefrontUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/${tenantId}`,
+    });
 
     const status = await publishingService.getStatus(tenantId);
     revalidatePath("/admin");

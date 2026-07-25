@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { BuilderService } from "@/lib/builder/builder-service";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import type { BuilderPage } from "@/lib/builder/types";
+import { storefrontToBuilderPages } from "@/lib/builder/artifact-loader";
 
 const builderService = new BuilderService();
 
@@ -20,9 +21,35 @@ async function getWebsiteId(): Promise<string> {
   return website.id;
 }
 
+async function tryLoadFromArtifact(_websiteId: string): Promise<BuilderPage[] | null> {
+  try {
+    void _websiteId;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.tenantId) return null;
+    const { prisma } = await import("@/lib/prisma");
+    const setting = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId: session.user.tenantId, key: "builder_artifact" } },
+    });
+    if (!setting?.value) return null;
+
+    const data = typeof setting.value === "string" ? JSON.parse(setting.value) : setting.value;
+    if (!data?.sections || data.sections.length === 0) return null;
+
+    return storefrontToBuilderPages(data);
+  } catch {
+    return null;
+  }
+}
+
 export async function loadBuilderPages(): Promise<{ success: boolean; pages?: BuilderPage[]; error?: string }> {
   try {
     const websiteId = await getWebsiteId();
+
+    const artifactPages = await tryLoadFromArtifact(websiteId);
+    if (artifactPages) {
+      return { success: true, pages: artifactPages };
+    }
+
     const pages = await builderService.load(websiteId);
     return { success: true, pages };
   } catch (e) {
@@ -47,16 +74,13 @@ export async function publishWebsite(pages: BuilderPage[]): Promise<{ success: b
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.$transaction(async (tx: any) => {
-      // Save builder state
       await builderService.save(websiteId, pages, tx);
 
-      // Fetch theme info
       const website = await tx.website.findUnique({
         where: { id: websiteId },
         select: { themePackageId: true, themeColors: true, themeFonts: true },
       });
 
-      // Publish snapshot
       return publishSnapshotService.publish(websiteId, {
         pages,
         themePackageId: website?.themePackageId || "neon-dark",
@@ -86,7 +110,6 @@ export async function rollbackToVersion(version: number): Promise<{ success: boo
     const websiteId = await getWebsiteId();
     const data = await publishSnapshotService.rollback(websiteId, version);
 
-    // Restore pages to builder state
     await builderService.save(websiteId, data.pages);
 
     return { success: true, pages: data.pages };

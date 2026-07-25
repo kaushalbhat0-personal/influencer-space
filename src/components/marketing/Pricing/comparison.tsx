@@ -1,21 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { PLANS } from "@/modules/billing/domain/plan-catalog";
+import { getPlansByFamily, getFeatureInfo, getAllFeatureIds } from "@/lib/capabilities";
 import { entitlement } from "@/modules/billing/application/entitlements";
-import { FEATURES } from "@/modules/billing/domain/plan-catalog";
-import type { PlanFamily } from "@/modules/billing/domain/types";
 import { Check, Minus } from "lucide-react";
 
 interface ComparisonProps {
-  family: PlanFamily;
+  family: "creator" | "agency";
 }
 
 export function ComparisonMatrix({ family }: ComparisonProps) {
-  const plans = PLANS.filter((p) => p.family === family);
+  const plans = getPlansByFamily(family);
   if (plans.length === 0) return null;
 
-  const features = FEATURES.filter((f) => f.valueType !== "string");
+  const features = getAllFeatureIds().map((id) => {
+    const info = getFeatureInfo(id);
+    return { key: id, description: info.label, valueType: info.valueType };
+  });
 
   return (
     <div className="mt-20">

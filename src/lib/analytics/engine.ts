@@ -61,10 +61,8 @@ export class AnalyticsEngine {
     const results = await Promise.all(
       metricIds.map((id) =>
         metricsRegistry.calculate(id, period.from, period.to, tenantId).catch(() => ({
-          label: id,
-          value: 0,
-          unit: undefined,
-        })),
+          id, label: id, value: 0, unit: undefined,
+        } as MetricValue)),
       ),
     );
 

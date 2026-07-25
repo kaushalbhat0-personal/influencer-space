@@ -1,53 +1,31 @@
 import { prisma } from "@/lib/prisma";
-import { PLANS, FEATURES } from "../domain/plan-catalog";
+import { getAllPlans, FEATURE_CATALOG } from "@/lib/capabilities";
 
-/**
- * Idempotently populate BillingPlan, BillingFeature, and BillingPlanFeature
- * tables from the canonical in-memory plan catalog.
- *
- * Safe to run multiple times. Upserts by unique code/key.
- */
 export async function seedBillingCatalog() {
-  // 1. Seed features
-  for (const feature of FEATURES) {
+  // 1. Seed features from canonical catalog
+  for (const [key, info] of Object.entries(FEATURE_CATALOG)) {
     await prisma.billingFeature.upsert({
-      where: { key: feature.key },
-      update: { description: feature.description, valueType: feature.valueType },
-      create: { key: feature.key, description: feature.description, valueType: feature.valueType },
+      where: { key },
+      update: { description: info.description, valueType: info.valueType },
+      create: { key, description: info.description, valueType: info.valueType },
     });
   }
 
   const featureMap = new Map<string, string>();
   const allFeatures = await prisma.billingFeature.findMany();
-  for (const f of allFeatures) {
-    featureMap.set(f.key, f.id);
-  }
+  for (const f of allFeatures) featureMap.set(f.key, f.id);
 
-  // 2. Seed plans
-  for (const plan of PLANS) {
+  // 2. Seed plans from canonical catalog
+  for (const plan of getAllPlans()) {
     await prisma.billingPlan.upsert({
       where: { code: plan.code },
-      update: {
-        name: plan.name,
-        family: plan.family,
-        price: plan.price,
-        currency: plan.currency,
-        cycle: plan.cycle,
-        version: { increment: 1 },
-      },
-      create: {
-        code: plan.code,
-        family: plan.family,
-        name: plan.name,
-        price: plan.price,
-        currency: plan.currency,
-        cycle: plan.cycle,
-      },
+      update: { name: plan.name, family: plan.family, price: plan.price, currency: plan.currency, cycle: plan.cycle ?? "monthly", version: { increment: 1 } },
+      create: { code: plan.code, family: plan.family, name: plan.name, price: plan.price, currency: plan.currency, cycle: plan.cycle ?? "monthly" },
     });
   }
 
   // 3. Seed plan-feature join records
-  for (const plan of PLANS) {
+  for (const plan of getAllPlans()) {
     const dbPlan = await prisma.billingPlan.findUnique({ where: { code: plan.code } });
     if (!dbPlan) continue;
 

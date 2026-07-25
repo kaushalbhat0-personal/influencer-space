@@ -30,8 +30,8 @@ function StatCard({
 
 export default async function SuperAdminPage() {
   const [stats, tenants] = await Promise.all([
-    getPlatformStats(),
-    getAllTenants(),
+    getPlatformStats().catch(() => ({ totalTenants: 0, totalProducts: 0, activeProSubscriptions: 0 })),
+    getAllTenants().catch(() => []),
   ]);
 
   return (

@@ -1,6 +1,6 @@
 {
   "name": "influencer-space",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -38,6 +38,7 @@
     "razorpay": "^2.9.6",
     "react": "^18",
     "react-dom": "^18",
+    "recharts": "^3.10.0",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },

@@ -7,7 +7,10 @@ import { Menu, X } from "lucide-react";
 import { MotionPresence, MotionDiv } from "@/components/ui/MotionSafe";
 
 const NAV_LINKS = [
-  { href: "/#features", label: "Features" },
+  { href: "/features", label: "Features" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/showcase", label: "Showcase" },
+  { href: "/about", label: "About" },
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
 ];
@@ -23,7 +26,9 @@ export function MarketingNav() {
   }, [pathname, close]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [close]);
@@ -31,11 +36,12 @@ export function MarketingNav() {
   useEffect(() => {
     if (mobileOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
 
   const isActive = (href: string) => {
-    if (href.startsWith("/#")) return false;
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
@@ -50,8 +56,11 @@ export function MarketingNav() {
         Skip to main content
       </a>
 
-      <nav className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/[0.06] bg-[var(--surface-root)]/80 backdrop-blur-xl" aria-label="Main navigation">
-        <div className="mx-auto flex h-full max-w-7xl items-center gap-8 px-4 sm:px-8">
+      <nav
+        className="fixed inset-x-0 top-0 z-50 h-16 border-b border-white/[0.06] bg-[var(--surface-root)]/80 backdrop-blur-xl"
+        aria-label="Main navigation"
+      >
+        <div className="mx-auto flex h-full max-w-7xl items-center gap-6 px-4 sm:px-8">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-lg font-bold text-transparent">
@@ -59,8 +68,8 @@ export function MarketingNav() {
             </span>
           </Link>
 
-          {/* Desktop links — center */}
-          <div className="hidden lg:flex items-center gap-1">
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-1 flex-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -77,9 +86,6 @@ export function MarketingNav() {
             ))}
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1 hidden lg:block" />
-
           {/* Desktop CTAs */}
           <div className="hidden lg:flex items-center gap-3">
             <Link
@@ -88,10 +94,7 @@ export function MarketingNav() {
             >
               Sign In
             </Link>
-            <Link
-              href="/signup"
-              className="btn-primary text-sm"
-            >
+            <Link href="/signup" className="btn-primary text-sm">
               Start Free
             </Link>
           </div>
@@ -135,7 +138,7 @@ export function MarketingNav() {
               aria-modal="true"
               aria-label="Mobile navigation"
             >
-              <div className="flex h-16 items-center justify-between px-4 border-b border-white/[0.06]">
+              <div className="flex h-16 items-center justify-between border-b border-white/[0.06] px-4">
                 <Link href="/" onClick={close}>
                   <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-lg font-bold text-transparent">
                     CreatorStore
@@ -167,7 +170,7 @@ export function MarketingNav() {
                   </Link>
                 ))}
 
-                <div className="mt-4 border-t border-white/[0.06] pt-4 space-y-2">
+                <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
                   <Link
                     href="/admin/login"
                     onClick={close}

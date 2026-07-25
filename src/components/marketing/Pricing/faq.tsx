@@ -1,15 +1,41 @@
 const FAQ_ITEMS = [
-  { q: "Is Free Forever really free?", a: "Yes. No credit card required. No time limit. You can build and publish your storefront completely free." },
-  { q: "Can I upgrade later?", a: "Absolutely. Upgrade anytime from your dashboard. Your data, products, and settings stay exactly as they are." },
-  { q: "Can I change plans anytime?", a: "Yes. Upgrade or downgrade whenever you need. Changes take effect immediately." },
-  { q: "Do agencies manage multiple creators?", a: "Yes. Agency plans include a multi-tenant dashboard. Switch between creator workspaces without logging out." },
-  { q: "Do you charge transaction fees?", a: "CreatorStore does not charge per-transaction fees on paid plans. Your revenue is yours." },
-  { q: "Can I use my own domain?", a: "Yes. Creator Pro, Elite, and all Agency plans include custom domain support with free SSL." },
+  {
+    q: "How does the AI build my storefront?",
+    a: "Paste your YouTube, Instagram, or creator profile URL. Our AI analyzes your content, brand colors, niche, audience, and social links — then generates a complete storefront with products, checkout, and SEO. No manual entry needed.",
+  },
+  {
+    q: "What platforms do you support?",
+    a: "YouTube, Instagram, TikTok, X (Twitter), LinkedIn, Twitch, and any website URL. If your content lives online, CreatorStore can work with it.",
+  },
+  {
+    q: "Can I use my own domain?",
+    a: "Yes. Creator Pro, Elite, and all Agency plans include custom domain support with free SSL. You can also use a CreatorStore subdomain for free.",
+  },
+  {
+    q: "How do payments work?",
+    a: "CreatorStore uses Razorpay for payment processing. Your customers can pay via UPI, credit/debit cards, net banking, and wallets. Payouts go directly to your linked account.",
+  },
+  {
+    q: "What can I sell?",
+    a: "Digital products, courses, memberships, coaching, physical merchandise, event tickets, donations, and affiliate links. If you can create it, you can sell it.",
+  },
+  {
+    q: "Can agencies use CreatorStore?",
+    a: "Yes. Agency plans support multi-client workspaces, white-label branding, team collaboration, and centralized analytics. Generate storefronts for clients in minutes.",
+  },
+  {
+    q: "Can I switch plans later?",
+    a: "Upgrade or downgrade anytime. Your data, products, and settings stay exactly as they are. Changes take effect immediately.",
+  },
+  {
+    q: "Who owns my content and data?",
+    a: "You do. Your content, products, customer data, and storefront are yours. You can export your data and cancel anytime. We never claim ownership of your content.",
+  },
 ];
 
 export function PricingFAQ() {
   return (
-    <section className="px-4 py-16 sm:px-8 sm:py-24">
+    <section id="faq" className="px-4 py-16 sm:px-8 sm:py-24">
       <div className="mx-auto max-w-2xl">
         <h3 className="text-center text-lg font-semibold text-white mb-8">Frequently asked questions</h3>
         <div className="space-y-4">

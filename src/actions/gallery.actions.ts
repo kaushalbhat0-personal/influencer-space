@@ -1,204 +1,85 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
-import { logAction } from "@/lib/audit";
+import { GalleryService } from "@/lib/gallery/service";
+import { BulkActionEngine, type BulkExecutor } from "@/lib/bulk/BulkActionEngine";
+import type { FetchGalleryParams } from "@/lib/gallery/types";
 
-export type GalleryItemData = {
-  id: string;
-  url: string;
-  caption: string | null;
-  isVideo: boolean;
-  order: number;
-  createdAt: Date;
+const bulkExecutor: BulkExecutor = {
+  publish: (ids, tenantId) => GalleryService.bulkPublish(ids, tenantId),
+  archive: (ids, tenantId) => GalleryService.bulkArchive(ids, tenantId),
+  delete: (ids, tenantId) => GalleryService.bulkDelete(ids, tenantId),
 };
 
-async function requireAuth(tenantId: string): Promise<void> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) throw new Error("Unauthorized");
-  if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
-    throw new Error("Forbidden");
-  }
+export const bulkEngine = new BulkActionEngine(bulkExecutor, "Gallery", "/admin/gallery");
+
+export type GalleryItemData = import("@/lib/gallery/types").GalleryItemData;
+
+export async function fetchGalleryItems(params: FetchGalleryParams) {
+  try { const data = await GalleryService.fetch(params); return { success: true as const, data }; }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to fetch gallery" }; }
 }
 
-function toItem(row: {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string;
-  mediaType: string;
-  videoUrl: string | null;
-  order: number;
-  createdAt: Date;
-}): GalleryItemData {
-  return {
-    id: row.id,
-    url: row.mediaType === "video" && row.videoUrl ? row.videoUrl : row.imageUrl,
-    caption: row.description || row.title,
-    isVideo: row.mediaType === "video",
-    order: row.order,
-    createdAt: row.createdAt,
-  };
+export async function createGalleryItem(tenantId: string, data: Record<string, unknown>) {
+  try { return await GalleryService.create(tenantId, data); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to create item" }; }
 }
 
-export async function fetchGalleryItems(
-  tenantId: string,
-): Promise<{ success: boolean; data?: GalleryItemData[]; error?: string }> {
-  try {
-    await requireAuth(tenantId);
-
-    const rows = await prisma.galleryImage.findMany({
-      where: { tenantId },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    });
-
-    return { success: true, data: rows.map(toItem) };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch gallery items",
-    };
-  }
+export async function updateExistingGalleryItem(tenantId: string, data: { id: string } & Record<string, unknown>) {
+  try { return await GalleryService.update(tenantId, data); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to update item" }; }
 }
 
-export async function createGalleryItem(
-  tenantId: string,
-  data: { url: string; caption?: string; isVideo: boolean },
-): Promise<{ success: boolean; data?: GalleryItemData; error?: string }> {
-  try {
-    await requireAuth(tenantId);
-
-    if (!data.url) {
-      return { success: false, error: "URL is required" };
-    }
-
-    const maxOrder = await prisma.galleryImage.aggregate({
-      where: { tenantId },
-      _max: { order: true },
-    });
-
-    const row = await prisma.$transaction(async (tx) => {
-      const r = await tx.galleryImage.create({
-        data: {
-          tenantId,
-          title: data.caption || "Untitled",
-          description: data.caption || null,
-          imageUrl: data.isVideo ? "" : data.url,
-          mediaType: data.isVideo ? "video" : "image",
-          videoUrl: data.isVideo ? data.url : null,
-          category: "general",
-          order: (maxOrder._max.order ?? 0) + 1,
-        },
-      });
-      await logAction(tenantId, "createGalleryItem", { itemId: r.id, caption: data.caption ?? null }, tx);
-      return r;
-    });
-
-    revalidatePath("/admin/gallery");
-    return { success: true, data: toItem(row) };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to create gallery item",
-    };
-  }
+export async function removeGalleryItem(id: string, tenantId: string) {
+  try { return await GalleryService.delete(id, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to delete item" }; }
 }
 
-export async function removeGalleryItem(
-  id: string,
-  tenantId: string,
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await requireAuth(tenantId);
-
-    const existing = await prisma.galleryImage.findFirst({
-      where: { id, tenantId },
-    });
-    if (!existing) {
-      return { success: false, error: "Gallery item not found" };
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.galleryImage.delete({ where: { id } });
-      await logAction(tenantId, "deleteGalleryItem", { itemId: id }, tx);
-    });
-
-    revalidatePath("/admin/gallery");
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to delete gallery item",
-    };
-  }
+export async function updateGalleryOrder(tenantId: string, updates: { id: string; order: number }[]) {
+  try { return await GalleryService.reorder(tenantId, updates); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to reorder" }; }
 }
 
-export async function updateGalleryOrder(
-  tenantId: string,
-  updates: { id: string; order: number }[],
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await requireAuth(tenantId);
-
-    await prisma.$transaction(
-      updates.map((u) =>
-        prisma.galleryImage.update({
-          where: { id: u.id },
-          data: { order: u.order },
-        }),
-      ),
-    );
-
-    await logAction(tenantId, "reorderGallery", { count: updates.length });
-    revalidatePath("/admin/gallery");
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to reorder gallery items",
-    };
-  }
+export async function publishGalleryItem(id: string, tenantId: string) {
+  try { return await GalleryService.publish(id, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to publish" }; }
 }
 
-export async function updateExistingGalleryItem(
-  tenantId: string,
-  data: { id: string; caption?: string; url?: string; isVideo?: boolean },
-): Promise<{ success: boolean; data?: GalleryItemData; error?: string }> {
-  try {
-    await requireAuth(tenantId);
-
-    if (!data.id) return { success: false, error: "Item ID is required" };
-
-    const existing = await prisma.galleryImage.findFirst({
-      where: { id: data.id, tenantId },
-    });
-    if (!existing) return { success: false, error: "Gallery item not found" };
-
-    const row = await prisma.$transaction(async (tx) => {
-      const r = await tx.galleryImage.update({
-        where: { id: data.id },
-        data: {
-          title: data.caption ?? existing.title,
-          description: data.caption ?? existing.description,
-          imageUrl: data.isVideo ? existing.imageUrl : (data.url ?? existing.imageUrl),
-          videoUrl: data.isVideo ? (data.url ?? existing.videoUrl) : existing.videoUrl,
-          mediaType: data.isVideo !== undefined ? (data.isVideo ? "video" : "image") : existing.mediaType,
-        },
-      });
-      await logAction(tenantId, "updateGalleryItem", { itemId: data.id }, tx);
-      return r;
-    });
-
-    revalidatePath("/admin/gallery");
-    return { success: true, data: toItem(row) };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update gallery item",
-    };
-  }
+export async function unpublishGalleryItem(id: string, tenantId: string) {
+  try { return await GalleryService.unpublish(id, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to unpublish" }; }
 }
 
+export async function archiveGalleryItem(id: string, tenantId: string) {
+  try { return await GalleryService.archive(id, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to archive" }; }
+}
 
+export async function restoreGalleryItem(id: string, tenantId: string) {
+  try { return await GalleryService.restore(id, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to restore" }; }
+}
+
+export async function toggleFeatured(id: string, tenantId: string, isFeatured: boolean) {
+  try { return await GalleryService.toggleFeatured(id, tenantId, isFeatured); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Failed to toggle featured" }; }
+}
+
+export async function bulkPublishGallery(ids: string[], tenantId: string) {
+  try { return await bulkEngine.execute("publish", ids, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk publish failed" }; }
+}
+
+export async function bulkArchiveGallery(ids: string[], tenantId: string) {
+  try { return await bulkEngine.execute("archive", ids, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk archive failed" }; }
+}
+
+export async function bulkDeleteGallery(ids: string[], tenantId: string) {
+  try { return await bulkEngine.execute("delete", ids, tenantId); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk delete failed" }; }
+}
+
+export async function bulkFeatureGallery(ids: string[], tenantId: string, isFeatured: boolean) {
+  try { return await GalleryService.bulkFeature(ids, tenantId, isFeatured); }
+  catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk feature failed" }; }
+}

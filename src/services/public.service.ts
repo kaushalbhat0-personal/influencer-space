@@ -39,12 +39,22 @@ export type PublicProfile = {
   };
 };
 
+export type PublicProductImage = {
+  url: string;
+  alt: string;
+  order: number;
+};
+
 export type PublicProductData = {
   id: string;
   name: string;
   description: string | null;
   price: number;
   imageUrl: string | null;
+  slug?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  images?: PublicProductImage[] | null;
 };
 
 export type PublicLinkData = {
@@ -136,5 +146,5 @@ export async function getPublicPageData(tenantId: string): Promise<PublicPageDat
     imageMobileAlignment: heroRaw.imageMobileAlignment || "center",
   };
 
-  return { profile, hero, products, links, gallery, milestones, games, feed };
+  return { profile, hero, products: products as PublicProductData[], links, gallery, milestones, games, feed };
 }

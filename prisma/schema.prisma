@@ -312,22 +312,31 @@ model User {
 }
 
 model Product {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @db.Uuid
-  name        String
-  description String?
-  price       Float
-  imageUrl    String?
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @db.Uuid
+  name           String
+  description    String?
+  price          Float
+  imageUrl       String?
+  images         Json?     @default("[]")
+  slug           String?
+  status         String    @default("PUBLISHED")
+  seoTitle       String?
+  seoDescription String?
+  order          Int       @default(0)
+  isActive       Boolean   @default(true)
+  isFeatured     Boolean   @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   orders ProductOrder[]
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+  @@index([slug, tenantId])
+  @@index([status])
 }
 
 model ProductOrder {
@@ -411,22 +420,32 @@ model Setting {
 }
 
 model GalleryImage {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
   title       String
   description String?
+  altText     String?
   imageUrl    String
-  mediaType   String   @default("image")
+  mediaType   String    @default("image")
   videoUrl    String?
-  category    String   @default("bgmi")
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  width       Int?
+  height      Int?
+  fileSize    Int?
+  category    String    @default("general")
+  tags        String?
+  status      String    @default("PUBLISHED")
+  isFeatured  Boolean   @default(false)
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+  @@index([status])
+  @@index([category])
 }
 
 model TimelineEvent {
@@ -1082,9 +1101,9 @@ model WorkflowExecution {
 model AnalyticsEvent {
   id          String   @id @default(uuid()) @db.Uuid
   tenantId    String?  @db.Uuid
-  source      String   // "builder" | "publishing" | "commerce" | "ai" | "workflow" | "media" | "auth"
-  eventType   String   // "page_view" | "purchase" | "ai_generation" | "workflow_completed" | "asset_uploaded"
-  entityId    String?  // ID of the entity the event relates to
+  source      String
+  eventType   String
+  entityId    String?
   payload     Json     @default("{}")
   occurredAt  DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -1093,4 +1112,209 @@ model AnalyticsEvent {
   @@index([source, eventType])
   @@index([eventType, occurredAt])
   @@index([occurredAt])
+}
+
+// ── PLATFORM EVENTS ──────────────────────────────────────────────────────────
+
+model PlatformEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  eventType   String
+  payload     Json     @default("{}")
+  aggregateId String?
+  source      String   @default("platform")
+  occurredAt  DateTime @default(now())
+
+  @@index([eventType, occurredAt])
+  @@index([aggregateId])
+  @@index([occurredAt])
+}
+
+// ── PARTNER ──────────────────────────────────────────────────────────────────
+
+enum PartnerType {
+  freelancer
+  agency
+  enterprise
+  marketplace
+  affiliate
+}
+
+enum PartnerStatus {
+  pending
+  active
+  suspended
+  disabled
+  invited
+  archived
+}
+
+model Partner {
+  id              String        @id @db.Uuid
+  type            PartnerType   @default(agency)
+  status          PartnerStatus @default(active)
+  businessName    String
+  logo            String?
+  website         String?
+  description     String?
+  taxIdentifier   String?
+  country         String?
+  timezone        String?       @default("Asia/Kolkata")
+  supportEmail    String?
+  contactPerson   String?
+  socialLinks     Json          @default("{}")
+  settings        Json          @default("{}")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  workspaceAssignments PartnerWorkspaceAssignment[]
+  invites               PartnerInvite[]
+  members               PartnerMember[]
+}
+
+model PartnerMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  partnerId String   @db.Uuid
+  userId    String
+  role      String   @default("viewer")
+  status    String   @default("active")
+  joinedAt  DateTime @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([partnerId, userId])
+}
+
+model PartnerWorkspaceAssignment {
+  id            String   @id @default(uuid()) @db.Uuid
+  partnerId     String   @db.Uuid
+  workspaceId   String   @unique
+  workspaceName String
+  workspaceSlug String?
+  status        String   @default("active")
+  reason        String   @default("created")
+  assignedBy    String
+  assignedAt    DateTime @default(now())
+  transferredAt DateTime?
+  removedAt     DateTime?
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([status])
+}
+
+model PartnerInvite {
+  id          String   @id @default(uuid()) @db.Uuid
+  partnerId   String   @db.Uuid
+  email       String
+  role        String   @default("viewer")
+  status      String   @default("pending")
+  invitedBy   String
+  acceptedBy  String?
+  acceptedAt  DateTime?
+  declinedAt  DateTime?
+  revokedAt   DateTime?
+  expiredAt   DateTime?
+  expiresAt   DateTime
+  message     String?
+  createdAt   DateTime @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId, status])
+  @@index([email])
+}
+
+// ── COMMISSION ───────────────────────────────────────────────────────────────
+
+model CommissionRule {
+  id                    String   @id @default(uuid()) @db.Uuid
+  type                  String   @default("default")
+  status                String   @default("active")
+  partnerId             String?  @db.Uuid
+  platformSharePercent  Int
+  partnerSharePercent   Int
+  effectiveFrom         DateTime @default(now())
+  effectiveTo           DateTime?
+  priority              Int      @default(100)
+  label                 String
+  description           String?
+  metadata              Json     @default("{}")
+  createdAt             DateTime @default(now())
+
+  @@index([partnerId])
+  @@index([status, effectiveFrom, effectiveTo])
+}
+
+model CommissionEntry {
+  id              String   @id @default(uuid()) @db.Uuid
+  invoiceId       String
+  partnerId       String   @db.Uuid
+  subscriptionId  String?
+  planCode        String
+  amount          Float
+  platformShare   Float
+  partnerShare    Float
+  platformPercent Int
+  partnerPercent  Int
+  entryType       String   @default("commission_created")
+  status          String   @default("pending")
+  description     String?
+  ruleId          String?  @db.Uuid
+  parentEntryId   String?  @db.Uuid
+  clearedAt       DateTime?
+  reversedAt      DateTime?
+  audit           Json     @default("{}")
+  createdAt       DateTime @default(now())
+
+  @@index([partnerId, createdAt])
+  @@index([invoiceId])
+  @@index([status])
+}
+
+// ── PAYOUT ───────────────────────────────────────────────────────────────────
+
+model PayoutBatch {
+  id              String   @id @default(uuid()) @db.Uuid
+  partnerId       String   @db.Uuid
+  status          String   @default("pending")
+  provider        String   @default("manual")
+  currency        String   @default("INR")
+  total           Float
+  fee             Float    @default(0)
+  netAmount       Float
+  entryCount      Int      @default(1)
+  idempotencyKey  String   @unique
+  providerReference String?
+  bankReference   String?
+  failureReason   String?
+  audit           Json     @default("{}")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reservations PayoutReservation[]
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([idempotencyKey])
+}
+
+model PayoutReservation {
+  id                 String   @id @default(uuid()) @db.Uuid
+  batchId            String   @db.Uuid
+  partnerId          String   @db.Uuid
+  commissionEntryId  String
+  amount             Float
+  status             String   @default("reserved")
+  createdAt          DateTime @default(now())
+  settledAt          DateTime?
+  releasedAt         DateTime?
+
+  batch PayoutBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([partnerId])
+  @@index([commissionEntryId])
+  @@index([status])
 }

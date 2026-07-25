@@ -1,80 +1,88 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ContentContainer, PageHeader, MetricGrid, PageSection, DashboardGrid, DashboardGridMain, DashboardGridSide } from "@/components/layout";
+import { ContentContainer, PageHeader, DashboardGrid, DashboardGridMain, DashboardGridSide, MetricGrid } from "@/components/layout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { fetchAnalytics } from "@/actions/order.actions";
+import { DashboardWidgetSkeleton } from "@/components/ui/DashboardWidget";
 import { MetricCard } from "@/components/data/MetricCard";
-import { Package, IndianRupee, TrendingUp, ShoppingBag } from "lucide-react";
+import { Package, IndianRupee, ShoppingBag, TrendingUp } from "lucide-react";
+import { computeDateRange, formatCurrency } from "@/lib/analytics/date";
+import { DEFAULT_DATE_PRESET } from "@/lib/analytics/constants";
+import { computeAnalytics } from "@/lib/analytics/queries";
+import { AnalyticsClient } from "./_components/analytics-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function AnalyticsPage() {
+async function AnalyticsShell({ tenantId }: { tenantId: string }) {
+  const range = computeDateRange(DEFAULT_DATE_PRESET);
+  const summary = await computeAnalytics(tenantId, range);
+
+  return (
+    <>
+      <div className="mb-6">
+        <PageHeader
+          title="Analytics"
+          description="Track store performance, revenue, and customer trends."
+          breadcrumbs={[{ label: "Dashboard", href: "/admin/dashboard" }, { label: "Analytics" }]}
+        />
+      </div>
+
+      <div className="mb-6">
+        <MetricGrid>
+          <MetricCard label="Total Revenue" value={formatCurrency(summary.revenue.total)} icon={IndianRupee} subtext={`${summary.orders.completed} completed orders`} />
+          <MetricCard label="Total Orders" value={summary.orders.total} icon={Package} subtext={`${summary.orders.completed} completed`} />
+          <MetricCard label="Active Products" value={summary.products.active} icon={ShoppingBag} subtext={`${summary.products.featured} featured`} />
+          <MetricCard label="Conversion" value={summary.conversion.overall > 0 ? `${summary.conversion.overall}%` : "—"} icon={TrendingUp} subtext={summary.orders.total > 0 ? `${summary.orders.completed} of ${summary.orders.total}` : "No orders"} />
+        </MetricGrid>
+      </div>
+
+      <ErrorBoundary>
+        <Suspense fallback={<AnalyticsFallback />}>
+          <AnalyticsClient tenantId={tenantId} initialSummary={summary} />
+        </Suspense>
+      </ErrorBoundary>
+    </>
+  );
+}
+
+function AnalyticsFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="h-8 w-96 rounded bg-white/5 animate-pulse" />
+      <DashboardGrid>
+        <DashboardGridMain>
+          <DashboardWidgetSkeleton rows={6} />
+          <DashboardWidgetSkeleton rows={4} />
+        </DashboardGridMain>
+        <DashboardGridSide>
+          <DashboardWidgetSkeleton rows={5} />
+          <DashboardWidgetSkeleton rows={4} />
+        </DashboardGridSide>
+      </DashboardGrid>
+    </div>
+  );
+}
+
+export default async function AdminAnalyticsPage() {
   const session = await getServerSession(authOptions);
   const tenantId = session?.user?.tenantId;
-  if (!tenantId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
 
-  let data: Awaited<ReturnType<typeof fetchAnalytics>> | null = null;
-  try { data = await fetchAnalytics(tenantId); } catch { /* handled */ }
-
-  if (!data) {
+  if (!tenantId) {
     return (
       <ContentContainer>
-        <PageHeader title="Analytics" description="Track store performance" />
-        <p className="text-zinc-500">Unable to load analytics. Please try again.</p>
+        <div className="admin-card p-8 text-center" role="alert">
+          <p className="text-lg font-semibold text-white">Unauthorized</p>
+          <p className="mt-1 text-sm text-zinc-400">Please log in to view analytics.</p>
+        </div>
       </ContentContainer>
     );
   }
 
   return (
     <ContentContainer>
-      <PageHeader
-        title="Analytics"
-        description="Track store performance, revenue, and customer trends."
-        breadcrumbs={[{ label: "Dashboard", href: "/admin/dashboard" }, { label: "Analytics" }]}
-      />
-
-      <PageSection>
-        <MetricGrid>
-          <MetricCard label="Total Orders" value={data.completedOrders} icon={Package} />
-          <MetricCard label="Total Revenue" value={`₹${data.totalRevenue.toLocaleString("en-IN")}`} icon={IndianRupee} />
-          <MetricCard label="Active Products" value={data.activeProducts} icon={ShoppingBag} />
-          <MetricCard
-            label="Conversion"
-            value={data.totalOrders > 0 ? `${Math.round((data.completedOrders / data.totalOrders) * 100)}%` : "—"}
-            icon={TrendingUp}
-          />
-        </MetricGrid>
-      </PageSection>
-
-      <ErrorBoundary>
-        <DashboardGrid>
-          <DashboardGridMain>
-            <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-zinc-400 mb-4">Revenue Overview</h3>
-              <div className="h-48 flex items-center justify-center">
-                <p className="text-3xl font-bold text-white font-display">₹{data.totalRevenue.toLocaleString("en-IN")}</p>
-              </div>
-            </div>
-          </DashboardGridMain>
-          <DashboardGridSide>
-            <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-zinc-400 mb-4">Top Products</h3>
-              {data.topProducts.length > 0 ? (
-                <ul className="space-y-2">
-                  {data.topProducts.map((name, i) => (
-                    <li key={name} className="flex items-center gap-3 text-sm">
-                      <span className="text-xs font-bold text-zinc-600 w-4">{i + 1}</span>
-                      <span className="text-zinc-300">{name}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-zinc-500">No products yet</p>
-              )}
-            </div>
-          </DashboardGridSide>
-        </DashboardGrid>
-      </ErrorBoundary>
+      <Suspense fallback={<AnalyticsFallback />}>
+        <AnalyticsShell tenantId={tenantId} />
+      </Suspense>
     </ContentContainer>
   );
 }

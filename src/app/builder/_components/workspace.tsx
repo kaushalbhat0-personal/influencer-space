@@ -33,12 +33,14 @@ export function BuilderWorkspace() {
 
   // Load builder state from DB on mount
   useEffect(() => {
-    loadBuilderPages().then((res) => {
-      if (res.success && res.pages && res.pages.length > 0) {
-        builderStore.hydrate(res.pages);
-      }
-      setLoading(false);
-    });
+    loadBuilderPages()
+      .then((res) => {
+        if (res.success && res.pages && res.pages.length > 0) {
+          builderStore.hydrate(res.pages);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   // Auto-save when isDirty changes (debounced)

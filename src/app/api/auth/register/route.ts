@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 const FREE_PLAN = { plan: "STARTER", seats: 1, status: "FREE" };
 
 export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for") ?? "register";
+  const rateCheck = checkRateLimit(`register:${ip}`, "/api/auth/register");
+  if (!rateCheck.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+
   try {
     const body = await req.json();
     const email: string = body.email?.trim().toLowerCase();

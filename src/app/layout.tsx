@@ -27,19 +27,26 @@ const APP_URL = getPlatformConfig().appUrl;
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "CreatorStore | The Best Shopify Alternative for Indian Creators",
+    default:
+      "CreatorStore | AI-Powered Creator Business Platform",
     template: "%s — CreatorStore",
   },
   description:
-    "Launch your merch store, sell digital downloads, and build your creator portfolio with zero setup fees. Native UPI checkout, Instagram/YouTube integration, and custom domains.",
+    "CreatorStore is an AI-powered creator business platform. Paste your social profile and AI generates a complete storefront with products, checkout, analytics, SEO, and visual builder. Native UPI payments. Custom domains.",
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     siteName: "CreatorStore",
     url: APP_URL,
+    title: "CreatorStore | AI-Powered Creator Business Platform",
+    description:
+      "AI builds your entire creator business from your social profile. Storefront, products, payments, analytics, and visual builder — all in one.",
   },
   twitter: {
     card: "summary_large_image",
+    title: "CreatorStore | AI-Powered Creator Business Platform",
+    description:
+      "AI builds your entire creator business from your social profile.",
   },
 };
 

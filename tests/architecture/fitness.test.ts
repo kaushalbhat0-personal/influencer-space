@@ -59,10 +59,9 @@ describe("Fitness: ADR Compliance", () => {
 describe("Fitness: Test Coverage", () => {
   it("Major features must have test files", () => {
     const tests = fs.readdirSync("tests/unit");
-    expect(tests).toContain("commerce.test.ts");
-    expect(tests).toContain("ai-generation.test.ts");
-    expect(tests).toContain("gallery-module.test.ts");
-    expect(tests).toContain("product-module.test.ts");
+    expect(tests).toContain("generation-intelligence.test.ts");
+    expect(tests).toContain("capabilities.test.ts");
+    expect(tests).toContain("billing-v2.test.ts");
   });
 });
 

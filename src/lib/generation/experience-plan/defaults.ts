@@ -1,0 +1,90 @@
+import type { ExperiencePlan } from "./types";
+
+export const DEFAULTS: ExperiencePlan = {
+  hero: {
+    variant: "standard",
+    headlineAlignment: "center",
+    showProfile: true,
+    showPricing: false,
+    showSocialProof: false,
+    overlay: false,
+    ctaStyle: "solid",
+    badge: false,
+  },
+  pricing: {
+    visibility: "full",
+    showComparison: false,
+    badgeStyle: "none",
+  },
+  socialProof: {
+    testimonialsEnabled: false,
+    testimonialCount: 2,
+    testimonialStyle: "carousel",
+    showRatings: false,
+    showReviewCount: false,
+    socialLinksStyle: "icons",
+  },
+  gallery: {
+    layout: "grid",
+    columns: 3,
+    showTitles: true,
+    lightboxEnabled: true,
+    titleStyle: "niche_label",
+  },
+  testimonial: {
+    enabled: false,
+    sectionPlacement: "after_hero",
+    maxItems: 2,
+    style: "carousel",
+  },
+  cta: {
+    primaryStyle: "solid",
+    primarySize: "md",
+    secondaryVisible: true,
+    secondaryStyle: "outline",
+    icon: "arrow",
+  },
+  footer: {
+    showSocialLinks: false,
+    showNewsletter: false,
+    showBackToTop: true,
+    linksLayout: "horizontal",
+    copyrightStyle: "full",
+  },
+  navigation: {
+    style: "standard",
+    sticky: true,
+    transparent: false,
+    searchEnabled: false,
+  },
+  theme: {
+    density: "comfortable",
+    cardStyle: "flat",
+    borderRadius: "rounded",
+    shadowDepth: "subtle",
+  },
+  sectionOrder: {
+    order: ["hero"],
+    pinned: ["hero"],
+    hidden: [],
+  },
+  page: {
+    pageTypes: ["home", "about", "contact"],
+    homePageSections: ["hero"],
+  },
+  conversionGoal: {
+    primary: "awareness",
+    secondary: "engagement",
+  },
+  seo: {
+    priority: "medium",
+    focusKeywords: 2,
+    structuredData: true,
+    openGraph: true,
+  },
+  contentDensity: "normal",
+  visualRhythm: "balanced",
+  mobilePriority: "medium",
+  animationProfile: "moderate",
+  recommendationSlots: 2,
+};

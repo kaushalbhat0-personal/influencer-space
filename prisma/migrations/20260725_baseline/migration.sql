@@ -1,0 +1,1633 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'AGENCY_ADMIN', 'AGENCY_STAFF', 'ADMIN');
+
+-- CreateEnum
+CREATE TYPE "AgencyStatus" AS ENUM ('ACTIVE', 'TRIAL', 'SUSPENDED', 'EXPIRED');
+
+-- CreateEnum
+CREATE TYPE "WorkspaceType" AS ENUM ('TENANT', 'AGENCY');
+
+-- CreateEnum
+CREATE TYPE "WorkspaceRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
+
+-- CreateEnum
+CREATE TYPE "WorkspaceStatus" AS ENUM ('ACTIVE', 'SUSPENDED', 'CLOSED');
+
+-- CreateEnum
+CREATE TYPE "PartnerType" AS ENUM ('freelancer', 'agency', 'enterprise', 'marketplace', 'affiliate');
+
+-- CreateEnum
+CREATE TYPE "PartnerStatus" AS ENUM ('pending', 'active', 'suspended', 'disabled', 'invited', 'archived');
+
+-- CreateTable
+CREATE TABLE "Tenant" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "subdomain" TEXT NOT NULL,
+    "customDomain" TEXT,
+    "razorpayAccountId" TEXT,
+    "razorpaySetupComplete" BOOLEAN NOT NULL DEFAULT false,
+    "youtubeChannelId" TEXT,
+    "twitchChannelId" TEXT,
+    "youtubeApiKey" TEXT,
+    "instagramApiKey" TEXT,
+    "instagramAccessToken" TEXT,
+    "instagramRefreshToken" TEXT,
+    "instagramTokenExpiry" TIMESTAMP(3),
+    "twitchAccessToken" TEXT,
+    "twitchRefreshToken" TEXT,
+    "twitchTokenExpiry" TIMESTAMP(3),
+    "themeId" UUID,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Tenant_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Website" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "themePackageId" TEXT NOT NULL DEFAULT 'neon-dark',
+    "themeColors" JSONB NOT NULL DEFAULT '{}',
+    "themeFonts" JSONB NOT NULL DEFAULT '{}',
+    "themeConfig" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Website_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Brand" (
+    "id" UUID NOT NULL,
+    "websiteId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "tagline" TEXT NOT NULL DEFAULT '',
+    "bio" TEXT NOT NULL DEFAULT '',
+    "avatarUrl" TEXT,
+    "bannerUrl" TEXT,
+    "socialLinks" JSONB NOT NULL DEFAULT '[]',
+
+    CONSTRAINT "Brand_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PublishStatus" (
+    "id" UUID NOT NULL,
+    "websiteId" UUID NOT NULL,
+    "state" TEXT NOT NULL DEFAULT 'draft',
+    "liveVersion" INTEGER,
+    "publishedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PublishStatus_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PublishSnapshot" (
+    "id" UUID NOT NULL,
+    "websiteId" UUID NOT NULL,
+    "version" INTEGER NOT NULL,
+    "state" TEXT NOT NULL,
+    "snapshot" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PublishSnapshot_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Theme" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "primaryColor" TEXT NOT NULL DEFAULT '#2D1B69',
+    "secondaryColor" TEXT NOT NULL DEFAULT '#00f5ff',
+    "accentColor" TEXT NOT NULL DEFAULT '#ff00e5',
+    "backgroundColor" TEXT NOT NULL DEFAULT '#09090b',
+    "textColor" TEXT NOT NULL DEFAULT '#ffffff',
+    "fontFamily" TEXT NOT NULL DEFAULT 'Inter',
+    "borderRadius" TEXT NOT NULL DEFAULT '8px',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Theme_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Subscription" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "razorpaySubscriptionId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'FREE',
+    "plan" TEXT NOT NULL DEFAULT 'STARTER',
+    "currentPeriodEnd" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WebsiteAgency" (
+    "id" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "subdomain" TEXT NOT NULL,
+    "customDomain" TEXT,
+    "razorpayAccountId" TEXT,
+    "razorpaySetupComplete" BOOLEAN NOT NULL DEFAULT false,
+    "defaultThemeId" UUID,
+    "platformFeePercent" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "status" "AgencyStatus" NOT NULL DEFAULT 'TRIAL',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WebsiteAgency_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AgencyTenant" (
+    "id" UUID NOT NULL,
+    "agencyId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "revSharePercent" DOUBLE PRECISION NOT NULL DEFAULT 20,
+    "productRevSharePercent" DOUBLE PRECISION NOT NULL DEFAULT 10,
+    "canEditTheme" BOOLEAN NOT NULL DEFAULT true,
+    "canEditProducts" BOOLEAN NOT NULL DEFAULT true,
+    "canEditGallery" BOOLEAN NOT NULL DEFAULT true,
+    "canEditLinks" BOOLEAN NOT NULL DEFAULT true,
+    "canEditMilestones" BOOLEAN NOT NULL DEFAULT true,
+    "canEditSettings" BOOLEAN NOT NULL DEFAULT false,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AgencyTenant_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AgencySubscription" (
+    "id" UUID NOT NULL,
+    "agencyId" UUID NOT NULL,
+    "razorpaySubscriptionId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'FREE',
+    "plan" TEXT NOT NULL DEFAULT 'STARTER',
+    "maxManagedTenants" INTEGER NOT NULL DEFAULT 3,
+    "currentPeriodEnd" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AgencySubscription_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Workspace" (
+    "id" UUID NOT NULL,
+    "type" "WorkspaceType" NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "status" "WorkspaceStatus" NOT NULL DEFAULT 'ACTIVE',
+    "isFreelancer" BOOLEAN NOT NULL DEFAULT false,
+    "locale" TEXT NOT NULL DEFAULT 'en-IN',
+    "timezone" TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "onboardingCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "tenantId" UUID,
+    "agencyId" UUID,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Workspace_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WorkspaceMember" (
+    "id" UUID NOT NULL,
+    "workspaceId" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "role" "WorkspaceRole" NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "invitedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "joinedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "WorkspaceMember_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID,
+    "agencyId" UUID,
+    "name" TEXT,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "role" "Role" NOT NULL DEFAULT 'ADMIN',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Product" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "price" DOUBLE PRECISION NOT NULL,
+    "imageUrl" TEXT,
+    "images" JSONB DEFAULT '[]',
+    "slug" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PUBLISHED',
+    "seoTitle" TEXT,
+    "seoDescription" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "archivedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProductOrder" (
+    "id" TEXT NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "productId" UUID NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "razorpayOrderId" TEXT NOT NULL,
+    "razorpayPaymentId" TEXT,
+    "fanEmail" TEXT,
+    "platformFeePercent" DOUBLE PRECISION NOT NULL DEFAULT 5,
+    "agencyFeePercent" DOUBLE PRECISION,
+    "agencyId" UUID,
+    "routeTransferId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ProductOrder_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AffiliateLink" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "imageUrl" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "clicks" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AffiliateLink_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ContactSubmission" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ContactSubmission_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "NewsletterSubscriber" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "email" TEXT NOT NULL,
+    "name" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "NewsletterSubscriber_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Setting" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "key" TEXT NOT NULL,
+    "value" JSONB NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Setting_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "GalleryImage" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "altText" TEXT,
+    "imageUrl" TEXT NOT NULL,
+    "mediaType" TEXT NOT NULL DEFAULT 'image',
+    "videoUrl" TEXT,
+    "width" INTEGER,
+    "height" INTEGER,
+    "fileSize" INTEGER,
+    "category" TEXT NOT NULL DEFAULT 'general',
+    "tags" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PUBLISHED',
+    "isFeatured" BOOLEAN NOT NULL DEFAULT false,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "archivedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "GalleryImage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TimelineEvent" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "year" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "imageUrl" TEXT,
+    "stats" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "TimelineEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Game" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "logoUrl" TEXT,
+    "description" TEXT,
+    "genre" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Game_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SocialStats" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "platform" TEXT NOT NULL,
+    "followers" INTEGER NOT NULL DEFAULT 0,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "posts" INTEGER NOT NULL DEFAULT 0,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "SocialStats_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AuditLog" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "action" TEXT NOT NULL,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ContentFeedItem" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "platform" TEXT NOT NULL,
+    "mediaType" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "thumbnailUrl" TEXT,
+    "caption" TEXT,
+    "permalink" TEXT,
+    "pinned" BOOLEAN NOT NULL DEFAULT false,
+    "hidden" BOOLEAN NOT NULL DEFAULT false,
+    "externalId" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "syncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ContentFeedItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Page" (
+    "id" UUID NOT NULL,
+    "websiteId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "isHome" BOOLEAN NOT NULL DEFAULT false,
+    "theme" TEXT NOT NULL DEFAULT 'default',
+    "config" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Page_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Section" (
+    "id" UUID NOT NULL,
+    "pageId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "visible" BOOLEAN NOT NULL DEFAULT true,
+    "locked" BOOLEAN NOT NULL DEFAULT false,
+    "config" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Section_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Block" (
+    "id" UUID NOT NULL,
+    "sectionId" UUID NOT NULL,
+    "moduleId" TEXT NOT NULL,
+    "parentId" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "visible" BOOLEAN NOT NULL DEFAULT true,
+    "locked" BOOLEAN NOT NULL DEFAULT false,
+    "config" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Block_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CreatorProvisionRun" (
+    "id" UUID NOT NULL,
+    "creatorName" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "sourcePlatform" TEXT,
+    "tenantId" UUID,
+    "tenantSlug" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "currentStep" TEXT NOT NULL DEFAULT 'IMPORT_REQUESTED',
+    "error" TEXT,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "durationMs" INTEGER,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+
+    CONSTRAINT "CreatorProvisionRun_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CreatorProvisionEvent" (
+    "id" UUID NOT NULL,
+    "runId" UUID NOT NULL,
+    "step" TEXT NOT NULL,
+    "event" TEXT NOT NULL,
+    "message" TEXT,
+    "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CreatorProvisionEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingAccount" (
+    "id" UUID NOT NULL,
+    "accountType" TEXT NOT NULL,
+    "accountId" UUID NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "BillingAccount_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingPlan" (
+    "id" UUID NOT NULL,
+    "code" TEXT NOT NULL,
+    "family" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "cycle" TEXT NOT NULL DEFAULT 'monthly',
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BillingPlan_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingFeature" (
+    "id" UUID NOT NULL,
+    "key" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "valueType" TEXT NOT NULL DEFAULT 'integer',
+
+    CONSTRAINT "BillingFeature_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingPlanFeature" (
+    "planId" UUID NOT NULL,
+    "featureId" UUID NOT NULL,
+    "intValue" INTEGER,
+    "boolValue" BOOLEAN,
+    "strValue" TEXT,
+
+    CONSTRAINT "BillingPlanFeature_pkey" PRIMARY KEY ("planId","featureId")
+);
+
+-- CreateTable
+CREATE TABLE "BillingSubscription" (
+    "id" UUID NOT NULL,
+    "accountId" UUID NOT NULL,
+    "workspaceId" UUID,
+    "planId" UUID NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "trialEndsAt" TIMESTAMP(3),
+    "renewsAt" TIMESTAMP(3),
+    "cancelledAt" TIMESTAMP(3),
+    "cancellationReason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "BillingSubscription_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingEvent" (
+    "id" UUID NOT NULL,
+    "accountId" UUID NOT NULL,
+    "workspaceId" UUID,
+    "type" TEXT NOT NULL,
+    "idempotencyKey" TEXT,
+    "payload" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BillingEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BillingInvoice" (
+    "id" UUID NOT NULL,
+    "accountId" UUID NOT NULL,
+    "workspaceId" UUID,
+    "subscriptionId" UUID,
+    "planCode" TEXT NOT NULL,
+    "planVersion" INTEGER NOT NULL DEFAULT 1,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "taxAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "lineItems" JSONB DEFAULT '[]',
+    "provider" TEXT,
+    "providerReference" TEXT,
+    "invoiceUrl" TEXT,
+    "issuedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "paidAt" TIMESTAMP(3),
+    "dueAt" TIMESTAMP(3),
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BillingInvoice_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProviderAccount" (
+    "id" UUID NOT NULL,
+    "provider" TEXT NOT NULL,
+    "externalId" TEXT NOT NULL,
+    "handle" TEXT,
+    "name" TEXT,
+    "profileData" JSONB NOT NULL DEFAULT '{}',
+    "fetchedAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ProviderAccount_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProviderFetchLog" (
+    "id" UUID NOT NULL,
+    "provider" TEXT NOT NULL,
+    "accountId" UUID,
+    "endpoint" TEXT NOT NULL,
+    "quotaUnits" INTEGER NOT NULL DEFAULT 1,
+    "latencyMs" INTEGER NOT NULL DEFAULT 0,
+    "status" TEXT NOT NULL,
+    "cached" BOOLEAN NOT NULL DEFAULT false,
+    "error" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ProviderFetchLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "YouTubeQuotaUsage" (
+    "id" UUID NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "unitsUsed" INTEGER NOT NULL DEFAULT 0,
+    "calls" INTEGER NOT NULL DEFAULT 0,
+    "failures" INTEGER NOT NULL DEFAULT 0,
+    "avgLatencyMs" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "YouTubeQuotaUsage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CreatorProfile" (
+    "id" UUID NOT NULL,
+    "name" TEXT,
+    "description" TEXT,
+    "avatarUrl" TEXT,
+    "bannerUrl" TEXT,
+    "followers" INTEGER NOT NULL DEFAULT 0,
+    "videoCount" INTEGER NOT NULL DEFAULT 0,
+    "viewCount" BIGINT NOT NULL DEFAULT 0,
+    "country" TEXT,
+    "platform" TEXT NOT NULL,
+    "handle" TEXT,
+    "externalId" TEXT,
+    "socialLinks" JSONB NOT NULL DEFAULT '[]',
+    "latestContent" JSONB NOT NULL DEFAULT '[]',
+    "categories" JSONB NOT NULL DEFAULT '[]',
+    "keywords" JSONB NOT NULL DEFAULT '[]',
+    "language" TEXT,
+    "rawResponse" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CreatorProfile_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CreatorIntelligence" (
+    "id" UUID NOT NULL,
+    "profileId" UUID NOT NULL,
+    "niche" TEXT NOT NULL,
+    "subNiche" TEXT,
+    "audience" TEXT,
+    "brandPersonality" TEXT,
+    "brandTone" TEXT,
+    "visualStyle" TEXT,
+    "contentStyle" TEXT,
+    "websiteGoal" TEXT,
+    "monetization" TEXT,
+    "recommendedTheme" TEXT,
+    "recommendedTemplate" TEXT,
+    "recommendedSections" JSONB NOT NULL DEFAULT '[]',
+    "seoKeywords" JSONB NOT NULL DEFAULT '[]',
+    "confidence" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "reasoning" TEXT,
+    "model" TEXT NOT NULL DEFAULT 'gpt-4',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CreatorIntelligence_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CreatorImport" (
+    "id" UUID NOT NULL,
+    "creatorName" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "sourcePlatform" TEXT,
+    "provider" TEXT,
+    "providerAccountId" UUID,
+    "creatorProfileId" UUID,
+    "creatorIntelligenceId" UUID,
+    "tenantId" UUID,
+    "websiteId" UUID,
+    "status" TEXT NOT NULL DEFAULT 'STARTED',
+    "cacheHit" BOOLEAN NOT NULL DEFAULT false,
+    "durationMs" INTEGER,
+    "warnings" JSONB NOT NULL DEFAULT '[]',
+    "errors" JSONB NOT NULL DEFAULT '[]',
+    "correlationId" TEXT,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+
+    CONSTRAINT "CreatorImport_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Asset" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "filename" TEXT NOT NULL,
+    "originalFilename" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL DEFAULT 0,
+    "width" INTEGER,
+    "height" INTEGER,
+    "checksum" TEXT,
+    "storageProvider" TEXT NOT NULL DEFAULT 'local',
+    "storageKey" TEXT NOT NULL,
+    "publicUrl" TEXT,
+    "thumbnailUrl" TEXT,
+    "mediumUrl" TEXT,
+    "largeUrl" TEXT,
+    "altText" TEXT,
+    "referenceCount" INTEGER NOT NULL DEFAULT 0,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Asset_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AssetReference" (
+    "id" UUID NOT NULL,
+    "assetId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "pageId" TEXT,
+    "sectionId" TEXT,
+    "blockId" TEXT,
+    "field" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AssetReference_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DesignTheme" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "mode" TEXT NOT NULL DEFAULT 'light',
+    "active" BOOLEAN NOT NULL DEFAULT false,
+    "tokens" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "DesignTheme_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Offering" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "type" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Offering_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Purchase" (
+    "id" UUID NOT NULL,
+    "offeringId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "customerEmail" TEXT,
+    "customerName" TEXT,
+    "amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "checkoutProvider" TEXT,
+    "providerSessionId" TEXT,
+    "providerPaymentId" TEXT,
+    "fulfilledAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Purchase_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Workflow" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "trigger" TEXT NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "actions" JSONB NOT NULL DEFAULT '[]',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Workflow_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WorkflowExecution" (
+    "id" UUID NOT NULL,
+    "workflowId" UUID NOT NULL,
+    "tenantId" UUID NOT NULL,
+    "trigger" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "actions" JSONB NOT NULL DEFAULT '[]',
+    "results" JSONB NOT NULL DEFAULT '[]',
+    "retries" INTEGER NOT NULL DEFAULT 0,
+    "maxRetries" INTEGER NOT NULL DEFAULT 1,
+    "durationMs" INTEGER,
+    "error" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+
+    CONSTRAINT "WorkflowExecution_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AnalyticsEvent" (
+    "id" UUID NOT NULL,
+    "tenantId" UUID,
+    "source" TEXT NOT NULL,
+    "eventType" TEXT NOT NULL,
+    "entityId" TEXT,
+    "payload" JSONB NOT NULL DEFAULT '{}',
+    "occurredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AnalyticsEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PlatformEvent" (
+    "id" UUID NOT NULL,
+    "eventType" TEXT NOT NULL,
+    "payload" JSONB NOT NULL DEFAULT '{}',
+    "aggregateId" TEXT,
+    "source" TEXT NOT NULL DEFAULT 'platform',
+    "occurredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PlatformEvent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Partner" (
+    "id" UUID NOT NULL,
+    "type" "PartnerType" NOT NULL DEFAULT 'agency',
+    "status" "PartnerStatus" NOT NULL DEFAULT 'active',
+    "businessName" TEXT NOT NULL,
+    "logo" TEXT,
+    "website" TEXT,
+    "description" TEXT,
+    "taxIdentifier" TEXT,
+    "country" TEXT,
+    "timezone" TEXT DEFAULT 'Asia/Kolkata',
+    "supportEmail" TEXT,
+    "contactPerson" TEXT,
+    "socialLinks" JSONB NOT NULL DEFAULT '{}',
+    "settings" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Partner_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PartnerMember" (
+    "id" UUID NOT NULL,
+    "partnerId" UUID NOT NULL,
+    "userId" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'viewer',
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PartnerMember_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PartnerWorkspaceAssignment" (
+    "id" UUID NOT NULL,
+    "partnerId" UUID NOT NULL,
+    "workspaceId" TEXT NOT NULL,
+    "workspaceName" TEXT NOT NULL,
+    "workspaceSlug" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "reason" TEXT NOT NULL DEFAULT 'created',
+    "assignedBy" TEXT NOT NULL,
+    "assignedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "transferredAt" TIMESTAMP(3),
+    "removedAt" TIMESTAMP(3),
+
+    CONSTRAINT "PartnerWorkspaceAssignment_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PartnerInvite" (
+    "id" UUID NOT NULL,
+    "partnerId" UUID NOT NULL,
+    "email" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'viewer',
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "invitedBy" TEXT NOT NULL,
+    "acceptedBy" TEXT,
+    "acceptedAt" TIMESTAMP(3),
+    "declinedAt" TIMESTAMP(3),
+    "revokedAt" TIMESTAMP(3),
+    "expiredAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "message" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PartnerInvite_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CommissionRule" (
+    "id" UUID NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'default',
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "partnerId" UUID,
+    "platformSharePercent" INTEGER NOT NULL,
+    "partnerSharePercent" INTEGER NOT NULL,
+    "effectiveFrom" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "effectiveTo" TIMESTAMP(3),
+    "priority" INTEGER NOT NULL DEFAULT 100,
+    "label" TEXT NOT NULL,
+    "description" TEXT,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CommissionRule_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CommissionEntry" (
+    "id" UUID NOT NULL,
+    "invoiceId" TEXT NOT NULL,
+    "partnerId" UUID NOT NULL,
+    "subscriptionId" TEXT,
+    "planCode" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "platformShare" DOUBLE PRECISION NOT NULL,
+    "partnerShare" DOUBLE PRECISION NOT NULL,
+    "platformPercent" INTEGER NOT NULL,
+    "partnerPercent" INTEGER NOT NULL,
+    "entryType" TEXT NOT NULL DEFAULT 'commission_created',
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "description" TEXT,
+    "ruleId" UUID,
+    "parentEntryId" UUID,
+    "clearedAt" TIMESTAMP(3),
+    "reversedAt" TIMESTAMP(3),
+    "audit" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CommissionEntry_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PayoutBatch" (
+    "id" UUID NOT NULL,
+    "partnerId" UUID NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "provider" TEXT NOT NULL DEFAULT 'manual',
+    "currency" TEXT NOT NULL DEFAULT 'INR',
+    "total" DOUBLE PRECISION NOT NULL,
+    "fee" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "netAmount" DOUBLE PRECISION NOT NULL,
+    "entryCount" INTEGER NOT NULL DEFAULT 1,
+    "idempotencyKey" TEXT NOT NULL,
+    "providerReference" TEXT,
+    "bankReference" TEXT,
+    "failureReason" TEXT,
+    "audit" JSONB NOT NULL DEFAULT '{}',
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "PayoutBatch_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PayoutReservation" (
+    "id" UUID NOT NULL,
+    "batchId" UUID NOT NULL,
+    "partnerId" UUID NOT NULL,
+    "commissionEntryId" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'reserved',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "settledAt" TIMESTAMP(3),
+    "releasedAt" TIMESTAMP(3),
+
+    CONSTRAINT "PayoutReservation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Tenant_subdomain_key" ON "Tenant"("subdomain");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Tenant_razorpayAccountId_key" ON "Tenant"("razorpayAccountId");
+
+-- CreateIndex
+CREATE INDEX "Tenant_customDomain_idx" ON "Tenant"("customDomain");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Website_tenantId_key" ON "Website"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Website_tenantId_idx" ON "Website"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Brand_websiteId_key" ON "Brand"("websiteId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PublishStatus_websiteId_key" ON "PublishStatus"("websiteId");
+
+-- CreateIndex
+CREATE INDEX "PublishStatus_websiteId_idx" ON "PublishStatus"("websiteId");
+
+-- CreateIndex
+CREATE INDEX "PublishStatus_state_idx" ON "PublishStatus"("state");
+
+-- CreateIndex
+CREATE INDEX "PublishSnapshot_websiteId_idx" ON "PublishSnapshot"("websiteId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PublishSnapshot_websiteId_version_key" ON "PublishSnapshot"("websiteId", "version");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Theme_name_key" ON "Theme"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Subscription_tenantId_key" ON "Subscription"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Subscription_tenantId_idx" ON "Subscription"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WebsiteAgency_subdomain_key" ON "WebsiteAgency"("subdomain");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WebsiteAgency_razorpayAccountId_key" ON "WebsiteAgency"("razorpayAccountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AgencyTenant_tenantId_key" ON "AgencyTenant"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "AgencyTenant_agencyId_idx" ON "AgencyTenant"("agencyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AgencySubscription_agencyId_key" ON "AgencySubscription"("agencyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Workspace_slug_key" ON "Workspace"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Workspace_tenantId_key" ON "Workspace"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Workspace_agencyId_key" ON "Workspace"("agencyId");
+
+-- CreateIndex
+CREATE INDEX "Workspace_type_idx" ON "Workspace"("type");
+
+-- CreateIndex
+CREATE INDEX "Workspace_status_idx" ON "Workspace"("status");
+
+-- CreateIndex
+CREATE INDEX "WorkspaceMember_workspaceId_idx" ON "WorkspaceMember"("workspaceId");
+
+-- CreateIndex
+CREATE INDEX "WorkspaceMember_userId_idx" ON "WorkspaceMember"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WorkspaceMember_workspaceId_userId_key" ON "WorkspaceMember"("workspaceId", "userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_tenantId_idx" ON "User"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "User_agencyId_idx" ON "User"("agencyId");
+
+-- CreateIndex
+CREATE INDEX "Product_tenantId_idx" ON "Product"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Product_slug_tenantId_idx" ON "Product"("slug", "tenantId");
+
+-- CreateIndex
+CREATE INDEX "Product_status_idx" ON "Product"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProductOrder_razorpayOrderId_key" ON "ProductOrder"("razorpayOrderId");
+
+-- CreateIndex
+CREATE INDEX "ProductOrder_tenantId_idx" ON "ProductOrder"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "ProductOrder_productId_idx" ON "ProductOrder"("productId");
+
+-- CreateIndex
+CREATE INDEX "AffiliateLink_tenantId_idx" ON "AffiliateLink"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "ContactSubmission_tenantId_idx" ON "ContactSubmission"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "NewsletterSubscriber_tenantId_idx" ON "NewsletterSubscriber"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "NewsletterSubscriber_tenantId_email_key" ON "NewsletterSubscriber"("tenantId", "email");
+
+-- CreateIndex
+CREATE INDEX "Setting_tenantId_idx" ON "Setting"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Setting_tenantId_key_key" ON "Setting"("tenantId", "key");
+
+-- CreateIndex
+CREATE INDEX "GalleryImage_tenantId_idx" ON "GalleryImage"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "GalleryImage_status_idx" ON "GalleryImage"("status");
+
+-- CreateIndex
+CREATE INDEX "GalleryImage_category_idx" ON "GalleryImage"("category");
+
+-- CreateIndex
+CREATE INDEX "TimelineEvent_tenantId_idx" ON "TimelineEvent"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Game_tenantId_idx" ON "Game"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "SocialStats_tenantId_idx" ON "SocialStats"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SocialStats_tenantId_platform_key" ON "SocialStats"("tenantId", "platform");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_tenantId_createdAt_idx" ON "AuditLog"("tenantId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ContentFeedItem_tenantId_pinned_hidden_order_idx" ON "ContentFeedItem"("tenantId", "pinned", "hidden", "order");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ContentFeedItem_tenantId_externalId_key" ON "ContentFeedItem"("tenantId", "externalId");
+
+-- CreateIndex
+CREATE INDEX "Page_websiteId_idx" ON "Page"("websiteId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Page_websiteId_slug_key" ON "Page"("websiteId", "slug");
+
+-- CreateIndex
+CREATE INDEX "Section_pageId_idx" ON "Section"("pageId");
+
+-- CreateIndex
+CREATE INDEX "Block_sectionId_idx" ON "Block"("sectionId");
+
+-- CreateIndex
+CREATE INDEX "CreatorProvisionRun_status_idx" ON "CreatorProvisionRun"("status");
+
+-- CreateIndex
+CREATE INDEX "CreatorProvisionRun_startedAt_idx" ON "CreatorProvisionRun"("startedAt");
+
+-- CreateIndex
+CREATE INDEX "CreatorProvisionRun_tenantId_idx" ON "CreatorProvisionRun"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "CreatorProvisionEvent_runId_timestamp_idx" ON "CreatorProvisionEvent"("runId", "timestamp");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillingAccount_accountType_accountId_key" ON "BillingAccount"("accountType", "accountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillingPlan_code_key" ON "BillingPlan"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillingFeature_key_key" ON "BillingFeature"("key");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillingSubscription_workspaceId_key" ON "BillingSubscription"("workspaceId");
+
+-- CreateIndex
+CREATE INDEX "BillingSubscription_accountId_idx" ON "BillingSubscription"("accountId");
+
+-- CreateIndex
+CREATE INDEX "BillingSubscription_planId_idx" ON "BillingSubscription"("planId");
+
+-- CreateIndex
+CREATE INDEX "BillingSubscription_workspaceId_idx" ON "BillingSubscription"("workspaceId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillingEvent_idempotencyKey_key" ON "BillingEvent"("idempotencyKey");
+
+-- CreateIndex
+CREATE INDEX "BillingEvent_accountId_idx" ON "BillingEvent"("accountId");
+
+-- CreateIndex
+CREATE INDEX "BillingEvent_workspaceId_idx" ON "BillingEvent"("workspaceId");
+
+-- CreateIndex
+CREATE INDEX "BillingEvent_type_idx" ON "BillingEvent"("type");
+
+-- CreateIndex
+CREATE INDEX "BillingEvent_createdAt_idx" ON "BillingEvent"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "BillingInvoice_workspaceId_idx" ON "BillingInvoice"("workspaceId");
+
+-- CreateIndex
+CREATE INDEX "BillingInvoice_status_idx" ON "BillingInvoice"("status");
+
+-- CreateIndex
+CREATE INDEX "BillingInvoice_dueAt_idx" ON "BillingInvoice"("dueAt");
+
+-- CreateIndex
+CREATE INDEX "ProviderAccount_provider_idx" ON "ProviderAccount"("provider");
+
+-- CreateIndex
+CREATE INDEX "ProviderAccount_handle_idx" ON "ProviderAccount"("handle");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProviderAccount_provider_externalId_key" ON "ProviderAccount"("provider", "externalId");
+
+-- CreateIndex
+CREATE INDEX "ProviderFetchLog_provider_createdAt_idx" ON "ProviderFetchLog"("provider", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ProviderFetchLog_accountId_idx" ON "ProviderFetchLog"("accountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "YouTubeQuotaUsage_date_key" ON "YouTubeQuotaUsage"("date");
+
+-- CreateIndex
+CREATE INDEX "CreatorProfile_platform_handle_idx" ON "CreatorProfile"("platform", "handle");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CreatorIntelligence_profileId_key" ON "CreatorIntelligence"("profileId");
+
+-- CreateIndex
+CREATE INDEX "CreatorIntelligence_profileId_idx" ON "CreatorIntelligence"("profileId");
+
+-- CreateIndex
+CREATE INDEX "CreatorImport_status_idx" ON "CreatorImport"("status");
+
+-- CreateIndex
+CREATE INDEX "CreatorImport_createdAt_idx" ON "CreatorImport"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "CreatorImport_provider_idx" ON "CreatorImport"("provider");
+
+-- CreateIndex
+CREATE INDEX "CreatorImport_creatorName_idx" ON "CreatorImport"("creatorName");
+
+-- CreateIndex
+CREATE INDEX "Asset_tenantId_idx" ON "Asset"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Asset_checksum_idx" ON "Asset"("checksum");
+
+-- CreateIndex
+CREATE INDEX "Asset_mimeType_idx" ON "Asset"("mimeType");
+
+-- CreateIndex
+CREATE INDEX "Asset_status_idx" ON "Asset"("status");
+
+-- CreateIndex
+CREATE INDEX "Asset_tenantId_createdAt_idx" ON "Asset"("tenantId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "AssetReference_assetId_idx" ON "AssetReference"("assetId");
+
+-- CreateIndex
+CREATE INDEX "AssetReference_tenantId_idx" ON "AssetReference"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "AssetReference_pageId_idx" ON "AssetReference"("pageId");
+
+-- CreateIndex
+CREATE INDEX "AssetReference_sectionId_idx" ON "AssetReference"("sectionId");
+
+-- CreateIndex
+CREATE INDEX "AssetReference_blockId_idx" ON "AssetReference"("blockId");
+
+-- CreateIndex
+CREATE INDEX "DesignTheme_tenantId_idx" ON "DesignTheme"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "DesignTheme_tenantId_active_idx" ON "DesignTheme"("tenantId", "active");
+
+-- CreateIndex
+CREATE INDEX "Offering_tenantId_idx" ON "Offering"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Offering_tenantId_status_idx" ON "Offering"("tenantId", "status");
+
+-- CreateIndex
+CREATE INDEX "Offering_type_idx" ON "Offering"("type");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Offering_tenantId_slug_key" ON "Offering"("tenantId", "slug");
+
+-- CreateIndex
+CREATE INDEX "Purchase_offeringId_idx" ON "Purchase"("offeringId");
+
+-- CreateIndex
+CREATE INDEX "Purchase_tenantId_idx" ON "Purchase"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Purchase_status_idx" ON "Purchase"("status");
+
+-- CreateIndex
+CREATE INDEX "Purchase_customerEmail_idx" ON "Purchase"("customerEmail");
+
+-- CreateIndex
+CREATE INDEX "Workflow_tenantId_idx" ON "Workflow"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "Workflow_trigger_idx" ON "Workflow"("trigger");
+
+-- CreateIndex
+CREATE INDEX "Workflow_enabled_idx" ON "Workflow"("enabled");
+
+-- CreateIndex
+CREATE INDEX "WorkflowExecution_workflowId_idx" ON "WorkflowExecution"("workflowId");
+
+-- CreateIndex
+CREATE INDEX "WorkflowExecution_tenantId_idx" ON "WorkflowExecution"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "WorkflowExecution_status_idx" ON "WorkflowExecution"("status");
+
+-- CreateIndex
+CREATE INDEX "WorkflowExecution_createdAt_idx" ON "WorkflowExecution"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "AnalyticsEvent_tenantId_occurredAt_idx" ON "AnalyticsEvent"("tenantId", "occurredAt");
+
+-- CreateIndex
+CREATE INDEX "AnalyticsEvent_source_eventType_idx" ON "AnalyticsEvent"("source", "eventType");
+
+-- CreateIndex
+CREATE INDEX "AnalyticsEvent_eventType_occurredAt_idx" ON "AnalyticsEvent"("eventType", "occurredAt");
+
+-- CreateIndex
+CREATE INDEX "AnalyticsEvent_occurredAt_idx" ON "AnalyticsEvent"("occurredAt");
+
+-- CreateIndex
+CREATE INDEX "PlatformEvent_eventType_occurredAt_idx" ON "PlatformEvent"("eventType", "occurredAt");
+
+-- CreateIndex
+CREATE INDEX "PlatformEvent_aggregateId_idx" ON "PlatformEvent"("aggregateId");
+
+-- CreateIndex
+CREATE INDEX "PlatformEvent_occurredAt_idx" ON "PlatformEvent"("occurredAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PartnerMember_partnerId_userId_key" ON "PartnerMember"("partnerId", "userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PartnerWorkspaceAssignment_workspaceId_key" ON "PartnerWorkspaceAssignment"("workspaceId");
+
+-- CreateIndex
+CREATE INDEX "PartnerWorkspaceAssignment_partnerId_idx" ON "PartnerWorkspaceAssignment"("partnerId");
+
+-- CreateIndex
+CREATE INDEX "PartnerWorkspaceAssignment_status_idx" ON "PartnerWorkspaceAssignment"("status");
+
+-- CreateIndex
+CREATE INDEX "PartnerInvite_partnerId_status_idx" ON "PartnerInvite"("partnerId", "status");
+
+-- CreateIndex
+CREATE INDEX "PartnerInvite_email_idx" ON "PartnerInvite"("email");
+
+-- CreateIndex
+CREATE INDEX "CommissionRule_partnerId_idx" ON "CommissionRule"("partnerId");
+
+-- CreateIndex
+CREATE INDEX "CommissionRule_status_effectiveFrom_effectiveTo_idx" ON "CommissionRule"("status", "effectiveFrom", "effectiveTo");
+
+-- CreateIndex
+CREATE INDEX "CommissionEntry_partnerId_createdAt_idx" ON "CommissionEntry"("partnerId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "CommissionEntry_invoiceId_idx" ON "CommissionEntry"("invoiceId");
+
+-- CreateIndex
+CREATE INDEX "CommissionEntry_status_idx" ON "CommissionEntry"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PayoutBatch_idempotencyKey_key" ON "PayoutBatch"("idempotencyKey");
+
+-- CreateIndex
+CREATE INDEX "PayoutBatch_partnerId_idx" ON "PayoutBatch"("partnerId");
+
+-- CreateIndex
+CREATE INDEX "PayoutBatch_status_idx" ON "PayoutBatch"("status");
+
+-- CreateIndex
+CREATE INDEX "PayoutBatch_idempotencyKey_idx" ON "PayoutBatch"("idempotencyKey");
+
+-- CreateIndex
+CREATE INDEX "PayoutReservation_batchId_idx" ON "PayoutReservation"("batchId");
+
+-- CreateIndex
+CREATE INDEX "PayoutReservation_partnerId_idx" ON "PayoutReservation"("partnerId");
+
+-- CreateIndex
+CREATE INDEX "PayoutReservation_commissionEntryId_idx" ON "PayoutReservation"("commissionEntryId");
+
+-- CreateIndex
+CREATE INDEX "PayoutReservation_status_idx" ON "PayoutReservation"("status");
+
+-- AddForeignKey
+ALTER TABLE "Tenant" ADD CONSTRAINT "Tenant_themeId_fkey" FOREIGN KEY ("themeId") REFERENCES "Theme"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Website" ADD CONSTRAINT "Website_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Brand" ADD CONSTRAINT "Brand_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PublishStatus" ADD CONSTRAINT "PublishStatus_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PublishSnapshot" ADD CONSTRAINT "PublishSnapshot_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "PublishStatus"("websiteId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WebsiteAgency" ADD CONSTRAINT "WebsiteAgency_defaultThemeId_fkey" FOREIGN KEY ("defaultThemeId") REFERENCES "Theme"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AgencyTenant" ADD CONSTRAINT "AgencyTenant_agencyId_fkey" FOREIGN KEY ("agencyId") REFERENCES "WebsiteAgency"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AgencyTenant" ADD CONSTRAINT "AgencyTenant_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AgencySubscription" ADD CONSTRAINT "AgencySubscription_agencyId_fkey" FOREIGN KEY ("agencyId") REFERENCES "WebsiteAgency"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Workspace" ADD CONSTRAINT "Workspace_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Workspace" ADD CONSTRAINT "Workspace_agencyId_fkey" FOREIGN KEY ("agencyId") REFERENCES "WebsiteAgency"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_agencyId_fkey" FOREIGN KEY ("agencyId") REFERENCES "WebsiteAgency"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Product" ADD CONSTRAINT "Product_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductOrder" ADD CONSTRAINT "ProductOrder_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductOrder" ADD CONSTRAINT "ProductOrder_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AffiliateLink" ADD CONSTRAINT "AffiliateLink_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ContactSubmission" ADD CONSTRAINT "ContactSubmission_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NewsletterSubscriber" ADD CONSTRAINT "NewsletterSubscriber_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Setting" ADD CONSTRAINT "Setting_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "GalleryImage" ADD CONSTRAINT "GalleryImage_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TimelineEvent" ADD CONSTRAINT "TimelineEvent_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Game" ADD CONSTRAINT "Game_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SocialStats" ADD CONSTRAINT "SocialStats_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ContentFeedItem" ADD CONSTRAINT "ContentFeedItem_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Page" ADD CONSTRAINT "Page_websiteId_fkey" FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Section" ADD CONSTRAINT "Section_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "Page"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Block" ADD CONSTRAINT "Block_sectionId_fkey" FOREIGN KEY ("sectionId") REFERENCES "Section"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CreatorProvisionEvent" ADD CONSTRAINT "CreatorProvisionEvent_runId_fkey" FOREIGN KEY ("runId") REFERENCES "CreatorProvisionRun"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingPlanFeature" ADD CONSTRAINT "BillingPlanFeature_planId_fkey" FOREIGN KEY ("planId") REFERENCES "BillingPlan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingPlanFeature" ADD CONSTRAINT "BillingPlanFeature_featureId_fkey" FOREIGN KEY ("featureId") REFERENCES "BillingFeature"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingSubscription" ADD CONSTRAINT "BillingSubscription_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "BillingAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingSubscription" ADD CONSTRAINT "BillingSubscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "BillingPlan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingSubscription" ADD CONSTRAINT "BillingSubscription_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingEvent" ADD CONSTRAINT "BillingEvent_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BillingInvoice" ADD CONSTRAINT "BillingInvoice_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProviderFetchLog" ADD CONSTRAINT "ProviderFetchLog_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "ProviderAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CreatorIntelligence" ADD CONSTRAINT "CreatorIntelligence_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "CreatorProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Asset" ADD CONSTRAINT "Asset_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetReference" ADD CONSTRAINT "AssetReference_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "Asset"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AssetReference" ADD CONSTRAINT "AssetReference_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DesignTheme" ADD CONSTRAINT "DesignTheme_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Offering" ADD CONSTRAINT "Offering_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_offeringId_fkey" FOREIGN KEY ("offeringId") REFERENCES "Offering"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Workflow" ADD CONSTRAINT "Workflow_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkflowExecution" ADD CONSTRAINT "WorkflowExecution_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "Workflow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WorkflowExecution" ADD CONSTRAINT "WorkflowExecution_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PartnerMember" ADD CONSTRAINT "PartnerMember_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PartnerWorkspaceAssignment" ADD CONSTRAINT "PartnerWorkspaceAssignment_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PartnerInvite" ADD CONSTRAINT "PartnerInvite_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "Partner"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PayoutReservation" ADD CONSTRAINT "PayoutReservation_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "PayoutBatch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
