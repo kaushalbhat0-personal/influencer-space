@@ -3,14 +3,14 @@ import type {
   GenerationId, CreatorId, JobId,
 } from "@/lib/generation/domain/types/ids";
 import type {
-  Generation, GenerationRequest, GenerationResult, GenerationJob,
-  GenerationArtifact, CheckpointRow,
+  GenerationRequest, GenerationResult, GenerationJob,
+  CheckpointRow,
 } from "@/lib/generation/domain/types/index";
 import type {
-  PipelineStage, StrategyType, GenerationMode, StageStatus,
+  PipelineStage, StrategyType, StageStatus,
 } from "@/lib/generation/domain/types/enums";
 import type {
-  GenerationCost, GenerationBudget,
+  GenerationCost,
   GenerationProgress,
 } from "@/lib/generation/domain/value-objects/index";
 

@@ -1,4 +1,4 @@
-import { IdentityUser, AuthResult, AuthCredentials, AuthRegistration, AuthTokenPair, IdentityWorkspace } from "../types";
+import { IdentityUser, AuthCredentials, AuthRegistration } from "../types";
 import { AuthenticationError, UserNotFoundError, UserAlreadyExistsError, EmailNotVerifiedError } from "../errors";
 import { IdentityEventDispatcher, createUserCreatedEvent, createUserLoginEvent } from "../events";
 import { PasswordValidation } from "./types";

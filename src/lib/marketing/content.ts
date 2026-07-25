@@ -1,4 +1,3 @@
-import type { StaticImageData } from "next/image";
 
 export interface Testimonial {
   id: string;

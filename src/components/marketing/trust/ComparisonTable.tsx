@@ -33,7 +33,6 @@ function CellValue({
 }
 
 export function ComparisonTable({ comparison }: ComparisonTableProps) {
-  const cols = comparison.competitors.length + 1;
 
   return (
     <Section id="comparison" background="subtle">

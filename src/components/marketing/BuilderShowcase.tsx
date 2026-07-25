@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Layout, Eye, Palette, MousePointerClick, Smartphone, Globe } from "lucide-react";
 import Link from "next/link";
 
@@ -37,14 +36,7 @@ const BUILDER_FEATURES = [
   },
 ];
 
-const TABS = [
-  { id: "builder", label: "Visual Builder" },
-  { id: "sections", label: "Drag & Drop" },
-  { id: "themes", label: "Themes" },
-] as const;
-
 export function BuilderShowcase() {
-  const [activeTab, setActiveTab] = useState<string>("builder");
 
   return (
     <section id="builder" className="relative px-4 py-20 sm:px-8 sm:py-28 overflow-hidden">

@@ -1,6 +1,5 @@
 import type {
   WorkflowInstance,
-  WorkflowHandler,
   WorkflowStatus,
   StateTransitionEvent,
   WorkflowExecutionResult,

@@ -1,6 +1,6 @@
-import { Organization, OrganizationType } from "../types";
-import { OrganizationNotFoundError, WorkspaceNotFoundError } from "../errors";
-import { IdentityEventDispatcher, createOrganizationCreatedEvent, createWorkspaceCreatedEvent } from "../events";
+import { Organization } from "../types";
+import { OrganizationNotFoundError } from "../errors";
+import { IdentityEventDispatcher, createOrganizationCreatedEvent } from "../events";
 import { CreateOrganizationInput, UpdateOrganizationInput } from "./types";
 
 export interface OrganizationRepository {

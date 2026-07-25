@@ -1,14 +1,11 @@
 import type {
   WorkflowEvent,
-  WorkflowEventMap,
   EventListener,
   WorkflowStartedEvent,
   WorkflowStateChangedEvent,
   WorkflowCompletedEvent,
   WorkflowFailedEvent,
 } from "./types";
-
-type EventType = keyof WorkflowEventMap;
 
 export class WorkflowEventDispatcher {
   private listeners: Map<string, Set<EventListener>> = new Map();

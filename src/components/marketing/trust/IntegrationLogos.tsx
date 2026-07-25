@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { TrustLogo } from "@/lib/marketing/trust/types";
 
 interface IntegrationLogosProps {

@@ -1,4 +1,4 @@
-import { IdentityWorkspace, WorkspaceStatus, WorkspaceType } from "../types";
+import { IdentityWorkspace, WorkspaceStatus } from "../types";
 import { WorkspaceNotFoundError } from "../errors";
 import { IdentityEventDispatcher, createWorkspaceCreatedEvent, createMembershipCreatedEvent } from "../events";
 import { CreateWorkspaceInput, UpdateWorkspaceInput, WorkspaceQuery } from "./types";

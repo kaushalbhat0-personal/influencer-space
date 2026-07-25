@@ -7,7 +7,7 @@ export class AudienceStrategy implements ContextStrategy {
   readonly id = "audience";
   readonly produces = ["audienceEngagement", "socialPresence"] as const;
 
-  compute(_graph: KnowledgeGraph, profile: ExperienceProfile): Partial<PlanningContext> {
+  compute(_graph: KnowledgeGraph, _profile: ExperienceProfile): Partial<PlanningContext> {
     const followers = _graph.creator.followers;
     const engagement = _graph.creator.engagement;
     const linkCount = _graph.socialLinks.length;

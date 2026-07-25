@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { PricingFAQ } from "@/components/marketing/PricingFAQ";
 import { Footer } from "@/components/marketing/Footer";
-import { FAQ_CATEGORIES } from "@/lib/marketing/content";
+
 
 export const metadata: Metadata = {
   title: "FAQ",

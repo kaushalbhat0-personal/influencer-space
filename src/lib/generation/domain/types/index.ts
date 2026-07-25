@@ -1,4 +1,4 @@
-import type { GenerationId, ArtifactId, JobId, StageId, CreatorId } from "./ids";
+import type { GenerationId, ArtifactId, JobId, CreatorId } from "./ids";
 import type {
   GenerationStatus, StageStatus, GenerationPriority, GenerationMode,
   PipelineStage, StrategyType, JobStatus,

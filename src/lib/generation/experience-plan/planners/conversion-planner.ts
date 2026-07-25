@@ -9,7 +9,7 @@ export class ConversionPlanner implements Planner {
   readonly produces = ["conversionGoal", "recommendationSlots"] as const;
   readonly dependsOn = [] as const;
 
-  plan(_graph: KnowledgeGraph, profile: ExperienceProfile, context: PlanningContext): Partial<ExperiencePlan> {
+  plan(_graph: KnowledgeGraph, profile: ExperienceProfile, _context: PlanningContext): Partial<ExperiencePlan> {
     const { businessModel, persona, commerceStage } = profile;
     const primary = this.resolvePrimary(businessModel);
     const secondary = this.resolveSecondary(primary);

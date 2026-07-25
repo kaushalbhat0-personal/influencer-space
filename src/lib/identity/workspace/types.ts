@@ -1,4 +1,4 @@
-import { IdentityWorkspace, WorkspaceType, WorkspaceStatus, WorkspaceRole } from "../types";
+import { IdentityWorkspace, WorkspaceType, WorkspaceStatus } from "../types";
 
 export interface CreateWorkspaceInput {
   readonly organizationId: string;

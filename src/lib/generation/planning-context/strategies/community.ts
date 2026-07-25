@@ -7,7 +7,7 @@ export class CommunityStrategy implements ContextStrategy {
   readonly id = "community";
   readonly produces = ["communityStrength"] as const;
 
-  compute(_graph: KnowledgeGraph, _profile: ExperienceProfile): Partial<PlanningContext> {
+  compute(_graph: KnowledgeGraph, __profile: ExperienceProfile): Partial<PlanningContext> {
     const linkCount = _graph.socialLinks.length;
     const hasCommunityInterest = _graph.audience.interests.some(
       (i) => i.toLowerCase().includes("community") || i.toLowerCase().includes("networking")

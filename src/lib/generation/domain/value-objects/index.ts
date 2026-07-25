@@ -1,4 +1,3 @@
-import { ARTIFACT_SOURCES } from "../types/enums";
 import type { ArtifactSource } from "../types/enums";
 
 export class GenerationProgress {
