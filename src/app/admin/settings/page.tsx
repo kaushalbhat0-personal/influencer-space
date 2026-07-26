@@ -1,24 +1,13 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { ContentContainer } from "@/components/layout";
 import { SettingsService } from "@/services/settings.service";
 import { prisma } from "@/lib/prisma";
 import { SettingsForm } from "@/features/settings/components/settings-form";
+import { requireTenant } from "@/lib/auth/require-tenant";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-
-  if (!tenantId) {
-    return (
-      <ContentContainer>
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Website Settings</h1>
-        <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
-      </ContentContainer>
-    );
-  }
+  const { tenantId, role } = await requireTenant();
 
   const [config, heroData, tenantKeys] = await Promise.all([
     SettingsService.getInfluencerData(tenantId),
@@ -41,7 +30,7 @@ export default async function SettingsPage() {
         key={JSON.stringify({ config, heroData })}
         config={config}
         heroData={heroData}
-        role={session?.user?.role ?? "ADMIN"}
+        role={role}
         youtubeKeyConfigured={!!tenantKeys?.youtubeApiKey}
         instagramKeyConfigured={!!tenantKeys?.instagramApiKey}
         tenantId={tenantId}

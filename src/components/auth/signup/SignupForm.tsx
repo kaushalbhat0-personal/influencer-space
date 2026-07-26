@@ -265,14 +265,16 @@ export function SignupForm() {
             </div>
             <button
               onClick={() => {
-                const target = socialUrl
+                const base = socialUrl
                   ? `/onboarding?url=${encodeURIComponent(socialUrl)}&persona=${state.persona}&plan=${state.selectedPlan}`
-                  : "/admin/dashboard";
-                router.push(target);
+                  : state.persona === "agency"
+                    ? "/agency/dashboard"
+                    : "/onboarding";
+                router.push(base);
               }}
               className="btn-primary w-full py-3"
             >
-              {socialUrl ? "Continue to Onboarding" : state.persona === "creator" ? "Continue to Dashboard" : "Continue to Agency Workspace"}
+              {state.persona === "agency" ? "Go to Agency Workspace" : "Continue to Onboarding"}
             </button>
           </div>
         )}

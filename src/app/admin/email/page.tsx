@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer, PageHeader } from "@/components/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Mail } from "lucide-react";
@@ -7,10 +6,7 @@ import { Mail } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function EmailPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) {
-    return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
-  }
+  await requireTenant();
 
   return (
     <ContentContainer>

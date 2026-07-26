@@ -12,6 +12,11 @@ if (!secret && process.env.NODE_ENV === "production") {
 async function resolveWorkspace(user: { id: string; tenantId?: string | null; agencyId?: string | null; role: string }) {
   if (user.role === "SUPER_ADMIN") return { workspaceId: null, workspaceType: null, workspaceRole: null };
 
+  // ADMIN without tenantId → pre-provisioning, no workspace yet
+  if (user.role === "ADMIN" && !user.tenantId) {
+    return { workspaceId: null, workspaceType: null, workspaceRole: null };
+  }
+
   const ownerId = user.tenantId || user.agencyId;
   if (!ownerId) return { workspaceId: null, workspaceType: null, workspaceRole: null };
 
@@ -29,6 +34,11 @@ async function resolveWorkspace(user: { id: string; tenantId?: string | null; ag
       });
     }
     return { workspaceId: workspace.id, workspaceType: workspace.type, workspaceRole: member.role };
+  }
+
+  // Only create workspace if there's a tenant or agency to link it to
+  if (!user.tenantId && !user.agencyId) {
+    return { workspaceId: null, workspaceType: null, workspaceRole: null };
   }
 
   const created = await workspaceRepository.create({

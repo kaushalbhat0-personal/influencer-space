@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer, PageHeader, DashboardGrid, DashboardGridMain, DashboardGridSide, MetricGrid } from "@/components/layout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { DashboardWidgetSkeleton } from "@/components/ui/DashboardWidget";
@@ -64,19 +63,7 @@ function AnalyticsFallback() {
 }
 
 export default async function AdminAnalyticsPage() {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-
-  if (!tenantId) {
-    return (
-      <ContentContainer>
-        <div className="admin-card p-8 text-center" role="alert">
-          <p className="text-lg font-semibold text-white">Unauthorized</p>
-          <p className="mt-1 text-sm text-zinc-400">Please log in to view analytics.</p>
-        </div>
-      </ContentContainer>
-    );
-  }
+  const { tenantId } = await requireTenant();
 
   return (
     <ContentContainer>

@@ -42,11 +42,12 @@ const routeGuards: Array<{
   prefix: string;
   roles: AllowedRole[];
   redirectTo: string;
+  requireTenant?: boolean;
 }> = [
   { prefix: "/super-admin", roles: ["SUPER_ADMIN"], redirectTo: "/admin/login" },
   { prefix: "/agency",       roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF"], redirectTo: "/admin/login" },
-  { prefix: "/admin/dashboard", roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login" },
-  { prefix: "/admin",        roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login" },
+  { prefix: "/admin/dashboard", roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login", requireTenant: true },
+  { prefix: "/admin",        roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login", requireTenant: true },
 ];
 
 async function checkRouteAccess(
@@ -56,7 +57,6 @@ async function checkRouteAccess(
   const guard = routeGuards.find((g) => pathname.startsWith(g.prefix));
   if (!guard) return null;
 
-  // Allow login page through
   if (pathname === "/admin/login") return null;
 
   const token = await getToken({ req: request, secret });
@@ -72,7 +72,13 @@ async function checkRouteAccess(
     return new NextResponse("Unauthorized", { status: 403 });
   }
 
-  return null; // Access allowed
+  // ADMIN without tenantId → redirect to onboarding (pre-provisioning state)
+  if (guard.requireTenant && userRole === "ADMIN" && !token.tenantId) {
+    const onboardingUrl = new URL("/onboarding", request.url);
+    return NextResponse.redirect(onboardingUrl);
+  }
+
+  return null;
 }
 
 // ─── Main Middleware ──────────────────────────────────────────────────────────

@@ -1,6 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { ContentContainer } from "@/components/layout";
+import { requireTenant } from "@/lib/auth/require-tenant";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { integrationService } from "@/features/integrations/service";
@@ -8,9 +6,7 @@ import { integrationService } from "@/features/integrations/service";
 export const dynamic = "force-dynamic";
 
 export default async function AdminIntegrationsPage() {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-  if (!tenantId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
+  const { tenantId } = await requireTenant();
 
   const integrations = await integrationService.list(tenantId);
 

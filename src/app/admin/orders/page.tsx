@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer, PageHeader, MetricGrid } from "@/components/layout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { OrdersTable } from "./_components/orders-table";
@@ -10,9 +9,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-  if (!tenantId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
+  const { tenantId } = await requireTenant();
 
   let orders: Awaited<ReturnType<typeof fetchOrders>> = [];
   try { orders = await fetchOrders(tenantId); } catch { /* handled below */ }

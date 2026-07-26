@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer } from "@/components/layout";
 import { BillingPageClient } from "@/components/billing/BillingPageClient";
 import { billingService } from "@/lib/billing/service";
@@ -10,12 +9,7 @@ import { workspaceRepository } from "@/modules/workspace/infrastructure/reposito
 export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
-  const session = await getServerSession(authOptions).catch(() => null);
-  const tenantId = session?.user?.tenantId;
-
-  if (!tenantId) {
-    return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
-  }
+  const { tenantId } = await requireTenant();
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } }).catch(() => null);
   if (!tenant) {

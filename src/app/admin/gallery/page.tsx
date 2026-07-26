@@ -1,10 +1,9 @@
 import { Suspense } from "react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { ContentContainer } from "@/components/layout";
 import { GalleryManager } from "@/features/gallery/components/gallery-page";
 import { GalleryCardSkeleton } from "@/components/gallery/GalleryCard";
 import { DashboardWidgetError } from "@/components/ui/DashboardWidget";
+import { requireTenant } from "@/lib/auth/require-tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -38,16 +37,7 @@ function GalleryFallback() {
 }
 
 export default async function AdminGalleryPage() {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-
-  if (!tenantId) {
-    return (
-      <ContentContainer>
-        <DashboardWidgetError message="No tenant configured. Please contact support." />
-      </ContentContainer>
-    );
-  }
+  const { tenantId } = await requireTenant();
 
   return (
     <ContentContainer>

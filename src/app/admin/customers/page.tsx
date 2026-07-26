@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer, PageHeader, MetricGrid } from "@/components/layout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { fetchCustomers } from "@/actions/order.actions";
@@ -10,9 +9,7 @@ import { Users, IndianRupee, ShoppingBag } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function CustomersPage() {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-  if (!tenantId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
+  const { tenantId } = await requireTenant();
 
   let customers: Awaited<ReturnType<typeof fetchCustomers>> = [];
   try { customers = await fetchCustomers(tenantId); } catch { /* handled below */ }
