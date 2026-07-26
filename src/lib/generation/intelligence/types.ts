@@ -169,6 +169,8 @@ export const THEME_PALETTES: Record<string, { primary: string; secondary: string
   lifestyle: { primary: "#EC4899", secondary: "#F472B6", accent: "#F9A8D4", mode: "light" },
   sports: { primary: "#2563EB", secondary: "#3B82F6", accent: "#60A5FA", mode: "light" },
   news: { primary: "#1E293B", secondary: "#334155", accent: "#475569", mode: "dark" },
+  comedy: { primary: "#E11D48", secondary: "#FB7185", accent: "#FDA4AF", mode: "light" },
+  celebrity: { primary: "#D946EF", secondary: "#E879F9", accent: "#F0ABFC", mode: "dark" },
   default: { primary: "#6366F1", secondary: "#818CF8", accent: "#A5B4FC", mode: "light" },
 };
 
@@ -186,6 +188,8 @@ export const NICHE_KEYWORDS: Record<string, string[]> = {
   lifestyle: ["lifestyle", "daily", "vlog", "routine", "fashion", "beauty", "home", "family", "life", "motivation", "inspiration"],
   sports: ["sports", "soccer", "football", "basketball", "tennis", "cricket", "athlete", "training", "coach", "fitness", "competition"],
   news: ["news", "breaking", "update", "report", "politics", "world", "current", "headline", "press", "media", "journalism"],
+  comedy: ["comedy", "funny", "standup", "joke", "laugh", "humor", "sketch", "comedian", "roast", "memes", "satire", "prank"],
+  celebrity: ["celebrity", "star", "famous", "icon", "legend", "bollywood", "brand", "official", "glamour", "red carpet", "exclusive"],
 };
 
 export const SECTION_TYPES: Record<string, PipelineStage[]> = {
@@ -202,6 +206,8 @@ export const SECTION_TYPES: Record<string, PipelineStage[]> = {
   lifestyle: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
   sports: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
   news: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
+  comedy: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
+  celebrity: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
 };
 
 export const PRODUCT_RECOMMENDATIONS: Record<string, Array<{ name: string; type: string; category: string; priceRange: string }>> = {
@@ -269,6 +275,16 @@ export const PRODUCT_RECOMMENDATIONS: Record<string, Array<{ name: string; type:
     { name: "Newsletter", type: "subscription", category: "Media", priceRange: "$5-$20/mo" },
     { name: "Premium Content", type: "digital", category: "Media", priceRange: "$10-$30" },
     { name: "Ad Space", type: "service", category: "Advertising", priceRange: "$100-$1000" },
+  ],
+  comedy: [
+    { name: "Merch Store", type: "physical", category: "Apparel", priceRange: "$20-$50" },
+    { name: "Show Tickets", type: "service", category: "Events", priceRange: "$15-$100" },
+    { name: "Premium Content", type: "digital", category: "Media", priceRange: "$5-$20" },
+  ],
+  celebrity: [
+    { name: "Branded Merch", type: "physical", category: "Apparel", priceRange: "$30-$100" },
+    { name: "Exclusive Content", type: "subscription", category: "Media", priceRange: "$10-$50/mo" },
+    { name: "Meet & Greet", type: "service", category: "Events", priceRange: "$100-$500" },
   ],
 };
 

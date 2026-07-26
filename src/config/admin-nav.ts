@@ -1,8 +1,8 @@
 import {
-  LayoutDashboard, ShoppingBag, Package, Users, Image as ImageIcon,
+  LayoutDashboard, User, ShoppingBag, Package, Users, Image as ImageIcon,
   Trophy, Gamepad2, Rss, Link2, BarChart3, MessageSquare,
   Layout, Palette, Search, Globe, CreditCard, Settings,
-  ExternalLink, LogOut,
+  ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -28,10 +28,14 @@ export const ADMIN_NAV: NavConfig = {
   groups: [
     { items: [{ href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
 
+    { items: [{ href: "/admin/profile", label: "Profile", icon: User }] },
+
     {
       label: "Sell", collapsible: true,
       items: [
         { href: "/admin/products", label: "Products", icon: ShoppingBag },
+        { href: "/admin/services", label: "Services", icon: UserCheck },
+        { href: "/admin/courses", label: "Courses", icon: BookOpen },
         { href: "/admin/orders", label: "Orders", icon: Package },
         { href: "/admin/customers", label: "Customers", icon: Users },
       ],
@@ -41,6 +45,8 @@ export const ADMIN_NAV: NavConfig = {
       label: "Content", collapsible: true,
       items: [
         { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+        { href: "/admin/testimonials", label: "Testimonials", icon: UserCheck },
+        { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
         { href: "/admin/milestones", label: "Milestones", icon: Trophy },
         { href: "/admin/games", label: "Games", icon: Gamepad2 },
         { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
@@ -65,6 +71,7 @@ export const ADMIN_NAV: NavConfig = {
         { href: "/admin/seo", label: "SEO", icon: Search },
         { href: "/admin/settings/domain", label: "Domain", icon: Globe },
         { href: "/admin/billing", label: "Billing", icon: CreditCard },
+        { href: "/admin/integrations", label: "Integrations", icon: Puzzle },
         { href: "/admin/settings", label: "Settings", icon: Settings },
       ],
     },

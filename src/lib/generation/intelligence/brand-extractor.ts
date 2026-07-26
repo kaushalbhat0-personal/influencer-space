@@ -60,9 +60,9 @@ export class BrandExtractor {
     };
 
     const found: string[] = [];
-    const lower = text.toLowerCase();
     for (const [color, hex] of Object.entries(colorMap)) {
-      if (lower.includes(color) && !found.includes(hex)) found.push(hex);
+      const regex = new RegExp(`\\b${color}\\b`, "i");
+      if (regex.test(text) && !found.includes(hex)) found.push(hex);
     }
     return found.slice(0, 3);
   }

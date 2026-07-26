@@ -847,7 +847,7 @@ describe("Workflow Definitions", () => {
   it("creatorOnboardingWorkflow has correct definition", () => {
     const def = creatorOnboardingWorkflow.definition;
     expect(def.id).toBe("creator-onboarding");
-    expect(def.initialState).toBe("signup");
+    expect(def.initialState).toBe("import-profile");
     expect(def.states.length).toBeGreaterThanOrEqual(7);
     expect(def.transitions.length).toBeGreaterThanOrEqual(8);
   });

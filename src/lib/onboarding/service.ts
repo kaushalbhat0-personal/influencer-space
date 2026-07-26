@@ -14,7 +14,8 @@ import { ArtifactEngine } from "@/lib/generation/artifacts/artifact-engine";
 import { ArtifactRegistry } from "@/lib/generation/artifacts/artifact-registry";
 import { provisioner } from "@/lib/generation/integration/register-generators";
 import { GoldenValidator, goldenDataset } from "@/lib/generation/golden";
-import { detectPlatform, buildContentSource } from "@/lib/generation/integration/provision-pipeline";
+import { detectPlatform, buildContentSource, buildContentSourceFromYouTube } from "@/lib/generation/integration/provision-pipeline";
+import type { ContentSource } from "@/lib/generation/intelligence/types";
 
 export interface OnboardingProgress {
   state: string;
@@ -28,6 +29,14 @@ export interface ImportProfileResult {
   knowledgeGraph: KnowledgeGraph;
   personaMatch: { persona: CreatorPersona; score: number };
   experienceProfile: ExperienceProfile;
+  channelMeta?: {
+    id: string;
+    title: string;
+    description: string;
+    thumbnailUrl: string;
+    customUrl: string;
+    subscriberCount: number;
+  } | null;
 }
 
 export interface GenerateResult {
@@ -67,7 +76,30 @@ export class OnboardingService {
 
   async importProfile(sourceUrl: string, _creatorId: string, creatorName: string): Promise<ImportProfileResult> {
     const platform = detectPlatform(sourceUrl);
-    const source = buildContentSource(sourceUrl, platform, creatorName);
+    let source: ContentSource;
+
+    if (platform === "youtube") {
+      const scraper = await import("@/services/youtube-scraper.service").then(
+        (m) => m.YouTubeScraperService,
+      );
+      const channelMeta = await scraper.fetchChannelMetadata(sourceUrl);
+      if (channelMeta) {
+        source = buildContentSourceFromYouTube(sourceUrl, channelMeta);
+      } else {
+        source = buildContentSource(sourceUrl, platform, creatorName);
+      }
+
+      const knowledgeGraph = this.knowledgeBuilder.build(source);
+      const personaMatch = this.personaEngine.detect(knowledgeGraph);
+      const experienceProfile = this.experienceProfileBuilder.build(
+        knowledgeGraph,
+        personaMatch.persona,
+        personaMatch.score,
+      );
+      return { platform, knowledgeGraph, personaMatch, experienceProfile, channelMeta };
+    }
+
+    source = buildContentSource(sourceUrl, platform, creatorName);
     const knowledgeGraph = this.knowledgeBuilder.build(source);
     const personaMatch = this.personaEngine.detect(knowledgeGraph);
     const experienceProfile = this.experienceProfileBuilder.build(

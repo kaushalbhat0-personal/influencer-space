@@ -56,6 +56,7 @@ export const DEFAULTS: ExperiencePlan = {
     sticky: true,
     transparent: false,
     searchEnabled: false,
+    links: [],
   },
   theme: {
     density: "comfortable",

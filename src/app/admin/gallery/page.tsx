@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ContentContainer } from "@/components/layout";
-import { GalleryManager } from "./_components/gallery-manager";
+import { GalleryManager } from "@/features/gallery/components/gallery-page";
 import { GalleryCardSkeleton } from "@/components/gallery/GalleryCard";
 import { DashboardWidgetError } from "@/components/ui/DashboardWidget";
 

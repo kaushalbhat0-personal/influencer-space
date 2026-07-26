@@ -162,3 +162,30 @@ export function buildContentSource(url: string, platform: string, creatorName: s
     links: [url],
   };
 }
+
+export function buildContentSourceFromYouTube(
+  url: string,
+  channelMeta: {
+    id: string;
+    title: string;
+    description: string;
+    thumbnailUrl: string;
+    customUrl: string;
+    subscriberCount: number;
+  },
+): ContentSource {
+  return {
+    platform: "youtube",
+    username: channelMeta.customUrl.replace(/^@/, "") || channelMeta.id,
+    displayName: channelMeta.title,
+    bio: channelMeta.description.slice(0, 500),
+    avatarUrl: channelMeta.thumbnailUrl,
+    followers: channelMeta.subscriberCount,
+    following: 0,
+    posts: 0,
+    engagement: 0,
+    content: [],
+    categories: [],
+    links: [url, `https://youtube.com/${channelMeta.customUrl}`],
+  };
+}

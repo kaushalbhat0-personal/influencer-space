@@ -2,6 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 import { BuilderService } from "@/lib/builder/builder-service";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import type { BuilderPage } from "@/lib/builder/types";
@@ -88,6 +89,12 @@ export async function publishWebsite(pages: BuilderPage[]): Promise<{ success: b
         themeFonts: (website?.themeFonts || {}) as Record<string, string>,
       });
     });
+
+    try {
+      revalidatePath("/", "layout");
+    } catch {
+      // best-effort
+    }
 
     return { success: true, version: result.version };
   } catch (e) {

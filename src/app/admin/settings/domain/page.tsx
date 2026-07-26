@@ -1,9 +1,9 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ContentContainer } from "@/components/layout";
 import { VercelService } from "@/services/vercel.service";
-import { DomainSettings } from "./_components/domain-settings";
-import type { VercelVerificationRecord } from "@/services/vercel.service";
+import { DomainSettings } from "@/features/domains/components/domain-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +13,10 @@ export default async function DomainPage() {
 
   if (!tenantId) {
     return (
-      <div>
+      <ContentContainer>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
         <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
-      </div>
+      </ContentContainer>
     );
   }
 
@@ -25,7 +25,7 @@ export default async function DomainPage() {
     select: { customDomain: true, subdomain: true },
   });
 
-  let verification: VercelVerificationRecord[] | undefined;
+  let verification: { type: string; domain: string; value: string }[] | undefined;
   let verified = false;
 
   if (tenant?.customDomain) {
@@ -35,7 +35,7 @@ export default async function DomainPage() {
   }
 
   return (
-    <div>
+    <ContentContainer>
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
         <p className="mt-1 text-sm text-gray-400">
@@ -48,6 +48,6 @@ export default async function DomainPage() {
         verified={verified}
         verification={verification ?? []}
       />
-    </div>
+    </ContentContainer>
   );
 }

@@ -9,7 +9,7 @@ import { Package, IndianRupee, ShoppingBag, TrendingUp } from "lucide-react";
 import { computeDateRange, formatCurrency } from "@/lib/analytics/date";
 import { DEFAULT_DATE_PRESET } from "@/lib/analytics/constants";
 import { computeAnalytics } from "@/lib/analytics/queries";
-import { AnalyticsClient } from "./_components/analytics-client";
+import { AnalyticsClient } from "@/features/analytics/components/analytics-client";
 
 export const dynamic = "force-dynamic";
 

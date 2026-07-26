@@ -9,6 +9,7 @@ import { capabilityService } from "@/lib/capabilities";
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
 import { platformEventBus } from "@/lib/events";
+import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import {
   runProvisionPipeline, buildProvisioningInput, buildBuilderArtifactData,
   buildPublishSnapshotRecord, detectPlatform, buildContentSource,
@@ -173,11 +174,18 @@ export async function confirmProvision(params: {
 
     const snapshotData = buildPublishSnapshotRecord(pipelineResult);
     if (snapshotData && provisioned) {
+      const website = await prisma.website.findUnique({ where: { tenantId: provisioned.tenantId }, select: { id: true } });
+      if (!website) {
+        console.error(`[provision] Website not found for tenantId=${provisioned.tenantId}`);
+        return { success: false, error: "Website not found during publishing" };
+      }
       try {
-        const { publishSnapshotService } = await import("@/lib/publishing/snapshot");
-        const website = await prisma.website.findUnique({ where: { tenantId: provisioned.tenantId }, select: { id: true } });
-        if (website) await publishSnapshotService.publishFromArtifact(website.id, snapshotData as any);
-      } catch {}
+        await publishSnapshotService.publishFromArtifact(website.id, snapshotData as never);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Publishing failed";
+        console.error(`[provision] Publishing failed for websiteId=${website.id} tenantId=${provisioned.tenantId}`, err);
+        return { success: false, error: msg };
+      }
     }
 
     const capabilities = capabilityService.planSummary(params.planCode);
@@ -202,6 +210,7 @@ export async function confirmProvision(params: {
       sourcePlatform,
       workspaceId,
       planCode: params.planCode,
+      correlationId: undefined,
     });
 
     await logAction(provisioned.tenantId, "provisioning:completed", {

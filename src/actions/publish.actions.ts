@@ -38,6 +38,7 @@ export async function publishWebsite(): Promise<PublishActionResult> {
       websiteId: website?.id ?? tenantId,
       version: 1,
       storefrontUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/${tenantId}`,
+      correlationId: undefined,
     });
 
     const status = await publishingService.getStatus(tenantId);

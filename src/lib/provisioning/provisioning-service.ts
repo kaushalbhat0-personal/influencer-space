@@ -265,7 +265,7 @@ export class ProvisioningService {
         tenantId,
         tenantSlug: slug,
         workspaceId: provisionedWs?.id ?? tenantId,
-        websiteId: tenantId,
+        websiteId: website?.id ?? tenantId,
         storefrontUrl,
         dashboardUrl,
         adminEmail,

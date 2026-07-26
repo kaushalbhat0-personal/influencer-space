@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import type { SnapshotData } from "@/lib/publishing/snapshot";
 import type { BuilderPage } from "@/lib/builder/types";
@@ -6,19 +7,31 @@ import type { PublicPageData } from "./public.service";
 
 export interface PublishedPageResult {
   tenantId: string;
+  websiteId: string;
   snapshot: SnapshotData | null;
   legacy: PublicPageData;
   fromSnapshot: boolean;
 }
 
 export async function getPublishedPageData(tenantId: string): Promise<PublishedPageResult> {
-  const snapshot = await publishSnapshotService.getLive(tenantId);
+  const website = await prisma.website.findUnique({
+    where: { tenantId },
+    select: { id: true },
+  });
+
+  if (!website) {
+    console.error(`[published-service] Website not found for tenantId=${tenantId}`);
+    const legacy = await getPublicPageData(tenantId);
+    return { tenantId, websiteId: "", snapshot: null, legacy, fromSnapshot: false };
+  }
+
+  const snapshot = await publishSnapshotService.getLive(website.id);
   const legacy = await getPublicPageData(tenantId);
 
   if (snapshot) {
-    return { tenantId, snapshot: snapshot.data, legacy, fromSnapshot: true };
+    return { tenantId, websiteId: website.id, snapshot: snapshot.data, legacy, fromSnapshot: true };
   }
-  return { tenantId, snapshot: null, legacy, fromSnapshot: false };
+  return { tenantId, websiteId: website.id, snapshot: null, legacy, fromSnapshot: false };
 }
 
 export function extractProfileFromPages(snapshot: SnapshotData): { name: string; tagline: string; bio: string; profileImage: string | null } {

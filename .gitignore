@@ -43,3 +43,11 @@ next-env.d.ts
 .env*
 
 dev-server.log
+
+# E2E test screenshots and build artifacts
+docs/alpha/screenshots/
+docs/rc1/screenshots/
+playwright-report/
+test-results/
+build2.txt
+build_output.txt

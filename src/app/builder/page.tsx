@@ -1,4 +1,4 @@
-import BuilderLoader from "./_components/loader";
+import BuilderLoader from "@/features/builder/components/loader";
 
 export const dynamic = "force-dynamic";
 

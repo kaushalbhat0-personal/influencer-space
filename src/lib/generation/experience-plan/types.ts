@@ -55,11 +55,17 @@ export interface FooterPlan {
   readonly copyrightStyle: "full" | "minimal";
 }
 
+export interface NavigationLink {
+  readonly label: string;
+  readonly href: string;
+}
+
 export interface NavigationPlan {
   readonly style: "standard" | "centered" | "minimal" | "hamburger";
   readonly sticky: boolean;
   readonly transparent: boolean;
   readonly searchEnabled: boolean;
+  readonly links: readonly NavigationLink[];
 }
 
 export interface ThemePlan {

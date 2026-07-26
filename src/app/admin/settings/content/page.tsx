@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ContentFeedManager } from "./_components/content-feed-manager";
+import { ContentContainer } from "@/components/layout";
+import { ContentFeedManager } from "@/features/settings/components/content-feed-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -11,14 +12,10 @@ export default async function ContentFeedSettingsPage() {
 
   if (!tenantId) {
     return (
-      <div>
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">
-          Content Feed
-        </h1>
-        <p className="mt-4 text-gray-400">
-          No tenant configured. Please seed a tenant first.
-        </p>
-      </div>
+      <ContentContainer>
+        <h1 className="admin-gradient-text text-2xl font-bold font-display">Content Feed</h1>
+        <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
+      </ContentContainer>
     );
   }
 
@@ -28,7 +25,7 @@ export default async function ContentFeedSettingsPage() {
   });
 
   return (
-    <div>
+    <ContentContainer>
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Content Feed</h1>
         <p className="mt-1 text-sm text-gray-400">
@@ -43,6 +40,6 @@ export default async function ContentFeedSettingsPage() {
           createdAt: item.createdAt.toISOString(),
         }))}
       />
-    </div>
+    </ContentContainer>
   );
 }

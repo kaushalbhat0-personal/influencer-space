@@ -1,6 +1,6 @@
 "use client";
 
-import { EditableText } from "@/app/builder/_components/canvas/inline-editor";
+import { EditableText } from "@/features/builder/canvas/inline-editor";
 import type { ComponentDefinition } from "./types";
 import { useFormState } from "react-dom";
 import {

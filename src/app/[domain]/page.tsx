@@ -11,15 +11,16 @@ import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { StorefrontNav, NAV_ICONS } from "@/components/storefront/StorefrontNav";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 async function getPageData(slug: string) {
-  try {
-    const tenant = await prisma.tenant.findFirst({ where: { OR: [{ subdomain: slug }, { customDomain: slug }] } });
-    if (!tenant) return null;
-    const published = await getPublishedPageData(tenant.id);
-    return { tenantId: published.tenantId, snapshot: published.snapshot, legacy: published.legacy, fromSnapshot: published.fromSnapshot };
-  } catch { return null; }
+  const tenant = await prisma.tenant.findFirst({ where: { OR: [{ subdomain: slug }, { customDomain: slug }] } });
+  if (!tenant) {
+    console.log(`[storefront] Tenant not found for slug=${slug}`);
+    return null;
+  }
+  const published = await getPublishedPageData(tenant.id);
+  return { tenantId: published.tenantId, snapshot: published.snapshot, legacy: published.legacy, fromSnapshot: published.fromSnapshot };
 }
 
 function getCanonicalUrl(slug: string): string {
@@ -105,7 +106,13 @@ export async function generateMetadata({ params }: { params: { domain: string } 
 }
 
 export default async function PublicPage({ params }: { params: { domain: string } }) {
-  const pd = await getPageData(params.domain);
+  let pd;
+  try {
+    pd = await getPageData(params.domain);
+  } catch (error) {
+    console.error(`[storefront] Failed to resolve page data for domain=${params.domain}`, error);
+    throw error;
+  }
   if (!pd) notFound();
 
   const { tenantId, snapshot, legacy } = pd;

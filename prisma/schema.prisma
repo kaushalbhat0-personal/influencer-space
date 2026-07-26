@@ -635,6 +635,75 @@ model CreatorProvisionEvent {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Generation Session — first-class resource for every creator generation
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Immutable event log for a GenerationSession.
+model GenerationSessionEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @db.Uuid
+  type      String   // stage_started | stage_completed | stage_failed | status_changed | progress_updated | error_occurred | warning_added | retry_initiated | workflow_linked
+  data      Json     @default("{}")
+  timestamp DateTime @default(now())
+
+  session GenerationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, timestamp])
+}
+
+/// Per-stage tracking within a GenerationSession.
+model GenerationSessionStage {
+  id          String   @id @default(uuid()) @db.Uuid
+  sessionId   String   @db.Uuid
+  type        String   // import_profile | knowledge_intelligence | persona_detection | planning_context | experience_planning | composition | artifact_generation | provisioning | publishing | golden_validation
+  status      String   // pending | running | completed | skipped | failed
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?
+  error       String?
+
+  session GenerationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, type])
+}
+
+/// Every creator generation is a first-class resource with lifecycle, progress, and history.
+model GenerationSession {
+  id                   String    @id @default(uuid()) @db.Uuid
+  workspaceId          String    @db.Uuid
+  creatorId            String?   @db.Uuid
+  creatorName          String
+  sourceUrl            String?
+  platform             String?
+  status               String    @default("created") // created | queued | running | publishing | completed | failed | cancelled | timed_out | retrying
+  currentStage         String?
+  progressPercent      Int       @default(0)
+  maxRetries           Int       @default(3)
+  retryCount           Int       @default(0)
+  workflowId           String?   @db.Uuid
+  evaluationScore      Float?
+  goldenValidationScore Float?
+  artifactVersion      Int?
+  correlationId        String?
+  storefrontUrl        String?
+  builderUrl           String?
+  dashboardUrl         String?
+  error                String?
+  warnings             Json      @default("[]")
+  startedAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  completedAt          DateTime?
+
+  stages  GenerationSessionStage[]
+  history GenerationSessionEvent[]
+
+  @@index([workspaceId])
+  @@index([status])
+  @@index([creatorId])
+  @@index([correlationId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Billing v2 — Phase 1 Foundation (additive — legacy tables preserved)
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -1117,15 +1186,17 @@ model AnalyticsEvent {
 // ── PLATFORM EVENTS ──────────────────────────────────────────────────────────
 
 model PlatformEvent {
-  id          String   @id @default(uuid()) @db.Uuid
-  eventType   String
-  payload     Json     @default("{}")
-  aggregateId String?
-  source      String   @default("platform")
-  occurredAt  DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  eventType     String
+  payload       Json     @default("{}")
+  aggregateId   String?
+  correlationId String?
+  source        String   @default("platform")
+  occurredAt    DateTime @default(now())
 
   @@index([eventType, occurredAt])
   @@index([aggregateId])
+  @@index([correlationId])
   @@index([occurredAt])
 }
 

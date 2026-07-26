@@ -1,8 +1,9 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ContentContainer } from "@/components/layout";
 import { SettingsService } from "@/services/settings.service";
-import { SettingsForm } from "./_components/settings-form";
 import { prisma } from "@/lib/prisma";
+import { SettingsForm } from "@/features/settings/components/settings-form";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +13,10 @@ export default async function SettingsPage() {
 
   if (!tenantId) {
     return (
-      <div>
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">
-          Website Settings
-        </h1>
-        <p className="mt-4 text-gray-400">
-          No tenant configured. Please seed a tenant first.
-        </p>
-      </div>
+      <ContentContainer>
+        <h1 className="admin-gradient-text text-2xl font-bold font-display">Website Settings</h1>
+        <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
+      </ContentContainer>
     );
   }
 
@@ -33,7 +30,7 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div>
+    <ContentContainer>
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Website Settings</h1>
         <p className="mt-1 text-sm text-gray-400">
@@ -49,6 +46,6 @@ export default async function SettingsPage() {
         instagramKeyConfigured={!!tenantKeys?.instagramApiKey}
         tenantId={tenantId}
       />
-    </div>
+    </ContentContainer>
   );
 }

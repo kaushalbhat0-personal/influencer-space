@@ -48,28 +48,24 @@ function makeSource(overrides?: Partial<ContentSource>): ContentSource {
 // ===================== Types =====================
 describe("Intelligence types", () => {
   it("THEME_PALETTES has all expected niches", () => {
-    expect(THEME_PALETTES.gaming).toBeDefined();
-    expect(THEME_PALETTES.education).toBeDefined();
-    expect(THEME_PALETTES.finance).toBeDefined();
-    expect(THEME_PALETTES.fitness).toBeDefined();
-    expect(THEME_PALETTES.music).toBeDefined();
-    expect(THEME_PALETTES.travel).toBeDefined();
-    expect(THEME_PALETTES.food).toBeDefined();
-    expect(THEME_PALETTES.photography).toBeDefined();
-    expect(THEME_PALETTES.technology).toBeDefined();
-    expect(THEME_PALETTES.art).toBeDefined();
-    expect(THEME_PALETTES.default).toBeDefined();
+    const expected = ["gaming", "education", "finance", "fitness", "music", "travel", "food", "photography", "technology", "art", "lifestyle", "sports", "news", "comedy", "celebrity", "default"];
+    for (const niche of expected) {
+      expect(THEME_PALETTES[niche]).toBeDefined();
+    }
   });
 
   it("NICHE_KEYWORDS has all expected niches", () => {
-    expect(NICHE_KEYWORDS.gaming).toContain("gaming");
-    expect(NICHE_KEYWORDS.fitness).toContain("fitness");
-    expect(NICHE_KEYWORDS.technology).toContain("tech");
+    const expected = ["gaming", "education", "finance", "fitness", "music", "travel", "food", "photography", "technology", "art", "lifestyle", "sports", "news", "comedy", "celebrity"];
+    for (const niche of expected) {
+      expect(NICHE_KEYWORDS[niche].length).toBeGreaterThan(0);
+    }
   });
 
   it("PRODUCT_RECOMMENDATIONS has all expected niches", () => {
-    expect(PRODUCT_RECOMMENDATIONS.gaming).toHaveLength(3);
-    expect(PRODUCT_RECOMMENDATIONS.food).toHaveLength(3);
+    const expected = ["gaming", "education", "finance", "fitness", "music", "travel", "food", "photography", "technology", "art", "lifestyle", "sports", "news", "comedy", "celebrity"];
+    for (const niche of expected) {
+      expect(PRODUCT_RECOMMENDATIONS[niche]).toHaveLength(3);
+    }
   });
 
   it("formatConfidence returns correct levels", () => {

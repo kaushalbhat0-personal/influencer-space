@@ -29,11 +29,13 @@ export class PlatformEventBus {
     type: T,
     payload: PlatformEventPayloads[T],
     source = "platform",
+    correlationId?: string,
   ): PlatformEvent<T> {
     const event: PlatformEvent<T> = {
       id: generateEventId(),
       type,
       payload,
+      correlationId,
       timestamp: new Date().toISOString(),
       source,
     };

@@ -1,6 +1,7 @@
 export const EVENT_TYPES = [
   "UserRegistered",
   "CreatorProvisioned",
+  "WebsiteBeingGenerated",
   "WebsiteGenerated",
   "WebsitePublished",
   "PaymentCaptured",
@@ -31,6 +32,15 @@ export interface PlatformEventPayloads {
     sourcePlatform: string;
     workspaceId: string;
     planCode: string;
+    correlationId?: string;
+  };
+  WebsiteBeingGenerated: {
+    tenantId: string;
+    workspaceId: string;
+    creatorName: string;
+    sourceUrl: string;
+    sourcePlatform: string;
+    correlationId?: string;
   };
   WebsiteGenerated: {
     tenantId: string;
@@ -38,12 +48,14 @@ export interface PlatformEventPayloads {
     sourcePlatform: string;
     stagesCompleted: number;
     totalStages: number;
+    correlationId?: string;
   };
   WebsitePublished: {
     tenantId: string;
     websiteId: string;
     version: number;
     storefrontUrl: string;
+    correlationId?: string;
   };
   PaymentCaptured: {
     workspaceId: string;
@@ -111,6 +123,7 @@ export type PlatformEvent<T extends EventType = EventType> = {
   id: string;
   type: T;
   payload: PlatformEventPayloads[T];
+  correlationId?: string;
   timestamp: string;
   source: string;
 };

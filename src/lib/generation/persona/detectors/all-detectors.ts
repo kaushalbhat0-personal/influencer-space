@@ -91,6 +91,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     let s = 0;
     if (g.products.length >= 2 && g.products.some(p => p.type === "digital")) s += 40;
     if (g.content.topContentTypes.some(t => ["educational", "tutorial", "how to"].includes(t))) s += 30;
+    if (g.content.commonHashtags.some(h => ["#educational", "#tutorial", "#course", "#learn", "#study"].includes(h))) s += 15;
     if (bio(g).match(/course|teach|learn|curriculum/)) s += 20;
     if (g.audience.interests.some(i => i.toLowerCase().includes("learn"))) s += 10;
     return s;
@@ -140,6 +141,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["educational", "tutorial", "lesson"].includes(t))) s += 35;
+    if (g.content.commonHashtags.some(h => ["#educational", "#tutorial", "#lesson", "#study", "#class"].includes(h))) s += 15;
     if (g.products.length <= 1) s += 20;
     if (bio(g).match(/teacher|educator|professor|instructor/)) s += 20;
     if (g.content.contentQuality === "high") s += 10;
@@ -190,9 +192,9 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     defaultModules: ["hero", "products", "about", "faq", "testimonials"], onboardingDefaults: {},
   }, g => {
     let s = 0;
-    if (g.products.length >= 5) s += 40;
+    if (g.products.length >= 3) s += 40;
     if (g.businessModel.type === "digital_products") s += 30;
-    if (bio(g).match(/academy|institute|school|university/)) s += 20;
+    if (bio(g).match(/academy|institute|school|university|coaching|preparation/)) s += 25;
     if (g.content.contentQuality === "high") s += 10;
     return s;
   }),
@@ -210,6 +212,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["stream", "live", "gameplay"].includes(t))) s += 35;
+    if (g.content.commonHashtags.some(h => ["#stream", "#live", "#gameplay", "#twitch"].includes(h))) s += 15;
     if (g.content.contentQuality === "high") s += 20;
     if (g.creator.followers > 5000) s += 15;
     if (g.socialLinks.length >= 3) s += 15;
@@ -228,6 +231,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     let s = 0;
     if (g.creator.followers > 100000) s += 40;
     if (g.content.topContentTypes.some(t => ["competitive", "esports", "tournament"].includes(t))) s += 25;
+    if (g.content.commonHashtags.some(h => ["#esports", "#competitive", "#tournament"].includes(h))) s += 15;
     if (bio(g).match(/esports|competitive|pro|team/)) s += 20;
     if (g.products.length >= 1) s += 15;
     return s;
@@ -243,6 +247,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["tutorial", "guide", "walkthrough", "how to"].includes(t))) s += 40;
+    if (g.content.commonHashtags.some(h => ["#guide", "#tutorial", "#walkthrough", "#tips"].includes(h))) s += 15;
     if (bio(g).match(/guide|tutorial|walkthrough|tips/)) s += 25;
     if (g.products.length >= 1) s += 20;
     s += 10;
@@ -259,6 +264,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["challenge", "speedrun", "funny", "montage"].includes(t))) s += 35;
+    if (g.content.commonHashtags.some(h => ["#challenge", "#speedrun", "#montage", "#funny"].includes(h))) s += 15;
     if (g.content.contentQuality === "high") s += 20;
     if (g.creator.followers > 10000) s += 20;
     if (g.socialLinks.length >= 2) s += 15;
@@ -276,6 +282,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["entertainment", "funny", "variety"].includes(t))) s += 30;
+    if (g.content.commonHashtags.some(h => ["#entertainment", "#funny", "#gaming"].includes(h))) s += 15;
     if (g.creator.followers > 5000) s += 20;
     if (g.socialLinks.length >= 2) s += 20;
     if (g.products.length === 0) s += 15;
@@ -1214,6 +1221,124 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     if (g.socialLinks.length >= 3) s += 15;
     if (g.creator.followers > 10000) s += 10;
     s += 10;
+    return s;
+  }),
+
+  // ──────────────────────────────────────────────
+  // FINANCE
+  // ──────────────────────────────────────────────
+  createDetector("finance", {
+    id: ids("finance_educator"), name: "Finance Educator",
+    niche: "finance", description: "Educates audiences on personal finance, investing, and wealth building",
+    businessModel: bm("education"), typicalProducts: ["Courses", "Guides", "Templates"],
+    contentStyle: cs("educational"), audienceType: at("general"),
+    socialProofEmphasis: "medium", pricingEmphasis: "medium",
+    defaultModules: ["hero", "products", "about", "faq", "contact"], onboardingDefaults: {},
+  }, g => {
+    let s = 0;
+    if (g.content.topContentTypes.some(t => ["educational", "tutorial", "guide", "analysis"].includes(t))) s += 30;
+    if (bio(g).match(/finance|invest|money|budget|saving|wealth|financial/)) s += 30;
+    if (g.products.length >= 1 && g.products.some(p => p.type === "digital")) s += 20;
+    if (g.audience.interests.some(i => i.toLowerCase().includes("education") || i.toLowerCase().includes("business"))) s += 10;
+    s += 10;
+    return s;
+  }),
+
+  createDetector("finance", {
+    id: ids("finance_advisor"), name: "Financial Advisor",
+    niche: "finance", description: "Professional financial advisor offering consultation and wealth management services",
+    businessModel: bm("service_based"), typicalProducts: ["Consultation", "Wealth management", "Planning"],
+    contentStyle: cs("educational"), audienceType: at("professional"),
+    socialProofEmphasis: "high", pricingEmphasis: "high",
+    defaultModules: ["hero", "about", "products", "testimonials", "contact"], onboardingDefaults: {},
+  }, g => {
+    let s = 0;
+    if (g.businessModel.type === "services" && g.creator.followers > 5000) s += 30;
+    if (bio(g).match(/advisor|consultant|advisory|wealth|portfolio|expert/)) s += 30;
+    if (g.content.topContentTypes.some(t => ["professional", "analysis", "strategy"].includes(t))) s += 15;
+    if (g.audience.interests.some(i => i.toLowerCase().includes("business"))) s += 15;
+    if (g.brand.brandVoice === "professional") s += 10;
+    return s;
+  }),
+
+  createDetector("finance", {
+    id: ids("finance_investor"), name: "Investor",
+    niche: "finance", description: "Shares investment strategies, market analysis, and trading insights",
+    businessModel: bm("education"), typicalProducts: ["Investment guides", "Market reports", "Courses"],
+    contentStyle: cs("technical"), audienceType: at("niche"),
+    socialProofEmphasis: "medium", pricingEmphasis: "medium",
+    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+  }, g => {
+    let s = 0;
+    if (bio(g).match(/investor|trading|stock|crypto|market|portfolio/)) s += 35;
+    if (g.content.topContentTypes.some(t => ["analysis", "technical", "report", "strategy"].includes(t))) s += 20;
+    if (g.products.length >= 2) s += 20;
+    if (g.content.contentQuality === "high") s += 15;
+    s += 10;
+    return s;
+  }),
+
+  // ──────────────────────────────────────────────
+  // COMEDY
+  // ──────────────────────────────────────────────
+  createDetector("comedy", {
+    id: ids("comedy_standup"), name: "Standup Comedian",
+    niche: "comedy", description: "Performs standup comedy and live comedy shows",
+    businessModel: bm("service_based"), typicalProducts: ["Show tickets", "Merch", "Premium content"],
+    contentStyle: cs("entertainment"), audienceType: at("general"),
+    socialProofEmphasis: "high", pricingEmphasis: "medium",
+    defaultModules: ["hero", "about", "products", "gallery", "contact"], onboardingDefaults: {},
+  }, g => {
+    let s = 0;
+    if (g.content.topContentTypes.some(t => ["comedy", "entertainment", "funny", "sketch"].includes(t))) s += 30;
+    if (g.content.commonHashtags.some(h => ["#comedy", "#funny", "#sketch", "#standup", "#comedian", "#humor", "#joke"].includes(h))) s += 15;
+    if (bio(g).match(/comedy|standup|comedian|laugh|funny|humor|joke|roast/)) s += 30;
+    if (g.creator.followers > 50000) s += 20;
+    if (g.products.length >= 1) s += 10;
+    s += 10;
+    return s;
+  }),
+
+  createDetector("comedy", {
+    id: ids("comedy_sketch_creator"), name: "Sketch Creator",
+    niche: "comedy", description: "Creates comedy sketches, parody, and satirical content",
+    businessModel: bm("content_monetization"), typicalProducts: ["Merch", "Channel memberships"],
+    contentStyle: cs("entertainment"), audienceType: at("general"),
+    socialProofEmphasis: "medium", pricingEmphasis: "low",
+    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+  }, g => {
+    let s = 0;
+    if (bio(g).match(/sketch|parody|satire|character|impression/)) s += 35;
+    if (g.content.topContentTypes.some(t => ["sketch", "parody", "satire", "comedy"].includes(t))) s += 25;
+    if (g.content.commonHashtags.some(h => ["#sketch", "#comedy", "#parody", "#satire"].includes(h))) s += 15;
+    if (g.socialLinks.length >= 3) s += 20;
+    if (g.creator.followers > 10000) s += 10;
+    s += 10;
+    return s;
+  }),
+
+  // ──────────────────────────────────────────────
+  // CELEBRITY
+  // ──────────────────────────────────────────────
+  createDetector("celebrity", {
+    id: ids("celebrity_influencer"), name: "Celebrity Influencer",
+    niche: "celebrity", description: "High-profile celebrity with massive brand presence and influence",
+    businessModel: bm("hybrid"), typicalProducts: ["Branded merchandise", "Exclusive content", "Brand deals"],
+    contentStyle: cs("entertainment"), audienceType: at("general"),
+    socialProofEmphasis: "high", pricingEmphasis: "high",
+    defaultModules: ["hero", "products", "about", "gallery", "testimonials", "contact"], onboardingDefaults: {},
+  }, g => {
+    let s = 0;
+    if (g.creator.followers > 500000) s += 30;
+    if (g.creator.followers > 100000) s += 20;
+    if (g.creator.followers >= 50000) s += 15;
+    if (g.creator.followers >= 10000) s += 10;
+    if (g.brand.existingBranding) s += 20;
+    if (g.content.commonHashtags.some(h => ["#celebrity", "#bollywood", "#star", "#famous"].includes(h))) s += 15;
+    if (bio(g).match(/celebrity|star|icon|bollywood|legend/)) s += 15;
+    if (g.products.length >= 3) s += 15;
+    if (g.brand.brandVoice === "professional") s += 10;
+    s += 5;
     return s;
   }),
 

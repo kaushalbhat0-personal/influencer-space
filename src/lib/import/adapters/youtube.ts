@@ -34,6 +34,17 @@ export class YouTubeAdapter implements CreatorImportAdapter {
   validate(input: string): { valid: boolean; error?: string } {
     const trimmed = input.trim();
     if (!trimmed) return { valid: false, error: "YouTube URL or handle is required." };
+
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(@[a-zA-Z0-9_-]{3,}|channel\/[a-zA-Z0-9_-]+|c\/[a-zA-Z0-9_-]+|user\/[a-zA-Z0-9_-]+)|youtu\.be\/[a-zA-Z0-9_-]+)/;
+    if (!youtubeRegex.test(trimmed)) {
+      return { valid: false, error: "Invalid YouTube URL. Expected format: https://youtube.com/@handle" };
+    }
+
+    const handle = extractHandle(trimmed);
+    if (!handle) {
+      return { valid: false, error: "Could not extract YouTube handle from the provided URL." };
+    }
+
     return { valid: true };
   }
 

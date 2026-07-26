@@ -1,11 +1,11 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import dotenv from "dotenv";
+import { loadEnvConfig } from "@next/env";
 
-dotenv.config();
+loadEnvConfig(process.cwd());
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("DATABASE_URL is not set");
   process.exit(1);
