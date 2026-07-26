@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, XCircle, Clock, ExternalLink, Layout, BarChart3, Timer, Users, Activity, AlertTriangle, Zap, Shield, Database, RefreshCw } from "lucide-react";
-import { scoreToLabel, scoreToColor } from "@/lib/beta/scoring";
+import { CheckCircle2, XCircle, Clock, ExternalLink, Layout, BarChart3, Timer, Users, Activity, Zap, Database, RefreshCw } from "lucide-react";
+import { scoreToColor } from "@/lib/beta/scoring";
 import type { BetaDashboardEntry } from "@/lib/beta/types";
 import type { ReadinessScore } from "@/lib/observability/production-score";
 

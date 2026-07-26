@@ -23,10 +23,6 @@ export interface TenantSessionWithLifecycle extends TenantSession {
   lifecycle: LifecycleData;
 }
 
-function isAuthenticated(lifecycle: LifecycleData): lifecycle is LifecycleData & { role: string } {
-  return lifecycle.state !== LifecycleState.VISITOR && !!lifecycle.role;
-}
-
 export async function requireTenant(): Promise<TenantSession> {
   const { session, lifecycle } = await resolveSession();
 

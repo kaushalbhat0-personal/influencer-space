@@ -1,11 +1,6 @@
 import type { Scenario, ScenarioContext, ScenarioResult, AssertionResult, TimingMetrics } from "./types";
 import { calculateHealthScore } from "./scoring";
 
-function measureDuration<T>(fn: () => Promise<T>): Promise<{ result: T; durationMs: number }> {
-  const start = performance.now();
-  return fn().then((result) => ({ result, durationMs: Math.round(performance.now() - start) }));
-}
-
 export async function runScenario(
   scenario: Scenario,
   context: ScenarioContext,

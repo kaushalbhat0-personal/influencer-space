@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Assertion, AssertionCategory, Severity } from "./types";
+import type { Assertion, Severity } from "./types";
 
 export function identityAssertion(
   id: string,
