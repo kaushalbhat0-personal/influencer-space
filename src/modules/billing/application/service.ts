@@ -116,7 +116,7 @@ export class BillingService {
         invoiceId: invoice.id,
         subscriptionId: sub.id,
         providerReference,
-      }).catch(() => {});
+      }).catch((err) => { console.error(`[Billing] Failed to persist audit log for payment:captured:`, err); });
     }
   }
 

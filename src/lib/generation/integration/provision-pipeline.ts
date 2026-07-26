@@ -71,6 +71,7 @@ export function extractArtifactData(pipelineResult: PipelineResult): PipelineArt
 
 export function buildProvisioningInput(params: {
   runId: string;
+  authenticatedUserId?: string;
   creatorName: string;
   sourceUrl: string;
   sourcePlatform: string;
@@ -82,6 +83,7 @@ export function buildProvisioningInput(params: {
 
   return {
     runId: params.runId,
+    authenticatedUserId: params.authenticatedUserId,
     creatorName: params.creatorName,
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,

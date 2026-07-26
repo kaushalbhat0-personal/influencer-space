@@ -17,9 +17,6 @@ export * from "./invitation/service";
 export * from "./session/types";
 export * from "./session/service";
 
-export * from "./authentication/types";
-export * from "./authentication/service";
-
 export * from "./authorization/types";
 export * from "./authorization/service";
 export * from "./authorization/policies";

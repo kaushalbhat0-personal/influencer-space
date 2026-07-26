@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, memo } from "react";
-import { Layers, Image, Palette, Search, Package, FileText } from "lucide-react";
+import { Search, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { componentRegistry } from "@/lib/registry/components";
 import { ThemeInspector } from "../theme";
 
-type Tab = "modules" | "pages" | "layers" | "assets" | "theme";
+type Tab = "modules" | "theme";
 
 export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>("modules");
@@ -24,18 +24,15 @@ export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { colla
         .filter((cat) => cat.components.length > 0)
     : categories;
 
-  const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
-    { id: "modules", label: "Modules", icon: Package },
-    { id: "pages", label: "Pages", icon: FileText },
-    { id: "layers", label: "Layers", icon: Layers },
-    { id: "assets", label: "Assets", icon: Image },
-    { id: "theme", label: "Theme", icon: Palette },
+  const tabs: { id: Tab; label: string; icon: typeof Package }[] = [
+    { id: "modules", label: "Sections", icon: Package },
+    { id: "theme", label: "Theme", icon: Package },
   ];
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Builder</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Sections</span>
         <button onClick={onToggle} className="rounded p-0.5 text-zinc-600 hover:text-zinc-400">
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
@@ -48,7 +45,6 @@ export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { colla
             onClick={() => setActiveTab(tab.id)}
             className={cn("flex-1 py-2 text-[10px] font-medium transition-colors", activeTab === tab.id ? "border-b border-s8ul-cyan text-s8ul-cyan" : "text-zinc-600 hover:text-zinc-400")}
           >
-            <tab.icon className="mx-auto mb-0.5 h-3.5 w-3.5" />
             {tab.label}
           </button>
         ))}
@@ -59,7 +55,7 @@ export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { colla
           <div className="border-b border-white/5 px-2 py-1.5">
             <div className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-2 py-1">
               <Search className="h-3 w-3 text-zinc-600" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search components..." className="flex-1 bg-transparent text-xs text-zinc-400 outline-none placeholder:text-zinc-700" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search sections..." className="flex-1 bg-transparent text-xs text-zinc-400 outline-none placeholder:text-zinc-700" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-3">
@@ -79,19 +75,12 @@ export const BuilderSidebar = memo(function BuilderSidebar({ onToggle }: { colla
                 </div>
               </div>
             ))}
-            {filteredCategories.length === 0 && <p className="px-2 py-4 text-center text-xs text-zinc-700">No components found</p>}
+            {filteredCategories.length === 0 && <p className="px-2 py-4 text-center text-xs text-zinc-700">No sections found</p>}
           </div>
         </>
       )}
 
       {activeTab === "theme" && <ThemeInspector />}
-      {activeTab !== "modules" && activeTab !== "theme" && (
-        <div className="flex flex-1 items-center justify-center text-xs text-zinc-700">
-          {activeTab === "pages" && "Pages panel — coming soon"}
-          {activeTab === "layers" && "Layers panel — coming soon"}
-          {activeTab === "assets" && "Assets panel — coming soon"}
-        </div>
-      )}
     </div>
   );
 });

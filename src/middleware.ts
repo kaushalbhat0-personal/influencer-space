@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { lifecycleService, LifecycleState } from "@/lib/lifecycle";
 
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
@@ -13,6 +14,8 @@ const platformDomains = [
 ];
 
 const DEFAULT_TENANT = process.env.DEFAULT_TENANT_SUBDOMAIN || "";
+
+const PUBLIC_PATHS = ["/", "/pricing", "/features", "/signup", "/admin/login"];
 
 // ─── Tenant Host Resolution ──────────────────────────────────────────────────
 
@@ -34,72 +37,45 @@ function parseTenantHost(host: string): string | null {
   return stripped;
 }
 
-// ─── Role-Based Route Guards ─────────────────────────────────────────────────
-
-type AllowedRole = "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "ADMIN";
-
-const routeGuards: Array<{
-  prefix: string;
-  roles: AllowedRole[];
-  redirectTo: string;
-  requireTenant?: boolean;
-}> = [
-  { prefix: "/super-admin", roles: ["SUPER_ADMIN"], redirectTo: "/admin/login" },
-  { prefix: "/agency",       roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF"], redirectTo: "/admin/login" },
-  { prefix: "/admin/dashboard", roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login", requireTenant: true },
-  { prefix: "/admin",        roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"], redirectTo: "/admin/login", requireTenant: true },
-];
-
-async function checkRouteAccess(
-  pathname: string,
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  const guard = routeGuards.find((g) => pathname.startsWith(g.prefix));
-  if (!guard) return null;
-
-  if (pathname === "/admin/login") return null;
-
-  const token = await getToken({ req: request, secret });
-
-  if (!token) {
-    const loginUrl = new URL(guard.redirectTo, request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  const userRole = token.role as AllowedRole | undefined;
-
-  if (!userRole || !guard.roles.includes(userRole)) {
-    return new NextResponse("Unauthorized", { status: 403 });
-  }
-
-  // ADMIN without tenantId → redirect to onboarding (pre-provisioning state)
-  if (guard.requireTenant && userRole === "ADMIN" && !token.tenantId) {
-    const onboardingUrl = new URL("/onboarding", request.url);
-    return NextResponse.redirect(onboardingUrl);
-  }
-
-  return null;
-}
-
 // ─── Main Middleware ──────────────────────────────────────────────────────────
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
 
-  // Read workspaceId from JWT token (available in all roles)
-  const token = await getToken({ req: request, secret }).catch(() => null);
-  const workspaceId = (token?.workspaceId as string) ?? null;
+  const token = await getToken({ req: request, secret }) as {
+    id?: string; tenantId?: string; role?: string; workspaceId?: string;
+  } | null;
+  const lifecycle = lifecycleService.resolveFromToken(token);
+  const workspaceId = token?.workspaceId;
 
-  // Platform root — bypass tenant logic
-  if (platformDomains.some((d) => d === host.toLowerCase())) {
-    const accessCheck = await checkRouteAccess(pathname, request);
-    if (accessCheck) return accessCheck;
+  // ── Public paths (always allowed) ──────────────────────────────────────────
+  if (PUBLIC_PATHS.includes(pathname)) {
     const headers = new Headers(request.headers);
     if (workspaceId) headers.set("x-workspace-id", workspaceId);
     return NextResponse.next({ request: { headers } });
   }
 
+  // ── Platform root ──────────────────────────────────────────────────────────
+  if (platformDomains.some((d) => d === host.toLowerCase())) {
+    const redirect = lifecycleService.redirectTo(pathname, lifecycle);
+    if (redirect) {
+      const url = new URL(redirect, request.url);
+      return NextResponse.redirect(url);
+    }
+
+    const canAccess = lifecycleService.canAccess(pathname, lifecycle);
+    if (!canAccess.allowed) {
+      const url = new URL(canAccess.redirectTo ?? "/admin/login", request.url);
+      return NextResponse.redirect(url);
+    }
+
+    const headers = new Headers(request.headers);
+    if (workspaceId) headers.set("x-workspace-id", workspaceId);
+    return NextResponse.next({ request: { headers } });
+  }
+
+  // ── Tenant subdomain ───────────────────────────────────────────────────────
   const tenantHost = parseTenantHost(host) || DEFAULT_TENANT || null;
 
   const requestHeaders = new Headers(request.headers);
@@ -114,10 +90,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 308 });
   }
 
-  // Check role-based access for admin routes
+  // Role-based access for admin routes
   if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin")) {
-    const accessCheck = await checkRouteAccess(pathname, request);
-    if (accessCheck) return accessCheck;
+    const redirect = lifecycleService.redirectTo(pathname, lifecycle);
+    if (redirect) {
+      const url = new URL(redirect, request.url);
+      return NextResponse.redirect(url);
+    }
+
+    const canAccess = lifecycleService.canAccess(pathname, lifecycle);
+    if (!canAccess.allowed) {
+      const url = new URL(canAccess.redirectTo ?? "/admin/login", request.url);
+      return NextResponse.redirect(url);
+    }
+
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 

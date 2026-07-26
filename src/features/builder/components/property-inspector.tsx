@@ -29,7 +29,7 @@ export function PropertyInspector() {
     return propertyResolver.resolve(selection.ids[0]!);
   }, [selection.ids]);
 
-  if (!resolved) return <EmptyState message="Select a module to edit properties" />;
+  if (!resolved) return <EmptyState message="Select a block to edit its properties" />;
 
   let filtered = resolved.properties;
   if (state.searchQuery) {

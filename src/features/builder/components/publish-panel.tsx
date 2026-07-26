@@ -65,7 +65,7 @@ export function PublishPanel({ className }: PublishPanelProps) {
     }
   }, []);
 
-  const isPublished = status?.state === "published";
+  const isPublished = status?.state === "live";
 
   return (
     <div className={cn("p-4 space-y-4", className)}>

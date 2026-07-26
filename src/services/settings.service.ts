@@ -59,13 +59,15 @@ export const SettingsService = {
     try {
       const data = await SettingsService.getSettingByKey(tenantId, "influencer_data");
       if (data) return data as InfluencerDataType;
-    } catch {}
+    } catch (err) {
+      console.error("SettingsService.getInfluencerData error:", err);
+    }
 
     await SettingsService.upsertSetting(
       tenantId,
       "influencer_data",
       defaultConfig as Prisma.InputJsonValue,
-    ).catch(() => {});
+    ).catch((err) => { console.error("SettingsService.getInfluencerData upsert error:", err); });
 
     return defaultConfig;
   },
@@ -85,13 +87,15 @@ export const SettingsService = {
     try {
       const data = await SettingsService.getSettingByKey(tenantId, "hero_data");
       if (data) return { ...defaultHeroData, ...(data as Partial<HeroDataType>) };
-    } catch {}
+    } catch (err) {
+      console.error("SettingsService.getHeroData error:", err);
+    }
 
     await SettingsService.upsertSetting(
       tenantId,
       "hero_data",
       defaultHeroData as Prisma.InputJsonValue,
-    ).catch(() => {});
+    ).catch((err) => { console.error("SettingsService.getHeroData upsert error:", err); });
 
     return defaultHeroData;
   },

@@ -2,19 +2,23 @@
 
 import { Suspense, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, Search } from "lucide-react";
+import Link from "next/link";
+import { Menu, Search, ExternalLink, Layout } from "lucide-react";
 import { AdminSidebar } from "./admin-sidebar";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
+import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
 export function AdminLayoutClient({
   children,
   siteUrl,
+  publishStatus = "draft",
 }: {
   children: React.ReactNode;
   siteUrl: string;
+  publishStatus?: PublishStatusValue;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
@@ -32,6 +36,7 @@ export function AdminLayoutClient({
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         siteUrl={siteUrl}
+        publishStatus={publishStatus}
       />
 
       {/* Mobile header */}
@@ -47,6 +52,7 @@ export function AdminLayoutClient({
           CreatorStore
         </span>
         <div className="flex-1" />
+        <PublishStatusBadge status={publishStatus} size="sm" />
         <button
           onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
           className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white"
@@ -69,6 +75,23 @@ export function AdminLayoutClient({
           <kbd className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
         </button>
         <div className="flex-1" />
+        <PublishStatusBadge status={publishStatus} size="md" />
+        <Link
+          href="/builder"
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+        >
+          <Layout className="h-3.5 w-3.5" />
+          Builder
+        </Link>
+        <Link
+          href={siteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          View site
+        </Link>
         <NotificationCenter />
       </div>
 

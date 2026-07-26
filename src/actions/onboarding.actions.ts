@@ -53,21 +53,6 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
   }
 }
 
-async function ensureWorkspace(userId: string): Promise<string> {
-  const memberships = await workspaceRepository.findMembershipsByUserId(userId);
-  const active = memberships.find((m) => m.status === "ACTIVE");
-  if (active) return active.workspaceId;
-
-  const slug = `ws_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  const ws = await workspaceRepository.create({
-    type: "TENANT",
-    name: "My Workspace",
-    slug,
-  });
-  await workspaceRepository.addMember({ workspaceId: ws.id, userId, role: "OWNER" });
-  return ws.id;
-}
-
 export async function runCreatorGeneration(
   sourceUrl: string,
   workspaceName: string,
@@ -75,6 +60,7 @@ export async function runCreatorGeneration(
   currency: string,
   language: string,
   existingProfileResult?: ImportProfileResult,
+  precreatedSessionId?: string,
 ): Promise<{
   success: boolean;
   stages?: Array<{ stage: string; status: string; error?: string }>;
@@ -82,7 +68,7 @@ export async function runCreatorGeneration(
   goldenValidation?: { passed: boolean; overallScore: number; regressions: string[] } | null;
   error?: string;
 }> {
-  let generationSessionId: string | null = null;
+  let generationSessionId: string | null = precreatedSessionId ?? null;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
@@ -90,34 +76,36 @@ export async function runCreatorGeneration(
     const creatorName = session.user.name || "Creator";
     const userId = session.user.id;
 
-    const workspaceId = await ensureWorkspace(userId);
+    const placeholderWsId = `pre_provision:${userId}`;
 
     const ctx = correlationService.create({
-      workspaceId,
+      workspaceId: placeholderWsId,
       creatorId: userId,
     });
 
-    try {
-      const gs = await sessionService.create({
-        workspaceId,
-        creatorId: userId,
-        creatorName,
-        sourceUrl,
-        platform: "youtube",
-        correlationId: ctx.correlationId,
-      });
-      generationSessionId = gs.id;
-      await sessionService.start(gs.id);
-      await sessionService.beginExecution(gs.id);
-      await sessionService.updateStage(gs.id, "import_profile", "running");
-    } catch (err) {
-      console.error(`[onboarding][${ctx.correlationId}] Failed to create generation session`, err);
+    if (!precreatedSessionId) {
+      try {
+        const gs = await sessionService.create({
+          workspaceId: placeholderWsId,
+          creatorId: userId,
+          creatorName,
+          sourceUrl,
+          platform: "youtube",
+          correlationId: ctx.correlationId,
+        });
+        generationSessionId = gs.id;
+        await sessionService.start(gs.id);
+        await sessionService.beginExecution(gs.id);
+        await sessionService.updateStage(gs.id, "import_profile", "running");
+      } catch (err) {
+        console.error(`[onboarding][${ctx.correlationId}] Failed to create generation session`, err);
+      }
     }
 
     if (generationSessionId) {
       platformEventBus.publish("WebsiteBeingGenerated", {
         tenantId: "",
-        workspaceId,
+        workspaceId: placeholderWsId,
         creatorName,
         sourceUrl,
         sourcePlatform: "youtube",
@@ -191,6 +179,7 @@ export async function runCreatorGeneration(
 
     const provisioningInput = buildProvisioningInput({
       runId,
+      authenticatedUserId: userId,
       creatorName,
       sourceUrl,
       sourcePlatform,
@@ -220,7 +209,7 @@ export async function runCreatorGeneration(
     }
 
     const ws = await workspaceRepository.findByTenantId(provisioned.tenantId);
-    const resolvedWorkspaceId = ws?.id ?? workspaceId;
+    const resolvedWorkspaceId = ws?.id ?? placeholderWsId;
 
     await prisma.setting.upsert({
       where: { tenantId_key: { tenantId: provisioned.tenantId, key: "onboarding_source" } },
@@ -292,18 +281,8 @@ export async function runCreatorGeneration(
       // cache invalidation is best-effort
     }
 
-    const ownerMember = ws
-      ? await prisma.workspaceMember.findFirst({
-          where: { workspaceId: ws.id, userId, role: "OWNER" },
-          select: { id: true },
-        })
-      : null;
-    if (ws && !ownerMember) {
-      await workspaceRepository.addMember({ workspaceId: ws.id, userId, role: "OWNER" });
-    }
-
     await logAction(provisioned.tenantId, "onboarding:completed", {
-      sourceUrl, sourcePlatform, workspaceName, workspaceId, creatorName,
+      sourceUrl, sourcePlatform, workspaceName, workspaceId: resolvedWorkspaceId, creatorName,
     });
 
     const website = await prisma.website.findUnique({
@@ -369,5 +348,108 @@ export async function getProvisionRunId(): Promise<{ runId?: string; status?: st
     return { runId: latestRun.id, status: latestRun.status };
   } catch {
     return { error: "Failed to check provisioning status" };
+  }
+}
+
+export async function createGenerationSession(
+  sourceUrl: string,
+): Promise<{ sessionId: string; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { sessionId: "", error: "Unauthorized" };
+
+    const placeholderWsId = `pre_provision:${session.user.id}`;
+    const ctx = correlationService.create({ workspaceId: placeholderWsId, creatorId: session.user.id });
+    const gs = await sessionService.create({
+      workspaceId: placeholderWsId,
+      creatorId: session.user.id,
+      creatorName: session.user.name || "Creator",
+      sourceUrl,
+      platform: "youtube",
+      correlationId: ctx.correlationId,
+    });
+
+    await sessionService.start(gs.id);
+    await sessionService.beginExecution(gs.id);
+    await sessionService.updateStage(gs.id, "import_profile", "running");
+
+    return { sessionId: gs.id };
+  } catch (error) {
+    return { sessionId: "", error: error instanceof Error ? error.message : "Failed to create session" };
+  }
+}
+
+type SessionProgressSuccess = {
+  status: string;
+  currentStage: string | null;
+  progressPercent: number;
+  elapsedMs: number;
+  error: string | null;
+  stages: Array<{ type: string; status: string; label: string; error: string | null; duration: number | null }>;
+  storefrontUrl: string | null;
+  evaluationScore: number | null;
+  goldenValidationScore: number | null;
+  completedAt: string | null;
+};
+
+type SessionProgressResult = { success: true; data: SessionProgressSuccess } | { success: false; error: string };
+
+export async function getGenerationSessionProgress(sessionId: string): Promise<SessionProgressResult> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    const gs = await sessionService.getById(sessionId);
+    if (!gs) return { success: false, error: "Session not found" };
+
+    const stages = gs.stages.map((s) => ({
+      type: s.type,
+      status: s.status,
+      label: s.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      error: s.error,
+      duration: s.duration,
+    }));
+
+    return {
+      success: true,
+      data: {
+        status: gs.status,
+        currentStage: gs.currentStage,
+        progressPercent: gs.progressPercent,
+        elapsedMs: Date.now() - gs.startedAt.getTime(),
+        error: gs.error,
+        stages,
+        storefrontUrl: gs.storefrontUrl,
+        evaluationScore: gs.evaluationScore,
+        goldenValidationScore: gs.goldenValidationScore,
+        completedAt: gs.completedAt?.toISOString() ?? null,
+      },
+    };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to get session status" };
+  }
+}
+
+export async function markOnboardingComplete(tenantId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await prisma.setting.upsert({
+      where: { tenantId_key: { tenantId, key: "onboarding_completed" } },
+      update: { value: { completedAt: new Date().toISOString() } },
+      create: { tenantId, key: "onboarding_completed", value: { completedAt: new Date().toISOString() } },
+    });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to mark onboarding" };
+  }
+}
+
+export async function isOnboardingComplete(tenantId: string): Promise<boolean> {
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId, key: "onboarding_completed" } },
+    });
+    return !!setting;
+  } catch {
+    return false;
   }
 }

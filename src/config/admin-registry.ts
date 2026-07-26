@@ -232,6 +232,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "beta", title: "Beta Validation", group: "system",
+    href: "/super-admin/beta", icon: CheckCircle2, permission: "super_admin",
+    searchable: true, keywords: ["validation", "onboarding", "creators", "tests", "scenarios"],
+    auditCategory: "system", analyticsKey: "beta:viewed",
+    productionReady: true,
+  },
+  {
     id: "jobs", title: "Jobs", group: "system",
     href: "/super-admin/jobs", icon: Timer, permission: "super_admin",
     searchable: false, keywords: ["cron", "queue", "background", "worker"],

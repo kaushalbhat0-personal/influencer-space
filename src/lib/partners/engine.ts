@@ -65,7 +65,7 @@ export class PartnerEngine {
     this.workspaces.set(params.id, []);
     this.invites.set(params.id, []);
     this.activityLog.set(params.id, []);
-    partnerRepository.create(params).catch(() => {});
+    partnerRepository.create(params).catch((err) => { console.error(`[PartnerEngine] Failed to persist createPartner(${params.id}):`, err); });
     return partner;
   }
 
@@ -86,7 +86,7 @@ export class PartnerEngine {
     if (!partner) return undefined;
     partner.profile = { ...partner.profile, ...profile };
     partner.updatedAt = new Date().toISOString();
-    partnerRepository.updateProfile(id, profile).catch(() => {});
+    partnerRepository.updateProfile(id, profile).catch((err) => { console.error(`[PartnerEngine] Failed to persist updateProfile(${id}):`, err); });
     return partner;
   }
 
@@ -103,7 +103,7 @@ export class PartnerEngine {
     if (!partner) return undefined;
     partner.status = status;
     partner.updatedAt = new Date().toISOString();
-    partnerRepository.setStatus(id, status).catch(() => {});
+    partnerRepository.setStatus(id, status).catch((err) => { console.error(`[PartnerEngine] Failed to persist setStatus(${id}, ${status}):`, err); });
     return partner;
   }
 
@@ -116,7 +116,7 @@ export class PartnerEngine {
     if (!members) return false;
     if (members.some((m) => m.userId === member.userId)) return false;
     members.push(member);
-    partnerRepository.addMember(partnerId, member).catch(() => {});
+    partnerRepository.addMember(partnerId, member).catch((err) => { console.error(`[PartnerEngine] Failed to persist addMember(${partnerId}):`, err); });
     return true;
   }
 
@@ -126,7 +126,7 @@ export class PartnerEngine {
     const idx = members.findIndex((m) => m.userId === userId);
     if (idx === -1) return false;
     members.splice(idx, 1);
-    partnerRepository.removeMember(partnerId, userId).catch(() => {});
+    partnerRepository.removeMember(partnerId, userId).catch((err) => { console.error(`[PartnerEngine] Failed to persist removeMember(${partnerId}, ${userId}):`, err); });
     return true;
   }
 
@@ -136,7 +136,7 @@ export class PartnerEngine {
     const member = members.find((m) => m.userId === userId);
     if (!member) return false;
     member.role = role;
-    partnerRepository.updateMemberRole(partnerId, userId, role).catch(() => {});
+    partnerRepository.updateMemberRole(partnerId, userId, role).catch((err) => { console.error(`[PartnerEngine] Failed to persist updateMemberRole(${partnerId}, ${userId}):`, err); });
     return true;
   }
 
@@ -169,7 +169,7 @@ export class PartnerEngine {
     };
     assignments.push(assignment);
     this.workspaces.set(partnerId, assignments);
-    partnerRepository.assignWorkspace(assignment).catch(() => {});
+    partnerRepository.assignWorkspace(assignment).catch((err) => { console.error(`[PartnerEngine] Failed to persist assignWorkspace:`, err); });
     this.addActivity(partnerId, { type: "workspace_assigned", description: `Workspace "${workspaceName}" assigned`, timestamp: assignment.assignedAt, relatedId: workspaceId });
     return { success: true };
   }
@@ -180,7 +180,7 @@ export class PartnerEngine {
     const assignment = assignments.find((w) => w.workspaceId === workspaceId && w.status === "active");
     if (!assignment) return { success: false, error: "Workspace not assigned to this partner" };
     assignment.status = "removed";
-    partnerRepository.unassignWorkspace(partnerId, workspaceId).catch(() => {});
+    partnerRepository.unassignWorkspace(partnerId, workspaceId).catch((err) => { console.error(`[PartnerEngine] Failed to persist unassignWorkspace:`, err); });
     this.addActivity(partnerId, { type: "workspace_assigned", description: `Workspace "${assignment.workspaceName}" unassigned`, timestamp: new Date().toISOString(), relatedId: workspaceId });
     return { success: true };
   }
@@ -245,7 +245,7 @@ export class PartnerEngine {
     const invite: PartnerInvite = { id: `${params.partnerId}_${params.email}_${Date.now()}`, partnerId: params.partnerId, email: params.email, role: params.role, status: "pending", invitedById: params.invitedById, expiresAt: expiresAt.toISOString(), createdAt: new Date().toISOString(), message: params.message };
     existing.push(invite);
     this.invites.set(params.partnerId, existing);
-    partnerRepository.createInvite({ id: invite.id, partnerId: invite.partnerId, email: invite.email, role: invite.role, invitedBy: invite.invitedById, expiresAt: invite.expiresAt, message: invite.message }).catch(() => {});
+    partnerRepository.createInvite({ id: invite.id, partnerId: invite.partnerId, email: invite.email, role: invite.role, invitedBy: invite.invitedById, expiresAt: invite.expiresAt, message: invite.message }).catch((err) => { console.error(`[PartnerEngine] Failed to persist createInvite:`, err); });
     this.addActivity(params.partnerId, { type: "invite_sent", description: `Invite sent to ${params.email}`, timestamp: invite.createdAt, relatedId: invite.id });
     return invite;
   }

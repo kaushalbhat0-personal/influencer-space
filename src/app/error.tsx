@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 export default function GlobalError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };
@@ -18,7 +17,7 @@ export default function GlobalError({
       </div>
       <h1 className="text-2xl font-bold text-white">Something went wrong</h1>
       <p className="mt-2 max-w-md text-sm text-zinc-400">
-        {error.message || "An unexpected error occurred. Our team has been notified."}
+        We encountered an unexpected issue. Our team has been notified.
       </p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <button onClick={reset} className="btn-primary px-6 py-2.5 text-sm">

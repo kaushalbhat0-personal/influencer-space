@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import type { Template } from "@/lib/template/registry";
+import { productRepository } from "@/modules/tenant/infrastructure/product-repository";
+import { galleryRepository } from "@/modules/tenant/infrastructure/gallery-repository";
+import { linkRepository } from "@/modules/tenant/infrastructure/link-repository";
 
 type StrategyId = "fast" | "balanced" | "premium";
 
@@ -54,16 +58,20 @@ function timelineData(year: string, title: string, description: string) {
   return { year, title, description, imageUrl: null, stats: null, order: 0, isActive: true };
 }
 
+function applyTx(tx?: Prisma.TransactionClient) {
+  return tx ?? prisma;
+}
+
 export async function seedStarterData(
   template: Template,
   tenantId: string,
   strategy: StrategyId,
   creatorName?: string,
+  tx?: Prisma.TransactionClient,
 ): Promise<void> {
   const modules = listModules(template);
   const isInstructional = strategy === "fast";
 
-  // Products
   if (modules.some((m) => m.startsWith("products."))) {
     const products = isInstructional
       ? PLACEHOLDER_PRODUCTS
@@ -75,17 +83,14 @@ export async function seedStarterData(
 
     for (let i = 0; i < products.length; i++) {
       const p = products[i];
-      await prisma.product.create({
-        data: {
-          tenantId,
-          ...productData(p.name, p.description, p.price, isInstructional ? undefined : creatorName),
-          order: i,
-        },
-      });
+      await productRepository.create({
+        tenantId,
+        ...productData(p.name, p.description, p.price, isInstructional ? undefined : creatorName),
+        order: i,
+      }, tx);
     }
   }
 
-  // Gallery
   if (modules.some((m) => m.startsWith("gallery."))) {
     const gallery = isInstructional ? PLACEHOLDER_GALLERY : [
       { title: "Latest Creations", description: "A showcase of our most recent work and creative projects." },
@@ -95,44 +100,35 @@ export async function seedStarterData(
 
     for (let i = 0; i < gallery.length; i++) {
       const g = gallery[i];
-      await prisma.galleryImage.create({
-        data: {
-          tenantId,
-          ...galleryData(g.title, g.description),
-          order: i,
-        },
-      });
+      await galleryRepository.create({
+        tenantId,
+        ...galleryData(g.title, g.description),
+        order: i,
+      }, tx);
     }
   }
 
-  // Timeline
   if (modules.some((m) => m.startsWith("timeline."))) {
+    const db = applyTx(tx);
     for (let i = 0; i < PLACEHOLDER_TIMELINE.length; i++) {
       const t = PLACEHOLDER_TIMELINE[i];
-      await prisma.timelineEvent.create({
-        data: {
-          tenantId,
-          ...timelineData(t.year, t.title, t.description),
-          order: i,
-        },
+      await db.timelineEvent.create({
+        data: { tenantId, ...timelineData(t.year, t.title, t.description), order: i },
       });
     }
   }
 
-  // Affiliate links
   if (modules.some((m) => m.startsWith("affiliate.") || m.startsWith("links."))) {
     for (let i = 0; i < PLACEHOLDER_AFFILIATES.length; i++) {
       const a = PLACEHOLDER_AFFILIATES[i];
-      await prisma.affiliateLink.create({
-        data: {
-          tenantId,
-          title: a.title,
-          url: a.url,
-          imageUrl: null,
-          order: i,
-          isActive: true,
-        },
-      });
+      await linkRepository.create({
+        tenantId,
+        title: a.title,
+        url: a.url,
+        imageUrl: null,
+        order: i,
+        isActive: true,
+      }, tx);
     }
   }
 }

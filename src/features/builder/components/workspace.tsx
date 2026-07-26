@@ -15,6 +15,7 @@ import { builderStore } from "@/lib/builder/store";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages, publishWebsite } from "@/actions/builder.actions";
+import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
 export function BuilderWorkspace() {
   useKeyboardShortcuts();
@@ -29,6 +30,8 @@ export function BuilderWorkspace() {
   const [publishing, setPublishing] = useState(false);
   const [liveVersion, setLiveVersion] = useState<number | null>(null);
   const [statusMsg, setStatusMsg] = useState("");
+  const [storefrontUrl, setStorefrontUrl] = useState("/");
+  const [publishStatus, setPublishStatus] = useState<PublishStatusValue>("draft");
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -40,6 +43,17 @@ export function BuilderWorkspace() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    import("@/actions/publish.actions").then((mod) =>
+      mod.getPublishStatus().then((r) => {
+        if (r.success && r.status) {
+          if (r.status.state === "live") setPublishStatus("published");
+          else if (r.status.state === "preview") setPublishStatus("preview");
+          else setPublishStatus("draft");
+          if (r.status.storefrontUrl) setStorefrontUrl(r.status.storefrontUrl);
+        }
+      })
+    ).catch((e: Error) => { console.error("[builder] Failed to fetch publish status", e); });
   }, []);
 
   useEffect(() => {
@@ -94,9 +108,13 @@ export function BuilderWorkspace() {
           device={device}
           zoom={zoom}
           showGrid={showGrid}
+          storefrontUrl={storefrontUrl}
+          publishStatus={publishStatus}
           onDeviceChange={setDevice}
           onZoomChange={setZoom}
           onToggleGrid={() => setShowGrid((v) => !v)}
+          onPublish={handlePublish}
+          publishing={publishing}
         />
         <div className="flex flex-1 overflow-hidden">
           <ResizablePanel side="left" collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)}>

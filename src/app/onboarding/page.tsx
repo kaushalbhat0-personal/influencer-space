@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { importCreatorProfile, runCreatorGeneration } from "@/actions/onboarding.actions";
+import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete } from "@/actions/onboarding.actions";
 import {
-  CheckCircle2, Globe, Rocket, AlertTriangle, Loader2, ArrowLeft,
+  CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
-  Sparkles, Layout,
+  Sparkles, Layout, Clock,
 } from "lucide-react";
 
 type OnboardingStep = "welcome" | "import" | "preview" | "generating" | "complete" | "error";
@@ -22,20 +22,13 @@ interface ProfileData {
   confidence: number;
 }
 
-interface GenerationResult {
-  tenantId: string;
-  workspaceId: string;
-  storefrontUrl: string;
-  dashboardUrl: string;
+interface SessionStage {
+  type: string;
+  status: string;
+  label: string;
+  error: string | null;
+  duration: number | null;
 }
-
-const STAGE_LABELS: Record<string, string> = {
-  profile_import: "Analyzing social profile",
-  generation: "AI generating your storefront",
-  provisioning: "Creating your workspace",
-  builder_init: "Setting up the builder",
-  publishing: "Publishing your storefront",
-};
 
 const PLATFORM_ICONS: Record<string, typeof Globe> = {
   youtube: Video,
@@ -68,6 +61,27 @@ function detectClientPlatform(url: string): string | null {
   return null;
 }
 
+function formatElapsed(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}m ${secs}s`;
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  import_profile: "Importing creator",
+  knowledge_intelligence: "Building knowledge graph",
+  persona_detection: "Detecting persona",
+  planning_context: "Planning experience",
+  experience_planning: "Planning experience",
+  composition: "Composing storefront",
+  artifact_generation: "Composing storefront",
+  provisioning: "Provisioning workspace",
+  publishing: "Publishing storefront",
+  golden_validation: "Finalizing",
+};
+
 export default function OnboardingPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -82,9 +96,23 @@ export default function OnboardingPage() {
   const [workspaceName, setWorkspaceName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stages, setStages] = useState<Array<{ stage: string; status: string; error?: string }>>([]);
-  const [result, setResult] = useState<GenerationResult | null>(null);
+
+  const [sessionStages, setSessionStages] = useState<SessionStage[]>([]);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [goldenScore, setGoldenScore] = useState<number | null>(null);
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearPolling = useCallback(() => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
+
+  useEffect(() => {
+    return () => clearPolling();
+  }, [clearPolling]);
 
   const handleAnalyze = useCallback(async () => {
     if (!sourceUrl.trim()) return;
@@ -117,45 +145,87 @@ export default function OnboardingPage() {
     setLoading(true);
     setError(null);
     setStep("generating");
-    setStages([]);
+    setSessionStages([]);
+    setProgressPercent(0);
+    setElapsedMs(0);
 
-    const res = await runCreatorGeneration(
-      sourceUrl,
-      workspaceName,
-      Intl.DateTimeFormat().resolvedOptions().timeZone,
-      "INR",
-      "en",
-    );
+    try {
+      const { sessionId: newSessionId, error: sessionErr } = await createGenerationSession(sourceUrl);
 
-    setStages(res.stages ?? []);
-
-    if (res.success && res.result) {
-      setResult(res.result);
-      if (res.goldenValidation) {
-        setGoldenScore(res.goldenValidation.overallScore);
+      if (sessionErr || !newSessionId) {
+        setError(sessionErr || "Failed to start generation");
+        setStep("error");
+        setLoading(false);
+        return;
       }
-      setStep("complete");
-    } else {
-      setError(res.error || "Generation failed. Please try again.");
+
+      const startTime = Date.now();
+      timerRef.current = setInterval(() => {
+        setElapsedMs(Date.now() - startTime);
+      }, 1000);
+
+      pollRef.current = setInterval(async () => {
+        const result = await getGenerationSessionProgress(newSessionId);
+        if (!result.success) return;
+
+        setSessionStages(result.data.stages);
+        setProgressPercent(result.data.progressPercent);
+
+        if (result.data.status === "completed" || result.data.status === "failed") {
+          clearPolling();
+        }
+      }, 1500);
+
+      const res = await runCreatorGeneration(
+        sourceUrl, workspaceName,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        "INR", "en",
+        undefined,
+        newSessionId,
+      );
+
+      if (res.success && res.result) {
+        if (res.goldenValidation) {
+          setGoldenScore(res.goldenValidation.overallScore);
+        }
+        setProgressPercent(100);
+
+        await markOnboardingComplete(res.result.tenantId);
+
+        try {
+          await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
+        } catch {
+          // session refresh is best-effort; redirect will re-validate
+        }
+
+        setTimeout(() => {
+          router.replace("/admin/dashboard");
+        }, 2000);
+      } else {
+        setError(res.error || "Generation failed. Please try again.");
+        setStep("error");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
       setStep("error");
     }
     setLoading(false);
-  }, [sourceUrl, workspaceName]);
+  }, [sourceUrl, workspaceName, router, clearPolling]);
 
   const handleRetry = useCallback(() => {
     setError(null);
     setStep("import");
-    setStages([]);
+    setSessionStages([]);
+    setProgressPercent(0);
+    setElapsedMs(0);
   }, []);
 
-  const activeStages = stages.filter((s) => s.status !== "skipped");
-  const completedStages = activeStages.filter((s) => s.status === "completed");
-  const failedStages = activeStages.filter((s) => s.status === "failed");
-  const hasFailure = failedStages.length > 0;
-  const currentStageIndex = completedStages.length;
-  const progress = activeStages.length > 0
-    ? Math.round((completedStages.length / activeStages.length) * 100)
-    : 0;
+  const hasFailure = sessionStages.some((s) => s.status === "failed");
+  const allStageTypes = [
+    "import_profile", "knowledge_intelligence", "persona_detection",
+    "planning_context", "experience_planning", "composition",
+    "artifact_generation", "provisioning", "publishing", "golden_validation",
+  ];
 
   const PlatformIcon = detectedPlatform && PLATFORM_ICONS[detectedPlatform]
     ? PLATFORM_ICONS[detectedPlatform]
@@ -379,21 +449,29 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-400">{progressPercent}% complete</span>
+              <span className="flex items-center gap-1.5 text-zinc-500">
+                <Clock className="h-3.5 w-3.5" />
+                {formatElapsed(elapsedMs)}
+              </span>
+            </div>
+
+            <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
 
             <div className="space-y-1">
-              {["profile_import", "generation", "provisioning", "builder_init", "publishing"].map((stageKey) => {
-                const stage = stages.find((s) => s.stage === stageKey);
-                const stageIndex = stages.findIndex((s) => s.stage === stageKey);
-                const isCurrent = stageIndex === currentStageIndex;
-                const isCompleted = stage?.status === "completed";
+              {allStageTypes.map((stageKey) => {
+                const stage = sessionStages.find((s) => s.type === stageKey);
+                const stageIndex = sessionStages.findIndex((s) => s.type === stageKey);
+                const completedCount = sessionStages.filter((s) => s.status === "completed").length;
+                const isCurrent = stageIndex === completedCount && stage?.status === "running";
+                const isCompleted = stage?.status === "completed" || stage?.status === "skipped";
                 const isFailed = stage?.status === "failed";
-                const isPending = !stage && stageKey !== stages[0]?.stage;
 
                 return (
                   <div
@@ -401,7 +479,7 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-4 py-3 transition-all",
                       isCompleted && "text-zinc-300",
-                      isCurrent && !isCompleted && "bg-white/[0.03]",
+                      isCurrent && "bg-white/[0.03]",
                       isFailed && "bg-red-500/5",
                     )}
                   >
@@ -414,7 +492,7 @@ export default function OnboardingPage() {
                     ) : (
                       <div className={cn(
                         "h-4 w-4 rounded-full border shrink-0",
-                        isPending ? "border-zinc-700" : "border-zinc-600",
+                        "border-zinc-700",
                       )} />
                     )}
                     <span className="text-sm flex-1">
@@ -449,12 +527,12 @@ export default function OnboardingPage() {
             <div>
               <h1 className="text-2xl font-bold text-white">Your storefront is ready!</h1>
               <p className="text-zinc-400 mt-2 text-sm">
-                AI has generated your personalized storefront. You can customize everything in the builder.
+                Redirecting you to your dashboard...
               </p>
             </div>
 
             {goldenScore !== null && (
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-zinc-400">Generation Quality</span>
                   <span className={cn(
@@ -464,7 +542,7 @@ export default function OnboardingPage() {
                     {Math.round(goldenScore * 100)}%
                   </span>
                 </div>
-                <div className="mt-2 h-1.5 rounded-full bg-zinc-800">
+                <div className="h-1.5 rounded-full bg-zinc-800">
                   <div
                     className={cn(
                       "h-full rounded-full",
@@ -473,33 +551,13 @@ export default function OnboardingPage() {
                     style={{ width: `${Math.round(goldenScore * 100)}%` }}
                   />
                 </div>
+                <div className="grid grid-cols-1 gap-2 text-left text-xs text-zinc-500">
+                  {goldenScore >= 0.8 && <p>Your storefront was generated with high confidence. The content, structure, and branding closely match your creator identity.</p>}
+                  {goldenScore >= 0.5 && goldenScore < 0.8 && <p>Your storefront is ready. You may want to review the generated content and make adjustments in the builder to better match your brand.</p>}
+                  {goldenScore < 0.5 && <p>Your storefront was generated with limited data. Review and customize your content in the builder to ensure it reflects your brand.</p>}
+                </div>
               </div>
             )}
-
-            <div className="space-y-3">
-              <button
-                onClick={() => router.push(result?.dashboardUrl ?? "/builder")}
-                className="btn-primary w-full py-3 flex items-center justify-center gap-2"
-              >
-                <Rocket className="h-4 w-4" /> Open Builder
-              </button>
-              {result?.storefrontUrl && (
-                <a
-                  href={result.storefrontUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-secondary w-full py-3 inline-flex items-center justify-center gap-2"
-                >
-                  <Globe className="h-4 w-4" /> View Storefront
-                </a>
-              )}
-              <button
-                onClick={() => router.push("/admin/dashboard")}
-                className="text-sm text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
-              >
-                Go to Dashboard instead
-              </button>
-            </div>
           </div>
         )}
 

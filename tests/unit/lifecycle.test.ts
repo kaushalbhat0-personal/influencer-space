@@ -46,6 +46,11 @@ const { mockBcryptHash } = vi.hoisted(() => ({ mockBcryptHash: vi.fn() }));
 const { mockBcryptCompare } = vi.hoisted(() => ({ mockBcryptCompare: vi.fn() }));
 const { mockCheckRateLimit } = vi.hoisted(() => ({ mockCheckRateLimit: vi.fn() }));
 
+const { mockSettingFindUnique, mockWebsiteFindUnique } = vi.hoisted(() => ({
+  mockSettingFindUnique: vi.fn(),
+  mockWebsiteFindUnique: vi.fn(),
+}));
+
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock("next-auth", () => ({ getServerSession: mockGetServerSession }));
@@ -59,6 +64,8 @@ vi.mock("@/lib/prisma", () => ({
       create: mockPrismaUserCreate,
       update: mockPrismaUserUpdate,
     },
+    setting: { findUnique: mockSettingFindUnique },
+    website: { findUnique: mockWebsiteFindUnique },
     websiteAgency: { create: mockPrismaWebsiteAgencyCreate },
     agencySubscription: { create: mockPrismaAgencySubCreate },
     billingAccount: { create: mockPrismaBillingAccountCreate },
@@ -188,6 +195,8 @@ describe("requireTenant", () => {
   });
 
   it("returns TenantSession when ADMIN has tenantId", async () => {
+    mockSettingFindUnique.mockResolvedValue({ id: "setting-1" });
+    mockWebsiteFindUnique.mockResolvedValue({ id: "website-1", publishStatus: null });
     mockGetServerSession.mockResolvedValue({
       user: {
         id: "user-1",
@@ -218,6 +227,8 @@ describe("requireTenant", () => {
   });
 
   it("returns TenantSession when AGENCY_ADMIN has tenantId", async () => {
+    mockSettingFindUnique.mockResolvedValue({ id: "setting-2" });
+    mockWebsiteFindUnique.mockResolvedValue({ id: "website-2", publishStatus: null });
     mockGetServerSession.mockResolvedValue({
       user: {
         id: "user-2",

@@ -8,6 +8,13 @@ export interface DashboardMetrics {
   messageCount: number;
   publishedVersion: number | null;
   generationStatus: string | null;
+  publishState: string | null;
+  storefrontUrl: string;
+  hasPublishedSnapshot: boolean;
+  hasCustomDomain: boolean;
+  hasSeo: boolean;
+  profileCompletion: number;
+  testimonialCount: number;
 }
 
 export interface DashboardActivity {
@@ -27,7 +34,16 @@ export interface DashboardHealthCheck {
 export interface QuickStartStep {
   id: string;
   label: string;
+  description?: string;
   done: boolean;
   href: string;
   estimatedMinutes: number;
+}
+
+export interface QuickCard {
+  label: string;
+  value: string | number;
+  href: string;
+  icon: string;
+  color: string;
 }

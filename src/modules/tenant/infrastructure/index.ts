@@ -15,3 +15,12 @@ export type { CreatePublishStatusData } from "./publish-status-repository";
 
 export { UserRepository, userRepository } from "./user-repository";
 export type { CreateUserData } from "./user-repository";
+
+export { ProductRepository, productRepository } from "./product-repository";
+export type { CreateProductData } from "./product-repository";
+
+export { GalleryRepository, galleryRepository } from "./gallery-repository";
+export type { CreateGalleryData } from "./gallery-repository";
+
+export { LinkRepository, linkRepository } from "./link-repository";
+export type { CreateLinkData } from "./link-repository";

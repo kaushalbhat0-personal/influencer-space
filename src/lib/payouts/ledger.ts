@@ -14,7 +14,7 @@ export class PayoutLedger {
     return { batches: this.batches.length };
   }
 
-  addBatch(batch: PayoutBatch): void { this.batches.push(batch); payoutRepository.saveBatch(batch).catch(() => {}); }
+  addBatch(batch: PayoutBatch): void { this.batches.push(batch); payoutRepository.saveBatch(batch).catch((err) => { console.error(`[PayoutLedger] Failed to persist batch ${batch.id}:`, err); }); }
   getBatch(batchId: string): PayoutBatch | undefined { return this.batches.find((b) => b.id === batchId); }
 
   updateBatchStatus(batchId: string, status: PayoutStatus, updates?: Partial<PayoutBatch["audit"]>): PayoutBatch | undefined {
@@ -22,7 +22,7 @@ export class PayoutLedger {
     if (!batch) return undefined;
     batch.status = status; batch.updatedAt = new Date().toISOString();
     if (updates) batch.audit = { ...batch.audit, ...updates };
-    payoutRepository.updateBatchStatus(batchId, status, updates as Record<string, unknown>).catch(() => {});
+    payoutRepository.updateBatchStatus(batchId, status, updates as Record<string, unknown>).catch((err) => { console.error(`[PayoutLedger] Failed to persist updateBatchStatus(${batchId}, ${status}):`, err); });
     return batch;
   }
 
@@ -42,7 +42,7 @@ export class PayoutLedger {
     return { items: result.slice(offset, offset + limit), total, hasMore: offset + limit < total };
   }
 
-  addReservation(reservation: PayoutReservation): void { this.reservations.push(reservation); payoutRepository.saveReservation(reservation).catch(() => {}); }
+  addReservation(reservation: PayoutReservation): void { this.reservations.push(reservation); payoutRepository.saveReservation(reservation).catch((err) => { console.error(`[PayoutLedger] Failed to persist reservation ${reservation.id}:`, err); }); }
   getReservationsByBatch(batchId: string): PayoutReservation[] { return this.reservations.filter((r) => r.batchId === batchId); }
   getReservationsByPartner(partnerId: string): PayoutReservation[] { return this.reservations.filter((r) => r.partnerId === partnerId); }
   getReservationsByCommissionEntry(commissionEntryId: string): PayoutReservation[] { return this.reservations.filter((r) => r.commissionEntryId === commissionEntryId); }
@@ -51,7 +51,7 @@ export class PayoutLedger {
     const r = this.reservations.find((x) => x.id === reservationId);
     if (!r || r.status !== "reserved") return false;
     r.status = "settled"; r.settledAt = new Date().toISOString();
-    payoutRepository.updateReservationStatus(reservationId, "settled", { settledAt: new Date() }).catch(() => {});
+    payoutRepository.updateReservationStatus(reservationId, "settled", { settledAt: new Date() }).catch((err) => { console.error(`[PayoutLedger] Failed to persist settleReservation(${reservationId}):`, err); });
     return true;
   }
 
@@ -59,7 +59,7 @@ export class PayoutLedger {
     const r = this.reservations.find((x) => x.id === reservationId);
     if (!r || r.status !== "reserved") return false;
     r.status = "released"; r.releasedAt = new Date().toISOString();
-    payoutRepository.updateReservationStatus(reservationId, "released", { releasedAt: new Date() }).catch(() => {});
+    payoutRepository.updateReservationStatus(reservationId, "released", { releasedAt: new Date() }).catch((err) => { console.error(`[PayoutLedger] Failed to persist releaseReservation(${reservationId}):`, err); });
     return true;
   }
 

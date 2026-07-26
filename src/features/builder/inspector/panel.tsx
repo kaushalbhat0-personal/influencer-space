@@ -70,7 +70,7 @@ export const PropertyInspector = memo(function PropertyInspector() {
       <div className="flex h-full items-center justify-center p-4">
         <div className="text-center">
           <Settings className="mx-auto h-6 w-6 text-zinc-700" />
-          <p className="mt-2 text-xs text-zinc-600">Select a component on the canvas to edit its properties.</p>
+          <p className="mt-2 text-xs text-zinc-600">Select a block in the editor to edit its properties.</p>
         </div>
       </div>
     );
@@ -81,7 +81,7 @@ export const PropertyInspector = memo(function PropertyInspector() {
       <div className="flex h-full items-center justify-center p-4">
         <div className="text-center">
           <AlertCircle className="mx-auto h-6 w-6 text-zinc-700" />
-          <p className="mt-2 text-xs text-zinc-600">No editable properties for this component.</p>
+          <p className="mt-2 text-xs text-zinc-600">No editable properties for this block.</p>
           <p className="text-[10px] text-zinc-700 mt-1">{componentId}</p>
         </div>
       </div>

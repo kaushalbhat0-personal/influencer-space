@@ -20,7 +20,7 @@ export class PayoutService {
     const batch: PayoutBatch = { id: `pout_${Date.now()}`, partnerId: params.partnerId, status: "pending", provider: params.provider as PayoutBatch["provider"], currency: params.currency, total: params.total, fee: params.fee, netAmount: params.total - params.fee, entryCount: params.entryIds.length, entries: params.entryIds, idempotencyKey: params.idempotencyKey, audit: { payoutVersion: 1, initiatedBy: params.initiatedBy }, metadata: params.metadata, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     payoutLedger.addBatch(batch);
     for (const entryId of params.entryIds) { payoutLedger.addReservation({ id: `res_${batch.id}_${entryId}`, batchId: batch.id, partnerId: params.partnerId, commissionEntryId: entryId, amount: Math.round(params.total / params.entryIds.length), status: "reserved", createdAt: new Date().toISOString() }); }
-    payoutRepository.saveBatch(batch).catch(() => {});
+    payoutRepository.saveBatch(batch).catch((err) => { console.error(`[PayoutService] Failed to persist batch ${batch.id}:`, err); });
     platformEventBus.publish("PayoutCreated", { batchId: batch.id, partnerId: params.partnerId, amount: params.total, provider: params.provider });
     return batch;
   }

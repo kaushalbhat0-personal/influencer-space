@@ -83,7 +83,7 @@ export async function importCreator(
     await logAction(provisionResult.tenantId, "import:completed", {
       source, recordId, creatorName: profile.brandName, status,
       confidence: qualityReport.score, duration: record.duration,
-    }).catch(() => {});
+    }).catch((err) => { console.error(`[import] Failed to persist import:completed audit log:`, err); });
 
     return {
       success: qualityReport.published,

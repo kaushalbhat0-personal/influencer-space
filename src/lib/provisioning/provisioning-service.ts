@@ -17,6 +17,7 @@ import { websiteSettingsRepository } from "@/modules/tenant/infrastructure/setti
 import { userRepository } from "@/modules/tenant/infrastructure/user-repository";
 
 export interface ProvisioningInput {
+  authenticatedUserId?: string;
   creatorName: string;
   sourceUrl?: string;
   sourcePlatform?: string;
@@ -138,7 +139,10 @@ export class ProvisioningService {
       const heroData = { title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" };
       const metaData = { templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() };
 
-      const { tenantId } = await prisma.$transaction(async (tx) => {
+      const templateId = input.templateId || personalization.templateId;
+      const template = templateService.getTemplate(templateId);
+
+      const { tenantId, user, website } = await prisma.$transaction(async (tx) => {
         const tenant = await tenantRepository.create({ name: creatorName, subdomain: slug }, tx as Prisma.TransactionClient);
         const website = await websiteRepository.create({ tenantId: tenant.id }, tx as Prisma.TransactionClient);
 
@@ -164,13 +168,18 @@ export class ProvisioningService {
           { key: "provisioning_meta", value: metaData },
         ], tx as Prisma.TransactionClient);
 
-        const user = await userRepository.create({
-          tenantId: tenant.id,
-          name: creatorName,
-          email: adminEmail,
-          password: hashedPassword,
-          role: "ADMIN",
-        }, tx as Prisma.TransactionClient);
+        const user = input.authenticatedUserId
+          ? await userRepository.update(input.authenticatedUserId, {
+              tenantId: tenant.id,
+              role: "ADMIN",
+            }, tx as Prisma.TransactionClient)
+          : await userRepository.create({
+              tenantId: tenant.id,
+              name: creatorName,
+              email: adminEmail,
+              password: hashedPassword,
+              role: "ADMIN",
+            }, tx as Prisma.TransactionClient);
 
         const ws = await workspaceRepository.create({
           type: "TENANT",
@@ -185,29 +194,31 @@ export class ProvisioningService {
           role: "OWNER",
         }, tx as Prisma.TransactionClient);
 
-        return { tenantId: tenant.id };
+        if (template) {
+          await seedStarterData(
+            template,
+            tenant.id,
+            (input.strategyId as "fast" | "balanced" | "premium") || "balanced",
+            input.creatorName,
+            tx as Prisma.TransactionClient,
+          );
+        }
+
+        return { tenantId: tenant.id, user, website };
       });
 
       // Apply personalized template and theme
-      const website = await websiteRepository.findByTenantId(tenantId);
+      if (template && website) {
+        await templateService.apply({
+          websiteId: website.id,
+          templateId: template.id,
+          generatedContent: input.generatedContent,
+        });
+      }
+
       if (website) {
-        const templateId = input.templateId || personalization.templateId;
-        const template = templateService.getTemplate(templateId);
-        if (template) {
-          await templateService.apply({
-            websiteId: website.id,
-            templateId: template.id,
-            generatedContent: input.generatedContent,
-          });
-          await seedStarterData(
-            template,
-            tenantId,
-            (input.strategyId as "fast" | "balanced" | "premium") || "balanced",
-            input.creatorName,
-          );
-        }
         const { themeService } = await import("@/lib/theme");
-        await themeService.apply(website.id, { packageId: personalization.themePackageId }).catch(() => {});
+        await themeService.apply(website.id, { packageId: personalization.themePackageId }).catch((err) => { console.error(`[provisioning] Theme apply failed for website ${website.id}:`, err); });
 
         if (input.generatedTheme?.colors) {
           const colors = input.generatedTheme.colors;
@@ -219,7 +230,7 @@ export class ProvisioningService {
             "--surface-base": "#18181b",
             "--text-primary": "#fafafa",
             "--text-secondary": "#a1a1aa",
-          }).catch(() => {});
+          }).catch((err) => { console.error(`[provisioning] Theme color update failed for website ${website.id}:`, err); });
         }
       }
 
@@ -250,8 +261,8 @@ export class ProvisioningService {
         websiteId: website?.id ?? tenantId,
         storefrontUrl,
         dashboardUrl,
-        adminEmail,
-        temporaryPassword: tempPassword,
+        adminEmail: input.authenticatedUserId ? user.email : adminEmail,
+        temporaryPassword: input.authenticatedUserId ? "" : tempPassword,
         websiteStatus: "published",
         tenantStatus: "active",
         publicationStatus: "published",

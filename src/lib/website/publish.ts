@@ -7,15 +7,6 @@ export class PublishService {
     return prisma.publishStatus.findUnique({ where: { websiteId } });
   }
 
-  async setState(websiteId: string, state: PublishState) {
-    const now = state === "live" ? new Date() : undefined;
-    return prisma.publishStatus.upsert({
-      where: { websiteId },
-      create: { websiteId, state, publishedAt: now ?? null },
-      update: { state, publishedAt: now ?? undefined },
-    });
-  }
-
   async listByState(state: PublishState) {
     return prisma.publishStatus.findMany({
       where: { state },

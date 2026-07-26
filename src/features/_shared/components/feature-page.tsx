@@ -3,17 +3,22 @@
 import { Suspense } from "react";
 import type { ReactNode } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { GlassCard } from "@/components/ui/GlassCard";
 
 interface FeaturePageProps {
   title: string;
   description?: string;
   children: ReactNode;
   actions?: ReactNode;
+  isEmpty?: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyAction?: ReactNode;
+  loading?: boolean;
 }
 
-export function FeaturePage({ title, description, children, actions }: FeaturePageProps) {
+export function FeaturePage({ title, description, children, actions, isEmpty, emptyTitle, emptyDescription, emptyAction, loading }: FeaturePageProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -33,7 +38,19 @@ export function FeaturePage({ title, description, children, actions }: FeaturePa
             </div>
           }
         >
-          {children}
+          {loading ? (
+            <div className="flex h-48 items-center justify-center">
+              <LoadingSpinner size="lg" text="Loading..." />
+            </div>
+          ) : isEmpty ? (
+            <EmptyState
+              title={emptyTitle || "Nothing here yet"}
+              description={emptyDescription || "Get started by adding your first item."}
+              action={emptyAction}
+            />
+          ) : (
+            children
+          )}
         </Suspense>
       </ErrorBoundary>
     </div>
@@ -50,17 +67,14 @@ export function FeatureEmptyState({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <GlassCard className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="mb-4 h-12 w-12 rounded-full bg-zinc-800" />
-      <h3 className="text-lg font-semibold text-zinc-200">{title}</h3>
-      {description && (
-        <p className="mt-1 max-w-sm text-sm text-zinc-500">{description}</p>
-      )}
-      {action && (
-        <button onClick={action.onClick} className="btn-primary mt-6 text-sm">
+    <EmptyState
+      title={title}
+      description={description}
+      action={action ? (
+        <button onClick={action.onClick} className="btn-primary text-sm">
           {action.label}
         </button>
-      )}
-    </GlassCard>
+      ) : undefined}
+    />
   );
 }

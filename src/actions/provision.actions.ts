@@ -72,7 +72,7 @@ export async function provisionCreator(
       creatorName: input.creatorName,
       tenantSlug: result.tenantSlug,
       sourcePlatform: input.sourcePlatform || "manual",
-    }).catch(() => {});
+    }).catch((err) => { console.error(`[provision] Failed to persist provisioning:completed audit log:`, err); });
 
     track("provisioning:completed", {
       tenantId: result.tenantId,

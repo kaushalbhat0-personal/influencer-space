@@ -26,6 +26,16 @@ export class UserRepository {
     });
   }
 
+  async update(id: string, data: { tenantId?: string; role?: string }, tx?: Prisma.TransactionClient) {
+    return this.client(tx).user.update({
+      where: { id },
+      data: {
+        ...(data.tenantId !== undefined && { tenantId: data.tenantId }),
+        ...(data.role !== undefined && { role: data.role as never }),
+      },
+    });
+  }
+
   async findFirstByTenantId(tenantId: string, tx?: Prisma.TransactionClient) {
     return this.client(tx).user.findFirst({
       where: { tenantId },

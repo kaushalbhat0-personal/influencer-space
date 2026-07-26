@@ -2,60 +2,11 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { resolveWorkspace } from "@/lib/auth/resolve-workspace";
 
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
   throw new Error("NEXTAUTH_SECRET is required in production");
-}
-
-async function resolveWorkspace(user: { id: string; tenantId?: string | null; agencyId?: string | null; role: string }) {
-  if (user.role === "SUPER_ADMIN") return { workspaceId: null, workspaceType: null, workspaceRole: null };
-
-  // ADMIN without tenantId → pre-provisioning, no workspace yet
-  if (user.role === "ADMIN" && !user.tenantId) {
-    return { workspaceId: null, workspaceType: null, workspaceRole: null };
-  }
-
-  const ownerId = user.tenantId || user.agencyId;
-  if (!ownerId) return { workspaceId: null, workspaceType: null, workspaceRole: null };
-
-  const workspace = user.tenantId
-    ? await workspaceRepository.findByTenantId(user.tenantId)
-    : await workspaceRepository.findByAgencyId(user.agencyId!);
-
-  if (workspace) {
-    let member = await workspaceRepository.findMember(workspace.id, user.id);
-    if (!member) {
-      member = await workspaceRepository.addMember({
-        workspaceId: workspace.id,
-        userId: user.id,
-        role: user.role === "AGENCY_STAFF" ? "MEMBER" : "OWNER",
-      });
-    }
-    return { workspaceId: workspace.id, workspaceType: workspace.type, workspaceRole: member.role };
-  }
-
-  // Only create workspace if there's a tenant or agency to link it to
-  if (!user.tenantId && !user.agencyId) {
-    return { workspaceId: null, workspaceType: null, workspaceRole: null };
-  }
-
-  const created = await workspaceRepository.create({
-    type: user.tenantId ? "TENANT" : "AGENCY",
-    name: "Workspace",
-    slug: `ws_${user.id.slice(0, 8)}`,
-    tenantId: user.tenantId ?? undefined,
-    agencyId: user.agencyId ?? undefined,
-  });
-
-  await workspaceRepository.addMember({
-    workspaceId: created.id,
-    userId: user.id,
-    role: user.role === "AGENCY_STAFF" ? "MEMBER" : "OWNER",
-  });
-
-  return { workspaceId: created.id, workspaceType: created.type, workspaceRole: user.role === "AGENCY_STAFF" ? "MEMBER" : "OWNER" };
 }
 
 export const authOptions: NextAuthOptions = {

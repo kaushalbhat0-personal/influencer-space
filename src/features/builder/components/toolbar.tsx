@@ -1,25 +1,35 @@
 "use client";
 
-import { Smartphone, Tablet, Monitor, Undo, Redo, Eye, ZoomIn, ZoomOut, Save, Grid3X3 } from "lucide-react";
+import Link from "next/link";
+import { Smartphone, Tablet, Monitor, Undo, Redo, Eye, ZoomIn, ZoomOut, Grid3X3, LayoutDashboard, ExternalLink, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuilderCanvas } from "@/lib/builder/types";
 import { builderCommands } from "@/lib/builder/commands";
 import { builderQuery } from "@/lib/builder/query";
+import { PublishStatusBadge } from "@/components/publish/PublishStatusBadge";
 
 export function BuilderToolbar({
   device,
   zoom,
   showGrid,
+  storefrontUrl = "/",
+  publishStatus = "draft",
   onDeviceChange,
   onZoomChange,
   onToggleGrid,
+  onPublish,
+  publishing,
 }: {
   device: BuilderCanvas["device"];
   zoom: number;
   showGrid: boolean;
+  storefrontUrl?: string;
+  publishStatus?: "draft" | "preview" | "publishing" | "published" | "outdated" | "unavailable";
   onDeviceChange: (d: BuilderCanvas["device"]) => void;
   onZoomChange: (z: number) => void;
   onToggleGrid: () => void;
+  onPublish?: () => void;
+  publishing?: boolean;
 }) {
   const devices: { id: BuilderCanvas["device"]; label: string; icon: typeof Monitor }[] = [
     { id: "mobile", label: "Mobile", icon: Smartphone },
@@ -30,11 +40,31 @@ export function BuilderToolbar({
   const history = builderQuery.getHistoryState();
 
   return (
-    <div className="flex h-10 items-center justify-between border-b border-white/5 bg-zinc-950 px-3">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-zinc-300">Builder</span>
-        <span className="text-[10px] text-zinc-600">—</span>
-        <span className="text-[10px] text-zinc-500">workspace</span>
+    <div className="flex h-11 items-center justify-between border-b border-white/10 bg-zinc-950 px-4">
+      <div className="flex items-center gap-4">
+        <Link
+          href="/admin/dashboard"
+          className="flex items-center gap-2 text-sm font-bold bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent font-display hover:opacity-80 transition-opacity"
+        >
+          CreatorStore
+        </Link>
+        <span className="h-4 w-px bg-white/10" />
+        <Link
+          href="/admin/dashboard"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-all"
+        >
+          <LayoutDashboard className="h-3.5 w-3.5" />
+          Dashboard
+        </Link>
+        <Link
+          href={storefrontUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-all"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          View site
+        </Link>
       </div>
 
       <div className="flex items-center gap-1">
@@ -54,7 +84,20 @@ export function BuilderToolbar({
         <button onClick={onToggleGrid} className={cn("rounded p-1.5 transition-colors", showGrid ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300")} title="Toggle Grid"><Grid3X3 className="h-3.5 w-3.5" /></button>
         <div className="mx-2 h-4 w-px bg-white/10" />
         <button className="rounded p-1.5 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" title="Preview"><Eye className="h-3.5 w-3.5" /></button>
-        <button className="rounded p-1.5 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" title="Save"><Save className="h-3.5 w-3.5" /></button>
+        <PublishStatusBadge status={publishStatus} size="sm" />
+        <div className="mx-2 h-4 w-px bg-white/10" />
+        <button
+          onClick={onPublish}
+          disabled={publishing}
+          className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-[11px] font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+        >
+          {publishing ? (
+            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+          ) : (
+            <Rocket className="h-3.5 w-3.5" />
+          )}
+          {publishing ? "Publishing..." : "Publish"}
+        </button>
       </div>
     </div>
   );

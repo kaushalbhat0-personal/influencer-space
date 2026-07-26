@@ -147,7 +147,7 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
               <div className="flex flex-col items-center gap-4 pt-12 text-center" data-canvas-bg="true">
                 <div className="h-16 w-16 rounded-full bg-zinc-800" />
                 <h2 className="text-sm font-semibold text-zinc-300">Your Website Preview</h2>
-                <p className="max-w-xs text-xs text-zinc-600">Add modules from the left sidebar to start building.</p>
+                <p className="max-w-xs text-xs text-zinc-600">Add sections from the left sidebar to get started.</p>
               </div>
             )}
 
