@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { lifecycleService, LifecycleState } from "@/lib/lifecycle";
+import { lifecycleService } from "@/lib/lifecycle/service";
+import { LifecycleState } from "@/lib/lifecycle";
 import type { LifecycleData } from "@/lib/lifecycle";
 
 export type SessionRole = "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "ADMIN";
