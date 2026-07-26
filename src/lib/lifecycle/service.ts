@@ -1,6 +1,11 @@
-import { prisma } from "@/lib/prisma";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { LifecycleState, type LifecycleData, type RouteGuard } from "./types";
 import type { AllowedRole } from "./types";
+
+async function getPrisma(): Promise<PrismaClient> {
+  const { prisma } = await import("@/lib/prisma");
+  return prisma;
+}
 
 export const LIFECYCLE_ROUTE_GUARDS: RouteGuard[] = [
   {
@@ -116,6 +121,7 @@ export class LifecycleService {
       };
     }
 
+    const prisma = await getPrisma();
     const [onboardingSetting, websiteWithStatus] = await Promise.all([
       prisma.setting.findUnique({
         where: { tenantId_key: { tenantId, key: "onboarding_completed" } },
