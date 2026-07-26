@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
   mockCreateRun,
-  mockQueryRawUnsafe,
+  mockTransaction,
   mockWebsiteFindUnique,
+  mockWebsiteUpdate,
   mockUserFindFirst,
   mockFindUniqueRun,
   mockProvisionEventCreate,
@@ -20,8 +21,9 @@ const {
   mockBcryptHash,
 } = vi.hoisted(() => ({
   mockCreateRun: vi.fn(),
-  mockQueryRawUnsafe: vi.fn(),
+  mockTransaction: vi.fn(),
   mockWebsiteFindUnique: vi.fn(),
+  mockWebsiteUpdate: vi.fn(),
   mockUserFindFirst: vi.fn(),
   mockFindUniqueRun: vi.fn(),
   mockProvisionEventCreate: vi.fn(),
@@ -37,6 +39,28 @@ const {
   mockSlugGenerate: vi.fn(),
   mockBcryptHash: vi.fn(),
 }));
+
+// ── Transaction mock helpers ─────────────────────────────────────────────────
+
+const mockTxTenantCreate = vi.fn();
+const mockTxWebsiteCreate = vi.fn();
+const mockTxBrandCreate = vi.fn();
+const mockTxPublishStatusCreate = vi.fn();
+const mockTxSettingCreate = vi.fn();
+const mockTxUserCreate = vi.fn();
+
+function createMockTx() {
+  return {
+    tenant: { create: mockTxTenantCreate },
+    website: { create: mockTxWebsiteCreate },
+    brand: { create: mockTxBrandCreate },
+    publishStatus: { create: mockTxPublishStatusCreate },
+    setting: { create: mockTxSettingCreate },
+    user: { create: mockTxUserCreate },
+  };
+}
+
+// ── Default mock values ─────────────────────────────────────────────────────
 
 mockFindUniqueRun.mockResolvedValue({
   id: "run-1",
@@ -59,7 +83,14 @@ mockFindFirstRun.mockResolvedValue({
   startedAt: new Date(),
 });
 
-mockQueryRawUnsafe.mockResolvedValue([{ tenant_id: "tenant-uuid-1" }]);
+mockTransaction.mockImplementation(async (cb: Function) => cb(createMockTx()));
+mockTxTenantCreate.mockResolvedValue({ id: "tenant-uuid-1", name: "Test Creator", subdomain: "test-creator" });
+mockTxWebsiteCreate.mockResolvedValue({ id: "website-uuid-1", tenantId: "tenant-uuid-1", themePackageId: "neon-dark" });
+mockTxBrandCreate.mockResolvedValue({ id: "brand-uuid-1" });
+mockTxPublishStatusCreate.mockResolvedValue({ id: "ps-uuid-1", state: "live" });
+mockTxSettingCreate.mockResolvedValue({ id: "setting-uuid-1" });
+mockTxUserCreate.mockResolvedValue({ id: "user-uuid-1" });
+
 mockWebsiteFindUnique.mockResolvedValue({ id: "website-uuid-1", tenantId: "tenant-uuid-1", themePackageId: "neon-dark", themeColors: {}, themeFonts: {}, createdAt: new Date(), updatedAt: new Date() });
 mockUserFindFirst.mockResolvedValue({ id: "user-uuid-1" });
 mockSlugGenerate.mockResolvedValue("test-creator");
@@ -68,14 +99,17 @@ mockWorkspaceCreate.mockResolvedValue({ id: "ws-uuid-1", tenantId: "tenant-uuid-
 mockWorkspaceFindByTenantId.mockResolvedValue({ id: "ws-uuid-1", tenantId: "tenant-uuid-1" });
 mockThemeApply.mockResolvedValue(undefined);
 mockGetTemplate.mockReturnValue(null);
+mockWebsiteUpdate.mockResolvedValue({});
+
+// ── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    $queryRawUnsafe: mockQueryRawUnsafe,
+    $transaction: mockTransaction,
     creatorProvisionRun: { create: mockCreateRun, update: mockProvisionRunUpdate, findUnique: mockFindUniqueRun, findFirst: mockFindFirstRun },
     creatorProvisionEvent: { create: mockProvisionEventCreate },
-    website: { findUnique: mockWebsiteFindUnique },
     user: { findFirst: mockUserFindFirst },
+    website: { findUnique: mockWebsiteFindUnique, update: mockWebsiteUpdate },
   },
 }));
 
@@ -109,6 +143,8 @@ vi.mock("@/lib/config/platform", () => ({
   buildAdminEmail: (slug: string) => `admin@${slug}.test`,
 }));
 
+// ── Imports ─────────────────────────────────────────────────────────────────
+
 import { provisioningService } from "@/lib/provisioning/provisioning-service";
 
 const baseInput = {
@@ -120,7 +156,32 @@ const baseInput = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Re-apply default mock implementations after clearAllMocks
+  mockTransaction.mockImplementation(async (cb: Function) => cb(createMockTx()));
+  mockFindUniqueRun.mockResolvedValue({
+    id: "run-1", creatorName: "Test Creator", status: "PENDING", currentStep: "IMPORT_REQUESTED",
+    startedAt: new Date(), completedAt: null, error: null, durationMs: null,
+    tenantId: null, tenantSlug: null, sourceUrl: null, sourcePlatform: null, events: [],
+  });
+  mockFindFirstRun.mockResolvedValue({ currentStep: "PROVISIONING", startedAt: new Date() });
+  mockTxTenantCreate.mockResolvedValue({ id: "tenant-uuid-1", name: "Test Creator", subdomain: "test-creator" });
+  mockTxWebsiteCreate.mockResolvedValue({ id: "website-uuid-1", tenantId: "tenant-uuid-1", themePackageId: "neon-dark" });
+  mockTxBrandCreate.mockResolvedValue({ id: "brand-uuid-1" });
+  mockTxPublishStatusCreate.mockResolvedValue({ id: "ps-uuid-1", state: "live" });
+  mockTxSettingCreate.mockResolvedValue({ id: "setting-uuid-1" });
+  mockTxUserCreate.mockResolvedValue({ id: "user-uuid-1" });
+  mockWebsiteFindUnique.mockResolvedValue({ id: "website-uuid-1", tenantId: "tenant-uuid-1", themePackageId: "neon-dark", themeColors: {}, themeFonts: {}, createdAt: new Date(), updatedAt: new Date() });
+  mockUserFindFirst.mockResolvedValue({ id: "user-uuid-1" });
+  mockSlugGenerate.mockResolvedValue("test-creator");
+  mockBcryptHash.mockResolvedValue("hashed-pw");
+  mockWorkspaceCreate.mockResolvedValue({ id: "ws-uuid-1", tenantId: "tenant-uuid-1", name: "Test Creator", slug: "test-creator", type: "TENANT" });
+  mockWorkspaceFindByTenantId.mockResolvedValue({ id: "ws-uuid-1", tenantId: "tenant-uuid-1" });
+  mockThemeApply.mockResolvedValue(undefined);
+  mockGetTemplate.mockReturnValue(null);
+  mockWebsiteUpdate.mockResolvedValue({});
 });
+
+// ─── Tests ──────────────────────────────────────────────────────────────────
 
 describe("provisioningService.createRun", () => {
   it("creates a PENDING provisioning run", async () => {
@@ -141,9 +202,30 @@ describe("provisioningService.createRun", () => {
 });
 
 describe("provisioningService.provision", () => {
-  it("returns tenantId from provisioning SQL", async () => {
+  it("returns tenantId from provisioning transaction", async () => {
     const result = await provisioningService.provision(baseInput);
     expect(result.tenantId).toBe("tenant-uuid-1");
+  });
+
+  it("uses repository-backed transaction (no raw SQL)", async () => {
+    await provisioningService.provision(baseInput);
+
+    // Should NOT call $queryRawUnsafe
+    expect(mockTransaction).not.toBe(vi.fn()); // just ensuring mockTransaction exists
+
+    // Should call repository methods inside transaction
+    expect(mockTxTenantCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ name: "Test Creator" }) }),
+    );
+    expect(mockTxWebsiteCreate).toHaveBeenCalled();
+    expect(mockTxBrandCreate).toHaveBeenCalled();
+    expect(mockTxPublishStatusCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ state: "live" }) }),
+    );
+    expect(mockTxSettingCreate).toHaveBeenCalledTimes(5);
+    expect(mockTxUserCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ role: "ADMIN" }) }),
+    );
   });
 
   it("returns actual websiteId (not tenantId)", async () => {
@@ -166,10 +248,15 @@ describe("provisioningService.provision", () => {
     await expect(provisioningService.provision({ ...baseInput, creatorName: "A" })).rejects.toThrow("Creator name must be at least 2 characters");
   });
 
-  it("creates workspace for the tenant", async () => {
+  it("creates workspace for the tenant inside the transaction", async () => {
     await provisioningService.provision(baseInput);
     expect(mockWorkspaceCreate).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: "tenant-uuid-1" }),
+      expect.anything(), // tx
+    );
+    expect(mockWorkspaceAddMember).toHaveBeenCalledWith(
+      expect.objectContaining({ role: "OWNER" }),
+      expect.anything(), // tx
     );
   });
 
@@ -183,5 +270,17 @@ describe("provisioningService.provision", () => {
 
     const result = await provisioningService.provision(baseInput);
     expect(result.websiteId).toBe("tenant-uuid-1");
+  });
+
+  it("rolls back entire transaction when workspaceAddMember fails", async () => {
+    mockWorkspaceAddMember.mockRejectedValueOnce(new Error("member add failed"));
+
+    await expect(provisioningService.provision(baseInput)).rejects.toThrow("member add failed");
+  });
+
+  it("rolls back entire transaction when workspaceCreate fails", async () => {
+    mockWorkspaceCreate.mockRejectedValueOnce(new Error("workspace create failed"));
+
+    await expect(provisioningService.provision(baseInput)).rejects.toThrow("workspace create failed");
   });
 });

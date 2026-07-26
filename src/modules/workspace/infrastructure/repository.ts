@@ -1,25 +1,29 @@
 import { prisma } from "@/lib/prisma";
-import type { Workspace, WorkspaceMember } from "@/generated/prisma/client";
+import type { Prisma, Workspace, WorkspaceMember } from "@/generated/prisma/client";
 
 export interface WorkspaceWithRole extends Workspace {
   role?: string;
 }
 
 export class WorkspaceRepository {
-  async findById(id: string): Promise<Workspace | null> {
-    return prisma.workspace.findUnique({ where: { id } });
+  private client(tx?: Prisma.TransactionClient) {
+    return tx ?? prisma;
   }
 
-  async findBySlug(slug: string): Promise<Workspace | null> {
-    return prisma.workspace.findUnique({ where: { slug } });
+  async findById(id: string, tx?: Prisma.TransactionClient): Promise<Workspace | null> {
+    return this.client(tx).workspace.findUnique({ where: { id } });
   }
 
-  async findByTenantId(tenantId: string): Promise<Workspace | null> {
-    return prisma.workspace.findUnique({ where: { tenantId } });
+  async findBySlug(slug: string, tx?: Prisma.TransactionClient): Promise<Workspace | null> {
+    return this.client(tx).workspace.findUnique({ where: { slug } });
   }
 
-  async findByAgencyId(agencyId: string): Promise<Workspace | null> {
-    return prisma.workspace.findUnique({ where: { agencyId } });
+  async findByTenantId(tenantId: string, tx?: Prisma.TransactionClient): Promise<Workspace | null> {
+    return this.client(tx).workspace.findUnique({ where: { tenantId } });
+  }
+
+  async findByAgencyId(agencyId: string, tx?: Prisma.TransactionClient): Promise<Workspace | null> {
+    return this.client(tx).workspace.findUnique({ where: { agencyId } });
   }
 
   async findMembershipsByUserId(userId: string): Promise<Array<WorkspaceMember & { workspace: Workspace }>> {
@@ -29,8 +33,8 @@ export class WorkspaceRepository {
     });
   }
 
-  async findMember(workspaceId: string, userId: string): Promise<WorkspaceMember | null> {
-    return prisma.workspaceMember.findUnique({
+  async findMember(workspaceId: string, userId: string, tx?: Prisma.TransactionClient): Promise<WorkspaceMember | null> {
+    return this.client(tx).workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId, userId } },
     });
   }
@@ -41,36 +45,36 @@ export class WorkspaceRepository {
     slug: string;
     tenantId?: string;
     agencyId?: string;
-  }): Promise<Workspace> {
-    return prisma.workspace.create({ data });
+  }, tx?: Prisma.TransactionClient): Promise<Workspace> {
+    return this.client(tx).workspace.create({ data });
   }
 
   async addMember(data: {
     workspaceId: string;
     userId: string;
     role: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
-  }): Promise<WorkspaceMember> {
-    return prisma.workspaceMember.create({
+  }, tx?: Prisma.TransactionClient): Promise<WorkspaceMember> {
+    return this.client(tx).workspaceMember.create({
       data: { ...data, joinedAt: new Date() },
     });
   }
 
-  async updateMemberRole(workspaceId: string, userId: string, role: string): Promise<WorkspaceMember> {
-    return prisma.workspaceMember.update({
+  async updateMemberRole(workspaceId: string, userId: string, role: string, tx?: Prisma.TransactionClient): Promise<WorkspaceMember> {
+    return this.client(tx).workspaceMember.update({
       where: { workspaceId_userId: { workspaceId, userId } },
       data: { role: role as never },
     });
   }
 
-  async removeMember(workspaceId: string, userId: string): Promise<void> {
-    await prisma.workspaceMember.update({
+  async removeMember(workspaceId: string, userId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.client(tx).workspaceMember.update({
       where: { workspaceId_userId: { workspaceId, userId } },
       data: { status: "REMOVED" },
     });
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.workspace.delete({ where: { id } });
+  async delete(id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.client(tx).workspace.delete({ where: { id } });
   }
 }
 

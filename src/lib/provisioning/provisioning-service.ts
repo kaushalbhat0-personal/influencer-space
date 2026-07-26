@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
+import type { Prisma } from "@/generated/prisma/client";
 import { tenantSlugService } from "@/lib/slug/tenant-slug.service";
 import { buildStorefrontUrl, buildDashboardUrl, buildAdminEmail } from "@/lib/config/platform";
 import { ProvisionStep, ProvisionEventType, provisionStateMachine } from "./provisioning-state";
@@ -8,6 +9,12 @@ import { templateService } from "@/lib/template";
 import { websitePersonalizer } from "@/lib/personalization";
 import { seedStarterData } from "@/lib/data/seeder";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { tenantRepository } from "@/modules/tenant/infrastructure/tenant-repository";
+import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
+import { brandRepository } from "@/modules/tenant/infrastructure/brand-repository";
+import { publishStatusRepository } from "@/modules/tenant/infrastructure/publish-status-repository";
+import { websiteSettingsRepository } from "@/modules/tenant/infrastructure/settings-repository";
+import { userRepository } from "@/modules/tenant/infrastructure/user-repository";
 
 export interface ProvisioningInput {
   creatorName: string;
@@ -96,7 +103,6 @@ export class ProvisioningService {
       throw new Error("Creator name must be at least 2 characters");
     }
 
-    // Personalize the website based on creator name/source
     const personalization = websitePersonalizer.personalize(creatorName, input.sourceUrl);
 
     // ── BEFORE TRANSACTION: expensive work + preparation ──────────────────
@@ -116,90 +122,74 @@ export class ProvisioningService {
     await this.logEvent(runId, ProvisionStep.PROVISIONING, ProvisionEventType.STARTED, "Starting resource provisioning");
 
     try {
-      // ── TRANSACTION: single raw SQL query (1 round trip) ────────────────
+      // ── TRANSACTION: repository-backed provisioning ─────────────────────
       const adminEmail = buildAdminEmail(slug);
-      const socialLinksJson = JSON.stringify(input.sourceUrl ? [{ platform: input.sourcePlatform || "youtube", url: input.sourceUrl }] : []);
+      const socialLinks = input.sourceUrl ? [{ platform: input.sourcePlatform || "youtube", url: input.sourceUrl }] : [];
 
-      const brandConfigJson = JSON.stringify({
+      const brandConfig = {
         name: creatorName,
         tagline: input.generatedContent?.tagline || "",
         bio: input.generatedContent?.aboutSection || "",
         heroTitle: input.generatedContent?.heroTitle || creatorName,
         aboutText: input.generatedContent?.aboutSection || "",
-      });
-      const seoJson = JSON.stringify({ title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription });
-      const influencerJson = JSON.stringify({ name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: null, niche: input.sourcePlatform || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } });
-      const heroJson = JSON.stringify({ title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" });
-      const metaJson = JSON.stringify({ templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() });
+      };
+      const seoConfig = { title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription };
+      const influencerData = { name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: null, niche: input.sourcePlatform || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
+      const heroData = { title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" };
+      const metaData = { templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() };
 
-      const [rawResult] = await prisma.$queryRawUnsafe<{ tenant_id: string }[]>(
-        `WITH t AS (
-          INSERT INTO "Tenant" ("name", "subdomain", "createdAt", "updatedAt")
-          VALUES ($1, $2, NOW(), NOW())
-          RETURNING id
-        ), w AS (
-          INSERT INTO "Website" ("tenantId", "themePackageId", "createdAt", "updatedAt")
-          SELECT t.id, 'neon-dark', NOW(), NOW() FROM t
-          RETURNING id
-        ), b AS (
-          INSERT INTO "Brand" ("websiteId", "name", "tagline", "bio", "socialLinks")
-          SELECT w.id, $3, $4, $5, $6::jsonb FROM w
-        ), ps AS (
-          INSERT INTO "PublishStatus" ("websiteId", "state", "publishedAt", "createdAt", "updatedAt")
-          SELECT w.id, 'live', NOW(), NOW(), NOW() FROM w
-        ), s AS (
-          INSERT INTO "Setting" ("id", "tenantId", "key", "value", "updatedAt")
-          SELECT gen_random_uuid(), t.id, v.key, v.value::jsonb, NOW()
-          FROM t, (VALUES
-            ('brand_config', $7::jsonb),
-            ('seo', $8::jsonb),
-            ('influencer_data', $9::jsonb),
-            ('hero_data', $10::jsonb),
-            ('provisioning_meta', $11::jsonb)
-          ) AS v(key, value)
-        )
-        INSERT INTO "User" ("id", "tenantId", "name", "email", "password", "role", "createdAt", "updatedAt")
-        SELECT gen_random_uuid(), t.id, $12, $13, $14, CAST($15 AS "public"."Role"), NOW(), NOW()
-        FROM t
-        RETURNING (SELECT id FROM t) as tenant_id;`,
-        creatorName,
-        slug,
-        creatorName,
-        input.generatedContent?.tagline || personalization.tagline,
-        input.generatedContent?.aboutSection || personalization.bio,
-        socialLinksJson,
-        brandConfigJson,
-        seoJson,
-        influencerJson,
-        heroJson,
-        metaJson,
-        creatorName,
-        adminEmail,
-        hashedPassword,
-        "ADMIN"
-      );
+      const { tenantId } = await prisma.$transaction(async (tx) => {
+        const tenant = await tenantRepository.create({ name: creatorName, subdomain: slug }, tx as Prisma.TransactionClient);
+        const website = await websiteRepository.create({ tenantId: tenant.id }, tx as Prisma.TransactionClient);
 
-      const tenantId = rawResult?.tenant_id;
-      if (!tenantId) throw new Error("Failed to create tenant");
+        await brandRepository.create({
+          websiteId: website.id,
+          name: creatorName,
+          tagline: input.generatedContent?.tagline || personalization.tagline,
+          bio: input.generatedContent?.aboutSection || personalization.bio,
+          socialLinks,
+        }, tx as Prisma.TransactionClient);
 
-      // Create Workspace for the new tenant
-      const provisionedUser = await prisma.user.findFirst({ where: { tenantId }, select: { id: true } });
-      if (provisionedUser) {
+        await publishStatusRepository.create({
+          websiteId: website.id,
+          state: "live",
+          publishedAt: new Date(),
+        }, tx as Prisma.TransactionClient);
+
+        await websiteSettingsRepository.createBatch(tenant.id, [
+          { key: "brand_config", value: brandConfig },
+          { key: "seo", value: seoConfig },
+          { key: "influencer_data", value: influencerData },
+          { key: "hero_data", value: heroData },
+          { key: "provisioning_meta", value: metaData },
+        ], tx as Prisma.TransactionClient);
+
+        const user = await userRepository.create({
+          tenantId: tenant.id,
+          name: creatorName,
+          email: adminEmail,
+          password: hashedPassword,
+          role: "ADMIN",
+        }, tx as Prisma.TransactionClient);
+
         const ws = await workspaceRepository.create({
           type: "TENANT",
           name: creatorName,
-          slug: slug,
-          tenantId,
-        });
+          slug,
+          tenantId: tenant.id,
+        }, tx as Prisma.TransactionClient);
+
         await workspaceRepository.addMember({
           workspaceId: ws.id,
-          userId: provisionedUser.id,
+          userId: user.id,
           role: "OWNER",
-        });
-      }
+        }, tx as Prisma.TransactionClient);
+
+        return { tenantId: tenant.id };
+      });
 
       // Apply personalized template and theme
-      const website = await prisma.website.findUnique({ where: { tenantId } });
+      const website = await websiteRepository.findByTenantId(tenantId);
       if (website) {
         const templateId = input.templateId || personalization.templateId;
         const template = templateService.getTemplate(templateId);
@@ -209,7 +199,6 @@ export class ProvisioningService {
             templateId: template.id,
             generatedContent: input.generatedContent,
           });
-          // Seed starter data for data-backed blocks (products, gallery, timeline, etc.)
           await seedStarterData(
             template,
             tenantId,
@@ -217,26 +206,19 @@ export class ProvisioningService {
             input.creatorName,
           );
         }
-        // Apply theme
         const { themeService } = await import("@/lib/theme");
         await themeService.apply(website.id, { packageId: personalization.themePackageId }).catch(() => {});
 
-        // Store AI-generated theme colors
         if (input.generatedTheme?.colors) {
           const colors = input.generatedTheme.colors;
-          await prisma.website.update({
-            where: { id: website.id },
-            data: {
-              themeColors: {
-                "--brand-primary": colors.primary ?? "#6366F1",
-                "--brand-secondary": colors.secondary ?? "#8B5CF6",
-                "--brand-accent": colors.accent ?? "#10B981",
-                "--surface-root": "#09090b",
-                "--surface-base": "#18181b",
-                "--text-primary": "#fafafa",
-                "--text-secondary": "#a1a1aa",
-              },
-            },
+          await websiteRepository.updateThemeColors(website.id, {
+            "--brand-primary": colors.primary ?? "#6366F1",
+            "--brand-secondary": colors.secondary ?? "#8B5CF6",
+            "--brand-accent": colors.accent ?? "#10B981",
+            "--surface-root": "#09090b",
+            "--surface-base": "#18181b",
+            "--text-primary": "#fafafa",
+            "--text-secondary": "#a1a1aa",
           }).catch(() => {});
         }
       }
