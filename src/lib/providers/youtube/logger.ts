@@ -16,7 +16,7 @@ export class ImportLogger {
   private correlationId: string;
 
   constructor(correlationId?: string) {
-    this.correlationId = correlationId || `import_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    this.correlationId = correlationId || crypto.randomUUID();
   }
 
   getCorrelationId(): string {

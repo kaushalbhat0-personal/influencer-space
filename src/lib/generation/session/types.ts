@@ -169,12 +169,28 @@ export function calculateProgress(stages: StageRecord[]): number {
     if (stage.status === "completed" || stage.status === "skipped") {
       completedWeight += weight;
     } else if (stage.status === "running") {
-      completedWeight += weight * 0.5;
+      const elapsed = stage.startedAt ? Date.now() - stage.startedAt.getTime() : 0;
+      const estimatedDuration = ESTIMATED_STAGE_DURATION_MS[stage.type] ?? 30000;
+      const stageProgress = Math.min(elapsed / estimatedDuration, 1);
+      completedWeight += weight * (0.5 + stageProgress * 0.5);
     }
   }
 
   return Math.round((completedWeight / totalWeight) * 100);
 }
+
+const ESTIMATED_STAGE_DURATION_MS: Partial<Record<StageType, number>> = {
+  import_profile: 8000,
+  knowledge_intelligence: 12000,
+  persona_detection: 8000,
+  planning_context: 10000,
+  experience_planning: 15000,
+  composition: 12000,
+  artifact_generation: 12000,
+  provisioning: 20000,
+  publishing: 15000,
+  golden_validation: 5000,
+};
 
 export const STAGE_LABELS: Record<StageType, string> = {
   import_profile: "Import Profile",

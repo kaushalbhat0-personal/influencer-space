@@ -52,11 +52,10 @@ export type EventHandler<T extends RegistryEventType> = (event: RegistryEvent<T>
 
 export type UnsubscribeFn = () => void;
 
-let eventCounter = 0;
+import { randomUUID } from "crypto";
 
 function generateEventId(): string {
-  eventCounter++;
-  return `evt_${Date.now()}_${eventCounter}_${Math.random().toString(36).slice(2, 8)}`;
+  return randomUUID();
 }
 
 export class RegistryEventBus {
@@ -143,7 +142,6 @@ export class RegistryEventBus {
 
   destroy(): void {
     this.subscribers.clear();
-    eventCounter = 0;
   }
 }
 

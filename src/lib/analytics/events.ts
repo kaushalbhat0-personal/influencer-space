@@ -30,7 +30,7 @@ const events: ProductEvent[] = [];
 
 export function trackProductEvent(stage: EventStage, meta?: Record<string, unknown>): ProductEvent {
   const event: ProductEvent = {
-    id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: crypto.randomUUID(),
     stage, timestamp: new Date().toISOString(), metadata: meta,
   };
   events.push(event);

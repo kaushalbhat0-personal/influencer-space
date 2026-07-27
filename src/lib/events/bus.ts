@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type {
   EventType,
   PlatformEvent,
@@ -7,10 +8,8 @@ import type {
 } from "./types";
 import { eventRepository } from "./repositories/event-repository";
 
-let eventCounter = 0;
 function generateEventId(): string {
-  eventCounter++;
-  return `evt_${Date.now()}_${eventCounter}`;
+  return randomUUID();
 }
 
 export class PlatformEventBus {

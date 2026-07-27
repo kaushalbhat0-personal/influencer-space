@@ -100,6 +100,7 @@ export default function OnboardingPage() {
   const [sessionStages, setSessionStages] = useState<SessionStage[]>([]);
   const [progressPercent, setProgressPercent] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [estimatedRemainingMs, setEstimatedRemainingMs] = useState<number | null>(null);
   const [goldenScore, setGoldenScore] = useState<number | null>(null);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -169,7 +170,14 @@ export default function OnboardingPage() {
         if (!result.success) return;
 
         setSessionStages(result.data.stages);
-        setProgressPercent(result.data.progressPercent);
+        if (result.data.progressPercent > 0) {
+          setProgressPercent((prev) => Math.max(prev, result.data.progressPercent));
+        } else {
+          setProgressPercent(result.data.progressPercent);
+        }
+        if (result.data.estimatedRemainingMs != null) {
+          setEstimatedRemainingMs(result.data.estimatedRemainingMs);
+        }
 
         if (result.data.status === "completed" || result.data.status === "failed") {
           clearPolling();
@@ -454,6 +462,9 @@ export default function OnboardingPage() {
               <span className="flex items-center gap-1.5 text-zinc-500">
                 <Clock className="h-3.5 w-3.5" />
                 {formatElapsed(elapsedMs)}
+                {estimatedRemainingMs != null && estimatedRemainingMs > 0 && (
+                  <span className="text-zinc-600">· ~{formatElapsed(estimatedRemainingMs)} remaining</span>
+                )}
               </span>
             </div>
 

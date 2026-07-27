@@ -1,8 +1,7 @@
 import type { BuilderEventType, BuilderEvent, BuilderEventPayloads, EventHandler, UnsubscribeFn, SubscriberEntry, EventDiagnostics } from "./types";
 import { platformTelemetry } from "@/lib/telemetry/telemetry";
 
-let eventCounter = 0;
-function generateEventId(): string { return `bev_${Date.now()}_${++eventCounter}_${Math.random().toString(36).slice(2, 6)}`; }
+function generateEventId(): string { return crypto.randomUUID(); }
 
 export class BuilderEventBus {
   private subscribers = new Map<BuilderEventType, SubscriberEntry[]>();
@@ -17,7 +16,7 @@ export class BuilderEventBus {
     priority = 0
   ): UnsubscribeFn {
     const entry: SubscriberEntry = {
-      id: generateEventId(),
+      id: crypto.randomUUID(),
       type,
       priority,
       handler: handler as EventHandler,
@@ -49,7 +48,7 @@ export class BuilderEventBus {
       payload,
       timestamp: Date.now(),
       id: generateEventId(),
-      correlationId: `corr_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      correlationId: crypto.randomUUID(),
       transactionId,
     };
 
@@ -121,7 +120,6 @@ export class BuilderEventBus {
     this.errors = [];
     this.emitted = 0;
     this.replayCount = 0;
-    eventCounter = 0;
   }
 }
 

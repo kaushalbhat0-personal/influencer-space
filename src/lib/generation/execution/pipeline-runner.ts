@@ -47,7 +47,7 @@ export class PipelineRunnerImpl implements PipelineRunner {
       return failure(new Error(`Pipeline validation failed: ${plan.errors.join("; ")}`));
     }
 
-    const generationId = (context.metadata?.generationId as string) ?? `gen_${Date.now()}`;
+    const generationId = (context.metadata?.generationId as string) ?? crypto.randomUUID();
 
     const checkpointManager = new CheckpointManager(this.config.checkpointRepository);
     const artifactManager = new ArtifactManager();

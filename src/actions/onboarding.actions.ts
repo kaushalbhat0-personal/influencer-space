@@ -11,6 +11,7 @@ import { logAction } from "@/lib/audit";
 import { onboardingService } from "@/lib/onboarding/service";
 import { goldenDataset, GoldenValidator } from "@/lib/generation/golden";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
+import { publishingService } from "@/lib/publishing/service";
 import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
@@ -63,10 +64,12 @@ export async function runCreatorGeneration(
   precreatedSessionId?: string,
 ): Promise<{
   success: boolean;
-  stages?: Array<{ stage: string; status: string; error?: string }>;
-  result?: { tenantId: string; workspaceId?: string; storefrontUrl: string; dashboardUrl: string };
-  goldenValidation?: { passed: boolean; overallScore: number; regressions: string[] } | null;
-  error?: string;
+    stages?: Array<{ stage: string; status: string; error?: string }>;
+    result?: { tenantId: string; workspaceId?: string; storefrontUrl: string; dashboardUrl: string };
+    goldenValidation?: { passed: boolean; overallScore: number; regressions: string[] } | null;
+    error?: string;
+    retryable?: boolean;
+    tenantId?: string;
 }> {
   let generationSessionId: string | null = precreatedSessionId ?? null;
   try {
@@ -191,7 +194,7 @@ export async function runCreatorGeneration(
       if (generationSessionId) {
         await sessionService.fail(generationSessionId, err instanceof Error ? err.message : "Provisioning failed");
       }
-      return { success: false, stages, error: err instanceof Error ? err.message : "Provisioning failed" };
+      return { success: false, stages, error: err instanceof Error ? err.message : "Provisioning failed", retryable: false };
     }
     markStage("provisioning", "completed");
 
@@ -209,7 +212,6 @@ export async function runCreatorGeneration(
 
     if (resolvedWorkspaceId && generationSessionId) {
       await sessionService.updateProgress(generationSessionId, {
-        status: "publishing" as const,
         currentStage: "publishing",
       });
       await sessionRegistry.update(generationSessionId, { workspaceId: resolvedWorkspaceId });
@@ -258,9 +260,9 @@ export async function runCreatorGeneration(
         markStage("publishing", "failed", errMsg);
         console.error(`[onboarding] Website not found for tenantId=${provisioned.tenantId}`);
         if (generationSessionId) {
-          await sessionService.fail(generationSessionId, errMsg);
+          await sessionService.updateStage(generationSessionId, "publishing", "failed", errMsg);
         }
-        return { success: false, stages, error: errMsg };
+        return { success: false, stages, error: errMsg, retryable: true, tenantId: provisioned.tenantId };
       }
       try {
         await publishSnapshotService.publishFromArtifact(website.id, snapshotData as never);
@@ -269,9 +271,9 @@ export async function runCreatorGeneration(
         console.error(`[onboarding] Publishing failed for websiteId=${website.id} tenantId=${provisioned.tenantId}`, err);
         markStage("publishing", "failed", msg);
         if (generationSessionId) {
-          await sessionService.fail(generationSessionId, msg);
+          await sessionService.updateStage(generationSessionId, "publishing", "failed", msg);
         }
-        return { success: false, stages, error: msg };
+        return { success: false, stages, error: msg, retryable: true, tenantId: provisioned.tenantId };
       }
     }
     markStage("publishing", "completed");
@@ -386,6 +388,7 @@ type SessionProgressSuccess = {
   currentStage: string | null;
   progressPercent: number;
   elapsedMs: number;
+  estimatedRemainingMs: number | null;
   error: string | null;
   stages: Array<{ type: string; status: string; label: string; error: string | null; duration: number | null }>;
   storefrontUrl: string | null;
@@ -412,13 +415,20 @@ export async function getGenerationSessionProgress(sessionId: string): Promise<S
       duration: s.duration,
     }));
 
+    const elapsedMs = Date.now() - gs.startedAt.getTime();
+    const progress = gs.progressPercent;
+    const estimatedRemainingMs = progress > 0 && progress < 100
+      ? Math.round((elapsedMs / progress) * (100 - progress))
+      : null;
+
     return {
       success: true,
       data: {
         status: gs.status,
         currentStage: gs.currentStage,
         progressPercent: gs.progressPercent,
-        elapsedMs: Date.now() - gs.startedAt.getTime(),
+        elapsedMs,
+        estimatedRemainingMs,
         error: gs.error,
         stages,
         storefrontUrl: gs.storefrontUrl,
@@ -453,5 +463,21 @@ export async function isOnboardingComplete(tenantId: string): Promise<boolean> {
     return !!setting;
   } catch {
     return false;
+  }
+}
+
+export async function retryPublish(
+  tenantId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const sess = await getServerSession(authOptions);
+    if (!sess?.user?.id) return { success: false, error: "Unauthorized" };
+
+    const result = await publishingService.publish(tenantId);
+    if (!result.success) return { success: false, error: result.error ?? "Publish failed" };
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Retry publish failed" };
   }
 }
