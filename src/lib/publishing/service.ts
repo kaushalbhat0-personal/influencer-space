@@ -20,6 +20,8 @@ import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
 import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
+import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
+import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
 
 type PageData = {
@@ -96,9 +98,42 @@ export class PublishingService {
 
       const snapshotData = options?.pages ?? await this.loadFromBuilder(websiteId);
 
-      const result = await publishRepository.createPublish(websiteId, snapshotData);
-
+      const aggregate = await websiteAggregateService.build(tenantId);
       const correlationId = safeCorrelationId(options?.correlation);
+      const canonicalSnapshot: PublishedSnapshot = {
+        metadata: {
+          version: (await prisma.publishStatus.findUnique({ where: { websiteId } }))?.liveVersion ?? 0,
+          publishedAt: new Date().toISOString(),
+          previousVersion: null,
+          correlationId,
+          generatedBy: "dashboard",
+        },
+        layout: {
+          pages: snapshotData.pages.map((p) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            isHome: p.isHome,
+            order: p.order,
+            sections: p.sections.map((s) => ({
+              id: s.id,
+              type: s.name,
+              config: s.slots.length > 0 ? s.slots[0]!.config : {},
+              order: s.order,
+              visible: s.visible,
+            })),
+          })),
+          theme: {
+            packageId: snapshotData.themePackageId,
+            colors: snapshotData.themeColors,
+            fonts: snapshotData.themeFonts,
+          },
+        },
+        content: aggregate as unknown as Record<string, unknown>,
+        renderingHints: {},
+      };
+
+      const result = await publishRepository.createPublish(websiteId, snapshotData, canonicalSnapshot);
 
       try {
         platformEventBus.publish("WebsitePublished", {

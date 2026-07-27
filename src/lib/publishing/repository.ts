@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { BuilderPage } from "@/lib/builder/types";
 import type { Prisma } from "@/generated/prisma/client";
+import type { PublishedSnapshot } from "@/types/snapshot";
 
 type PageData = {
   pages: BuilderPage[];
@@ -18,17 +19,22 @@ export class PublishRepository {
   async createPublish(
     websiteId: string,
     data: PageData,
+    canonicalSnapshot?: PublishedSnapshot,
   ): Promise<PublishResult> {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.publishStatus.findUnique({ where: { websiteId } });
       const nextVersion = (existing?.liveVersion ?? 0) + 1;
 
-      const snapshotPayload = {
+      const snapshotPayload: Record<string, unknown> = {
         pages: data.pages,
         themePackageId: data.themePackageId,
         themeColors: data.themeColors,
         themeFonts: data.themeFonts,
       };
+
+      if (canonicalSnapshot) {
+        snapshotPayload.canonical = canonicalSnapshot;
+      }
 
       const snap = await tx.publishSnapshot.create({
         data: {

@@ -29,6 +29,16 @@ export class BrandRepository {
       },
     });
   }
+
+  async findByTenantId(tenantId: string, tx?: Prisma.TransactionClient) {
+    return this.client(tx).brand.findFirst({
+      where: { website: { tenantId } },
+    });
+  }
+
+  async findIdentity(tenantId: string, tx?: Prisma.TransactionClient) {
+    return this.findByTenantId(tenantId, tx);
+  }
 }
 
 export const brandRepository = new BrandRepository();

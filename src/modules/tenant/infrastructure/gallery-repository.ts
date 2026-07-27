@@ -88,6 +88,13 @@ export class GalleryRepository {
     });
     return result._max.order ?? 0;
   }
+
+  async findPublished(tenantId: string, tx?: Prisma.TransactionClient): Promise<GalleryImage[]> {
+    return this.client(tx).galleryImage.findMany({
+      where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null },
+      orderBy: { order: "asc" },
+    });
+  }
 }
 
 export const galleryRepository = new GalleryRepository();

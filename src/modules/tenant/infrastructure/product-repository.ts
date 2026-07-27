@@ -78,6 +78,20 @@ export class ProductRepository {
     const r = await this.client(tx).product.deleteMany({ where });
     return r.count;
   }
+
+  async findPublished(tenantId: string, tx?: Prisma.TransactionClient): Promise<Product[]> {
+    return this.client(tx).product.findMany({
+      where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null },
+      orderBy: { order: "asc" },
+    });
+  }
+
+  async findFeatured(tenantId: string, tx?: Prisma.TransactionClient): Promise<Product[]> {
+    return this.client(tx).product.findMany({
+      where: { tenantId, isFeatured: true, status: "PUBLISHED", isActive: true, archivedAt: null },
+      orderBy: { order: "asc" },
+    });
+  }
 }
 
 export const productRepository = new ProductRepository();

@@ -227,4 +227,12 @@ export const SettingsService = {
       await prisma.workspace.update({ where: { id: workspace.id }, data: updateData });
     }
   },
+
+  async getSeo(tenantId: string): Promise<{ title: string; description: string } | null> {
+    const data = await SettingsService.getSettingByKey(tenantId, "seo");
+    if (data && typeof data === "object") {
+      return data as { title: string; description: string };
+    }
+    return null;
+  },
 };

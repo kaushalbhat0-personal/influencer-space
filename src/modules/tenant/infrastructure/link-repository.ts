@@ -59,6 +59,13 @@ export class LinkRepository {
       data: { clicks: { increment: 1 } },
     });
   }
+
+  async findPublished(tenantId: string, tx?: Prisma.TransactionClient): Promise<AffiliateLink[]> {
+    return this.client(tx).affiliateLink.findMany({
+      where: { tenantId, isActive: true },
+      orderBy: { order: "asc" },
+    });
+  }
 }
 
 export const linkRepository = new LinkRepository();

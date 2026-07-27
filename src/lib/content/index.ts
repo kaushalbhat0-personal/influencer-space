@@ -38,3 +38,7 @@ export type {
   CtaContent, NewsletterContent, TestimonialContent,
   PricingContent, LinksContent, ContactContent,
 } from "./schemas";
+
+// ── Website Aggregate (REF-01C) ──────────────────────────
+export { WebsiteAggregateService, websiteAggregateService } from "./website-aggregate.service";
+export type { WebsiteAggregate } from "./website-aggregate.types";

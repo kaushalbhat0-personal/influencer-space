@@ -21,7 +21,10 @@ export class WebsiteRepository {
   }
 
   async findByTenantId(tenantId: string, tx?: Prisma.TransactionClient) {
-    return this.client(tx).website.findUnique({ where: { tenantId } });
+    return this.client(tx).website.findUnique({
+      where: { tenantId },
+      include: { tenant: true },
+    });
   }
 
   async findById(id: string, tx?: Prisma.TransactionClient) {
@@ -65,6 +68,13 @@ export class WebsiteRepository {
     return this.client(tx).website.update({
       where: { id },
       data,
+    });
+  }
+
+  async findTheme(tenantId: string, tx?: Prisma.TransactionClient) {
+    return this.client(tx).website.findUnique({
+      where: { tenantId },
+      select: { themePackageId: true, themeColors: true, themeFonts: true },
     });
   }
 }
