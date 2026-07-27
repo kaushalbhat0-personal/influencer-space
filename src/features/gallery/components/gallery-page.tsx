@@ -7,7 +7,7 @@ import {
   toggleFeatured,
   bulkPublishGallery, bulkArchiveGallery, bulkDeleteGallery, bulkFeatureGallery,
 } from "@/actions/gallery.actions";
-import type { GalleryItemData } from "@/actions/gallery.actions";
+import type { GalleryItemData } from "@/lib/gallery/types";
 import { GalleryCard, GalleryCardSkeleton, GalleryCardEmpty } from "@/components/gallery/GalleryCard";
 import { GalleryEditor } from "@/components/gallery/GalleryEditor";
 import { GalleryToolbar } from "@/components/gallery/GalleryToolbar";

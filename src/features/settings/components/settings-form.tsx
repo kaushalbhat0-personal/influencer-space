@@ -13,7 +13,7 @@ import { updateInfluencerData, updateHeroData, updateHeroPartial, updateApiKeys 
 import { SettingsLivePreview } from "./settings-live-preview";
 import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
-import type { SettingsActionState } from "@/actions/settings.actions";
+import type { SettingsActionState } from "@/actions/settings.types";
 
 type SaveState = { pending: boolean; state: SettingsActionState };
 

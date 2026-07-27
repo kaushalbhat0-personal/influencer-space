@@ -1,18 +1,8 @@
 "use server";
 
 import { GalleryService } from "@/lib/gallery/service";
-import { BulkActionEngine, type BulkExecutor } from "@/lib/bulk/BulkActionEngine";
+import { galleryBulkEngine } from "@/lib/gallery/bulk";
 import type { FetchGalleryParams } from "@/lib/gallery/types";
-
-const bulkExecutor: BulkExecutor = {
-  publish: (ids, tenantId) => GalleryService.bulkPublish(ids, tenantId),
-  archive: (ids, tenantId) => GalleryService.bulkArchive(ids, tenantId),
-  delete: (ids, tenantId) => GalleryService.bulkDelete(ids, tenantId),
-};
-
-export const bulkEngine = new BulkActionEngine(bulkExecutor, "Gallery", "/admin/gallery");
-
-export type GalleryItemData = import("@/lib/gallery/types").GalleryItemData;
 
 export async function fetchGalleryItems(params: FetchGalleryParams) {
   try { const data = await GalleryService.fetch(params); return { success: true as const, data }; }
@@ -65,17 +55,17 @@ export async function toggleFeatured(id: string, tenantId: string, isFeatured: b
 }
 
 export async function bulkPublishGallery(ids: string[], tenantId: string) {
-  try { return await bulkEngine.execute("publish", ids, tenantId); }
+  try { return await galleryBulkEngine.execute("publish", ids, tenantId); }
   catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk publish failed" }; }
 }
 
 export async function bulkArchiveGallery(ids: string[], tenantId: string) {
-  try { return await bulkEngine.execute("archive", ids, tenantId); }
+  try { return await galleryBulkEngine.execute("archive", ids, tenantId); }
   catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk archive failed" }; }
 }
 
 export async function bulkDeleteGallery(ids: string[], tenantId: string) {
-  try { return await bulkEngine.execute("delete", ids, tenantId); }
+  try { return await galleryBulkEngine.execute("delete", ids, tenantId); }
   catch (error) { return { success: false as const, error: error instanceof Error ? error.message : "Bulk delete failed" }; }
 }
 

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { submitContact } from "@/actions/contact.actions";
-import type { ContactActionState } from "@/actions/contact.actions";
+import type { ContactActionState } from "@/actions/contact.types";
 
 export function ContactFormClient() {
   const formRef = useRef<HTMLFormElement>(null);

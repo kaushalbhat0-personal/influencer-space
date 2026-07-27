@@ -7,8 +7,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
 import { createGame, updateGame } from "@/actions/games.actions";
 import { GAMES_ROUTE } from "@/lib/constants";
-import type { GameData } from "@/actions/games.actions";
-import type { GameActionState } from "@/actions/games.actions";
+import type { GameData, GameActionState } from "@/actions/games.types";
 
 type Props =
   | { mode: "create"; game?: never }

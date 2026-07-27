@@ -9,7 +9,7 @@ import {
   updateLinkOrder,
   updateExistingLink,
 } from "@/actions/link.actions";
-import type { LinkData } from "@/actions/link.actions";
+import type { LinkData } from "@/actions/link.types";
 import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 export function LinksManager({

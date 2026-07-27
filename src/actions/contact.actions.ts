@@ -1,4 +1,5 @@
 "use server";
+import type { ContactActionState } from "./contact.types";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -6,26 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { MESSAGES_ROUTE } from "@/lib/constants";
 import { getTenantContext } from "@/lib/tenant";
 
-export type ContactData = {
-  id: string;
-  name: string;
-  email: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
-};
-
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   email: z.string().email("Invalid email address"),
   message: z.string().min(10, "Message must be at least 10 characters").max(5000),
 });
-
-export type ContactActionState = {
-  success: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
 
 async function requireTenant(): Promise<string> {
   const tenant = await getTenantContext();
@@ -95,3 +81,6 @@ export async function deleteMessage(
     return { success: false, error: "Failed to delete message" };
   }
 }
+
+
+

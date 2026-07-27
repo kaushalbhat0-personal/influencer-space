@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { fetchMilestones } from "@/actions/milestone.actions";
 import { MilestonesManager } from "./_components/milestones-manager";
-import type { MilestoneData } from "@/actions/milestone.actions";
+import type { MilestoneData } from "@/actions/milestone.types";
 
 export const dynamic = "force-dynamic";
 

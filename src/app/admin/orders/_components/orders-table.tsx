@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import type { Column } from "@/components/data/DataTable";
-import type { OrderRow } from "@/actions/order.actions";
+import type { OrderRow } from "@/actions/order.types";
 
 function formatINR(amount: number) {
   return `₹${amount.toLocaleString("en-IN")}`;

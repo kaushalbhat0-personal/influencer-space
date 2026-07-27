@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { MessageActions } from "./message-actions";
-import type { ContactData } from "@/actions/contact.actions";
+import type { ContactData } from "@/actions/contact.types";
 
 const rowVariants = {
   hidden: { opacity: 0, x: -20 },

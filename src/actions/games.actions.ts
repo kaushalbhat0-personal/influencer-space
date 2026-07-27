@@ -1,4 +1,5 @@
 "use server";
+import type { GameActionState } from "./games.types";
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -8,31 +9,12 @@ import { prisma } from "@/lib/prisma";
 import { GAMES_ROUTE } from "@/lib/constants";
 import { logAction } from "@/lib/audit";
 
-export type GameData = {
-  id: string;
-  name: string;
-  logoUrl: string | null;
-  description: string | null;
-  genre: string | null;
-  order: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  tenantId: string;
-};
-
 const gameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   logoUrl: z.string().optional().or(z.literal("")),
   description: z.string().max(500).optional().or(z.literal("")),
   genre: z.string().max(50).optional().or(z.literal("")),
 });
-
-export type GameActionState = {
-  success: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
 
 async function requireAuth(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -140,3 +122,6 @@ export async function deleteGame(id: string): Promise<GameActionState> {
     return { success: false, error: "Failed to delete game" };
   }
 }
+
+
+

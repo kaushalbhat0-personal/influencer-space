@@ -1,4 +1,5 @@
 "use server";
+import type { MilestoneData } from "./milestone.types";
 
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
@@ -14,19 +15,6 @@ const createMilestoneSchema = z.object({
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   stats: z.string().max(100).optional().or(z.literal("")),
 });
-
-export type MilestoneData = {
-  id: string;
-  year: string;
-  title: string;
-  description: string;
-  imageUrl: string | null;
-  stats: string | null;
-  order: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -188,3 +176,5 @@ export async function removeMilestone(
     };
   }
 }
+
+

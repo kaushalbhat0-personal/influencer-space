@@ -65,3 +65,4 @@ export async function validateBeforePublish(): Promise<PublishActionResult> {
     return { success: false, error: error instanceof Error ? error.message : "Validation failed" };
   }
 }
+

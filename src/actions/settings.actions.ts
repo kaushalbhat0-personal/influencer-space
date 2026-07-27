@@ -1,4 +1,5 @@
 "use server";
+import type { SettingsActionState } from "./settings.types";
 
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
@@ -58,12 +59,6 @@ const apiKeysSchema = z.object({
   youtubeApiKey: z.string().optional(),
   instagramApiKey: z.string().optional(),
 });
-
-export type SettingsActionState = {
-  success: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-};
 
 export async function updateInfluencerData(
   tenantId: string,
@@ -329,3 +324,6 @@ export async function updateThemeConfig(
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
+
+
+

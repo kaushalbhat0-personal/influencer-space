@@ -7,7 +7,7 @@ import {
   removeMilestone,
   updateExistingMilestone,
 } from "@/actions/milestone.actions";
-import type { MilestoneData } from "@/actions/milestone.actions";
+import type { MilestoneData } from "@/actions/milestone.types";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";

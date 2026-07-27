@@ -178,3 +178,4 @@ export async function toggleAffiliateActive(
     return { success: false, error: "Failed to toggle affiliate status" };
   }
 }
+

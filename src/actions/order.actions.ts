@@ -1,18 +1,9 @@
 "use server";
+import type { OrderRow } from "./order.types";
 
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-export type OrderRow = {
-  id: string;
-  productName: string;
-  amount: number;
-  status: string;
-  fanEmail: string | null;
-  razorpayOrderId: string;
-  createdAt: string;
-};
 
 async function requireTenant(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -100,3 +91,5 @@ export async function fetchAnalytics(tenantId: string) {
     topProducts: products.slice(0, 5).map((p) => p.name),
   };
 }
+
+

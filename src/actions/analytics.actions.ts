@@ -11,3 +11,4 @@ export async function fetchAnalytics(tenantId: string, preset: DatePreset = "las
 }
 
 export type AnalyticsResponse = Awaited<ReturnType<typeof fetchAnalytics>>;
+

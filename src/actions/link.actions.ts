@@ -1,4 +1,5 @@
 "use server";
+import type { LinkData } from "./link.types";
 
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
@@ -11,18 +12,6 @@ const createLinkSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   url: z.string().url("Must be a valid URL").max(2000),
 });
-
-export type LinkData = {
-  id: string;
-  title: string;
-  url: string;
-  imageUrl: string | null;
-  clicks: number;
-  order: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -233,3 +222,5 @@ export async function deleteLink(
     };
   }
 }
+
+

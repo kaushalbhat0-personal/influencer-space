@@ -92,3 +92,4 @@ export async function subscribeNewsletter(
     return { success: false, error: "Failed to subscribe. Please try again." };
   }
 }
+
