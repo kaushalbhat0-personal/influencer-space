@@ -4,7 +4,8 @@
 // Storefront reads this object only — never business tables.
 
 export interface PublishedSnapshot {
-  snapshotVersion: number;
+  _schema: "creatorstore.snapshot";
+  _version: number;
   metadata: SnapshotMetadata;
   content: WebsiteAggregate;
   layout: LayoutSnapshot;
@@ -34,7 +35,7 @@ export interface WebsiteAggregate {
     bannerUrl: string | null;
     socialLinks: Array<{ platform: string; url: string }>;
   };
-  hero: Record<string, unknown>;
+  hero: HeroContent;
   products: Array<{
     id: string; name: string; description: string | null;
     price: number; imageUrl: string | null; images: string[];
@@ -54,6 +55,26 @@ export interface WebsiteAggregate {
   };
 }
 
+export interface HeroContent {
+  title: string;
+  subtitle: string;
+  description: string;
+  videoUrl?: string | null;
+  posterUrl?: string | null;
+  ctaText?: string;
+  ctaLink?: string;
+  ctaSecondaryText?: string;
+  ctaSecondaryLink?: string;
+  liveBadgeText?: string;
+  showLiveBadge?: boolean;
+  imageUrl?: string | null;
+}
+
+export interface CTABlock {
+  text: string;
+  link: string;
+}
+
 // ── Layout (from Builder, semantic types only) ────────────
 
 export interface LayoutSnapshot {
@@ -65,7 +86,7 @@ export interface LayoutSnapshot {
     order: number;
     sections: Array<{
       id: string;
-      type: string;
+      moduleId: string;
       config: Record<string, unknown>;
       order: number;
       visible: boolean;
@@ -77,8 +98,18 @@ export interface LayoutSnapshot {
 
 export interface ThemeSnapshot {
   packageId: string;
-  colors: Record<string, string>;
-  fonts: Record<string, string>;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    foreground: string;
+    muted: string;
+  };
+  typography: {
+    heading: string;
+    body: string;
+  };
 }
 
 // ── Navigation (computed at publish time) ─────────────────
@@ -87,6 +118,7 @@ export interface NavigationItem {
   label: string;
   href: string;
   order: number;
+  enabled?: boolean;
 }
 
 // ── Rendering Hints (from Builder, layout only) ───────────
@@ -103,3 +135,4 @@ export interface RenderingHints {
 // Migration is handled by serializers, never by runtime if/else.
 
 export const CURRENT_SNAPSHOT_VERSION = 1;
+export const SNAPSHOT_SCHEMA = "creatorstore.snapshot" as const;

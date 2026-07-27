@@ -18,7 +18,7 @@ export interface StorefrontDocument {
   navigation: Array<{
     id: string;
     label: string;
-    exists: boolean;
+    enabled: boolean;
   }>;
 
   jsonLd: Array<Record<string, unknown>>;

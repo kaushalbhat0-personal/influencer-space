@@ -100,8 +100,11 @@ export class PublishingService {
 
       const aggregate = await websiteAggregateService.build(tenantId);
       const correlationId = safeCorrelationId(options?.correlation);
+      const dbThemeColors = snapshotData.themeColors as Record<string, string> | undefined;
+      const dbThemeFonts = snapshotData.themeFonts as Record<string, string> | undefined;
       const canonicalSnapshot: PublishedSnapshot = {
-        snapshotVersion: 1,
+        _schema: "creatorstore.snapshot",
+        _version: 1,
         metadata: {
           version: ((await prisma.publishStatus.findUnique({ where: { websiteId } }))?.liveVersion ?? 0) + 1,
           publishedAt: new Date().toISOString(),
@@ -119,7 +122,7 @@ export class PublishingService {
             order: p.order,
             sections: p.sections.map((s) => ({
               id: s.id,
-              type: s.name,
+              moduleId: s.slots.length > 0 ? s.slots[0]!.moduleId : s.name,
               config: s.slots.length > 0 ? s.slots[0]!.config : {},
               order: s.order,
               visible: s.visible,
@@ -128,8 +131,18 @@ export class PublishingService {
         },
         theme: {
           packageId: snapshotData.themePackageId,
-          colors: snapshotData.themeColors,
-          fonts: snapshotData.themeFonts,
+          colors: {
+            primary: dbThemeColors?.primary ?? "#6366F1",
+            secondary: dbThemeColors?.secondary ?? "#818CF8",
+            accent: dbThemeColors?.accent ?? "#A5B4FC",
+            background: dbThemeColors?.background ?? "#09090b",
+            foreground: dbThemeColors?.foreground ?? "#fafafa",
+            muted: dbThemeColors?.muted ?? "#a1a1aa",
+          },
+          typography: {
+            heading: dbThemeFonts?.heading ?? "Inter",
+            body: dbThemeFonts?.body ?? "Inter",
+          },
         },
         navigation: [],
         renderingHints: {},
