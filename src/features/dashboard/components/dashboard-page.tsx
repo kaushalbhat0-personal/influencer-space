@@ -160,6 +160,8 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               storefrontUrl={metrics.storefrontUrl}
               publishState={metrics.publishState}
               publishedVersion={metrics.publishedVersion}
+              publishedAt={metrics.publishedAt}
+              recentVersions={metrics.recentVersions}
               hasProducts={metrics.productCount > 0}
             />
 

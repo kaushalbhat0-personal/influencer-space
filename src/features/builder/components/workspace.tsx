@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ResizablePanel } from "./panel";
 import { BuilderToolbar } from "./toolbar";
 import { BuilderSidebar } from "./sidebar";
@@ -14,7 +14,7 @@ import { BuilderStatusBar } from "./status-bar";
 import { builderStore } from "@/lib/builder/store";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { useKeyboardShortcuts } from "../shared/keyboard";
-import { loadBuilderPages, saveBuilderPages, publishWebsite } from "@/actions/builder.actions";
+import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
 export function BuilderWorkspace() {
@@ -27,8 +27,6 @@ export function BuilderWorkspace() {
   const [showGrid, setShowGrid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [liveVersion, setLiveVersion] = useState<number | null>(null);
   const [statusMsg, setStatusMsg] = useState("");
   const [storefrontUrl, setStorefrontUrl] = useState("/");
   const [publishStatus, setPublishStatus] = useState<PublishStatusValue>("draft");
@@ -75,21 +73,6 @@ export function BuilderWorkspace() {
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
   }, [builderStore.isDirty, loading]);
 
-  const handlePublish = useCallback(async () => {
-    setPublishing(true);
-    setStatusMsg("Publishing...");
-    const pages = builderStore.serialize();
-    const res = await publishWebsite(pages);
-    if (res.success && res.version) {
-      setLiveVersion(res.version);
-      builderStore.markClean();
-      setStatusMsg("Published");
-    } else {
-      setStatusMsg("Publish failed");
-    }
-    setPublishing(false);
-  }, []);
-
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-zinc-950">
@@ -113,8 +96,20 @@ export function BuilderWorkspace() {
           onDeviceChange={setDevice}
           onZoomChange={setZoom}
           onToggleGrid={() => setShowGrid((v) => !v)}
-          onPublish={handlePublish}
-          publishing={publishing}
+          onSave={async () => {
+            setSaving(true);
+            setStatusMsg("Saving...");
+            const pages = builderStore.serialize();
+            const res = await saveBuilderPages(pages);
+            if (res.success) {
+              builderStore.markClean();
+              setStatusMsg("Saved");
+            } else {
+              setStatusMsg("Save failed");
+            }
+            setSaving(false);
+          }}
+          saving={saving}
         />
         <div className="flex flex-1 overflow-hidden">
           <ResizablePanel side="left" collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)}>
@@ -142,9 +137,6 @@ export function BuilderWorkspace() {
           isDirty={builderStore.isDirty}
           saving={saving}
           statusMsg={statusMsg}
-          onPublish={handlePublish}
-          publishing={publishing}
-          liveVersion={liveVersion}
         />
       </div>
     </InlineEditProvider>

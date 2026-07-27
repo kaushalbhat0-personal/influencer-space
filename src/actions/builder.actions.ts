@@ -2,7 +2,6 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
 import { BuilderService } from "@/lib/builder/builder-service";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import type { BuilderPage } from "@/lib/builder/types";
@@ -61,45 +60,29 @@ export async function loadBuilderPages(): Promise<{ success: boolean; pages?: Bu
 export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success: boolean; error?: string }> {
   try {
     const websiteId = await getWebsiteId();
+    const { prisma } = await import("@/lib/prisma");
     await builderService.save(websiteId, pages);
+
+    const publishStatus = await prisma.publishStatus.findUnique({
+      where: { websiteId },
+      select: { state: true, liveVersion: true },
+    });
+
+    if (publishStatus?.state === "live") {
+      await prisma.publishStatus.update({
+        where: { websiteId },
+        data: { state: "draft" },
+      });
+    }
+
     return { success: true };
   } catch (e) {
     return { success: false, error: String(e) };
   }
 }
 
-export async function publishWebsite(pages: BuilderPage[]): Promise<{ success: boolean; version?: number; error?: string }> {
-  try {
-    const websiteId = await getWebsiteId();
-    const { prisma } = await import("@/lib/prisma");
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await prisma.$transaction(async (tx: any) => {
-      await builderService.save(websiteId, pages, tx);
-
-      const website = await tx.website.findUnique({
-        where: { id: websiteId },
-        select: { themePackageId: true, themeColors: true, themeFonts: true },
-      });
-
-      return publishSnapshotService.publish(websiteId, {
-        pages,
-        themePackageId: website?.themePackageId || "neon-dark",
-        themeColors: (website?.themeColors || {}) as Record<string, string>,
-        themeFonts: (website?.themeFonts || {}) as Record<string, string>,
-      });
-    });
-
-    try {
-      revalidatePath("/", "layout");
-    } catch {
-      // best-effort
-    }
-
-    return { success: true, version: result.version };
-  } catch (e) {
-    return { success: false, error: String(e) };
-  }
+export async function publishWebsite(_pages: BuilderPage[]): Promise<{ success: boolean; version?: number; error?: string }> {
+  return { success: false, error: "Publishing from builder is no longer supported. Use the Dashboard to publish." };
 }
 
 export async function listSnapshots(): Promise<{ success: boolean; snapshots?: { version: number; state: string; createdAt: Date }[]; error?: string }> {

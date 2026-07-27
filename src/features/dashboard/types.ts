@@ -7,6 +7,7 @@ export interface DashboardMetrics {
   linkCount: number;
   messageCount: number;
   publishedVersion: number | null;
+  publishedAt: string | null;
   generationStatus: string | null;
   publishState: string | null;
   storefrontUrl: string;
@@ -15,6 +16,7 @@ export interface DashboardMetrics {
   hasSeo: boolean;
   profileCompletion: number;
   testimonialCount: number;
+  recentVersions: Array<{ version: number; createdAt: string }>;
 }
 
 export interface DashboardActivity {

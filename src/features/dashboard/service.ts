@@ -4,7 +4,7 @@ import type { DashboardMetrics, DashboardActivity, DashboardHealthCheck, QuickSt
 
 export const dashboardService = {
   async getMetrics(tenantId: string): Promise<DashboardMetrics> {
-    const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting] = await Promise.all([
+    const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website] = await Promise.all([
       prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true } }),
       prisma.productOrder.aggregate({
         where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
@@ -15,11 +15,12 @@ export const dashboardService = {
       prisma.contactSubmission.count({ where: { tenantId } }),
       prisma.publishStatus.findFirst({
         where: { website: { tenantId } },
-        select: { state: true, liveVersion: true },
+        select: { state: true, liveVersion: true, publishedAt: true },
       }),
       prisma.tenant.findUnique({ where: { id: tenantId }, select: { subdomain: true, customDomain: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } }, select: { id: true, value: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } }, select: { id: true } }),
+      prisma.website.findUnique({ where: { tenantId }, select: { id: true } }),
     ]);
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 
@@ -31,6 +32,19 @@ export const dashboardService = {
     const completedItems = [hasProducts, hasGallery, hasCustomDomain, hasTestimonials].filter(Boolean).length;
     const profileCompletion = Math.round((completedItems / 4) * 100);
 
+    const recentVersions: Array<{ version: number; createdAt: string }> = [];
+    if (website && publishStatus?.liveVersion) {
+      const snapshots = await prisma.publishSnapshot.findMany({
+        where: { websiteId: website.id, state: "live" },
+        select: { version: true, createdAt: true },
+        orderBy: { version: "desc" },
+        take: 10,
+      });
+      for (const snap of snapshots) {
+        recentVersions.push({ version: snap.version, createdAt: snap.createdAt.toISOString() });
+      }
+    }
+
     return {
       productCount: products.length,
       activeProductCount: products.filter((p) => p.isActive).length,
@@ -40,6 +54,7 @@ export const dashboardService = {
       linkCount: links,
       messageCount: messages,
       publishedVersion: publishStatus?.liveVersion ?? null,
+      publishedAt: publishStatus?.publishedAt?.toISOString() ?? null,
       generationStatus: publishStatus?.state ?? null,
       publishState: publishStatus?.state ?? null,
       storefrontUrl: tenant ? buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain) : "/",
@@ -48,6 +63,7 @@ export const dashboardService = {
       hasSeo,
       profileCompletion,
       testimonialCount,
+      recentVersions,
     };
   },
 

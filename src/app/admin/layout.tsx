@@ -35,8 +35,10 @@ export default async function AdminLayout({
     }
 
     const dbState = website?.publishStatus?.state;
+    const liveVersion = website?.publishStatus?.liveVersion;
     if (dbState === "live") publishStatus = "published";
     else if (dbState === "preview") publishStatus = "preview";
+    else if (dbState === "draft" && liveVersion && liveVersion > 0) publishStatus = "outdated";
     else publishStatus = "draft";
   }
 

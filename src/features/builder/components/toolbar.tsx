@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Smartphone, Tablet, Monitor, Undo, Redo, Eye, ZoomIn, ZoomOut, Grid3X3, LayoutDashboard, ExternalLink, Rocket } from "lucide-react";
+import { Smartphone, Tablet, Monitor, Undo, Redo, Eye, ZoomIn, ZoomOut, Grid3X3, LayoutDashboard, ExternalLink, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuilderCanvas } from "@/lib/builder/types";
 import { builderCommands } from "@/lib/builder/commands";
@@ -17,8 +17,8 @@ export function BuilderToolbar({
   onDeviceChange,
   onZoomChange,
   onToggleGrid,
-  onPublish,
-  publishing,
+  onSave,
+  saving,
 }: {
   device: BuilderCanvas["device"];
   zoom: number;
@@ -28,8 +28,8 @@ export function BuilderToolbar({
   onDeviceChange: (d: BuilderCanvas["device"]) => void;
   onZoomChange: (z: number) => void;
   onToggleGrid: () => void;
-  onPublish?: () => void;
-  publishing?: boolean;
+  onSave?: () => void;
+  saving?: boolean;
 }) {
   const devices: { id: BuilderCanvas["device"]; label: string; icon: typeof Monitor }[] = [
     { id: "mobile", label: "Mobile", icon: Smartphone },
@@ -87,16 +87,16 @@ export function BuilderToolbar({
         <PublishStatusBadge status={publishStatus} size="sm" />
         <div className="mx-2 h-4 w-px bg-white/10" />
         <button
-          onClick={onPublish}
-          disabled={publishing}
-          className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-[11px] font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+          onClick={onSave}
+          disabled={saving}
+          className="flex items-center gap-1.5 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-[11px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
         >
-          {publishing ? (
+          {saving ? (
             <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
           ) : (
-            <Rocket className="h-3.5 w-3.5" />
+            <Save className="h-3.5 w-3.5" />
           )}
-          {publishing ? "Publishing..." : "Publish"}
+          {saving ? "Saving..." : "Save Layout"}
         </button>
       </div>
     </div>
