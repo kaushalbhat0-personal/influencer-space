@@ -19,17 +19,9 @@ import { revalidatePath } from "next/cache";
 import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
-import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
-
-type PageData = {
-  pages: BuilderPage[];
-  themePackageId: string;
-  themeColors: Record<string, string>;
-  themeFonts: Record<string, string>;
-};
 
 export type PublishState = "draft" | "preview" | "live" | "archived";
 
@@ -78,7 +70,7 @@ export class PublishingService {
 
   async publish(
     tenantId: string,
-    options?: { pages?: PageData; correlation?: CorrelationContext },
+    correlation?: CorrelationContext,
   ): Promise<{ success: boolean; version?: number; error?: string }> {
     try {
       const tenant = await prisma.tenant.findUnique({
@@ -96,17 +88,23 @@ export class PublishingService {
       const websiteId = website.id;
       const storeRoot = buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain);
 
-      const snapshotData = options?.pages ?? await this.loadFromBuilder(websiteId);
+      const [builderPages, websiteFull, aggregate, correlationId] = await Promise.all([
+        this.loadBuilderPages(websiteId),
+        prisma.website.findUnique({
+          where: { id: websiteId },
+          select: { themePackageId: true, themeColors: true, themeFonts: true },
+        }),
+        websiteAggregateService.build(tenantId),
+        Promise.resolve(safeCorrelationId(correlation)),
+      ]);
 
-      const aggregate = await websiteAggregateService.build(tenantId);
-      const correlationId = safeCorrelationId(options?.correlation);
-      const dbThemeColors = snapshotData.themeColors as Record<string, string> | undefined;
-      const dbThemeFonts = snapshotData.themeFonts as Record<string, string> | undefined;
+      const dbThemeColors = ((websiteFull?.themeColors ?? {}) as Record<string, string>);
+      const dbThemeFonts = ((websiteFull?.themeFonts ?? {}) as Record<string, string>);
       const canonicalSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
         _version: 1,
         metadata: {
-          version: ((await prisma.publishStatus.findUnique({ where: { websiteId } }))?.liveVersion ?? 0) + 1,
+          version: 0,
           publishedAt: new Date().toISOString(),
           previousVersion: null,
           correlationId,
@@ -114,7 +112,7 @@ export class PublishingService {
         },
         content: aggregate,
         layout: {
-          pages: snapshotData.pages.map((p) => ({
+          pages: builderPages.map((p) => ({
             id: p.id,
             name: p.name,
             slug: p.slug,
@@ -130,7 +128,7 @@ export class PublishingService {
           })),
         },
         theme: {
-          packageId: snapshotData.themePackageId,
+          packageId: websiteFull?.themePackageId ?? "neon-dark",
           colors: {
             primary: dbThemeColors?.primary ?? "#6366F1",
             secondary: dbThemeColors?.secondary ?? "#818CF8",
@@ -148,7 +146,7 @@ export class PublishingService {
         renderingHints: {},
       };
 
-      const result = await publishRepository.createPublish(websiteId, snapshotData, canonicalSnapshot);
+      const result = await publishRepository.createPublish(websiteId, canonicalSnapshot);
 
       try {
         platformEventBus.publish("WebsitePublished", {
@@ -175,25 +173,46 @@ export class PublishingService {
     }
   }
 
-  async publishFromPages(
-    tenantId: string,
-    pages: PageData,
-    correlation?: CorrelationContext,
-  ): Promise<{ success: boolean; version?: number; error?: string }> {
-    return this.publish(tenantId, { pages, correlation });
-  }
-
   async preview(tenantId: string): Promise<{ success: boolean; version?: number; error?: string }> {
     try {
       const website = await prisma.website.findUnique({
         where: { tenantId },
-        select: { id: true },
+        select: { id: true, themePackageId: true, themeColors: true, themeFonts: true },
       });
       if (!website) return { success: false, error: "Website not found" };
 
-      const snapshotData = await this.loadFromBuilder(website.id);
-      const result = await publishRepository.createPreview(website.id, snapshotData);
+      const [builderPages, aggregate] = await Promise.all([
+        this.loadBuilderPages(website.id),
+        websiteAggregateService.build(tenantId),
+      ]);
 
+      const dbThemeColors = (website.themeColors ?? {}) as Record<string, string>;
+      const dbThemeFonts = (website.themeFonts ?? {}) as Record<string, string>;
+      const previewSnapshot: PublishedSnapshot = {
+        _schema: "creatorstore.snapshot",
+        _version: 1,
+        metadata: { version: 0, publishedAt: new Date().toISOString(), previousVersion: null, correlationId: `preview_${website.id}`, generatedBy: "dashboard" },
+        content: aggregate,
+        layout: {
+          pages: builderPages.map((p) => ({
+            id: p.id, name: p.name, slug: p.slug, isHome: p.isHome, order: p.order,
+            sections: p.sections.map((s) => ({
+              id: s.id, moduleId: s.slots.length > 0 ? s.slots[0]!.moduleId : s.name,
+              config: s.slots.length > 0 ? s.slots[0]!.config : {},
+              order: s.order, visible: s.visible,
+            })),
+          })),
+        },
+        theme: {
+          packageId: website.themePackageId,
+          colors: { primary: dbThemeColors?.primary ?? "#6366F1", secondary: dbThemeColors?.secondary ?? "#818CF8", accent: dbThemeColors?.accent ?? "#A5B4FC", background: dbThemeColors?.background ?? "#09090b", foreground: dbThemeColors?.foreground ?? "#fafafa", muted: dbThemeColors?.muted ?? "#a1a1aa" },
+          typography: { heading: dbThemeFonts?.heading ?? "Inter", body: dbThemeFonts?.body ?? "Inter" },
+        },
+        navigation: [],
+        renderingHints: {},
+      };
+
+      const result = await publishRepository.createPreview(website.id, previewSnapshot);
       return { success: true, version: result.version };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Preview failed" };
@@ -259,103 +278,11 @@ export class PublishingService {
     }
   }
 
-  private async loadFromBuilder(websiteId: string): Promise<PageData> {
+  private async loadBuilderPages(websiteId: string): Promise<BuilderPage[]> {
     const builderService = await import("@/lib/builder/builder-service").then(
       (m) => new m.BuilderService(),
     );
-    const [pages, websiteConfig] = await Promise.all([
-      builderService.load(websiteId),
-      prisma.website.findUnique({
-        where: { id: websiteId },
-        select: { themePackageId: true, themeColors: true, themeFonts: true, tenantId: true },
-      }),
-    ]);
-
-    if (pages.length > 0) {
-      return {
-        pages,
-        themePackageId: websiteConfig?.themePackageId ?? "neon-dark",
-        themeColors: (websiteConfig?.themeColors ?? {}) as Record<string, string>,
-        themeFonts: (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
-      };
-    }
-
-    const tenantId = websiteConfig?.tenantId;
-
-    const latestSnapshot = tenantId ? await prisma.publishSnapshot.findFirst({
-      where: { websiteId, state: "live" },
-      orderBy: { version: "desc" },
-      select: { snapshot: true },
-    }) : null;
-
-    if (latestSnapshot) {
-      const data = latestSnapshot.snapshot as Record<string, unknown>;
-      if (data.pages && Array.isArray(data.pages)) {
-        return {
-          pages: data.pages as BuilderPage[],
-          themePackageId: (data.themePackageId as string) ?? websiteConfig?.themePackageId ?? "neon-dark",
-          themeColors: (data.themeColors as Record<string, string>) ?? (websiteConfig?.themeColors ?? {}) as Record<string, string>,
-          themeFonts: (data.themeFonts as Record<string, string>) ?? (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
-        };
-      }
-    }
-
-    if (tenantId) {
-      const artifactSetting = await prisma.setting.findUnique({
-        where: { tenantId_key: { tenantId, key: "builder_artifact" } },
-        select: { value: true },
-      });
-      if (artifactSetting?.value && typeof artifactSetting.value === "object") {
-        const artifact = artifactSetting.value as Record<string, unknown>;
-        const sections = artifact.sections as Array<Record<string, unknown>> | undefined;
-        if (Array.isArray(sections) && sections.length > 0) {
-          const restoredPages: BuilderPage[] = [{
-            id: "home",
-            name: "Home",
-            slug: "/",
-            order: 0,
-            isHome: true,
-            theme: "",
-            metadata: {},
-            sections: sections.map((s, i) => {
-              const type = (s.type as string) ?? "";
-              const moduleId = resolveModuleId(type);
-              return {
-                id: (s.id as string) ?? `section_${i}`,
-                name: moduleIdToDisplayName(moduleId),
-                order: i,
-                visible: true,
-                locked: false,
-                metadata: {},
-                slots: [{
-                  id: `slot_${(s.id as string) ?? i}`,
-                  moduleId,
-                  parentId: null,
-                  order: 0,
-                  visible: true,
-                  locked: false,
-                  config: (s.props as Record<string, unknown>) ?? {},
-                  metadata: {},
-                }],
-              };
-            }),
-          }];
-          return {
-            pages: restoredPages,
-            themePackageId: websiteConfig?.themePackageId ?? "neon-dark",
-            themeColors: (websiteConfig?.themeColors ?? {}) as Record<string, string>,
-            themeFonts: (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
-          };
-        }
-      }
-    }
-
-    return {
-      pages,
-      themePackageId: websiteConfig?.themePackageId ?? "neon-dark",
-      themeColors: (websiteConfig?.themeColors ?? {}) as Record<string, string>,
-      themeFonts: (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
-    };
+    return builderService.load(websiteId);
   }
 }
 

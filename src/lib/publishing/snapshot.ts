@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
 import type { BuilderPage } from "@/lib/builder/types";
-import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
+import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
+import { serializeSnapshot } from "./snapshot-serializer";
+import { publishRepository } from "./repository";
+import {
+  SNAPSHOT_SCHEMA,
+  CURRENT_SNAPSHOT_VERSION,
+  type PublishedSnapshot,
+} from "@/types/snapshot";
 
 export type PublishSnapshotData = SnapshotData;
 
@@ -23,126 +30,98 @@ export type SnapshotData = ArtifactSnapshotRecord | {
   themeFonts: Record<string, string>;
 };
 
-function builderPagesToArtifact(pages: BuilderPage[], website: Record<string, any>): ArtifactSnapshotRecord {
-  return {
-    website: { title: "", tagline: "" },
-    theme: {
-      primary: website?.themeColors?.primary ?? "#6366F1",
-      secondary: website?.themeColors?.secondary ?? "#818CF8",
-      mode: "light",
-      fonts: { heading: "Inter", body: "Inter" },
-    },
-    pages: pages.map((p) => ({ id: p.id, type: p.isHome ? "home" : "products", title: p.name, slug: p.slug })),
-    navigation: { desktop: pages.map((p) => ({ label: p.name, href: `/${p.slug}`, order: p.order })) },
-    sections: pages.flatMap((p) =>
-      p.sections.map((s, i) => ({
-        id: s.id,
-        type: s.slots.length > 0 ? s.slots[0]!.moduleId : s.name,
-        page: p.isHome ? "home" : "products",
-        order: i,
-        props: s.slots.length > 0 ? s.slots[0]!.config : {},
-      }))
-    ),
-    products: [],
-    gallery: { enabled: false, albums: [] },
-    seo: { title: "", description: "" },
-  };
-}
-
-function isLegacySnapshot(snapshot: SnapshotData): snapshot is { pages: BuilderPage[]; themePackageId: string; themeColors: Record<string, string>; themeFonts: Record<string, string> } {
-  return "themePackageId" in snapshot;
-}
-
 export class PublishSnapshotService {
-  async publish(websiteId: string, snapshot: SnapshotData): Promise<{ version: number }> {
-    try {
-      const existing = await prisma.publishStatus.findUnique({ where: { websiteId } });
+  async publish(websiteId: string, _snapshot: SnapshotData): Promise<{ version: number }> {
+    const website = await prisma.website.findUnique({
+      where: { id: websiteId },
+      select: { tenantId: true, themePackageId: true, themeColors: true, themeFonts: true },
+    });
+    if (!website) throw new Error("Website not found");
+
+    const aggregate = await websiteAggregateService.build(website.tenantId);
+    const dbThemeColors = website.themeColors as Record<string, string> | undefined;
+    const dbThemeFonts = website.themeFonts as Record<string, string> | undefined;
+
+    const canonicalSnapshot: PublishedSnapshot = {
+      _schema: SNAPSHOT_SCHEMA,
+      _version: CURRENT_SNAPSHOT_VERSION,
+      metadata: {
+        version: 0,
+        publishedAt: new Date().toISOString(),
+        previousVersion: null,
+        correlationId: `publish_${websiteId}_${Date.now()}`,
+        generatedBy: "onboarding",
+      },
+      content: aggregate,
+      layout: {
+        pages: [],
+      },
+      theme: {
+        packageId: website.themePackageId,
+        colors: {
+          primary: dbThemeColors?.primary ?? "#6366F1",
+          secondary: dbThemeColors?.secondary ?? "#818CF8",
+          accent: dbThemeColors?.accent ?? "#A5B4FC",
+          background: dbThemeColors?.background ?? "#09090b",
+          foreground: dbThemeColors?.foreground ?? "#fafafa",
+          muted: dbThemeColors?.muted ?? "#a1a1aa",
+        },
+        typography: {
+          heading: dbThemeFonts?.heading ?? "Inter",
+          body: dbThemeFonts?.body ?? "Inter",
+        },
+      },
+      navigation: [],
+      renderingHints: {},
+    };
+
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.publishStatus.findUnique({ where: { websiteId } });
       const nextVersion = (existing?.liveVersion ?? 0) + 1;
 
-      let artifact: ArtifactSnapshotRecord;
-      if (isLegacySnapshot(snapshot)) {
-        const websiteRaw = await prisma.website.findUnique({
-          where: { id: websiteId },
-          select: { themePackageId: true, themeColors: true, themeFonts: true },
-        });
-        const website = (websiteRaw ?? {}) as unknown as Record<string, any>;
-        artifact = builderPagesToArtifact(snapshot.pages, website);
-      } else {
-        artifact = snapshot;
-      }
+      canonicalSnapshot.metadata.version = nextVersion;
 
-      const result = await prisma.$transaction(async (tx) => {
-        const snap = await tx.publishSnapshot.create({
-          data: {
-            websiteId,
-            version: nextVersion,
-            state: "live",
-            snapshot: JSON.parse(JSON.stringify(artifact)),
-          },
-        });
-
-        await tx.publishStatus.upsert({
-          where: { websiteId },
-          create: { websiteId, state: "live", liveVersion: nextVersion, publishedAt: new Date() },
-          update: { state: "live", liveVersion: nextVersion, publishedAt: new Date() },
-        });
-
-        return snap;
+      const snap = await tx.publishSnapshot.create({
+        data: {
+          websiteId,
+          version: nextVersion,
+          state: "live",
+          snapshot: JSON.parse(JSON.stringify(serializeSnapshot(canonicalSnapshot))),
+        },
       });
 
-      return { version: result.version };
-    } catch (error) {
-      throw error;
-    }
+      await tx.publishStatus.upsert({
+        where: { websiteId },
+        create: { websiteId, state: "live", liveVersion: nextVersion, publishedAt: new Date() },
+        update: { state: "live", liveVersion: nextVersion, publishedAt: new Date() },
+      });
+
+      return { version: snap.version };
+    });
   }
 
   async publishFromArtifact(websiteId: string, artifact: ArtifactSnapshotRecord): Promise<{ version: number }> {
     return this.publish(websiteId, artifact);
   }
 
-  async preview(websiteId: string, snapshot: SnapshotData): Promise<{ version: number }> {
-    try {
-      let artifact: ArtifactSnapshotRecord;
-      if (isLegacySnapshot(snapshot)) {
-        const websiteRaw = await prisma.website.findUnique({
-          where: { id: websiteId },
-          select: { themePackageId: true, themeColors: true, themeFonts: true },
-        });
-        const website = (websiteRaw ?? {}) as unknown as Record<string, any>;
-        artifact = builderPagesToArtifact(snapshot.pages, website);
-      } else {
-        artifact = snapshot;
-      }
-
-      const result = await prisma.$transaction(async (tx) => {
-        const existing = await tx.publishSnapshot.findFirst({
-          where: { websiteId, state: "preview" },
-          orderBy: { version: "desc" },
-        });
-        const nextVersion = (existing?.version ?? 0) + 1;
-
-        const snap = await tx.publishSnapshot.create({
-          data: {
-            websiteId,
-            version: nextVersion,
-            state: "preview",
-            snapshot: JSON.parse(JSON.stringify(artifact)),
-          },
-        });
-
-        await tx.publishStatus.upsert({
-          where: { websiteId },
-          create: { websiteId, state: "preview" },
-          update: { state: "preview" },
-        });
-
-        return snap;
-      });
-
-      return { version: result.version };
-    } catch (error) {
-      throw error;
-    }
+  async preview(websiteId: string, _snapshot: SnapshotData): Promise<{ version: number }> {
+    const website = await prisma.website.findUnique({
+      where: { id: websiteId },
+      select: { tenantId: true, themePackageId: true, themeColors: true, themeFonts: true },
+    });
+    const aggregate = website ? await websiteAggregateService.build(website.tenantId) : undefined;
+    const colors = (website?.themeColors ?? {}) as Record<string, string>;
+    const fonts = (website?.themeFonts ?? {}) as Record<string, string>;
+    const preview: PublishedSnapshot = {
+      _schema: SNAPSHOT_SCHEMA, _version: CURRENT_SNAPSHOT_VERSION,
+      metadata: { version: 0, publishedAt: new Date().toISOString(), previousVersion: null, correlationId: `preview_${websiteId}`, generatedBy: "dashboard" },
+      content: aggregate ?? { identity: { name: "", tagline: "", bio: "", avatarUrl: null, bannerUrl: null, socialLinks: [] }, hero: { title: "", subtitle: "", description: "" }, products: [], gallery: [], links: [], seo: { title: "", description: "" } },
+      layout: { pages: [] },
+      theme: { packageId: website?.themePackageId ?? "neon-dark", colors: { primary: colors?.primary ?? "#6366F1", secondary: colors?.secondary ?? "#818CF8", accent: colors?.accent ?? "#A5B4FC", background: colors?.background ?? "#09090b", foreground: colors?.foreground ?? "#fafafa", muted: colors?.muted ?? "#a1a1aa" }, typography: { heading: fonts?.heading ?? "Inter", body: fonts?.body ?? "Inter" } },
+      navigation: [], renderingHints: {},
+    };
+    const result = await publishRepository.createPreview(websiteId, preview);
+    return { version: result.version };
   }
 
   async rollback(websiteId: string, version: number): Promise<{ pages: BuilderPage[] }> {
@@ -152,44 +131,31 @@ export class PublishSnapshotService {
       });
       if (!snap) throw new Error(`Snapshot version ${version} not found`);
 
-      const data = snap.snapshot as unknown as SnapshotData;
+      const data = snap.snapshot as Record<string, unknown>;
+      const canonical = data.canonical as Record<string, unknown> | undefined;
 
-      if (isLegacySnapshot(data)) {
-        return { pages: data.pages };
+      if (canonical) {
+        const layout = canonical.layout as Record<string, unknown> | undefined;
+        const pages = layout?.pages as Array<Record<string, unknown>> | undefined;
+        if (pages) {
+          return { pages: pages.map((p: any) => ({
+            id: p.id, name: p.name, slug: p.slug, isHome: p.isHome, order: p.order,
+            theme: "", metadata: {},
+            sections: (p.sections ?? []).map((s: any) => ({
+              id: s.id, name: s.moduleId, order: s.order, visible: s.visible ?? true,
+              locked: false, metadata: {},
+              slots: [{
+                id: `slot_${s.id}`,
+                moduleId: s.moduleId,
+                parentId: null, order: 0, visible: true, locked: false,
+                config: s.config ?? {}, metadata: {},
+              }],
+            })),
+          })) as BuilderPage[] };
+        }
       }
 
-      const artifact = data as ArtifactSnapshotRecord;
-      const moduleId = (s: ArtifactSnapshotRecord["sections"][number]) => resolveModuleId(s.type);
-      const displayName = (s: ArtifactSnapshotRecord["sections"][number]) => moduleIdToDisplayName(moduleId(s));
-      const pages: BuilderPage[] = artifact.sections.map((s, i) => ({
-        id: s.id,
-        name: displayName(s),
-        slug: s.page === "home" ? "/" : `/${s.page}`,
-        order: i,
-        isHome: s.page === "home",
-        theme: "",
-        metadata: {},
-        sections: [{
-          id: s.id,
-          name: displayName(s),
-          order: 0,
-          visible: true,
-          locked: false,
-          metadata: {},
-          slots: [{
-            id: `slot_${s.id}`,
-            moduleId: moduleId(s),
-            parentId: null,
-            order: 0,
-            visible: true,
-            locked: false,
-            config: s.props ?? {},
-            metadata: {},
-          }],
-        }],
-      }));
-
-      return { pages };
+      return { pages: [] };
     } catch (error) {
       throw error;
     }
