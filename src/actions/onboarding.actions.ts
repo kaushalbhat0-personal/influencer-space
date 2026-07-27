@@ -207,6 +207,12 @@ export async function runCreatorGeneration(
       });
     }
 
+    try {
+      await markOnboardingComplete(provisioned.tenantId);
+    } catch {
+      // onboarding_completed upsert is best-effort; dashboard uses it for recovery UX
+    }
+
     const ws = await workspaceRepository.findByTenantId(provisioned.tenantId);
     const resolvedWorkspaceId = ws?.id;
 

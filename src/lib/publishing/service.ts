@@ -216,9 +216,84 @@ export class PublishingService {
       builderService.load(websiteId),
       prisma.website.findUnique({
         where: { id: websiteId },
-        select: { themePackageId: true, themeColors: true, themeFonts: true },
+        select: { themePackageId: true, themeColors: true, themeFonts: true, tenantId: true },
       }),
     ]);
+
+    if (pages.length > 0) {
+      return {
+        pages,
+        themePackageId: websiteConfig?.themePackageId ?? "neon-dark",
+        themeColors: (websiteConfig?.themeColors ?? {}) as Record<string, string>,
+        themeFonts: (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
+      };
+    }
+
+    const tenantId = websiteConfig?.tenantId;
+
+    const latestSnapshot = tenantId ? await prisma.publishSnapshot.findFirst({
+      where: { websiteId, state: "live" },
+      orderBy: { version: "desc" },
+      select: { snapshot: true },
+    }) : null;
+
+    if (latestSnapshot) {
+      const data = latestSnapshot.snapshot as Record<string, unknown>;
+      if (data.pages && Array.isArray(data.pages)) {
+        return {
+          pages: data.pages as BuilderPage[],
+          themePackageId: (data.themePackageId as string) ?? websiteConfig?.themePackageId ?? "neon-dark",
+          themeColors: (data.themeColors as Record<string, string>) ?? (websiteConfig?.themeColors ?? {}) as Record<string, string>,
+          themeFonts: (data.themeFonts as Record<string, string>) ?? (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
+        };
+      }
+    }
+
+    if (tenantId) {
+      const artifactSetting = await prisma.setting.findUnique({
+        where: { tenantId_key: { tenantId, key: "builder_artifact" } },
+        select: { value: true },
+      });
+      if (artifactSetting?.value && typeof artifactSetting.value === "object") {
+        const artifact = artifactSetting.value as Record<string, unknown>;
+        const sections = artifact.sections as Array<Record<string, unknown>> | undefined;
+        if (Array.isArray(sections) && sections.length > 0) {
+          const restoredPages: BuilderPage[] = [{
+            id: "home",
+            name: "Home",
+            slug: "/",
+            order: 0,
+            isHome: true,
+            theme: "",
+            metadata: {},
+            sections: sections.map((s, i) => ({
+              id: (s.id as string) ?? `section_${i}`,
+              name: (s.type as string) ?? "section",
+              order: i,
+              visible: true,
+              locked: false,
+              metadata: {},
+              slots: [{
+                id: `slot_${(s.id as string) ?? i}`,
+                moduleId: (s.type as string) ?? "section",
+                parentId: null,
+                order: 0,
+                visible: true,
+                locked: false,
+                config: (s.props as Record<string, unknown>) ?? {},
+                metadata: {},
+              }],
+            })),
+          }];
+          return {
+            pages: restoredPages,
+            themePackageId: websiteConfig?.themePackageId ?? "neon-dark",
+            themeColors: (websiteConfig?.themeColors ?? {}) as Record<string, string>,
+            themeFonts: (websiteConfig?.themeFonts ?? {}) as Record<string, string>,
+          };
+        }
+      }
+    }
 
     return {
       pages,

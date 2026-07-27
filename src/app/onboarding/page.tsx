@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete } from "@/actions/onboarding.actions";
+import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
@@ -102,6 +102,8 @@ export default function OnboardingPage() {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [estimatedRemainingMs, setEstimatedRemainingMs] = useState<number | null>(null);
   const [goldenScore, setGoldenScore] = useState<number | null>(null);
+  const [retryInfo, setRetryInfo] = useState<{ tenantId: string } | null>(null);
+  const [retryPublishing, setRetryPublishing] = useState(false);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -209,6 +211,10 @@ export default function OnboardingPage() {
         setTimeout(() => {
           router.replace("/admin/dashboard");
         }, 2000);
+      } else if (res.retryable && res.tenantId) {
+        setRetryInfo({ tenantId: res.tenantId });
+        setError(res.error || "Publishing failed. You can retry or continue to your dashboard.");
+        setStep("error");
       } else {
         setError(res.error || "Generation failed. Please try again.");
         setStep("error");
@@ -227,6 +233,33 @@ export default function OnboardingPage() {
     setProgressPercent(0);
     setElapsedMs(0);
   }, []);
+
+  const handleRetryPublish = useCallback(async () => {
+    if (!retryInfo) return;
+    setRetryPublishing(true);
+    setError(null);
+    try {
+      const res = await retryPublish(retryInfo.tenantId);
+      if (res.success) {
+        try {
+          await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
+        } catch { }
+        router.replace("/admin/dashboard");
+      } else {
+        setError(res.error || "Retry publishing failed");
+      }
+    } catch {
+      setError("Retry publishing failed");
+    }
+    setRetryPublishing(false);
+  }, [retryInfo, router]);
+
+  const handleGoToDashboard = useCallback(async () => {
+    if (retryInfo?.tenantId) {
+      await markOnboardingComplete(retryInfo.tenantId);
+    }
+    router.replace("/admin/dashboard");
+  }, [retryInfo, router]);
 
   const hasFailure = sessionStages.some((s) => s.status === "failed");
   const allStageTypes = [
@@ -574,32 +607,69 @@ export default function OnboardingPage() {
 
         {step === "error" && (
           <div className="text-center space-y-6">
-            <div className="rounded-full bg-red-500/20 p-4 w-fit mx-auto">
-              <AlertTriangle className="h-10 w-10 text-red-400" />
+            <div className={cn(
+              "rounded-full p-4 w-fit mx-auto",
+              retryInfo ? "bg-amber-500/20" : "bg-red-500/20",
+            )}>
+              <AlertTriangle className={cn(
+                "h-10 w-10",
+                retryInfo ? "text-amber-400" : "text-red-400",
+              )} />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-white">Something went wrong</h1>
+              <h1 className="text-xl font-semibold text-white">
+                {retryInfo ? "Publishing failed" : "Something went wrong"}
+              </h1>
               <p className="text-zinc-400 mt-2 text-sm">{error || "Could not generate your storefront."}</p>
+              {retryInfo && (
+                <p className="text-zinc-500 mt-3 text-xs">
+                  Your storefront was created successfully. Publishing the live version failed.
+                  You can retry or continue to the dashboard.
+                </p>
+              )}
             </div>
             <div className="space-y-3">
-              <button
-                onClick={handleGenerate}
-                className="btn-primary w-full py-3"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={handleRetry}
-                className="btn-secondary w-full py-3"
-              >
-                Change Settings
-              </button>
-              <button
-                onClick={() => router.push("/admin/dashboard")}
-                className="text-sm text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
-              >
-                Go to Dashboard instead
-              </button>
+              {retryInfo ? (
+                <>
+                  <button
+                    onClick={handleRetryPublish}
+                    disabled={retryPublishing}
+                    className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+                  >
+                    {retryPublishing && (
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    )}
+                    {retryPublishing ? "Publishing..." : "Retry Publishing"}
+                  </button>
+                  <button
+                    onClick={handleGoToDashboard}
+                    className="btn-secondary w-full py-3"
+                  >
+                    Go to Dashboard
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleGenerate}
+                    className="btn-primary w-full py-3"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={handleRetry}
+                    className="btn-secondary w-full py-3"
+                  >
+                    Change Settings
+                  </button>
+                  <button
+                    onClick={() => router.push("/admin/dashboard")}
+                    className="text-sm text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
+                  >
+                    Go to Dashboard instead
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
