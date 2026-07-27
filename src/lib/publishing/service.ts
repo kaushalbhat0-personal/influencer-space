@@ -19,6 +19,7 @@ import { revalidatePath } from "next/cache";
 import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
+import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
 import { publishRepository } from "./repository";
 
 type PageData = {
@@ -266,24 +267,28 @@ export class PublishingService {
             isHome: true,
             theme: "",
             metadata: {},
-            sections: sections.map((s, i) => ({
-              id: (s.id as string) ?? `section_${i}`,
-              name: (s.type as string) ?? "section",
-              order: i,
-              visible: true,
-              locked: false,
-              metadata: {},
-              slots: [{
-                id: `slot_${(s.id as string) ?? i}`,
-                moduleId: (s.type as string) ?? "section",
-                parentId: null,
-                order: 0,
+            sections: sections.map((s, i) => {
+              const type = (s.type as string) ?? "";
+              const moduleId = resolveModuleId(type);
+              return {
+                id: (s.id as string) ?? `section_${i}`,
+                name: moduleIdToDisplayName(moduleId),
+                order: i,
                 visible: true,
                 locked: false,
-                config: (s.props as Record<string, unknown>) ?? {},
                 metadata: {},
-              }],
-            })),
+                slots: [{
+                  id: `slot_${(s.id as string) ?? i}`,
+                  moduleId,
+                  parentId: null,
+                  order: 0,
+                  visible: true,
+                  locked: false,
+                  config: (s.props as Record<string, unknown>) ?? {},
+                  metadata: {},
+                }],
+              };
+            }),
           }];
           return {
             pages: restoredPages,

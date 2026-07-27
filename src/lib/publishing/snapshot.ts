@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
 import type { BuilderPage } from "@/lib/builder/types";
+import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
 
 export type PublishSnapshotData = SnapshotData;
 
@@ -36,7 +37,7 @@ function builderPagesToArtifact(pages: BuilderPage[], website: Record<string, an
     sections: pages.flatMap((p) =>
       p.sections.map((s, i) => ({
         id: s.id,
-        type: s.name,
+        type: s.slots.length > 0 ? s.slots[0]!.moduleId : s.name,
         page: p.isHome ? "home" : "products",
         order: i,
         props: s.slots.length > 0 ? s.slots[0]!.config : {},
@@ -158,9 +159,11 @@ export class PublishSnapshotService {
       }
 
       const artifact = data as ArtifactSnapshotRecord;
+      const moduleId = (s: ArtifactSnapshotRecord["sections"][number]) => resolveModuleId(s.type);
+      const displayName = (s: ArtifactSnapshotRecord["sections"][number]) => moduleIdToDisplayName(moduleId(s));
       const pages: BuilderPage[] = artifact.sections.map((s, i) => ({
         id: s.id,
-        name: s.type,
+        name: displayName(s),
         slug: s.page === "home" ? "/" : `/${s.page}`,
         order: i,
         isHome: s.page === "home",
@@ -168,14 +171,14 @@ export class PublishSnapshotService {
         metadata: {},
         sections: [{
           id: s.id,
-          name: s.type,
+          name: displayName(s),
           order: 0,
           visible: true,
           locked: false,
           metadata: {},
           slots: [{
             id: `slot_${s.id}`,
-            moduleId: s.type,
+            moduleId: moduleId(s),
             parentId: null,
             order: 0,
             visible: true,

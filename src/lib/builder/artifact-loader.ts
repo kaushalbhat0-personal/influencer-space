@@ -1,4 +1,5 @@
 import type { BuilderPage } from "./types";
+import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
 
 interface StorefrontData {
   website?: Record<string, unknown>;
@@ -44,44 +45,28 @@ function buildPage(
     isHome,
     theme: "",
     metadata: {},
-    sections: (sectionRows ?? []).map((sec, i) => ({
-      id: sec.id ?? `section_${id}_${i}`,
-      name: sec.type ?? `Section ${i + 1}`,
-      order: i,
-      visible: true,
-      locked: false,
-      metadata: {},
-      slots: [
-        {
-          id: `slot_${sec.id ?? `${id}_${i}`}_0`,
-          moduleId: mapSectionTypeToModule(sec.type),
-          parentId: null,
-          order: 0,
-          visible: true,
-          locked: false,
-          config: sec.props ?? {},
-          metadata: {},
-        },
-      ],
-    })),
+    sections: (sectionRows ?? []).map((sec, i) => {
+      const moduleId = resolveModuleId(sec.type ?? "");
+      return {
+        id: sec.id ?? `section_${id}_${i}`,
+        name: moduleIdToDisplayName(moduleId),
+        order: i,
+        visible: true,
+        locked: false,
+        metadata: {},
+        slots: [
+          {
+            id: `slot_${sec.id ?? `${id}_${i}`}_0`,
+            moduleId,
+            parentId: null,
+            order: 0,
+            visible: true,
+            locked: false,
+            config: sec.props ?? {},
+            metadata: {},
+          },
+        ],
+      };
+    }),
   };
-}
-
-function mapSectionTypeToModule(sectionType: string): string {
-  const moduleMap: Record<string, string> = {
-    hero: "hero",
-    featured_products: "featured-products",
-    product_grid: "product-grid",
-    content_feed: "content-feed",
-    gallery: "gallery",
-    about: "about",
-    contact_form: "contact",
-    social_links: "social-links",
-    faq: "faq",
-    footer: "footer",
-    stats: "stats",
-    testimonials: "testimonials",
-    newsletter: "newsletter",
-  };
-  return moduleMap[sectionType] ?? "content";
 }

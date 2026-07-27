@@ -10,6 +10,7 @@ import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { StorefrontNav } from "@/components/storefront/StorefrontNav";
+import { resolveModuleId } from "@/lib/registry/resolve-module";
 
 export const revalidate = 60;
 
@@ -74,7 +75,7 @@ function extractSlots(snapshot: any): Array<{ id: string; moduleId: string; conf
   if (isArtifact) {
     return (snapshot.sections as any[])
       .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
-      .map((s: any) => ({ id: s.id, moduleId: s.type, config: s.props ?? {} }));
+      .map((s: any) => ({ id: s.id, moduleId: resolveModuleId(s.type), config: s.props ?? {} }));
   }
 
   if (snapshot.pages) {
