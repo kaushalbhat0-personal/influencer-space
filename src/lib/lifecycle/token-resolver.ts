@@ -189,5 +189,3 @@ export class LifecycleService {
     return null;
   }
 }
-
-export const lifecycleService = new LifecycleService();

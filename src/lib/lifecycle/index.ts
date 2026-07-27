@@ -4,3 +4,4 @@ export type { LifecycleData, RouteGuard, NavigationConfig, NavigationItem } from
 export { LifecycleService, LIFECYCLE_ROUTE_GUARDS } from "./token-resolver";
 
 export { getNavigation, getNavigationForRole } from "./navigation";
+export { lifecycleService } from "./service";

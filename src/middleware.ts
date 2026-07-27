@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { lifecycleService } from "@/lib/lifecycle/token-resolver";
+import { LifecycleService } from "@/lib/lifecycle/token-resolver";
+
+const lifecycleService = new LifecycleService();
 
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
