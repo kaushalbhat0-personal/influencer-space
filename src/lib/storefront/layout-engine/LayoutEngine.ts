@@ -3,7 +3,7 @@
 // No side effects. No DB access. No services. No rendering.
 // Deterministic. Immutable input.
 
-import type { PublishedSnapshot } from "@/types/snapshot";
+import type { PublishedSnapshot, WebsiteAggregate } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
 import { resolveModuleId } from "@/lib/registry/resolve-module";
 
@@ -162,6 +162,71 @@ export class LayoutEngine {
     return jsonLd;
   }
 
+  // ── Section Composition ─────────────────────────────────
+  // Pure: composes layout config + business content into renderer props.
+
+  private composeSectionConfig(
+    moduleId: string,
+    layoutConfig: Record<string, unknown>,
+    content: WebsiteAggregate,
+  ): Record<string, unknown> {
+    const config = { ...layoutConfig };
+
+    if (moduleId.startsWith("hero.")) {
+      Object.assign(config, content.hero);
+    } else if (moduleId.startsWith("about.")) {
+      config.title = config.title || content.identity.name || "About";
+      config.content = config.content || content.identity.bio || "";
+      config.imageUrl = config.imageUrl || content.identity.avatarUrl;
+    } else if (moduleId.startsWith("products.")) {
+      const productEntries: Record<string, unknown>[] = content.products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        imageUrl: p.imageUrl,
+        slug: p.slug,
+      }));
+      config.resolvedData = productEntries;
+      config.resolvedTitle = content.identity.name
+        ? `${content.identity.name}'s Products`
+        : "Products";
+    } else if (moduleId.startsWith("gallery.")) {
+      const imageEntries: Record<string, unknown>[] = content.gallery.map((g) => ({
+        url: g.imageUrl,
+        caption: g.title || g.description || "",
+        isVideo: g.mediaType === "video",
+      }));
+      config.resolvedData = imageEntries;
+      config.resolvedTitle = "Gallery";
+    } else if (moduleId.startsWith("links.") || moduleId === "links.default") {
+      const linkEntries: Record<string, unknown>[] = content.links.map((l) => ({
+        url: l.url,
+        platform: l.title,
+        label: l.title,
+      }));
+      for (const s of content.identity.socialLinks) {
+        linkEntries.push({ url: s.url, platform: s.platform, label: s.platform });
+      }
+      config.resolvedData = linkEntries;
+      config.resolvedTitle = "Connect With Me";
+    } else if (moduleId.startsWith("footer.")) {
+      config.copyright = config.copyright || `© ${content.identity.name} — CreatorStore`;
+    } else if (moduleId.startsWith("contact.")) {
+      config.title = config.title || "Get In Touch";
+    } else if (moduleId.startsWith("newsletter.")) {
+      config.title = config.title || "Subscribe";
+    } else if (moduleId.startsWith("testimonials.")) {
+      config.resolvedData = config.resolvedData || [];
+      config.resolvedTitle = config.resolvedTitle || "Testimonials";
+    } else if (moduleId.startsWith("faq.")) {
+      config.resolvedData = config.resolvedData || [];
+      config.resolvedTitle = config.resolvedTitle || "FAQ";
+    }
+
+    return config;
+  }
+
   // ── Pages ──────────────────────────────────────────────
 
   private buildPages(snapshot: PublishedSnapshot): StorefrontDocument["pages"] {
@@ -170,13 +235,16 @@ export class LayoutEngine {
       name: page.name,
       slug: page.slug,
       isHome: page.isHome,
-      sections: page.sections.map((section) => ({
-        id: section.id,
-        moduleId: resolveModuleId(section.moduleId),
-        config: { ...section.config },
-        order: section.order,
-        visible: section.visible,
-      })),
+      sections: page.sections.map((section) => {
+        const moduleId = resolveModuleId(section.moduleId);
+        return {
+          id: section.id,
+          moduleId,
+          config: this.composeSectionConfig(moduleId, section.config, snapshot.content),
+          order: section.order,
+          visible: section.visible,
+        };
+      }),
     }));
   }
 

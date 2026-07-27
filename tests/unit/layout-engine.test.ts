@@ -241,9 +241,30 @@ describe("LayoutEngine — pages", () => {
     expect(doc.pages[0].sections[0].visible).toBe(true);
   });
 
-  it("preserves config (shallow copy, not reference)", () => {
+  it("injects hero content into section config", () => {
     const doc = engine.resolve(minimalSnapshot());
-    expect(doc.pages[0].sections[0].config).toEqual({});
+    expect(doc.pages[0].sections[0].config).toHaveProperty("title", "Hello");
+    expect(doc.pages[0].sections[0].config).toHaveProperty("subtitle", "");
+    expect(doc.pages[0].sections[0].config).toHaveProperty("description", "");
+  });
+
+  it("injects products content into products grid section", () => {
+    const doc = engine.resolve(fullSnapshot());
+    const productsSection = doc.pages[0].sections.find((s) => s.moduleId === "products.grid");
+    expect(productsSection).toBeDefined();
+    const resolvedData = productsSection!.config.resolvedData as Array<Record<string, unknown>>;
+    expect(resolvedData).toHaveLength(1);
+    expect(resolvedData[0].name).toBe("Course");
+    expect(resolvedData[0].price).toBe(499);
+  });
+
+  it("injects about content from identity", () => {
+    const doc = engine.resolve(fullSnapshot());
+    const aboutSection = doc.pages[0].sections.find((s) => s.moduleId === "about.default");
+    expect(aboutSection).toBeDefined();
+    const config = aboutSection!.config;
+    expect(config).toHaveProperty("content");
+    expect(config).toHaveProperty("imageUrl");
   });
 });
 
