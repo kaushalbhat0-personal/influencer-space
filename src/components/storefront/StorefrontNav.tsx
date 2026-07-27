@@ -14,12 +14,12 @@ const NAV_ICON: Record<string, JSX.Element> = {
 interface NavSection {
   id: string;
   label: string;
-  exists: boolean;
+  enabled: boolean;
 }
 
 export function StorefrontNav({ sections }: { sections: NavSection[] }) {
   const [activeSection, setActiveSection] = useState("");
-  const visibleSections = sections.filter((s) => s.exists);
+  const visibleSections = sections.filter((s) => s.enabled);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
