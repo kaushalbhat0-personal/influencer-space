@@ -51,3 +51,7 @@ playwright-report/
 test-results/
 build2.txt
 build_output.txt
+
+server-err.log
+server-output.log
+scripts/db-check.mjs

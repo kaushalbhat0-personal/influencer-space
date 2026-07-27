@@ -9,7 +9,7 @@ import { buildStorefrontMetadata, buildStorefrontJsonLd } from "@/lib/storefront
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { StorefrontNav, NAV_ICONS } from "@/components/storefront/StorefrontNav";
+import { StorefrontNav } from "@/components/storefront/StorefrontNav";
 
 export const revalidate = 60;
 
@@ -141,7 +141,7 @@ export default async function PublicPage({ params }: { params: { domain: string 
 
   return (
     <main className="min-h-screen text-white pb-20 md:pb-0" style={themeStyle as React.CSSProperties}>
-      <StorefrontNav sections={sectionDefs.map((s) => ({ id: s.id, label: s.label, exists: s.exists, icon: NAV_ICONS[s.id] }))} />
+      <StorefrontNav sections={sectionDefs.map((s) => ({ id: s.id, label: s.label, exists: s.exists }))} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profileLd) }} />
       {productListLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productListLd) }} />}
       <div className="mx-auto max-w-2xl px-4 pt-4">

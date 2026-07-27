@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type JSX } from "react";
 import { Home, ShoppingBag, Image as ImageIcon, User, Mail } from "lucide-react";
+
+const NAV_ICONS: Record<string, JSX.Element> = {
+  hero: <Home className="h-4 w-4" />,
+  products: <ShoppingBag className="h-4 w-4" />,
+  gallery: <ImageIcon className="h-4 w-4" />,
+  about: <User className="h-4 w-4" />,
+  contact: <Mail className="h-4 w-4" />,
+};
 
 interface NavSection {
   id: string;
@@ -78,11 +86,3 @@ export function StorefrontNav({ sections }: { sections: NavSection[] }) {
     </>
   );
 }
-
-export const NAV_ICONS: Record<string, React.ReactNode> = {
-  hero: <Home className="h-4 w-4" />,
-  products: <ShoppingBag className="h-4 w-4" />,
-  gallery: <ImageIcon className="h-4 w-4" />,
-  about: <User className="h-4 w-4" />,
-  contact: <Mail className="h-4 w-4" />,
-};
