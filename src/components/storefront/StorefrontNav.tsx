@@ -3,7 +3,7 @@
 import { useState, useEffect, type JSX } from "react";
 import { Home, ShoppingBag, Image as ImageIcon, User, Mail } from "lucide-react";
 
-const NAV_ICONS: Record<string, JSX.Element> = {
+const NAV_ICON: Record<string, JSX.Element> = {
   hero: <Home className="h-4 w-4" />,
   products: <ShoppingBag className="h-4 w-4" />,
   gallery: <ImageIcon className="h-4 w-4" />,
@@ -14,7 +14,6 @@ const NAV_ICONS: Record<string, JSX.Element> = {
 interface NavSection {
   id: string;
   label: string;
-  icon?: React.ReactNode;
   exists: boolean;
 }
 
@@ -77,7 +76,7 @@ export function StorefrontNav({ sections }: { sections: NavSection[] }) {
               }`}
               aria-label={s.label}
             >
-              {s.icon}
+              {NAV_ICON[s.id]}
               <span className="text-[10px] font-medium">{s.label}</span>
             </button>
           ))}
