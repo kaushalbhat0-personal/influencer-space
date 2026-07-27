@@ -12,7 +12,7 @@ import { workspaceRepository } from "@/modules/workspace/infrastructure/reposito
 import { tenantRepository } from "@/modules/tenant/infrastructure/tenant-repository";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { brandRepository } from "@/modules/tenant/infrastructure/brand-repository";
-import { publishStatusRepository } from "@/modules/tenant/infrastructure/publish-status-repository";
+import { publishRepository } from "@/lib/publishing/repository";
 import { websiteSettingsRepository } from "@/modules/tenant/infrastructure/settings-repository";
 import { userRepository } from "@/modules/tenant/infrastructure/user-repository";
 
@@ -154,11 +154,7 @@ export class ProvisioningService {
           socialLinks,
         }, tx as Prisma.TransactionClient);
 
-        await publishStatusRepository.create({
-          websiteId: website.id,
-          state: "live",
-          publishedAt: new Date(),
-        }, tx as Prisma.TransactionClient);
+        await publishRepository.createStatus(website.id, "live", new Date(), tx as Prisma.TransactionClient);
 
         await websiteSettingsRepository.createBatch(tenant.id, [
           { key: "brand_config", value: brandConfig },

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { BuilderPage } from "@/lib/builder/types";
+import type { Prisma } from "@/generated/prisma/client";
 
 type PageData = {
   pages: BuilderPage[];
@@ -89,6 +90,22 @@ export class PublishRepository {
       });
 
       return { version: nextVersion, websiteId };
+    });
+  }
+
+  async createStatus(
+    websiteId: string,
+    state?: string,
+    publishedAt?: Date,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const client = tx ?? prisma;
+    return client.publishStatus.create({
+      data: {
+        websiteId,
+        state: state ?? "draft",
+        publishedAt: publishedAt ?? new Date(),
+      },
     });
   }
 }

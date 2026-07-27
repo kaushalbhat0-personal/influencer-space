@@ -1,5 +1,5 @@
 import { buildStorefrontUrl } from "@/lib/config/platform";
-import { publishService } from "@/lib/website";
+import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 
 export interface ShowcaseSite {
   id: string;
@@ -18,14 +18,14 @@ const CATEGORIES = [
 
 export class ShowcaseService {
   async getPublished(filters?: { category?: string; search?: string }): Promise<ShowcaseSite[]> {
-    const published = await publishService.listByState("live");
+    const published = await websiteRepository.listPublished();
 
     let sites: ShowcaseSite[] = published.map((ps) => ({
-      id: ps.website.tenant.subdomain,
-      name: ps.website.brand?.name || ps.website.tenant.name,
-      category: this.inferCategory(ps.website.brand?.name || ""),
-      description: ps.website.brand?.bio || ps.website.brand?.tagline || "Creator storefront",
-      storefrontUrl: buildStorefrontUrl(ps.website.tenant.subdomain),
+      id: ps.tenant.subdomain,
+      name: ps.brand?.name || ps.tenant.name,
+      category: this.inferCategory(ps.brand?.name || ""),
+      description: ps.brand?.bio || ps.brand?.tagline || "Creator storefront",
+      storefrontUrl: buildStorefrontUrl(ps.tenant.subdomain),
       products: [],
     }));
 

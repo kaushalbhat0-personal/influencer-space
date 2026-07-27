@@ -24,6 +24,28 @@ export class WebsiteRepository {
     return this.client(tx).website.findUnique({ where: { tenantId } });
   }
 
+  async findById(id: string, tx?: Prisma.TransactionClient) {
+    return this.client(tx).website.findUnique({
+      where: { id },
+      include: { brand: true, publishStatus: true },
+    });
+  }
+
+  async listAll(tx?: Prisma.TransactionClient) {
+    return this.client(tx).website.findMany({
+      include: { brand: true, publishStatus: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async listPublished(tx?: Prisma.TransactionClient) {
+    return this.client(tx).website.findMany({
+      where: { publishStatus: { state: "live" } },
+      include: { brand: true, tenant: true, publishStatus: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async updateThemeColors(
     id: string,
     colors: Record<string, string>,

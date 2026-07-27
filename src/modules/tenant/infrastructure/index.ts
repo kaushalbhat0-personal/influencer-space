@@ -10,9 +10,6 @@ export type { CreateBrandData } from "./brand-repository";
 export { WebsiteSettingsRepository, websiteSettingsRepository } from "./settings-repository";
 export type { SettingEntry } from "./settings-repository";
 
-export { PublishStatusRepository, publishStatusRepository } from "./publish-status-repository";
-export type { CreatePublishStatusData } from "./publish-status-repository";
-
 export { UserRepository, userRepository } from "./user-repository";
 export type { CreateUserData } from "./user-repository";
 
