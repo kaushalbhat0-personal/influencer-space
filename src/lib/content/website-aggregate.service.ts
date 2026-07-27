@@ -4,7 +4,7 @@ import { galleryRepository } from "@/modules/tenant/infrastructure/gallery-repos
 import { linkRepository } from "@/modules/tenant/infrastructure/link-repository";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { SettingsService } from "@/services/settings.service";
-import type { WebsiteAggregate } from "./website-aggregate.types";
+import type { WebsiteAggregate } from "@/types/snapshot";
 
 export class WebsiteAggregateService {
   async build(tenantId: string): Promise<WebsiteAggregate> {
@@ -59,7 +59,6 @@ export class WebsiteAggregateService {
         title: ((seoData as { title?: string } | null)?.title) ?? "",
         description: ((seoData as { description?: string } | null)?.description) ?? "",
       },
-      navigation: [],
     };
   }
 }

@@ -101,13 +101,15 @@ export class PublishingService {
       const aggregate = await websiteAggregateService.build(tenantId);
       const correlationId = safeCorrelationId(options?.correlation);
       const canonicalSnapshot: PublishedSnapshot = {
+        snapshotVersion: 1,
         metadata: {
-          version: (await prisma.publishStatus.findUnique({ where: { websiteId } }))?.liveVersion ?? 0,
+          version: ((await prisma.publishStatus.findUnique({ where: { websiteId } }))?.liveVersion ?? 0) + 1,
           publishedAt: new Date().toISOString(),
           previousVersion: null,
           correlationId,
           generatedBy: "dashboard",
         },
+        content: aggregate,
         layout: {
           pages: snapshotData.pages.map((p) => ({
             id: p.id,
@@ -123,13 +125,13 @@ export class PublishingService {
               visible: s.visible,
             })),
           })),
-          theme: {
-            packageId: snapshotData.themePackageId,
-            colors: snapshotData.themeColors,
-            fonts: snapshotData.themeFonts,
-          },
         },
-        content: aggregate as unknown as Record<string, unknown>,
+        theme: {
+          packageId: snapshotData.themePackageId,
+          colors: snapshotData.themeColors,
+          fonts: snapshotData.themeFonts,
+        },
+        navigation: [],
         renderingHints: {},
       };
 
