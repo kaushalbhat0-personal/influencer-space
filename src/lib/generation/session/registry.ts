@@ -31,7 +31,7 @@ function mapHistory(row: { id: string; sessionId: string; type: string; data: Pr
 
 function mapSession(
   row: {
-    id: string; workspaceId: string; creatorId: string | null; creatorName: string;
+    id: string; workspaceId: string | null; creatorId: string | null; creatorName: string;
     sourceUrl: string | null; platform: string | null; status: string; currentStage: string | null;
     progressPercent: number; maxRetries: number; retryCount: number; workflowId: string | null;
     evaluationScore: number | null; goldenValidationScore: number | null; artifactVersion: number | null;
@@ -80,7 +80,7 @@ function mapSession(
 export const sessionRegistry = {
   async create(data: {
     id: string;
-    workspaceId: string;
+    workspaceId?: string;
     creatorId: string | null;
     creatorName: string;
     sourceUrl: string | null;
@@ -91,7 +91,7 @@ export const sessionRegistry = {
     const session = await prisma.generationSession.create({
       data: {
         id: data.id,
-        workspaceId: data.workspaceId,
+        workspaceId: data.workspaceId ?? null,
         creatorId: data.creatorId,
         creatorName: data.creatorName,
         sourceUrl: data.sourceUrl,
@@ -151,6 +151,7 @@ export const sessionRegistry = {
       currentStage?: string | null;
       progressPercent?: number;
       workflowId?: string;
+      workspaceId?: string;
       evaluationScore?: number;
       goldenValidationScore?: number;
       artifactVersion?: number;
@@ -168,6 +169,7 @@ export const sessionRegistry = {
     if (data.currentStage !== undefined) updateData.currentStage = data.currentStage;
     if (data.progressPercent !== undefined) updateData.progressPercent = data.progressPercent;
     if (data.workflowId !== undefined) updateData.workflowId = data.workflowId;
+    if (data.workspaceId !== undefined) updateData.workspaceId = data.workspaceId;
     if (data.evaluationScore !== undefined) updateData.evaluationScore = data.evaluationScore;
     if (data.goldenValidationScore !== undefined) updateData.goldenValidationScore = data.goldenValidationScore;
     if (data.artifactVersion !== undefined) updateData.artifactVersion = data.artifactVersion;

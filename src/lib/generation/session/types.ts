@@ -68,7 +68,7 @@ export interface HistoryEvent {
 
 export interface GenerationSessionData {
   id: string;
-  workspaceId: string;
+  workspaceId: string | null;
   creatorId: string | null;
   creatorName: string;
   sourceUrl: string | null;
@@ -97,7 +97,7 @@ export interface GenerationSessionData {
 }
 
 export interface CreateSessionInput {
-  workspaceId: string;
+  workspaceId?: string;
   creatorId?: string;
   creatorName: string;
   sourceUrl?: string;

@@ -670,7 +670,7 @@ model GenerationSessionStage {
 /// Every creator generation is a first-class resource with lifecycle, progress, and history.
 model GenerationSession {
   id                   String    @id @default(uuid()) @db.Uuid
-  workspaceId          String    @db.Uuid
+  workspaceId          String?   @db.Uuid
   creatorId            String?   @db.Uuid
   creatorName          String
   sourceUrl            String?

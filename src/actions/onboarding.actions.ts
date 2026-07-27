@@ -11,7 +11,7 @@ import { logAction } from "@/lib/audit";
 import { onboardingService } from "@/lib/onboarding/service";
 import { goldenDataset, GoldenValidator } from "@/lib/generation/golden";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
-import { sessionService } from "@/lib/generation/session";
+import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
 import {
@@ -64,7 +64,7 @@ export async function runCreatorGeneration(
 ): Promise<{
   success: boolean;
   stages?: Array<{ stage: string; status: string; error?: string }>;
-  result?: { tenantId: string; workspaceId: string; storefrontUrl: string; dashboardUrl: string };
+  result?: { tenantId: string; workspaceId?: string; storefrontUrl: string; dashboardUrl: string };
   goldenValidation?: { passed: boolean; overallScore: number; regressions: string[] } | null;
   error?: string;
 }> {
@@ -76,17 +76,13 @@ export async function runCreatorGeneration(
     const creatorName = session.user.name || "Creator";
     const userId = session.user.id;
 
-    const placeholderWsId = `pre_provision:${userId}`;
-
     const ctx = correlationService.create({
-      workspaceId: placeholderWsId,
       creatorId: userId,
     });
 
     if (!precreatedSessionId) {
       try {
         const gs = await sessionService.create({
-          workspaceId: placeholderWsId,
           creatorId: userId,
           creatorName,
           sourceUrl,
@@ -105,7 +101,7 @@ export async function runCreatorGeneration(
     if (generationSessionId) {
       platformEventBus.publish("WebsiteBeingGenerated", {
         tenantId: "",
-        workspaceId: placeholderWsId,
+        workspaceId: generationSessionId,
         creatorName,
         sourceUrl,
         sourcePlatform: "youtube",
@@ -209,7 +205,15 @@ export async function runCreatorGeneration(
     }
 
     const ws = await workspaceRepository.findByTenantId(provisioned.tenantId);
-    const resolvedWorkspaceId = ws?.id ?? placeholderWsId;
+    const resolvedWorkspaceId = ws?.id;
+
+    if (resolvedWorkspaceId && generationSessionId) {
+      await sessionService.updateProgress(generationSessionId, {
+        status: "publishing" as const,
+        currentStage: "publishing",
+      });
+      await sessionRegistry.update(generationSessionId, { workspaceId: resolvedWorkspaceId });
+    }
 
     await prisma.setting.upsert({
       where: { tenantId_key: { tenantId: provisioned.tenantId, key: "onboarding_source" } },
@@ -358,10 +362,8 @@ export async function createGenerationSession(
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { sessionId: "", error: "Unauthorized" };
 
-    const placeholderWsId = `pre_provision:${session.user.id}`;
-    const ctx = correlationService.create({ workspaceId: placeholderWsId, creatorId: session.user.id });
+    const ctx = correlationService.create({ creatorId: session.user.id });
     const gs = await sessionService.create({
-      workspaceId: placeholderWsId,
       creatorId: session.user.id,
       creatorName: session.user.name || "Creator",
       sourceUrl,

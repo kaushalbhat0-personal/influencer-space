@@ -54,6 +54,7 @@ scenarioRegistry.register({
       }, "critical"),
 
       A.provisioningAssertion("workspace-created", "Workspace exists", async () => {
+        if (!session.workspaceId) return false;
         const workspace = await prisma.workspace.findUnique({ where: { id: session.workspaceId } });
         return !!workspace;
       }),
