@@ -12,6 +12,11 @@ const COMPAT_MAP: Record<string, string> = {
   newsletter: "newsletter.default",
   pricing: "pricing.default",
   courses: "courses.default",
+
+  featured_products: "products.grid",
+  product_grid: "products.grid",
+  social_links: "links.default",
+  contact_form: "contact.default",
 };
 
 export function resolveModuleId(type: string): string {

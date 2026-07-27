@@ -5,6 +5,7 @@
 
 import type { PublishedSnapshot } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
+import { resolveModuleId } from "@/lib/registry/resolve-module";
 
 export class LayoutEngine {
   resolve(snapshot: PublishedSnapshot): StorefrontDocument {
@@ -171,7 +172,7 @@ export class LayoutEngine {
       isHome: page.isHome,
       sections: page.sections.map((section) => ({
         id: section.id,
-        moduleId: section.moduleId,
+        moduleId: resolveModuleId(section.moduleId),
         config: { ...section.config },
         order: section.order,
         visible: section.visible,

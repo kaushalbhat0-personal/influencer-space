@@ -320,6 +320,50 @@ describe("LayoutEngine — determinism", () => {
 
 // ── Special Cases ─────────────────────────────────────────
 
+describe("LayoutEngine — vocabulary resolution", () => {
+  it("resolves featured_products to products.grid", () => {
+    const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "featured_products";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("products.grid");
+  });
+
+  it("resolves product_grid to products.grid", () => {
+    const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "product_grid";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("products.grid");
+  });
+
+  it("resolves social_links to links.default", () => {
+    const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "social_links";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("links.default");
+  });
+
+  it("resolves contact_form to contact.default", () => {
+    const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "contact_form";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("contact.default");
+  });
+
+  it("canonical IDs pass through unchanged", () => {
+    const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "hero.default";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("hero.default");
+  });
+
+  it("unknown IDs pass through unchanged (no silent mapping)", () => {
+    const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "content_feed";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("content_feed");
+  });
+});
+
 describe("LayoutEngine — special cases", () => {
   it("handles multi-page layout", () => {
     const doc = engine.resolve(fullSnapshot());
