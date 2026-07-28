@@ -14,6 +14,7 @@ export interface CreateAssetData {
   altText?: string;
   width?: number;
   height?: number;
+  processingStatus?: string;
 }
 
 export interface UpdateAssetData {

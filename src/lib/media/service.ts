@@ -3,6 +3,7 @@ import { assetRepository } from "./repositories/asset-repository";
 import { storageProviderFactory } from "./providers/factory";
 import { mediaValidator, type FileInfo } from "./validator";
 import { platformEventBus } from "@/lib/events";
+import { processingQueue } from "./processing/queue";
 
 export interface UploadOptions {
   tenantId: string;
@@ -86,6 +87,11 @@ export class MediaService {
         options.entityField,
       );
     }
+
+    // Queue async processing
+    processingQueue.enqueue(asset.id).catch(() => {
+      // Fire-and-forget — processing is non-critical for upload response
+    });
 
     this.emit("AssetUploaded", { assetId: asset.id, tenantId: options.tenantId, deduplicated: false });
 

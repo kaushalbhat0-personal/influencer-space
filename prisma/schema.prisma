@@ -1001,7 +1001,10 @@ model Asset {
   size             Int      @default(0)
   width            Int?
   height           Int?
+  duration         Int?     // Duration in seconds (for video/audio)
   checksum         String?
+  blurHash         String?  // Blur placeholder data URL
+  dominantColor    String?  // Hex color string (e.g. "#18181b")
   storageProvider  String   @default("local")
   storageKey       String
   publicUrl        String?
@@ -1011,6 +1014,8 @@ model Asset {
   altText          String?
   referenceCount   Int      @default(0)
   status           String   @default("ACTIVE") // ACTIVE | DELETED
+  processingStatus String   @default("PENDING") // PENDING | QUEUED | PROCESSING | READY | FAILED
+  processingError  String?  // Error message if processing failed
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

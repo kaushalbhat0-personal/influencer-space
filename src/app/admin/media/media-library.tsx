@@ -14,11 +14,16 @@ interface AssetItem {
   size: number;
   width?: number | null;
   height?: number | null;
+  duration?: number | null;
+  blurHash?: string | null;
+  dominantColor?: string | null;
   publicUrl?: string | null;
   thumbnailUrl?: string | null;
   storageProvider: string;
   referenceCount: number;
   status: string;
+  processingStatus: string;
+  processingError?: string | null;
   createdAt: string;
   references?: Array<{ entityType: string; entityId: string; field: string | null }>;
 }
@@ -140,6 +145,13 @@ export function MediaLibrary() {
                     Unused
                   </div>
                 )}
+                {asset.processingStatus !== "READY" && asset.processingStatus !== "PENDING" && (
+                  <div className={`absolute left-1 top-1 rounded px-1.5 py-0.5 text-[9px] ${
+                    asset.processingStatus === "FAILED" ? "bg-red-900/80 text-red-300" : "bg-blue-900/80 text-blue-300"
+                  }`}>
+                    {asset.processingStatus}
+                  </div>
+                )}
               </button>
             ))}
             {!loading && assets.length === 0 && (
@@ -236,7 +248,19 @@ function AssetDetailPanel({
         )}
         <div className="flex justify-between"><span className="text-zinc-500">Provider</span><span className="text-zinc-300">{asset.storageProvider}</span></div>
         <div className="flex justify-between"><span className="text-zinc-500">Status</span><span className={isDeleted ? "text-red-400" : "text-emerald-400"}>{asset.status}</span></div>
+        <div className="flex justify-between"><span className="text-zinc-500">Processing</span><span className={asset.processingStatus === "FAILED" ? "text-red-400" : asset.processingStatus === "READY" ? "text-emerald-400" : "text-amber-400"}>{asset.processingStatus}</span></div>
+        {asset.processingError && <div className="flex justify-between"><span className="text-zinc-500">Error</span><span className="text-red-400 text-[10px] truncate max-w-[180px]" title={asset.processingError}>{asset.processingError}</span></div>}
         <div className="flex justify-between"><span className="text-zinc-500">References</span><span className="text-zinc-300">{asset.referenceCount}</span></div>
+        {asset.dominantColor && (
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-500">Color</span>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full border border-white/10" style={{ backgroundColor: asset.dominantColor }} />
+              <span className="text-zinc-300 text-[10px]">{asset.dominantColor}</span>
+            </div>
+          </div>
+        )}
+        {asset.duration && <div className="flex justify-between"><span className="text-zinc-500">Duration</span><span className="text-zinc-300">{asset.duration}s</span></div>}
         {asset.createdAt && (
           <div className="flex justify-between"><span className="text-zinc-500">Uploaded</span><span className="text-zinc-300">{new Date(asset.createdAt).toLocaleDateString()}</span></div>
         )}
