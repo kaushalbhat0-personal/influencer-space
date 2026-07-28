@@ -1,11 +1,6 @@
-import { supabaseClient, supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const BUCKET_NAME = "influencer-images";
-
-export interface UploadResult {
-  path: string;
-  publicUrl: string;
-}
 
 function getClient() {
   if (!supabaseAdmin) {
@@ -14,39 +9,12 @@ function getClient() {
   return supabaseAdmin;
 }
 
+/**
+ * Legacy storage service — only used by affiliate delete cleanup.
+ * Will be removed when affiliates are migrated to MediaService.
+ * @deprecated Use MediaService instead.
+ */
 export class StorageService {
-  static async upload(
-    tenantId: string,
-    file: File,
-    folder: string,
-    filename?: string,
-  ): Promise<UploadResult> {
-    const client = getClient();
-    const ext = file.name.split(".").pop();
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(7);
-    const name = filename || `${timestamp}-${random}`;
-    const path = `${tenantId}/${folder}/${name}.${ext}`;
-
-    const { data, error } = await client.storage
-      .from(BUCKET_NAME)
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-      });
-
-    if (error) {
-      console.error("StorageService.upload error:", error.message);
-      throw new Error(error.message);
-    }
-
-    const { data: urlData } = supabaseClient.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(data.path);
-
-    return { path: data.path, publicUrl: urlData.publicUrl };
-  }
-
   static async delete(path: string): Promise<void> {
     const client = getClient();
     const { error } = await client.storage
@@ -57,44 +25,6 @@ export class StorageService {
       console.error("StorageService.delete error:", error.message);
       throw new Error(error.message);
     }
-  }
-
-  static async deleteMultiple(paths: string[]): Promise<void> {
-    if (paths.length === 0) return;
-    const client = getClient();
-    const { error } = await client.storage
-      .from(BUCKET_NAME)
-      .remove(paths);
-
-    if (error) {
-      console.error("StorageService.deleteMultiple error:", error.message);
-      throw new Error(error.message);
-    }
-  }
-
-  static async deleteFolder(tenantId: string, folder: string): Promise<void> {
-    const prefix = `${tenantId}/${folder}`;
-    const client = getClient();
-    const { data, error } = await client.storage
-      .from(BUCKET_NAME)
-      .list(prefix);
-
-    if (error) {
-      console.error("StorageService.deleteFolder list error:", error.message);
-      throw new Error(error.message);
-    }
-
-    if (data && data.length > 0) {
-      const paths = data.map((file) => `${prefix}/${file.name}`);
-      await this.deleteMultiple(paths);
-    }
-  }
-
-  static getPublicUrl(path: string): string {
-    const { data } = supabaseClient.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(path);
-    return data.publicUrl;
   }
 
   static extractPathFromUrl(url: string): string | null {

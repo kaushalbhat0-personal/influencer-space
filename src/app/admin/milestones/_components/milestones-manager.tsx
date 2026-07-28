@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   createMilestone,
@@ -8,8 +8,7 @@ import {
   updateExistingMilestone,
 } from "@/actions/milestone.actions";
 import type { MilestoneData } from "@/actions/milestone.types";
-import { ImageUploader } from "@/components/admin/ImageUploader";
-import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
+import { MediaUploadField } from "@/components/shared/MediaUploadField";
 import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 export function MilestonesManager({
@@ -28,8 +27,7 @@ export function MilestonesManager({
   const [stats, setStats] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
-  const uploaderRef = useRef<ImageUploaderHandle>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [editingMilestone, setEditingMilestone] = useState<MilestoneData | null>(null);
   const [editYear, setEditYear] = useState("");
   const [editTitle, setEditTitle] = useState("");
@@ -48,27 +46,19 @@ export function MilestonesManager({
     setDescription("");
     setStats("");
     setError("");
-    uploaderRef.current?.reset();
+    setUploadedImageUrl("");
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!year.trim() || !title.trim() || !description.trim()) return;
 
-    let finalImageUrl = "";
-    try {
-      finalImageUrl = (await uploaderRef.current?.upload()) ?? "";
-    } catch {
-      showToast("error", "Upload failed");
-      return;
-    }
-
     setError("");
     const formData = new FormData();
     formData.set("year", year.trim());
     formData.set("title", title.trim());
     formData.set("description", description.trim());
-    formData.set("imageUrl", finalImageUrl);
+    formData.set("imageUrl", uploadedImageUrl);
     formData.set("stats", stats.trim());
 
     startTransition(async () => {
@@ -202,18 +192,19 @@ export function MilestonesManager({
             required
           />
           <div className="flex flex-col gap-3 sm:flex-row">
-            <ImageUploader
-              ref={uploaderRef}
-              tenantId={tenantId}
+            <MediaUploadField
+              label="Image"
+              currentUrl={uploadedImageUrl || null}
               folder="milestones"
-              onUploadingChange={setIsUploading}
+              accept="image/*"
+              onUploadComplete={({ url }) => setUploadedImageUrl(url)}
             />
             <button
               type="submit"
-              disabled={pending || isUploading || !year.trim() || !title.trim() || !description.trim()}
+              disabled={pending || !year.trim() || !title.trim() || !description.trim()}
               className="admin-btn-cyan shrink-0 px-6 py-2.5"
             >
-              {pending || isUploading ? "Adding..." : "Add Milestone"}
+              {pending ? "Adding..." : "Add Milestone"}
             </button>
           </div>
         </form>

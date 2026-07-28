@@ -4,31 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { ImageUpload } from "@/components/ui/ImageUpload";
-import { VideoUpload } from "@/components/ui/VideoUpload";
-import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { MediaUploadField } from "@/components/shared/MediaUploadField";
 import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
 import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.types";
 
 type SaveState = { pending: boolean; state: SettingsActionState };
-
-async function uploadFile(file: File, tenantId: string, folder: string): Promise<string> {
-  const ext = file.name.split(".").pop();
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(7);
-  const path = `${tenantId}/${folder}/${timestamp}-${random}.${ext}`;
-
-  const { data, error: uploadError } = await supabaseClient.storage
-    .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: true });
-
-  if (uploadError) throw new Error(uploadError.message);
-
-  const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
-  return urlData.publicUrl;
-}
 
 function emptyState(): SaveState {
   return { pending: false, state: { success: false } };
@@ -55,9 +37,7 @@ export function SettingsForm({
   const [apiKeysSave, setApiKeysSave] = useState<SaveState>(emptyState);
 
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
-  const [posterFile, setPosterFile] = useState<File | null>(null);
 
   const [videoDesktopAlignment, setVideoDesktopAlignment] = useState<"top" | "center" | "bottom">(
     heroData.videoDesktopAlignment as "top" | "center" | "bottom" || "center"
@@ -152,20 +132,7 @@ export function SettingsForm({
     setVideoSave({ pending: true, state: { success: false } });
 
     const formData = new FormData();
-
-    if (videoFile) {
-      try {
-        const url = await uploadFile(videoFile, tenantId, "hero");
-        setVideoUrl(url);
-        formData.set("videoUrl", url);
-      } catch (err) {
-        setVideoSave({ pending: false, state: { success: false, error: err instanceof Error ? err.message : "Upload failed" } });
-        return;
-      }
-    } else if (videoUrl) {
-      formData.set("videoUrl", videoUrl);
-    }
-
+    formData.set("videoUrl", videoUrl);
     formData.set("videoDesktopAlignment", videoDesktopAlignment);
     formData.set("videoMobileAlignment", videoMobileAlignment);
 
@@ -181,20 +148,7 @@ export function SettingsForm({
     setPosterSave({ pending: true, state: { success: false } });
 
     const formData = new FormData();
-
-    if (posterFile) {
-      try {
-        const url = await uploadFile(posterFile, tenantId, "hero");
-        setPosterUrl(url);
-        formData.set("posterUrl", url);
-      } catch (err) {
-        setPosterSave({ pending: false, state: { success: false, error: err instanceof Error ? err.message : "Upload failed" } });
-        return;
-      }
-    } else if (posterUrl) {
-      formData.set("posterUrl", posterUrl);
-    }
-
+    formData.set("posterUrl", posterUrl);
     formData.set("imageDesktopAlignment", imageDesktopAlignment);
     formData.set("imageMobileAlignment", imageMobileAlignment);
 
@@ -248,13 +202,12 @@ export function SettingsForm({
           <CardContent>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Hero Video</h3>
-              <VideoUpload
-                onChange={(file) => {
-                  setVideoFile(file);
-                  if (!file) setVideoUrl("");
-                }}
-                currentUrl={videoUrl || null}
+              <MediaUploadField
                 label="Hero Video"
+                currentUrl={videoUrl}
+                folder="hero"
+                accept="video/*"
+                onUploadComplete={({ url }) => setVideoUrl(url)}
               />
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
@@ -280,13 +233,12 @@ export function SettingsForm({
           <CardContent>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Hero Poster Image</h3>
-              <ImageUpload
-                onChange={(file) => {
-                  setPosterFile(file);
-                  if (!file) setPosterUrl("");
-                }}
-                currentUrl={posterUrl || null}
+              <MediaUploadField
                 label="Hero Poster Image"
+                currentUrl={posterUrl}
+                folder="hero"
+                accept="image/*"
+                onUploadComplete={({ url }) => setPosterUrl(url)}
               />
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
