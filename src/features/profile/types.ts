@@ -4,6 +4,8 @@ export interface ProfileData {
   bio: string;
   avatarUrl: string | null;
   bannerUrl: string | null;
+  avatarAssetId: string | null;
+  bannerAssetId: string | null;
   socialLinks: SocialLink[];
   contactEmail: string | null;
   categories: string[];
@@ -30,6 +32,8 @@ export interface ProfileUpdateInput {
   bio?: string;
   avatarUrl?: string | null;
   bannerUrl?: string | null;
+  avatarAssetId?: string | null;
+  bannerAssetId?: string | null;
   socialLinks?: SocialLink[];
   contactEmail?: string | null;
   categories?: string[];

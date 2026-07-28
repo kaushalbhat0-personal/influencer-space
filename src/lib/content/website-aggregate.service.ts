@@ -5,6 +5,7 @@ import { galleryRepository } from "@/modules/tenant/infrastructure/gallery-repos
 import { linkRepository } from "@/modules/tenant/infrastructure/link-repository";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { SettingsService } from "@/services/settings.service";
+import { mediaService } from "@/lib/media/service";
 import type { WebsiteAggregate } from "@/types/snapshot";
 
 export class WebsiteAggregateService {
@@ -41,7 +42,7 @@ export class WebsiteAggregateService {
       ? (faqData as Record<string, unknown>[])
       : [];
 
-    return {
+    const result: WebsiteAggregate = {
       identity: {
         name: brand?.name ?? website?.tenant?.name ?? "",
         tagline: brand?.tagline ?? "",
@@ -136,6 +137,23 @@ export class WebsiteAggregateService {
         permalink: item.permalink,
       })),
     };
+
+    // Resolve asset IDs to URLs for the snapshot
+    if (brand?.avatarAssetId || brand?.bannerAssetId) {
+      const assetIds: string[] = [];
+      if (brand.avatarAssetId) assetIds.push(brand.avatarAssetId);
+      if (brand.bannerAssetId) assetIds.push(brand.bannerAssetId);
+
+      const resolved = await mediaService.resolveUrls(assetIds);
+      if (brand.avatarAssetId && resolved[brand.avatarAssetId]) {
+        result.identity.avatarUrl = resolved[brand.avatarAssetId];
+      }
+      if (brand.bannerAssetId && resolved[brand.bannerAssetId]) {
+        result.identity.bannerUrl = resolved[brand.bannerAssetId];
+      }
+    }
+
+    return result;
   }
 }
 

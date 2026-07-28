@@ -269,6 +269,18 @@ export class MediaService {
     return provider.getPublicUrl(asset.storageKey);
   }
 
+  async resolveUrls(assetIds: (string | null | undefined)[]): Promise<Record<string, string>> {
+    const ids = assetIds.filter((id): id is string => id != null);
+    if (ids.length === 0) return {};
+
+    const result: Record<string, string> = {};
+    await Promise.all(ids.map(async (id) => {
+      const url = await this.getPublicUrl(id);
+      if (url) result[id] = url;
+    }));
+    return result;
+  }
+
   async getById(assetId: string) {
     return assetRepository.findById(assetId);
   }

@@ -10,7 +10,7 @@ export const profileService = {
       }),
       prisma.brand.findFirst({
         where: { website: { tenantId } },
-        select: { name: true, tagline: true, bio: true, avatarUrl: true, bannerUrl: true, socialLinks: true },
+        select: { name: true, tagline: true, bio: true, avatarUrl: true, bannerUrl: true, avatarAssetId: true, bannerAssetId: true, socialLinks: true },
       }),
       prisma.setting.findMany({
         where: { tenantId, key: { in: ["brand_config", "influencer_data"] } },
@@ -39,6 +39,8 @@ export const profileService = {
       bio: brand?.bio ?? "",
       avatarUrl: brand?.avatarUrl ?? null,
       bannerUrl: brand?.bannerUrl ?? null,
+      avatarAssetId: brand?.avatarAssetId ?? null,
+      bannerAssetId: brand?.bannerAssetId ?? null,
       socialLinks,
       contactEmail: (influencerData?.contactEmail as string) ?? null,
       categories: Array.isArray(influencerData?.categories) ? influencerData.categories as string[] : [],
@@ -60,7 +62,9 @@ export const profileService = {
       if (input.tagline !== undefined) updateData.tagline = input.tagline;
       if (input.bio !== undefined) updateData.bio = input.bio;
       if (input.avatarUrl !== undefined) updateData.avatarUrl = input.avatarUrl;
+      if (input.avatarAssetId !== undefined) updateData.avatarAssetId = input.avatarAssetId;
       if (input.bannerUrl !== undefined) updateData.bannerUrl = input.bannerUrl;
+      if (input.bannerAssetId !== undefined) updateData.bannerAssetId = input.bannerAssetId;
       if (input.socialLinks !== undefined) updateData.socialLinks = input.socialLinks;
       if (Object.keys(updateData).length > 0) {
         await prisma.brand.update({ where: { id: brand.id }, data: updateData });

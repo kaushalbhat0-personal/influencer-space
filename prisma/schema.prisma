@@ -111,14 +111,16 @@ model Website {
 
 /// Brand identity — replaces brand_config + influencer_data settings.
 model Brand {
-  id          String   @id @default(uuid()) @db.Uuid
-  websiteId   String   @unique @db.Uuid
-  name        String
-  tagline     String   @default("")
-  bio         String   @default("")
-  avatarUrl   String?
-  bannerUrl   String?
-  socialLinks Json     @default("[]")
+  id            String   @id @default(uuid()) @db.Uuid
+  websiteId     String   @unique @db.Uuid
+  name          String
+  tagline       String   @default("")
+  bio           String   @default("")
+  avatarUrl     String?
+  bannerUrl     String?
+  avatarAssetId String?  @db.Uuid
+  bannerAssetId String?  @db.Uuid
+  socialLinks   Json     @default("[]")
 
   website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
 }
@@ -319,6 +321,7 @@ model Product {
   price          Float
   imageUrl       String?
   images         Json?     @default("[]")
+  imageAssetId   String?   @db.Uuid
   slug           String?
   status         String    @default("PUBLISHED")
   seoTitle       String?
@@ -363,16 +366,17 @@ model ProductOrder {
 }
 
 model AffiliateLink {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String   @db.Uuid
-  title     String
-  url       String
-  imageUrl  String?
-  order     Int      @default(0)
-  clicks    Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  title       String
+  url         String
+  imageUrl    String?
+  imageAssetId String? @db.Uuid
+  order       Int      @default(0)
+  clicks      Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -428,6 +432,7 @@ model GalleryImage {
   imageUrl    String
   mediaType   String    @default("image")
   videoUrl    String?
+  assetId     String?   @db.Uuid
   width       Int?
   height      Int?
   fileSize    Int?
@@ -455,6 +460,7 @@ model TimelineEvent {
   title       String
   description String
   imageUrl    String?
+  imageAssetId String? @db.Uuid
   stats       String?
   order       Int      @default(0)
   isActive    Boolean  @default(true)
@@ -471,6 +477,7 @@ model Game {
   tenantId    String   @db.Uuid
   name        String
   logoUrl     String?
+  logoAssetId String?  @db.Uuid
   description String?
   genre       String?
   order       Int      @default(0)
@@ -511,21 +518,22 @@ model AuditLog {
 }
 
 model ContentFeedItem {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @db.Uuid
-  platform     String   // "instagram" | "twitch" | "youtube"
-  mediaType    String   // "image" | "video"
-  url          String   @db.Text
-  thumbnailUrl String?  @db.Text
-  caption      String?  @db.Text
-  permalink    String?  @db.Text
-  pinned       Boolean  @default(false)
-  hidden       Boolean  @default(false)
-  externalId   String?  // platform's native post ID (dedup key)
-  order        Int      @default(0)
-  syncedAt     DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @db.Uuid
+  platform        String   // "instagram" | "twitch" | "youtube"
+  mediaType       String   // "image" | "video"
+  url             String   @db.Text
+  thumbnailUrl    String?  @db.Text
+  thumbnailAssetId String? @db.Uuid
+  caption         String?  @db.Text
+  permalink       String?  @db.Text
+  pinned          Boolean  @default(false)
+  hidden          Boolean  @default(false)
+  externalId      String?  // platform's native post ID (dedup key)
+  order           Int      @default(0)
+  syncedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
