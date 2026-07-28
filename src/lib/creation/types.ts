@@ -8,14 +8,14 @@ export interface CreatorProfile {
 
 export interface GenerationContext {
   creator: CreatorProfile;
-  industryId: string;
-  styleId: string;
-  blueprintId: string | null;
-  themeId: string | null;
-  capabilities: string[];
-  locale: string;
-  timezone: string;
-  currency: string;
+  industryId?: string;
+  styleId?: string;
+  blueprintId?: string;
+  themeId?: string;
+  capabilities?: string[];
+  locale?: string;
+  timezone?: string;
+  currency?: string;
 }
 
 export interface GenerationResult {
@@ -77,4 +77,21 @@ export interface PreviewSession {
   pages: GeneratedPage[];
   navigation: GeneratedNavItem[];
   createdAt: Date;
+}
+
+// ── Canonical WebsiteDefinition ─────────────────────────
+export interface WebsiteDefinition {
+  tenantName: string;
+  creatorName: string;
+  creatorEmail: string;
+  tagline?: string;
+  bio?: string;
+  avatarUrl?: string;
+  blueprintId: string;
+  themeId: string;
+  themeVariant: "light" | "dark";
+  pages: GeneratedPage[];
+  navigation: GeneratedNavItem[];
+  source: "ai" | "blueprint" | "manual" | "import" | "marketplace" | "clone" | "agency";
+  capabilities?: string[];
 }

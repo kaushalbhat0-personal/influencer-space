@@ -1,6 +1,5 @@
 import { themeRegistry } from "@/lib/theme/registry-new";
 import { ThemeGalleryClient } from "./theme-gallery-client";
-import type { PlanTier } from "@/lib/platform/capabilities/subscriptions";
 
 export const dynamic = "force-dynamic";
 

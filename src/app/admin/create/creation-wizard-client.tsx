@@ -2,13 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { recommendationEngine } from "@/lib/creation/recommendation/engine";
-import { websiteGenerationService } from "@/lib/creation/service";
-import { previewSessionManager } from "@/lib/creation/preview/session";
+import { createWebsite } from "@/actions/create.actions";
 import type { IndustryDefinition } from "@/lib/creation/industry/registry";
 import type { StyleDefinition } from "@/lib/creation/style/registry";
 import type { BlueprintDefinition } from "@/lib/blueprint/types";
 import type { ThemeDefinition } from "@/lib/theme/types-new";
-import { CreatorImage } from "@/components/shared/CreatorImage";
 
 interface Props {
   industries: IndustryDefinition[];
@@ -43,8 +41,19 @@ export function CreationWizardClient({ industries, styles, blueprints, themes }:
 
   async function handleGenerate() {
     setStep("generating");
-    // Simulate generation — in production this would call the service
-    setTimeout(() => setStep("done"), 1500);
+    try {
+      const formData = new FormData();
+      formData.set("blueprintId", selectedBlueprint ?? recommendation?.recommendedBlueprintId ?? "com.creatos.creator");
+      formData.set("themeId", selectedTheme ?? recommendation?.recommendedThemeId ?? "com.creatos.neon-dark");
+      const result = await createWebsite(formData);
+      if (result.success) {
+        setStep("done");
+      } else {
+        setStep("review");
+      }
+    } catch {
+      setStep("review");
+    }
   }
 
   // ── Step: Industry Selection ──

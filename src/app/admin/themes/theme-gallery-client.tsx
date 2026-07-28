@@ -26,9 +26,6 @@ export function ThemeGalleryClient({
     return result;
   }, [themes, search, categoryFilter, premiumFilter]);
 
-  const variants = selectedTheme?.variants ?? [];
-  const currentVariant = variants[0];
-
   return (
     <div className="space-y-6">
       {/* Filters */}
