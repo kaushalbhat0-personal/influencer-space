@@ -4,6 +4,7 @@ import {
   Layout, Palette, Search, Globe, CreditCard,
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
   User, Menu, Sparkles, Gamepad as GamepadIcon, FolderOpen,
+  Paintbrush, LayoutTemplate, Wand2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -27,7 +28,10 @@ export interface NavConfig {
 
 export const ADMIN_NAV: NavConfig = {
   groups: [
-    { items: [{ href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
+    { items: [
+      { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/admin/create", label: "Create Website", icon: Wand2 },
+    ]},
 
     {
       label: "Store", collapsible: true,
@@ -55,12 +59,20 @@ export const ADMIN_NAV: NavConfig = {
     },
 
     {
-      label: "Website", collapsible: true,
+      label: "Design", collapsible: true,
+      items: [
+        { href: "/admin/themes", label: "Theme Gallery", icon: Paintbrush },
+        { href: "/admin/blueprints", label: "Blueprints", icon: LayoutTemplate },
+        { href: "/admin/appearance", label: "Theme Settings", icon: Palette },
+        { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
+        { href: "/builder", label: "Layout Builder", icon: Layout },
+      ],
+    },
+
+    {
+      label: "Profile", collapsible: true,
       items: [
         { href: "/admin/profile", label: "Profile", icon: User },
-        { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
-        { href: "/admin/appearance", label: "Theme", icon: Palette },
-        { href: "/builder", label: "Layout Builder", icon: Layout },
         { href: "/admin/seo", label: "SEO", icon: Search },
       ],
     },
