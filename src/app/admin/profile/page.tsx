@@ -8,5 +8,5 @@ export default async function AdminProfilePage() {
   const { tenantId } = await requireTenant();
 
   const data = await profileService.getProfile(tenantId);
-  return <ProfilePage initialData={data} />;
+  return <ProfilePage initialData={data} tenantId={tenantId} />;
 }

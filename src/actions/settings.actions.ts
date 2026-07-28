@@ -17,14 +17,6 @@ async function requireAuth(tenantId: string): Promise<void> {
   }
 }
 
-const influencerPartialSchema = z.object({
-  name: z.string().min(1).optional(),
-  tagline: z.string().min(1).optional(),
-  bio: z.string().min(10).optional(),
-  profileImage: z.string().optional(),
-  niche: z.string().optional(),
-});
-
 const heroPartialSchema = z.object({
   videoUrl: z.string().optional(),
   posterUrl: z.string().optional(),
@@ -59,57 +51,6 @@ const apiKeysSchema = z.object({
   youtubeApiKey: z.string().optional(),
   instagramApiKey: z.string().optional(),
 });
-
-export async function updateInfluencerData(
-  tenantId: string,
-  _prevState: SettingsActionState,
-  formData: FormData,
-): Promise<SettingsActionState> {
-  const rawData: Record<string, unknown> = {};
-  for (const [key, value] of Array.from(formData.entries())) {
-    rawData[key] = value;
-  }
-
-  const parsed = influencerPartialSchema.safeParse(rawData);
-  if (!parsed.success) {
-    return {
-      success: false,
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    await requireAuth(tenantId);
-
-    const existing = await SettingsService.getInfluencerData(tenantId);
-
-    const merged: Record<string, unknown> = { ...existing };
-    for (const [key, value] of Object.entries(parsed.data)) {
-      if (value !== undefined) {
-        merged[key] = value;
-      }
-    }
-
-    const socialKeys = ["instagram", "youtube", "twitter", "tiktok"] as const;
-    for (const key of socialKeys) {
-      if (formData.has(key)) {
-        merged.social = { ...((merged.social as object) || {}), [key]: formData.get(key) as string };
-      }
-    }
-
-    await SettingsService.updateInfluencerData(tenantId, merged as Parameters<typeof SettingsService.updateInfluencerData>[1]);
-
-    revalidatePath("/");
-    revalidatePath("/admin/settings");
-    return { success: true };
-  } catch (error) {
-    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
-      return { success: false, error: error.message };
-    }
-    console.error("updateInfluencerData error:", error);
-    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
-  }
-}
 
 export async function updateHeroData(
   tenantId: string,

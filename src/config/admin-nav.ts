@@ -1,8 +1,9 @@
 import {
-  LayoutDashboard, User, ShoppingBag, Package, Users, Image as ImageIcon,
-  Trophy, Gamepad2, Rss, Link2, BarChart3, MessageSquare,
-  Layout, Palette, Search, Globe, CreditCard, Settings,
+  LayoutDashboard, ShoppingBag, Package, Users, Image as ImageIcon,
+  Trophy, Rss, Link2, BarChart3, MessageSquare,
+  Layout, Palette, Search, Globe, CreditCard,
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
+  User, Menu, Sparkles, Gamepad as GamepadIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -28,10 +29,8 @@ export const ADMIN_NAV: NavConfig = {
   groups: [
     { items: [{ href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
 
-    { items: [{ href: "/admin/profile", label: "Profile", icon: User }] },
-
     {
-      label: "Sell", collapsible: true,
+      label: "Store", collapsible: true,
       items: [
         { href: "/admin/products", label: "Products", icon: ShoppingBag },
         { href: "/admin/services", label: "Services", icon: UserCheck },
@@ -44,17 +43,29 @@ export const ADMIN_NAV: NavConfig = {
     {
       label: "Content", collapsible: true,
       items: [
+        { href: "/admin/settings", label: "Hero", icon: Sparkles },
         { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+        { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
         { href: "/admin/testimonials", label: "Testimonials", icon: UserCheck },
         { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
-        { href: "/admin/milestones", label: "Milestones", icon: Trophy },
-        { href: "/admin/games", label: "Games", icon: Gamepad2 },
-        { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
+        { href: "/admin/milestones", label: "Timeline", icon: Trophy },
+        { href: "/admin/games", label: "Games", icon: GamepadIcon },
       ],
     },
 
     {
-      label: "Grow", collapsible: true,
+      label: "Website", collapsible: true,
+      items: [
+        { href: "/admin/profile", label: "Profile", icon: User },
+        { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
+        { href: "/admin/appearance", label: "Theme", icon: Palette },
+        { href: "/builder", label: "Layout Builder", icon: Layout },
+        { href: "/admin/seo", label: "SEO", icon: Search },
+      ],
+    },
+
+    {
+      label: "Marketing", collapsible: true,
       items: [
         { href: "/admin/links", label: "Links", icon: Link2 },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
@@ -62,17 +73,12 @@ export const ADMIN_NAV: NavConfig = {
       ],
     },
 
-    { items: [{ href: "/builder", label: "Builder", icon: Layout }] },
-
     {
-      label: "Settings", collapsible: true,
+      label: "Account", collapsible: true,
       items: [
-        { href: "/admin/appearance", label: "Appearance", icon: Palette },
-        { href: "/admin/seo", label: "SEO", icon: Search },
         { href: "/admin/settings/domain", label: "Domain", icon: Globe },
         { href: "/admin/billing", label: "Billing", icon: CreditCard },
         { href: "/admin/integrations", label: "Integrations", icon: Puzzle },
-        { href: "/admin/settings", label: "Settings", icon: Settings },
       ],
     },
   ],

@@ -3,15 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { VideoUpload } from "@/components/ui/VideoUpload";
 import { supabaseClient, BUCKET } from "@/lib/supabase";
 import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
-import { updateInfluencerData, updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
+import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
-import type { InfluencerDataType } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.types";
 
@@ -38,34 +36,25 @@ function emptyState(): SaveState {
 }
 
 export function SettingsForm({
-  config,
   heroData,
-  role,
   youtubeKeyConfigured,
   instagramKeyConfigured,
   tenantId,
 }: {
-  config: InfluencerDataType;
   heroData: HeroDataType;
-  role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
   youtubeKeyConfigured: boolean;
   instagramKeyConfigured: boolean;
   tenantId: string;
 }) {
   const router = useRouter();
   const heroDetailFormRef = useRef<HTMLFormElement>(null);
-  const profileInfoFormRef = useRef<HTMLFormElement>(null);
   const apiKeysFormRef = useRef<HTMLFormElement>(null);
 
   const [videoSave, setVideoSave] = useState<SaveState>(emptyState);
   const [posterSave, setPosterSave] = useState<SaveState>(emptyState);
   const [heroDetailsSave, setHeroDetailsSave] = useState<SaveState>(emptyState);
-  const [profilePicSave, setProfilePicSave] = useState<SaveState>(emptyState);
-  const [profileInfoSave, setProfileInfoSave] = useState<SaveState>(emptyState);
   const [apiKeysSave, setApiKeysSave] = useState<SaveState>(emptyState);
 
-  const [profileImage, setProfileImage] = useState<string>(config.profileImage || "");
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
@@ -87,9 +76,6 @@ export function SettingsForm({
   const [youtubeApiKey, setYoutubeApiKey] = useState("");
   const [instagramApiKey, setInstagramApiKey] = useState("");
 
-  const [liveName, setLiveName] = useState(config.name || "");
-  const [liveTagline, setLiveTagline] = useState(config.tagline || "");
-  const [liveBio, setLiveBio] = useState(config.bio || "");
   const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
   const [liveShowBadge, setLiveShowBadge] = useState<boolean>(!!heroData.showLiveBadge);
 
@@ -112,7 +98,6 @@ export function SettingsForm({
   useEffect(() => { setLiveShowBadge(!!heroData.showLiveBadge); }, [heroData.showLiveBadge]);
   useEffect(() => { setVideoUrl(heroData.videoUrl || ""); }, [heroData.videoUrl]);
   useEffect(() => { setPosterUrl(heroData.posterUrl || ""); }, [heroData.posterUrl]);
-  useEffect(() => { setProfileImage(config.profileImage || ""); }, [config.profileImage]);
 
   function alignmentButtons(
     desktopAlign: string,
@@ -256,53 +241,6 @@ export function SettingsForm({
     }
 
     setHeroDetailsSave({ pending: false, state: result });
-  }
-
-  async function handleSaveProfilePicture() {
-    setProfilePicSave({ pending: true, state: { success: false } });
-
-    const formData = new FormData();
-    const originalProfileImage = config.profileImage || "";
-
-    if (profileImageFile) {
-      try {
-        const url = await uploadFile(profileImageFile, tenantId, "profile");
-        setProfileImage(url);
-        formData.set("profileImage", url);
-      } catch (err) {
-        setProfilePicSave({ pending: false, state: { success: false, error: err instanceof Error ? err.message : "Upload failed" } });
-        return;
-      }
-    } else if (profileImage) {
-      formData.set("profileImage", profileImage);
-    }
-
-    if (!formData.has("profileImage")) {
-      setProfilePicSave({ pending: false, state: { success: false, error: "No image to save" } });
-      return;
-    }
-
-    const result = await updateInfluencerData(tenantId, { success: false }, formData);
-    setProfilePicSave({ pending: false, state: result });
-
-    if (result.success) {
-      const finalUrl = (formData.get("profileImage") as string) || "";
-      if (originalProfileImage && originalProfileImage !== finalUrl) {
-        const oldPath = extractSupabaseFilePath(originalProfileImage);
-        if (oldPath) await deleteSupabaseFile(oldPath);
-      }
-      setTimeout(() => router.refresh(), 50);
-    }
-  }
-
-  async function handleSaveProfileInfo(formData: FormData) {
-    setProfileInfoSave({ pending: true, state: { success: false } });
-
-    if (profileImage) formData.set("profileImage", profileImage);
-
-    const result = await updateInfluencerData(tenantId, { success: false }, formData);
-    setProfileInfoSave({ pending: false, state: result });
-    if (result.success) router.refresh();
   }
 
   async function handleSaveApiKeys(formData: FormData) {
@@ -457,104 +395,6 @@ export function SettingsForm({
           </CardContent>
         </Card>
 
-        {/* ─── Profile Picture ─── */}
-        <Card>
-          <CardContent>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Profile Picture</h3>
-              <ImageUpload
-                onChange={(file) => {
-                  setProfileImageFile(file);
-                  if (!file) setProfileImage("");
-                }}
-                currentUrl={profileImage || null}
-                label="Profile Image"
-              />
-              {profilePicSave.state.success && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Profile picture saved!
-                </div>
-              )}
-              {profilePicSave.state.error && (
-                <p className="text-sm text-red-400">{profilePicSave.state.error}</p>
-              )}
-              <button type="button" onClick={handleSaveProfilePicture} disabled={profilePicSave.pending} className="admin-btn-cyan">
-                {profilePicSave.pending ? "Saving..." : "Save Profile Picture"}
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ─── Personal Information ─── */}
-        <Card>
-          <CardContent>
-            <form ref={profileInfoFormRef} action={handleSaveProfileInfo} className="space-y-6">
-              <h3 className="text-lg font-semibold text-white">Personal Information</h3>
-              <Input
-                id="name" name="name" label="Full Name" defaultValue={config.name}
-                error={profileInfoSave.state.fieldErrors?.name?.[0]}
-                onChange={(e) => setLiveName(e.target.value)} required
-              />
-              <Input
-                id="tagline" name="tagline" label="Tagline" defaultValue={config.tagline}
-                error={profileInfoSave.state.fieldErrors?.tagline?.[0]}
-                onChange={(e) => setLiveTagline(e.target.value)} required
-              />
-              <Textarea
-                id="bio" name="bio" label="Bio" defaultValue={config.bio}
-                error={profileInfoSave.state.fieldErrors?.bio?.[0]}
-                onChange={(e) => setLiveBio(e.target.value)} rows={5} required
-              />
-
-              {role === "SUPER_ADMIN" && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Niche</h3>
-                <div>
-                  <label htmlFor="niche" className="block text-sm font-medium text-gray-300 mb-1.5">Background Theme</label>
-                  <select id="niche" name="niche" defaultValue={config.niche || "gaming"} className="admin-select">
-                    <option value="gaming" className="bg-gray-900 text-white">Gaming</option>
-                    <option value="fitness" className="bg-gray-900 text-white">Fitness</option>
-                    <option value="fashion" className="bg-gray-900 text-white">Fashion</option>
-                    <option value="travel" className="bg-gray-900 text-white">Travel</option>
-                    <option value="tech" className="bg-gray-900 text-white">Tech</option>
-                    <option value="food" className="bg-gray-900 text-white">Food</option>
-                    <option value="lifestyle" className="bg-gray-900 text-white">Lifestyle</option>
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">Controls the floating background icons on the public site.</p>
-                </div>
-              </div>
-              )}
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Social Media Links</h3>
-                <p className="text-sm text-gray-500">Leave empty to hide the icon from the public site.</p>
-                <Input id="instagram" name="instagram" label="Instagram URL" defaultValue={config.social?.instagram || ""} placeholder="https://instagram.com/username" />
-                <Input id="youtube" name="youtube" label="YouTube URL" defaultValue={config.social?.youtube || ""} placeholder="https://youtube.com/@username" />
-                <Input id="twitter" name="twitter" label="Twitter / X URL" defaultValue={config.social?.twitter || ""} placeholder="https://twitter.com/username" />
-                <Input id="tiktok" name="tiktok" label="TikTok URL" defaultValue={config.social?.tiktok || ""} placeholder="https://tiktok.com/@username" />
-              </div>
-
-              {profileInfoSave.state.success && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Profile info saved!
-                </div>
-              )}
-              {profileInfoSave.state.error && (
-                <p className="text-sm text-red-400">{profileInfoSave.state.error}</p>
-              )}
-
-              <div className="flex items-center gap-4 pt-2">
-                <button type="submit" disabled={profileInfoSave.pending} className="admin-btn-cyan">
-                  {profileInfoSave.pending ? "Saving..." : "Save Profile Info"}
-                </button>
-                <button type="button" onClick={() => router.push("/admin/dashboard")} className="admin-btn-outline">
-                  Back to Dashboard
-                </button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
         {/* ─── API Integrations ─── */}
         <Card>
           <CardContent>
@@ -610,10 +450,10 @@ export function SettingsForm({
             videoMobileAlignment={videoMobileAlignment}
             imageDesktopAlignment={imageDesktopAlignment}
             imageMobileAlignment={imageMobileAlignment}
-            profileUrl={profileImage || config.profileImage || null}
-            name={liveName}
-            tagline={liveTagline}
-            bio={liveBio}
+            profileUrl={null}
+            name=""
+            tagline={heroTagline}
+            bio=""
             liveBadgeText={liveBadgeText}
             showLiveBadge={liveShowBadge}
           />

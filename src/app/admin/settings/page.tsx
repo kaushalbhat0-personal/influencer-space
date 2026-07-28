@@ -7,10 +7,9 @@ import { requireTenant } from "@/lib/auth/require-tenant";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const { tenantId, role } = await requireTenant();
+  const { tenantId } = await requireTenant();
 
-  const [config, heroData, tenantKeys] = await Promise.all([
-    SettingsService.getInfluencerData(tenantId),
+  const [heroData, tenantKeys] = await Promise.all([
     SettingsService.getHeroData(tenantId),
     prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -21,16 +20,14 @@ export default async function SettingsPage() {
   return (
     <ContentContainer>
       <div className="mb-6">
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Website Settings</h1>
+        <h1 className="admin-gradient-text text-2xl font-bold font-display">Hero &amp; Integrations</h1>
         <p className="mt-1 text-sm text-gray-400">
-          Update your brand information below. Changes appear on the public site instantly.
+          Customize your hero section and manage API integrations.
         </p>
       </div>
       <SettingsForm
-        key={JSON.stringify({ config, heroData })}
-        config={config}
+        key={JSON.stringify({ heroData })}
         heroData={heroData}
-        role={role}
         youtubeKeyConfigured={!!tenantKeys?.youtubeApiKey}
         instagramKeyConfigured={!!tenantKeys?.instagramApiKey}
         tenantId={tenantId}

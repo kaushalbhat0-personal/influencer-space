@@ -1,6 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import type { InfluencerDataType } from "@/config/influencer";
-import { defaultConfig } from "@/config/influencer";
 import type { HeroDataType } from "@/config/hero";
 import { defaultHeroData } from "@/config/hero";
 import type { Prisma } from "@/generated/prisma/client";
@@ -53,34 +51,6 @@ export const SettingsService = {
       console.error("SettingsService.upsertSetting error:", error);
       throw error;
     }
-  },
-
-  async getInfluencerData(tenantId: string): Promise<InfluencerDataType> {
-    try {
-      const data = await SettingsService.getSettingByKey(tenantId, "influencer_data");
-      if (data) return data as InfluencerDataType;
-    } catch (err) {
-      console.error("SettingsService.getInfluencerData error:", err);
-    }
-
-    await SettingsService.upsertSetting(
-      tenantId,
-      "influencer_data",
-      defaultConfig as Prisma.InputJsonValue,
-    ).catch((err) => { console.error("SettingsService.getInfluencerData upsert error:", err); });
-
-    return defaultConfig;
-  },
-
-  async updateInfluencerData(
-    tenantId: string,
-    data: InfluencerDataType,
-  ): Promise<void> {
-    await SettingsService.upsertSetting(
-      tenantId,
-      "influencer_data",
-      data as Prisma.InputJsonValue,
-    );
   },
 
   async getHeroData(tenantId: string): Promise<HeroDataType> {
