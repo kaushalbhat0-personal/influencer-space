@@ -1016,25 +1016,24 @@ model Asset {
   @@index([tenantId, createdAt])
 }
 
-/// Tracks which page/section/block references which asset.
+/// Tracks which business entity references which asset.
 model AssetReference {
-  id        String   @id @default(uuid()) @db.Uuid
-  assetId   String   @db.Uuid
-  tenantId  String   @db.Uuid
-  pageId    String?
-  sectionId String?
-  blockId   String?
-  field     String?  // e.g. "imageUrl", "avatarUrl", "bannerUrl"
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  assetId    String   @db.Uuid
+  tenantId   String   @db.Uuid
+  entityType String   // e.g. "product", "gallery", "hero", "profile", "timeline", "game"
+  entityId   String   // UUID of the business entity
+  field      String?  // e.g. "imageUrl", "avatarUrl", "bannerUrl", "posterUrl", "videoUrl"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  asset  Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  asset  Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([assetId, entityType, entityId, field])
   @@index([assetId])
   @@index([tenantId])
-  @@index([pageId])
-  @@index([sectionId])
-  @@index([blockId])
+  @@index([entityType, entityId])
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

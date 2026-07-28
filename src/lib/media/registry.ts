@@ -12,7 +12,10 @@ export class AssetRegistry {
   }
 
   async upload(tenantId: string, input: { filename: string; mimeType: string; buffer: Buffer; altText?: string }): Promise<{ id: string; url: string }> {
-    const result = await this.provider.upload({
+    const ext = input.filename.split(".").pop() || "bin";
+    const storageKey = `${tenantId}/general/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const result = await this.provider.upload(storageKey, {
       filename: input.filename,
       mimeType: input.mimeType,
       buffer: input.buffer,
@@ -25,12 +28,9 @@ export class AssetRegistry {
         originalFilename: input.filename,
         mimeType: input.mimeType,
         size: result.size,
-        width: result.width,
-        height: result.height,
         storageProvider: this.provider.name,
         storageKey: result.storageKey,
         publicUrl: result.publicUrl,
-        thumbnailUrl: result.thumbnailUrl,
         altText: input.altText || null,
         status: "ACTIVE",
       },
@@ -87,17 +87,18 @@ export class AssetRegistry {
     return true;
   }
 
-  /** Track a reference from a block/section/page to an asset. */
-  async addReference(params: { assetId: string; tenantId: string; pageId?: string; sectionId?: string; blockId?: string; field?: string }): Promise<void> {
-    await prisma.assetReference.create({
-      data: {
+  /** Track a reference from a business entity to an asset. */
+  async addReference(params: { assetId: string; tenantId: string; entityType: string; entityId: string; field?: string }): Promise<void> {
+    await prisma.assetReference.upsert({
+      where: { assetId_entityType_entityId_field: { assetId: params.assetId, entityType: params.entityType, entityId: params.entityId, field: params.field ?? "" } },
+      create: {
         assetId: params.assetId,
         tenantId: params.tenantId,
-        pageId: params.pageId || null,
-        sectionId: params.sectionId || null,
-        blockId: params.blockId || null,
-        field: params.field || null,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        field: params.field ?? null,
       },
+      update: {},
     });
     await prisma.asset.update({
       where: { id: params.assetId },
@@ -106,13 +107,14 @@ export class AssetRegistry {
   }
 
   /** Remove a reference. */
-  async removeReference(referenceId: string): Promise<void> {
-    const ref = await prisma.assetReference.findUnique({ where: { id: referenceId } });
-    if (!ref) return;
-    await prisma.assetReference.delete({ where: { id: referenceId } });
+  async removeReference(assetId: string, entityType: string, entityId: string): Promise<void> {
+    await prisma.assetReference.deleteMany({
+      where: { assetId, entityType, entityId },
+    });
+    const remaining = await prisma.assetReference.count({ where: { assetId } });
     await prisma.asset.update({
-      where: { id: ref.assetId },
-      data: { referenceCount: { decrement: 1 } },
+      where: { id: assetId },
+      data: { referenceCount: remaining },
     });
   }
 
@@ -120,7 +122,7 @@ export class AssetRegistry {
   async getReferences(assetId: string) {
     return prisma.assetReference.findMany({
       where: { assetId },
-      select: { id: true, pageId: true, sectionId: true, blockId: true, field: true, createdAt: true },
+      select: { id: true, entityType: true, entityId: true, field: true, createdAt: true },
     });
   }
 
