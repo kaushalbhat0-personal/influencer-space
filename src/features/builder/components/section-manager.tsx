@@ -1,9 +1,26 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { builderStore } from "@/lib/builder/store";
 import { cn } from "@/lib/utils";
-import { GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, ExternalLink } from "lucide-react";
+
+const EDIT_LINKS: Record<string, string | null> = {
+  "hero.default": "/admin/settings",
+  "hero.gaming": "/admin/settings",
+  "hero.fitness": "/admin/settings",
+  "hero.education": "/admin/settings",
+  "about.default": "/admin/profile",
+  "products.grid": "/admin/products",
+  "gallery.grid": "/admin/gallery",
+  "testimonials.default": "/admin/testimonials",
+  "faq.default": "/admin/faq",
+  "timeline.default": "/admin/milestones",
+  "games.default": "/admin/games",
+  "links.default": "/admin/links",
+  "contentFeed.default": "/admin/settings/content",
+};
 
 interface SectionManagerProps {
   className?: string;
@@ -108,6 +125,20 @@ export function SectionManager({ className }: SectionManagerProps) {
               >
                 {section.visible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
               </button>
+              {(() => {
+                const moduleId = section.slots?.[0]?.moduleId;
+                const editHref = moduleId ? EDIT_LINKS[moduleId] : null;
+                return editHref ? (
+                  <Link
+                    href={editHref}
+                    className="p-0.5 rounded hover:bg-white/10 text-zinc-500 hover:text-s8ul-cyan"
+                    aria-label={`Edit ${section.name}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                ) : null;
+              })()}
               <button
                 onClick={(e) => { e.stopPropagation(); removeSection(section.id); }}
                 className="p-0.5 rounded hover:bg-red-500/20 text-zinc-500 hover:text-red-400"

@@ -5,9 +5,7 @@ import { ResizablePanel } from "./panel";
 import { BuilderToolbar } from "./toolbar";
 import { BuilderSidebar } from "./sidebar";
 import { InteractiveCanvas } from "../canvas/interactive-canvas";
-import { BuilderBreadcrumbs } from "../canvas/breadcrumbs";
-import { CanvasMinimap } from "../canvas/minimap";
-import { PropertyInspector } from "../inspector/panel";
+// SectionManager is rendered inside BuilderSidebar
 import { InlineEditProvider } from "./inline-edit";
 import { InlineEditorOverlay } from "../canvas/inline-editor-overlay";
 import { BuilderStatusBar } from "./status-bar";
@@ -21,10 +19,8 @@ export function BuilderWorkspace() {
   useKeyboardShortcuts();
 
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
   const [device, setDevice] = useState<BuilderCanvasType["device"]>("desktop");
   const [zoom, setZoom] = useState(1);
-  const [showGrid, setShowGrid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
@@ -90,12 +86,10 @@ export function BuilderWorkspace() {
         <BuilderToolbar
           device={device}
           zoom={zoom}
-          showGrid={showGrid}
           storefrontUrl={storefrontUrl}
           publishStatus={publishStatus}
           onDeviceChange={setDevice}
           onZoomChange={setZoom}
-          onToggleGrid={() => setShowGrid((v) => !v)}
           onSave={async () => {
             setSaving(true);
             setStatusMsg("Saving...");
@@ -116,20 +110,14 @@ export function BuilderWorkspace() {
             <BuilderSidebar collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} />
           </ResizablePanel>
           <div className="relative flex flex-1 flex-col overflow-hidden">
-            <BuilderBreadcrumbs />
             <div className="flex-1 overflow-auto">
               <InteractiveCanvas
                 device={device}
                 zoom={zoom}
-                showGrid={showGrid}
               />
             </div>
-            <CanvasMinimap />
             <InlineEditorOverlay />
           </div>
-          <ResizablePanel side="right" collapsed={rightCollapsed} onToggle={() => setRightCollapsed((v) => !v)}>
-            <PropertyInspector />
-          </ResizablePanel>
         </div>
         <BuilderStatusBar
           selectedCount={builderStore.canvas?.selectedElementIds?.size ?? 0}

@@ -6,19 +6,16 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { publishingService } from "@/lib/publishing/service";
 
-async function requireTenant(): Promise<string> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  return session.user.tenantId;
-}
-
 export async function createWebsite(formData: FormData): Promise<{
   success: boolean;
   websiteId?: string;
   error?: string;
 }> {
   try {
-    await requireTenant();
+    const session = await getServerSession(authOptions);
+    const tenantId = session?.user?.tenantId;
+    if (!tenantId) return { success: false, error: "Unauthorized" };
+
     const themeId = formData.get("themeId") as string || "com.creatos.neon-dark";
 
     // 1. Update website with blueprint and theme

@@ -13,8 +13,6 @@ import { builderStore } from "@/lib/builder/store";
 import { useInlineEdit } from "../components/inline-edit";
 import { SelectionOverlay } from "./selection-overlay";
 import { HoverOverlay } from "./hover-overlay";
-import { SelectionBox } from "./selection-box";
-import { CanvasGrid } from "./grid";
 import { DragOverlay } from "./drag-overlay";
 
 type Device = BuilderCanvasType["device"];
@@ -24,11 +22,9 @@ const DEVICE_WIDTHS: Record<Device, number> = { mobile: 375, tablet: 768, deskto
 export const InteractiveCanvas = memo(function InteractiveCanvas({
   device,
   zoom,
-  showGrid,
 }: {
   device: Device;
   zoom: number;
-  showGrid: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -125,14 +121,11 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      <SelectionBox containerRef={containerRef} />
-
       <div className="flex min-h-full items-start justify-center p-8">
         <div
           className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50 transition-all"
           style={{ width: DEVICE_WIDTHS[device], transform: `scale(${zoom})`, transformOrigin: "top center" }}
         >
-          {showGrid && <CanvasGrid />}
           <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">
             <div className="flex gap-1">
               <div className="h-2.5 w-2.5 rounded-full bg-red-500/80" />

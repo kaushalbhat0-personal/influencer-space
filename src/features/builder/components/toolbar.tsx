@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Smartphone, Tablet, Monitor, Undo, Redo, Eye, ZoomIn, ZoomOut, Grid3X3, LayoutDashboard, ExternalLink, Save } from "lucide-react";
+import { Smartphone, Tablet, Monitor, Undo, Redo, Eye, ZoomIn, ZoomOut, LayoutDashboard, ExternalLink, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuilderCanvas } from "@/lib/builder/types";
 import { builderCommands } from "@/lib/builder/commands";
@@ -11,23 +11,19 @@ import { PublishStatusBadge } from "@/components/publish/PublishStatusBadge";
 export function BuilderToolbar({
   device,
   zoom,
-  showGrid,
   storefrontUrl = "/",
   publishStatus = "draft",
   onDeviceChange,
   onZoomChange,
-  onToggleGrid,
   onSave,
   saving,
 }: {
   device: BuilderCanvas["device"];
   zoom: number;
-  showGrid: boolean;
   storefrontUrl?: string;
   publishStatus?: "draft" | "preview" | "publishing" | "published" | "outdated" | "unavailable";
   onDeviceChange: (d: BuilderCanvas["device"]) => void;
   onZoomChange: (z: number) => void;
-  onToggleGrid: () => void;
   onSave?: () => void;
   saving?: boolean;
 }) {
@@ -80,8 +76,6 @@ export function BuilderToolbar({
         <button onClick={() => onZoomChange(Math.max(0.25, zoom - 0.25))} className="rounded p-1.5 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" title="Zoom Out"><ZoomOut className="h-3.5 w-3.5" /></button>
         <span className="min-w-[3rem] text-center text-[10px] text-zinc-500">{Math.round(zoom * 100)}%</span>
         <button onClick={() => onZoomChange(Math.min(2, zoom + 0.25))} className="rounded p-1.5 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" title="Zoom In"><ZoomIn className="h-3.5 w-3.5" /></button>
-        <div className="mx-2 h-4 w-px bg-white/10" />
-        <button onClick={onToggleGrid} className={cn("rounded p-1.5 transition-colors", showGrid ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300")} title="Toggle Grid"><Grid3X3 className="h-3.5 w-3.5" /></button>
         <div className="mx-2 h-4 w-px bg-white/10" />
         <button className="rounded p-1.5 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" title="Preview"><Eye className="h-3.5 w-3.5" /></button>
         <PublishStatusBadge status={publishStatus} size="sm" />

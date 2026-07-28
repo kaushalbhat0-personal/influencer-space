@@ -45,11 +45,9 @@ export function InlineEditProvider({ children }: { children: ReactNode }) {
     active: false, mode: "none", elementId: null, descriptor: null, value: null, x: 0, y: 0, width: 0, height: 0,
   });
 
-  const startEditing = useCallback((elementId: string, descriptor: PropertyDescriptor, rect: DOMRect) => {
-    const ed = propertyEditorRegistry.get(descriptor.editorType as Parameters<typeof propertyEditorRegistry.get>[0]);
-    if (!ed?.supportsInlineEditing) return;
-    const mode: InlineEditMode = descriptor.editorType === "image" ? "image" : descriptor.editorType === "url" ? "url" : "text";
-    setState({ active: true, mode, elementId, descriptor, value: descriptor.currentValue ?? descriptor.defaultValue, x: rect.x, y: rect.y, width: rect.width, height: rect.height });
+  const startEditing = useCallback((elementId: string, _descriptor: PropertyDescriptor, rect: DOMRect) => {
+    const mode: InlineEditMode = "text";
+    setState({ active: true, mode, elementId, descriptor: _descriptor, value: _descriptor.currentValue ?? _descriptor.defaultValue, x: rect.x, y: rect.y, width: rect.width, height: rect.height });
     builderCommands.execute("selectNode", { elementId, multi: false });
   }, []);
 
@@ -107,4 +105,4 @@ export function InlineEditProvider({ children }: { children: ReactNode }) {
   );
 }
 
-import { propertyEditorRegistry } from "../inspector/property-editors";
+// property editor imports removed — content editing moved to admin pages
