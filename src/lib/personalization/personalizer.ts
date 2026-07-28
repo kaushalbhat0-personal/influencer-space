@@ -31,23 +31,29 @@ const NICHE_TEMPLATES: Record<Niche, string> = {
   general: "gaming",
 };
 
+/**
+ * Maps niches to theme IDs.
+ * @deprecated Use IndustryRegistry + ThemeRegistry instead.
+ *   Kept for backward compatibility with legacy provisioning pipeline.
+ *   Will be removed after provisioning migration.
+ */
 const NICHE_THEMES: Record<Niche, string> = {
-  gaming: "neon-dark",
-  fitness: "forest-canopy",
-  education: "slate-minimal",
-  music: "royal-plum",
-  restaurant: "warm-ember",
-  technology: "midnight-ocean",
-  fashion: "royal-plum",
-  art: "royal-plum",
-  photography: "slate-minimal",
-  travel: "midnight-ocean",
-  lifestyle: "forest-canopy",
-  business: "slate-minimal",
-  entertainment: "neon-dark",
-  sports: "forest-canopy",
-  health: "forest-canopy",
-  general: "neon-dark",
+  gaming: "com.creatos.neon-dark",
+  fitness: "com.creatos.neon-dark",
+  education: "com.creatos.slate-minimal",
+  music: "com.creatos.neon-dark",
+  restaurant: "com.creatos.warm-ember",
+  technology: "com.creatos.midnight-ocean",
+  fashion: "com.creatos.neon-dark",
+  art: "com.creatos.neon-dark",
+  photography: "com.creatos.slate-minimal",
+  travel: "com.creatos.midnight-ocean",
+  lifestyle: "com.creatos.neon-dark",
+  business: "com.creatos.slate-minimal",
+  entertainment: "com.creatos.neon-dark",
+  sports: "com.creatos.neon-dark",
+  health: "com.creatos.neon-dark",
+  general: "com.creatos.neon-dark",
 };
 
 function generateTagline(name: string, niche: Niche): string {

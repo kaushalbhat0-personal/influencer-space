@@ -1,3 +1,10 @@
+/**
+ * @deprecated Use ThemeRegistry (registry-new.ts) instead.
+ *   This file defines a duplicate NEON_DARK_THEME outside the canonical ThemeRegistry.
+ *   New themes should be added to BuiltInThemeProvider in providers/built-in.ts.
+ *   Consumers should use themeRegistry.getById("com.creatos.neon-dark") instead.
+ *   This file will be removed after all consumers migrate to ThemeRegistry.
+ */
 import type { Theme, ThemeManifest } from "./types";
 import { DEFAULT_NEON_DARK_TOKENS } from "./tokens";
 

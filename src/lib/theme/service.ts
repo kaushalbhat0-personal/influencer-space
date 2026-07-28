@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { themeRegistry } from "./registry-new";
 import { themePresetRegistry } from "./presets";
 import type { ThemePreset } from "./presets";
 

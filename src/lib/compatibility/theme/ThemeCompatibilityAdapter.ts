@@ -5,8 +5,10 @@ import type { ThemeDefinition } from "@/lib/builder/theme/types";
  * Backward-compatible Theme Adapter.
  * Wraps the new platform.theme subsystem so legacy code continues working.
  *
- * @deprecated Legacy code should migrate to platform.theme.* directly.
- *   This adapter exists only for backward compatibility during migration.
+ * @deprecated Legacy code should migrate to ThemeRegistry (registry-new.ts) directly.
+ *   This adapter has a hardcoded duplicate theme definition that bypasses the canonical ThemeRegistry.
+ *   All consumers should use themeRegistry.getById() instead.
+ *   This file will be removed after all consumers migrate.
  */
 export class ThemeAdapter {
   private static instance: ThemeAdapter;

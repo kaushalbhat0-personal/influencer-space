@@ -22,8 +22,11 @@ import type { BuilderPage } from "@/lib/builder/types";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
 import { themeResolver } from "@/lib/theme/resolver-new";
+import { PLATFORM_DEFAULT_THEME_ID } from "@/lib/theme/default-theme";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
+
+const FALLBACK_THEME_ID = PLATFORM_DEFAULT_THEME_ID ?? "com.creatos.neon-dark";
 
 export type PublishState = "draft" | "preview" | "live" | "archived";
 
@@ -102,7 +105,7 @@ export class PublishingService {
       ]);
 
       const resolvedTheme = themeResolver.resolveForSnapshot(
-        websiteFull?.themePackageId ?? "com.creatos.neon-dark",
+        websiteFull?.themePackageId ?? FALLBACK_THEME_ID,
       );
       const canonicalSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
@@ -132,7 +135,7 @@ export class PublishingService {
           })),
         },
         theme: {
-          packageId: resolvedTheme?.packageId ?? websiteFull?.themePackageId ?? "com.creatos.neon-dark",
+          packageId: resolvedTheme?.packageId ?? websiteFull?.themePackageId ?? FALLBACK_THEME_ID,
           colors: {
             primary: resolvedTheme?.colors.primary ?? "#6366F1",
             secondary: resolvedTheme?.colors.secondary ?? "#818CF8",
@@ -200,7 +203,7 @@ export class PublishingService {
         navigationService.getOrGenerate(tenantId),
       ]);
 
-      const resolvedTheme = themeResolver.resolveForSnapshot(website.themePackageId ?? "com.creatos.neon-dark");
+      const resolvedTheme = themeResolver.resolveForSnapshot(website.themePackageId ?? FALLBACK_THEME_ID);
       const previewSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
         _version: 1,
@@ -217,7 +220,7 @@ export class PublishingService {
           })),
         },
         theme: {
-          packageId: resolvedTheme?.packageId ?? website.themePackageId ?? "com.creatos.neon-dark",
+          packageId: resolvedTheme?.packageId ?? website.themePackageId ?? FALLBACK_THEME_ID,
           colors: { primary: resolvedTheme?.colors.primary ?? "#6366F1", secondary: resolvedTheme?.colors.secondary ?? "#818CF8", accent: resolvedTheme?.colors.accent ?? "#A5B4FC", background: resolvedTheme?.colors.background ?? "#09090b", foreground: resolvedTheme?.colors.foreground ?? "#fafafa", muted: resolvedTheme?.colors.muted ?? "#a1a1aa" },
           typography: { heading: resolvedTheme?.typography.heading ?? "Inter", body: resolvedTheme?.typography.body ?? "Inter" },
         },

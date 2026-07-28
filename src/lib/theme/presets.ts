@@ -1,3 +1,9 @@
+/**
+ * @deprecated Use ThemeRegistry (registry-new.ts) + ThemeDefinition instead.
+ *   This preset system is a legacy parallel registry.
+ *   New themes should be added to BuiltInThemeProvider in providers/built-in.ts.
+ *   This file will be removed after all consumers migrate to ThemeRegistry.
+ */
 export interface ThemePreset {
   id: string;
   name: string;
