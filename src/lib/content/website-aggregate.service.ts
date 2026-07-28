@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { brandRepository } from "@/modules/tenant/infrastructure/brand-repository";
 import { productRepository } from "@/modules/tenant/infrastructure/product-repository";
 import { galleryRepository } from "@/modules/tenant/infrastructure/gallery-repository";
@@ -8,7 +9,7 @@ import type { WebsiteAggregate } from "@/types/snapshot";
 
 export class WebsiteAggregateService {
   async build(tenantId: string): Promise<WebsiteAggregate> {
-    const [brand, heroData, products, gallery, links, seoData, website] = await Promise.all([
+    const [brand, heroData, products, gallery, links, seoData, website, timelineEvents, gameList, feedItems, testimonialsData, faqData] = await Promise.all([
       brandRepository.findByTenantId(tenantId),
       SettingsService.getHeroData(tenantId),
       productRepository.findPublished(tenantId),
@@ -16,7 +17,29 @@ export class WebsiteAggregateService {
       linkRepository.findPublished(tenantId),
       SettingsService.getSeo(tenantId),
       websiteRepository.findByTenantId(tenantId),
+      prisma.timelineEvent.findMany({
+        where: { tenantId },
+        orderBy: { year: "desc" },
+      }),
+      prisma.game.findMany({
+        where: { tenantId },
+        orderBy: { order: "asc" },
+      }),
+      prisma.contentFeedItem.findMany({
+        where: { tenantId, hidden: false },
+        orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+      }),
+      SettingsService.getSettingByKey(tenantId, "testimonials"),
+      SettingsService.getSettingByKey(tenantId, "faq"),
     ]);
+
+    const rawTestimonials = Array.isArray(testimonialsData)
+      ? (testimonialsData as Record<string, unknown>[])
+      : [];
+
+    const rawFaq = Array.isArray(faqData)
+      ? (faqData as Record<string, unknown>[])
+      : [];
 
     return {
       identity: {
@@ -72,6 +95,46 @@ export class WebsiteAggregateService {
         title: ((seoData as { title?: string } | null)?.title) ?? "",
         description: ((seoData as { description?: string } | null)?.description) ?? "",
       },
+      testimonials: rawTestimonials.map((item) => ({
+        id: (item.id as string) ?? "",
+        author: item.author as string,
+        role: (item.role as string) ?? null,
+        content: item.content as string,
+        avatarUrl: (item.avatarUrl as string) ?? null,
+        rating: (item.rating as number) ?? 5,
+        featured: (item.featured as boolean) ?? false,
+        category: (item.category as string) ?? "general",
+      })),
+      faq: rawFaq.map((item) => ({
+        id: (item.id as string) ?? "",
+        question: item.question as string,
+        answer: item.answer as string,
+        category: (item.category as string) ?? "general",
+      })),
+      timeline: timelineEvents.map((e) => ({
+        id: e.id,
+        year: e.year,
+        title: e.title,
+        description: e.description,
+        imageUrl: e.imageUrl,
+        stats: e.stats,
+      })),
+      games: gameList.map((g) => ({
+        id: g.id,
+        name: g.name,
+        logoUrl: g.logoUrl,
+        description: g.description,
+        genre: g.genre,
+      })),
+      contentFeed: feedItems.map((item) => ({
+        id: item.id,
+        platform: item.platform,
+        mediaType: item.mediaType,
+        url: item.url,
+        thumbnailUrl: item.thumbnailUrl,
+        caption: item.caption,
+        permalink: item.permalink,
+      })),
     };
   }
 }

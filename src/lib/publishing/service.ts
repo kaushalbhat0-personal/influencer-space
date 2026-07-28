@@ -20,6 +20,7 @@ import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
+import { navigationService } from "@/lib/navigation/service";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
 
@@ -88,13 +89,14 @@ export class PublishingService {
       const websiteId = website.id;
       const storeRoot = buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain);
 
-      const [builderPages, websiteFull, aggregate, correlationId] = await Promise.all([
+      const [builderPages, websiteFull, aggregate, navItems, correlationId] = await Promise.all([
         this.loadBuilderPages(websiteId),
         prisma.website.findUnique({
           where: { id: websiteId },
           select: { themePackageId: true, themeColors: true, themeFonts: true },
         }),
         websiteAggregateService.build(tenantId),
+        navigationService.getOrGenerate(tenantId),
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
 
@@ -142,7 +144,16 @@ export class PublishingService {
             body: dbThemeFonts?.body ?? "Inter",
           },
         },
-        navigation: [],
+        navigation: navItems.map((n) => ({
+          id: n.id,
+          label: n.label,
+          href: n.href,
+          type: n.type,
+          order: n.order,
+          visible: n.visible,
+          ...(n.target ? { target: n.target } : {}),
+          ...(n.icon ? { icon: n.icon } : {}),
+        })),
         renderingHints: {},
       };
 
@@ -181,9 +192,10 @@ export class PublishingService {
       });
       if (!website) return { success: false, error: "Website not found" };
 
-      const [builderPages, aggregate] = await Promise.all([
+      const [builderPages, aggregate, navItems] = await Promise.all([
         this.loadBuilderPages(website.id),
         websiteAggregateService.build(tenantId),
+        navigationService.getOrGenerate(tenantId),
       ]);
 
       const dbThemeColors = (website.themeColors ?? {}) as Record<string, string>;
@@ -208,7 +220,16 @@ export class PublishingService {
           colors: { primary: dbThemeColors?.primary ?? "#6366F1", secondary: dbThemeColors?.secondary ?? "#818CF8", accent: dbThemeColors?.accent ?? "#A5B4FC", background: dbThemeColors?.background ?? "#09090b", foreground: dbThemeColors?.foreground ?? "#fafafa", muted: dbThemeColors?.muted ?? "#a1a1aa" },
           typography: { heading: dbThemeFonts?.heading ?? "Inter", body: dbThemeFonts?.body ?? "Inter" },
         },
-        navigation: [],
+        navigation: navItems.map((n) => ({
+          id: n.id,
+          label: n.label,
+          href: n.href,
+          type: n.type,
+          order: n.order,
+          visible: n.visible,
+          ...(n.target ? { target: n.target } : {}),
+          ...(n.icon ? { icon: n.icon } : {}),
+        })),
         renderingHints: {},
       };
 

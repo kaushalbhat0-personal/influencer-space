@@ -3,7 +3,8 @@ import type { ComponentType } from "react";
 export type ComponentCategory =
   | "hero" | "about" | "gallery" | "products" | "timeline" | "footer"
   | "links" | "testimonials" | "faq" | "pricing" | "contact" | "newsletter"
-  | "courses" | "music" | "video" | "social" | "embed" | "custom";
+  | "courses" | "music" | "video" | "social" | "embed" | "custom"
+  | "games" | "contentFeed";
 
 export interface ComponentAnimation {
   id: string;

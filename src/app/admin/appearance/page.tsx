@@ -3,9 +3,15 @@ import { authOptions } from "@/lib/auth";
 import { entitlement } from "@/modules/billing/application/entitlements";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { prisma } from "@/lib/prisma";
-import { themeAdapter } from "@/lib/compatibility";
 import { AppearanceManager } from "./_components/appearance-manager";
 import Link from "next/link";
+
+const FONT_REVERSE_MAP: Record<string, string> = {
+  "Geist, system-ui, sans-serif": "geist",
+  "Inter, system-ui, sans-serif": "inter",
+  "'IBM Plex Sans', system-ui, sans-serif": "plex",
+  "'JetBrains Mono', monospace": "mono",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +49,23 @@ export default async function AppearancePage() {
     );
   }
 
-  const themeConfig = themeAdapter.getThemeConfig();
+  const website = await prisma.website.findUnique({
+    where: { tenantId },
+    select: { id: true, themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
+  });
+
+  const dbColors = (website?.themeColors ?? {}) as Record<string, string>;
+  const dbFonts = (website?.themeFonts ?? {}) as Record<string, string>;
+  const dbConfig = (website?.themeConfig ?? {}) as Record<string, string>;
+
+  const initialTheme = {
+    primary: dbColors.primary ?? "#00f5ff",
+    secondary: dbColors.secondary ?? "#00f5ff",
+    accent: dbColors.accent ?? "#06b6d4",
+    font: FONT_REVERSE_MAP[dbFonts.heading] ?? "geist",
+    borderRadius: dbConfig.borderRadius ?? "8",
+    layoutDensity: (dbConfig.layoutDensity as "compact" | "comfortable" | "spacious") ?? "comfortable",
+  };
 
   return (
     <div>
@@ -51,7 +73,7 @@ export default async function AppearancePage() {
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance & Theme</h1>
         <p className="mt-1 text-sm text-gray-400">Customize colors, fonts, and layout. Changes appear in the live preview instantly.</p>
       </div>
-      <AppearanceManager tenantId={tenantId} initialTheme={themeConfig} />
+      <AppearanceManager tenantId={tenantId} initialTheme={initialTheme} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { themeAdapter } from "@/lib/compatibility";
+import { updateTheme } from "@/actions/theme.actions";
 import { PreviewShell } from "@/components/admin/PreviewShell";
 import type { ThemeOverrides } from "@/components/admin/PreviewShell";
 
@@ -33,13 +33,12 @@ interface ThemeState {
 }
 
 export function AppearanceManager({
-  tenantId: _tenantId,
+  tenantId,
   initialTheme,
 }: {
   tenantId: string;
   initialTheme: Record<string, unknown>;
 }) {
-  void _tenantId;
   const [theme, setTheme] = useState<ThemeState>({
     primary: (initialTheme.primary as string) || "#00f5ff",
     secondary: (initialTheme.secondary as string) || "#00f5ff",
@@ -57,8 +56,8 @@ export function AppearanceManager({
     setTheme(updated);
     setSaved(false);
 
-    startTransition(() => {
-      themeAdapter.updateThemeConfig(partial as Record<string, string>);
+    startTransition(async () => {
+      await updateTheme(tenantId, partial);
       setSaved(true);
     });
   }

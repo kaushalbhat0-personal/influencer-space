@@ -38,40 +38,22 @@ export class LayoutEngine {
   }
 
   // ── Navigation ─────────────────────────────────────────
+  // Canonical: read from snapshot.navigation directly.
+  // No runtime derivation. No content inspection.
+  // Navigation is persisted and published as part of the snapshot.
 
   private buildNavigation(snapshot: PublishedSnapshot): StorefrontDocument["navigation"] {
-    const hasProducts = snapshot.content.products.length > 0;
-    const hasGallery = snapshot.content.gallery.length > 0;
-    const hasLinks = snapshot.content.links.length > 0;
-
-    const nav: StorefrontDocument["navigation"] = [];
-
-    for (const page of snapshot.layout.pages) {
-      nav.push({
-        id: page.id,
-        label: page.name,
-        enabled: true,
-      });
-    }
-
-    if (hasProducts) {
-      nav.push({ id: "products", label: "Products", enabled: true });
-    }
-    if (hasGallery) {
-      nav.push({ id: "gallery", label: "Gallery", enabled: true });
-    }
-    if (hasLinks) {
-      nav.push({ id: "links", label: "Links", enabled: true });
-    }
-
-    for (const item of snapshot.navigation) {
-      const existing = nav.find((n) => n.id === item.label.toLowerCase());
-      if (existing) {
-        existing.enabled = item.enabled ?? true;
-      }
-    }
-
-    return nav;
+    return snapshot.navigation
+      .filter((n) => n.visible)
+      .map((n) => ({
+        id: n.id,
+        label: n.label,
+        href: n.href,
+        type: n.type,
+        visible: n.visible,
+        ...(n.target ? { target: n.target } : {}),
+        ...(n.icon ? { icon: n.icon } : {}),
+      }));
   }
 
   // ── Metadata ───────────────────────────────────────────
@@ -174,10 +156,14 @@ export class LayoutEngine {
 
     if (moduleId.startsWith("hero.")) {
       Object.assign(config, content.hero);
+      if (content.hero.ctaText && !config.cta) {
+        config.cta = content.hero.ctaText;
+      }
     } else if (moduleId.startsWith("about.")) {
       config.title = config.title || content.identity.name || "About";
       config.content = config.content || content.identity.bio || "";
       config.imageUrl = config.imageUrl || content.identity.avatarUrl;
+      config.tagline = config.tagline || content.identity.tagline || "";
     } else if (moduleId.startsWith("products.")) {
       const productEntries: Record<string, unknown>[] = content.products.map((p) => ({
         id: p.id,
@@ -193,8 +179,12 @@ export class LayoutEngine {
         : "Products";
     } else if (moduleId.startsWith("gallery.")) {
       const imageEntries: Record<string, unknown>[] = content.gallery.map((g) => ({
+        id: g.id,
         url: g.imageUrl,
         caption: g.title || g.description || "",
+        description: g.description,
+        videoUrl: g.videoUrl,
+        altText: g.altText,
         isVideo: g.mediaType === "video",
       }));
       config.resolvedData = imageEntries;
@@ -217,11 +207,33 @@ export class LayoutEngine {
     } else if (moduleId.startsWith("newsletter.")) {
       config.title = config.title || "Subscribe";
     } else if (moduleId.startsWith("testimonials.")) {
-      config.resolvedData = config.resolvedData || [];
-      config.resolvedTitle = config.resolvedTitle || "Testimonials";
+      config.resolvedData = content.testimonials.map((t) => ({
+        name: t.author,
+        handle: t.role,
+        content: t.content,
+        message: t.content,
+        avatarUrl: t.avatarUrl,
+        rating: t.rating,
+      }));
+      config.resolvedTitle = "Testimonials";
     } else if (moduleId.startsWith("faq.")) {
-      config.resolvedData = config.resolvedData || [];
-      config.resolvedTitle = config.resolvedTitle || "FAQ";
+      config.resolvedData = content.faq.map((f) => ({
+        question: f.question,
+        answer: f.answer,
+        q: f.question,
+        a: f.answer,
+        category: f.category,
+      }));
+      config.resolvedTitle = "FAQ";
+    } else if (moduleId.startsWith("timeline.")) {
+      config.resolvedData = content.timeline.map((t) => ({
+        year: t.year,
+        title: t.title,
+        name: t.title,
+        description: t.description,
+        imageUrl: t.imageUrl,
+      }));
+      config.resolvedTitle = "Timeline";
     }
 
     return config;

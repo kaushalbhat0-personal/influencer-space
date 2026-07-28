@@ -55,6 +55,19 @@ export async function getPublishStatus(): Promise<PublishActionResult> {
   }
 }
 
+export async function previewWebsite(): Promise<PublishActionResult> {
+  try {
+    const tenantId = await requireTenant();
+    const result = await publishingService.preview(tenantId);
+    if (!result.success) return { success: false, error: result.error };
+
+    const status = await publishingService.getStatus(tenantId);
+    return { success: true, status: status.data, version: result.version, previewUrl: status.data?.previewUrl ?? undefined };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Preview failed" };
+  }
+}
+
 export async function validateBeforePublish(): Promise<PublishActionResult> {
   try {
     const tenantId = await requireTenant();

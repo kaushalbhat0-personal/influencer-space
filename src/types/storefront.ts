@@ -18,7 +18,11 @@ export interface StorefrontDocument {
   navigation: Array<{
     id: string;
     label: string;
-    enabled: boolean;
+    href: string;
+    type: "page" | "anchor" | "external";
+    visible: boolean;
+    target?: "_self" | "_blank";
+    icon?: string | null;
   }>;
 
   jsonLd: Array<Record<string, unknown>>;

@@ -26,6 +26,51 @@ export interface SnapshotMetadata {
 
 // ── Content (from WebsiteAggregateService) ─────────────────
 
+export interface TestimonialContent {
+  id: string;
+  author: string;
+  role: string | null;
+  content: string;
+  avatarUrl: string | null;
+  rating: number;
+  featured: boolean;
+  category: string;
+}
+
+export interface FaqContent {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+export interface TimelineContent {
+  id: string;
+  year: string;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  stats: string | null;
+}
+
+export interface GameContent {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  description: string | null;
+  genre: string | null;
+}
+
+export interface ContentFeedContent {
+  id: string;
+  platform: string;
+  mediaType: string;
+  url: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  permalink: string | null;
+}
+
 export interface WebsiteAggregate {
   identity: {
     name: string;
@@ -53,6 +98,11 @@ export interface WebsiteAggregate {
     title: string;
     description: string;
   };
+  testimonials: TestimonialContent[];
+  faq: FaqContent[];
+  timeline: TimelineContent[];
+  games: GameContent[];
+  contentFeed: ContentFeedContent[];
 }
 
 export interface HeroContent {
@@ -112,13 +162,19 @@ export interface ThemeSnapshot {
   };
 }
 
-// ── Navigation (computed at publish time) ─────────────────
+// ── Navigation (persisted, canonical) ────────────────────
+
+export type NavItemType = "page" | "anchor" | "external";
 
 export interface NavigationItem {
+  id: string;
   label: string;
   href: string;
+  type: NavItemType;
   order: number;
-  enabled?: boolean;
+  visible: boolean;
+  target?: "_self" | "_blank";
+  icon?: string | null;
 }
 
 // ── Rendering Hints (from Builder, layout only) ───────────

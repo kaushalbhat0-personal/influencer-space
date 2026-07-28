@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { getServerSession } from "next-auth";
@@ -9,10 +8,10 @@ import { capabilityService } from "@/lib/capabilities";
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
 import { platformEventBus } from "@/lib/events";
-import { publishSnapshotService } from "@/lib/publishing/snapshot";
+import { publishingService } from "@/lib/publishing/service";
 import {
   runProvisionPipeline, buildProvisioningInput, buildBuilderArtifactData,
-  buildPublishSnapshotRecord, detectPlatform, buildContentSource,
+  detectPlatform, buildContentSource,
 } from "@/lib/generation/integration/provision-pipeline";
 
 export interface AnalyzeResult {
@@ -149,7 +148,7 @@ export async function confirmProvision(params: {
 
     let provisioned;
     try {
-      provisioned = await provisioningService.provision(provisioningInput as any);
+      provisioned = await provisioningService.provision(provisioningInput as unknown as Parameters<typeof provisioningService.provision>[0]);
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : "Provisioning failed" };
     }
@@ -172,18 +171,15 @@ export async function confirmProvision(params: {
       });
     }
 
-    const snapshotData = buildPublishSnapshotRecord(pipelineResult);
-    if (snapshotData && provisioned) {
-      const website = await prisma.website.findUnique({ where: { tenantId: provisioned.tenantId }, select: { id: true } });
-      if (!website) {
-        console.error(`[provision] Website not found for tenantId=${provisioned.tenantId}`);
-        return { success: false, error: "Website not found during publishing" };
-      }
+    if (provisioned) {
       try {
-        await publishSnapshotService.publishFromArtifact(website.id, snapshotData as never);
+        const result = await publishingService.publish(provisioned.tenantId);
+        if (!result.success) {
+          return { success: false, error: result.error ?? "Publishing failed" };
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Publishing failed";
-        console.error(`[provision] Publishing failed for websiteId=${website.id} tenantId=${provisioned.tenantId}`, err);
+        console.error(`[provision] Publishing failed for tenantId=${provisioned.tenantId}`, err);
         return { success: false, error: msg };
       }
     }

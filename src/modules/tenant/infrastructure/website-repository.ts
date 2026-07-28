@@ -60,6 +60,21 @@ export class WebsiteRepository {
     });
   }
 
+  async updateTheme(
+    id: string,
+    theme: {
+      themeColors?: Record<string, string>;
+      themeFonts?: Record<string, string>;
+      themeConfig?: Record<string, string>;
+    },
+    tx?: Prisma.TransactionClient,
+  ) {
+    return this.client(tx).website.update({
+      where: { id },
+      data: theme,
+    });
+  }
+
   async update(
     id: string,
     data: Record<string, unknown>,
@@ -74,7 +89,7 @@ export class WebsiteRepository {
   async findTheme(tenantId: string, tx?: Prisma.TransactionClient) {
     return this.client(tx).website.findUnique({
       where: { tenantId },
-      select: { themePackageId: true, themeColors: true, themeFonts: true },
+      select: { id: true, themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
     });
   }
 }

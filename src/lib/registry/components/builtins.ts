@@ -7,6 +7,7 @@ import {
   ContactRenderer, NewsletterRenderer, PricingRenderer,
   CoursesRenderer, SpotifyRenderer, YouTubeRenderer,
   DiscordRenderer, InstagramRenderer,
+  GamesRenderer, ContentFeedRenderer,
 } from "./renderers";
 
 const BUILTIN_COMPONENTS: ComponentDefinition[] = [
@@ -214,6 +215,26 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { serverId: "", label: "Join Discord" },
     renderer: DiscordRenderer,
+  },
+  {
+    id: "games.default", type: "games", name: "Games", category: "games",
+    icon: "Gamepad2", description: "Games and gaming content",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [], responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Games" },
+    renderer: GamesRenderer,
+  },
+  {
+    id: "contentFeed.default", type: "contentFeed", name: "Content Feed", category: "contentFeed",
+    icon: "Rss", description: "Social content feed grid",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [], responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Latest Content" },
+    renderer: ContentFeedRenderer,
   },
   {
     id: "social.instagram", type: "social", name: "Instagram Feed", category: "social",

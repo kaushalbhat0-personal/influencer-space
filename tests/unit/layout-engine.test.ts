@@ -31,7 +31,7 @@ function minimalSnapshot(): PublishedSnapshot {
       colors: { primary: "#6366F1", secondary: "#818CF8", accent: "#A5B4FC", background: "#09090b", foreground: "#fafafa", muted: "#a1a1aa" },
       typography: { heading: "Inter", body: "Inter" },
     },
-    navigation: [{ label: "Home", href: "/", order: 0, enabled: true }],
+    navigation: [{ id: "hero", label: "Home", href: "#hero", type: "anchor", order: 0, visible: true }],
     renderingHints: {},
   };
 }
@@ -72,8 +72,11 @@ function fullSnapshot(): PublishedSnapshot {
       typography: { heading: "Poppins", body: "Inter" },
     },
     navigation: [
-      { label: "Home", href: "/", order: 0, enabled: true },
-      { label: "Shop", href: "/shop", order: 1, enabled: true },
+      { id: "hero", label: "Home", href: "#hero", type: "anchor", order: 0, visible: true },
+      { id: "products", label: "Products", href: "#products", type: "anchor", order: 1, visible: true },
+      { id: "gallery", label: "Gallery", href: "#gallery", type: "anchor", order: 2, visible: true },
+      { id: "links", label: "Links", href: "#links", type: "anchor", order: 3, visible: true },
+      { id: "shop_page", label: "Shop", href: "/shop", type: "page", order: 4, visible: true },
     ],
     renderingHints: {
       sectionVisibility: { s_hero: "visible", s_about: "auto" },
@@ -140,10 +143,10 @@ describe("LayoutEngine — navigation", () => {
     expect(labels).not.toContain("Links");
   });
 
-  it("all nav items have enabled property", () => {
+  it("all nav items have visible property", () => {
     const doc = engine.resolve(fullSnapshot());
     for (const item of doc.navigation) {
-      expect(typeof item.enabled).toBe("boolean");
+      expect(typeof item.visible).toBe("boolean");
     }
   });
 });
@@ -389,7 +392,7 @@ describe("LayoutEngine — special cases", () => {
   it("handles multi-page layout", () => {
     const doc = engine.resolve(fullSnapshot());
     expect(doc.pages).toHaveLength(2);
-    expect(doc.navigation.filter((n) => n.enabled).length).toBeGreaterThanOrEqual(4);
+    expect(doc.navigation.filter((n) => n.visible).length).toBeGreaterThanOrEqual(4);
   });
 
   it("hero image snapshot produces no video metadata", () => {

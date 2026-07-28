@@ -6,18 +6,15 @@ import { provisioningService } from "@/lib/provisioning/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 import { logAction } from "@/lib/audit";
 import { onboardingService } from "@/lib/onboarding/service";
 import { goldenDataset, GoldenValidator } from "@/lib/generation/golden";
-import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import { publishingService } from "@/lib/publishing/service";
 import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
 import {
   buildProvisioningInput, buildBuilderArtifactData,
-  buildPublishSnapshotRecord,
 } from "@/lib/generation/integration/provision-pipeline";
 import type { ImportProfileResult } from "@/lib/onboarding/service";
 
@@ -255,26 +252,15 @@ export async function runCreatorGeneration(
     if (generationSessionId) {
       await sessionService.updateStage(generationSessionId, "publishing", "running");
     }
-    const snapshotData = buildPublishSnapshotRecord(pipelineResult);
-    if (snapshotData && provisioned) {
-      const website = await prisma.website.findUnique({
-        where: { tenantId: provisioned.tenantId },
-        select: { id: true },
-      });
-      if (!website) {
-        const errMsg = "Website not found for publishing";
-        markStage("publishing", "failed", errMsg);
-        console.error(`[onboarding] Website not found for tenantId=${provisioned.tenantId}`);
-        if (generationSessionId) {
-          await sessionService.updateStage(generationSessionId, "publishing", "failed", errMsg);
-        }
-        return { success: false, stages, error: errMsg, retryable: true, tenantId: provisioned.tenantId };
-      }
+    if (provisioned) {
       try {
-        await publishSnapshotService.publishFromArtifact(website.id, snapshotData as never);
+        const publishResult = await publishingService.publish(provisioned.tenantId);
+        if (!publishResult.success) {
+          throw new Error(publishResult.error ?? "Publishing failed");
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Publishing failed";
-        console.error(`[onboarding] Publishing failed for websiteId=${website.id} tenantId=${provisioned.tenantId}`, err);
+        console.error(`[onboarding] Publishing failed for tenantId=${provisioned.tenantId}`, err);
         markStage("publishing", "failed", msg);
         if (generationSessionId) {
           await sessionService.updateStage(generationSessionId, "publishing", "failed", msg);
@@ -285,12 +271,6 @@ export async function runCreatorGeneration(
     markStage("publishing", "completed");
     if (generationSessionId) {
       await sessionService.updateStage(generationSessionId, "publishing", "completed");
-    }
-
-    try {
-      revalidatePath("/", "layout");
-    } catch {
-      // cache invalidation is best-effort
     }
 
     await logAction(provisioned.tenantId, "onboarding:completed", {

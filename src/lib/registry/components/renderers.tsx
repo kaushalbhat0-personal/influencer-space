@@ -38,8 +38,25 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 export function HeroRenderer({ props, elementId, definition }: RendererProps) {
   const p = props as Record<string, string>;
   const cid = definition?.id || "";
+  const hasMedia = Boolean(p.videoUrl || p.posterUrl);
   return (
     <div className="relative flex min-h-[40vh] items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black px-4">
+      {hasMedia && (
+        <div className="absolute inset-0">
+          {p.videoUrl ? (
+            <video
+              autoPlay muted loop playsInline
+              poster={p.posterUrl || undefined}
+              className="h-full w-full object-cover opacity-40"
+            >
+              <source src={p.videoUrl} type="video/mp4" />
+            </video>
+          ) : (
+            <img src={p.posterUrl} alt="" className="h-full w-full object-cover opacity-40" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+        </div>
+      )}
       <div className="relative z-10 max-w-2xl text-center">
         {Boolean(p.showLiveBadge) && (
           <div className="mb-4 flex items-center justify-center gap-2">
@@ -47,7 +64,7 @@ export function HeroRenderer({ props, elementId, definition }: RendererProps) {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
             </span>
-            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">Live</span>
+            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">{p.liveBadgeText || "Live"}</span>
           </div>
         )}
         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
@@ -58,13 +75,30 @@ export function HeroRenderer({ props, elementId, definition }: RendererProps) {
             {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="subtitle" value={p.subtitle || ""} /> : p.subtitle}
           </p>
         )}
-        {(elementId || p.cta) && (
-          <div className="mt-6">
-            <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
-              {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="cta" value={p.cta || ""} /> : p.cta}
-            </span>
-          </div>
-        )}
+        <div className="mt-6 flex items-center justify-center gap-3">
+          {(elementId || p.cta) && (
+            p.ctaLink ? (
+              <a href={p.ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
+                {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="cta" value={p.cta || ""} /> : p.cta}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
+                {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="cta" value={p.cta || ""} /> : p.cta}
+              </span>
+            )
+          )}
+          {(elementId || p.ctaSecondaryText) && (
+            p.ctaSecondaryLink ? (
+              <a href={p.ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
+                {p.ctaSecondaryText}
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300">
+                {p.ctaSecondaryText}
+              </span>
+            )
+          )}
+        </div>
       </div>
     </div>
   );
@@ -80,6 +114,9 @@ export function AboutRenderer({ props, elementId, definition }: RendererProps) {
       <h2 className="text-2xl font-bold text-white">
         {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="title" value={p.title || "About"} /> : p.title || "About"}
       </h2>
+      {p.tagline && (
+        <p className="mt-2 text-base text-zinc-500">{p.tagline}</p>
+      )}
       <div className="mt-4 text-zinc-400">
         {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="content" value={p.content || ""} /> : p.content}
       </div>
@@ -569,4 +606,103 @@ export function InstagramRenderer({ props }: RendererProps) {
   }
 
   return <EmptyState label="Connect your Instagram account" />;
+}
+
+/* ─── Games ────────────────────────────────────────────── */
+
+export function GamesRenderer({ props }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const games = (p.resolvedData as Record<string, string>[]) || [];
+  const title = (p.resolvedTitle as string) || "Games";
+  if (!useVisibility(props, games.length > 0)) return null;
+
+  if (games.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-12">
+        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {games.map((game: Record<string, string>, i: number) => (
+            <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-center">
+              {game.logoUrl ? (
+                <img src={game.logoUrl} alt={game.name} className="mx-auto mb-3 h-20 w-20 rounded-full object-cover" />
+              ) : (
+                <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-zinc-600">
+                  {(game.name || "G")[0]}
+                </div>
+              )}
+              <p className="text-sm font-medium text-white">{game.name}</p>
+              {game.genre && <p className="mt-1 text-xs text-zinc-500">{game.genre}</p>}
+              {game.description && <p className="mt-2 text-xs text-zinc-500">{game.description}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return <EmptyState label="Add your games" />;
+}
+
+/* ─── Content Feed ─────────────────────────────────────── */
+
+export function ContentFeedRenderer({ props }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const items = (p.resolvedData as Record<string, string>[]) || [];
+  const title = (p.resolvedTitle as string) || "Latest Content";
+  if (!useVisibility(props, items.length > 0)) return null;
+
+  if (items.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-12">
+        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {items.map((item: Record<string, string>, i: number) => {
+            const isVideo = item.mediaType === "video";
+            return (
+              <a
+                key={i}
+                href={item.permalink || "#"}
+                target={item.permalink ? "_blank" : undefined}
+                rel={item.permalink ? "noopener noreferrer" : undefined}
+                className="group relative overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-white/[0.06] transition-all hover:ring-white/20"
+                style={{ aspectRatio: isVideo ? "9 / 16" : "1 / 1" }}
+              >
+                {(item.thumbnailUrl || item.url) ? (
+                  <img
+                    src={item.thumbnailUrl || item.url}
+                    alt={item.caption ?? ""}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-zinc-800">
+                    <span className="text-xs text-zinc-600">No media</span>
+                  </div>
+                )}
+                {isVideo && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm transition-transform group-hover:scale-110">
+                      <svg className="ml-0.5 h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+                {item.caption && (
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 opacity-0 transition-opacity group-hover:opacity-100">
+                    <p className="line-clamp-2 text-xs leading-relaxed text-white/90">{item.caption}</p>
+                  </div>
+                )}
+                <div className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/80 backdrop-blur-sm">
+                  {item.platform || "social"}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return <EmptyState label="No content feed items" />;
 }
