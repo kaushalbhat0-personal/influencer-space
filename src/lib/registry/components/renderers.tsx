@@ -8,6 +8,7 @@ import {
   subscribeNewsletter,
   type ContactActionResult,
 } from "@/actions/storefront.actions";
+import { CreatorImage, CreatorVideo } from "@/components/shared";
 
 
 interface RendererProps {
@@ -44,15 +45,23 @@ export function HeroRenderer({ props, elementId, definition }: RendererProps) {
       {hasMedia && (
         <div className="absolute inset-0">
           {p.videoUrl ? (
-            <video
-              autoPlay muted loop playsInline
-              poster={p.posterUrl || undefined}
+            <CreatorVideo
+              src={p.videoUrl}
+              poster={p.posterUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
               className="h-full w-full object-cover opacity-40"
-            >
-              <source src={p.videoUrl} type="video/mp4" />
-            </video>
+              aspectRatio="auto"
+            />
           ) : (
-            <img src={p.posterUrl} alt="" className="h-full w-full object-cover opacity-40" />
+            <CreatorImage
+              src={p.posterUrl}
+              alt=""
+              variant="hero"
+              className="h-full w-full object-cover opacity-40"
+            />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
         </div>
@@ -120,7 +129,11 @@ export function AboutRenderer({ props, elementId, definition }: RendererProps) {
       <div className="mt-4 text-zinc-400">
         {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="content" value={p.content || ""} /> : p.content}
       </div>
-      {p.imageUrl && <img src={p.imageUrl} alt="" className="mx-auto mt-6 h-32 w-32 rounded-full object-cover" />}
+      {p.imageUrl && (
+        <div className="mx-auto mt-6 h-32 w-32">
+          <CreatorImage src={p.imageUrl} alt="Profile photo" variant="avatar" />
+        </div>
+      )}
     </div>
   );
 }
@@ -141,7 +154,16 @@ export function GalleryRenderer({ props }: RendererProps) {
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
           {images.slice(0, 12).map((img: Record<string, unknown>, i: number) => (
             <div key={i} className="aspect-square overflow-hidden rounded-lg bg-zinc-800">
-              {img.url ? <img src={img.url as string} alt={String(img.caption || "")} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-700">Image</div>}
+              {img.url ? (
+                <CreatorImage
+                  src={img.url as string}
+                  alt={String(img.caption || "")}
+                  variant="gallery"
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-zinc-700">Image</div>
+              )}
             </div>
           ))}
         </div>
@@ -168,7 +190,16 @@ export function ProductsRenderer({ props }: RendererProps) {
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
           {products.map((prod: Record<string, unknown>, idx: number) => (
             <div key={idx} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4">
-              {prod.imageUrl ? <img src={String(prod.imageUrl)} alt={String(prod.name || "")} className="mb-2 aspect-video w-full rounded object-cover" /> : <div className="mb-2 aspect-video rounded bg-zinc-800" />}
+              {prod.imageUrl ? (
+                <CreatorImage
+                  src={String(prod.imageUrl)}
+                  alt={String(prod.name || "")}
+                  variant="product"
+                  className="mb-2 w-full rounded"
+                />
+              ) : (
+                <div className="mb-2 aspect-video rounded bg-zinc-800" />
+              )}
               <p className="text-sm font-medium text-zinc-300">{String(prod.name || "")}</p>
               <p className="text-xs text-zinc-500">{prod.price ? `₹${Number(prod.price).toLocaleString()}` : ""}</p>
             </div>
@@ -456,7 +487,12 @@ export function CoursesRenderer({ props }: RendererProps) {
           {courses.map((course: Record<string, unknown>, i: number) => (
             <div key={i} className="overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50">
               {course.imageUrl ? (
-                <img src={String(course.imageUrl)} alt={String(course.title || "")} className="aspect-video w-full object-cover" />
+                <CreatorImage
+                  src={String(course.imageUrl)}
+                  alt={String(course.title || "")}
+                  variant="card"
+                  className="w-full"
+                />
               ) : (
                 <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900" />
               )}
@@ -624,7 +660,9 @@ export function GamesRenderer({ props }: RendererProps) {
           {games.map((game: Record<string, string>, i: number) => (
             <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-center">
               {game.logoUrl ? (
-                <img src={game.logoUrl} alt={game.name} className="mx-auto mb-3 h-20 w-20 rounded-full object-cover" />
+                <div className="mx-auto mb-3 h-20 w-20">
+                  <CreatorImage src={game.logoUrl} alt={game.name} variant="logo" />
+                </div>
               ) : (
                 <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-zinc-600">
                   {(game.name || "G")[0]}
@@ -668,11 +706,11 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                 style={{ aspectRatio: isVideo ? "9 / 16" : "1 / 1" }}
               >
                 {(item.thumbnailUrl || item.url) ? (
-                  <img
+                  <CreatorImage
                     src={item.thumbnailUrl || item.url}
                     alt={item.caption ?? ""}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
+                    variant="gallery"
+                    className="h-full w-full transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-zinc-800">
