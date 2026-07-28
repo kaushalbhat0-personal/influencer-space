@@ -3,11 +3,10 @@
 import { useState, useCallback } from "react";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { ImageUpload } from "@/components/ui/ImageUpload";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { supabaseClient, BUCKET } from "@/lib/supabase";
+import { MediaUploadField } from "@/components/shared/MediaUploadField";
 import { useAutosave } from "@/features/_shared/hooks/use-autosave";
 import type { ProfileData, SocialLink } from "../types";
 import { updateProfile } from "../actions";
@@ -17,26 +16,9 @@ interface ProfilePageProps {
   tenantId: string;
 }
 
-async function uploadFile(file: File, tenantId: string): Promise<string> {
-  const ext = file.name.split(".").pop();
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(7);
-  const path = `${tenantId}/profile/${timestamp}-${random}.${ext}`;
-
-  const { data, error: uploadError } = await supabaseClient.storage
-    .from(BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: true });
-
-  if (uploadError) throw new Error(uploadError.message);
-
-  const { data: urlData } = supabaseClient.storage.from(BUCKET).getPublicUrl(data.path);
-  return urlData.publicUrl;
-}
-
 export function ProfilePage({ initialData, tenantId }: ProfilePageProps) {
   const [data, setData] = useState<ProfileData>(initialData);
   const [dirty, setDirty] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const save = useCallback(async (d: ProfileData) => {
     await updateProfile(d);
@@ -67,30 +49,23 @@ export function ProfilePage({ initialData, tenantId }: ProfilePageProps) {
     update("socialLinks", links);
   };
 
-  async function handleAvatarUpload(file: File | null) {
-    if (!file) return;
-    setAvatarUploading(true);
-    try {
-      const url = await uploadFile(file, tenantId);
-      update("avatarUrl", url);
-    } catch {
-      // upload error handled by autosave skip
-    } finally {
-      setAvatarUploading(false);
-    }
-  }
-
   return (
     <FeaturePage title="Profile" description="Manage your public creator profile.">
       <div className="grid gap-6 lg:grid-cols-2">
         <GlassCard className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Avatar</h3>
-          <ImageUpload
-            onChange={handleAvatarUpload}
-            currentUrl={data.avatarUrl}
+          <MediaUploadField
             label="Profile Photo"
+            currentUrl={data.avatarUrl}
+            folder="profile"
+            entityType="profile"
+            entityId={tenantId}
+            entityField="avatarAssetId"
+            onUploadComplete={({ assetId, url }) => {
+              update("avatarAssetId", assetId);
+              update("avatarUrl", url);
+            }}
           />
-          {avatarUploading && <p className="text-xs text-zinc-500">Uploading...</p>}
         </GlassCard>
 
         <GlassCard className="space-y-4 p-6">

@@ -10,7 +10,6 @@ import {
 import type { MilestoneData } from "@/actions/milestone.types";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
-import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
 import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 export function MilestonesManager({
@@ -87,18 +86,12 @@ export function MilestonesManager({
   async function handleDelete(id: string, name: string) {
     if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
 
-    const milestone = milestones.find((m) => m.id === id);
-
     setMilestones((prev) => prev.filter((m) => m.id !== id));
 
     startTransition(async () => {
       const result = await removeMilestone(id, tenantId);
       if (result.success) {
         showToast("success", `"${name}" deleted`);
-        if (milestone?.imageUrl) {
-          const filePath = extractSupabaseFilePath(milestone.imageUrl);
-          if (filePath) await deleteSupabaseFile(filePath);
-        }
         router.refresh();
       } else {
         setMilestones((prev) => [...prev]);

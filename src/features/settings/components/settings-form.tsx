@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { VideoUpload } from "@/components/ui/VideoUpload";
 import { supabaseClient, BUCKET } from "@/lib/supabase";
-import { extractSupabaseFilePath, deleteSupabaseFile } from "@/utils/storage";
 import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
 import type { HeroDataType } from "@/config/hero";
@@ -153,7 +152,6 @@ export function SettingsForm({
     setVideoSave({ pending: true, state: { success: false } });
 
     const formData = new FormData();
-    const originalVideoUrl = heroData.videoUrl || "";
 
     if (videoFile) {
       try {
@@ -175,11 +173,6 @@ export function SettingsForm({
     setVideoSave({ pending: false, state: result });
 
     if (result.success) {
-      const finalVideoUrl = (formData.get("videoUrl") as string) || "";
-      if (originalVideoUrl && originalVideoUrl !== finalVideoUrl) {
-        const oldPath = extractSupabaseFilePath(originalVideoUrl);
-        if (oldPath) await deleteSupabaseFile(oldPath);
-      }
       setTimeout(() => router.refresh(), 50);
     }
   }
@@ -188,7 +181,6 @@ export function SettingsForm({
     setPosterSave({ pending: true, state: { success: false } });
 
     const formData = new FormData();
-    const originalPosterUrl = heroData.posterUrl || "";
 
     if (posterFile) {
       try {
@@ -210,11 +202,6 @@ export function SettingsForm({
     setPosterSave({ pending: false, state: result });
 
     if (result.success) {
-      const finalPosterUrl = (formData.get("posterUrl") as string) || "";
-      if (originalPosterUrl && originalPosterUrl !== finalPosterUrl) {
-        const oldPath = extractSupabaseFilePath(originalPosterUrl);
-        if (oldPath) await deleteSupabaseFile(oldPath);
-      }
       setTimeout(() => router.refresh(), 50);
     }
   }
