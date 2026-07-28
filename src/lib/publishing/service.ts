@@ -21,6 +21,7 @@ import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
+import { themeRegistry } from "@/lib/theme/registry-new";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
 
@@ -100,8 +101,9 @@ export class PublishingService {
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
 
-      const dbThemeColors = ((websiteFull?.themeColors ?? {}) as Record<string, string>);
-      const dbThemeFonts = ((websiteFull?.themeFonts ?? {}) as Record<string, string>);
+      const resolvedTheme = themeRegistry.resolveThemeForSnapshot(
+        websiteFull?.themePackageId ?? "com.creatos.neon-dark",
+      );
       const canonicalSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
         _version: 1,
@@ -130,18 +132,18 @@ export class PublishingService {
           })),
         },
         theme: {
-          packageId: websiteFull?.themePackageId ?? "neon-dark",
+          packageId: resolvedTheme?.packageId ?? websiteFull?.themePackageId ?? "com.creatos.neon-dark",
           colors: {
-            primary: dbThemeColors?.primary ?? "#6366F1",
-            secondary: dbThemeColors?.secondary ?? "#818CF8",
-            accent: dbThemeColors?.accent ?? "#A5B4FC",
-            background: dbThemeColors?.background ?? "#09090b",
-            foreground: dbThemeColors?.foreground ?? "#fafafa",
-            muted: dbThemeColors?.muted ?? "#a1a1aa",
+            primary: resolvedTheme?.colors.primary ?? "#6366F1",
+            secondary: resolvedTheme?.colors.secondary ?? "#818CF8",
+            accent: resolvedTheme?.colors.accent ?? "#A5B4FC",
+            background: resolvedTheme?.colors.background ?? "#09090b",
+            foreground: resolvedTheme?.colors.foreground ?? "#fafafa",
+            muted: resolvedTheme?.colors.muted ?? "#a1a1aa",
           },
           typography: {
-            heading: dbThemeFonts?.heading ?? "Inter",
-            body: dbThemeFonts?.body ?? "Inter",
+            heading: resolvedTheme?.typography.heading ?? "Inter",
+            body: resolvedTheme?.typography.body ?? "Inter",
           },
         },
         navigation: navItems.map((n) => ({
@@ -198,8 +200,7 @@ export class PublishingService {
         navigationService.getOrGenerate(tenantId),
       ]);
 
-      const dbThemeColors = (website.themeColors ?? {}) as Record<string, string>;
-      const dbThemeFonts = (website.themeFonts ?? {}) as Record<string, string>;
+      const resolvedTheme = themeRegistry.resolveThemeForSnapshot(website.themePackageId ?? "com.creatos.neon-dark");
       const previewSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
         _version: 1,
@@ -216,9 +217,9 @@ export class PublishingService {
           })),
         },
         theme: {
-          packageId: website.themePackageId,
-          colors: { primary: dbThemeColors?.primary ?? "#6366F1", secondary: dbThemeColors?.secondary ?? "#818CF8", accent: dbThemeColors?.accent ?? "#A5B4FC", background: dbThemeColors?.background ?? "#09090b", foreground: dbThemeColors?.foreground ?? "#fafafa", muted: dbThemeColors?.muted ?? "#a1a1aa" },
-          typography: { heading: dbThemeFonts?.heading ?? "Inter", body: dbThemeFonts?.body ?? "Inter" },
+          packageId: resolvedTheme?.packageId ?? website.themePackageId ?? "com.creatos.neon-dark",
+          colors: { primary: resolvedTheme?.colors.primary ?? "#6366F1", secondary: resolvedTheme?.colors.secondary ?? "#818CF8", accent: resolvedTheme?.colors.accent ?? "#A5B4FC", background: resolvedTheme?.colors.background ?? "#09090b", foreground: resolvedTheme?.colors.foreground ?? "#fafafa", muted: resolvedTheme?.colors.muted ?? "#a1a1aa" },
+          typography: { heading: resolvedTheme?.typography.heading ?? "Inter", body: resolvedTheme?.typography.body ?? "Inter" },
         },
         navigation: navItems.map((n) => ({
           id: n.id,
