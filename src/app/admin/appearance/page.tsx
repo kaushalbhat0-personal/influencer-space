@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { entitlement } from "@/modules/billing/application/entitlements";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { prisma } from "@/lib/prisma";
+import { entitlementService } from "@/lib/platform/capabilities/entitlements";
 import { AppearanceManager } from "./_components/appearance-manager";
 import Link from "next/link";
 
@@ -29,14 +29,15 @@ export default async function AppearancePage() {
   }
 
   const workspace = await workspaceRepository.findByTenantId(tenantId);
-  let canCustomBranding = false;
+  let planTier: string | null = null;
   if (workspace) {
     const sub = await prisma.billingSubscription.findUnique({ where: { workspaceId: workspace.id } });
     if (sub) {
       const plan = await prisma.billingPlan.findUnique({ where: { id: sub.planId } });
-      if (plan) canCustomBranding = entitlement.has(plan.code, "custom_branding");
+      if (plan) planTier = plan.code;
     }
   }
+  const canCustomBranding = entitlementService.has(planTier as Parameters<typeof entitlementService.has>[0], "custom_branding");
   if (!canCustomBranding) {
     return (
       <div>
