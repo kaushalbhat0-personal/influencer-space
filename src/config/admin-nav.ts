@@ -3,7 +3,7 @@ import {
   Trophy, Rss, Link2, BarChart3, MessageSquare,
   Layout, Palette, Search, Globe, CreditCard,
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
-  User, Menu, Sparkles, Gamepad as GamepadIcon,
+  User, Menu, Sparkles, Gamepad as GamepadIcon, FolderOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -43,6 +43,7 @@ export const ADMIN_NAV: NavConfig = {
     {
       label: "Content", collapsible: true,
       items: [
+        { href: "/admin/media", label: "Media Library", icon: FolderOpen },
         { href: "/admin/settings", label: "Hero", icon: Sparkles },
         { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
         { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
