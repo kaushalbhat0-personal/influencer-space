@@ -21,7 +21,7 @@ import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
-import { themeRegistry } from "@/lib/theme/registry-new";
+import { themeResolver } from "@/lib/theme/resolver-new";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
 
@@ -101,7 +101,7 @@ export class PublishingService {
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
 
-      const resolvedTheme = themeRegistry.resolveThemeForSnapshot(
+      const resolvedTheme = themeResolver.resolveForSnapshot(
         websiteFull?.themePackageId ?? "com.creatos.neon-dark",
       );
       const canonicalSnapshot: PublishedSnapshot = {
@@ -200,7 +200,7 @@ export class PublishingService {
         navigationService.getOrGenerate(tenantId),
       ]);
 
-      const resolvedTheme = themeRegistry.resolveThemeForSnapshot(website.themePackageId ?? "com.creatos.neon-dark");
+      const resolvedTheme = themeResolver.resolveForSnapshot(website.themePackageId ?? "com.creatos.neon-dark");
       const previewSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
         _version: 1,

@@ -82,33 +82,6 @@ export class ThemeRegistry {
     return Array.from(cats).sort();
   }
 
-  resolveThemeForSnapshot(themeId: string, mode: "light" | "dark" = "dark"): {
-    packageId: string;
-    colors: { primary: string; secondary: string; accent: string; background: string; foreground: string; muted: string };
-    typography: { heading: string; body: string };
-  } | null {
-    const theme = this.getById(themeId);
-    if (!theme) return null;
-
-    const variant = theme.variants.find((v) => v.mode === mode) ?? theme.variants[0];
-    if (!variant) return null;
-
-    return {
-      packageId: theme.id,
-      colors: {
-        primary: variant.tokens.colors.primary,
-        secondary: variant.tokens.colors.secondary,
-        accent: variant.tokens.colors.accent,
-        background: variant.tokens.colors.background,
-        foreground: variant.tokens.colors.textPrimary,
-        muted: variant.tokens.colors.textMuted,
-      },
-      typography: {
-        heading: variant.tokens.typography.headingFont,
-        body: variant.tokens.typography.bodyFont,
-      },
-    };
-  }
 }
 
 export const themeRegistry = new ThemeRegistry();
