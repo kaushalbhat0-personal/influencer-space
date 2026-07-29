@@ -1,0 +1,1 @@
+﻿ALTER TABLE ""Brand"" ADD COLUMN IF NOT EXISTS ""avatarAssetId"" UUID;

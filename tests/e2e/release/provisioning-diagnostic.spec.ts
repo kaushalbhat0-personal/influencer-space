@@ -80,9 +80,13 @@ test.describe("Provisioning Pipeline Diagnostic", () => {
         if (urlMatch) log("7-storefront-url", urlMatch[0]);
       } else if (bodyText.includes("fail")) {
         log("7-provision-result", "failed");
-        const errMatch = bodyText.match(/Provision[^.]*\./);
-        if (errMatch) log("7-error", errMatch[0]);
-        else log("7-error", "Provision failed (no detail)");
+        const errIndex = bodyText.indexOf("PrismaClientKnownRequestError");
+        if (errIndex >= 0) {
+          const errDetail = bodyText.substring(errIndex, errIndex + 300);
+          log("7-error-detail", errDetail);
+        } else {
+          log("7-error", "Provision failed (no Prisma detail)");
+        }
       } else {
         log("7-provision-result", "unknown");
         log("7-body-preview", bodyText.substring(0, 500));
