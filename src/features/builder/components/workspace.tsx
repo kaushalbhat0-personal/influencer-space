@@ -13,7 +13,6 @@ import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-overview.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { websiteHealthEngine } from "@/lib/platform/health/engine";
 import { Upload, ExternalLink } from "lucide-react";
 
 export function BuilderWorkspace() {
@@ -65,16 +64,18 @@ export function BuilderWorkspace() {
 
     getBuilderOverview().then((r) => {
       if (r.success && r.data) {
-        setThemeName(r.data.website.themePackageId);
-        setCurrentThemeId(r.data.website.themePackageId);
-        setBlueprintName(r.data.blueprint?.name ?? null);
-        setPlanCode(r.data.subscription?.plan ?? null);
-        setCreatorName(r.data.tenant.name);
-        setOverviewData(r.data);
-        const tenantId = r.data.tenant.id;
-        websiteHealthEngine.evaluate(tenantId).then((health) => {
-          setCompletionPct(health.overallScore);
-        }).catch(() => {});
+        const d = r.data;
+        setThemeName(d.website.themePackageId);
+        setCurrentThemeId(d.website.themePackageId);
+        setBlueprintName(d.blueprint?.name ?? null);
+        setPlanCode(d.subscription?.plan ?? null);
+        setCreatorName(d.tenant.name);
+        setOverviewData(d);
+        import("@/actions/health.actions").then((mod) =>
+          mod.getWebsiteHealthScore(d.tenant.id).then((h) => {
+            if (h.success && h.score != null) setCompletionPct(h.score);
+          })
+        ).catch(() => {});
       }
     }).catch(() => {});
   }, []);
