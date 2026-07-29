@@ -32,7 +32,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ImportAnalysisResult | null>(null);
   const [provisioning, setProvisioning] = useState(false);
-  const [importResult, setImportResult] = useState<{ success: boolean; storefrontUrl: string; creatorName: string } | null>(null);
+  const [importResult, setImportResult] = useState<{ success: boolean; storefrontUrl: string; creatorName: string; error?: string } | null>(null);
   const [importRecords, setImportRecords] = useState<ImportRecord[]>([]);
 
   // Domains
@@ -52,7 +52,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
   async function handleProvision(profile: CreatorProfile) {
     setProvisioning(true);
     const result = await importCreator(source, input, profile);
-    setImportResult({ success: result.success, storefrontUrl: result.storefrontUrl, creatorName: profile.brandName });
+    setImportResult({ success: result.success, storefrontUrl: result.storefrontUrl, creatorName: profile.brandName, error: result.error });
     setImportRecords((prev) => [result.record, ...prev]);
     setProvisioning(false);
     if (result.success) {
@@ -191,7 +191,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
                   </div>
                 )}
                 {!importResult.success && (
-                  <p className="text-red-300/80 text-xs">Check the import history for details.</p>
+                  <p className="text-red-300/80 text-xs">{importResult.error ?? "Check the import history for details."}</p>
                 )}
                 <button onClick={() => { setAnalysis(null); setImportResult(null); }} className="text-xs text-zinc-500 hover:text-zinc-300 mt-2">Import another</button>
               </motion.div>
