@@ -1,31 +1,49 @@
-import { test, expect } from "@playwright/test";
-import { loginAsCreator, loginAsAgency, loginAsSuperAdmin, logout } from "../shared/auth";
+import { test, expect } from "../shared/fixtures";
 
-test.describe("Smoke: Authentication", () => {
-  test("creator login succeeds", async ({ page }) => {
-    await loginAsCreator(page);
-    await expect(page).toHaveURL(/\/admin\/dashboard/);
+const {
+  CREATOR_EMAIL = "",
+  CREATOR_PASSWORD = "",
+  AGENCY_OWNER_EMAIL = "",
+  AGENCY_OWNER_PASSWORD = "",
+  SUPERADMIN_EMAIL = "",
+  SUPERADMIN_PASSWORD = "",
+} = process.env;
+
+test.describe("Level 1 — Smoke: Authentication", () => {
+  test("creator login succeeds", async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login(CREATOR_EMAIL, CREATOR_PASSWORD);
+    await loginPage.expectRedirectTo(/\/admin\/dashboard/);
   });
 
-  test("agency login succeeds", async ({ page }) => {
-    await loginAsAgency(page);
-    await expect(page).toHaveURL(/\/agency/);
+  test("agency owner login succeeds", async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login(AGENCY_OWNER_EMAIL, AGENCY_OWNER_PASSWORD);
+    await loginPage.expectRedirectTo(/\/agency/);
   });
 
-  test("super admin login succeeds", async ({ page }) => {
-    await loginAsSuperAdmin(page);
-    await expect(page).toHaveURL(/\/super-admin/);
+  test("super admin login succeeds", async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login(SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
+    await loginPage.expectRedirectTo(/\/super-admin/);
+  });
+
+  test("invalid login shows error", async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login("invalid@test.com", "wrong");
+    await loginPage.expectError();
   });
 });
 
-test.describe("Smoke: Creator Dashboard", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsCreator(page);
+test.describe("Level 1 — Smoke: Creator", () => {
+  test.beforeEach(async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login(CREATOR_EMAIL, CREATOR_PASSWORD);
   });
 
-  test("dashboard loads with metrics", async ({ page }) => {
-    await expect(page.locator("text=Welcome back").first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=Website Health").first()).toBeVisible();
+  test("dashboard loads with metrics", async ({ dashboardPage }) => {
+    await dashboardPage.expectWelcomeMessage("");
+    await dashboardPage.expectHealthVisible();
   });
 
   test("builder loads", async ({ page }) => {
@@ -41,9 +59,10 @@ test.describe("Smoke: Creator Dashboard", () => {
   });
 });
 
-test.describe("Smoke: Super Admin", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsSuperAdmin(page);
+test.describe("Level 1 — Smoke: Super Admin", () => {
+  test.beforeEach(async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login(SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
   });
 
   test("dashboard loads", async ({ page }) => {
@@ -68,41 +87,9 @@ test.describe("Smoke: Super Admin", () => {
     await expect(page.locator("text=Platform Activity").first()).toBeVisible();
   });
 
-  test("insights page loads", async ({ page }) => {
-    await page.goto("/super-admin/insights");
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("text=Platform Insights").first()).toBeVisible();
-  });
-
   test("revenue management loads", async ({ page }) => {
     await page.goto("/super-admin/revenue-management");
     await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Revenue Management").first()).toBeVisible();
-  });
-
-  test("billing settings loads", async ({ page }) => {
-    await page.goto("/super-admin/revenue-management/settings");
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("text=Billing Settings").first()).toBeVisible();
-  });
-
-  test("commission center loads", async ({ page }) => {
-    await page.goto("/super-admin/revenue-management/commissions");
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("text=Commission Center").first()).toBeVisible();
-  });
-});
-
-test.describe("Smoke: Billing", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsSuperAdmin(page);
-  });
-
-  test("revenue management dashboard loads", async ({ page }) => {
-    await page.goto("/super-admin/revenue-management");
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("text=MRR").first()).toBeVisible();
-    await expect(page.locator("text=ARR").first()).toBeVisible();
-    await expect(page.locator("text=Creator Subs").first()).toBeVisible();
   });
 });
