@@ -3,8 +3,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 
-const FREE_PLAN = { plan: "STARTER", seats: 1, status: "FREE" };
-
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for") ?? "register";
   const rateCheck = checkRateLimit(`register:${ip}`, "/api/auth/register");
@@ -57,15 +55,6 @@ export async function POST(req: Request) {
         await tx.user.update({
           where: { id: user.id },
           data: { agencyId: agency.id },
-        });
-
-        await tx.agencySubscription.create({
-          data: {
-            agencyId: agency.id,
-            plan: FREE_PLAN.plan,
-            maxManagedTenants: FREE_PLAN.seats,
-            status: FREE_PLAN.status,
-          },
         });
 
         const billingAccount = await tx.billingAccount.create({

@@ -29,7 +29,7 @@ async function main() {
     "newsletterSubscriber", "offering", "page", "product", "productOrder",
     "providerAccount", "providerFetchLog", "purchase", "publishSnapshot",
     "section", "setting", "socialStats", "subscription",
-    "agencySubscription", "agencyTenant", "timelineEvent", "workspaceMember",
+    "agencyTenant", "timelineEvent", "workspaceMember",
     "workflow", "workflowExecution", "youTubeQuotaUsage",
   ] as const;
 
@@ -138,7 +138,6 @@ async function main() {
   await safeDelete("Workspace", () => prisma.workspace.deleteMany());
 
   // Legacy billing + tenant-adjacent
-  await safeDelete("AgencySubscription", () => prisma.agencySubscription.deleteMany());
   await safeDelete("Subscription", () => prisma.subscription.deleteMany());
 
   // Agencies + tenants + users (preserve super admins)

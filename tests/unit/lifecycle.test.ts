@@ -11,7 +11,6 @@ const {
   mockPrismaUserCreate,
   mockPrismaUserUpdate,
   mockPrismaWebsiteAgencyCreate,
-  mockPrismaAgencySubCreate,
   mockPrismaBillingAccountCreate,
   mockPrismaBillingPlanFindUnique,
   mockPrismaBillingSubCreate,
@@ -21,7 +20,7 @@ const {
   mockPrismaUserCreate: vi.fn(),
   mockPrismaUserUpdate: vi.fn(),
   mockPrismaWebsiteAgencyCreate: vi.fn(),
-  mockPrismaAgencySubCreate: vi.fn(),
+
   mockPrismaBillingAccountCreate: vi.fn(),
   mockPrismaBillingPlanFindUnique: vi.fn(),
   mockPrismaBillingSubCreate: vi.fn(),
@@ -67,7 +66,6 @@ vi.mock("@/lib/prisma", () => ({
     setting: { findUnique: mockSettingFindUnique },
     website: { findUnique: mockWebsiteFindUnique },
     websiteAgency: { create: mockPrismaWebsiteAgencyCreate },
-    agencySubscription: { create: mockPrismaAgencySubCreate },
     billingAccount: { create: mockPrismaBillingAccountCreate },
     billingPlan: { findUnique: mockPrismaBillingPlanFindUnique },
     billingSubscription: { create: mockPrismaBillingSubCreate },
@@ -133,7 +131,6 @@ beforeEach(() => {
       cb({
         user: { create: mockPrismaUserCreate, update: mockPrismaUserUpdate },
         websiteAgency: { create: mockPrismaWebsiteAgencyCreate },
-        agencySubscription: { create: mockPrismaAgencySubCreate },
         billingAccount: { create: mockPrismaBillingAccountCreate },
         billingPlan: { findUnique: mockPrismaBillingPlanFindUnique },
         billingSubscription: { create: mockPrismaBillingSubCreate },
