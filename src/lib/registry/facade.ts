@@ -1,11 +1,11 @@
-import { themeRegistry } from "@/lib/theme/registry";
+import { themeRegistry } from "@/lib/theme/registry-new";
+import type { ThemeDefinition } from "@/lib/theme/types-new";
 import { surfaceRegistry } from "@/lib/module/surface-registry";
 import { ModuleRegistry } from "@/lib/module/registry";
 import { registryEvents } from "./events";
 import { DiagnosticEngine } from "./diagnostics";
 
-import type { ThemeId, Theme, ThemeManifest, ThemeValidationError, SurfaceId } from "@/lib/theme/types";
-import type { RegistryEntry as ThemeRegistryEntry } from "@/lib/theme/registry";
+import type { ThemeId, SurfaceId } from "@/lib/theme/types";
 import type { ModuleId, ModuleDefinition, ModuleQuery, ModuleValidationResult, DependencyGraph, SemVer, RegistryEntry as ModuleRegistryEntry, ModuleLifecycleState } from "@/lib/module/types";
 import type { SurfaceDefinition, SurfaceValidationResult } from "@/lib/module/surface-registry";
 import type { DiagnosticReport } from "./diagnostics";
@@ -58,15 +58,15 @@ export class RegistryFacade {
   }
 
   validateAll(): {
-    theme: Map<ThemeId, import("@/lib/theme/types").ThemeValidationResult>;
+    theme: { id: string; name: string; status: string }[];
     module: Map<ModuleId, ModuleValidationResult>;
     surface: SurfaceValidationResult;
   } {
-    const themeResults = new Map<ThemeId, import("@/lib/theme/types").ThemeValidationResult>();
-    for (const id of this.registries.theme.listIds()) {
-      const result = this.registries.theme.validate(id);
-      if (result) themeResults.set(id, result);
-    }
+    const themeResults = this.registries.theme.getAll().map((t) => ({
+      id: t.id,
+      name: t.name,
+      status: t.status,
+    }));
 
     const moduleResults = this.registries.module.validateAll();
 
@@ -103,7 +103,7 @@ export class RegistryFacade {
 
     return {
       status,
-      themeCount: this.registries.theme.size,
+      themeCount: this.registries.theme.count(),
       moduleCount: this.registries.module.size,
       surfaceCount: this.registries.surface.size,
       eventListenerCount: this.events.listenerCount(),
@@ -114,7 +114,7 @@ export class RegistryFacade {
 
 export const registryFacade = new RegistryFacade();
 
-export type { ThemeId, Theme, ThemeManifest, ThemeValidationError, ThemeRegistryEntry };
+export type { ThemeId };
 export type { ModuleId, ModuleDefinition, ModuleQuery, ModuleValidationResult, DependencyGraph, SemVer, ModuleRegistryEntry, ModuleLifecycleState };
 export type { SurfaceId, SurfaceDefinition, SurfaceValidationResult };
 export type { DiagnosticReport };

@@ -1,7 +1,6 @@
 export { themePresetRegistry } from "./presets";
 export type { ThemePreset } from "./presets";
 export { ThemeService, themeService } from "./service";
-export type { ThemeOverrides } from "./types";
 
 // ── Canonical Theme Registry (THEME-01A) ──────────────────────
 export { ThemeRegistry, themeRegistry } from "./registry-new";

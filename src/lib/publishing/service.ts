@@ -22,11 +22,10 @@ import type { BuilderPage } from "@/lib/builder/types";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
 import { themeResolver } from "@/lib/theme/resolver-new";
-import { PLATFORM_DEFAULT_THEME_ID } from "@/lib/theme/default-theme";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
 
-const FALLBACK_THEME_ID = PLATFORM_DEFAULT_THEME_ID ?? "com.creatos.neon-dark";
+const FALLBACK_THEME_ID = "com.creatos.neon-dark";
 
 export type PublishState = "draft" | "preview" | "live" | "archived";
 

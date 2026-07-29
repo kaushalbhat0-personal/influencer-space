@@ -1,6 +1,25 @@
 export type ThemeCategory =
-  | "minimal" | "creator" | "business" | "portfolio" | "photography"
-  | "education" | "gaming" | "podcast" | "luxury" | "ecommerce" | "agency";
+  | "minimal" | "creator" | "business & agency" | "portfolio & creative" | "photography"
+  | "coach & education" | "gaming" | "podcast" | "luxury & lifestyle" | "ecommerce" | "agency"
+  | "food & restaurant" | "music" | "health";
+
+/** Display labels for each category */
+export const CATEGORY_LABELS: Record<ThemeCategory, string> = {
+  "minimal": "Minimal",
+  "creator": "Creator",
+  "business & agency": "Business & Agency",
+  "portfolio & creative": "Portfolio & Creative",
+  "photography": "Photography",
+  "coach & education": "Coach & Education",
+  "gaming": "Gaming",
+  "podcast": "Podcast",
+  "luxury & lifestyle": "Luxury & Lifestyle",
+  "ecommerce": "E-Commerce",
+  "agency": "Agency",
+  "food & restaurant": "Food & Restaurant",
+  "music": "Music",
+  "health": "Health",
+};
 
 export type ThemeStatus = "active" | "deprecated" | "coming_soon";
 
@@ -114,5 +133,63 @@ export interface ThemeDefinition {
   supportsRTL: boolean;
   previewImage?: string;
   thumbnail?: string;
+
+  /** Cover/hero image for the theme detail page */
+  coverImage?: string;
+
+  /** Up to 6 key color swatches for visual preview */
+  colorSwatches?: string[];
+
+  /** Feature this theme on the marketplace home */
+  featured?: boolean;
+
+  /** Industry IDs this theme is designed for */
+  industries?: string[];
+
+  /** Blueprint IDs this theme is known to work well with */
+  supportedBlueprints?: string[];
+
+  /** Blueprint IDs this theme is incompatible with */
+  incompatibleBlueprints?: string[];
+
+  /** Minimum platform version required */
+  minimumPlatformVersion?: string;
+
+  /** Maximum platform version allowed */
+  maximumPlatformVersion?: string;
+
+  /** Capabilities required to use this theme (e.g. "premium_themes") */
+  requiredCapabilities?: string[];
+
+  /** ISO date of initial release */
+  releaseDate?: string;
+
+  /** ISO date of last update */
+  updatedAt?: string;
+
+  /** URL to changelog */
+  changelog?: string;
+
+  /** URL to documentation */
+  documentation?: string;
+
+  /** Aggregate marketplace rating (0-5) */
+  rating?: number;
+
+  /** URL to support / contact */
+  support?: string;
+
   variants: ThemeVariant[];
+}
+
+export interface ThemeRegistryListOptions {
+  category?: string;
+  premium?: boolean;
+  search?: string;
+  entitlements?: string[];
+  industries?: string[];
+  featured?: boolean;
+  sort?: "name" | "newest" | "updated" | "rating";
+  limit?: number;
+  offset?: number;
 }

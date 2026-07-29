@@ -98,7 +98,7 @@ export class BlueprintRegistry {
 
   resolveInheritedBlueprint(blueprintId: string): BlueprintDefinition {
     const bp = this.getById(blueprintId);
-    if (!bp) throw new Error(`Blueprint not found: ${blueprintId}`);
+    if (!bp) throw new Error(`Website template not found: ${blueprintId}`);
 
     if (!bp.inheritance.parentId) return bp;
 

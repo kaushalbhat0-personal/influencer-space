@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import type { ThemeDefinition } from "@/lib/theme/types-new";
+import { CATEGORY_LABELS } from "@/lib/theme/types-new";
 
-export function ThemeGalleryClient({
+export function ThemeMarketplaceClient({
   themes,
   categories,
 }: {
@@ -39,7 +40,7 @@ export function ThemeGalleryClient({
         />
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
           <option value="">All categories</option>
-          {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+          {categories.map((cat) => <option key={cat} value={cat}>{CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] || cat}</option>)}
         </select>
         <select value={premiumFilter === null ? "" : premiumFilter ? "premium" : "free"} onChange={(e) => setPremiumFilter(e.target.value === "" ? null : e.target.value === "premium")} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
           <option value="">All themes</option>
@@ -65,7 +66,7 @@ export function ThemeGalleryClient({
                 <p className="text-sm font-medium text-white">{theme.name}</p>
                 {theme.premium && <span className="rounded bg-amber-900/60 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">PRO</span>}
               </div>
-              <p className="text-[10px] text-zinc-500">{theme.category} &middot; v{theme.version}</p>
+              <p className="text-[10px] text-zinc-500">{CATEGORY_LABELS[theme.category] || theme.category} &middot; v{theme.version}</p>
               <p className="line-clamp-2 text-[11px] text-zinc-400">{theme.description}</p>
               <div className="flex flex-wrap gap-1 pt-1">
                 {theme.variants.map((v) => (

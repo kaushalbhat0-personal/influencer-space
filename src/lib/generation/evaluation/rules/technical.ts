@@ -25,7 +25,7 @@ export class BlueprintValidationRule extends BaseEvaluationRule {
   readonly id = "technical.blueprint_validation";
   readonly category = "technical" as const;
   readonly weight = 15;
-  readonly description = "WebsiteBlueprint is valid and complete";
+  readonly description = "Website template is valid and complete";
 
   evaluate(ctx: EvaluationContext): EvaluationRuleResult {
     const bp = ctx.blueprint;
@@ -36,8 +36,8 @@ export class BlueprintValidationRule extends BaseEvaluationRule {
     if (bp.sections.length === 0) issues.push("no sections");
     if (bp.seo.title.length === 0) issues.push("missing SEO title");
 
-    if (issues.length === 0) return this.pass("Blueprint is valid and complete");
-    return this.fail(`Blueprint issues: ${issues.join(", ")}`, {
+    if (issues.length === 0) return this.pass("Website template is valid and complete");
+    return this.fail(`Website template issues: ${issues.join(", ")}`, {
       action: "regenerate", summary: "Fix blueprint validation errors", details: `Resolve: ${issues.join(", ")} before publishing.`, priority: "high",
     }, issues.length * 5);
   }

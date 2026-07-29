@@ -8,7 +8,7 @@ export interface ThemeValidationResult {
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 const RGBA_COLOR = /^rgba?\(/;
-const VALID_CATEGORIES = ["minimal", "creator", "business", "portfolio", "photography", "education", "gaming", "podcast", "luxury", "ecommerce", "agency"];
+const VALID_CATEGORIES = ["minimal", "creator", "business & agency", "portfolio & creative", "photography", "coach & education", "gaming", "podcast", "luxury & lifestyle", "ecommerce", "agency", "food & restaurant", "music", "health"];
 
 function validateColorTokens(colors: ColorTokens): string[] {
   const errors: string[] = [];

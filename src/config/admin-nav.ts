@@ -61,8 +61,8 @@ export const ADMIN_NAV: NavConfig = {
     {
       label: "Design", collapsible: true,
       items: [
-        { href: "/admin/themes", label: "Theme Gallery", icon: Paintbrush },
-        { href: "/admin/blueprints", label: "Blueprints", icon: LayoutTemplate },
+        { href: "/admin/themes", label: "Theme Marketplace", icon: Paintbrush },
+        { href: "/admin/blueprints", label: "Website Templates", icon: LayoutTemplate },
         { href: "/admin/appearance", label: "Theme Settings", icon: Palette },
         { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
         { href: "/builder", label: "Layout Builder", icon: Layout },

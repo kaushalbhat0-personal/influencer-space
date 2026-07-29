@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Smartphone, Tablet, Monitor } from "lucide-react";
-import type { ThemeOverrides } from "@/lib/theme";
+import type { ThemeOverrides } from "@/lib/theme/types";
 
-export type { ThemeOverrides } from "@/lib/theme";
+export type { ThemeOverrides } from "@/lib/theme/types";
 
 type Device = "mobile" | "tablet" | "desktop";
 

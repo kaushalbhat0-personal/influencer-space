@@ -1,4 +1,4 @@
-import { themeRegistry } from "@/lib/theme/registry";
+import { themeRegistry } from "@/lib/theme/registry-new";
 import { surfaceRegistry } from "@/lib/module/surface-registry";
 import { registryFacade } from "@/lib/registry/facade";
 import { registryEvents } from "@/lib/registry/events";
@@ -18,7 +18,6 @@ import type {
   BootstrapHook,
 } from "./types";
 import { DEFAULT_BOOTSTRAP_CONFIG } from "./types";
-import { NEON_DARK_THEME, NEON_DARK_MANIFEST } from "@/lib/theme/default-theme";
 
 function log(...args: unknown[]) {
   if (process.env.DEBUG || process.env.NODE_ENV !== "production") {
@@ -71,9 +70,9 @@ export class PlatformBootstrap {
       });
 
       await this.executePhase("theme-registry", phases, () => {
-        if (this.config.autoRegisterDefaults) {
-          themeRegistry.register(NEON_DARK_THEME, NEON_DARK_MANIFEST, "platform");
-        }
+        // All themes pre-loaded via BuiltInThemeProvider — nothing to register
+        const count = themeRegistry.count();
+        log(`[Bootstrap] ThemeRegistry: ${count} themes available`);
       });
 
       await this.executePhase("surface-registry", phases, () => {
@@ -309,13 +308,12 @@ export class PlatformBootstrap {
   }
 
   private runValidation(): NonNullable<StartupReport["validation"]> {
-    const themeIds = themeRegistry.listIds();
+    const allThemes = themeRegistry.getAll();
     let themesValid = 0;
     let themesWithErrors = 0;
 
-    for (const id of themeIds) {
-      const result = themeRegistry.validate(id);
-      if (result && result.valid) themesValid++;
+    for (const theme of allThemes) {
+      if (theme.status === "active") themesValid++;
       else themesWithErrors++;
     }
 

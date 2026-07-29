@@ -30,7 +30,7 @@ export function BlueprintGalleryClient({
       <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
-          placeholder="Search blueprints..."
+          placeholder="Search templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 min-w-[200px] rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-zinc-600"
@@ -70,7 +70,7 @@ export function BlueprintGalleryClient({
 
       {filtered.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-sm text-zinc-500">No blueprints found matching your criteria.</p>
+          <p className="text-sm text-zinc-500">No templates found matching your criteria.</p>
         </div>
       )}
 
@@ -159,7 +159,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
 
         <div className="mt-6 flex justify-end">
           <button onClick={onClose} className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
-            Select Blueprint
+            Select Template
           </button>
         </div>
       </div>

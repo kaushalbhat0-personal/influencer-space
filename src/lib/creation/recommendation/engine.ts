@@ -79,7 +79,7 @@ export class RecommendationEngine {
     const themeVariant: "light" | "dark" = themeObj?.supportsDarkMode !== false ? "dark" : "light";
 
     if (!topBlueprint || topBlueprint.score < 0) {
-      warnings.push("No strongly recommended blueprint found. Defaulting to Creator.");
+      warnings.push("No strongly recommended template found. Defaulting to Creator.");
     }
 
     return {
@@ -93,7 +93,7 @@ export class RecommendationEngine {
 
   scoreBlueprint(blueprintId: string, ctx: Partial<GenerationContext>): RecommendationScore {
     const bp = blueprintRegistry.getById(blueprintId);
-    if (!bp) return { blueprintId, blueprintName: "Unknown", score: -100, reasons: ["Blueprint not found"] };
+    if (!bp) return { blueprintId, blueprintName: "Unknown", score: -100, reasons: ["Template not found"] };
 
     let score = 0;
     const reasons: string[] = [];
