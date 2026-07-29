@@ -1,6 +1,6 @@
 import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
-import { getPlan } from "@/lib/capabilities";
+import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
 import { validateTransition } from "../domain/lifecycle";
 import { capabilityService } from "@/lib/capabilities";
 import { commissionService } from "@/lib/commission";
@@ -9,6 +9,7 @@ import { logAction } from "@/lib/audit";
 import { platformEventBus } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
 import type { CheckoutResult } from "../domain/types";
+import type { FeatureId } from "@/lib/capabilities/constants";
 
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
@@ -154,6 +155,44 @@ export class BillingService {
       status: sub.status,
       active: sub.status === "ACTIVE" || sub.status === "TRIALING",
     };
+  }
+
+  async getBillingInfo(workspaceId: string, tenantId: string) {
+    const subscription = await billingRepository.findSubscriptionWithPlan(workspaceId);
+    const invoices = await prisma.billingInvoice.findMany({
+      where: { workspaceId },
+      orderBy: { issuedAt: "desc" },
+      take: 50,
+    });
+
+    const planCode = subscription?.plan?.code ?? "creator_free";
+    const plan = getPlan(planCode);
+
+    const products = await prisma.product.count({ where: { tenantId } });
+    const gallery = await prisma.galleryImage.count({ where: { tenantId } });
+    const orders = await prisma.productOrder.count({ where: { tenantId } });
+
+    return {
+      plan: plan ?? { code: "creator_free", family: "creator" as const, name: "Free", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" },
+      subscription: subscription ?? { id: "", accountId: workspaceId, workspaceId, planCode: "creator_free", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
+      invoices: invoices.map((inv) => ({
+        id: inv.id, amount: inv.amount, status: inv.status, issuedAt: inv.issuedAt.toISOString(), planCode: inv.planCode,
+      })),
+      paymentMethods: [],
+      usage: [
+        { feature: "max_products" as FeatureId, used: products, limit: 5 },
+        { feature: "max_gallery" as FeatureId, used: gallery, limit: 10 },
+      ],
+      activeProducts: products,
+      activeGallery: gallery,
+      storageUsed: 0,
+      ordersProcessed: orders,
+      messagesSent: 0,
+    };
+  }
+
+  getPlans() {
+    return getPlansByFamily("creator");
   }
 }
 

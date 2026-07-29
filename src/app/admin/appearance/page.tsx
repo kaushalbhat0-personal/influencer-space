@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { prisma } from "@/lib/prisma";
-import { entitlementService } from "@/lib/platform/capabilities/entitlements";
+import { entitlementService } from "@/lib/capabilities";
 import { AppearanceManager } from "./_components/appearance-manager";
 import Link from "next/link";
 
@@ -37,7 +37,7 @@ export default async function AppearancePage() {
       if (plan) planTier = plan.code;
     }
   }
-  const canCustomBranding = entitlementService.has(planTier as Parameters<typeof entitlementService.has>[0], "custom_branding");
+  const canCustomBranding = entitlementService.has(planTier, "custom_branding");
   if (!canCustomBranding) {
     return (
       <div>

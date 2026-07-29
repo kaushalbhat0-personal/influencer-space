@@ -10,13 +10,71 @@ export class BillingRepository {
     return this.client(tx).billingSubscription.findUnique({ where: { workspaceId } });
   }
 
+  async findSubscriptionWithPlan(workspaceId: string) {
+    const sub = await prisma.billingSubscription.findUnique({
+      where: { workspaceId },
+      include: { plan: { select: { code: true } } },
+    });
+    if (!sub) return null;
+    return sub as BillingSubscription & { plan: { code: string } };
+  }
+
+  async findSubscriptionsByWorkspaceIds(workspaceIds: string[]) {
+    if (workspaceIds.length === 0) return [];
+    return prisma.billingSubscription.findMany({
+      where: { workspaceId: { in: workspaceIds } },
+      include: { plan: true },
+    });
+  }
+
+  async findInvoicesByWorkspaceIds(workspaceIds: string[], limit = 100) {
+    if (workspaceIds.length === 0) return [];
+    return prisma.billingInvoice.findMany({
+      where: { workspaceId: { in: workspaceIds } },
+      orderBy: { issuedAt: "desc" },
+      take: limit,
+    });
+  }
+
+  async findInvoicesByWorkspaceId(workspaceId: string, limit = 50) {
+    return prisma.billingInvoice.findMany({
+      where: { workspaceId },
+      orderBy: { issuedAt: "desc" },
+      take: limit,
+    });
+  }
+
+  async countActiveProSubscriptions() {
+    const proPlans = await prisma.billingPlan.findMany({
+      where: { family: "creator", price: { gt: 0 } },
+      select: { id: true },
+    });
+    const proPlanIds = proPlans.map((p) => p.id);
+    if (proPlanIds.length === 0) return 0;
+    return prisma.billingSubscription.count({
+      where: { planId: { in: proPlanIds }, status: "ACTIVE" },
+    });
+  }
+
+  async countProSubscriptionsLegacy() {
+    return prisma.subscription.count({ where: { plan: "PRO" } });
+  }
+
+  async getAllSubscriptionsWithPlan() {
+    return prisma.billingSubscription.findMany({ include: { plan: true } });
+  }
+
+  async getInvoiceRevenue() {
+    return prisma.billingInvoice.aggregate({
+      _sum: { amount: true },
+      where: { status: "PAID" },
+    });
+  }
+
   async upsertSubscription(workspaceId: string, data: { planId: string; status: string; trialEndsAt?: Date | null; renewsAt?: Date | null }, tx?: Prisma.TransactionClient): Promise<BillingSubscription> {
     const existing = await this.client(tx).billingSubscription.findUnique({ where: { workspaceId } });
     if (existing) {
-      return this.client(tx).billingSubscription.update({
-        where: { workspaceId },
-        data,
-      });
+      return this.client(tx).billingSubscription.update({ where: { workspaceId }, data });
     }
     return this.client(tx).billingSubscription.create({
       data: { accountId: workspaceId, workspaceId, ...data },

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { encode } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
 
@@ -7,13 +9,19 @@ function sleep(ms: number) {
 }
 
 export async function GET(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   const email = request.nextUrl.searchParams.get("email");
 
   if (!email) {
     return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
 
-  // Poll for user creation (webhook may take a few seconds)
   for (let i = 0; i < 30; i++) {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -53,7 +61,6 @@ export async function GET(request: NextRequest) {
     await sleep(1000);
   }
 
-  // Timeout — redirect to login with a hint
   const loginUrl = new URL("/admin/login", request.url);
   loginUrl.searchParams.set("new", "true");
   loginUrl.searchParams.set("email", email);

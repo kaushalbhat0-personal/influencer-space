@@ -85,6 +85,7 @@ model Tenant {
   workflows          Workflow[]
   workflowExecutions WorkflowExecution[]
   website            Website?
+  clientAssignments  ClientAssignment[]
 
   @@index([customDomain])
 }
@@ -175,6 +176,9 @@ model Theme {
   agencyDefaults WebsiteAgency[]   @relation("DefaultTheme")
 }
 
+/// @deprecated Use BillingSubscription (v2) instead.
+/// Legacy per-tenant subscription model.
+/// Slated for removal after all consumers migrate to BillingSubscription.
 model Subscription {
   id                      String    @id @default(uuid()) @db.Uuid
   tenantId                String    @unique @db.Uuid
@@ -207,7 +211,6 @@ model WebsiteAgency {
   workspace    Workspace?
   users        User[]
   tenants      AgencyTenant[]
-  subscription AgencySubscription?
 }
 
 model AgencyTenant {
@@ -232,20 +235,6 @@ model AgencyTenant {
   @@index([agencyId])
 }
 
-model AgencySubscription {
-  id                      String    @id @default(uuid()) @db.Uuid
-  agencyId                String    @unique @db.Uuid
-  razorpaySubscriptionId  String?
-  status                  String    @default("FREE")
-  plan                    String    @default("STARTER")
-  maxManagedTenants       Int       @default(3)
-  currentPeriodEnd        DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-
-  agency WebsiteAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-}
-
 /// ⛔️ DOMAIN FROZEN after Phase 2a — no schema changes without Architecture Review.
 /// Workspace is the single aggregate root for billable, member-owned contexts.
 model Workspace {
@@ -268,6 +257,7 @@ model Workspace {
   tenant Tenant?        @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   agency WebsiteAgency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
   members WorkspaceMember[]
+  clientAssignments ClientAssignment[]
   billingSubscription BillingSubscription?
   billingEvents       BillingEvent[]
   billingInvoices     BillingInvoice[]
@@ -294,6 +284,29 @@ model WorkspaceMember {
   @@index([userId])
 }
 
+/// Client assignments link workspace members to tenants (clients).
+/// Replaces the legacy Setting JSON storage for client assignments.
+/// Created in v1.2.1 — see docs/v1.2.1-engineering-plan.md
+model ClientAssignment {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  tenantId    String   @db.Uuid
+  userId      String   @db.Uuid
+  role        String   // account_manager | designer | developer | content_editor | support
+  assignedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, tenantId, userId])
+  @@index([workspaceId])
+  @@index([tenantId])
+  @@index([userId])
+}
+
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   tenantId  String?  @db.Uuid
@@ -307,7 +320,8 @@ model User {
 
   tenant Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   agency WebsiteAgency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
-  workspaceMembers WorkspaceMember[]
+  workspaceMembers   WorkspaceMember[]
+  clientAssignments  ClientAssignment[]
 
   @@index([tenantId])
   @@index([agencyId])

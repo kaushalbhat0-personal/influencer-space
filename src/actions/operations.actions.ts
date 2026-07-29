@@ -11,6 +11,7 @@ import { commissionLedger } from "@/lib/commission/ledger";
 import { payoutLedger } from "@/lib/payouts/ledger";
 import { payoutService } from "@/lib/payouts";
 import { prisma } from "@/lib/prisma";
+import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { logAction } from "@/lib/audit";
 
 function requireSuperAdmin(session: { user?: { role?: string } } | null): void {
@@ -27,8 +28,8 @@ export async function getOperationsDashboard() {
       getDiagnostics(),
       prisma.tenant.count(),
       prisma.user.count(),
-      prisma.billingSubscription.findMany({ include: { plan: true } }),
-      prisma.billingInvoice.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
+      billingRepository.getAllSubscriptionsWithPlan(),
+      billingRepository.getInvoiceRevenue(),
       platformEventBus.getHistory().filter((e) => Date.now() - new Date(e.timestamp).getTime() < 86400000).length,
     ]);
 

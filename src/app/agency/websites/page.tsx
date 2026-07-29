@@ -6,6 +6,7 @@ import { ContentContainer, PageHeader } from "@/components/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Globe } from "lucide-react";
 import { WebsitesTable } from "./_components/websites-table";
+import { getAgencyClients } from "@/lib/workspace/adapters";
 
 export const dynamic = "force-dynamic";
 
@@ -16,18 +17,14 @@ export default async function AgencyWebsitesPage() {
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
 
-  let sites: WebsiteRow[] = [];
-  try {
-    const raw = await prisma.agencyTenant.findMany({
-      where: { agencyId }, include: { tenant: { include: { _count: { select: { products: true } } } } },
-    });
-    sites = raw.map((at) => ({
-      name: at.tenant.name,
-      url: buildStorefrontUrlWithTenant(at.tenant.customDomain, at.tenant.subdomain),
-      products: at.tenant._count.products,
-      isActive: at.status === "ACTIVE",
-    }));
-  } catch { /* empty */ }
+  const clients = await getAgencyClients(agencyId);
+
+  const sites: WebsiteRow[] = clients.map((c) => ({
+    name: c.tenantName,
+    url: buildStorefrontUrlWithTenant(null, c.subdomain ?? ""),
+    products: c.products,
+    isActive: c.status === "ACTIVE",
+  }));
 
   return (
     <ContentContainer>

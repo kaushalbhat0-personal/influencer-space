@@ -38,6 +38,18 @@ export const FEATURE_IDS = {
   API_ACCESS: "api_access",
   WEBHOOKS: "webhooks",
   WHITE_LABEL: "white_label",
+  BUILDER: "basic_builder",
+  ADVANCED_BUILDER: "advanced_builder",
+  MARKETPLACE_ACCESS: "marketplace_access",
+  TEMPLATE_LIBRARY: "template_library",
+  NAVIGATION_EDITOR: "navigation_editor",
+  MEDIA_STORAGE: "media_storage",
+  AUTOMATION: "automation",
+  MULTIPLE_BRANDS: "multiple_brands",
+  AGENCY_CLIENTS: "agency_clients",
+  BULK_PUBLISH: "bulk_publish",
+  CUSTOM_COMPONENTS: "custom_components",
+  API_INTEGRATIONS: "api_integrations",
 } as const;
 export type FeatureId = (typeof FEATURE_IDS)[keyof typeof FEATURE_IDS];
 
@@ -68,6 +80,18 @@ export const BOOLEAN_FEATURES = new Set<FeatureId>([
   FEATURE_IDS.API_ACCESS,
   FEATURE_IDS.WEBHOOKS,
   FEATURE_IDS.WHITE_LABEL,
+  FEATURE_IDS.BUILDER,
+  FEATURE_IDS.ADVANCED_BUILDER,
+  FEATURE_IDS.MARKETPLACE_ACCESS,
+  FEATURE_IDS.TEMPLATE_LIBRARY,
+  FEATURE_IDS.NAVIGATION_EDITOR,
+  FEATURE_IDS.MEDIA_STORAGE,
+  FEATURE_IDS.AUTOMATION,
+  FEATURE_IDS.MULTIPLE_BRANDS,
+  FEATURE_IDS.AGENCY_CLIENTS,
+  FEATURE_IDS.BULK_PUBLISH,
+  FEATURE_IDS.CUSTOM_COMPONENTS,
+  FEATURE_IDS.API_INTEGRATIONS,
 ]);
 
 export const USAGE_METRICS = [

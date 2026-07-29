@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
 import { IndianRupee, FileText, CreditCard, TrendingUp } from "lucide-react";
+import { billingRepository } from "@/modules/billing/infrastructure/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -16,27 +17,12 @@ export default async function AgencyBilling() {
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">No agency configured</p></ContentContainer>;
 
-  const workspaceIds = await prisma.workspace.findMany({
-    where: { agencyId },
-    select: { id: true },
-  });
-
-  const wsIdList = workspaceIds.map((w) => w.id);
+  const wsRecords = await prisma.workspace.findMany({ where: { agencyId }, select: { id: true } });
+  const wsIds = wsRecords.map((w) => w.id);
 
   const [invoiceData, subscriptionData] = await Promise.all([
-    wsIdList.length > 0
-      ? prisma.billingInvoice.findMany({
-          where: { accountId: { in: wsIdList } },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-        })
-      : Promise.resolve([]),
-    wsIdList.length > 0
-      ? prisma.billingSubscription.findMany({
-          where: { workspaceId: { in: wsIdList } },
-          include: { plan: true },
-        })
-      : Promise.resolve([]),
+    wsIds.length > 0 ? billingRepository.findInvoicesByWorkspaceIds(wsIds, 20) : Promise.resolve([]),
+    wsIds.length > 0 ? billingRepository.findSubscriptionsByWorkspaceIds(wsIds) : Promise.resolve([]),
   ]);
 
   const totalRevenue = invoiceData.reduce((s, i) => s + i.amount, 0);
@@ -52,7 +38,7 @@ export default async function AgencyBilling() {
           <MetricCard label="Total Revenue" value={formatRupees(totalRevenue)} icon={IndianRupee} />
           <MetricCard label="Active Subscriptions" value={activeSubs.length} icon={CreditCard} />
           <MetricCard label="Invoices" value={invoiceData.length} icon={FileText} />
-          <MetricCard label="Avg per Client" value={wsIdList.length > 0 ? formatRupees(Math.round(totalRevenue / wsIdList.length)) : "—"} icon={TrendingUp} />
+          <MetricCard label="Avg per Client" value={wsIds.length > 0 ? formatRupees(Math.round(totalRevenue / wsIds.length)) : "—"} icon={TrendingUp} />
         </MetricGrid>
       </PageSection>
 

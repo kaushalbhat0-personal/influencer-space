@@ -1,50 +1,86 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/components/layout";
+import { ContentContainer, PageHeader, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Building } from "lucide-react";
+import { Building, Activity, Globe, AlertTriangle } from "lucide-react";
+import { clientService } from "@/lib/client/service";
 import { ClientsTable } from "./_components/clients-table";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-interface ClientRow { id: string; name: string; subdomain: string | null; createdAt: Date; plans: number; status: string; }
-
-export default async function AgencyClientsPage() {
+export default async function AgencyClientsPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; status?: string };
+}) {
   const session = await getServerSession(authOptions);
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
 
-  let clients: ClientRow[] = [];
-  try {
-    const raw = await prisma.agencyTenant.findMany({
-      where: { agencyId },
-      include: { tenant: { include: { _count: { select: { products: true } } } } },
-      orderBy: { createdAt: "desc" },
-    });
-    clients = raw.map((at) => ({
-      id: at.tenant.id, name: at.tenant.name, subdomain: at.tenant.subdomain,
-      createdAt: at.tenant.createdAt, plans: at.tenant._count.products, status: at.status,
-    }));
-  } catch { /* empty */ }
+  const query = searchParams.q ?? "";
+  const statusFilter = searchParams.status ?? "";
+
+  let clients = await clientService.listByAgency(agencyId);
+
+  if (query) {
+    clients = await clientService.search(agencyId, query);
+  }
+
+  if (statusFilter) {
+    clients = clients.filter((c) => c.status === statusFilter);
+  }
 
   return (
     <ContentContainer>
-      <PageHeader title="Clients" description="All your managed creator clients." breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Clients" }]} />
+      <PageHeader
+        title="Clients"
+        description="All your managed creator clients."
+        breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Clients" }]}
+        actions={
+          <Link href="/agency/clients/new" className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+            + New Client
+          </Link>
+        }
+      />
+
+      {/* Quick Stats */}
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <MetricCard label="Total" value={clients.length} icon={Building} />
+        <MetricCard label="Active" value={clients.filter((c) => c.status === "active").length} icon={Activity} />
+        <MetricCard label="Published" value={clients.filter((c) => c.publishState === "live").length} icon={Globe} />
+        <MetricCard label="Needs Attention" value={clients.filter((c) => c.healthScore != null && c.healthScore < 50).length} icon={AlertTriangle} />
+      </div>
 
       {clients.length === 0 ? (
-        <EmptyState title="No clients" description="Generate a website for your first client to get started." icon={Building} />
+        <EmptyState
+          icon={Building}
+          title={query ? "No matching clients" : "No clients yet"}
+          description={query ? "Try a different search term." : "Create your first client to get started."}
+          action={
+            !query ? (
+              <Link href="/agency/clients/new" className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+                Create Client
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (
-        <>
-          <PageSection>
-            <MetricGrid>
-              <MetricCard label="Total Clients" value={clients.length} icon={Building} />
-              <MetricCard label="Active" value={clients.filter((c) => c.status === "ACTIVE").length} />
-            </MetricGrid>
-          </PageSection>
-          <ClientsTable data={clients} />
-        </>
+        <PageSection>
+          <ClientsTable
+            data={clients.map((c) => ({
+              id: c.tenantId,
+              name: c.businessName,
+              subdomain: null,
+              createdAt: c.createdAt,
+              plans: c.websiteCount,
+              status: c.status,
+              healthScore: c.healthScore,
+              publishState: c.publishState,
+            }))}
+          />
+        </PageSection>
       )}
     </ContentContainer>
   );

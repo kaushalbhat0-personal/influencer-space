@@ -1,5 +1,4 @@
 import { themeRegistry } from "@/lib/theme/registry-new";
-import type { ThemeDefinition } from "@/lib/theme/types-new";
 import { surfaceRegistry } from "@/lib/module/surface-registry";
 import { ModuleRegistry } from "@/lib/module/registry";
 import { registryEvents } from "./events";

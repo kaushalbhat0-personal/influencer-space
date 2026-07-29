@@ -106,27 +106,35 @@ export default function SupportPage() {
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { label: "Impersonate", desc: "Login as creator", icon: User, href: "#", color: "text-indigo-400 bg-indigo-500/10" },
-            { label: "Reset Password", desc: "Force password reset", icon: Key, href: "#", color: "text-amber-400 bg-amber-500/10" },
-            { label: "Copy Dashboard", desc: "Copy admin URL", icon: Copy, href: "#", color: "text-zinc-400 bg-zinc-800" },
+            { label: "Impersonate", desc: "Login as creator", icon: User, href: "#", color: "text-indigo-400 bg-indigo-500/10", disabled: true },
+            { label: "Reset Password", desc: "Force password reset", icon: Key, href: "#", color: "text-amber-400 bg-amber-500/10", disabled: true },
+            { label: "Copy Dashboard", desc: "Copy admin URL", icon: Copy, href: "#", color: "text-zinc-400 bg-zinc-800", disabled: true },
             { label: "View Tenant", desc: "Tenant detail", icon: Building, href: "/super-admin/tenants", color: "text-emerald-400 bg-emerald-500/10" },
             { label: "View Orders", desc: "All orders", icon: ShoppingBag, href: "/super-admin/payments", color: "text-amber-400 bg-amber-500/10" },
             { label: "View Billing", desc: "Subscription", icon: CreditCard, href: "/super-admin/subscriptions", color: "text-violet-400 bg-violet-500/10" },
             { label: "View Audit", desc: "Audit log", icon: Clock, href: "/super-admin/audit", color: "text-zinc-400 bg-zinc-800" },
-            { label: "Suspend", desc: "Disable account", icon: Ban, href: "#", color: "text-red-400 bg-red-500/10" },
-          ].map((action) => (
-            <a
-              key={action.label}
-              href={action.href}
-              className="flex flex-col gap-1 rounded-xl border border-white/[0.06] p-3 hover:border-white/[0.12] transition-all text-left"
-            >
-              <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center", action.color)}>
-                <action.icon className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-xs font-medium text-white">{action.label}</span>
-              <span className="text-[10px] text-zinc-600">{action.desc}</span>
-            </a>
-          ))}
+            { label: "Suspend", desc: "Disable account", icon: Ban, href: "#", color: "text-red-400 bg-red-500/10", disabled: true },
+          ].map((action) => {
+            const Wrapper = action.disabled ? "div" : "a";
+            return (
+              <Wrapper
+                key={action.label}
+                {...(action.disabled ? {} : { href: action.href })}
+                className={`flex flex-col gap-1 rounded-xl border border-white/[0.06] p-3 transition-all text-left ${
+                  action.disabled ? "opacity-50 cursor-not-allowed" : "hover:border-white/[0.12]"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center", action.color)}>
+                    <action.icon className="h-3.5 w-3.5" />
+                  </div>
+                  {action.disabled && <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[8px] text-zinc-500">Soon</span>}
+                </div>
+                <span className="text-xs font-medium text-white">{action.label}</span>
+                <span className="text-[10px] text-zinc-600">{action.desc}</span>
+              </Wrapper>
+            );
+          })}
         </div>
       </div>
     </div>

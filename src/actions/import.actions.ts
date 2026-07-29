@@ -2,9 +2,10 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { getAdapter } from "@/lib/import/adapters";
-import { provisioningEngine } from "@/lib/provisioning/engine";
-import { QualityGate } from "@/lib/provisioning/quality-gate";
+import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
 import type { ImportSource, CreatorProfile, ImportAnalysisResult, ImportRecord, ImportResult } from "@/lib/import/types";
@@ -38,7 +39,7 @@ export async function importCreator(
   profile: CreatorProfile,
 ): Promise<ImportResult> {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id ?? "system";
+  const userId = session?.user?.id;
   const startedAt = Date.now();
   const recordId = nextId();
   const record: ImportRecord = {
@@ -50,48 +51,79 @@ export async function importCreator(
   try {
     track("publish:started", { source, creatorName: profile.brandName });
 
-    const provisionResult = await provisioningEngine.provision(profile, userId);
+    const runId = await provisioningService.createRun({
+      creatorName: profile.brandName,
+      sourceUrl: input,
+      sourcePlatform: source,
+    });
+
+    const provisioningInput = {
+      runId,
+      authenticatedUserId: userId,
+      creatorName: profile.brandName,
+      sourceUrl: input,
+      sourcePlatform: source,
+      generatedContent: {
+        heroTitle: profile.heroTitle,
+        tagline: profile.tagline,
+        aboutSection: profile.aboutText,
+        seoTitle: profile.seoTitle,
+        seoDescription: profile.seoDesc,
+      },
+      generatedTheme: {
+        preset: "custom",
+        colors: { primary: profile.palette.primary, secondary: profile.palette.secondary },
+      },
+    };
+
+    const provisionResult = await provisioningService.provision(provisioningInput as Parameters<typeof provisioningService.provision>[0]);
     if (!provisionResult.success) {
       record.status = "failed";
-      record.errors = provisionResult.errors;
       record.tenantId = provisionResult.tenantId;
       record.duration = Date.now() - startedAt;
-      track("publish:completed", { source, status: "failed", errors: provisionResult.errors.join(",") });
-      return { success: false, tenantId: provisionResult.tenantId, storefrontUrl: provisionResult.storefrontUrl, status: "failed", record, error: provisionResult.errors.join(", ") };
+      track("publish:completed", { source, status: "failed", errors: "Provisioning failed" });
+      return { success: false, tenantId: provisionResult.tenantId, storefrontUrl: "", status: "failed", record, error: "Provisioning failed" };
     }
 
-    const qualityReport = await QualityGate.run(provisionResult.tenantId);
+    // Create products from profile
+    if (profile.products.length > 0) {
+      for (const p of profile.products) {
+        await prisma.product.create({
+          data: {
+            tenantId: provisionResult.tenantId,
+            name: p.name,
+            price: p.price,
+            description: p.description,
+            isActive: true,
+          },
+        });
+      }
+    }
+
+    // Publish
+    const publishResult = await publishingService.publish(provisionResult.tenantId);
 
     record.tenantId = provisionResult.tenantId;
     record.storefrontUrl = provisionResult.storefrontUrl;
-
-    if (qualityReport.published) {
-      record.status = "completed";
-      track("publish:completed", { source, status: "published", tenantId: provisionResult.tenantId });
-    } else {
-      record.status = "failed";
-      record.errors = [`Quality score ${qualityReport.score}%`];
-      track("publish:completed", { source, status: "draft", score: qualityReport.score });
-    }
-
+    record.status = publishResult.success ? "completed" : "failed";
     record.duration = Date.now() - startedAt;
-    record.confidence = qualityReport.score;
-    record.completeness = qualityReport.score;
+    record.confidence = publishResult.success ? 100 : 0;
+    record.completeness = publishResult.success ? 100 : 0;
 
-    const status = qualityReport.published ? "published" : "failed";
+    const status = publishResult.success ? "published" : "failed";
 
     await logAction(provisionResult.tenantId, "import:completed", {
       source, recordId, creatorName: profile.brandName, status,
-      confidence: qualityReport.score, duration: record.duration,
+      duration: record.duration,
     }).catch((err) => { console.error(`[import] Failed to persist import:completed audit log:`, err); });
 
     return {
-      success: qualityReport.published,
+      success: publishResult.success,
       tenantId: provisionResult.tenantId,
       storefrontUrl: provisionResult.storefrontUrl,
       status,
       record,
-      error: qualityReport.published ? undefined : `Quality score ${qualityReport.score}%`,
+      error: publishResult.success ? undefined : `Publishing failed: ${publishResult.error}`,
     };
   } catch (e) {
     record.status = "failed";

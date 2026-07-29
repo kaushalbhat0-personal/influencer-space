@@ -2,8 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer } from "@/components/layout";
 import { BillingPageClient } from "@/components/billing/BillingPageClient";
-import { billingService } from "@/lib/billing/service";
-import { getPlan, getCreatorPlans } from "@/lib/billing/mapper";
+import { billingService } from "@/modules/billing/application/service";
+import type { BillingDashboard, BillingPlan } from "@/lib/billing/types";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 export const dynamic = "force-dynamic";
@@ -20,8 +20,8 @@ export default async function BillingPage() {
 
   if (workspace) {
     const [billingData, plans] = await Promise.all([
-      billingService.getBillingInfo(workspace.id, tenant.id).catch(() => null),
-      Promise.resolve(billingService.getPlans()).catch(() => []),
+      billingService.getBillingInfo(workspace.id, tenant.id).catch(() => null) as Promise<BillingDashboard | null>,
+      Promise.resolve(billingService.getPlans()).catch(() => []) as Promise<BillingPlan[]>,
     ]);
     if (!billingData) {
       return <ContentContainer><p className="text-red-400">Failed to load billing data.</p></ContentContainer>;
@@ -34,12 +34,11 @@ export default async function BillingPage() {
   }
 
   const productCount = await prisma.product.count({ where: { tenantId: tenant.id } }).catch(() => 0);
-  const plan = getPlan("creator_free") ?? { code: "creator_free", family: "creator" as const, name: "Free Forever", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" };
-  const plans = getCreatorPlans();
+  const plans = billingService.getPlans() as BillingPlan[];
 
-  const billingData = {
-    plan: { ...plan, name: "Free Forever", price: 0 },
-    subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_free", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
+  const billingData: BillingDashboard = {
+    plan: { code: "creator_free", family: "creator", name: "Free Forever", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
+    subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_free", status: "ACTIVE", trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
     invoices: [], paymentMethods: [], usage: [],
     activeProducts: productCount, activeGallery: 0, storageUsed: 0, ordersProcessed: 0, messagesSent: 0,
   };

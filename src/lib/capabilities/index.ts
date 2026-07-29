@@ -13,3 +13,7 @@ export { toPlanSummary, formatFeatureComparison, formatUsageHint, comparisonToRo
 
 export * from "./constants";
 export type * from "./types";
+export { entitlementService, EntitlementService } from "./entitlements";
+export type { EntitlementCapabilityId, EntitlementResult } from "./entitlements";
+export { capabilityRegistry, featureRegistry, CapabilityRegistry, FeatureRegistry } from "./registry";
+export type { CapabilityId, CapabilityDefinition, FeatureDefinition } from "./registry";

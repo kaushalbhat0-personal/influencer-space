@@ -3,7 +3,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { BuilderService } from "@/lib/builder/builder-service";
+import { publishingService } from "@/lib/publishing/service";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
+import { workspaceContext } from "@/lib/workspace/context";
+import { workspacePolicy } from "@/lib/workspace/policy";
 import type { BuilderPage } from "@/lib/builder/types";
 import { storefrontToBuilderPages } from "@/lib/builder/artifact-loader";
 
@@ -59,21 +62,26 @@ export async function loadBuilderPages(): Promise<{ success: boolean; pages?: Bu
 
 export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success: boolean; error?: string }> {
   try {
+    const ctx = await workspaceContext.getActive();
+    if (ctx?.workspaceId) {
+      try {
+        await workspacePolicy.assertCanEdit(ctx.workspaceId);
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Cannot edit" };
+      }
+    }
+
     const websiteId = await getWebsiteId();
     const { prisma } = await import("@/lib/prisma");
     await builderService.save(websiteId, pages);
 
-    const publishStatus = await prisma.publishStatus.findUnique({
-      where: { websiteId },
-      select: { state: true, liveVersion: true },
+    const { tenantId } = await prisma.website.findUniqueOrThrow({
+      where: { id: websiteId },
+      select: { tenantId: true },
     });
 
-    if (publishStatus?.state === "live") {
-      await prisma.publishStatus.update({
-        where: { websiteId },
-        data: { state: "draft" },
-      });
-    }
+    const result = await publishingService.markChangesPending(tenantId);
+    if (!result.success) return result;
 
     return { success: true };
   } catch (e) {

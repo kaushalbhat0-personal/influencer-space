@@ -35,7 +35,7 @@ export class ThemeResolver {
   resolveForSnapshot(
     themeId: string,
     mode: ThemeResolutionMode = "dark",
-    _options?: {
+    options?: {
       inheritedThemeId?: string;
       overrides?: Partial<ResolvedSnapshotTheme>;
     },
@@ -45,10 +45,32 @@ export class ThemeResolver {
       // Fallback: try default theme
       const defaultTheme = themeRegistry.getById("com.creatos.neon-dark");
       if (!defaultTheme) return null;
-      return this.extractSnapshotTheme(defaultTheme, mode);
+      return this.applyOverrides(this.extractSnapshotTheme(defaultTheme, mode), options?.overrides);
     }
 
-    return this.extractSnapshotTheme(theme, mode);
+    return this.applyOverrides(this.extractSnapshotTheme(theme, mode), options?.overrides);
+  }
+
+  private applyOverrides(
+    base: ResolvedSnapshotTheme,
+    overrides?: Partial<ResolvedSnapshotTheme>,
+  ): ResolvedSnapshotTheme {
+    if (!overrides) return base;
+    return {
+      packageId: base.packageId,
+      colors: {
+        primary: overrides.colors?.primary ?? base.colors.primary,
+        secondary: overrides.colors?.secondary ?? base.colors.secondary,
+        accent: overrides.colors?.accent ?? base.colors.accent,
+        background: overrides.colors?.background ?? base.colors.background,
+        foreground: overrides.colors?.foreground ?? base.colors.foreground,
+        muted: overrides.colors?.muted ?? base.colors.muted,
+      },
+      typography: {
+        heading: overrides.typography?.heading ?? base.typography.heading,
+        body: overrides.typography?.body ?? base.typography.body,
+      },
+    };
   }
 
   private extractSnapshotTheme(

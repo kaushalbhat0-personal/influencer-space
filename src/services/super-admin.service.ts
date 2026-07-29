@@ -1,9 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import { billingRepository } from "@/modules/billing/infrastructure/repository";
 
 export interface PlatformStats {
   totalTenants: number;
   totalProducts: number;
+  totalGallery: number;
+  totalOrders: number;
+  totalRevenue: number;
+  totalAgencies: number;
+  totalUsers: number;
   activeProSubscriptions: number;
+  auditEntries24h: number;
+  publishCount: number;
 }
 
 export interface TenantWithDetails {
@@ -18,20 +26,32 @@ export interface TenantWithDetails {
 }
 
 export async function getPlatformStats(): Promise<PlatformStats> {
-  const [totalTenants, totalProducts, proPlans, activeProSubscriptionsLegacy] =
-    await Promise.all([
-      prisma.tenant.count(),
-      prisma.product.count(),
-      prisma.billingPlan.findMany({ where: { family: "creator", price: { gt: 0 } }, select: { id: true } }),
-      prisma.subscription.count({ where: { plan: "PRO" } }),
-    ]);
+  const [
+    totalTenants, totalProducts, totalGallery, totalOrders,
+    revenueAgg, totalAgencies, totalUsers,
+    activeV2Subscriptions, activeProSubscriptionsLegacy, auditCount, publishCount,
+  ] = await Promise.all([
+    prisma.tenant.count(),
+    prisma.product.count(),
+    prisma.galleryImage.count(),
+    prisma.productOrder.count(),
+    prisma.productOrder.aggregate({ _sum: { amount: true } }),
+    prisma.websiteAgency.count(),
+    prisma.user.count(),
+    billingRepository.countActiveProSubscriptions(),
+    billingRepository.countProSubscriptionsLegacy(),
+    prisma.auditLog.count({ where: { createdAt: { gte: new Date(Date.now() - 86400000) } } }),
+    prisma.publishSnapshot.count(),
+  ]);
 
-  const proPlanIds = proPlans.map((p) => p.id);
-  const activeV2Subscriptions = proPlanIds.length > 0
-    ? await prisma.billingSubscription.count({ where: { planId: { in: proPlanIds }, status: "ACTIVE" } })
-    : 0;
-
-  return { totalTenants, totalProducts, activeProSubscriptions: activeV2Subscriptions + activeProSubscriptionsLegacy };
+  return {
+    totalTenants, totalProducts, totalGallery, totalOrders,
+    totalRevenue: revenueAgg._sum.amount ?? 0,
+    totalAgencies, totalUsers,
+    activeProSubscriptions: activeV2Subscriptions + activeProSubscriptionsLegacy,
+    auditEntries24h: auditCount,
+    publishCount,
+  };
 }
 
 export async function getAllTenants(): Promise<TenantWithDetails[]> {

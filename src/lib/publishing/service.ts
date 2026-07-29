@@ -22,6 +22,8 @@ import type { BuilderPage } from "@/lib/builder/types";
 import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
 import { themeResolver } from "@/lib/theme/resolver-new";
+import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
+import { workspacePolicy } from "@/lib/workspace/policy";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "./repository";
 
@@ -83,6 +85,15 @@ export class PublishingService {
       });
       if (!tenant) return { success: false, error: "Tenant not found" };
 
+      const workspace = await prisma.workspace.findUnique({ where: { tenantId } });
+      if (workspace) {
+        try {
+          await workspacePolicy.assertCanPublish(workspace.id);
+        } catch (e) {
+          return { success: false, error: e instanceof Error ? e.message : "Cannot publish" };
+        }
+      }
+
       const website = await prisma.website.findUnique({
         where: { tenantId },
         select: { id: true },
@@ -103,8 +114,27 @@ export class PublishingService {
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
 
+      const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
+      const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
       const resolvedTheme = themeResolver.resolveForSnapshot(
         websiteFull?.themePackageId ?? FALLBACK_THEME_ID,
+        "dark",
+        {
+          overrides: Object.keys(websiteColors).length > 0 || Object.keys(websiteFonts).length > 0 ? {
+            colors: {
+              primary: websiteColors.primary as string | undefined,
+              secondary: websiteColors.secondary as string | undefined,
+              accent: websiteColors.accent as string | undefined,
+              background: websiteColors.background as string | undefined,
+              foreground: websiteColors.foreground as string | undefined,
+              muted: websiteColors.muted as string | undefined,
+            },
+            typography: {
+              heading: websiteFonts.heading as string | undefined,
+              body: websiteFonts.body as string | undefined,
+            },
+          } as Partial<ResolvedSnapshotTheme> : undefined,
+        },
       );
       const canonicalSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
@@ -185,6 +215,25 @@ export class PublishingService {
       return { success: true, version: result.version };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Publish failed" };
+    }
+  }
+
+  async markChangesPending(tenantId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const website = await prisma.website.findUnique({ where: { tenantId }, select: { id: true } });
+      if (!website) return { success: false, error: "Website not found" };
+
+      const status = await prisma.publishStatus.findUnique({ where: { websiteId: website.id } });
+      if (status?.state === "live") {
+        await prisma.publishStatus.update({
+          where: { websiteId: website.id },
+          data: { state: "draft" },
+        });
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Failed to mark changes" };
     }
   }
 

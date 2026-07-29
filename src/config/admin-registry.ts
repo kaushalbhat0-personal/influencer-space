@@ -1,24 +1,13 @@
-/**
- * Super Admin Registry — Single Source of Truth
- *
- * Every admin module (page, feature, capability) is defined once here.
- * Sidebar, breadcrumbs, permissions, search, audit, and analytics
- * all derive from this single registry.
- *
- * Future: Command Palette (Cmd+K), Analytics metadata, Audit categories.
- */
-
 import {
-  LayoutDashboard, TrendingUp, BarChart3,
-  Building2, Users, Headphones, UserCog, UserPlus, MessageSquare,
-  CreditCard, FileText, IndianRupee,
-  Bot, Palette, Layers, Sparkles, CheckCircle2,
-  ToggleRight, Key, Globe,
-  ScrollText, Activity, Timer, Settings,
+  LayoutDashboard, Activity, Building2, Users, Palette, Layers,
+  Headphones, BarChart3, CreditCard, ScrollText, Settings,
+  UserCog, UserPlus, Sparkles, CheckCircle2, Bot, Globe,
+  ToggleRight, Timer, FileText, IndianRupee, TrendingUp, Monitor, Clock,
+  Lightbulb, Percent,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export type AdminGroup = "overview" | "operations" | "billing" | "ai-platform" | "platform" | "system";
+export type AdminGroup = "platform" | "creators" | "marketplace" | "operations" | "billing" | "audit" | "system";
 export type AdminPermission = "super_admin";
 
 export interface AdminModule {
@@ -38,42 +27,123 @@ export interface AdminModule {
 }
 
 export const ADMIN_REGISTRY: AdminModule[] = [
-  // ── Overview ────────────────────────────────────────────────────────────────
+  // ── Platform ────────────────────────────────────────────────────
   {
-    id: "dashboard", title: "Dashboard", group: "overview",
+    id: "dashboard", title: "Dashboard", group: "platform",
     href: "/super-admin", icon: LayoutDashboard, permission: "super_admin",
-    searchable: true, keywords: ["home", "stats", "overview", "platform"],
+    searchable: true, keywords: ["home", "stats", "overview", "health"],
     auditCategory: "dashboard", analyticsKey: "dashboard:viewed",
     productionReady: true,
   },
   {
-    id: "revenue", title: "Revenue", group: "overview",
-    href: "/super-admin/revenue", icon: TrendingUp, permission: "super_admin",
-    searchable: true, keywords: ["mrr", "arr", "money", "income", "earnings"],
-    auditCategory: "revenue", analyticsKey: "revenue:viewed",
+    id: "operations", title: "Operations", group: "platform",
+    href: "/super-admin/operations", icon: Activity, permission: "super_admin",
+    searchable: true, keywords: ["engines", "recovery", "diagnostics", "jobs", "events"],
+    auditCategory: "system", analyticsKey: "operations:viewed",
     productionReady: true,
   },
   {
-    id: "analytics", title: "Analytics", group: "overview",
-    href: "/super-admin/analytics", icon: BarChart3, permission: "super_admin",
-    searchable: true, keywords: ["charts", "data", "metrics", "funnel", "conversion", "retention"],
-    auditCategory: "analytics", analyticsKey: "analytics:viewed",
+    id: "health", title: "Platform Health", group: "platform",
+    href: "/super-admin/health", icon: Activity, permission: "super_admin",
+    searchable: true, keywords: ["status", "monitor", "uptime", "database", "storage"],
+    auditCategory: "system", analyticsKey: "health:viewed",
+    productionReady: true,
+  },
+  {
+    id: "activity", title: "Activity", group: "platform",
+    href: "/super-admin/activity", icon: Clock, permission: "super_admin",
+    searchable: true, keywords: ["timeline", "events", "recent", "history", "log"],
+    auditCategory: "system", analyticsKey: "activity:viewed",
+    productionReady: true,
+  },
+  {
+    id: "insights", title: "Insights", group: "platform",
+    href: "/super-admin/insights", icon: Lightbulb, permission: "super_admin",
+    searchable: true, keywords: ["intelligence", "alerts", "attention", "health", "summary"],
+    auditCategory: "system", analyticsKey: "insights:viewed",
     productionReady: true,
   },
 
-  // ── Operations ──────────────────────────────────────────────────────────────
+  // ── Creators ────────────────────────────────────────────────────
   {
-    id: "tenants", title: "Tenants", group: "operations",
+    id: "tenants", title: "Creators", group: "creators",
     href: "/super-admin/tenants", icon: Building2, permission: "super_admin",
-    searchable: true, keywords: ["creators", "stores", "websites", "accounts"],
+    searchable: true, keywords: ["creators", "stores", "websites", "accounts", "list"],
     auditCategory: "tenants", analyticsKey: "tenants:viewed",
     productionReady: true,
   },
   {
-    id: "agencies", title: "Agencies", group: "operations",
+    id: "users", title: "Users", group: "creators",
+    href: "/super-admin/users", icon: UserCog, permission: "super_admin",
+    searchable: true, keywords: ["admins", "accounts", "roles", "permissions"],
+    auditCategory: "users", analyticsKey: "users:viewed",
+    productionReady: true,
+  },
+  {
+    id: "agencies", title: "Agencies", group: "creators",
     href: "/super-admin/agencies", icon: Users, permission: "super_admin",
     searchable: true, keywords: ["agency", "clients", "managed", "partners"],
     auditCategory: "agencies", analyticsKey: "agencies:viewed",
+    productionReady: true,
+  },
+  {
+    id: "support", title: "Support", group: "creators",
+    href: "/super-admin/support", icon: Headphones, permission: "super_admin",
+    searchable: true, keywords: ["tickets", "help", "assistance", "queries", "lookup", "search"],
+    auditCategory: "support", analyticsKey: "support:viewed",
+    productionReady: true,
+  },
+  {
+    id: "websites", title: "Websites", group: "creators",
+    href: "/super-admin/websites", icon: Monitor, permission: "super_admin",
+    searchable: true, keywords: ["websites", "storefronts", "published", "domains"],
+    auditCategory: "tenants", analyticsKey: "websites:viewed",
+    productionReady: true,
+  },
+
+  // ── Marketplace ─────────────────────────────────────────────────
+  {
+    id: "themes", title: "Themes", group: "marketplace",
+    href: "/super-admin/themes", icon: Palette, permission: "super_admin",
+    searchable: true, keywords: ["design", "appearance", "brand", "marketplace"],
+    auditCategory: "marketplace", analyticsKey: "themes:viewed",
+    productionReady: true,
+  },
+  {
+    id: "templates", title: "Website Templates", group: "marketplace",
+    href: "/super-admin/templates", icon: Layers, permission: "super_admin",
+    searchable: true, keywords: ["presets", "layouts", "reusable", "blueprint"],
+    auditCategory: "marketplace", analyticsKey: "templates:viewed",
+    productionReady: true,
+  },
+
+  // ── Operations ──────────────────────────────────────────────────
+  {
+    id: "generate", title: "Creator Import", group: "operations",
+    href: "/super-admin/generate", icon: Bot, permission: "super_admin",
+    searchable: true, keywords: ["import", "website", "create", "auto", "generation"],
+    auditCategory: "ai", analyticsKey: "generation:viewed",
+    productionReady: true,
+  },
+  {
+    id: "demo-studio", title: "Demo Studio", group: "operations",
+    href: "/super-admin/demo-studio", icon: Sparkles, permission: "super_admin",
+    searchable: true, keywords: ["demo", "generate", "showcase", "sample"],
+    auditCategory: "demo", analyticsKey: "demo:viewed",
+    productionReady: true,
+  },
+  {
+    id: "demo-publishing", title: "Publishing", group: "operations",
+    href: "/super-admin/demo-publishing", icon: CheckCircle2, permission: "super_admin",
+    searchable: true, keywords: ["review", "approve", "publish", "workflow"],
+    auditCategory: "demo", analyticsKey: "demo-publishing:viewed",
+    productionReady: true,
+  },
+  {
+    id: "demo-library", title: "Demo Library", group: "operations",
+    href: "/super-admin/demo-library", icon: Layers, permission: "super_admin",
+    searchable: true, keywords: ["seeds", "library", "catalog", "industries"],
+    auditCategory: "demo", analyticsKey: "demo-library:viewed",
     productionReady: true,
   },
   {
@@ -83,29 +153,22 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     auditCategory: "beta", analyticsKey: "beta:viewed",
     productionReady: true,
   },
-  {
-    id: "feedback", title: "Feedback", group: "operations",
-    href: "/super-admin/feedback", icon: MessageSquare, permission: "super_admin",
-    searchable: true, keywords: ["bugs", "ideas", "features", "requests", "suggestions"],
-    auditCategory: "feedback", analyticsKey: "feedback:viewed",
-    productionReady: true,
-  },
-  {
-    id: "users", title: "Users", group: "operations",
-    href: "/super-admin/users", icon: UserCog, permission: "super_admin",
-    searchable: true, keywords: ["admins", "accounts", "roles", "permissions", "passwords"],
-    auditCategory: "users", analyticsKey: "users:viewed",
-    productionReady: true,
-  },
-  {
-    id: "support", title: "Support", group: "operations",
-    href: "/super-admin/support", icon: Headphones, permission: "super_admin",
-    searchable: true, keywords: ["tickets", "help", "assistance", "queries", "lookup", "search"],
-    auditCategory: "support", analyticsKey: "support:viewed",
-    productionReady: true,
-  },
 
-  // ── Billing ─────────────────────────────────────────────────────────────────
+  // ── Billing ─────────────────────────────────────────────────────
+  {
+    id: "revenue", title: "Revenue Reports", group: "billing",
+    href: "/super-admin/revenue", icon: TrendingUp, permission: "super_admin",
+    searchable: true, keywords: ["mrr", "arr", "money", "income", "earnings"],
+    auditCategory: "revenue", analyticsKey: "revenue:viewed",
+    productionReady: true,
+  },
+  {
+    id: "revenue-management", title: "Revenue Management", group: "billing",
+    href: "/super-admin/revenue-management", icon: Percent, permission: "super_admin",
+    searchable: true, keywords: ["pricing", "plans", "commissions", "billing", "settings", "rates"],
+    auditCategory: "revenue", analyticsKey: "revenue-management:viewed",
+    productionReady: true,
+  },
   {
     id: "subscriptions", title: "Subscriptions", group: "billing",
     href: "/super-admin/subscriptions", icon: CreditCard, permission: "super_admin",
@@ -117,8 +180,7 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     id: "invoices", title: "Invoices", group: "billing",
     href: "/super-admin/invoices", icon: FileText, permission: "super_admin",
     searchable: false, keywords: ["receipts", "bills", "statements"],
-    badge: "soon",
-    productionReady: false,
+    productionReady: true,
   },
   {
     id: "payments", title: "Payments", group: "billing",
@@ -127,123 +189,51 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     auditCategory: "billing", analyticsKey: "payments:viewed",
     productionReady: true,
   },
-  {
-    id: "transactions", title: "Transactions", group: "billing",
-    href: "/super-admin/transactions", icon: ScrollText, permission: "super_admin",
-    searchable: false, keywords: ["events", "stream", "timeline"],
-    auditCategory: "billing", analyticsKey: "transactions:viewed",
-    productionReady: true,
-  },
-  {
-    id: "webhooks", title: "Webhooks", group: "billing",
-    href: "/super-admin/webhooks", icon: Activity, permission: "super_admin",
-    searchable: false, keywords: ["events", "gateway", "razorpay", "stripe"],
-    auditCategory: "billing", analyticsKey: "webhooks:viewed",
-    productionReady: true,
-  },
 
-  // ── Creator Platform ────────────────────────────────────────────────────────
+  // ── Audit ───────────────────────────────────────────────────────
   {
-    id: "generate", title: "Creator Import", group: "ai-platform",
-    href: "/super-admin/generate", icon: Bot, permission: "super_admin",
-    searchable: true, keywords: ["import", "website", "create", "auto", "pipeline", "generation"],
-    auditCategory: "ai", analyticsKey: "generation:viewed",
-    productionReady: true,
-  },
-  {
-    id: "demo-studio", title: "Demo Studio", group: "ai-platform",
-    href: "/super-admin/demo-studio", icon: Sparkles, permission: "super_admin",
-    searchable: true, keywords: ["demo", "generate", "showcase", "sample", "industry"],
-    auditCategory: "demo", analyticsKey: "demo:viewed",
-    productionReady: true,
-  },
-  {
-    id: "demo-publishing", title: "Publishing", group: "ai-platform",
-    href: "/super-admin/demo-publishing", icon: CheckCircle2, permission: "super_admin",
-    searchable: true, keywords: ["review", "approve", "publish", "workflow", "pipeline"],
-    auditCategory: "demo", analyticsKey: "demo-publishing:viewed",
-    productionReady: true,
-  },
-  {
-    id: "demo-library", title: "Demo Library", group: "ai-platform",
-    href: "/super-admin/demo-library", icon: Layers, permission: "super_admin",
-    searchable: true, keywords: ["seeds", "library", "catalog", "industries", "templates"],
-    auditCategory: "demo", analyticsKey: "demo-library:viewed",
-    productionReady: true,
-  },
-  {
-    id: "showcase", title: "Showcase", group: "ai-platform",
-    href: "/showcase", icon: Globe, permission: "super_admin",
-    searchable: true, keywords: ["gallery", "portfolio", "published", "storefront", "live", "featured"],
-    auditCategory: "demo", analyticsKey: "showcase:viewed",
-    productionReady: true,
-  },
-  {
-    id: "themes", title: "Themes", group: "ai-platform",
-    href: "/super-admin/themes", icon: Palette, permission: "super_admin",
-    searchable: false, keywords: ["design", "templates", "appearance", "brand"],
-    badge: "soon",
-    productionReady: false,
-  },
-  {
-    id: "templates", title: "Templates", group: "ai-platform",
-    href: "/super-admin/templates", icon: Layers, permission: "super_admin",
-    searchable: false, keywords: ["presets", "layouts", "reusable", "blueprint"],
-    badge: "soon",
-    productionReady: false,
-  },
-
-  // ── Platform ────────────────────────────────────────────────────────────────
-  {
-    id: "features", title: "Feature Flags", group: "platform",
-    href: "/super-admin/features", icon: ToggleRight, permission: "super_admin",
-    searchable: true, keywords: ["toggle", "config", "flags", "enable", "disable"],
-    auditCategory: "platform", analyticsKey: "features:viewed",
-    productionReady: true,
-  },
-  {
-    id: "api-keys", title: "API Keys", group: "platform",
-    href: "/super-admin/api-keys", icon: Key, permission: "super_admin",
-    searchable: false, keywords: ["tokens", "access", "developer", "api"],
-    badge: "soon",
-    productionReady: false,
-  },
-  {
-    id: "domains", title: "Domains", group: "platform",
-    href: "/super-admin/domains", icon: Globe, permission: "super_admin",
-    searchable: false, keywords: ["dns", "ssl", "custom", "vercel", "domain"],
-    badge: "soon",
-    productionReady: false,
-  },
-
-  // ── System ──────────────────────────────────────────────────────────────────
-  {
-    id: "audit", title: "Audit Log", group: "system",
+    id: "audit", title: "Audit Log", group: "audit",
     href: "/super-admin/audit", icon: ScrollText, permission: "super_admin",
     searchable: true, keywords: ["history", "events", "trace", "log"],
     auditCategory: "system", analyticsKey: "audit:viewed",
     productionReady: true,
   },
   {
-    id: "health", title: "Health", group: "system",
-    href: "/super-admin/health", icon: Activity, permission: "super_admin",
-    searchable: true, keywords: ["status", "monitor", "uptime", "database", "storage"],
-    auditCategory: "system", analyticsKey: "health:viewed",
+    id: "events", title: "Events", group: "audit",
+    href: "/super-admin/events", icon: Timer, permission: "super_admin",
+    searchable: true, keywords: ["event bus", "types", "messages", "history"],
+    auditCategory: "system", analyticsKey: "events:viewed",
     productionReady: true,
   },
   {
-    id: "beta", title: "Beta Validation", group: "system",
-    href: "/super-admin/beta", icon: CheckCircle2, permission: "super_admin",
-    searchable: true, keywords: ["validation", "onboarding", "creators", "tests", "scenarios"],
-    auditCategory: "system", analyticsKey: "beta:viewed",
+    id: "webhooks", title: "Webhooks", group: "audit",
+    href: "/super-admin/webhooks", icon: Globe, permission: "super_admin",
+    searchable: true, keywords: ["events", "gateway", "razorpay", "stripe"],
+    auditCategory: "billing", analyticsKey: "webhooks:viewed",
+    productionReady: true,
+  },
+
+  // ── System ──────────────────────────────────────────────────────
+  {
+    id: "features", title: "Feature Flags", group: "system",
+    href: "/super-admin/features", icon: ToggleRight, permission: "super_admin",
+    searchable: true, keywords: ["toggle", "config", "flags", "enable", "disable"],
+    auditCategory: "platform", analyticsKey: "features:viewed",
     productionReady: true,
   },
   {
-    id: "jobs", title: "Jobs", group: "system",
-    href: "/super-admin/jobs", icon: Timer, permission: "super_admin",
-    searchable: false, keywords: ["cron", "queue", "background", "worker"],
-    badge: "soon",
-    productionReady: false,
+    id: "analytics", title: "Analytics", group: "system",
+    href: "/super-admin/analytics", icon: BarChart3, permission: "super_admin",
+    searchable: true, keywords: ["charts", "data", "metrics", "funnel", "conversion"],
+    auditCategory: "analytics", analyticsKey: "analytics:viewed",
+    productionReady: true,
+  },
+  {
+    id: "transactions", title: "Transactions", group: "system",
+    href: "/super-admin/transactions", icon: ScrollText, permission: "super_admin",
+    searchable: false, keywords: ["events", "stream", "timeline"],
+    auditCategory: "billing", analyticsKey: "transactions:viewed",
+    productionReady: true,
   },
   {
     id: "settings", title: "Settings", group: "system",
@@ -253,8 +243,6 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: false,
   },
 ];
-
-// ── Derived Views ────────────────────────────────────────────────────────────
 
 export function getModulesByGroup(group: AdminGroup): AdminModule[] {
   return ADMIN_REGISTRY.filter((m) => m.group === group);
@@ -268,7 +256,7 @@ export function getModuleById(id: string): AdminModule | undefined {
   return ADMIN_REGISTRY.find((m) => m.id === id);
 }
 
-export const GROUP_ORDER: AdminGroup[] = ["overview", "operations", "billing", "ai-platform", "platform", "system"];
+export const GROUP_ORDER: AdminGroup[] = ["platform", "creators", "marketplace", "operations", "billing", "audit", "system"];
 
 export function getGroupedModules(): Map<AdminGroup, AdminModule[]> {
   const map = new Map<AdminGroup, AdminModule[]>();

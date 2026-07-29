@@ -20,6 +20,18 @@ const CATEGORY: Record<string, FeatureCategory> = {
   [FEATURE_IDS.PREMIUM_THEMES]: "content",
   [FEATURE_IDS.AI_TOOLS]: "ai",
   [FEATURE_IDS.EXPORT]: "content",
+  [FEATURE_IDS.BUILDER]: "content",
+  [FEATURE_IDS.ADVANCED_BUILDER]: "content",
+  [FEATURE_IDS.MARKETPLACE_ACCESS]: "content",
+  [FEATURE_IDS.TEMPLATE_LIBRARY]: "content",
+  [FEATURE_IDS.NAVIGATION_EDITOR]: "content",
+  [FEATURE_IDS.MEDIA_STORAGE]: "storage",
+  [FEATURE_IDS.AUTOMATION]: "content",
+  [FEATURE_IDS.MULTIPLE_BRANDS]: "team",
+  [FEATURE_IDS.AGENCY_CLIENTS]: "team",
+  [FEATURE_IDS.BULK_PUBLISH]: "content",
+  [FEATURE_IDS.CUSTOM_COMPONENTS]: "content",
+  [FEATURE_IDS.API_INTEGRATIONS]: "api",
   [FEATURE_IDS.PRIORITY_SUPPORT]: "support",
   [FEATURE_IDS.MULTIPLE_USERS]: "team",
   [FEATURE_IDS.API_ACCESS]: "api",
@@ -131,6 +143,54 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
   [FEATURE_IDS.WHITE_LABEL]: {
     id: FEATURE_IDS.WHITE_LABEL, label: "White Label", description: "White-label experience",
     category: "branding", valueType: "boolean",
+  },
+  [FEATURE_IDS.BUILDER]: {
+    id: FEATURE_IDS.BUILDER, label: "Layout Builder", description: "Page layout editor",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.ADVANCED_BUILDER]: {
+    id: FEATURE_IDS.ADVANCED_BUILDER, label: "Advanced Builder", description: "Custom components and advanced layout",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.MARKETPLACE_ACCESS]: {
+    id: FEATURE_IDS.MARKETPLACE_ACCESS, label: "Marketplace", description: "Access theme and template marketplace",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.TEMPLATE_LIBRARY]: {
+    id: FEATURE_IDS.TEMPLATE_LIBRARY, label: "Template Library", description: "Use professional templates",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.NAVIGATION_EDITOR]: {
+    id: FEATURE_IDS.NAVIGATION_EDITOR, label: "Navigation Editor", description: "Custom navigation menus",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.MEDIA_STORAGE]: {
+    id: FEATURE_IDS.MEDIA_STORAGE, label: "Media Storage", description: "Asset upload and storage",
+    category: "storage", valueType: "boolean",
+  },
+  [FEATURE_IDS.AUTOMATION]: {
+    id: FEATURE_IDS.AUTOMATION, label: "Automation", description: "Workflow automation",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.MULTIPLE_BRANDS]: {
+    id: FEATURE_IDS.MULTIPLE_BRANDS, label: "Multiple Brands", description: "Manage multiple storefronts",
+    category: "team", valueType: "boolean",
+  },
+  [FEATURE_IDS.AGENCY_CLIENTS]: {
+    id: FEATURE_IDS.AGENCY_CLIENTS, label: "Agency Clients", description: "Create and manage clients",
+    category: "team", valueType: "boolean",
+  },
+  [FEATURE_IDS.BULK_PUBLISH]: {
+    id: FEATURE_IDS.BULK_PUBLISH, label: "Bulk Publish", description: "Publish multiple sites at once",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.CUSTOM_COMPONENTS]: {
+    id: FEATURE_IDS.CUSTOM_COMPONENTS, label: "Custom Components", description: "Build custom components",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.API_INTEGRATIONS]: {
+    id: FEATURE_IDS.API_INTEGRATIONS, label: "API Integrations", description: "Connect external APIs",
+    category: "api", valueType: "boolean",
   },
 };
 

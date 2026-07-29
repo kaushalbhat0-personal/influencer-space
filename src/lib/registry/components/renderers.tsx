@@ -35,7 +35,7 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 
 /* ─── Hero ─────────────────────────────────────────────── */
 
-export function HeroRenderer({ props }: RendererProps) {
+export function HeroRenderer({ props, elementId }: RendererProps) {
   const p = props as Record<string, string>;
   const hasMedia = Boolean(p.videoUrl || p.posterUrl);
   return (

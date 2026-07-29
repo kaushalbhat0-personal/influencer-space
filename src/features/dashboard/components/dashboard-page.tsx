@@ -50,7 +50,7 @@ function MetricCard({ label, value, sub, subColor }: { label: string; value: str
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const [data] = useState(initialData);
-  const { metrics, activity, health, steps, creatorName } = data;
+  const { metrics, activity, health, overallScore, steps, creatorName } = data;
 
   const checklistSteps = steps.map((s) => ({
     id: s.id,
@@ -71,10 +71,15 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       title={`Welcome back, ${creatorName}`}
       description="See how your store is performing and find your next action."
       actions={
-        <Link href="/builder" className="btn-primary text-xs">
-          <Layout className="h-3.5 w-3.5 mr-1.5 inline" />
-          Open Builder
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/website-ready" className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
+            Website Status
+          </Link>
+          <Link href="/builder" className="btn-primary text-xs">
+            <Layout className="h-3.5 w-3.5 mr-1.5 inline" />
+            Open Builder
+          </Link>
+        </div>
       }
     >
       <div className="space-y-6">
@@ -133,12 +138,12 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               title="Website Health"
               actions={
                 <span className="text-lg font-bold font-display text-s8ul-cyan">
-                  {Math.round(health.reduce((s, h) => s + h.score, 0) / Math.max(health.length, 1))}%
+                  {overallScore}%
                 </span>
               }
             >
               <div className="space-y-1">
-                {health.map((check) => (
+                {health.slice(0, 8).map((check) => (
                   <Link
                     key={check.label}
                     href={check.href}
@@ -164,36 +169,6 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               recentVersions={metrics.recentVersions}
               hasProducts={metrics.productCount > 0}
             />
-
-            <DashboardWidget
-              title="Profile"
-              actions={
-                <span className="text-lg font-bold font-display text-s8ul-cyan">
-                  {metrics.profileCompletion}%
-                </span>
-              }
-            >
-              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden mb-4">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-s8ul-cyan to-s8ul-purple transition-all"
-                  style={{ width: `${metrics.profileCompletion}%` }}
-                />
-              </div>
-              <div className="space-y-1 text-xs text-zinc-500">
-                <p className={cn(metrics.productCount > 0 && "text-emerald-400")}>
-                  {metrics.productCount > 0 ? "✓" : "○"} {metrics.productCount} products
-                </p>
-                <p className={cn(metrics.galleryCount > 0 && "text-emerald-400")}>
-                  {metrics.galleryCount > 0 ? "✓" : "○"} {metrics.galleryCount} gallery items
-                </p>
-                <p className={cn(metrics.hasCustomDomain && "text-emerald-400")}>
-                  {metrics.hasCustomDomain ? "✓" : "○"} Custom domain
-                </p>
-                <p className={cn(metrics.testimonialCount > 0 && "text-emerald-400")}>
-                  {metrics.testimonialCount > 0 ? "✓" : "○"} Testimonials
-                </p>
-              </div>
-            </DashboardWidget>
           </DashboardGridSide>
         </DashboardGrid>
       </div>
