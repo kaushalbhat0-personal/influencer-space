@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
+import { revenueRepository } from "./repository";
 
 export interface RevenueDashboard {
   mrr: number;
@@ -13,36 +14,6 @@ export interface RevenueDashboard {
   totalInvoiced: number;
   pendingInvoices: number;
   failedPayments: number;
-}
-
-export interface CommissionConfig {
-  agencyClientPercent: number;
-  platformPercent: number;
-  referralPercent: number;
-  defaultCreatorPercent: number;
-  defaultAgencyPercent: number;
-}
-
-export interface BillingSettings {
-  defaultCurrency: string;
-  defaultTrialDays: number;
-  gracePeriodDays: number;
-  invoicePrefix: string;
-  autoRenew: boolean;
-  refundWindowDays: number;
-  prorationEnabled: boolean;
-}
-
-const COMMISSION_KEY = "revenue_commission_config";
-const BILLING_SETTINGS_KEY = "revenue_billing_settings";
-
-function parseJson<T>(value: unknown, fallback: T): T {
-  if (!value) return fallback;
-  try {
-    return { ...fallback, ...(value as Record<string, unknown>) } as T;
-  } catch {
-    return fallback;
-  }
 }
 
 export class RevenueService {
@@ -73,86 +44,58 @@ export class RevenueService {
     ).length;
 
     const trialUsers = subscriptions.filter((s) => s.status === "TRIALING").length;
-    const mrr = subscriptions
-      .filter((s) => s.status === "ACTIVE")
-      .reduce((sum, s) => sum + (s.plan?.price ?? 0), 0);
-
-    const monthlyRevenue = invoices30d
-      .filter((i) => new Date(i.issuedAt) > thirtyDaysAgo)
-      .reduce((sum, i) => sum + i.amount, 0);
-
-    const commissionRevenue = commissionEntries
-      .filter((e) => e.status === "pending" || e.status === "paid")
-      .reduce((sum, e) => sum + e.partnerShare, 0);
-
-    const totalInvoiced = (allInvoices._sum.amount ?? 0);
+    const mrr = subscriptions.filter((s) => s.status === "ACTIVE").reduce((sum, s) => sum + (s.plan?.price ?? 0), 0);
+    const monthlyRevenue = invoices30d.filter((i) => new Date(i.issuedAt) > thirtyDaysAgo).reduce((sum, i) => sum + i.amount, 0);
+    const commissionRevenue = commissionEntries.filter((e) => e.status === "pending" || e.status === "paid").reduce((sum, e) => sum + e.partnerShare, 0);
+    const totalInvoiced = allInvoices._sum.amount ?? 0;
     const pendingInvoices = invoices30d.filter((i) => i.status === "PENDING").length;
+    const subscriptionRevenue = invoices30d.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.amount, 0);
+    const platformTakeRate = subscriptionRevenue > 0 ? Math.round((commissionRevenue / (subscriptionRevenue + commissionRevenue)) * 100) : 0;
 
-    const subscriptionRevenue = invoices30d
-      .filter((i) => i.status === "PAID")
-      .reduce((sum, i) => sum + i.amount, 0);
+    return { mrr, arr: mrr * 12, activeCreatorSubs, activeAgencySubs, trialUsers, monthlyRevenue, commissionRevenue, platformTakeRate, totalInvoiced, pendingInvoices, failedPayments };
+  }
 
-    const platformTakeRate = subscriptionRevenue > 0
-      ? Math.round((commissionRevenue / (subscriptionRevenue + commissionRevenue)) * 100)
-      : 0;
+  async getCommissionConfig() {
+    const policy = await revenueRepository.getActiveCommissionPolicy();
+    return policy ?? { agencyClientPercent: 20, platformPercent: 10, referralPercent: 5, creatorDefaultShare: 70, agencyDefaultShare: 30 };
+  }
 
+  async updateCommissionConfig(config: { agencyClientPercent: number; platformPercent: number; referralPercent: number; creatorDefaultShare: number; agencyDefaultShare: number }): Promise<void> {
+    await revenueRepository.upsertCommissionPolicy(config);
+  }
+
+  async getBillingSettings() {
+    const cfg = await revenueRepository.getActiveBillingConfig();
+    const rev = await revenueRepository.getActiveRevenueConfig();
     return {
-      mrr,
-      arr: mrr * 12,
-      activeCreatorSubs,
-      activeAgencySubs,
-      trialUsers,
-      monthlyRevenue,
-      commissionRevenue,
-      platformTakeRate,
-      totalInvoiced,
-      pendingInvoices,
-      failedPayments,
+      defaultCurrency: rev?.defaultCurrency ?? "INR",
+      defaultTrialDays: rev?.defaultTrialDays ?? 14,
+      gracePeriodDays: rev?.gracePeriodDays ?? 7,
+      invoicePrefix: rev?.invoicePrefix ?? "INV",
+      autoRenew: rev?.autoRenew ?? true,
+      refundWindowDays: rev?.refundWindowDays ?? 30,
+      prorationEnabled: rev?.prorationEnabled ?? true,
+      taxMode: cfg?.taxMode ?? "exclusive",
+      cancellationPolicy: cfg?.cancellationPolicy ?? "immediate",
+      defaultRegion: cfg?.defaultRegion ?? "IN",
     };
   }
 
-  async getCommissionConfig(): Promise<CommissionConfig> {
-    const setting = await prisma.setting.findUnique({
-      where: { tenantId_key: { tenantId: "platform", key: COMMISSION_KEY } },
-    });
-    return parseJson<CommissionConfig>(setting?.value, {
-      agencyClientPercent: 20,
-      platformPercent: 10,
-      referralPercent: 5,
-      defaultCreatorPercent: 70,
-      defaultAgencyPercent: 30,
-    });
-  }
-
-  async updateCommissionConfig(config: CommissionConfig): Promise<void> {
-    await prisma.setting.upsert({
-      where: { tenantId_key: { tenantId: "platform", key: COMMISSION_KEY } },
-      update: { value: JSON.parse(JSON.stringify(config)) },
-      create: { tenantId: "platform", key: COMMISSION_KEY, value: JSON.parse(JSON.stringify(config)) },
-    });
-  }
-
-  async getBillingSettings(): Promise<BillingSettings> {
-    const setting = await prisma.setting.findUnique({
-      where: { tenantId_key: { tenantId: "platform", key: BILLING_SETTINGS_KEY } },
-    });
-    return parseJson<BillingSettings>(setting?.value, {
-      defaultCurrency: "INR",
-      defaultTrialDays: 14,
-      gracePeriodDays: 7,
-      invoicePrefix: "INV",
-      autoRenew: true,
-      refundWindowDays: 30,
-      prorationEnabled: true,
-    });
-  }
-
-  async updateBillingSettings(settings: BillingSettings): Promise<void> {
-    await prisma.setting.upsert({
-      where: { tenantId_key: { tenantId: "platform", key: BILLING_SETTINGS_KEY } },
-      update: { value: JSON.parse(JSON.stringify(settings)) },
-      create: { tenantId: "platform", key: BILLING_SETTINGS_KEY, value: JSON.parse(JSON.stringify(settings)) },
-    });
+  async updateBillingSettings(settings: { defaultCurrency?: string; defaultTrialDays?: number; gracePeriodDays?: number; invoicePrefix?: string; autoRenew?: boolean; refundWindowDays?: number; prorationEnabled?: boolean; taxMode?: string; cancellationPolicy?: string; defaultRegion?: string }): Promise<void> {
+    const revData: Record<string, unknown> = {};
+    const cfgData: Record<string, unknown> = {};
+    if (settings.defaultCurrency !== undefined) revData.defaultCurrency = settings.defaultCurrency;
+    if (settings.defaultTrialDays !== undefined) revData.defaultTrialDays = settings.defaultTrialDays;
+    if (settings.gracePeriodDays !== undefined) revData.gracePeriodDays = settings.gracePeriodDays;
+    if (settings.invoicePrefix !== undefined) revData.invoicePrefix = settings.invoicePrefix;
+    if (settings.autoRenew !== undefined) revData.autoRenew = settings.autoRenew;
+    if (settings.refundWindowDays !== undefined) revData.refundWindowDays = settings.refundWindowDays;
+    if (settings.prorationEnabled !== undefined) revData.prorationEnabled = settings.prorationEnabled;
+    if (Object.keys(revData).length > 0) await revenueRepository.upsertRevenueConfig(revData);
+    if (settings.taxMode !== undefined) cfgData.taxMode = settings.taxMode;
+    if (settings.cancellationPolicy !== undefined) cfgData.cancellationPolicy = settings.cancellationPolicy;
+    if (settings.defaultRegion !== undefined) cfgData.defaultRegion = settings.defaultRegion;
+    if (Object.keys(cfgData).length > 0) await revenueRepository.upsertBillingConfig(cfgData);
   }
 }
 

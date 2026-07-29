@@ -861,6 +861,77 @@ model BillingInvoice {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Revenue Management — Commercial Configuration (BILLING-02A)
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Platform-wide commercial defaults. Only one ACTIVE record at a time.
+model RevenueConfiguration {
+  id                String   @id @default(uuid()) @db.Uuid
+  status            String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  defaultCurrency   String   @default("INR")
+  defaultTrialDays  Int      @default(14)
+  gracePeriodDays   Int      @default(7)
+  invoicePrefix     String   @default("INV")
+  autoRenew         Boolean  @default(true)
+  refundWindowDays  Int      @default(30)
+  prorationEnabled  Boolean  @default(true)
+  effectiveFrom     DateTime @default(now())
+  effectiveTo       DateTime?
+  version           Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/// Commercial pricing for capability plans. Prices only — NOT entitlements.
+model CommercialPricing {
+  id            String   @id @default(uuid()) @db.Uuid
+  planCode      String   // matches capability plan code (e.g. "creator_pro")
+  workspaceType String   // "creator" | "agency"
+  monthlyPrice  Float    @default(0)
+  yearlyPrice   Float    @default(0)
+  currency      String   @default("INR")
+  status        String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  effectiveFrom DateTime @default(now())
+  effectiveTo   DateTime?
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([planCode, version])
+  @@index([planCode, status])
+}
+
+/// Commission and revenue sharing policies.
+model CommissionPolicy {
+  id                   String   @id @default(uuid()) @db.Uuid
+  status               String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  agencyClientPercent  Float    @default(20)
+  platformPercent      Float    @default(10)
+  referralPercent      Float    @default(5)
+  creatorDefaultShare  Float    @default(70)
+  agencyDefaultShare   Float    @default(30)
+  effectiveFrom        DateTime @default(now())
+  effectiveTo          DateTime?
+  version              Int      @default(1)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+/// Global billing defaults and operational settings.
+model BillingConfiguration {
+  id              String   @id @default(uuid()) @db.Uuid
+  status          String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  taxMode         String   @default("exclusive")
+  cancellationPolicy String @default("immediate")
+  defaultRegion   String   @default("IN")
+  effectiveFrom   DateTime @default(now())
+  effectiveTo     DateTime?
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Creator Intelligence Engine — Provider Accounts, Profiles, AI Analysis
 // ──────────────────────────────────────────────────────────────────────────────
 

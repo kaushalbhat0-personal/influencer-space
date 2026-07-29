@@ -39,8 +39,8 @@ export default async function CommissionCenterPage() {
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
           <h3 className="text-sm font-semibold text-white mb-4">Default Splits</h3>
           <div className="space-y-2">
-            <Field label="Creator Default Share" value={config.defaultCreatorPercent} />
-            <Field label="Agency Default Share" value={config.defaultAgencyPercent} />
+            <Field label="Creator Default Share" value={config.creatorDefaultShare} />
+            <Field label="Agency Default Share" value={config.agencyDefaultShare} />
           </div>
           <div className="mt-4 rounded-lg bg-amber-500/5 border border-amber-500/10 p-3">
             <p className="text-xs text-amber-400">
