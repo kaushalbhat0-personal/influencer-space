@@ -1,6 +1,5 @@
 "use client";
 
-import { EditableText } from "@/features/builder/canvas/inline-editor";
 import type { ComponentDefinition } from "./types";
 import { useFormState } from "react-dom";
 import {
@@ -36,9 +35,8 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 
 /* ─── Hero ─────────────────────────────────────────────── */
 
-export function HeroRenderer({ props, elementId, definition }: RendererProps) {
+export function HeroRenderer({ props }: RendererProps) {
   const p = props as Record<string, string>;
-  const cid = definition?.id || "";
   const hasMedia = Boolean(p.videoUrl || p.posterUrl);
   return (
     <div className="relative flex min-h-[40vh] items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black px-4">
@@ -77,22 +75,22 @@ export function HeroRenderer({ props, elementId, definition }: RendererProps) {
           </div>
         )}
         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="title" value={p.title || ""} /> : p.title || ""}
+          {p.title || ""}
         </h1>
         {(elementId || p.subtitle) && (
           <p className="mt-3 text-base text-zinc-400">
-            {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="subtitle" value={p.subtitle || ""} /> : p.subtitle}
+            {p.subtitle || ""}
           </p>
         )}
         <div className="mt-6 flex items-center justify-center gap-3">
           {(elementId || p.cta) && (
             p.ctaLink ? (
               <a href={p.ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
-                {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="cta" value={p.cta || ""} /> : p.cta}
+                {p.cta || ""}
               </a>
             ) : (
               <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
-                {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="cta" value={p.cta || ""} /> : p.cta}
+                {p.cta || ""}
               </span>
             )
           )}
@@ -115,19 +113,18 @@ export function HeroRenderer({ props, elementId, definition }: RendererProps) {
 
 /* ─── About ────────────────────────────────────────────── */
 
-export function AboutRenderer({ props, elementId, definition }: RendererProps) {
+export function AboutRenderer({ props }: RendererProps) {
   const p = props as Record<string, string>;
-  const cid = definition?.id || "";
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 text-center">
       <h2 className="text-2xl font-bold text-white">
-        {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="title" value={p.title || "About"} /> : p.title || "About"}
+        {p.title || "About"}
       </h2>
       {p.tagline && (
         <p className="mt-2 text-base text-zinc-500">{p.tagline}</p>
       )}
       <div className="mt-4 text-zinc-400">
-        {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="content" value={p.content || ""} /> : p.content}
+        {p.content || ""}
       </div>
       {p.imageUrl && (
         <div className="mx-auto mt-6 h-32 w-32">
@@ -269,12 +266,11 @@ export function LinksRenderer({ props }: RendererProps) {
 
 /* ─── Footer ───────────────────────────────────────────── */
 
-export function FooterRenderer({ props, elementId, definition }: RendererProps) {
+export function FooterRenderer({ props }: RendererProps) {
   const p = props as Record<string, string>;
-  const cid = definition?.id || "";
   return (
     <footer className="border-t border-white/10 py-8 text-center text-sm text-zinc-600">
-      {elementId ? <EditableText componentId={cid} elementId={elementId} fieldKey="copyright" value={p.copyright || "© All rights reserved"} /> : p.copyright || "© All rights reserved"}
+      {p.copyright || "© All rights reserved"}
     </footer>
   );
 }

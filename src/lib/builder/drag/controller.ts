@@ -3,9 +3,7 @@ import type { DragTarget, DragSession, DragDiagnostics, DragContext, CanvasEdge 
 import { builderQuery } from "../query";
 import { builderEvents } from "../events";
 import { builderCommands } from "../commands";
-import { interactionPolicy } from "../policy";
-import { constraintEngine } from "../constraints";
-import { documentValidator } from "../validation";
+// Policy, constraint, and validation engines removed — simplified to essential drag behavior
 import { platformTelemetry } from "@/lib/telemetry/telemetry";
 import { selectStrategy, moveStrategy } from "./strategies";
 import type { DragStrategy } from "./strategies";
@@ -40,15 +38,11 @@ export class DragController {
   get strategy(): DragStrategy { return this.activeStrategy; }
 
   getContext(): DragContext {
-    const selection = builderQuery.getSelection();
-    const selSnapshot = { ids: selection.ids, count: selection.count, mode: selection.mode };
     const target = this.session.currentTarget ?? { elementId: null, sectionId: null, dropZone: "none" as const, valid: false, reason: null };
     return {
       session: { ...this.session },
       strategy: this.activeStrategy,
       target,
-      snap: null,
-      selection: selSnapshot,
       modifiers: { ...this.session.modifierKeys },
       device: builderQuery.getDevice(),
       timestamp: Date.now(),
@@ -65,13 +59,6 @@ export class DragController {
 
     const section = hierarchy.sections.find((s) => s.slots.some((sl) => sl.id === elementId));
     if (!section) return { allowed: false, reason: "Parent section not found" };
-
-    const policy = interactionPolicy.evaluate("canDrag", {
-      elementId, sectionId: section.id, pageId: hierarchy.page.id,
-      role: "ADMIN", plan: "PRO", isLocked: slot.locked, isHidden: !slot.visible,
-      isReadOnly: false, isDraft: false, metadata: {},
-    });
-    if (!policy.allowed) return { allowed: false, reason: policy.reason ?? "Policy denied drag" };
 
     const rect = { width: viewportW / 10, height: 40 };
 
@@ -157,8 +144,6 @@ export class DragController {
 
       if (result.success) {
         builderCommands.execute("selectNode", { elementId: source.elementId });
-        const canvas = { pages: builderQuery.getCurrentPage() ? [builderQuery.getCurrentPage()!] : [] };
-        documentValidator.validate(canvas as Parameters<typeof documentValidator.validate>[0]);
       }
     }
 
@@ -190,19 +175,7 @@ export class DragController {
     if (sections.length === 0) return { elementId: null, sectionId: null, dropZone: "none", valid: false, reason: "No sections on page" };
 
     const targetSection = sections[0]!;
-    const ctx = {
-      elementId: this.session.source?.elementId ?? null,
-      moduleId: this.session.source?.moduleId ?? null,
-      sectionId: targetSection.id,
-      pageId: hierarchy.page?.id ?? null,
-      targetSectionId: targetSection.id,
-      targetPageId: hierarchy.page?.id ?? null,
-      device: builderQuery.getDevice(),
-      canvas: { pages: builderQuery.getCanvasHierarchy().page ? [builderQuery.getCanvasHierarchy().page!] : [] },
-      metadata: {},
-    };
-    const constraint = constraintEngine.evaluate("max-children", ctx);
-    return { elementId: null, sectionId: targetSection.id, dropZone: "inside", valid: constraint.valid, reason: constraint.valid ? null : constraint.message };
+    return { elementId: null, sectionId: targetSection.id, dropZone: "inside", valid: true, reason: null };
   }
 
   diagnostics(): DragDiagnostics {

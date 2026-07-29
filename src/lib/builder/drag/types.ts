@@ -1,6 +1,5 @@
 import type { ElementId, SectionId } from "../types";
 import type { DragStrategy } from "./strategies";
-import type { SnapResult } from "./snap";
 
 export type DragStatus = "idle" | "preparing" | "dragging" | "cancelling" | "completing";
 export type DropZone = "before" | "after" | "inside" | "none";
@@ -34,8 +33,6 @@ export interface DragContext {
   session: DragSession;
   strategy: DragStrategy;
   target: DragTarget;
-  snap: SnapResult | null;
-  selection: SelectionSnapshot;
   modifiers: { shift: boolean; alt: boolean; ctrl: boolean };
   device: "mobile" | "tablet" | "desktop";
   timestamp: number;

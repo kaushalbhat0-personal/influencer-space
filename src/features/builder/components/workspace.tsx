@@ -6,8 +6,7 @@ import { BuilderToolbar } from "./toolbar";
 import { BuilderSidebar } from "./sidebar";
 import { InteractiveCanvas } from "../canvas/interactive-canvas";
 // SectionManager is rendered inside BuilderSidebar
-import { InlineEditProvider } from "./inline-edit";
-import { InlineEditorOverlay } from "../canvas/inline-editor-overlay";
+// Inline editing removed — content editing moved to admin pages
 import { BuilderStatusBar } from "./status-bar";
 import { builderStore } from "@/lib/builder/store";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
@@ -81,7 +80,6 @@ export function BuilderWorkspace() {
   }
 
   return (
-    <InlineEditProvider>
       <div className="flex h-screen flex-col bg-zinc-950">
         <BuilderToolbar
           device={device}
@@ -116,7 +114,6 @@ export function BuilderWorkspace() {
                 zoom={zoom}
               />
             </div>
-            <InlineEditorOverlay />
           </div>
         </div>
         <BuilderStatusBar
@@ -127,6 +124,5 @@ export function BuilderWorkspace() {
           statusMsg={statusMsg}
         />
       </div>
-    </InlineEditProvider>
   );
 }

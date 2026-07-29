@@ -1,2 +1,2 @@
-export type { BuilderAPI, ThemeAPI, PreviewAPI, RenderingAPI, PluginAPI, TelemetryAPI, PlatformDiagnosticsReport } from "./platform";
-export { CreatorOSPlatform, platform } from "./platform";
+export type { BuilderAPI, PreviewAPI, PlatformAPI } from "./platform";
+export { platformAPI } from "./platform";

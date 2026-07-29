@@ -1,8 +1,6 @@
 import type { BuilderSection, BuilderSlot } from "../types";
-import type { ResolvedTheme } from "../theme/types";
 import { builderQuery } from "../query";
 import { builderEvents } from "../events";
-import { themeQuery } from "../theme/query";
 import { builderStore } from "../store";
 import { platformTelemetry } from "@/lib/telemetry/telemetry";
 
@@ -36,7 +34,7 @@ export interface PreviewState {
   device: PreviewDevice;
   zoom: number;
   pages: RenderPage[];
-  theme: ResolvedTheme;
+  theme: Record<string, string>;
   loadedAt: number;
   renderCount: number;
 }
@@ -96,7 +94,11 @@ export class PreviewRuntime {
 
     try {
       const hierarchy = builderQuery.getCanvasHierarchy();
-      const theme = themeQuery.getResolved();
+      const theme: Record<string, string> = {
+        "--brand-primary": "#6366F1",
+        "--brand-bg": "#09090B",
+        "--brand-text": "#FAFAFA",
+      };
       const device = builderStore.canvas.device;
       const zoom = builderStore.canvas.zoom;
 
@@ -124,15 +126,9 @@ export class PreviewRuntime {
     return this.state;
   }
 
-  private resolveStyles(_moduleId: string, theme: ResolvedTheme): Record<string, string> {
+  private resolveStyles(_moduleId: string, theme: Record<string, string>): Record<string, string> {
     void _moduleId;
-    const styles: Record<string, string> = {};
-    for (const [key, value] of Object.entries(theme)) {
-      if (key.includes("color") || key.includes("space") || key.includes("radius") || key.includes("font")) {
-        styles[key] = value;
-      }
-    }
-    return styles;
+    return theme;
   }
 
   getState(): PreviewState { return this.state; }
