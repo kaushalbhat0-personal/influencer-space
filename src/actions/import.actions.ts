@@ -41,7 +41,6 @@ export async function importCreator(
   profile: CreatorProfile,
 ): Promise<ImportResult> {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
   const startedAt = Date.now();
   const recordId = nextId();
   const record: ImportRecord = {
@@ -61,7 +60,6 @@ export async function importCreator(
 
     const provisioningInput = {
       runId,
-      authenticatedUserId: userId,
       creatorName: profile.brandName,
       sourceUrl: input,
       sourcePlatform: source,

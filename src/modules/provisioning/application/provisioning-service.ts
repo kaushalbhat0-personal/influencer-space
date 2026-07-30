@@ -21,8 +21,13 @@ import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import { correlationService } from "@/lib/platform/correlation";
 
+export type ProvisioningMode = "create_creator" | "attach_existing_user";
+
 export interface ProvisioningInput {
+  /** @deprecated Use mode: "attach_existing_user" + authenticatedUserId instead. */
   authenticatedUserId?: string;
+  /** Explicit provisioning intent. Defaults to "create_creator" when absent. */
+  mode?: ProvisioningMode;
   creatorName: string;
   sourceUrl?: string;
   sourcePlatform?: string;
@@ -178,11 +183,11 @@ export class ProvisioningService {
           { key: "provisioning_meta", value: metaData },
         ], tx as Prisma.TransactionClient);
 
-        const user = input.authenticatedUserId
-          ? await userRepository.update(input.authenticatedUserId, {
+        const user = input.mode === "attach_existing_user" && input.authenticatedUserId
+          ? await userRepository.safeUpdate(input.authenticatedUserId, {
               tenantId: tenant.id,
               role: "ADMIN",
-            }, tx as Prisma.TransactionClient)
+            }, tx as Prisma.TransactionClient, "SUPER_ADMIN")
           : await userRepository.create({
               tenantId: tenant.id,
               name: creatorName,
