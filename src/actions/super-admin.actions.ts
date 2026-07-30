@@ -13,6 +13,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { toSubdomain } from "@/lib/utils";
 import { purgeOldAuditLogs } from "@/lib/audit";
+import { logger } from "@/lib/observability/logger";
 import type { Prisma } from "@/generated/prisma/client";
 
 const DEFAULT_PASSWORD = "CreatorLaunch2026!";
@@ -348,7 +349,7 @@ export async function deleteTenant(tenantId: string): Promise<DeleteTenantResult
       try {
         await VercelService.removeDomain(tenant.customDomain);
       } catch {
-        console.warn("Vercel domain removal failed — proceeding with tenant delete.");
+        logger.warn("Vercel domain removal failed — proceeding with tenant delete.", "super-admin-actions");
       }
     }
 

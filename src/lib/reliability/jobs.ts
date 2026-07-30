@@ -1,3 +1,6 @@
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
+
 export interface JobDefinition {
   id: string;
   name: string;
@@ -15,7 +18,7 @@ export class JobRunner {
   register(job: Omit<JobDefinition, "lastRunAt" | "running">): void {
     if (this.jobs.find((j) => j.id === job.id)) return;
     this.jobs.push({ ...job, lastRunAt: null, running: false });
-    console.log(`[JobRunner] Registered: ${job.name} (every ${job.intervalMs}ms)`);
+    logger.info(`Registered: ${job.name} (every ${job.intervalMs}ms)`, "job-runner");
   }
 
   start(): void {
@@ -24,7 +27,7 @@ export class JobRunner {
     for (const job of this.jobs) {
       this.scheduleJob(job);
     }
-    console.log(`[JobRunner] Started ${this.jobs.length} job(s)`);
+    logger.info(`Started ${this.jobs.length} job(s)`, "job-runner");
   }
 
   stop(): void {
@@ -32,7 +35,7 @@ export class JobRunner {
     for (let i = 0; i < entries.length; i++) {
       const [id, timer] = entries[i];
       clearInterval(timer);
-      console.log(`[JobRunner] Stopped: ${id}`);
+      logger.info(`Stopped: ${id}`, "job-runner");
     }
     this.timers.clear();
     this.started = false;
@@ -64,7 +67,7 @@ export class JobRunner {
       job.lastRunAt = Date.now();
       return true;
     } catch (err) {
-      console.error(`[JobRunner] Job "${job.name}" failed:`, err);
+      captureError(err, { service: "job-runner", operation: `execute:${job.name}` });
       return false;
     } finally {
       job.running = false;

@@ -53,6 +53,8 @@ export type EventHandler<T extends RegistryEventType> = (event: RegistryEvent<T>
 export type UnsubscribeFn = () => void;
 
 import { randomUUID } from "crypto";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 function generateEventId(): string {
   return randomUUID();
@@ -76,11 +78,11 @@ export class RegistryEventBus {
           const result = (handler as EventHandler<T>)(event);
           if (result instanceof Promise) {
             result.catch((err: unknown) => {
-              console.error(`[RegistryEventBus] Async handler error for "${type}":`, err);
+              captureError(err, { service: "registry-event-bus", operation: `async-handler:${type}` });
             });
           }
         } catch (err) {
-          console.error(`[RegistryEventBus] Handler error for "${type}":`, err);
+          captureError(err, { service: "registry-event-bus", operation: `handler:${type}` });
         }
       }
     }

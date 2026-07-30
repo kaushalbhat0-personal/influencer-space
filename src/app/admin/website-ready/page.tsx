@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { websiteHealthEngine } from "@/lib/platform/health/engine";
 import { themeRegistry } from "@/lib/theme/registry-new";
-import { WebsiteReadyClient } from "./website-ready-client";
+import { WebsiteReadyClient } from "./_components/website-ready-client";
 import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 
 export const dynamic = "force-dynamic";

@@ -4,10 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getAdapter } from "@/lib/import/adapters";
-import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 import type { ImportSource, CreatorProfile, ImportAnalysisResult, ImportRecord, ImportResult } from "@/lib/import/types";
 
 let importCounter = 0;
@@ -115,7 +117,7 @@ export async function importCreator(
     await logAction(provisionResult.tenantId, "import:completed", {
       source, recordId, creatorName: profile.brandName, status,
       duration: record.duration,
-    }).catch((err) => { console.error(`[import] Failed to persist import:completed audit log:`, err); });
+    }).catch((err) => { captureError(err, { service: "import-actions", operation: "importCreator-audit" }); });
 
     return {
       success: publishResult.success,

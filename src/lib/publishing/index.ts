@@ -4,4 +4,4 @@ export type { PublishState, PublishStatus } from "./service";
 export { PublishSnapshotService, publishSnapshotService } from "./snapshot";
 export type { SnapshotData, ArtifactSnapshotRecord } from "./snapshot";
 
-export { PublishRepository, publishRepository } from "./repository";
+export { PublishRepository, publishRepository } from "@/modules/tenant/infrastructure/publishing-repository";

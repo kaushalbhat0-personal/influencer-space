@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { BuilderService } from "@/lib/builder/builder-service";
 import { publishingService } from "@/lib/publishing/service";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
-import { workspaceContext } from "@/lib/workspace/context";
+import { workspaceContext } from "@/modules/workspace/application/workspace-context";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import type { BuilderPage } from "@/lib/builder/types";
 import { storefrontToBuilderPages } from "@/lib/builder/artifact-loader";

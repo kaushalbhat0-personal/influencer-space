@@ -1,4 +1,6 @@
 import { success } from "../helpers/result";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 type EventHandler = (payload: Record<string, unknown>) => void | Promise<void>;
 
@@ -23,9 +25,9 @@ export class InProcessEventPublisher {
       if (sub.pattern.test(eventType)) {
         try {
           const result = sub.handler(payload);
-          if (result instanceof Promise) result.catch((err) => console.error("[Events] Handler error:", err));
+          if (result instanceof Promise) result.catch((err) => captureError(err, { service: "in-process-events", operation: "publish-async" }));
         } catch (err) {
-          console.error("[Events] Handler error:", err);
+          captureError(err, { service: "in-process-events", operation: "publish" });
         }
         if (sub.once) toRemove.push(i);
       }

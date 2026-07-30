@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDecryptedToken, refreshToken } from "@/lib/social-oauth";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 const BATCH_SIZE = 5;
 const MEDIA_LIMIT = 10;
@@ -38,7 +40,7 @@ async function fetchYouTubeStats(
   });
 
   if (!res.ok) {
-    console.error(`YouTube API returned ${res.status} for channel ${channelId}`);
+    logger.error(`YouTube API returned ${res.status} for channel ${channelId}`, "sync-socials", { metadata: { channelId, status: res.status } as Record<string, unknown> });
     return null;
   }
 
@@ -68,7 +70,7 @@ async function fetchInstagramStats(
   });
 
   if (!res.ok) {
-    console.error(`Instagram API returned ${res.status}`);
+    logger.error(`Instagram API returned ${res.status}`, "sync-socials", { metadata: { status: res.status } as Record<string, unknown> });
     return null;
   }
 
@@ -374,7 +376,7 @@ export async function GET(request: NextRequest) {
         );
         if (ytItems.length > 0) {
           const n = await syncContentItems(tenant.id, ytItems);
-          console.log(`  synced ${n} YouTube content items`);
+          logger.info(`synced ${n} YouTube content items`, "sync-socials");
         }
       }
 
@@ -401,7 +403,7 @@ export async function GET(request: NextRequest) {
         const igItems = await fetchInstagramContent(instaToken);
         if (igItems.length > 0) {
           const n = await syncContentItems(tenant.id, igItems);
-          console.log(`  synced ${n} Instagram content items`);
+          logger.info(`synced ${n} Instagram content items`, "sync-socials");
         }
       }
 
@@ -432,7 +434,7 @@ export async function GET(request: NextRequest) {
         const twItems = await fetchTwitchContent(twitchToken, tenant.twitchChannelId);
         if (twItems.length > 0) {
           const n = await syncContentItems(tenant.id, twItems);
-          console.log(`  synced ${n} Twitch content items`);
+          logger.info(`synced ${n} Twitch content items`, "sync-socials");
         }
       }
 
@@ -446,7 +448,7 @@ export async function GET(request: NextRequest) {
       hasMore: tenants.length === BATCH_SIZE,
     });
   } catch (error) {
-    console.error("sync-socials error:", error);
+    captureError(error, { service: "sync-socials", operation: "GET" });
     return NextResponse.json(
       { error: "Sync failed", detail: error instanceof Error ? error.message : String(error) },
       { status: 500 },

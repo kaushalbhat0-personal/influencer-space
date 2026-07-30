@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import { logger } from "@/lib/observability/logger";
 
 const BUCKET_NAME = "influencer-images";
 
@@ -22,7 +23,7 @@ export class StorageService {
       .remove([path]);
 
     if (error) {
-      console.error("StorageService.delete error:", error.message);
+      logger.error(`StorageService.delete error: ${error.message}`, "storage-service");
       throw new Error(error.message);
     }
   }

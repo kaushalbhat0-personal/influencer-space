@@ -1,7 +1,8 @@
 import type { ContentModuleManifest, ContentModuleAPI, ContentModuleRegistration, ProductModuleAPI, GalleryModuleAPI } from "./manifest";
 import { productRegistration } from "./entities/product/manifest";
 import { galleryRegistration } from "./entities/gallery";
-import { contentRegistry, contentCommands, contentEvents, contentTransactions, contentDiagnostics } from "./index";
+import { contentRegistry } from "./registry";
+import { contentCommands, contentEvents, contentTransactions, contentDiagnostics } from "./engine";
 
 class ContentAPIImpl {
   private registrations = new Map<string, ContentModuleRegistration>();

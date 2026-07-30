@@ -1,11 +1,12 @@
 import type { Scenario, ScenarioCategory } from "./types";
+import { logger } from "@/lib/observability/logger";
 
 class ScenarioRegistry {
   private scenarios = new Map<string, Scenario>();
 
   register(scenario: Scenario): void {
     if (this.scenarios.has(scenario.id)) {
-      console.warn(`[Beta] Scenario "${scenario.id}" already registered. Overwriting.`);
+      logger.warn(`Scenario "${scenario.id}" already registered. Overwriting.`, "beta-registry");
     }
     this.scenarios.set(scenario.id, scenario);
   }

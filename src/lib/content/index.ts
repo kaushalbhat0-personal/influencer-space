@@ -40,5 +40,5 @@ export type {
 } from "./schemas";
 
 // ── Website Aggregate (REF-01C) ──────────────────────────
-export { WebsiteAggregateService, websiteAggregateService } from "./website-aggregate.service";
+export { WebsiteAggregateService, websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 export type { WebsiteAggregate } from "./website-aggregate.types";

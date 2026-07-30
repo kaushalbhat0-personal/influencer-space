@@ -1,3 +1,5 @@
+import { logger } from "@/lib/observability/logger";
+
 export interface ImportLogEntry {
   timestamp: string;
   correlationId: string;
@@ -49,10 +51,12 @@ export class ImportLogger {
     logs.unshift(entry);
     if (logs.length > MAX_LOGS) logs.pop();
     // Console for production observability
-    const prefix = `[${severity.toUpperCase()}][${this.correlationId}] ${event}`;
-    if (severity === "error") console.error(prefix, details || "");
-    else if (severity === "warn") console.warn(prefix, details || "");
-    else console.log(prefix, details || "");
+    const msg = `${event}`;
+    const svc = "youtube-import";
+    const meta = details ? { metadata: details as Record<string, unknown> } : undefined;
+    if (severity === "error") logger.error(msg, svc, meta);
+    else if (severity === "warn") logger.warn(msg, svc, meta);
+    else logger.info(msg, svc, meta);
   }
 
   getLogs(): ImportLogEntry[] {

@@ -8,13 +8,22 @@ import { partnerService } from "@/lib/partners";
 import { logAction } from "@/lib/audit";
 import { platformEventBus } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
+import { metricsService } from "@/lib/observability/metrics-service";
 import type { CheckoutResult } from "../domain/types";
 import type { FeatureId } from "@/lib/capabilities/constants";
 
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
+    const start = Date.now();
+    logger.info("createCheckout started", "billing", { operation: "create_checkout", metadata: { workspaceId, planCode } as Record<string, unknown> });
     const plan = getPlan(planCode);
-    if (!plan) return { success: false, error: `Unknown plan: ${planCode}` };
+    if (!plan) {
+      logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "error", error: `Unknown plan: ${planCode}` } as Record<string, unknown> });
+      metricsService.recordDuration("billing_execution", Date.now() - start);
+      return { success: false, error: `Unknown plan: ${planCode}` };
+    }
 
     const order = await razorpayProvider.createCheckout({
       planCode,
@@ -23,7 +32,11 @@ export class BillingService {
       currency: plan.currency,
     });
 
-    if (!order.success) return order;
+    if (!order.success) {
+      logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "error", error: "Checkout creation failed" } as Record<string, unknown> });
+      metricsService.recordDuration("billing_execution", Date.now() - start);
+      return order;
+    }
 
     await billingRepository.createEvent({
       workspaceId,
@@ -33,11 +46,19 @@ export class BillingService {
       payload: { planCode, orderId: order.orderId, amount: plan.price },
     });
 
+    logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
+    metricsService.recordDuration("billing_execution", Date.now() - start);
     return order;
   }
 
   async handlePaymentCaptured(workspaceId: string, planCode: string, providerReference: string, idempotencyKey: string): Promise<void> {
-    if (await billingRepository.isDuplicateEvent(idempotencyKey)) return;
+    const start = Date.now();
+    logger.info("handlePaymentCaptured started", "billing", { operation: "handle_payment_captured", metadata: { workspaceId, planCode } as Record<string, unknown> });
+    if (await billingRepository.isDuplicateEvent(idempotencyKey)) {
+      logger.info("handlePaymentCaptured completed", "billing", { operation: "handle_payment_captured", duration: Date.now() - start, metadata: { result: "duplicate" } as Record<string, unknown> });
+      metricsService.recordDuration("billing_execution", Date.now() - start);
+      return;
+    }
 
     const plan = await billingRepository.findPlanByCode(planCode);
     if (!plan) throw new Error(`Unknown plan: ${planCode}`);
@@ -87,7 +108,7 @@ export class BillingService {
             currency: "INR",
           });
         } catch (err) {
-          console.error("Commission processing failed:", err);
+          captureError(err, { service: "billing", operation: "processCommission" });
         }
       }
     }
@@ -117,13 +138,23 @@ export class BillingService {
         invoiceId: invoice.id,
         subscriptionId: sub.id,
         providerReference,
-      }).catch((err) => { console.error(`[Billing] Failed to persist audit log for payment:captured:`, err); });
+      }).catch((err) => {
+        captureError(err, { service: "billing", operation: "paymentCaptured-audit" });
+      });
     }
+
+    logger.info("handlePaymentCaptured completed", "billing", { operation: "handle_payment_captured", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
+    metricsService.recordDuration("billing_execution", Date.now() - start);
   }
 
   async cancelSubscription(workspaceId: string, reason?: string): Promise<void> {
+    const start = Date.now();
+    logger.info("cancelSubscription started", "billing", { operation: "cancel_subscription", metadata: { workspaceId } as Record<string, unknown> });
     const sub = await billingRepository.findSubscriptionByWorkspaceId(workspaceId);
-    if (!sub) throw new Error("No active subscription");
+    if (!sub) {
+      captureError(new Error("No active subscription"), { service: "billing", operation: "cancel_subscription" });
+      throw new Error("No active subscription");
+    }
 
     validateTransition(sub.status as never, "CANCELLED");
 
@@ -144,6 +175,9 @@ export class BillingService {
       planCode: sub.planId,
       reason,
     });
+
+    logger.info("cancelSubscription completed", "billing", { operation: "cancel_subscription", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
+    metricsService.recordDuration("billing_execution", Date.now() - start);
   }
 
   async getSubscriptionStatus(workspaceId: string): Promise<{ planCode: string; status: string; active: boolean } | null> {

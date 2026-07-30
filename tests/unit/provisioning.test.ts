@@ -121,7 +121,7 @@ vi.mock("@/lib/template", () => ({
   templateService: { getTemplate: mockGetTemplate, apply: mockTemplateApply },
 }));
 
-vi.mock("@/lib/data/seeder", () => ({
+vi.mock("@/modules/tenant/application/seeder", () => ({
   seedStarterData: mockSeedStarterData,
 }));
 
@@ -145,7 +145,7 @@ vi.mock("@/lib/config/platform", () => ({
 
 // ── Imports ─────────────────────────────────────────────────────────────────
 
-import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 
 const baseInput = {
   runId: "run-1",

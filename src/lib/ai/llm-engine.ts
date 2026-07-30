@@ -1,10 +1,12 @@
 import type { IntelligenceEngine } from "./interface";
 import type { CreatorProfile, CreatorIntelligence } from "@/lib/creators/types";
+import { MS_PER_SECOND } from "@/lib/constants";
 import { CreatorIntelligenceSchema } from "./intelligence";
 import { aiProviderRegistry } from "./providers/registry";
 import { promptRegistry } from "./prompts/registry";
 import { HeuristicIntelligenceEngine } from "./heuristic";
 import { intelligenceCache } from "./cache";
+import { logger } from "@/lib/observability/logger";
 
 export interface LlmEngineConfig {
   providerName?: string;
@@ -63,7 +65,7 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
     const provider = aiProviderRegistry.getDefault(this.config.providerName);
     const promptEntry = promptRegistry.getLatest(this.config.promptId);
     if (!promptEntry) {
-      console.warn(`[LLM Engine] Prompt "${this.config.promptId}" not found, falling back to heuristic`);
+      logger.warn(`Prompt "${this.config.promptId}" not found, falling back to heuristic`, "llm-engine");
       this.stats.fallbacks++;
       return this.heuristic.analyze(profile, correlationId);
     }
@@ -118,7 +120,7 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
         // Confidence threshold check
         if (validated.confidence < this.config.confidenceThreshold) {
           this.stats.lowConfidence++;
-          console.warn(`[LLM Engine] Confidence ${validated.confidence} below threshold ${this.config.confidenceThreshold}, falling back`);
+          logger.warn(`Confidence ${validated.confidence} below threshold ${this.config.confidenceThreshold}, falling back`, "llm-engine");
           this.stats.fallbacks++;
           return this.heuristic.analyze(profile, correlationId);
         }
@@ -134,8 +136,8 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
 
         if (attempt < this.config.maxRetries && isRetryable(error)) {
           this.stats.retries++;
-          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s
-          console.warn(`[LLM Engine] Retry ${attempt + 1}/${this.config.maxRetries} after ${delay}ms`);
+          const delay = Math.pow(2, attempt) * MS_PER_SECOND;
+          logger.warn(`Retry ${attempt + 1}/${this.config.maxRetries} after ${delay}ms`, "llm-engine");
           await new Promise((r) => setTimeout(r, delay));
           continue;
         }
@@ -146,7 +148,7 @@ export class LlmIntelligenceEngine implements IntelligenceEngine {
 
     // All retries exhausted
     this.stats.failures++;
-    console.error(`[LLM Engine] Analysis failed after ${this.config.maxRetries + 1} attempts: ${lastError?.message}`);
+    logger.error(`Analysis failed after ${this.config.maxRetries + 1} attempts: ${lastError?.message}`, "llm-engine", { error: lastError ?? undefined });
 
     if (this.config.fallbackOnFailure) {
       this.stats.fallbacks++;

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { themeRegistry } from "@/lib/theme/registry-new";
 import Link from "next/link";
 import { Globe, Activity, Palette, CheckCircle, AlertCircle, Search, Filter } from "lucide-react";
-import { WebsiteFilters } from "./website-filters";
+import { WebsiteFilters } from "./_components/website-filters";
 
 export const dynamic = "force-dynamic";
 

@@ -2,11 +2,13 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { capabilityService } from "@/lib/capabilities";
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 import { platformEventBus } from "@/lib/events";
 import { publishingService } from "@/lib/publishing/service";
 import {
@@ -179,7 +181,7 @@ export async function confirmProvision(params: {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Publishing failed";
-        console.error(`[provision] Publishing failed for tenantId=${provisioned.tenantId}`, err);
+        captureError(err, { service: "super-admin-provision", operation: "publish", tenantId: provisioned.tenantId });
         return { success: false, error: msg };
       }
     }

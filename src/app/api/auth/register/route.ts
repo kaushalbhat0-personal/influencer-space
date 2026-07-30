@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for") ?? "register";
@@ -123,7 +125,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, userId: result.userId, email }, { status: 201 });
   } catch (error) {
-    console.error("Registration failed:", error);
+    captureError(error, { service: "auth-register", operation: "POST" });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

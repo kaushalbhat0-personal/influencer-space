@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { showcaseService } from "@/lib/showcase/service";
-import type { ShowcaseSite } from "@/lib/showcase/service";
+import { showcaseService, type ShowcaseSite } from "@/modules/tenant/application/showcase.service";
 import { Search, ExternalLink, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";

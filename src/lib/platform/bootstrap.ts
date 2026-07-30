@@ -18,10 +18,11 @@ import type {
   BootstrapHook,
 } from "./types";
 import { DEFAULT_BOOTSTRAP_CONFIG } from "./types";
+import { logger } from "@/lib/observability/logger";
 
 function log(...args: unknown[]) {
   if (process.env.DEBUG || process.env.NODE_ENV !== "production") {
-    log(...args);
+    logger.info(String(args[0]), "bootstrap", { metadata: { args } as unknown as Record<string, unknown> });
   }
 }
 
@@ -62,8 +63,8 @@ export class PlatformBootstrap {
       await this.executePhase("config-validation", phases, () => {
         const result = validateConfig();
         if (!result.ok) {
-          console.warn(`[Bootstrap] Config validation: ${result.errors.length} issues found`);
-          for (const err of result.errors) console.warn(`  [Config] ${err}`);
+          logger.warn(`Config validation: ${result.errors.length} issues found`, "bootstrap");
+          for (const err of result.errors) logger.warn(`Config: ${err}`, "bootstrap");
         } else {
           log(`[Bootstrap] Config validation: ${result.checks.filter((c) => c.present).length}/${result.checks.length} vars present`);
         }
@@ -267,7 +268,7 @@ export class PlatformBootstrap {
           await result;
         }
       } catch (err) {
-        console.error("[PlatformBootstrap] Startup hook failed:", err);
+        logger.error("Startup hook failed", "bootstrap", { error: err instanceof Error ? err : new Error(String(err)) });
       }
     }
 
@@ -282,7 +283,7 @@ export class PlatformBootstrap {
           await result;
         }
       } catch (err) {
-        console.error("[PlatformBootstrap] Shutdown hook failed:", err);
+        logger.error("Shutdown hook failed", "bootstrap", { error: err instanceof Error ? err : new Error(String(err)) });
       }
     }
   }

@@ -3,7 +3,7 @@ import { logAction } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import type { FetchGalleryParams } from "./types";
 import { findGalleryItems, findGalleryItemById } from "./queries";
-import { requireAuth, requireFound } from "./permissions";
+import { requireAuth, requireFound } from "@/modules/workspace/application/workspace-permissions";
 import { galleryCreateSchema } from "./validation";
 import { getFirstValidationError } from "./validation";
 

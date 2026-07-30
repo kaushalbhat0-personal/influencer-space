@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DemoSeedAdapter } from "@/lib/import/adapters/demo-seed";
-import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import type { DemoGenerationResult } from "@/lib/demo/types";

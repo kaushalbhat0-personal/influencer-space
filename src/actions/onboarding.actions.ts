@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 import { prisma } from "@/lib/prisma";
@@ -13,6 +13,8 @@ import { publishingService } from "@/lib/publishing/service";
 import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 import {
   buildProvisioningInput, buildBuilderArtifactData,
 } from "@/lib/generation/integration/provision-pipeline";
@@ -94,7 +96,7 @@ export async function runCreatorGeneration(
         await sessionService.beginExecution(gs.id);
         await sessionService.updateStage(gs.id, "import_profile", "running");
       } catch (err) {
-        console.error(`[onboarding][${ctx.correlationId}] Failed to create generation session`, err);
+        captureError(err, { service: "onboarding-actions", operation: "createGenerationSession", correlation: ctx.correlationId });
       }
     }
 
@@ -260,7 +262,7 @@ export async function runCreatorGeneration(
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Publishing failed";
-        console.error(`[onboarding] Publishing failed for tenantId=${provisioned.tenantId}`, err);
+        captureError(err, { service: "onboarding-actions", operation: "publish", tenantId: provisioned.tenantId });
         markStage("publishing", "failed", msg);
         if (generationSessionId) {
           await sessionService.updateStage(generationSessionId, "publishing", "failed", msg);
@@ -301,7 +303,7 @@ export async function runCreatorGeneration(
           dashboardUrl: website ? "/builder" : "/admin/dashboard",
         });
       } catch (err) {
-        console.error("[onboarding] Failed to complete generation session", err);
+        captureError(err, { service: "onboarding-actions", operation: "completeGenerationSession" });
       }
     }
 

@@ -1,5 +1,5 @@
 import { blueprintRegistry } from "@/lib/blueprint/registry";
-import { BlueprintGalleryClient } from "./blueprint-gallery-client";
+import { BlueprintGalleryClient } from "./_components/blueprint-gallery-client";
 
 export const dynamic = "force-dynamic";
 

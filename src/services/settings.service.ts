@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import type { HeroDataType } from "@/config/hero";
 import { defaultHeroData } from "@/config/hero";
 import type { Prisma } from "@/generated/prisma/client";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 type SqlExecutor = {
   $executeRawUnsafe: (query: string, ...params: unknown[]) => Promise<number>;
@@ -15,7 +17,7 @@ export const SettingsService = {
       });
       return setting?.value ?? null;
     } catch (error) {
-      console.error("SettingsService.getSettingByKey error:", error);
+      captureError(error, { service: "settings-service", operation: "getSettingByKey" });
       return null;
     }
   },
@@ -31,7 +33,7 @@ export const SettingsService = {
       }
       return result;
     } catch (error) {
-      console.error("SettingsService.getAllSettings error:", error);
+      captureError(error, { service: "settings-service", operation: "getAllSettings" });
       return {};
     }
   },
@@ -48,7 +50,7 @@ export const SettingsService = {
         create: { tenantId, key, value },
       });
     } catch (error) {
-      console.error("SettingsService.upsertSetting error:", error);
+      captureError(error, { service: "settings-service", operation: "upsertSetting" });
       throw error;
     }
   },
@@ -58,14 +60,14 @@ export const SettingsService = {
       const data = await SettingsService.getSettingByKey(tenantId, "hero_data");
       if (data) return { ...defaultHeroData, ...(data as Partial<HeroDataType>) };
     } catch (err) {
-      console.error("SettingsService.getHeroData error:", err);
+      captureError(err, { service: "settings-service", operation: "getHeroData" });
     }
 
     await SettingsService.upsertSetting(
       tenantId,
       "hero_data",
       defaultHeroData as Prisma.InputJsonValue,
-    ).catch((err) => { console.error("SettingsService.getHeroData upsert error:", err); });
+    ).catch((err) => { captureError(err, { service: "settings-service", operation: "getHeroData-upsert" }); });
 
     return defaultHeroData;
   },

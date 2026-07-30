@@ -1,6 +1,7 @@
 import type { PayoutBatch, PayoutReservation } from "./types";
 import type { PayoutProviderType, PayoutStatus } from "./constants";
 import { payoutRepository } from "./repositories/payout-repository";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export class PayoutLedger {
   private batches: PayoutBatch[] = [];
@@ -14,7 +15,7 @@ export class PayoutLedger {
     return { batches: this.batches.length };
   }
 
-  addBatch(batch: PayoutBatch): void { this.batches.push(batch); payoutRepository.saveBatch(batch).catch((err) => { console.error(`[PayoutLedger] Failed to persist batch ${batch.id}:`, err); }); }
+  addBatch(batch: PayoutBatch): void { this.batches.push(batch); payoutRepository.saveBatch(batch).catch((err) => { captureError(err, { service: "payout-ledger", operation: `saveBatch:${batch.id}` }); }); }
   getBatch(batchId: string): PayoutBatch | undefined { return this.batches.find((b) => b.id === batchId); }
 
   updateBatchStatus(batchId: string, status: PayoutStatus, updates?: Partial<PayoutBatch["audit"]>): PayoutBatch | undefined {
@@ -22,7 +23,7 @@ export class PayoutLedger {
     if (!batch) return undefined;
     batch.status = status; batch.updatedAt = new Date().toISOString();
     if (updates) batch.audit = { ...batch.audit, ...updates };
-    payoutRepository.updateBatchStatus(batchId, status, updates as Record<string, unknown>).catch((err) => { console.error(`[PayoutLedger] Failed to persist updateBatchStatus(${batchId}, ${status}):`, err); });
+    payoutRepository.updateBatchStatus(batchId, status, updates as Record<string, unknown>).catch((err) => { captureError(err, { service: "payout-ledger", operation: `updateBatchStatus:${batchId}` }); });
     return batch;
   }
 
@@ -42,7 +43,7 @@ export class PayoutLedger {
     return { items: result.slice(offset, offset + limit), total, hasMore: offset + limit < total };
   }
 
-  addReservation(reservation: PayoutReservation): void { this.reservations.push(reservation); payoutRepository.saveReservation(reservation).catch((err) => { console.error(`[PayoutLedger] Failed to persist reservation ${reservation.id}:`, err); }); }
+  addReservation(reservation: PayoutReservation): void { this.reservations.push(reservation); payoutRepository.saveReservation(reservation).catch((err) => { captureError(err, { service: "payout-ledger", operation: `saveReservation:${reservation.id}` }); }); }
   getReservationsByBatch(batchId: string): PayoutReservation[] { return this.reservations.filter((r) => r.batchId === batchId); }
   getReservationsByPartner(partnerId: string): PayoutReservation[] { return this.reservations.filter((r) => r.partnerId === partnerId); }
   getReservationsByCommissionEntry(commissionEntryId: string): PayoutReservation[] { return this.reservations.filter((r) => r.commissionEntryId === commissionEntryId); }
@@ -51,7 +52,7 @@ export class PayoutLedger {
     const r = this.reservations.find((x) => x.id === reservationId);
     if (!r || r.status !== "reserved") return false;
     r.status = "settled"; r.settledAt = new Date().toISOString();
-    payoutRepository.updateReservationStatus(reservationId, "settled", { settledAt: new Date() }).catch((err) => { console.error(`[PayoutLedger] Failed to persist settleReservation(${reservationId}):`, err); });
+    payoutRepository.updateReservationStatus(reservationId, "settled", { settledAt: new Date() }).catch((err) => { captureError(err, { service: "payout-ledger", operation: `settleReservation:${reservationId}` }); });
     return true;
   }
 
@@ -59,7 +60,7 @@ export class PayoutLedger {
     const r = this.reservations.find((x) => x.id === reservationId);
     if (!r || r.status !== "reserved") return false;
     r.status = "released"; r.releasedAt = new Date().toISOString();
-    payoutRepository.updateReservationStatus(reservationId, "released", { releasedAt: new Date() }).catch((err) => { console.error(`[PayoutLedger] Failed to persist releaseReservation(${reservationId}):`, err); });
+    payoutRepository.updateReservationStatus(reservationId, "released", { releasedAt: new Date() }).catch((err) => { captureError(err, { service: "payout-ledger", operation: `releaseReservation:${reservationId}` }); });
     return true;
   }
 

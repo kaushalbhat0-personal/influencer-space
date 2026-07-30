@@ -3,7 +3,7 @@ import {
   Headphones, BarChart3, CreditCard, ScrollText, Settings,
   UserCog, UserPlus, Sparkles, CheckCircle2, Bot, Globe,
   ToggleRight, Timer, FileText, IndianRupee, TrendingUp, Monitor, Clock,
-  Lightbulb, Percent,
+  Lightbulb, Percent, RefreshCw, Bell, BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -61,6 +61,20 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     href: "/super-admin/insights", icon: Lightbulb, permission: "super_admin",
     searchable: true, keywords: ["intelligence", "alerts", "attention", "health", "summary"],
     auditCategory: "system", analyticsKey: "insights:viewed",
+    productionReady: true,
+  },
+  {
+    id: "alerts", title: "Alerts", group: "platform",
+    href: "/super-admin/alerts", icon: Bell, permission: "super_admin",
+    searchable: true, keywords: ["alerts", "notifications", "warnings", "critical", "triggered", "rules"],
+    auditCategory: "system", analyticsKey: "alerts:viewed",
+    productionReady: true,
+  },
+  {
+    id: "runbooks", title: "Runbooks", group: "platform",
+    href: "/super-admin/runbooks", icon: BookOpen, permission: "super_admin",
+    searchable: true, keywords: ["runbooks", "recovery", "guides", "playbooks", "incidents", "sop"],
+    auditCategory: "system", analyticsKey: "runbooks:viewed",
     productionReady: true,
   },
 
@@ -241,6 +255,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     searchable: false, keywords: ["config", "platform", "general", "preferences"],
     badge: "soon",
     productionReady: false,
+  },
+  {
+    id: "registry-sync", title: "Registry Sync", group: "system",
+    href: "/super-admin/platform/sync", icon: RefreshCw, permission: "super_admin",
+    searchable: true, keywords: ["sync", "plan catalog", "features", "billing", "migration", "drift"],
+    auditCategory: "platform", analyticsKey: "registry-sync:viewed",
+    productionReady: true,
   },
 ];
 

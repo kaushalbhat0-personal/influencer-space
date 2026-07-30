@@ -1,3 +1,7 @@
+import { MS_PER_SECOND } from "@/lib/constants";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
+
 export interface RetryConfig {
   maxAttempts: number;
   baseDelayMs: number;
@@ -7,8 +11,8 @@ export interface RetryConfig {
 
 const DEFAULT_CONFIG: RetryConfig = {
   maxAttempts: 3,
-  baseDelayMs: 1000,
-  maxDelayMs: 30000,
+  baseDelayMs: MS_PER_SECOND,
+  maxDelayMs: 30 * MS_PER_SECOND,
   retryable: (err) => {
     if (err instanceof Error) {
       const msg = err.message.toLowerCase();
@@ -38,7 +42,7 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= merged.maxAttempts; attempt++) {
     try {
       const data = await fn();
-      if (attempt > 1) console.log(`[Retry] Succeeded on attempt ${attempt}/${merged.maxAttempts}`);
+      if (attempt > 1) logger.info(`Succeeded on attempt ${attempt}/${merged.maxAttempts}`, "retry");
       return { success: true, data, attempts: attempt };
     } catch (err) {
       lastError = err;
@@ -47,12 +51,12 @@ export async function withRetry<T>(
 
       if (!canRetry || isLastAttempt) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error(`[Retry] Failed after ${attempt} attempt(s): ${msg}`);
+        captureError(err, { service: "retry", operation: "withRetry" });
         return { success: false, error: msg, attempts: attempt };
       }
 
       const delay = calculateBackoff(attempt, merged);
-      console.log(`[Retry] Attempt ${attempt}/${merged.maxAttempts} failed. Retrying in ${Math.round(delay)}ms...`);
+      logger.info(`Attempt ${attempt}/${merged.maxAttempts} failed. Retrying in ${Math.round(delay)}ms...`, "retry");
       await sleep(delay);
     }
   }

@@ -37,9 +37,11 @@ export function trackProductEvent(stage: EventStage, meta?: Record<string, unkno
   return event;
 }
 
+import { logger } from "@/lib/observability/logger";
+
 /** Simple event tracking — logs to console and stores in memory for debugging. */
 export function track(event: string, properties?: Record<string, unknown>): void {
-  console.log(`[Analytics] ${event}`, properties || {});
+  logger.info(event, "analytics", { metadata: (properties ?? {}) as Record<string, unknown> });
 }
 
 export function getFunnelCounts(): Record<EventStage, number> {

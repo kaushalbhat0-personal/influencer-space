@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { workspaceMemberService } from "@/lib/workspace/membership";
+import { workspaceMemberService } from "@/modules/workspace/application/workspace-membership";
 import { assignmentRepository } from "./assignment-repository";
 
 export type AssignmentRole = "account_manager" | "designer" | "developer" | "content_editor" | "support";

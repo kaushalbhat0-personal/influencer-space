@@ -2,7 +2,10 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { resolveWorkspace } from "@/lib/auth/resolve-workspace";
+import { resolveWorkspace } from "@/modules/workspace/application/resolve-workspace";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
+import { metricsService } from "@/lib/observability/metrics-service";
 
 const secret = process.env.NEXTAUTH_SECRET;
 if (!secret && process.env.NODE_ENV === "production") {
@@ -20,6 +23,7 @@ export const authOptions: NextAuthOptions = {
         tenantId: { label: "Tenant ID", type: "text" },
       },
       async authorize(credentials) {
+        logger.info("Login attempt", "auth", { operation: "authorize", metadata: { email: credentials?.email } as Record<string, unknown> });
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
@@ -27,30 +31,50 @@ export const authOptions: NextAuthOptions = {
             where: { email: credentials.email },
             include: { tenant: { select: { id: true, subdomain: true } } },
           });
-          if (!user) return null;
+          if (!user) {
+            logger.info("Login failed: user not found", "auth", { operation: "authorize", metadata: { email: credentials.email } as Record<string, unknown> });
+            metricsService.recordOutcome("publish", false);
+            return null;
+          }
 
           const passwordMatch = await bcrypt.compare(credentials.password, user.password);
-          if (!passwordMatch) return null;
+          if (!passwordMatch) {
+            logger.info("Login failed: invalid password", "auth", { operation: "authorize", metadata: { email: credentials.email } as Record<string, unknown> });
+            metricsService.recordOutcome("publish", false);
+            return null;
+          }
 
           if (user.role === "SUPER_ADMIN") {
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: null, role: user.role, workspaceId: null, workspaceType: null, workspaceRole: null };
           }
 
           if (user.role === "AGENCY_ADMIN" || user.role === "AGENCY_STAFF") {
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: user.agencyId, role: user.role };
           }
 
           if (user.role === "ADMIN") {
             if (credentials.tenantId && user.tenant) {
               const match = user.tenant.id === credentials.tenantId || user.tenant.subdomain === credentials.tenantId;
-              if (!match) return null;
+              if (!match) {
+                logger.info("Login failed: tenant mismatch", "auth", { operation: "authorize", metadata: { email: credentials.email } as Record<string, unknown> });
+                metricsService.recordOutcome("publish", false);
+                return null;
+              }
             }
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: user.tenantId, agencyId: user.agencyId, role: user.role };
           }
 
+          logger.info("Login failed: unknown role", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+          metricsService.recordOutcome("publish", false);
           return null;
         } catch (error) {
-          console.error("Auth error:", error);
+          captureError(error, { service: "auth", operation: "authorize" });
           return null;
         }
       },

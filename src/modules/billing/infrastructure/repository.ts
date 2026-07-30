@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma, BillingSubscription, BillingInvoice, BillingEvent } from "@/generated/prisma/client";
+import { logger } from "@/lib/observability/logger";
+import { metricsService } from "@/lib/observability/metrics-service";
 
 export class BillingRepository {
   private client(tx?: Prisma.TransactionClient) {
@@ -72,13 +74,20 @@ export class BillingRepository {
   }
 
   async upsertSubscription(workspaceId: string, data: { planId: string; status: string; trialEndsAt?: Date | null; renewsAt?: Date | null }, tx?: Prisma.TransactionClient): Promise<BillingSubscription> {
+    const start = Date.now();
     const existing = await this.client(tx).billingSubscription.findUnique({ where: { workspaceId } });
+    let result: BillingSubscription;
     if (existing) {
-      return this.client(tx).billingSubscription.update({ where: { workspaceId }, data });
+      result = await this.client(tx).billingSubscription.update({ where: { workspaceId }, data });
+      logger.info("subscription updated", "billing", { operation: "update_subscription", duration: Date.now() - start, metadata: { workspaceId, planId: data.planId, status: data.status } as Record<string, unknown> });
+    } else {
+      result = await this.client(tx).billingSubscription.create({
+        data: { accountId: workspaceId, workspaceId, ...data },
+      });
+      logger.info("subscription created", "billing", { operation: "create_subscription", duration: Date.now() - start, metadata: { workspaceId, planId: data.planId, status: data.status } as Record<string, unknown> });
     }
-    return this.client(tx).billingSubscription.create({
-      data: { accountId: workspaceId, workspaceId, ...data },
-    });
+    metricsService.recordDuration("billing_execution", Date.now() - start);
+    return result;
   }
 
   async createEvent(data: { workspaceId: string; accountId: string; type: string; idempotencyKey?: string; payload?: unknown }, tx?: Prisma.TransactionClient): Promise<BillingEvent> {
@@ -91,12 +100,16 @@ export class BillingRepository {
   }
 
   async createInvoice(data: { workspaceId: string; accountId: string; planCode: string; amount: number; currency?: string; status?: string }, tx?: Prisma.TransactionClient): Promise<BillingInvoice> {
-    return this.client(tx).billingInvoice.create({
+    const start = Date.now();
+    const result = await this.client(tx).billingInvoice.create({
       data: {
         workspaceId: data.workspaceId, accountId: data.accountId, planCode: data.planCode,
         amount: data.amount, currency: data.currency ?? "INR", status: data.status ?? "PENDING",
       },
     });
+    logger.info("invoice created", "billing", { operation: "create_invoice", duration: Date.now() - start, metadata: { workspaceId: data.workspaceId, planCode: data.planCode, amount: data.amount } as Record<string, unknown> });
+    metricsService.recordDuration("billing_execution", Date.now() - start);
+    return result;
   }
 
   async updateInvoiceStatus(invoiceId: string, status: string, providerReference?: string, tx?: Prisma.TransactionClient): Promise<BillingInvoice> {

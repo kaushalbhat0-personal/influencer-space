@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { LayoutVariantSelector } from "@/lib/generation/composition/variants/selector";
 import { LayoutVariantRegistry } from "@/lib/generation/composition/variants/registry";
-import { ALL_VARIANTS } from "@/lib/generation/composition/variants/variants/all-variants";
+import { ALL_VARIANTS } from "@/lib/generation/composition/variants/all-variants";
 import type { KnowledgeGraph } from "@/lib/generation/intelligence/types";
 
 function mockGraph(niche: string, overrides?: Partial<KnowledgeGraph>): KnowledgeGraph {

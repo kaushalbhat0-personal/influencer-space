@@ -1,3 +1,5 @@
+import { logger } from "@/lib/observability/logger";
+
 export interface MarketingEvent {
   name: string;
   properties: Record<string, unknown>;
@@ -7,7 +9,7 @@ export interface MarketingEvent {
 export function trackMarketingEvent(name: string, properties: Record<string, unknown> = {}): void {
   try {
     if (process.env.NODE_ENV === "development") {
-      console.log("[Marketing]", name, properties);
+      logger.info(name, "marketing", { metadata: properties as Record<string, unknown> });
     }
   } catch {}
 }

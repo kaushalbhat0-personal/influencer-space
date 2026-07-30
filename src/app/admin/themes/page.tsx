@@ -1,5 +1,5 @@
 import { themeRegistry } from "@/lib/theme/registry-new";
-import { ThemeMarketplaceClient } from "./theme-marketplace-client";
+import { ThemeMarketplaceClient } from "./_components/theme-marketplace-client";
 
 export const dynamic = "force-dynamic";
 

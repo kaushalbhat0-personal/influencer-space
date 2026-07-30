@@ -1,5 +1,7 @@
 import type { BillingEventType, SubscriptionStatus } from "./constants";
 import type { BillingEventPayload } from "./types";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export interface BillingEvent {
   id: string;
@@ -62,7 +64,7 @@ export class EventRegistry {
 
     for (const result of results) {
       if (result.status === "rejected") {
-        console.error(`[EventRegistry] Subscriber error for ${event.type}:`, result.reason);
+        captureError(result.reason, { service: "billing-event-registry", operation: `subscriber:${event.type}` });
       }
     }
   }

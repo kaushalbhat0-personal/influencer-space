@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { billingService } from "@/modules/billing/application/service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for") ?? "webhook";
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
         }
       }
     } catch (error) {
-      console.error("Webhook payment processing failed:", error);
+      captureError(error, { service: "razorpay-webhook", operation: "paymentCaptured" });
     }
   }
 

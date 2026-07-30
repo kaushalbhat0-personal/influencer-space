@@ -1,4 +1,4 @@
-import { revenueService } from "@/lib/revenue/service";
+import { revenueService } from "@/modules/billing/application/revenue-service";
 import { Settings, IndianRupee, Clock, FileText, RefreshCw, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";

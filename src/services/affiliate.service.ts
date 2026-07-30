@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export type AffiliateData = {
   id: string;
@@ -19,7 +20,7 @@ export const AffiliateService = {
         orderBy: { createdAt: "desc" },
       });
     } catch (error) {
-      console.error("AffiliateService.findAll error:", error);
+      captureError(error, { service: "affiliate-service", operation: "findAll" });
       return [];
     }
   },
@@ -30,7 +31,7 @@ export const AffiliateService = {
         where: { id, tenantId },
       });
     } catch (error) {
-      console.error("AffiliateService.findById error:", error);
+      captureError(error, { service: "affiliate-service", operation: "findById" });
       return null;
     }
   },
@@ -42,7 +43,7 @@ export const AffiliateService = {
         orderBy: { createdAt: "desc" },
       });
     } catch (error) {
-      console.error("AffiliateService.findAllActive error:", error);
+      captureError(error, { service: "affiliate-service", operation: "findAllActive" });
       return [];
     }
   },
@@ -68,7 +69,7 @@ export const AffiliateService = {
         },
       });
     } catch (error) {
-      console.error("AffiliateService.create error:", error);
+      captureError(error, { service: "affiliate-service", operation: "create" });
       throw error;
     }
   },
@@ -90,7 +91,7 @@ export const AffiliateService = {
       if (!existing) throw new Error("Affiliate not found");
       return await prisma.affiliateLink.update({ where: { id }, data });
     } catch (error) {
-      console.error("AffiliateService.update error:", error);
+      captureError(error, { service: "affiliate-service", operation: "update" });
       throw error;
     }
   },
@@ -103,7 +104,7 @@ export const AffiliateService = {
       if (!existing) throw new Error("Affiliate not found");
       await prisma.affiliateLink.delete({ where: { id } });
     } catch (error) {
-      console.error("AffiliateService.delete error:", error);
+      captureError(error, { service: "affiliate-service", operation: "delete" });
       throw error;
     }
   },
@@ -119,7 +120,7 @@ export const AffiliateService = {
         data: { isActive: !existing.isActive },
       });
     } catch (error) {
-      console.error("AffiliateService.toggleActive error:", error);
+      captureError(error, { service: "affiliate-service", operation: "toggleActive" });
       throw error;
     }
   },
@@ -135,7 +136,7 @@ export const AffiliateService = {
         data: { clicks: { increment: 1 } },
       });
     } catch (error) {
-      console.error("AffiliateService.incrementClicks error:", error);
+      captureError(error, { service: "affiliate-service", operation: "incrementClicks" });
       throw error;
     }
   },

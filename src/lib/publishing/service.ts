@@ -19,13 +19,17 @@ import { revalidatePath } from "next/cache";
 import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
-import { websiteAggregateService } from "@/lib/content/website-aggregate.service";
+import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
 import { themeResolver } from "@/lib/theme/resolver-new";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import type { PublishedSnapshot } from "@/types/snapshot";
-import { publishRepository } from "./repository";
+import { publishRepository } from "@/modules/tenant/infrastructure/publishing-repository";
+import { logger } from "@/lib/observability/logger";
+import { runWorkflow } from "@/lib/observability/workflow-diagnostics";
+import { captureError } from "@/lib/observability/error-tracker";
+import { metricsService } from "@/lib/observability/metrics-service";
 
 const FALLBACK_THEME_ID = "com.creatos.neon-dark";
 
@@ -78,6 +82,8 @@ export class PublishingService {
     tenantId: string,
     correlation?: CorrelationContext,
   ): Promise<{ success: boolean; version?: number; error?: string }> {
+    const startTime = Date.now();
+    logger.info("Publishing started", "publishing", { correlation, metadata: { tenantId } });
     try {
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
@@ -212,8 +218,12 @@ export class PublishingService {
         // cache invalidation is fire-and-forget; already committed
       }
 
+      logger.info("Publishing completed", "publishing", { correlation, duration: Date.now() - startTime, metadata: { tenantId, version: result.version } });
+      metricsService.recordDuration("publish", Date.now() - startTime, { status: "success", tenantId });
+      metricsService.recordOutcome("publish", true, { tenantId });
       return { success: true, version: result.version };
     } catch (error) {
+      captureError(error, { service: "publishing", operation: "publish", correlation, tenantId });
       return { success: false, error: error instanceof Error ? error.message : "Publish failed" };
     }
   }
@@ -238,6 +248,8 @@ export class PublishingService {
   }
 
   async preview(tenantId: string): Promise<{ success: boolean; version?: number; error?: string }> {
+    const startTime = Date.now();
+    logger.info("Preview started", "publishing", { metadata: { tenantId } });
     try {
       const website = await prisma.website.findUnique({
         where: { tenantId },
@@ -286,13 +298,17 @@ export class PublishingService {
       };
 
       const result = await publishRepository.createPreview(website.id, previewSnapshot);
+      logger.info("Preview completed", "publishing", { duration: Date.now() - startTime, metadata: { tenantId, version: result.version } });
       return { success: true, version: result.version };
     } catch (error) {
+      captureError(error, { service: "publishing", operation: "preview", tenantId });
       return { success: false, error: error instanceof Error ? error.message : "Preview failed" };
     }
   }
 
   async rollback(tenantId: string, version: number): Promise<{ success: boolean; error?: string }> {
+    const startTime = Date.now();
+    logger.info("Rollback started", "publishing", { metadata: { tenantId, version } });
     try {
       const website = await prisma.website.findUnique({
         where: { tenantId },
@@ -308,8 +324,11 @@ export class PublishingService {
       );
       await builderService.save(website.id, data.pages);
 
+      logger.info("Rollback completed", "publishing", { duration: Date.now() - startTime, metadata: { tenantId, version } });
+      metricsService.recordOutcome("publish", true, { tenantId, operation: "rollback" });
       return { success: true };
     } catch (error) {
+      captureError(error, { service: "publishing", operation: "rollback", tenantId });
       return { success: false, error: error instanceof Error ? error.message : "Rollback failed" };
     }
   }

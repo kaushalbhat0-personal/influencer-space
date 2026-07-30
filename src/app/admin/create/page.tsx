@@ -2,7 +2,7 @@ import { industryRegistry } from "@/lib/creation/industry/registry";
 import { styleRegistry } from "@/lib/creation/style/registry";
 import { blueprintRegistry } from "@/lib/blueprint/registry";
 import { themeRegistry } from "@/lib/theme/registry-new";
-import { CreationWizardClient } from "./creation-wizard-client";
+import { CreationWizardClient } from "./_components/creation-wizard-client";
 
 export const dynamic = "force-dynamic";
 

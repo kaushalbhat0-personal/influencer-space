@@ -1,5 +1,8 @@
+/** @deprecated Use ThemeRegistry (registry-new.ts) instead. */
 export { themePresetRegistry } from "./presets";
+/** @deprecated Use ThemeRegistry (registry-new.ts) instead. */
 export type { ThemePreset } from "./presets";
+/** @deprecated Use ThemeRegistry/ThemeResolver instead. */
 export { ThemeService, themeService } from "./service";
 
 // ── Canonical Theme Registry (THEME-01A) ──────────────────────

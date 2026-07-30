@@ -7,6 +7,8 @@ import type {
   UnsubscribeFn,
 } from "./types";
 import { eventRepository } from "./repositories/event-repository";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 function generateEventId(): string {
   return randomUUID();
@@ -45,7 +47,7 @@ export class PlatformEventBus {
     }
 
     eventRepository.save(event as PlatformEvent).catch((err) => {
-      console.error(`[EventBus] Failed to persist event "${type}":`, err);
+      captureError(err, { service: "event-bus", operation: `persist:${type}` });
     });
 
     const handlers = this.subscribers.get(type);
@@ -55,11 +57,11 @@ export class PlatformEventBus {
           const result = handler(event as unknown as PlatformEvent);
           if (result instanceof Promise) {
             result.catch((err) => {
-              console.error(`[EventBus] Async handler error for "${type}":`, err);
+              captureError(err, { service: "event-bus", operation: `async-handler:${type}` });
             });
           }
         } catch (err) {
-          console.error(`[EventBus] Handler error for "${type}":`, err);
+          captureError(err, { service: "event-bus", operation: `handler:${type}` });
         }
       }
     }

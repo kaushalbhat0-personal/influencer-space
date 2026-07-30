@@ -8,6 +8,8 @@ import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -97,7 +99,7 @@ export async function updateHeroData(
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
       return { success: false, error: error.message };
     }
-    console.error("updateHeroData error:", error);
+    captureError(error, { service: "settings-actions", operation: "updateHeroData" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
@@ -142,7 +144,7 @@ export async function updateHeroPartial(
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
       return { success: false, error: error.message };
     }
-    console.error("updateHeroPartial error:", error);
+    captureError(error, { service: "settings-actions", operation: "updateHeroPartial" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
@@ -172,7 +174,7 @@ export async function updateSocialChannels(
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
       return { success: false, error: error.message };
     }
-    console.error("updateSocialChannels error:", error);
+    captureError(error, { service: "settings-actions", operation: "updateSocialChannels" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
@@ -212,7 +214,7 @@ export async function updateApiKeys(
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
       return { success: false, error: error.message };
     }
-    console.error("updateApiKeys error:", error);
+    captureError(error, { service: "settings-actions", operation: "updateApiKeys" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }
@@ -261,7 +263,7 @@ export async function updateThemeConfig(
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
       return { success: false, error: error.message };
     }
-    console.error("updateThemeConfig error:", error);
+    captureError(error, { service: "settings-actions", operation: "updateThemeConfig" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }

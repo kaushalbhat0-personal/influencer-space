@@ -1,4 +1,4 @@
-import { MediaLibrary } from "./media-library";
+import { MediaLibrary } from "./_components/media-library";
 
 export const dynamic = "force-dynamic";
 

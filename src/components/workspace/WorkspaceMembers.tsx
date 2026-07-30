@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { MemberResult } from "@/lib/workspace/membership";
+import type { MemberResult } from "@/modules/workspace/application/workspace-membership";
 import { Shield, ShieldCheck, ShieldMinus, User } from "lucide-react";
 
 interface Props {

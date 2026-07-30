@@ -1,5 +1,6 @@
 import type { BuilderEventType, BuilderEvent, BuilderEventPayloads, EventHandler, UnsubscribeFn, SubscriberEntry, EventDiagnostics } from "./types";
 import { platformTelemetry } from "@/lib/telemetry/telemetry";
+import { logger } from "@/lib/observability/logger";
 
 function generateEventId(): string { return crypto.randomUUID(); }
 
@@ -63,9 +64,9 @@ export class BuilderEventBus {
       try {
         sub.handler(event);
       } catch (err) {
-        const msg = `[BuilderEventBus] ${type} handler error: ${err instanceof Error ? err.message : String(err)}`;
+        const msg = `${type} handler error: ${err instanceof Error ? err.message : String(err)}`;
         this.errors.push(msg);
-        console.error(msg);
+        logger.error(msg, "builder-event-bus");
       }
     }
 

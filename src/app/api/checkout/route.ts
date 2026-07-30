@@ -3,6 +3,8 @@ import { getRazorpayInstance } from "@/lib/razorpay";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getPlan } from "@/lib/capabilities";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export async function POST(req: Request) {
   try {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error("Checkout order creation failed:", error);
+    captureError(error, { service: "checkout", operation: "createOrder" });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

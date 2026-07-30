@@ -1,5 +1,5 @@
 import { getNavigation } from "@/actions/navigation.actions";
-import { NavigationManager } from "./navigation-manager";
+import { NavigationManager } from "./_components/navigation-manager";
 
 export const dynamic = "force-dynamic";
 

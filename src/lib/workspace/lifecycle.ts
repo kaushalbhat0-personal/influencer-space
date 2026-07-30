@@ -1,3 +1,6 @@
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
+
 export type WorkspaceStatus = "CREATING" | "ACTIVE" | "SUSPENDED" | "ARCHIVED" | "DELETED";
 
 const TRANSITIONS: Record<WorkspaceStatus, WorkspaceStatus[]> = {
@@ -21,10 +24,13 @@ export class WorkspaceLifecycleService {
   }
 
   assertTransition(from: WorkspaceStatus, to: WorkspaceStatus): void {
+    logger.info("assertTransition", "workspace", { operation: "assert_transition", metadata: { from, to } as Record<string, unknown> });
     if (!this.canTransition(from, to)) {
-      throw new WorkspaceLifecycleError(
+      const error = new WorkspaceLifecycleError(
         `Cannot transition workspace from ${from} to ${to}`
       );
+      captureError(error, { service: "workspace", operation: "assert_transition" });
+      throw error;
     }
   }
 

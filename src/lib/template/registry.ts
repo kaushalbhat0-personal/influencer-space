@@ -25,6 +25,10 @@ export interface TemplateNavItem {
   order: number;
 }
 
+export interface TemplateModuleConfig {
+  enabled: boolean;
+}
+
 export interface Template {
   id: string;
   name: string;
@@ -32,6 +36,7 @@ export interface Template {
   category: string;
   pages: TemplatePage[];
   navigation: TemplateNavItem[];
+  modules?: Record<string, TemplateModuleConfig>;
 }
 
 const GAMING: Template = {

@@ -1,7 +1,7 @@
 import type { KnowledgeGraph } from "@/lib/generation/intelligence/types";
 import { LayoutVariantSelector } from "./selector";
 import type { BaseVariantStrategy } from "./base";
-import { ALL_VARIANTS } from "./variants/all-variants";
+import { ALL_VARIANTS } from "./all-variants";
 
 export class LayoutVariantRegistry {
   private selector = new LayoutVariantSelector();

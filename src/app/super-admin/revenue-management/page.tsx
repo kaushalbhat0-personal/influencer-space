@@ -1,4 +1,4 @@
-import { revenueService } from "@/lib/revenue/service";
+import { revenueService } from "@/modules/billing/application/revenue-service";
 import { IndianRupee, TrendingUp, Users, CreditCard, Clock, AlertTriangle, Activity, Percent } from "lucide-react";
 import Link from "next/link";
 

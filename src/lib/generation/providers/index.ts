@@ -7,12 +7,12 @@ export { ProviderCostEstimator } from "./provider-cost-estimator";
 export type { CostBreakdown } from "./provider-cost-estimator";
 export { ProviderHealthTracker } from "./provider-health";
 
-export { MockProvider } from "./providers/mock-provider";
-export { DeepSeekProvider } from "./providers/deepseek-provider";
-export { OpenAIProvider } from "./providers/openai-provider";
-export { AnthropicProvider } from "./providers/anthropic-provider";
-export { GoogleProvider } from "./providers/google-provider";
-export { OllamaProvider } from "./providers/ollama-provider";
+export { MockProvider } from "./mock-provider";
+export { DeepSeekProvider } from "./deepseek-provider";
+export { OpenAIProvider } from "./openai-provider";
+export { AnthropicProvider } from "./anthropic-provider";
+export { GoogleProvider } from "./google-provider";
+export { OllamaProvider } from "./ollama-provider";
 
 export { BaseProvider } from "./shared/base-provider";
 export { PROVIDER_PRIORITY, MODEL_CAPABILITIES, getModelCapability, estimateTokens, hashPrompt } from "./shared/provider-types";

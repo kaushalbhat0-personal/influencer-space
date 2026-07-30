@@ -11,6 +11,8 @@
     "seed": "tsx prisma/seed.ts",
     "db:clean": "tsx scripts/clean-supabase.ts",
     "setup-storage": "tsx scripts/setup-storage.ts",
+    "platform:bootstrap": "tsx scripts/platform-bootstrap.ts",
+    "platform:sync": "tsx scripts/platform-sync.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:arch": "vitest run tests/architecture/",

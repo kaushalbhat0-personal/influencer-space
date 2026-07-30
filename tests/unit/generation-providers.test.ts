@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { AIProvider, AIProviderFactory, AIPrompt, AIResponse, EventPublisher, GenerationCache, Result } from "@/lib/generation/contracts";
 import { success, failure } from "@/lib/generation/infrastructure/helpers/result";
-import { MockProvider } from "@/lib/generation/providers/providers/mock-provider";
-import { DeepSeekProvider } from "@/lib/generation/providers/providers/deepseek-provider";
-import { OpenAIProvider } from "@/lib/generation/providers/providers/openai-provider";
-import { AnthropicProvider } from "@/lib/generation/providers/providers/anthropic-provider";
-import { GoogleProvider } from "@/lib/generation/providers/providers/google-provider";
-import { OllamaProvider } from "@/lib/generation/providers/providers/ollama-provider";
+import { MockProvider } from "@/lib/generation/providers/mock-provider";
+import { DeepSeekProvider } from "@/lib/generation/providers/deepseek-provider";
+import { OpenAIProvider } from "@/lib/generation/providers/openai-provider";
+import { AnthropicProvider } from "@/lib/generation/providers/anthropic-provider";
+import { GoogleProvider } from "@/lib/generation/providers/google-provider";
+import { OllamaProvider } from "@/lib/generation/providers/ollama-provider";
 import { BaseProvider } from "@/lib/generation/providers/shared/base-provider";
 import {
   PROVIDER_PRIORITY, MODEL_CAPABILITIES, getModelCapability, estimateTokens, hashPrompt,

@@ -91,10 +91,12 @@ export type OnboardingEvent =
   | "onboarding:completed"
   | "onboarding:dropped";
 
+import { logger } from "@/lib/observability/logger";
+
 export function trackOnboarding(event: OnboardingEvent, meta?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
   try {
-    console.log(`[Onboarding] ${event}`, meta ?? {});
+    logger.info(event, "onboarding", { metadata: (meta ?? {}) as Record<string, unknown> });
     // Future: send to analytics provider
   } catch { /* */ }
 }

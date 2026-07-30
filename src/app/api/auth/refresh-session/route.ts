@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { encode, getToken } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
-import { resolveWorkspace } from "@/lib/auth/resolve-workspace";
+import { resolveWorkspace } from "@/modules/workspace/application/resolve-workspace";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("[refresh-session]", error);
+    captureError(error, { service: "refresh-session", operation: "POST" });
     return NextResponse.json({ error: "Session refresh failed" }, { status: 500 });
   }
 }

@@ -4,6 +4,8 @@ import type { ContentGenerator, GeneratorInput, GeneratorResult, GeneratorProven
 import { HeroGenerator } from "./generators/hero";
 import { AboutGenerator } from "./generators/about";
 import { SeoGenerator } from "./generators/seo";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export interface StudioOutput {
   sections: Record<string, Record<string, unknown>>;
@@ -75,7 +77,7 @@ export class ContentStudio {
           provenance[gen.id] = result.provenance;
         }
       } catch (error) {
-        console.error(`[ContentStudio] Generator "${gen.id}" failed:`, error);
+        captureError(error, { service: "content-studio", operation: `generate:${gen.id}` });
       }
     }
 

@@ -2,10 +2,12 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { provisioningService } from "@/lib/provisioning/provisioning-service";
+import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
-import type { ProvisioningInput } from "@/lib/provisioning/provisioning-service";
+import { logger } from "@/lib/observability/logger";
+import { captureError } from "@/lib/observability/error-tracker";
+import type { ProvisioningInput } from "@/modules/provisioning/application/provisioning-service";
 
 export type ProvisionActionResult = {
   success: boolean;
@@ -72,7 +74,7 @@ export async function provisionCreator(
       creatorName: input.creatorName,
       tenantSlug: result.tenantSlug,
       sourcePlatform: input.sourcePlatform || "manual",
-    }).catch((err) => { console.error(`[provision] Failed to persist provisioning:completed audit log:`, err); });
+    }).catch((err) => { captureError(err, { service: "provision-actions", operation: "provisionCreator-audit" }); });
 
     track("provisioning:completed", {
       tenantId: result.tenantId,

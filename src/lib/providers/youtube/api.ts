@@ -1,3 +1,5 @@
+import { logger } from "@/lib/observability/logger";
+
 export interface YouTubeChannelData {
   channelId: string | null;
   title: string;
@@ -57,7 +59,7 @@ export class YouTubeApiService {
 
     const res = await fetch(url);
     if (!res.ok) {
-      console.error(`YouTube search API error: ${res.status}`);
+      logger.error(`YouTube search API error: ${res.status}`, "youtube-api", { metadata: { channelId, status: res.status } as Record<string, unknown> });
       return [];
     }
 
@@ -106,7 +108,7 @@ export class YouTubeApiService {
     if (!res.ok) {
       if (res.status === 404) return null;
       if (res.status === 403) throw new Error("YouTube API quota exceeded");
-      console.error(`YouTube API error: ${res.status}`);
+      logger.error(`YouTube API error: ${res.status}`, "youtube-api", { metadata: { param, value, status: res.status } as Record<string, unknown> });
       return null;
     }
 
