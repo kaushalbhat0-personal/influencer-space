@@ -51,9 +51,10 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const classification = classifyRoute(pathname);
 
-  // ── Phase 1: Always-allow routes (static, internal, public marketing, public storefront) ──────
+  // ── Phase 1: Always-allow routes (static, internal, public marketing, public storefront, login) ──
   // These never require authentication regardless of session state.
-  if (!requiresAuthentication(classification.category)) {
+  const isLoginPage = pathname === "/admin/login";
+  if (!requiresAuthentication(classification.category) || isLoginPage) {
     const headers = new Headers(request.headers);
     const token = await getToken({ req: request, secret }) as {
       id?: string; tenantId?: string; role?: string; workspaceId?: string;
