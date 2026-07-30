@@ -214,6 +214,7 @@ export class PublishingService {
       try {
         revalidatePath("/", "layout");
         revalidatePath("/admin/dashboard");
+        revalidatePath(`/${tenant.subdomain}`);
       } catch {
         // cache invalidation is fire-and-forget; already committed
       }
