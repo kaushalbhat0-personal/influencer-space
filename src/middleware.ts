@@ -17,7 +17,7 @@ const platformDomains = [
 
 const DEFAULT_TENANT = process.env.DEFAULT_TENANT_SUBDOMAIN || "";
 
-const PUBLIC_PATHS = ["/", "/pricing", "/features", "/signup", "/admin/login"];
+const PUBLIC_PATHS = ["/", "/pricing", "/features", "/signup", "/admin/login", "/showcase", "/about", "/blog", "/contact", "/faq", "/privacy", "/terms", "/refund"];
 
 // ─── Tenant Host Resolution ──────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Role-based access for admin routes
-  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/super-admin") || pathname.startsWith("/builder")) {
     const redirect = lifecycleService.redirectTo(pathname, lifecycle);
     if (redirect) {
       const url = new URL(redirect, request.url);
@@ -106,7 +106,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    return NextResponse.next({ request: { headers: requestHeaders } });
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+    return response;
   }
 
   // Tenant rewrite for public pages

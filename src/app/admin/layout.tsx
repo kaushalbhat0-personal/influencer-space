@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildSiteUrlForAdmin } from "@/lib/config/platform";
 import { AdminLayoutClient } from "./_components/admin-layout-client";
+import { redirect } from "next/navigation";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
 export default async function AdminLayout({
@@ -11,6 +12,9 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/admin/login");
+  }
   const tenantId = session?.user?.tenantId;
 
   let siteUrl = "/";

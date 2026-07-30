@@ -9,11 +9,9 @@ function sleep(ms: number) {
 }
 
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  const session = await getServerSession(authOptions);
+  if (!session || session.user?.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const email = request.nextUrl.searchParams.get("email");

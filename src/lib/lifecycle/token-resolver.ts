@@ -97,13 +97,19 @@ export class LifecycleService {
     if (guard.allowedRoles) {
       const roleMatch = guard.allowedRoles.includes(lifecycle.role as AllowedRole);
       if (!roleMatch) {
+        if (lifecycle.state === LifecycleState.VISITOR) {
+          return { allowed: false, redirectTo: "/admin/login" };
+        }
         return { allowed: false, redirectTo: guard.redirectTo };
       }
     }
 
     const stateMatch = guard.allowedStates.includes(lifecycle.state);
     if (!stateMatch) {
-      if (lifecycle.state === LifecycleState.VISITOR || lifecycle.state === LifecycleState.AUTHENTICATED) {
+      if (lifecycle.state === LifecycleState.VISITOR) {
+        return { allowed: false, redirectTo: "/admin/login" };
+      }
+      if (lifecycle.state === LifecycleState.AUTHENTICATED) {
         return { allowed: false, redirectTo: "/onboarding" };
       }
       return { allowed: false, redirectTo: guard.redirectTo };

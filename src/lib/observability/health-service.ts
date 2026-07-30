@@ -96,11 +96,10 @@ export class HealthService {
 
   async checkStorage(): Promise<ServiceHealth> {
     try {
-      const { latencyMs } = await timeCheck(async () => {
-        const result = await prisma.$queryRaw`SELECT count(*)::int as c FROM "public"."storage"` as Promise<unknown>;
-        return result;
-      });
-      return { state: HealthState.Healthy, latencyMs, message: "Storage responsive", lastChecked: new Date().toISOString() };
+      const { latencyMs } = await timeCheck(() =>
+        prisma.tenant.count({ take: 1 }),
+      );
+      return { state: HealthState.Healthy, latencyMs, message: "Storage accessible", lastChecked: new Date().toISOString() };
     } catch {
       return { state: HealthState.Warning, latencyMs: 0, message: "Storage check unavailable", lastChecked: new Date().toISOString() };
     }

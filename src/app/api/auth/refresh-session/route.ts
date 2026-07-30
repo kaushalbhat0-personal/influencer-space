@@ -26,6 +26,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    if (token.role && user.role !== token.role) {
+      return NextResponse.json({ error: "Session invalidated: role changed" }, { status: 401 });
+    }
+
     const resolved = await resolveWorkspace(user);
 
     const sessionToken = await encode({
