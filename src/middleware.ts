@@ -61,8 +61,14 @@ export async function middleware(request: NextRequest) {
     const workspaceId = token?.workspaceId;
     if (workspaceId) headers.set("x-workspace-id", workspaceId);
 
-    // Tenant subdomain → rewrite to /[slug] for storefront page
-    const tenantHost = parseTenantHost(host) || DEFAULT_TENANT || null;
+    // Tenant subdomain → rewrite to /[slug] for storefront page.
+    // Only applies when:
+    //   a) Request arrives on a custom tenant subdomain (e.g. owais.creatorspace.app)
+    //   b) Path is a storefront slug on the platform domain
+    // DEFAULT_TENANT is a localhost-only fallback for development — never
+    // rewrites production marketing routes.
+    const extractedTenant = parseTenantHost(host);
+    const tenantHost = extractedTenant || (process.env.NODE_ENV === "development" ? DEFAULT_TENANT || null : null);
     if (tenantHost) {
       headers.set("x-tenant-host", tenantHost);
       const segments = pathname.split("/").filter(Boolean);
