@@ -15,12 +15,6 @@ export function StrategyInputHost({
   onBack: () => void;
 }) {
   const adapter = acquisitionRegistry.get(strategyId as AcquisitionStrategy);
-
-  // Manual strategy gets its own multi-step wizard
-  if (strategyId === "manual") {
-    return <ManualWizard />;
-  }
-
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +28,10 @@ export function StrategyInputHost({
     setError(null);
     onAcquired(input);
   }, [adapter, input, onAcquired]);
+
+  if (strategyId === "manual") {
+    return <ManualWizard />;
+  }
 
   if (!adapter) {
     return (

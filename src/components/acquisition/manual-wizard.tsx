@@ -5,11 +5,9 @@ import type { BusinessProfile, BusinessOffer } from "@/lib/acquisition/business-
 import { BUSINESS_CATEGORIES, OFFER_TYPES } from "@/lib/acquisition/business-types";
 import { calculateCompleteness } from "@/lib/acquisition/completeness";
 import { saveDraft, loadDraft, clearDraft } from "@/lib/acquisition/draft";
-import { AcquisitionPreview } from "./acquisition-preview";
 import { ProvisionProgress } from "./provision-progress";
 import { SuccessScreen } from "./success-screen";
-import { executeStrategy, acquireAndProvision } from "@/actions/acquisition/acquire.actions";
-import type { AcquisitionResult, CreatorProfile } from "@/lib/acquisition/types";
+import { acquireAndProvision } from "@/actions/acquisition/acquire.actions";
 
 const EMPTY_PROFILE: BusinessProfile = {
   businessName: "", ownerName: "", category: "", industry: "",
@@ -27,7 +25,6 @@ export function ManualWizard() {
   const [error, setError] = useState<string | null>(null);
   const [provisioning, setProvisioning] = useState(false);
   const [successData, setSuccessData] = useState<{ storefrontUrl: string; tenantId: string; creatorName: string } | null>(null);
-  const [acquisitionResult, setAcquisitionResult] = useState<AcquisitionResult | null>(null);
 
   useEffect(() => {
     const draft = loadDraft("manual");
@@ -88,7 +85,6 @@ export function ManualWizard() {
   const completeness = calculateCompleteness(profile);
 
   const addOffer = useCallback((type: string) => {
-    const offerType = OFFER_TYPES.find((o) => o.id === type);
     const newOffer: BusinessOffer = {
       id: `offer_${Date.now()}`,
       type,
@@ -269,11 +265,6 @@ export function ManualWizard() {
             <div className="flex gap-3"><BackBtn onClick={() => goTo("branding")} /><NextButton onClick={handleProvision} disabled={completeness.overall < 30} label={provisioning ? "Creating..." : "Create Storefront"} /></div>
           </div>
         );
-
-      case "preview":
-        return acquisitionResult ? (
-          <AcquisitionPreview result={acquisitionResult} onConfirm={handleProvision} onBack={() => goTo("links")} provisioning={provisioning} />
-        ) : null;
 
       case "provisioning":
         return <ProvisionProgress stages={[{ id: "provision", label: "Creating storefront", status: "running" }, { id: "publish", label: "Publishing", status: "pending" }]} />;
