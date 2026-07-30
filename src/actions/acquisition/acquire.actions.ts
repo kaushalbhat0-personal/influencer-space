@@ -1,14 +1,11 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { acquisitionRegistry } from "@/lib/acquisition";
 import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
-import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord, AcquisitionProvisionResult, CreatorProfile } from "@/lib/acquisition/types";
 

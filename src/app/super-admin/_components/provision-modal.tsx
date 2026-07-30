@@ -10,7 +10,7 @@ import { ImportPreview } from "@/components/import/ImportPreview";
 import { ImportHistoryTable } from "@/components/import/ImportHistoryTable";
 import { DEMO_SEEDS } from "@/lib/demo/seeds";
 import type { AcquisitionStrategy, CreatorProfile, AcquisitionResult, AcquisitionRecord } from "@/lib/acquisition/types";
-import { Video, User, Grid, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 
 interface TenantRow {
   id: string; name: string; subdomain: string;
