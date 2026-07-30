@@ -1,10 +1,10 @@
 "use client";
 
-import type { ImportRecord } from "@/lib/import/types";
+import type { AcquisitionRecord } from "@/lib/acquisition/types";
 import { motion } from "framer-motion";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
-export function ImportHistoryTable({ records }: { records: ImportRecord[] }) {
+export function ImportHistoryTable({ records }: { records: AcquisitionRecord[] }) {
   if (records.length === 0) {
     return (
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-8 text-center">
@@ -38,7 +38,7 @@ export function ImportHistoryTable({ records }: { records: ImportRecord[] }) {
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white truncate">{r.creatorName}</p>
               <p className="text-[10px] text-zinc-500">
-                {r.source} · {Math.round(r.duration / 1000)}s · {r.confidence}% confidence
+                {r.strategy} · {Math.round(r.duration / 1000)}s · {r.confidence}% confidence
               </p>
             </div>
             <div className="shrink-0 text-right">

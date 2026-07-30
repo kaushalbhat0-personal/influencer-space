@@ -4,12 +4,12 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { attachCustomDomain } from "@/actions/super-admin.actions";
-import { analyzeCreatorImport, importCreator } from "@/actions/import.actions";
-import { getAllAdapters } from "@/lib/import/adapters";
+import { executeStrategy, acquireAndProvision } from "@/actions/acquisition/acquire.actions";
+import { acquisitionRegistry } from "@/lib/acquisition";
 import { ImportPreview } from "@/components/import/ImportPreview";
 import { ImportHistoryTable } from "@/components/import/ImportHistoryTable";
 import { DEMO_SEEDS } from "@/lib/demo/seeds";
-import type { ImportSource, CreatorProfile, ImportAnalysisResult, ImportRecord } from "@/lib/import/types";
+import type { AcquisitionStrategy, CreatorProfile, AcquisitionResult, AcquisitionRecord } from "@/lib/acquisition/types";
 import { Video, User, Grid, Globe } from "lucide-react";
 
 interface TenantRow {
@@ -18,22 +18,18 @@ interface TenantRow {
   _count: { users: number; products: number };
 }
 
-const SOURCE_ICON: Record<string, typeof Grid> = {
-  demo_seed: Grid, manual: User, youtube: Video,
-};
-
 export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onClose: () => void; tenants: TenantRow[] }) {
   const router = useRouter();
   const [tab, setTab] = useState<"import" | "domains" | "history">("import");
 
   // Import flow
-  const [source, setSource] = useState<ImportSource>("youtube");
+  const [source, setSource] = useState<AcquisitionStrategy>("youtube");
   const [input, setInput] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<ImportAnalysisResult | null>(null);
+  const [analysis, setAnalysis] = useState<AcquisitionResult | null>(null);
   const [provisioning, setProvisioning] = useState(false);
   const [importResult, setImportResult] = useState<{ success: boolean; storefrontUrl: string; creatorName: string; error?: string } | null>(null);
-  const [importRecords, setImportRecords] = useState<ImportRecord[]>([]);
+  const [importRecords, setImportRecords] = useState<AcquisitionRecord[]>([]);
 
   // Domains
   const [domainInputs, setDomainInputs] = useState<Record<string, string>>({});
@@ -44,14 +40,14 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
     setAnalyzing(true);
     setAnalysis(null);
     setImportResult(null);
-    const result = await analyzeCreatorImport(source, input);
+    const result = await executeStrategy(source, input);
     setAnalysis(result);
     setAnalyzing(false);
   }
 
   async function handleProvision(profile: CreatorProfile) {
     setProvisioning(true);
-    const result = await importCreator(source, input, profile);
+    const result = await acquireAndProvision(source, input, profile);
     setImportResult({ success: result.success, storefrontUrl: result.storefrontUrl, creatorName: profile.brandName, error: result.error });
     setImportRecords((prev) => [result.record, ...prev]);
     setProvisioning(false);
@@ -113,12 +109,12 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-2">Import Source</label>
               <div className="grid grid-cols-3 gap-2">
-                {getAllAdapters().map((a) => {
-                  const AdapterIcon = SOURCE_ICON[a.source] || Globe;
-                  const active = source === a.source;
+                {acquisitionRegistry.getAll().map((a) => {
+                  const Icon = a.icon || Globe;
+                  const active = source === a.id;
                   return (
-                    <button key={a.source} onClick={() => { setSource(a.source); setAnalysis(null); setImportResult(null); }} className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center transition-all ${active ? "border-indigo-500/40 bg-indigo-500/10" : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"}`}>
-                      <AdapterIcon className={`h-5 w-5 ${active ? "text-indigo-400" : "text-zinc-500"}`} />
+                    <button key={a.id} onClick={() => { setSource(a.id); setAnalysis(null); setImportResult(null); }} className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center transition-all ${active ? "border-indigo-500/40 bg-indigo-500/10" : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"}`}>
+                      <Icon className={`h-5 w-5 ${active ? "text-indigo-400" : "text-zinc-500"}`} />
                       <span className={`text-[10px] font-medium leading-tight ${active ? "text-indigo-300" : "text-zinc-400"}`}>{a.label}</span>
                     </button>
                   );

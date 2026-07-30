@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CreatorProfile, ImportAnalysisResult } from "@/lib/import/types";
+import type { CreatorProfile, AcquisitionResult } from "@/lib/acquisition/types";
 import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
 
@@ -11,13 +11,13 @@ export function ImportPreview({
   onCancel,
   provisioning,
 }: {
-  analysis: ImportAnalysisResult;
+  analysis: AcquisitionResult;
   onConfirm: (profile: CreatorProfile) => void;
   onCancel: () => void;
   provisioning: boolean;
 }) {
-  const { confidence, completeness, warnings, creatorProfile } = analysis;
-  const [profile, setProfile] = useState<CreatorProfile>(() => structuredClone(creatorProfile));
+  const { confidence, completeness, warnings, profile: initialProfile } = analysis;
+  const [profile, setProfile] = useState<CreatorProfile>(() => structuredClone(initialProfile));
   const [newProduct, setNewProduct] = useState({ name: "", price: 0, description: "" });
 
   const canProvision = profile.brandName.trim().length > 0 && confidence > 0;

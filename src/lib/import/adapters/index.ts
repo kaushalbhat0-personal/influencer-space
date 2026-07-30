@@ -1,24 +1,21 @@
-import type { CreatorImportAdapter, ImportSource } from "@/lib/import/types";
-import { DemoSeedAdapter } from "./demo-seed";
-import { ManualAdapter } from "./manual";
-import { YouTubeAdapter } from "./youtube";
+/**
+ * @deprecated Import from @/lib/acquisition instead.
+ * Use acquisitionRegistry.get() / acquisitionRegistry.getAll().
+ * This module will be removed in a future release.
+ */
 
-const registry = new Map<ImportSource, CreatorImportAdapter>();
-
-function register(adapter: CreatorImportAdapter) {
-  registry.set(adapter.source, adapter);
-}
-
-register(new DemoSeedAdapter());
-register(new ManualAdapter());
-register(new YouTubeAdapter());
+import { acquisitionRegistry } from "@/lib/acquisition/registry";
+import type { AcquisitionStrategy as ImportSource } from "@/lib/acquisition/types";
+import type { CreatorAcquisitionAdapter as CreatorImportAdapter } from "@/lib/acquisition/types";
 
 export function getAdapter(source: ImportSource): CreatorImportAdapter | undefined {
-  return registry.get(source);
+  return acquisitionRegistry.get(source) as CreatorImportAdapter | undefined;
 }
 
 export function getAllAdapters(): CreatorImportAdapter[] {
-  return Array.from(registry.values());
+  return acquisitionRegistry.getAll() as CreatorImportAdapter[];
 }
 
-export { DemoSeedAdapter, ManualAdapter, YouTubeAdapter };
+export { YouTubeAcquisitionAdapter as YouTubeAdapter } from "@/lib/acquisition/strategies/youtube";
+export { ManualAcquisitionAdapter as ManualAdapter } from "@/lib/acquisition/strategies/manual";
+export { DemoSeedAcquisitionAdapter as DemoSeedAdapter } from "@/lib/acquisition/strategies/demo-seed";
