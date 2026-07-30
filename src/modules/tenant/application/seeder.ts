@@ -92,7 +92,7 @@ export async function seedStarterData(
 
   if (template.modules?.timeline?.enabled) {
     for (const event of data.timeline) {
-      await prisma.timelineEvent.create({
+      await db.timelineEvent.create({
         data: { tenantId, year: event.year, title: event.title, description: event.description },
       });
     }
