@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, getSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
@@ -30,16 +30,13 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
       return;
     }
 
-    const session = await getSession();
-
-    const role = session?.user?.role;
-    if (role === "SUPER_ADMIN") {
-      router.push("/super-admin");
-    } else if (role === "AGENCY_ADMIN" || role === "AGENCY_STAFF") {
-      router.push("/agency");
-    } else {
-      router.push("/admin/dashboard");
-    }
+    // Redirect to admin dashboard after login. The middleware will
+    // handle role-based redirects: SUPER_ADMIN → /super-admin,
+    // AGENCY → /agency, ADMIN → /admin/dashboard.
+    // DO NOT call getSession() here — the new session cookie may not
+    // have propagated to the browser cookie jar yet, causing the
+    // session callback to read a stale JWT from a deleted user.
+    router.push("/admin/dashboard");
   }
 
   return (
