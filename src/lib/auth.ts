@@ -104,7 +104,17 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { id: true, role: true },
+        });
+        if (!dbUser || dbUser.role !== token.role) {
+          logger.warn("Session invalidated: user deleted or role changed", "auth", {
+            metadata: { userId: token.id, tokenRole: token.role } as Record<string, unknown>,
+          });
+          return { ...session, expires: new Date(0).toISOString() };
+        }
         session.user.id = token.id as string;
         session.user.tenantId = (token.tenantId as string) ?? null;
         session.user.agencyId = (token.agencyId as string) ?? null;
