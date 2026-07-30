@@ -265,11 +265,9 @@ describe("provisioningService.provision", () => {
     expect(mockProvisionRunUpdate).toHaveBeenCalled();
   });
 
-  it("falls back to tenantId for websiteId when website lookup returns null", async () => {
-    mockWebsiteFindUnique.mockResolvedValue(null);
-
+  it("returns the created website ID from the provision transaction", async () => {
     const result = await provisioningService.provision(baseInput);
-    expect(result.websiteId).toBe("tenant-uuid-1");
+    expect(result.websiteId).toBe("website-uuid-1");
   });
 
   it("rolls back entire transaction when workspaceAddMember fails", async () => {
