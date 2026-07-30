@@ -3,11 +3,11 @@ import { User } from "lucide-react";
 
 export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
   id = "manual" as const;
-  label = "Manual Creator";
-  description = "Enter creator details by hand";
+  label = "Manual Setup";
+  description = "Enter your business details step by step";
   icon = User;
   requiresManualReview = false;
-  typicalConfidence = 30;
+  typicalConfidence = 90;
 
   validate(input: string): { valid: boolean; error?: string } {
     const trimmed = input.trim();
@@ -21,13 +21,9 @@ export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
     return {
       strategy: "manual",
       rawInput: input,
-      confidence: 30,
-      completeness: 10,
-      warnings: [
-        "No products detected — add at least one before publishing.",
-        "Brand color could not be inferred.",
-        "SEO fields are empty.",
-      ],
+      confidence: 90,
+      completeness: 60,
+      warnings: [],
       requiresManualReview: false,
       profile: {
         creatorName: name,
