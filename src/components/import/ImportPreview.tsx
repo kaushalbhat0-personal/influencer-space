@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { CreatorProfile, AcquisitionResult } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
+import type { AcquisitionResult } from "@/lib/acquisition/types";
 import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
 
@@ -12,27 +13,27 @@ export function ImportPreview({
   provisioning,
 }: {
   analysis: AcquisitionResult;
-  onConfirm: (profile: CreatorProfile) => void;
+  onConfirm: (profile: BusinessProfile) => void;
   onCancel: () => void;
   provisioning: boolean;
 }) {
   const { confidence, completeness, warnings, profile: initialProfile } = analysis;
-  const [profile, setProfile] = useState<CreatorProfile>(() => structuredClone(initialProfile));
-  const [newProduct, setNewProduct] = useState({ name: "", price: 0, description: "" });
+  const [profile, setProfile] = useState<BusinessProfile>(() => structuredClone(initialProfile));
+  const [newOffer, setNewOffer] = useState({ name: "", price: 0, description: "" });
 
-  const canProvision = profile.brandName.trim().length > 0 && confidence > 0;
+  const canProvision = profile.businessName.trim().length > 0 && confidence > 0;
 
-  function addProduct() {
-    if (!newProduct.name.trim()) return;
+  function addOffer() {
+    if (!newOffer.name.trim()) return;
     setProfile((p) => ({
       ...p,
-      products: [...p.products, { name: newProduct.name.trim(), price: newProduct.price, description: newProduct.description.trim() }],
+      offers: [...p.offers, { id: `offer_${Date.now()}`, type: "service", name: newOffer.name.trim(), description: newOffer.description.trim(), price: newOffer.price, currency: "INR" }],
     }));
-    setNewProduct({ name: "", price: 0, description: "" });
+    setNewOffer({ name: "", price: 0, description: "" });
   }
 
-  function removeProduct(i: number) {
-    setProfile((p) => ({ ...p, products: p.products.filter((_, idx) => idx !== i) }));
+  function removeOffer(id: string) {
+    setProfile((p) => ({ ...p, offers: p.offers.filter((o) => o.id !== id) }));
   }
 
   const warnColor = confidence >= 80 ? "text-emerald-400" : confidence >= 50 ? "text-amber-400" : "text-red-400";
@@ -59,14 +60,10 @@ export function ImportPreview({
 
       {/* Editable Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Brand Name" value={profile.brandName} onChange={(v) => setProfile((p) => ({ ...p, brandName: v }))} />
-        <Field label="Creator Name" value={profile.creatorName} onChange={(v) => setProfile((p) => ({ ...p, creatorName: v }))} />
+        <Field label="Business Name" value={profile.businessName} onChange={(v) => setProfile((p) => ({ ...p, businessName: v }))} />
+        <Field label="Owner Name" value={profile.ownerName} onChange={(v) => setProfile((p) => ({ ...p, ownerName: v }))} />
         <Field label="Tagline" value={profile.tagline} onChange={(v) => setProfile((p) => ({ ...p, tagline: v }))} className="sm:col-span-2" />
-        <Field label="Bio" value={profile.bio} onChange={(v) => setProfile((p) => ({ ...p, bio: v }))} textarea className="sm:col-span-2" />
-        <Field label="Hero Title" value={profile.heroTitle} onChange={(v) => setProfile((p) => ({ ...p, heroTitle: v }))} />
-        <Field label="Niche" value={profile.niche} onChange={(v) => setProfile((p) => ({ ...p, niche: v }))} />
-        <Field label="SEO Title" value={profile.seoTitle} onChange={(v) => setProfile((p) => ({ ...p, seoTitle: v }))} />
-        <Field label="SEO Description" value={profile.seoDesc} onChange={(v) => setProfile((p) => ({ ...p, seoDesc: v }))} />
+        <Field label="Description" value={profile.description} onChange={(v) => setProfile((p) => ({ ...p, description: v }))} textarea className="sm:col-span-2" />
       </div>
 
       {/* Palette */}
@@ -84,24 +81,24 @@ export function ImportPreview({
         </div>
       </div>
 
-      {/* Products */}
+      {/* Offers */}
       <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-2">Products ({profile.products.length})</label>
+        <label className="block text-xs font-medium text-zinc-400 mb-2">Offers ({profile.offers.length})</label>
         <div className="space-y-2 mb-3">
-          {profile.products.map((p, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-              <span className="flex-1 text-sm text-white truncate">{p.name}</span>
-              <span className="text-xs text-zinc-500">₹{p.price}</span>
-              <button onClick={() => removeProduct(i)} className="text-zinc-600 hover:text-red-400 transition-colors">
+          {profile.offers.map((o) => (
+            <div key={o.id} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+              <span className="flex-1 text-sm text-white truncate">{o.name}</span>
+              <span className="text-xs text-zinc-500">₹{o.price}</span>
+              <button onClick={() => removeOffer(o.id)} className="text-zinc-600 hover:text-red-400 transition-colors">
                 <Trash2 className="h-3 w-3" />
               </button>
             </div>
           ))}
         </div>
         <div className="flex gap-2">
-          <input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} placeholder="Product name" className="admin-input flex-1 text-sm" />
-          <input type="number" value={newProduct.price || ""} onChange={(e) => setNewProduct((p) => ({ ...p, price: Number(e.target.value) }))} placeholder="Price" className="admin-input w-24 text-sm" />
-          <button onClick={addProduct} className="admin-btn-cyan px-3 py-2 text-xs" disabled={!newProduct.name.trim()}>
+          <input value={newOffer.name} onChange={(e) => setNewOffer((o) => ({ ...o, name: e.target.value }))} placeholder="Offer name" className="admin-input flex-1 text-sm" />
+          <input type="number" value={newOffer.price || ""} onChange={(e) => setNewOffer((o) => ({ ...o, price: Number(e.target.value) }))} placeholder="Price" className="admin-input w-24 text-sm" />
+          <button onClick={addOffer} className="admin-btn-cyan px-3 py-2 text-xs" disabled={!newOffer.name.trim()}>
             <Plus className="h-3 w-3" />
           </button>
         </div>

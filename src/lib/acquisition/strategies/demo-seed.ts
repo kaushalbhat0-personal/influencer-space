@@ -1,4 +1,5 @@
 import type { CreatorAcquisitionAdapter, AcquisitionResult } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import { Grid } from "lucide-react";
 import { DEMO_SEEDS } from "@/lib/demo/seeds";
 
@@ -42,34 +43,30 @@ export class DemoSeedAcquisitionAdapter implements CreatorAcquisitionAdapter {
       requiresManualReview: false,
       providerMetadata: { seedId: seed.id },
       profile: {
-        creatorName: seed.brand.name,
-        brandName: seed.brand.name,
+        businessName: seed.brand.name,
+        ownerName: seed.brand.name,
+        category: seed.industry,
+        industry: seed.industry,
         tagline: seed.brand.tagline,
-        bio: seed.content.bio,
-        heroTitle: seed.content.hero,
-        aboutText: seed.content.about,
-        tone: seed.brand.voice,
-        niche: seed.industry,
+        description: seed.content.bio || seed.content.about,
         audience: seed.audience,
-        products: seed.products,
-        services: [],
+        goals: "",
+        tone: seed.brand.voice,
+        offers: seed.products.map((p: { name: string; price: number; description: string }) => ({ id: p.name.replace(/\s+/g, "_").toLowerCase(), type: "digital_download", name: p.name, description: p.description, price: p.price, currency: "INR" })),
         socialLinks: [],
-        seoTitle: seed.content.seoTitle,
-        seoDesc: seed.content.seoDesc,
         palette: seed.brand.palette,
-        faq: seed.faq,
-        testimonials: seed.testimonials,
         pages: seed.pages,
-      },
+      } as BusinessProfile,
     };
   }
 
-  private emptyProfile() {
+  private emptyProfile(): BusinessProfile {
     return {
-      creatorName: "", brandName: "", tagline: "", bio: "", heroTitle: "",
-      aboutText: "", tone: "", niche: "", audience: "", products: [], services: [], socialLinks: [],
-      seoTitle: "", seoDesc: "", palette: { primary: "#6366f1", secondary: "#a78bfa" },
-      faq: [], testimonials: [], pages: [],
+      businessName: "", ownerName: "", category: "", industry: "",
+      tagline: "", description: "", audience: "", goals: "", tone: "",
+      offers: [], socialLinks: [],
+      palette: { primary: "#6366f1", secondary: "#a78bfa" },
+      pages: [],
     };
   }
 }

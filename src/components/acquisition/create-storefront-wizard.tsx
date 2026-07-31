@@ -3,14 +3,14 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { executeStrategy, acquireAndProvision } from "@/actions/acquisition/acquire.actions";
-import type { AcquisitionResult, CreatorProfile } from "@/lib/acquisition/types";
+import type { AcquisitionResult, AcquisitionStrategy } from "@/lib/acquisition/types";
 import type { WizardStep } from "./types";
 import { StrategySelector } from "./strategy-selector";
 import { StrategyInputHost } from "./strategy-input-host";
 import { AcquisitionPreview } from "./acquisition-preview";
 import { ProvisionProgress } from "./provision-progress";
 import { SuccessScreen } from "./success-screen";
-import type { AcquisitionStrategy } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
 
 interface ProgressStage {
   id: string;
@@ -30,7 +30,7 @@ export function CreateStorefrontWizard({ onClose }: { onClose?: () => void }) {
   const [step, setStep] = useState<WizardStep>("strategy");
   const [strategyId, setStrategyId] = useState<string | null>(null);
   const [acquisitionResult, setAcquisitionResult] = useState<AcquisitionResult | null>(null);
-  const [editedProfile, setEditedProfile] = useState<CreatorProfile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<BusinessProfile | null>(null);
   const [rawInput, setRawInput] = useState("");
   const [provisioning, setProvisioning] = useState(false);
   const [progressStages, setProgressStages] = useState<ProgressStage[]>(
@@ -104,7 +104,7 @@ export function CreateStorefrontWizard({ onClose }: { onClose?: () => void }) {
         setSuccessData({
           storefrontUrl: result.storefrontUrl,
           tenantId: result.tenantId,
-          creatorName: profile.brandName,
+          creatorName: profile.businessName,
         });
         goTo("success");
       } else {

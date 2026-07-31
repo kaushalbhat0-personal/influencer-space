@@ -99,6 +99,9 @@ export interface BusinessOffer {
   currency: string;
 }
 
+import type { CreatorProfile } from "./types";
+
+/** @deprecated Legacy compatibility — use BusinessProfile directly. */
 export function businessProfileToCreatorProfile(profile: BusinessProfile): CreatorProfile {
   return {
     creatorName: profile.ownerName,
@@ -123,4 +126,29 @@ export function businessProfileToCreatorProfile(profile: BusinessProfile): Creat
   };
 }
 
-import type { CreatorProfile } from "./types";
+/** Convert legacy CreatorProfile to canonical BusinessProfile. */
+export function creatorProfileToBusinessProfile(profile: CreatorProfile): BusinessProfile {
+  return {
+    businessName: profile.brandName,
+    ownerName: profile.creatorName,
+    category: "",
+    industry: profile.niche,
+    tagline: profile.tagline,
+    description: profile.bio || profile.aboutText,
+    audience: profile.audience,
+    goals: "",
+    tone: profile.tone,
+    offers: profile.products.map((p) => ({
+      id: `legacy_${p.name.replace(/\s+/g, "_").toLowerCase()}`,
+      type: "service",
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      currency: "INR",
+    })),
+    socialLinks: profile.socialLinks,
+    logoUrl: profile.logoUrl,
+    palette: profile.palette,
+    pages: profile.pages,
+  };
+}

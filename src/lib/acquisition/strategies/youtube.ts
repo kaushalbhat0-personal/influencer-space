@@ -1,4 +1,5 @@
 import type { CreatorAcquisitionAdapter, AcquisitionResult } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import { Grid } from "lucide-react";
 
 let YouTubeScraperService: { fetchChannelMetadata: (url: string) => Promise<YouTubeChannelMeta | null> } | null = null;
@@ -80,26 +81,21 @@ export class YouTubeAcquisitionAdapter implements CreatorAcquisitionAdapter {
         assets: { avatarUrl: meta.thumbnailUrl },
         providerMetadata: { channelId: meta.id, subscriberCount: meta.subscriberCount },
         profile: {
-          creatorName: meta.title,
-          brandName: meta.title,
+          businessName: meta.title,
+          ownerName: meta.title,
+          category: "",
+          industry: "",
           tagline: meta.customUrl || meta.title,
-          bio: meta.description?.slice(0, 500) || "",
-          heroTitle: `Welcome to ${meta.title}`,
-          aboutText: meta.description?.slice(0, 1000) || "",
-          tone: "professional",
-          niche: "",
+          description: meta.description?.slice(0, 500) || "",
           audience: "",
-          products,
-          services: [],
+          goals: "",
+          tone: "professional",
+          offers: products.map((p) => ({ id: p.name.replace(/\s+/g, "_").toLowerCase(), type: "digital_download", name: p.name, description: p.description, price: p.price, currency: "INR" })),
           socialLinks: [{ platform: "youtube", url: `https://youtube.com/@${handle}` }],
-          seoTitle: meta.title,
-          seoDesc: meta.description?.slice(0, 160) || `${meta.title} — CreatorStore storefront`,
-          palette,
           logoUrl: meta.thumbnailUrl,
-          faq: [],
-          testimonials: [],
+          palette,
           pages: ["home", "products", "about", "contact"],
-        },
+        } as BusinessProfile,
       };
     } catch {
       const handle = extractHandle(input);
@@ -114,25 +110,15 @@ export class YouTubeAcquisitionAdapter implements CreatorAcquisitionAdapter {
         ],
         requiresManualReview: true,
         profile: {
-          creatorName: handle,
-          brandName: handle,
-          tagline: "",
-          bio: "",
-          heroTitle: `Welcome to ${handle}`,
-          aboutText: "",
-          tone: "professional",
-          niche: "",
-          audience: "",
-          products: [],
-          services: [],
+          businessName: handle,
+          ownerName: handle,
+          category: "", industry: "",
+          tagline: "", description: "", audience: "", goals: "", tone: "professional",
+          offers: [],
           socialLinks: [{ platform: "youtube", url: `https://youtube.com/@${handle}` }],
-          seoTitle: handle,
-          seoDesc: `${handle} — CreatorStore storefront`,
           palette: { primary: "#6366f1", secondary: "#a78bfa" },
-          faq: [],
-          testimonials: [],
           pages: ["home", "products", "about", "contact"],
-        },
+        } as BusinessProfile,
       };
     }
   }

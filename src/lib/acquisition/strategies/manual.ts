@@ -1,4 +1,5 @@
 import type { CreatorAcquisitionAdapter, AcquisitionResult } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import { User } from "lucide-react";
 
 export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
@@ -26,25 +27,14 @@ export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
       warnings: [],
       requiresManualReview: false,
       profile: {
-        creatorName: name,
-        brandName: name,
-        tagline: "",
-        bio: "",
-        heroTitle: `Welcome to ${name}`,
-        aboutText: "",
-        tone: "",
-        niche: "",
-        audience: "",
-        products: [],
-        services: [],
+        businessName: name, ownerName: name,
+        category: "", industry: "",
+        tagline: "", description: "", audience: "", goals: "", tone: "",
+        offers: [],
         socialLinks: [],
-        seoTitle: name,
-        seoDesc: `Official storefront of ${name}`,
         palette: { primary: "#6366f1", secondary: "#a78bfa" },
-        faq: [],
-        testimonials: [],
         pages: ["home", "products", "about", "contact"],
-      },
+      } as BusinessProfile,
     };
   }
 }

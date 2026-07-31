@@ -2,6 +2,11 @@ import type { LucideIcon } from "lucide-react";
 
 export type AcquisitionStrategy = "youtube" | "manual" | "demo_seed" | "instagram" | "twitch" | "website" | "tiktok" | "unknown";
 
+/**
+ * @deprecated Use BusinessProfile from @/lib/acquisition/business-types instead.
+ * CreatorProfile is legacy — kept for backward compatibility during migration.
+ * Will be removed after all adapters are migrated to BusinessProfile.
+ */
 export interface CreatorProfile {
   creatorName: string;
   brandName: string;
@@ -24,8 +29,15 @@ export interface CreatorProfile {
   pages: string[];
 }
 
+import type { BusinessProfile } from "./business-types";
+
 export interface AcquisitionResult {
-  profile: CreatorProfile;
+  /** The acquired business data. Canonical — use for provisioning. */
+  profile: BusinessProfile;
+  /**
+   * @deprecated Legacy compatibility — use profile fields directly.
+   * Maps to profile.businessName, profile.description, etc.
+   */
   strategy: AcquisitionStrategy;
   rawInput: string;
   confidence: number;

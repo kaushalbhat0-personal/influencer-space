@@ -45,27 +45,7 @@ export function ManualWizard() {
     setStep("provisioning");
     const name = profile.businessName || profile.ownerName || "Storefront";
     try {
-      const result = await acquireAndProvision("manual", name, {
-        creatorName: profile.ownerName || profile.businessName,
-        brandName: profile.businessName,
-        tagline: profile.tagline,
-        bio: profile.description,
-        heroTitle: profile.tagline || `Welcome to ${profile.businessName}`,
-        aboutText: profile.description,
-        tone: profile.tone,
-        niche: profile.industry,
-        audience: profile.audience,
-        products: profile.offers.map((o) => ({ name: o.name, price: o.price, description: o.description })),
-        services: profile.offers.filter((o) => ["service", "consultation"].includes(o.type)).map((o) => o.name),
-        socialLinks: profile.socialLinks,
-        seoTitle: profile.businessName,
-        seoDesc: `${profile.businessName} — ${profile.tagline || profile.description?.slice(0, 100) || "Storefront on CreatorStore"}`,
-        palette: profile.palette,
-        logoUrl: profile.logoUrl,
-        faq: [],
-        testimonials: [],
-        pages: profile.pages,
-      });
+      const result = await acquireAndProvision("manual", name, profile);
       if (result.success) {
         clearDraft("manual");
         setSuccessData({ storefrontUrl: result.storefrontUrl, tenantId: result.tenantId, creatorName: profile.businessName });

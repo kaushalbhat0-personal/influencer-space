@@ -7,7 +7,8 @@ import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
 import { captureError } from "@/lib/observability/error-tracker";
-import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord, AcquisitionProvisionResult, CreatorProfile } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
+import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord, AcquisitionProvisionResult } from "@/lib/acquisition/types";
 
 let counter = 0;
 function nextId(): string {
@@ -26,11 +27,11 @@ export async function executeStrategy(strategy: AcquisitionStrategy, input: stri
       warnings: [`Unsupported acquisition strategy: "${strategy}".`],
       requiresManualReview: true,
       profile: {
-        creatorName: "", brandName: "", tagline: "", bio: "", heroTitle: "",
-        aboutText: "", tone: "", niche: "", audience: "", products: [], services: [],
-        socialLinks: [], seoTitle: "", seoDesc: "",
+        businessName: "", ownerName: "", category: "", industry: "",
+        tagline: "", description: "", audience: "", goals: "", tone: "",
+        offers: [], socialLinks: [],
         palette: { primary: "#6366f1", secondary: "#a78bfa" },
-        faq: [], testimonials: [], pages: [],
+        pages: [],
       },
     };
   }
@@ -45,11 +46,11 @@ export async function executeStrategy(strategy: AcquisitionStrategy, input: stri
       warnings: [validation.error || "Invalid input."],
       requiresManualReview: true,
       profile: {
-        creatorName: "", brandName: "", tagline: "", bio: "", heroTitle: "",
-        aboutText: "", tone: "", niche: "", audience: "", products: [], services: [],
-        socialLinks: [], seoTitle: "", seoDesc: "",
+        businessName: "", ownerName: "", category: "", industry: "",
+        tagline: "", description: "", audience: "", goals: "", tone: "",
+        offers: [], socialLinks: [],
         palette: { primary: "#6366f1", secondary: "#a78bfa" },
-        faq: [], testimonials: [], pages: [],
+        pages: [],
       },
     };
   }
@@ -63,36 +64,39 @@ export async function executeStrategy(strategy: AcquisitionStrategy, input: stri
 export async function acquireAndProvision(
   strategy: AcquisitionStrategy,
   input: string,
-  profile: CreatorProfile,
+  profile: BusinessProfile,
 ): Promise<AcquisitionProvisionResult> {
+  const businessName = profile.businessName || profile.ownerName || "Storefront";
   const startedAt = Date.now();
   const recordId = nextId();
   const record: AcquisitionRecord = {
-    id: recordId, strategy, input, creatorName: profile.brandName,
+    id: recordId, strategy, input, creatorName: businessName,
     tenantId: "", storefrontUrl: "", status: "started", confidence: 0,
     completeness: 0, warnings: [], duration: 0, errors: [], createdAt: new Date().toISOString(),
   };
 
   try {
-    track("provision:started", { strategy, creatorName: profile.brandName });
+    track("provision:started", { strategy, creatorName: businessName });
 
     const runId = await provisioningService.createRun({
-      creatorName: profile.brandName,
+      creatorName: businessName,
       sourceUrl: input,
       sourcePlatform: strategy,
     });
 
+    const offers = profile.offers || [];
+
     const provisioningInput = {
       runId,
-      creatorName: profile.brandName,
+      creatorName: businessName,
       sourceUrl: input,
       sourcePlatform: strategy,
       generatedContent: {
-        heroTitle: profile.heroTitle,
+        heroTitle: profile.tagline || `Welcome to ${businessName}`,
         tagline: profile.tagline,
-        aboutSection: profile.aboutText,
-        seoTitle: profile.seoTitle,
-        seoDescription: profile.seoDesc,
+        aboutSection: profile.description,
+        seoTitle: businessName,
+        seoDescription: `${businessName} — ${profile.tagline || profile.description?.slice(0, 100) || "Storefront on CreatorStore"}`,
       },
       generatedTheme: {
         preset: "custom",
@@ -109,14 +113,14 @@ export async function acquireAndProvision(
       return { success: false, tenantId: provisionResult.tenantId, storefrontUrl: "", status: "failed", record, error: "Provisioning failed" };
     }
 
-    if (profile.products.length > 0) {
-      for (const p of profile.products) {
+    if (offers.length > 0) {
+      for (const o of offers) {
         await prisma.product.create({
           data: {
             tenantId: provisionResult.tenantId,
-            name: p.name,
-            price: p.price,
-            description: p.description,
+            name: o.name,
+            price: o.price,
+            description: o.description,
             isActive: true,
           },
         });
@@ -135,7 +139,7 @@ export async function acquireAndProvision(
     const status = publishResult.success ? "published" : "failed";
 
     await logAction(provisionResult.tenantId, "acquisition:completed", {
-      strategy, recordId, creatorName: profile.brandName, status,
+      strategy, recordId, creatorName: businessName, status,
       duration: record.duration,
     }).catch((err) => { captureError(err, { service: "acquisition-actions", operation: "acquireAndProvision-audit" }); });
 

@@ -9,7 +9,8 @@ import { acquisitionRegistry } from "@/lib/acquisition";
 import { ImportPreview } from "@/components/import/ImportPreview";
 import { ImportHistoryTable } from "@/components/import/ImportHistoryTable";
 import { DEMO_SEEDS } from "@/lib/demo/seeds";
-import type { AcquisitionStrategy, CreatorProfile, AcquisitionResult, AcquisitionRecord } from "@/lib/acquisition/types";
+import type { BusinessProfile } from "@/lib/acquisition/business-types";
+import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord } from "@/lib/acquisition/types";
 import { Globe } from "lucide-react";
 
 interface TenantRow {
@@ -45,10 +46,10 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
     setAnalyzing(false);
   }
 
-  async function handleProvision(profile: CreatorProfile) {
+  async function handleProvision(profile: BusinessProfile) {
     setProvisioning(true);
     const result = await acquireAndProvision(source, input, profile);
-    setImportResult({ success: result.success, storefrontUrl: result.storefrontUrl, creatorName: profile.brandName, error: result.error });
+    setImportResult({ success: result.success, storefrontUrl: result.storefrontUrl, creatorName: profile.businessName, error: result.error });
     setImportRecords((prev) => [result.record, ...prev]);
     setProvisioning(false);
     if (result.success) {
