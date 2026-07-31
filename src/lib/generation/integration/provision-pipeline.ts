@@ -84,6 +84,7 @@ export function buildProvisioningInput(params: {
   return {
     runId: params.runId,
     authenticatedUserId: params.authenticatedUserId,
+    mode: params.authenticatedUserId ? "attach_existing_user" as const : undefined,
     creatorName: params.creatorName,
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,
