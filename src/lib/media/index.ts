@@ -17,11 +17,3 @@ export type { UploadOptions, UploadResult, ReplaceOptions } from "./service";
 // ── Validator ─────────────────────────────────────────────
 export { MediaValidator, mediaValidator, categorizeMime } from "./validator";
 export type { ValidationResult, FileInfo, MediaCategory } from "./validator";
-
-// ── Legacy (deprecated — will be replaced by AssetRepository) ──
-/** @deprecated Use AssetRepository instead. */
-export { AssetRegistry, assetRegistry } from "./registry";
-/** @deprecated Use AssetRepository instead. */
-export { AssetResolver, assetResolver } from "./resolver";
-/** @deprecated Use AssetRepository instead. */
-export type { VariantName, ViewportSize } from "./resolver";

@@ -1,32 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Star, Trash2 } from "lucide-react";
+import { Plus, Star, Trash2, Pencil } from "lucide-react";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
 import { CrudTable } from "@/features/_shared/components/crud-table";
 import { EditDrawer } from "@/features/_shared/components/edit-drawer";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { MediaField } from "@/components/shared/MediaField";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { TestimonialData, TestimonialFormInput } from "../types";
-import { createTestimonial, deleteTestimonial } from "../actions";
+import { createTestimonial, deleteTestimonial, updateTestimonial } from "../actions";
 
 interface TestimonialsPageProps {
   initialData: TestimonialData[];
   tenantId: string;
 }
 
-export function TestimonialsPage({ initialData, tenantId: _tenantId }: TestimonialsPageProps) {
+export function TestimonialsPage({ initialData, tenantId }: TestimonialsPageProps) {
   const [items, setItems] = useState<TestimonialData[]>(initialData);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<TestimonialData | null>(null);
   const [form, setForm] = useState<TestimonialFormInput>({ author: "", content: "" });
+  const [saving, setSaving] = useState(false);
 
-  const handleCreate = async () => {
-    const created = await createTestimonial(form);
-    setItems((prev) => [...prev, created]);
-    setDrawerOpen(false);
+  const openCreate = () => {
+    setEditing(null);
     setForm({ author: "", content: "" });
+    setDrawerOpen(true);
+  };
+
+  const openEdit = (item: TestimonialData) => {
+    setEditing(item);
+    setForm({
+      author: item.author,
+      role: item.role ?? undefined,
+      content: item.content,
+      avatarUrl: item.avatarUrl ?? undefined,
+      rating: item.rating,
+      featured: item.featured,
+      category: item.category ?? undefined,
+    });
+    setDrawerOpen(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (editing) {
+        const updated = await updateTestimonial(editing.id, form);
+        setItems((prev) => prev.map((t) => (t.id === editing.id ? updated : t)));
+      } else {
+        const created = await createTestimonial(form);
+        setItems((prev) => [...prev, created]);
+      }
+      setDrawerOpen(false);
+      setEditing(null);
+      setForm({ author: "", content: "" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -35,7 +69,23 @@ export function TestimonialsPage({ initialData, tenantId: _tenantId }: Testimoni
   };
 
   const columns: Column<Record<string, unknown>>[] = [
-    { key: "author", header: "Author", render: (t: Record<string, unknown>) => (t as unknown as TestimonialData).author, sortable: true },
+    {
+      key: "author",
+      header: "Author",
+      render: (t: Record<string, unknown>) => {
+        const d = t as unknown as TestimonialData;
+        return (
+          <span className="flex items-center gap-2">
+            {d.avatarUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={d.avatarUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+            )}
+            <span className="font-medium text-zinc-200">{d.author}</span>
+          </span>
+        );
+      },
+      sortable: true,
+    },
     { key: "content", header: "Content", render: (t: Record<string, unknown>) => (
       <span className="text-sm text-zinc-400 line-clamp-1">{(t as unknown as TestimonialData).content}</span>
     )},
@@ -64,9 +114,14 @@ export function TestimonialsPage({ initialData, tenantId: _tenantId }: Testimoni
       render: (t: Record<string, unknown>) => {
         const d = t as unknown as TestimonialData;
         return (
-          <button onClick={() => handleDelete(d.id)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400" aria-label={`Delete ${d.author}`}>
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => openEdit(d)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-zinc-200" aria-label={`Edit ${d.author}`}>
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button onClick={() => handleDelete(d.id)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400" aria-label={`Delete ${d.author}`}>
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         );
       },
     },
@@ -77,7 +132,7 @@ export function TestimonialsPage({ initialData, tenantId: _tenantId }: Testimoni
       title="Testimonials"
       description="Manage customer testimonials."
       actions={
-        <button onClick={() => setDrawerOpen(true)} className="btn-primary text-xs">
+        <button onClick={openCreate} className="btn-primary text-xs">
           <Plus className="h-4 w-4" /> Add Testimonial
         </button>
       }
@@ -91,8 +146,22 @@ export function TestimonialsPage({ initialData, tenantId: _tenantId }: Testimoni
         emptyMessage="No testimonials yet."
       />
 
-      <EditDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="New Testimonial">
+      <EditDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editing ? `Edit ${editing.author}` : "New Testimonial"}
+        isSaving={saving}
+      >
         <div className="space-y-4">
+          <MediaField
+            label="Avatar"
+            value={{ url: form.avatarUrl ?? null }}
+            folder="general"
+            accept="image/*"
+            entityType="testimonial"
+            entityId={editing?.id}
+            onChange={(v) => setForm((f) => ({ ...f, avatarUrl: v?.url ?? undefined }))}
+          />
           <Input label="Author" value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
           <Input label="Role" value={form.role ?? ""} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} />
           <Textarea label="Content" value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} rows={4} />
@@ -101,8 +170,8 @@ export function TestimonialsPage({ initialData, tenantId: _tenantId }: Testimoni
             <input type="checkbox" id="featured" checked={form.featured ?? false} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))} className="rounded border-white/10" />
             <label htmlFor="featured" className="text-sm text-zinc-300">Featured</label>
           </div>
-          <button onClick={handleCreate} disabled={!form.author || !form.content} className="btn-primary w-full text-sm">
-            Create
+          <button onClick={handleSave} disabled={!form.author || !form.content || saving} className="btn-primary w-full text-sm">
+            {saving ? "Saving..." : editing ? "Update" : "Create"}
           </button>
         </div>
       </EditDrawer>

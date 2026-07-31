@@ -8,7 +8,9 @@ import {
   type ContactActionResult,
 } from "@/actions/storefront.actions";
 import { CreatorImage, CreatorVideo } from "@/components/shared";
+import { HeroMedia, responsiveAlignmentClass } from "@/components/shared/HeroMedia";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
+import { Star } from "lucide-react";
 
 
 interface RendererProps {
@@ -39,27 +41,38 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 export function HeroRenderer({ props, elementId }: RendererProps) {
   const p = props as Record<string, string>;
   const hasMedia = Boolean(p.videoUrl || p.posterUrl);
+  const videoAlign = responsiveAlignmentClass(
+    p.videoDesktopAlignment || "center",
+    p.videoMobileAlignment || "center",
+  );
+  const imageAlign = responsiveAlignmentClass(
+    p.imageDesktopAlignment || "center",
+    p.imageMobileAlignment || "center",
+  );
   return (
     <div className="relative flex min-h-[40vh] items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black px-4">
       {hasMedia && (
         <div className="absolute inset-0">
           {p.videoUrl ? (
-            <CreatorVideo
-              src={p.videoUrl}
+            <HeroMedia
+              type="video"
+              url={p.videoUrl}
               poster={p.posterUrl}
+              alignmentClass={videoAlign}
+              opacity="opacity-40"
+              className="absolute inset-0"
               autoPlay
               muted
               loop
               playsInline
-              className="h-full w-full object-cover opacity-40"
-              aspectRatio="auto"
             />
           ) : (
-            <CreatorImage
-              src={p.posterUrl}
-              alt=""
-              variant="hero"
-              className="h-full w-full object-cover opacity-40"
+            <HeroMedia
+              type="image"
+              url={p.posterUrl}
+              alignmentClass={imageAlign}
+              opacity="opacity-40"
+              className="absolute inset-0"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
@@ -78,10 +91,11 @@ export function HeroRenderer({ props, elementId }: RendererProps) {
         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
           {p.title || ""}
         </h1>
+        {(elementId || p.tagline) && (
+          <p className="mt-3 text-base text-zinc-400">{p.tagline || ""}</p>
+        )}
         {(elementId || p.subtitle) && (
-          <p className="mt-3 text-base text-zinc-400">
-            {p.subtitle || ""}
-          </p>
+          <p className="mt-1 text-sm text-zinc-500">{p.subtitle || ""}</p>
         )}
         <div className="mt-6 flex items-center justify-center gap-3">
           {(elementId || p.cta) && (
@@ -152,15 +166,27 @@ export function GalleryRenderer({ props }: RendererProps) {
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
           {images.slice(0, 12).map((img: Record<string, unknown>, i: number) => (
             <div key={i} className="aspect-square overflow-hidden rounded-lg bg-zinc-800">
-              {img.url ? (
+              {img.isVideo && img.videoUrl ? (
+                <video
+                  src={img.videoUrl as string}
+                  poster={(img.url as string) || undefined}
+                  muted
+                  loop
+                  playsInline
+                  controls
+                  className="h-full w-full object-cover"
+                />
+              ) : img.url ? (
                 <CreatorImage
                   src={img.url as string}
-                  alt={String(img.caption || "")}
+                  alt={String(img.altText || img.caption || "")}
                   variant="gallery"
                   className="h-full w-full"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-zinc-700">Image</div>
+                <div className="flex h-full items-center justify-center text-zinc-700">
+                  {img.isVideo ? "Video" : "Image"}
+                </div>
               )}
             </div>
           ))}
@@ -237,6 +263,16 @@ export function TimelineRenderer({ props }: RendererProps) {
           {milestones.map((m: Record<string, string>, i: number) => (
             <div key={i} className="relative border-l-2 border-zinc-800 pl-6">
               <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-zinc-950" />
+              {m.imageUrl && (
+                <div className="mb-2 w-full max-w-xs overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                  <CreatorImage
+                    src={m.imageUrl}
+                    alt={m.title || m.name || "Milestone"}
+                    variant="gallery"
+                    className="h-full w-full"
+                  />
+                </div>
+              )}
               <p className="text-xs font-semibold text-s8ul-cyan">{m.year}</p>
               <p className="mt-1 text-sm font-medium text-white">{m.title || m.name}</p>
               <p className="text-xs text-zinc-500">{m.description || ""}</p>
@@ -304,14 +340,30 @@ export function TestimonialsRenderer({ props }: RendererProps) {
           {items.map((item: Record<string, string>, i: number) => (
             <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4">
               <div className="mb-2 flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-zinc-500">
-                  {(item.name || "?")[0]}
-                </div>
+                {item.avatarUrl ? (
+                  <CreatorImage
+                    src={item.avatarUrl}
+                    alt={item.name || "Testimonial"}
+                    variant="avatar"
+                    className="h-8 w-8 rounded-full"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-zinc-500">
+                    {(item.name || "?")[0]}
+                  </div>
+                )}
                 <div>
                   <p className="text-xs font-medium text-zinc-300">{item.name || "Anonymous"}</p>
                   {item.handle && <p className="text-[10px] text-zinc-600">{item.handle}</p>}
                 </div>
               </div>
+              {item.rating && Number(item.rating) > 0 && (
+                <div className="mb-2 flex items-center gap-0.5">
+                  {Array.from({ length: Math.min(5, Number(item.rating)) }).map((_, s) => (
+                    <Star key={s} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+              )}
               <p className="text-xs italic text-zinc-400">{item.content || item.message || ""}</p>
             </div>
           ))}
@@ -533,13 +585,28 @@ export function ServicesRenderer({ props }: RendererProps) {
         <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service: Record<string, unknown>, i: number) => (
-            <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-6 text-center">
-              <p className="text-sm font-semibold text-white">{String(service.title || "")}</p>
-              {!!service.description && <p className="mt-1 text-xs text-zinc-500">{String(service.description)}</p>}
-              <p className="mt-3 text-lg font-bold text-zinc-100">
-                {typeof service.price === "number" ? `₹${service.price.toLocaleString()}` : String(service.price || "")}
-              </p>
-              {!!service.duration && <p className="mt-1 text-xs text-zinc-500">{String(service.duration)}</p>}
+            <div key={i} className="overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50 text-center">
+              {service.imageUrl ? (
+                <CreatorImage
+                  src={String(service.imageUrl)}
+                  alt={String(service.title || "")}
+                  variant="card"
+                  className="w-full"
+                />
+              ) : (
+                <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900" />
+              )}
+              <div className="p-6">
+                {!!service.category && (
+                  <p className="text-xs font-semibold text-s8ul-cyan">{String(service.category).toUpperCase()}</p>
+                )}
+                <p className="mt-1 text-sm font-semibold text-white">{String(service.title || "")}</p>
+                {!!service.description && <p className="mt-1 text-xs text-zinc-500">{String(service.description)}</p>}
+                <p className="mt-3 text-lg font-bold text-zinc-100">
+                  {typeof service.price === "number" ? `₹${service.price.toLocaleString()}` : String(service.price || "")}
+                </p>
+                {!!service.duration && <p className="mt-1 text-xs text-zinc-500">{String(service.duration)}</p>}
+              </div>
             </div>
           ))}
         </div>

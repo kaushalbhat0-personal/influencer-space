@@ -90,4 +90,34 @@ export async function replaceAsset(assetId: string, formData: FormData) {
   }
 }
 
+export async function removeAssetReference(
+  assetId: string,
+  entityType: string,
+  entityId: string,
+  entityField?: string,
+) {
+  try {
+    await requireTenant();
+    await mediaService.removeReference(assetId, entityType, entityId, entityField);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to remove reference" };
+  }
+}
+
+export async function createAssetReference(
+  assetId: string,
+  entityType: string,
+  entityId: string,
+  entityField?: string,
+) {
+  try {
+    const tenantId = await requireTenant();
+    await mediaService.createReference(assetId, tenantId, entityType, entityId, entityField);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create reference" };
+  }
+}
+
 export { uploadAsset as uploadToLibrary };

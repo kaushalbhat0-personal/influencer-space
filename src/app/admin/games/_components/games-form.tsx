@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
+import { MediaField } from "@/components/shared/MediaField";
 import { createGame, updateGame } from "@/actions/games.actions";
 import { GAMES_ROUTE } from "@/lib/constants";
 import type { GameData, GameActionState } from "@/actions/games.types";
@@ -18,12 +19,14 @@ export function GameForm({ mode, game }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, setState] = useState<GameActionState>({ success: false });
   const [pending, setPending] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(game?.logoUrl ?? "");
 
   const serverAction = mode === "create" ? createGame : updateGame;
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
     setState({ success: false });
+    formData.set("logoUrl", logoUrl);
     const result = await serverAction(state, formData);
     setState(result);
     setPending(false);
@@ -65,12 +68,15 @@ export function GameForm({ mode, game }: Props) {
             rows={3}
           />
 
-          <Input
-            id="logoUrl"
-            name="logoUrl"
-            label="Logo Emoji or Image URL"
-            defaultValue={game?.logoUrl ?? ""}
-            placeholder="e.g. 🏆 or https://..."
+          <MediaField
+            label="Logo"
+            value={{ url: logoUrl || null }}
+            folder="games"
+            accept="image/*"
+            entityType="game"
+            entityId={mode === "edit" ? game?.id : undefined}
+            onChange={(v) => setLogoUrl(v?.url ?? "")}
+            onError={(e) => setState({ success: false, error: e })}
           />
 
           {state.error && <p className="text-sm text-red-400">{state.error}</p>}

@@ -6,7 +6,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { MediaUploadField } from "@/components/shared/MediaUploadField";
+import { MediaField } from "@/components/shared/MediaField";
 import { useAutosave } from "@/features/_shared/hooks/use-autosave";
 import type { ProfileData, SocialLink } from "../types";
 import { updateProfile } from "../actions";
@@ -54,16 +54,16 @@ export function ProfilePage({ initialData, tenantId }: ProfilePageProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         <GlassCard className="space-y-4 p-6">
           <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Avatar</h3>
-          <MediaUploadField
+          <MediaField
             label="Profile Photo"
-            currentUrl={data.avatarUrl}
+            value={{ url: data.avatarUrl, assetId: data.avatarAssetId }}
             folder="profile"
             entityType="profile"
             entityId={tenantId}
             entityField="avatarAssetId"
-            onUploadComplete={({ assetId, url }) => {
-              update("avatarAssetId", assetId);
-              update("avatarUrl", url);
+            onChange={(v) => {
+              update("avatarAssetId", v?.assetId ?? null);
+              update("avatarUrl", v?.url ?? null);
             }}
           />
         </GlassCard>

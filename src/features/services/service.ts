@@ -1,23 +1,38 @@
 import { prisma } from "@/lib/prisma";
 import type { ServiceData, ServiceFormInput } from "./types";
 
+function toServiceData(o: {
+  id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  status: string;
+  createdAt: Date;
+  metadata: unknown;
+}): ServiceData {
+  const meta = (o.metadata as Record<string, unknown> | null) ?? {};
+  return {
+    id: o.id,
+    title: o.title,
+    description: o.description,
+    price: o.price,
+    duration: (meta.duration as string) ?? null,
+    imageUrl: (meta.imageUrl as string) ?? null,
+    category: (meta.category as string) ?? null,
+    status: (o.status === "published" ? "PUBLISHED" : "DRAFT") as ServiceData["status"],
+    isActive: o.status === "published",
+    createdAt: o.createdAt,
+  };
+}
+
 export const serviceService = {
   async list(tenantId: string): Promise<ServiceData[]> {
     const offerings = await prisma.offering.findMany({
       where: { tenantId, type: "coaching" },
       orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, description: true, price: true, status: true, createdAt: true, metadata: true },
     });
-    return offerings.map((o) => ({
-      id: o.id,
-      title: o.title,
-      description: o.description,
-      price: o.price,
-      duration: null,
-      status: (o.status.toUpperCase() === "PUBLISHED" ? "PUBLISHED" : "DRAFT") as ServiceData["status"],
-      isActive: o.status === "published",
-      order: 0,
-      createdAt: o.createdAt,
-    }));
+    return offerings.map(toServiceData);
   },
 
   async create(tenantId: string, input: ServiceFormInput): Promise<ServiceData> {
@@ -32,18 +47,40 @@ export const serviceService = {
         price: input.price,
         status: input.status === "PUBLISHED" ? "published" : "draft",
         currency: "INR",
+        metadata: JSON.parse(JSON.stringify({
+          duration: input.duration ?? null,
+          imageUrl: input.imageUrl ?? null,
+          category: input.category ?? null,
+        })),
       },
     });
-    return {
-      id: offering.id,
-      title: offering.title,
-      description: offering.description,
-      price: offering.price,
-      duration: null,
-      status: (offering.status === "published" ? "PUBLISHED" : "DRAFT") as ServiceData["status"],
-      isActive: offering.status === "published",
-      order: 0,
-      createdAt: offering.createdAt,
-    };
+    return toServiceData(offering);
+  },
+
+  async update(tenantId: string, id: string, input: ServiceFormInput): Promise<ServiceData> {
+    const existing = await prisma.offering.findFirst({ where: { id, tenantId } });
+    if (!existing) throw new Error("Service not found");
+
+    const existingMeta = (existing.metadata as Record<string, unknown> | null) ?? {};
+    const offering = await prisma.offering.update({
+      where: { id },
+      data: {
+        title: input.title,
+        description: input.description ?? null,
+        price: input.price,
+        status: input.status === "PUBLISHED" ? "published" : input.status === "ARCHIVED" ? "archived" : "draft",
+        metadata: JSON.parse(JSON.stringify({
+          ...existingMeta,
+          duration: input.duration ?? null,
+          imageUrl: input.imageUrl ?? null,
+          category: input.category ?? null,
+        })),
+      },
+    });
+    return toServiceData(offering);
+  },
+
+  async delete(tenantId: string, id: string): Promise<void> {
+    await prisma.offering.deleteMany({ where: { id, tenantId } });
   },
 };

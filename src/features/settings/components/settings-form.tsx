@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { MediaUploadField } from "@/components/shared/MediaUploadField";
+import { MediaField } from "@/components/shared/MediaField";
 import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
 import type { HeroDataType } from "@/config/hero";
@@ -202,12 +202,15 @@ export function SettingsForm({
           <CardContent>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Hero Video</h3>
-              <MediaUploadField
+              <MediaField
                 label="Hero Video"
-                currentUrl={videoUrl}
+                value={{ url: videoUrl }}
                 folder="hero"
                 accept="video/*"
-                onUploadComplete={({ url }) => setVideoUrl(url)}
+                entityType="hero"
+                entityId={tenantId}
+                entityField="videoUrl"
+                onChange={(v) => setVideoUrl(v?.url ?? "")}
               />
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
@@ -233,12 +236,15 @@ export function SettingsForm({
           <CardContent>
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Hero Poster Image</h3>
-              <MediaUploadField
+              <MediaField
                 label="Hero Poster Image"
-                currentUrl={posterUrl}
+                value={{ url: posterUrl }}
                 folder="hero"
                 accept="image/*"
-                onUploadComplete={({ url }) => setPosterUrl(url)}
+                entityType="hero"
+                entityId={tenantId}
+                entityField="posterUrl"
+                onChange={(v) => setPosterUrl(v?.url ?? "")}
               />
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>

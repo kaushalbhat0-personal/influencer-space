@@ -8,7 +8,7 @@ import {
   updateExistingMilestone,
 } from "@/actions/milestone.actions";
 import type { MilestoneData } from "@/actions/milestone.types";
-import { MediaUploadField } from "@/components/shared/MediaUploadField";
+import { MediaField } from "@/components/shared/MediaField";
 import { EditEntityDrawer } from "@/components/admin/EditEntityDrawer";
 
 export function MilestonesManager({
@@ -192,13 +192,15 @@ export function MilestonesManager({
             required
           />
           <div className="flex flex-col gap-3 sm:flex-row">
-            <MediaUploadField
-              label="Image"
-              currentUrl={uploadedImageUrl || null}
-              folder="milestones"
-              accept="image/*"
-              onUploadComplete={({ url }) => setUploadedImageUrl(url)}
-            />
+            <div className="flex-1">
+              <MediaField
+                label="Image"
+                value={{ url: uploadedImageUrl || null }}
+                folder="milestones"
+                accept="image/*"
+                onChange={(v) => setUploadedImageUrl(v?.url ?? "")}
+              />
+            </div>
             <button
               type="submit"
               disabled={pending || !year.trim() || !title.trim() || !description.trim()}
@@ -317,8 +319,15 @@ export function MilestonesManager({
           <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="admin-input w-full min-h-[80px] resize-none" disabled={pending} rows={3} required />
         </div>
         <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Image URL</label>
-          <input value={editImageUrl} onChange={(e) => setEditImageUrl(e.target.value)} className="admin-input w-full" disabled={pending} placeholder="https://..." />
+          <MediaField
+            label="Image"
+            value={{ url: editImageUrl || null }}
+            folder="milestones"
+            accept="image/*"
+            entityType="timeline"
+            entityId={editingMilestone?.id}
+            onChange={(v) => setEditImageUrl(v?.url ?? "")}
+          />
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button type="submit" disabled={pending || !editYear.trim() || !editTitle.trim()} className="admin-btn-cyan w-full py-2.5">

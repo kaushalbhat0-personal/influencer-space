@@ -59,6 +59,7 @@ export class WebsiteAggregateService {
       hero: {
         title: (heroData as Record<string, unknown>)?.title as string ?? "",
         subtitle: (heroData as Record<string, unknown>)?.subtitle as string ?? "",
+        tagline: (heroData as Record<string, unknown>)?.tagline as string ?? "",
         description: (heroData as Record<string, unknown>)?.description as string ?? "",
         videoUrl: (heroData as Record<string, unknown>)?.videoUrl as string | null ?? null,
         posterUrl: (heroData as Record<string, unknown>)?.posterUrl as string | null ?? null,
@@ -69,6 +70,10 @@ export class WebsiteAggregateService {
         liveBadgeText: (heroData as Record<string, unknown>)?.liveBadgeText as string ?? "",
         showLiveBadge: (heroData as Record<string, unknown>)?.showLiveBadge as boolean ?? false,
         imageUrl: (heroData as Record<string, unknown>)?.imageUrl as string | null ?? null,
+        videoDesktopAlignment: (heroData as Record<string, unknown>)?.videoDesktopAlignment as "top" | "center" | "bottom" ?? "center",
+        videoMobileAlignment: (heroData as Record<string, unknown>)?.videoMobileAlignment as "top" | "center" | "bottom" ?? "center",
+        imageDesktopAlignment: (heroData as Record<string, unknown>)?.imageDesktopAlignment as "top" | "center" | "bottom" ?? "center",
+        imageMobileAlignment: (heroData as Record<string, unknown>)?.imageMobileAlignment as "top" | "center" | "bottom" ?? "center",
       },
       products: products.map((p) => ({
         id: p.id,
@@ -164,6 +169,8 @@ export class WebsiteAggregateService {
             description: o.description,
             price: o.price,
             duration: (meta?.duration as string | undefined) ?? null,
+            imageUrl: (meta?.imageUrl as string | undefined) ?? null,
+            category: (meta?.category as string | undefined) ?? null,
           };
         }),
     };

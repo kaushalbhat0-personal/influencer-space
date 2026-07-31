@@ -92,7 +92,10 @@ export const SettingsService = {
        VALUES (gen_random_uuid(), $1, 'hero_data', $2::jsonb, NOW())
        ON CONFLICT ("tenantId", "key")
        DO UPDATE SET
-         "value" = COALESCE("Setting"."value", '{}'::jsonb) || EXCLUDED."value",
+         "value" = (COALESCE("Setting"."value", '{}'::jsonb) || EXCLUDED."value")
+           - (SELECT COALESCE(jsonb_agg("k"), '[]'::jsonb)
+              FROM jsonb_each(EXCLUDED."value") AS kv("k", "v")
+              WHERE kv."v" = 'null'::jsonb),
          "updatedAt" = NOW()`,
       tenantId,
       jsonString,

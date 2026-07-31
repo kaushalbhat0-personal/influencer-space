@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useCallback, useEffect, useRef } from "react";
 import {
-  updateExistingGalleryItem, removeGalleryItem,
+  updateExistingGalleryItem, removeGalleryItem, updateGalleryOrder,
   publishGalleryItem, unpublishGalleryItem, archiveGalleryItem, restoreGalleryItem,
   toggleFeatured,
   bulkPublishGallery, bulkArchiveGallery, bulkDeleteGallery, bulkFeatureGallery,
@@ -10,8 +10,10 @@ import {
 import type { GalleryItemData } from "@/lib/gallery/types";
 import { GalleryCard, GalleryCardSkeleton, GalleryCardEmpty } from "@/components/gallery/GalleryCard";
 import { GalleryEditor } from "@/components/gallery/GalleryEditor";
+import { GalleryAddDrawer } from "@/components/gallery/GalleryAddDrawer";
 import { GalleryToolbar } from "@/components/gallery/GalleryToolbar";
 import { Lightbox } from "@/components/gallery/Lightbox";
+import { Plus } from "lucide-react";
 
 const ITEMS_PER_PAGE = 24;
 
@@ -45,6 +47,7 @@ export function GalleryManager({
   const [editingItem, setEditingItem] = useState<GalleryItemData | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   // Lightbox
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -104,6 +107,20 @@ export function GalleryManager({
     finally { setSaving(false); }
   }, [tenantId, refreshItems]);
 
+  const handleMove = useCallback((item: GalleryItemData, direction: -1 | 1) => {
+    const idx = items.findIndex((i) => i.id === item.id);
+    const target = idx + direction;
+    if (idx < 0 || target < 0 || target >= items.length) return;
+    const updates = [
+      { id: items[idx].id, order: items[target].order },
+      { id: items[target].id, order: items[idx].order },
+    ];
+    startTransition(async () => {
+      const result = await updateGalleryOrder(tenantId, updates);
+      if (result.success) await refreshItems();
+    });
+  }, [items, tenantId, refreshItems, startTransition]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -112,6 +129,9 @@ export function GalleryManager({
           <h1 className="text-xl font-bold text-white sm:text-2xl">Gallery</h1>
           <p className="mt-1 text-sm text-zinc-500">Manage images and videos for your portfolio.</p>
         </div>
+        <button onClick={() => setAddOpen(true)} className="admin-btn-cyan flex items-center gap-2 px-4 py-2 text-xs">
+          <Plus className="h-4 w-4" /> Add Media
+        </button>
       </div>
 
       {/* Toolbar */}
@@ -144,7 +164,7 @@ export function GalleryManager({
       )}
 
       {/* Empty */}
-      {!loading && items.length === 0 && <GalleryCardEmpty />}
+      {!loading && items.length === 0 && <GalleryCardEmpty onCreate={() => setAddOpen(true)} />}
 
       {/* Grid */}
       {!loading && items.length > 0 && (
@@ -161,6 +181,8 @@ export function GalleryManager({
                 onRestore={(id) => startTransition(async () => { await restoreGalleryItem(id, tenantId); await refreshItems(); })}
                 onDelete={(id, caption) => { if (!window.confirm(`Delete "${caption || "this item"}"?`)) return; startTransition(async () => { await removeGalleryItem(id, tenantId); await refreshItems(); }); }}
                 onToggleFeatured={(id, featured) => startTransition(async () => { await toggleFeatured(id, tenantId, featured); await refreshItems(); })}
+                onMoveLeft={(it) => handleMove(it, -1)}
+                onMoveRight={(it) => handleMove(it, 1)}
                 loading={pending}
               />
             ))}
@@ -185,6 +207,14 @@ export function GalleryManager({
 
       {/* Editor */}
       <GalleryEditor item={editingItem} open={editorOpen} onClose={() => { setEditorOpen(false); setEditingItem(null); }} onSave={handleSave} saving={saving} />
+
+      {/* Add Media */}
+      <GalleryAddDrawer
+        tenantId={tenantId}
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdded={async () => { await refreshItems(); }}
+      />
 
       {/* Lightbox */}
       <Lightbox items={items} currentIndex={lightboxIndex} open={lightboxOpen}

@@ -65,4 +65,39 @@ export const testimonialService = {
       update: { value: sanitized },
     });
   },
+
+  async update(tenantId: string, id: string, input: TestimonialFormInput): Promise<TestimonialData> {
+    const settings = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId, key: "testimonials" } },
+    });
+    const items = Array.isArray(settings?.value) ? [...(settings.value as Record<string, unknown>[])] : [];
+    const index = items.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("Testimonial not found");
+
+    items[index] = {
+      ...items[index],
+      author: input.author,
+      role: input.role ?? null,
+      content: input.content,
+      avatarUrl: input.avatarUrl ?? null,
+      rating: input.rating ?? 5,
+      featured: input.featured ?? false,
+      category: input.category ?? "general",
+    };
+
+    const sanitized = JSON.parse(JSON.stringify(items));
+    await prisma.setting.upsert({
+      where: { tenantId_key: { tenantId, key: "testimonials" } },
+      create: { tenantId, key: "testimonials", value: sanitized },
+      update: { value: sanitized },
+    });
+
+    const updated = items[index] as unknown as TestimonialData;
+    return {
+      ...updated,
+      sortOrder: index,
+      isActive: true,
+      createdAt: new Date(),
+    } as TestimonialData;
+  },
 };

@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 const createLinkSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -76,6 +77,7 @@ export async function createLink(
     });
 
     revalidatePath("/admin/links");
+    await afterContentChange(tenantId);
     return { success: true, data: link };
   } catch (error) {
     return {
@@ -109,6 +111,7 @@ export async function toggleLinkStatus(
     });
 
     revalidatePath("/admin/links");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {
@@ -136,6 +139,7 @@ export async function updateLinkOrder(
 
     await logAction(tenantId, "reorderLinks", { count: updates.length });
     revalidatePath("/admin/links");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {
@@ -185,6 +189,7 @@ export async function updateExistingLink(
     });
 
     revalidatePath("/admin/links");
+    await afterContentChange(tenantId);
     return { success: true, data: link };
   } catch (error) {
     return {
@@ -214,6 +219,7 @@ export async function deleteLink(
     });
 
     revalidatePath("/admin/links");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {

@@ -78,8 +78,10 @@ export async function updateHeroData(
 
     const sparseData: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(parsed.data)) {
-      if (value !== undefined && value !== null && value !== "") {
-        sparseData[key] = value;
+      // Empty strings become JSON null so the JSONB merge removes the key,
+      // letting creators clear hero fields that were previously sticky.
+      if (value !== undefined && value !== null) {
+        sparseData[key] = value === "" ? null : value;
       }
     }
 
@@ -117,8 +119,9 @@ export async function updateHeroPartial(
 
   const sparseData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(parsed.data)) {
-    if (value !== undefined && value !== null && value !== "") {
-      sparseData[key] = value;
+    // Empty strings become JSON null so the JSONB merge removes the key.
+    if (value !== undefined && value !== null) {
+      sparseData[key] = value === "" ? null : value;
     }
   }
 

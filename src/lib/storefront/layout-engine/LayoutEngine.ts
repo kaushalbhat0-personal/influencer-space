@@ -271,6 +271,8 @@ export class LayoutEngine {
         description: s.description,
         price: s.price,
         duration: s.duration,
+        imageUrl: s.imageUrl,
+        category: s.category,
       }));
       config.resolvedTitle = "Services";
     }

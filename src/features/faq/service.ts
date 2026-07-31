@@ -46,4 +46,33 @@ export const faqService = {
       update: { value: sanitized },
     });
   },
+
+  async update(tenantId: string, id: string, input: FAQFormInput): Promise<FAQItemData> {
+    const settings = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId, key: "faq" } },
+    });
+    const items = Array.isArray(settings?.value) ? [...(settings.value as Record<string, unknown>[])] : [];
+    const index = items.findIndex((item) => item.id === id);
+    if (index === -1) throw new Error("FAQ item not found");
+
+    items[index] = {
+      ...items[index],
+      question: input.question,
+      answer: input.answer,
+      category: input.category ?? "general",
+    };
+
+    const sanitized = JSON.parse(JSON.stringify(items));
+    await prisma.setting.upsert({
+      where: { tenantId_key: { tenantId, key: "faq" } },
+      create: { tenantId, key: "faq", value: sanitized },
+      update: { value: sanitized },
+    });
+
+    return {
+      ...items[index],
+      sortOrder: index,
+      isActive: true,
+    } as FAQItemData;
+  },
 };

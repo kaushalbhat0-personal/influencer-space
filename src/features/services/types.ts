@@ -4,9 +4,10 @@ export interface ServiceData {
   description: string | null;
   price: number;
   duration: string | null;
+  imageUrl: string | null;
+  category: string | null;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   isActive: boolean;
-  order: number;
   createdAt: Date;
 }
 
@@ -15,6 +16,7 @@ export interface ServiceFormInput {
   description?: string;
   price: number;
   duration?: string;
+  imageUrl?: string;
+  category?: string;
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  isActive?: boolean;
 }

@@ -36,3 +36,15 @@ export async function deleteFAQItem(id: string) {
   revalidatePath("/admin/faq");
   await afterContentChange(tenantId);
 }
+
+export async function updateFAQItem(id: string, input: FAQFormInput) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+
+  const parsed = faqFormSchema.parse(input);
+  const result = await faqService.update(tenantId, id, parsed as FAQFormInput);
+  revalidatePath("/admin/faq");
+  await afterContentChange(tenantId);
+  return result;
+}

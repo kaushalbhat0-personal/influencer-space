@@ -13,6 +13,8 @@ export const profileUpdateSchema = z.object({
   bio: z.string().max(2000).optional(),
   avatarUrl: z.string().url().nullable().optional(),
   bannerUrl: z.string().url().nullable().optional(),
+  avatarAssetId: z.string().nullable().optional(),
+  bannerAssetId: z.string().nullable().optional(),
   socialLinks: z.array(socialLinkSchema).optional(),
   contactEmail: z.string().email().nullable().optional(),
   categories: z.array(z.string()).optional(),

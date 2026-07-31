@@ -93,6 +93,35 @@ export const profileService = {
       },
     });
 
+    if (input.brandColors) {
+      const existing = await prisma.setting.findUnique({
+        where: { tenantId_key: { tenantId, key: "brand_config" } },
+        select: { value: true },
+      });
+      const existingConfig = (existing?.value as Record<string, unknown>) ?? {};
+      await prisma.setting.upsert({
+        where: { tenantId_key: { tenantId, key: "brand_config" } },
+        create: {
+          tenantId,
+          key: "brand_config",
+          value: JSON.parse(JSON.stringify({
+            ...existingConfig,
+            primaryColor: input.brandColors.primary,
+            secondaryColor: input.brandColors.secondary,
+            accentColor: input.brandColors.accent,
+          })),
+        },
+        update: {
+          value: JSON.parse(JSON.stringify({
+            ...existingConfig,
+            primaryColor: input.brandColors.primary,
+            secondaryColor: input.brandColors.secondary,
+            accentColor: input.brandColors.accent,
+          })),
+        },
+      });
+    }
+
     return this.getProfile(tenantId);
   },
 };

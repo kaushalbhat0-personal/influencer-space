@@ -1,13 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Library } from "lucide-react";
 import { uploadAsset } from "@/actions/media.actions";
+import { MediaPickerDialog } from "@/components/shared/MediaPickerDialog";
 
 export interface ManagedImage {
   url: string;
   alt: string;
   order: number;
+  assetId?: string | null;
 }
 
 interface ImageManagerProps {
@@ -16,17 +18,22 @@ interface ImageManagerProps {
   tenantId: string;
   folder?: string;
   maxImages?: number;
+  entityId?: string | null;
+  entityType?: string;
 }
 
 export function ImageManager({
   images,
   onChange,
-  tenantId,
+  tenantId: _tenantId,
   folder = "products",
   maxImages = 10,
+  entityId,
+  entityType = "product",
 }: ImageManagerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRemove = (index: number) => {
@@ -41,6 +48,10 @@ export function ImageManager({
     onChange(next.map((img, i) => ({ ...img, order: i })));
   };
 
+  function append(assetId: string, url: string) {
+    onChange([...images, { url, alt: "", order: images.length, assetId }]);
+  }
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -50,12 +61,13 @@ export function ImageManager({
     const formData = new FormData();
     formData.set("file", file);
     formData.set("folder", folder);
-    formData.set("entityType", "product");
+    formData.set("entityType", entityType);
+    if (entityId) formData.set("entityId", entityId);
 
     try {
       const result = await uploadAsset(formData);
       if (result.success && result.assetId && result.url) {
-        onChange([...images, { url: result.url, alt: "", order: images.length }]);
+        append(result.assetId, result.url);
       } else {
         setError(result.error ?? "Upload failed");
       }
@@ -75,6 +87,7 @@ export function ImageManager({
             key={i}
             className="group relative aspect-square rounded-lg overflow-hidden bg-zinc-800 border border-white/5"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.url}
               alt={img.alt || `Image ${i + 1}`}
@@ -139,10 +152,34 @@ export function ImageManager({
           </button>
         )}
       </div>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          disabled={uploading || images.length >= maxImages}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300 disabled:opacity-50"
+        >
+          <Library className="h-3.5 w-3.5" />
+          Choose from Library
+        </button>
+        <p className="text-[11px] text-zinc-600">
+          {images.length}/{maxImages} images · First image is primary
+        </p>
+      </div>
       {error && <p className="text-xs text-red-400">{error}</p>}
-      <p className="text-[11px] text-zinc-600">
-        {images.length}/{maxImages} images · First image is primary
-      </p>
+
+      <MediaPickerDialog
+        open={pickerOpen}
+        accept="image/*"
+        folder={folder}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(media) => {
+          if (images.length >= maxImages) return;
+          append(media.assetId, media.url);
+          setPickerOpen(false);
+          setError(null);
+        }}
+      />
     </div>
   );
 }

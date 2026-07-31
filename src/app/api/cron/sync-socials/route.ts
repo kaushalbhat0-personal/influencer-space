@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getDecryptedToken, refreshToken } from "@/lib/social-oauth";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 const BATCH_SIZE = 5;
 const MEDIA_LIMIT = 10;
@@ -436,6 +437,10 @@ export async function GET(request: NextRequest) {
           const n = await syncContentItems(tenant.id, twItems);
           logger.info(`synced ${n} Twitch content items`, "sync-socials");
         }
+      }
+
+      if (synced.length > 0) {
+        await afterContentChange(tenant.id);
       }
 
       results.push({ tenantId: tenant.id, synced });

@@ -45,7 +45,7 @@ describe("Course service", () => {
 
   it("create creates course offering", async () => {
     mockOfferingCreate.mockResolvedValue({ id: "1", title: "New Course", description: "Desc", price: 0, status: "draft", slug: "new-course", type: "course", currency: "INR", createdAt: new Date(), updatedAt: new Date(), metadata: {}, tenantId: "t1" });
-    const result = await courseService.create("t1", { title: "New Course", description: "Desc" });
+    const result = await courseService.create("t1", { title: "New Course", description: "Desc", price: 0 });
     expect(result.title).toBe("New Course");
     expect(result.status).toBe("DRAFT");
   });

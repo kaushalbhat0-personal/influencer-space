@@ -26,3 +26,25 @@ export async function createService(input: ServiceFormInput) {
   await afterContentChange(tenantId);
   return result;
 }
+
+export async function updateService(id: string, input: ServiceFormInput) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+
+  const parsed = serviceFormSchema.parse(input);
+  const result = await serviceService.update(tenantId, id, parsed as ServiceFormInput);
+  revalidatePath("/admin/services");
+  await afterContentChange(tenantId);
+  return result;
+}
+
+export async function deleteService(id: string) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+
+  await serviceService.delete(tenantId, id);
+  revalidatePath("/admin/services");
+  await afterContentChange(tenantId);
+}

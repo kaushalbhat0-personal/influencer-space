@@ -36,3 +36,15 @@ export async function deleteTestimonial(id: string) {
   revalidatePath("/admin/testimonials");
   await afterContentChange(tenantId);
 }
+
+export async function updateTestimonial(id: string, input: TestimonialFormInput) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+
+  const parsed = testimonialFormSchema.parse(input);
+  const result = await testimonialService.update(tenantId, id, parsed as TestimonialFormInput);
+  revalidatePath("/admin/testimonials");
+  await afterContentChange(tenantId);
+  return result;
+}

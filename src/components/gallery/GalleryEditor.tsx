@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import type { GalleryItemData } from "@/lib/gallery/types";
+import { MediaField } from "@/components/shared/MediaField";
 
 interface GalleryEditorProps {
   item: GalleryItemData | null;
@@ -13,6 +14,10 @@ interface GalleryEditorProps {
   saving?: boolean;
 }
 
+function isVideoUrl(url: string | null | undefined): boolean {
+  return /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url ?? "");
+}
+
 export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEditorProps) {
   const [caption, setCaption] = useState("");
   const [altText, setAltText] = useState("");
@@ -20,6 +25,7 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
   const [isFeatured, setIsFeatured] = useState(false);
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
+  const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,10 +36,11 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
       setIsFeatured(item.isFeatured);
       setCategory(item.category ?? "");
       setTags(item.tags ?? "");
+      setUrl(item.url ?? null);
       setError("");
     } else {
       setCaption(""); setAltText(""); setStatus("PUBLISHED");
-      setIsFeatured(false); setCategory(""); setTags(""); setError("");
+      setIsFeatured(false); setCategory(""); setTags(""); setUrl(null); setError("");
     }
   }, [item]);
 
@@ -56,6 +63,8 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
     setError("");
     await onSave({
       id: item.id,
+      url: url ?? item.url,
+      isVideo: isVideoUrl(url),
       caption: caption.trim(),
       altText: altText.trim(),
       status,
@@ -89,13 +98,26 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Media */}
+              <MediaField
+                label="Media"
+                value={{ url }}
+                folder="gallery"
+                accept="image/*,video/*"
+                entityType="gallery"
+                entityId={item?.id}
+                onChange={(v) => setUrl(v?.url ?? null)}
+                onError={(e) => setError(e)}
+              />
+
               {/* Preview */}
-              {item && (
+              {url && (
                 <div className="aspect-video rounded-lg overflow-hidden bg-zinc-800">
-                  {item.isVideo ? (
-                    <video src={item.url} className="h-full w-full object-cover" controls />
+                  {isVideoUrl(url) ? (
+                    <video src={url} className="h-full w-full object-cover" controls />
                   ) : (
-                    <img src={item.url} alt={altText || caption || "Preview"} className="h-full w-full object-cover" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={url} alt={altText || caption || "Preview"} className="h-full w-full object-cover" />
                   )}
                 </div>
               )}

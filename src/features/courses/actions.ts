@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { courseService } from "./service";
+import { courseFormSchema } from "./validators";
 import type { CourseFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
 
@@ -25,8 +26,31 @@ export async function createCourse(input: CourseFormInput) {
   const tenantId = session?.user?.tenantId;
   if (!tenantId) throw new Error("Unauthorized");
 
-  const result = await courseService.create(tenantId, input);
+  const parsed = courseFormSchema.parse(input);
+  const result = await courseService.create(tenantId, parsed as CourseFormInput);
   revalidatePath("/admin/courses");
   await afterContentChange(tenantId);
   return result;
+}
+
+export async function updateCourse(id: string, input: CourseFormInput) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+
+  const parsed = courseFormSchema.parse(input);
+  const result = await courseService.update(tenantId, id, parsed as CourseFormInput);
+  revalidatePath("/admin/courses");
+  await afterContentChange(tenantId);
+  return result;
+}
+
+export async function deleteCourse(id: string) {
+  const session = await getServerSession(authOptions);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+
+  await courseService.delete(tenantId, id);
+  revalidatePath("/admin/courses");
+  await afterContentChange(tenantId);
 }

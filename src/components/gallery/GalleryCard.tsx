@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff, Star, Archive, Trash2, Edit3, Check, Play, ImageIcon } from "lucide-react";
+import { Eye, EyeOff, Star, Archive, Trash2, Edit3, Check, Play, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { StatusChip } from "@/components/shared/StatusChip";
 import type { GalleryItemData } from "@/lib/gallery/types";
 
@@ -36,6 +36,8 @@ interface GalleryCardProps {
   onRestore?: (id: string) => void;
   onDelete?: (id: string, caption: string) => void;
   onToggleFeatured?: (id: string, featured: boolean) => void;
+  onMoveLeft?: (item: GalleryItemData) => void;
+  onMoveRight?: (item: GalleryItemData) => void;
   loading?: boolean;
 }
 
@@ -61,6 +63,7 @@ function resolveStatus(item: GalleryItemData) {
 export function GalleryCard({
   item, selected, onSelect, onEdit, onPreview,
   onPublish, onUnpublish, onArchive, onRestore, onDelete, onToggleFeatured,
+  onMoveLeft, onMoveRight,
   loading,
 }: GalleryCardProps) {
   const status = resolveStatus(item);
@@ -157,6 +160,22 @@ export function GalleryCard({
           </div>
 
           <div className="flex items-center gap-1">
+            {onMoveLeft && (
+              <button onClick={(e) => { e.stopPropagation(); onMoveLeft(item); }}
+                className="rounded-lg p-1 text-zinc-600 hover:text-s8ul-cyan hover:bg-s8ul-cyan/10"
+                title="Move left" aria-label="Move left"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </button>
+            )}
+            {onMoveRight && (
+              <button onClick={(e) => { e.stopPropagation(); onMoveRight(item); }}
+                className="rounded-lg p-1 text-zinc-600 hover:text-s8ul-cyan hover:bg-s8ul-cyan/10"
+                title="Move right" aria-label="Move right"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            )}
             {onEdit && !isArchived && (
               <button onClick={(e) => { e.stopPropagation(); onEdit(item); }}
                 className="rounded-lg p-1 text-zinc-600 hover:text-s8ul-cyan hover:bg-s8ul-cyan/10"

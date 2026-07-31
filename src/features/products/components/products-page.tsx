@@ -43,6 +43,7 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
       description: product.description ?? undefined,
       price: product.price,
       imageUrl: product.imageUrl ?? undefined,
+      images: product.images,
       slug: product.slug ?? undefined,
       status: product.status,
       type: product.type,
@@ -181,6 +182,7 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
           </div>
           <ImageManager
             tenantId={tenantId}
+            entityId={editing?.id}
             images={(form.images ?? []).map((url, i) => ({ url, alt: "", order: i }))}
             onChange={(images) => {
               const urls = images.map((img) => img.url);

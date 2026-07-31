@@ -117,6 +117,8 @@ export interface WebsiteAggregate {
     description: string | null;
     price: number;
     duration: string | null;
+    imageUrl?: string | null;
+    category?: string | null;
   }>;
 }
 
@@ -124,6 +126,7 @@ export interface HeroContent {
   title: string;
   subtitle: string;
   description: string;
+  tagline?: string;
   videoUrl?: string | null;
   posterUrl?: string | null;
   ctaText?: string;
@@ -133,6 +136,10 @@ export interface HeroContent {
   liveBadgeText?: string;
   showLiveBadge?: boolean;
   imageUrl?: string | null;
+  videoDesktopAlignment?: "top" | "center" | "bottom";
+  videoMobileAlignment?: "top" | "center" | "bottom";
+  imageDesktopAlignment?: "top" | "center" | "bottom";
+  imageMobileAlignment?: "top" | "center" | "bottom";
 }
 
 export interface CTABlock {
