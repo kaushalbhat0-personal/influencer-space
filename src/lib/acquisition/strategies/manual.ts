@@ -1,5 +1,6 @@
 import type { CreatorAcquisitionAdapter, AcquisitionResult } from "@/lib/acquisition/types";
 import type { BusinessProfile } from "@/lib/acquisition/business-types";
+import { inferCategory } from "@/lib/acquisition/classify";
 import { User } from "lucide-react";
 
 export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
@@ -19,6 +20,7 @@ export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
 
   async acquire(input: string): Promise<AcquisitionResult> {
     const name = input.trim();
+    const { category, industry } = inferCategory(name);
     return {
       strategy: "manual",
       rawInput: input,
@@ -28,7 +30,7 @@ export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
       requiresManualReview: false,
       profile: {
         businessName: name, ownerName: name,
-        category: "", industry: "",
+        category, industry,
         tagline: "", description: "", audience: "", goals: "", tone: "",
         offers: [],
         socialLinks: [],

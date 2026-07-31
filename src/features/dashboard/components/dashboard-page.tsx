@@ -147,12 +147,19 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                   <Link
                     key={check.label}
                     href={check.href}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/5 transition-colors"
+                    className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-white/5 transition-colors"
                   >
-                    <div className={cn("h-2 w-2 rounded-full shrink-0", check.done ? "bg-emerald-500" : "bg-zinc-600")} />
-                    <span className="flex-1 text-sm text-zinc-300">{check.label}</span>
-                    <span className={cn("text-xs font-medium", check.done ? "text-emerald-400" : "text-zinc-500")}>
-                      {check.score}%
+                    <div className={cn("h-2 w-2 rounded-full shrink-0 mt-1.5", check.done ? "bg-emerald-500" : "bg-zinc-600")} />
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-300">{check.label}</span>
+                        <span className={cn("text-xs font-medium ml-2", check.done ? "text-emerald-400" : "text-zinc-500")}>
+                          {check.score}%
+                        </span>
+                      </span>
+                      {!check.done && check.description && (
+                        <span className="block text-[11px] text-zinc-600 mt-0.5">{check.description}</span>
+                      )}
                     </span>
                   </Link>
                 ))}

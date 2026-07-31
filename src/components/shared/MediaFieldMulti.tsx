@@ -36,6 +36,7 @@ export function MediaFieldMulti({
   const [uploading, setUploading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canAdd = !max || value.length < max;
@@ -93,9 +94,40 @@ export function MediaFieldMulti({
     onChange(value.filter((_, i) => i !== index));
   }
 
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    if (!canAdd) return;
+    setDragging(true);
+  }
+
+  function handleDragLeave() {
+    setDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (!canAdd) return;
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      uploadFiles(files).catch(() => {});
+    }
+  }
+
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div
+      className={`space-y-2 ${className}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <label className="block text-xs font-medium text-zinc-400">{label}</label>
+
+      {dragging && (
+        <div className="rounded-lg border-2 border-dashed border-s8ul-cyan/60 bg-s8ul-cyan/5 p-6 text-center">
+          <p className="text-xs font-medium text-s8ul-cyan">Drop files to upload</p>
+        </div>
+      )}
 
       {value.length > 0 && (
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">

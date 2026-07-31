@@ -20,7 +20,32 @@ interface ProfileData {
   category?: string;
   persona: { id: string; name: string };
   confidence: number;
+  categoryConfidence?: number;
+  categoryRequiresReview?: boolean;
+  categoryAlternatives?: Array<{ niche: string; score: number }>;
 }
+
+const CATEGORY_OPTIONS = [
+  { value: "film", label: "Film & Entertainment" },
+  { value: "celebrity", label: "Celebrity" },
+  { value: "food", label: "Food & Cooking" },
+  { value: "lifestyle", label: "Lifestyle" },
+  { value: "gaming", label: "Gaming" },
+  { value: "education", label: "Education" },
+  { value: "fitness", label: "Fitness & Health" },
+  { value: "music", label: "Music" },
+  { value: "art", label: "Art & Design" },
+  { value: "photography", label: "Photography" },
+  { value: "travel", label: "Travel" },
+  { value: "sports", label: "Sports" },
+  { value: "comedy", label: "Comedy" },
+  { value: "business", label: "Business & Agency" },
+  { value: "technology", label: "Technology & SaaS" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "finance", label: "Finance" },
+  { value: "news", label: "News & Media" },
+  { value: "general", label: "General" },
+];
 
 interface SessionStage {
   type: string;
@@ -93,6 +118,7 @@ export default function OnboardingPage() {
     prefillUrl ? detectClientPlatform(prefillUrl) : null,
   );
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [categoryOverride, setCategoryOverride] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +161,11 @@ export default function OnboardingPage() {
         category: res.category,
         persona: res.persona,
         confidence: res.confidence || 0,
+        categoryConfidence: res.categoryConfidence,
+        categoryRequiresReview: res.categoryRequiresReview,
+        categoryAlternatives: res.categoryAlternatives,
       });
+      setCategoryOverride(res.category || "general");
       setWorkspaceName(res.creatorName || "My Storefront");
       setStep("preview");
     } else {
@@ -192,6 +222,7 @@ export default function OnboardingPage() {
         "INR", "en",
         undefined,
         newSessionId,
+        categoryOverride || undefined,
       );
 
       if (res.success && res.result) {
@@ -435,19 +466,31 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {profileData.category && (
-                  <div className="rounded-lg bg-white/[0.03] px-3 py-2">
-                    <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Category</p>
-                    <p className="text-sm text-zinc-300 mt-0.5 capitalize">{profileData.category}</p>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 gap-3">
+                <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Category</p>
+                  <select
+                    value={categoryOverride || profileData.category || "general"}
+                    onChange={(e) => setCategoryOverride(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+                  >
+                    {CATEGORY_OPTIONS.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                  {profileData.categoryRequiresReview && (
+                    <p className="mt-1.5 flex items-center gap-1 text-[10px] text-amber-400">
+                      <AlertTriangle className="h-3 w-3 shrink-0" />
+                      Detection confidence was low — review the category above.
+                    </p>
+                  )}
+                </div>
                 <div className="rounded-lg bg-white/[0.03] px-3 py-2">
                   <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Persona</p>
                   <p className="text-sm text-zinc-300 mt-0.5">{profileData.persona.name}</p>
                 </div>
                 <div className="rounded-lg bg-white/[0.03] px-3 py-2">
-                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Confidence</p>
+                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Profile Match</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="flex-1 h-1.5 rounded-full bg-zinc-800">
                       <div

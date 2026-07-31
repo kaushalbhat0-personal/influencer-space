@@ -171,25 +171,29 @@ export const THEME_PALETTES: Record<string, { primary: string; secondary: string
   news: { primary: "#1E293B", secondary: "#334155", accent: "#475569", mode: "dark" },
   comedy: { primary: "#E11D48", secondary: "#FB7185", accent: "#FDA4AF", mode: "light" },
   celebrity: { primary: "#D946EF", secondary: "#E879F9", accent: "#F0ABFC", mode: "dark" },
+  film: { primary: "#7C3AED", secondary: "#A78BFA", accent: "#F0ABFC", mode: "dark" },
+  business: { primary: "#334155", secondary: "#64748B", accent: "#3B82F6", mode: "light" },
   default: { primary: "#6366F1", secondary: "#818CF8", accent: "#A5B4FC", mode: "light" },
 };
 
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   gaming: ["gaming", "twitch", "playthrough", "esports", "minecraft", "fortnite", "stream", "gamer", "lets play", "gameplay", "fps", "rpg", "speedrun"],
-  education: ["tutorial", "course", "learn", "lesson", "educational", "how to", "guide", "class", "training", "workshop", "lecture", "study"],
-  finance: ["finance", "invest", "money", "stock", "crypto", "trading", "budget", "saving", "wealth", "financial", "economy", "business"],
-  fitness: ["fitness", "workout", "gym", "exercise", "health", "training", "yoga", "muscle", "diet", "nutrition", "wellness", "crossfit"],
-  music: ["music", "song", "album", "concert", "guitar", "piano", "singer", "rapper", "producer", "beat", "band", "melody"],
+  education: ["tutorial", "course", "learn", "lesson", "educational", "how to", "guide", "class", "training", "workshop", "lecture", "study", "teacher", "school"],
+  finance: ["finance", "invest", "investing", "money", "stock", "stock market", "crypto", "trading", "budget", "saving", "wealth", "financial", "economy", "tax"],
+  fitness: ["fitness", "workout", "gym", "exercise", "health", "training", "yoga", "muscle", "diet", "nutrition", "wellness", "crossfit", "personal trainer"],
+  music: ["music", "song", "album", "concert", "guitar", "piano", "singer", "rapper", "producer", "beat", "band", "melody", "musician"],
   travel: ["travel", "trip", "vacation", "adventure", "explore", "wanderlust", "tourist", "journey", "destination", "backpack", "road trip"],
-  food: ["food", "recipe", "cooking", "baking", "restaurant", "chef", "meal", "cuisine", "delicious", "kitchen", "gourmet", "bites"],
+  food: ["food", "recipe", "cooking", "baking", "restaurant", "chef", "meal", "cuisine", "delicious", "kitchen", "gourmet", "foodie", "street food", "cookbook"],
   photography: ["photography", "photo", "camera", "portrait", "landscape", "edit", "lightroom", "photographer", "shots", "capture", "lens"],
-  technology: ["tech", "coding", "programming", "software", "app", "developer", "ai", "startup", "innovation", "gadget", "saas", "web3"],
+  technology: ["tech", "coding", "programming", "software", "app", "developer", "ai", "startup", "innovation", "gadget", "saas", "web3", "data science", "cloud"],
   art: ["art", "drawing", "painting", "sketch", "illustration", "digital art", "creative", "design", "artist", "canvas", "brush"],
-  lifestyle: ["lifestyle", "daily", "vlog", "routine", "fashion", "beauty", "home", "family", "life", "motivation", "inspiration"],
+  lifestyle: ["lifestyle", "daily", "vlog", "routine", "fashion", "beauty", "makeup", "skincare", "home", "family", "life", "motivation", "inspiration", "mom", "parenting"],
   sports: ["sports", "soccer", "football", "basketball", "tennis", "cricket", "athlete", "training", "coach", "fitness", "competition"],
   news: ["news", "breaking", "update", "report", "politics", "world", "current", "headline", "press", "media", "journalism"],
   comedy: ["comedy", "funny", "standup", "joke", "laugh", "humor", "sketch", "comedian", "roast", "memes", "satire", "prank"],
-  celebrity: ["celebrity", "star", "famous", "icon", "legend", "bollywood", "brand", "official", "glamour", "red carpet", "exclusive"],
+  film: ["film", "films", "cinema", "movie", "movies", "actor", "actress", "filmstar", "director", "filmmaker", "producer", "screenwriter", "choreographer", "bollywood", "hollywood", "tollywood", "web series", "movie review", "film industry"],
+  celebrity: ["celebrity", "star", "famous", "icon", "legend", "bollywood", "glamour", "red carpet", "exclusive", "actor", "actress", "filmstar", "superstar"],
+  business: ["business", "entrepreneur", "agency", "freelancer", "freelance", "consultant", "consulting", "coaching", "marketing", "branding", "startup", "founder", "strategy", "services", "clients", "b2b"],
 };
 
 export const SECTION_TYPES: Record<string, PipelineStage[]> = {
@@ -208,6 +212,8 @@ export const SECTION_TYPES: Record<string, PipelineStage[]> = {
   news: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
   comedy: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
   celebrity: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
+  film: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
+  business: ["source_resolution", "profile_extraction", "theme_selection", "content_generation", "seo_generation", "section_composition", "website_composition"],
 };
 
 export const PRODUCT_RECOMMENDATIONS: Record<string, Array<{ name: string; type: string; category: string; priceRange: string }>> = {
@@ -285,6 +291,16 @@ export const PRODUCT_RECOMMENDATIONS: Record<string, Array<{ name: string; type:
     { name: "Branded Merch", type: "physical", category: "Apparel", priceRange: "$30-$100" },
     { name: "Exclusive Content", type: "subscription", category: "Media", priceRange: "$10-$50/mo" },
     { name: "Meet & Greet", type: "service", category: "Events", priceRange: "$100-$500" },
+  ],
+  film: [
+    { name: "Posters & Prints", type: "physical", category: "Art", priceRange: "$15-$80" },
+    { name: "Behind-the-Scenes", type: "subscription", category: "Media", priceRange: "$5-$20/mo" },
+    { name: "Workshops", type: "service", category: "Education", priceRange: "$50-$300" },
+  ],
+  business: [
+    { name: "Consulting", type: "service", category: "Consulting", priceRange: "$100-$500" },
+    { name: "Strategy Template", type: "digital", category: "Tools", priceRange: "$10-$60" },
+    { name: "Retainer Plan", type: "subscription", category: "Services", priceRange: "$500-$5000/mo" },
   ],
 };
 

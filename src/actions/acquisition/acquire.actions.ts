@@ -92,6 +92,8 @@ export async function acquireAndProvision(
       creatorName: businessName,
       sourceUrl: input,
       sourcePlatform: strategy,
+      category: profile.category || profile.industry || undefined,
+      industry: profile.industry || undefined,
       generatedContent: {
         heroTitle: profile.tagline || `Welcome to ${businessName}`,
         tagline: profile.tagline,

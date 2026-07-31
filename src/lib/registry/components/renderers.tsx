@@ -213,17 +213,26 @@ export function ProductsRenderer({ props }: RendererProps) {
         <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
           {products.map((prod: Record<string, unknown>, idx: number) => (
-            <div key={idx} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4">
-              {prod.imageUrl ? (
-                <CreatorImage
-                  src={String(prod.imageUrl)}
-                  alt={String(prod.name || "")}
-                  variant="product"
-                  className="mb-2 w-full rounded"
-                />
-              ) : (
-                <div className="mb-2 aspect-video rounded bg-zinc-800" />
-              )}
+            <div key={idx} className="group rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition-colors hover:border-white/25 hover:bg-zinc-900">
+              <div className="relative mb-2 overflow-hidden rounded">
+                {prod.imageUrl ? (
+                  <CreatorImage
+                    src={String(prod.imageUrl)}
+                    alt={String(prod.name || "")}
+                    variant="product"
+                    className="w-full transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <div className="flex aspect-video items-center justify-center rounded bg-zinc-800">
+                    <span className="text-xs text-zinc-600">{String((prod.name as string)?.[0] ?? "P")}</span>
+                  </div>
+                )}
+                {Boolean(prod.isFeatured) && (
+                  <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-black">
+                    Featured
+                  </span>
+                )}
+              </div>
               <p className="text-sm font-medium text-zinc-300">{String(prod.name || "")}</p>
               <p className="text-xs text-zinc-500">{prod.price ? `₹${Number(prod.price).toLocaleString()}` : ""}</p>
               {prod.id ? (

@@ -8,7 +8,11 @@ import { MetricCard } from "@/components/data/MetricCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: { status?: string };
+}) {
   const { tenantId } = await requireTenant();
 
   let orders: Awaited<ReturnType<typeof fetchOrders>> = [];
@@ -17,6 +21,13 @@ export default async function OrdersPage() {
   const paidOrders = orders.filter((o) => o.status === "PAID" || o.status === "COMPLETED");
   const pendingOrders = orders.filter((o) => o.status === "PENDING");
   const totalRevenue = paidOrders.reduce((s, o) => s + o.amount, 0);
+
+  const statusFilter = searchParams.status;
+  const visibleOrders = statusFilter === "paid"
+    ? paidOrders
+    : statusFilter === "pending"
+      ? pendingOrders
+      : orders;
 
   return (
     <ContentContainer>
@@ -42,7 +53,7 @@ export default async function OrdersPage() {
       </div>
 
       <ErrorBoundary>
-        <OrdersTable orders={orders} />
+        <OrdersTable orders={visibleOrders} />
       </ErrorBoundary>
     </ContentContainer>
   );

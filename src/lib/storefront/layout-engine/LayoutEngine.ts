@@ -172,6 +172,7 @@ export class LayoutEngine {
         price: p.price,
         imageUrl: p.imageUrl,
         slug: p.slug,
+        isFeatured: p.isFeatured,
       }));
       config.resolvedData = productEntries;
       config.resolvedTitle = content.identity.name

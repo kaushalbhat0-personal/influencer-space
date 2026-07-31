@@ -28,13 +28,6 @@ export interface DashboardActivity {
   timestamp: Date;
 }
 
-export interface DashboardHealthCheck {
-  label: string;
-  score: number;
-  done: boolean;
-  href: string;
-}
-
 export interface QuickStartStep {
   id: string;
   label: string;

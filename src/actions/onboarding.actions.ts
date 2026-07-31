@@ -18,6 +18,7 @@ import { captureError } from "@/lib/observability/error-tracker";
 import {
   buildProvisioningInput, buildBuilderArtifactData,
 } from "@/lib/generation/integration/provision-pipeline";
+import { nicheDetector } from "@/lib/generation/intelligence/niche-detector";
 import type { ImportProfileResult } from "@/lib/onboarding/service";
 
 export async function importCreatorProfile(sourceUrl: string): Promise<{
@@ -29,6 +30,9 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
   category?: string;
   persona?: { id: string; name: string };
   confidence?: number;
+  categoryConfidence?: number;
+  categoryRequiresReview?: boolean;
+  categoryAlternatives?: Array<{ niche: string; score: number }>;
   error?: string;
 }> {
   try {
@@ -37,6 +41,22 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
 
     const creatorName = session.user.name || "Creator";
     const result = await onboardingService.importProfile(sourceUrl, session.user.id, creatorName);
+    const kg = result.knowledgeGraph;
+
+    const classification = nicheDetector.detect({
+      platform: result.platform,
+      username: "",
+      displayName: kg.creator.name,
+      bio: kg.creator.bio,
+      avatarUrl: "",
+      followers: kg.creator.followers,
+      following: 0,
+      posts: 0,
+      engagement: 0,
+      content: [],
+      categories: kg.creator.niche ? [kg.creator.niche] : [],
+      links: [],
+    });
 
     return {
       success: true,
@@ -47,6 +67,9 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
       category: result.knowledgeGraph.creator.niche,
       persona: { id: result.personaMatch.persona.id, name: result.personaMatch.persona.name },
       confidence: result.experienceProfile.confidence,
+      categoryConfidence: classification.confidence,
+      categoryRequiresReview: classification.requiresReview,
+      categoryAlternatives: classification.altNiches,
     };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Profile import failed" };
@@ -61,6 +84,7 @@ export async function runCreatorGeneration(
   language: string,
   existingProfileResult?: ImportProfileResult,
   precreatedSessionId?: string,
+  categoryOverride?: string,
 ): Promise<{
   success: boolean;
     stages?: Array<{ stage: string; status: string; error?: string }>;
@@ -183,6 +207,8 @@ export async function runCreatorGeneration(
       sourcePlatform,
       planCode: "creator_free",
       pipelineResult,
+      category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
+      industry: categoryOverride || profileResult.knowledgeGraph.creator.niche,
     });
 
     let provisioned;

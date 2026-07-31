@@ -7,7 +7,7 @@ export interface HealthCheck {
   score: number; // 0-100
   done: boolean;
   href: string;
-  category: "profile" | "content" | "design" | "store" | "marketing" | "platform";
+  category: "brand" | "content" | "commerce" | "seo" | "social" | "design" | "platform";
   weight: number; // relative importance for overall score
 }
 
@@ -46,12 +46,13 @@ export class WebsiteHealthEngine {
       seoSetting,
       website,
       publishStatus,
+      orderCount,
     ] = await Promise.all([
       prisma.brand.findFirst({
         where: { website: { tenantId } },
         select: { name: true, tagline: true, bio: true, avatarUrl: true },
       }),
-      prisma.product.count({ where: { tenantId, isActive: true } }),
+      prisma.product.count({ where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null } }),
       prisma.galleryImage.count({ where: { tenantId, status: "PUBLISHED", isActive: true } }),
       prisma.affiliateLink.count({ where: { tenantId, isActive: true } }),
       prisma.timelineEvent.count({ where: { tenantId } }),
@@ -62,6 +63,7 @@ export class WebsiteHealthEngine {
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
       prisma.website.findUnique({ where: { tenantId }, select: { id: true, themeColors: true } }),
       prisma.publishStatus.findFirst({ where: { website: { tenantId } } }),
+      prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
     ]);
 
     const testimonialCount = testimonialSetting?.value && Array.isArray(testimonialSetting.value)
@@ -74,21 +76,22 @@ export class WebsiteHealthEngine {
     const isPublished = publishStatus?.state === "live";
 
     return [
-      { id: "profile_name", label: "Profile Name", description: "Set your display name", score: brand?.name ? 100 : 0, done: !!brand?.name, href: "/admin/profile", category: "profile", weight: 10 },
-      { id: "profile_tagline", label: "Tagline", description: "Add a tagline to your profile", score: brand?.tagline ? 100 : 0, done: !!brand?.tagline, href: "/admin/profile", category: "profile", weight: 5 },
-      { id: "profile_bio", label: "Bio", description: "Write your biography", score: brand?.bio ? 100 : 0, done: !!brand?.bio, href: "/admin/profile", category: "profile", weight: 5 },
-      { id: "profile_avatar", label: "Profile Photo", description: "Upload a profile photo", score: brand?.avatarUrl ? 100 : 0, done: !!brand?.avatarUrl, href: "/admin/profile", category: "profile", weight: 8 },
-      { id: "products", label: "Products", description: "Add products to your store", score: Math.min(productCount * 20, 100), done: productCount > 0, href: "/admin/products", category: "store", weight: 15 },
-      { id: "gallery", label: "Gallery", description: "Showcase your work", score: Math.min(galleryCount * 10, 100), done: galleryCount > 0, href: "/admin/gallery", category: "content", weight: 10 },
-      { id: "links", label: "Links", description: "Add social and affiliate links", score: Math.min(linkCount * 25, 100), done: linkCount > 0, href: "/admin/links", category: "marketing", weight: 5 },
-      { id: "timeline", label: "Timeline", description: "Share your journey", score: Math.min(timelineCount * 20, 100), done: timelineCount > 0, href: "/admin/milestones", category: "content", weight: 5 },
-      { id: "testimonials", label: "Testimonials", description: "Build trust with testimonials", score: Math.min(testimonialCount * 25, 100), done: testimonialCount > 0, href: "/admin/testimonials", category: "content", weight: 8 },
-      { id: "faq", label: "FAQ", description: "Answer common questions", score: Math.min(faqCount * 25, 100), done: faqCount > 0, href: "/admin/faq", category: "content", weight: 5 },
-      { id: "feed", label: "Content Feed", description: "Connect your social media", score: Math.min(feedCount * 20, 100), done: feedCount > 0, href: "/admin/settings/content", category: "content", weight: 5 },
-      { id: "games", label: "Games", description: "List your games", score: Math.min(gameCount * 25, 100), done: gameCount > 0, href: "/admin/games", category: "content", weight: 3 },
-      { id: "seo", label: "SEO", description: "Optimize for search engines", score: seoSetting ? 100 : 0, done: Boolean(seoSetting), href: "/admin/seo", category: "marketing", weight: 10 },
-      { id: "theme", label: "Custom Theme", description: "Customize colors and fonts", score: hasCustomTheme ? 100 : 0, done: Boolean(hasCustomTheme), href: "/admin/appearance", category: "design", weight: 8 },
-      { id: "publishing", label: "Publish", description: "Publish your website", score: isPublished ? 100 : 0, done: isPublished, href: "/admin/dashboard", category: "platform", weight: 20 },
+      { id: "profile_name", label: "Profile Name", description: "Set your display name so visitors know who you are.", score: brand?.name ? 100 : 0, done: !!brand?.name, href: "/admin/profile", category: "brand", weight: 10 },
+      { id: "profile_tagline", label: "Tagline", description: "Add a tagline that summarises what you do.", score: brand?.tagline ? 100 : 0, done: !!brand?.tagline, href: "/admin/profile", category: "brand", weight: 5 },
+      { id: "profile_bio", label: "Bio", description: "Write your biography to build trust.", score: brand?.bio ? 100 : 0, done: !!brand?.bio, href: "/admin/profile", category: "brand", weight: 5 },
+      { id: "profile_avatar", label: "Profile Photo", description: "Upload a profile photo — faces convert.", score: brand?.avatarUrl ? 100 : 0, done: !!brand?.avatarUrl, href: "/admin/profile", category: "brand", weight: 8 },
+      { id: "products", label: "Products", description: "Publish products to give fans something to buy.", score: Math.min(productCount * 20, 100), done: productCount * 20 >= 100, href: "/admin/products", category: "commerce", weight: 15 },
+      { id: "orders", label: "First Sale", description: "Complete your first order to start earning.", score: orderCount > 0 ? 100 : 0, done: orderCount > 0, href: "/admin/orders", category: "commerce", weight: 20 },
+      { id: "gallery", label: "Gallery", description: "Showcase your work with images and videos.", score: Math.min(galleryCount * 10, 100), done: galleryCount * 10 >= 100, href: "/admin/gallery", category: "content", weight: 10 },
+      { id: "timeline", label: "Timeline", description: "Share your journey with milestones.", score: Math.min(timelineCount * 20, 100), done: timelineCount * 20 >= 100, href: "/admin/milestones", category: "content", weight: 5 },
+      { id: "testimonials", label: "Testimonials", description: "Social proof convinces undecided visitors.", score: Math.min(testimonialCount * 25, 100), done: testimonialCount * 25 >= 100, href: "/admin/testimonials", category: "content", weight: 8 },
+      { id: "faq", label: "FAQ", description: "Answer common questions to reduce friction.", score: Math.min(faqCount * 25, 100), done: faqCount * 25 >= 100, href: "/admin/faq", category: "content", weight: 5 },
+      { id: "games", label: "Games", description: "List your games for fans to discover.", score: Math.min(gameCount * 25, 100), done: gameCount * 25 >= 100, href: "/admin/games", category: "content", weight: 3 },
+      { id: "links", label: "Links", description: "Add social and affiliate links.", score: Math.min(linkCount * 25, 100), done: linkCount * 25 >= 100, href: "/admin/links", category: "social", weight: 5 },
+      { id: "feed", label: "Content Feed", description: "Connect your social media for fresh content.", score: Math.min(feedCount * 20, 100), done: feedCount * 20 >= 100, href: "/admin/settings/content", category: "social", weight: 5 },
+      { id: "seo", label: "SEO", description: "Configure titles and descriptions for search engines.", score: seoSetting ? 100 : 0, done: Boolean(seoSetting), href: "/admin/seo", category: "seo", weight: 10 },
+      { id: "theme", label: "Custom Theme", description: "Customize colors and fonts to match your brand.", score: hasCustomTheme ? 100 : 0, done: Boolean(hasCustomTheme), href: "/admin/appearance", category: "design", weight: 8 },
+      { id: "publishing", label: "Publish", description: "Publish your website to go live.", score: isPublished ? 100 : 0, done: isPublished, href: "/admin/website-ready", category: "platform", weight: 20 },
     ];
   }
 

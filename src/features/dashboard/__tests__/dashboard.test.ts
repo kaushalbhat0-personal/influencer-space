@@ -82,27 +82,4 @@ describe("Dashboard service", () => {
     expect(result).toHaveLength(2);
     expect(result[0].type).toBe("product:created");
   });
-
-  it("getHealthChecks evaluates all checks", async () => {
-    mockProductCount.mockResolvedValue(1);
-    mockOrderCount.mockResolvedValue(1);
-    mockGalleryCount.mockResolvedValue(1);
-    mockTenantFindUnique.mockResolvedValue({ customDomain: "example.com" });
-    mockSettingFindUnique.mockResolvedValue({ key: "seo", value: { title: "Store" } });
-
-    const result = await dashboardService.getHealthChecks("t1");
-    expect(result).toHaveLength(5);
-    expect(result.every((c) => c.score === 100)).toBe(true);
-  });
-
-  it("getHealthChecks returns zeros for empty tenant", async () => {
-    mockProductCount.mockResolvedValue(0);
-    mockOrderCount.mockResolvedValue(0);
-    mockGalleryCount.mockResolvedValue(0);
-    mockTenantFindUnique.mockResolvedValue({ customDomain: null });
-    mockSettingFindUnique.mockResolvedValue(null);
-
-    const result = await dashboardService.getHealthChecks("t1");
-    expect(result.every((c) => c.score === 0)).toBe(true);
-  });
 });

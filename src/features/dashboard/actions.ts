@@ -22,7 +22,9 @@ export async function getDashboardData() {
     metrics,
     activity,
     health: health.checks.map((c) => ({
+      id: c.id,
       label: c.label,
+      description: c.description,
       score: c.score,
       done: c.done,
       href: c.href,

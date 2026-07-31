@@ -23,13 +23,15 @@ export class ClientHealthEngine {
       : 0;
 
     const contentChecks = websiteHealth?.checks.filter((c) =>
-      ["content", "store"].includes(c.category)
+      ["content", "commerce"].includes(c.category)
     ) ?? [];
     const contentScore = contentChecks.length > 0
       ? Math.round(contentChecks.reduce((s, c) => s + c.score, 0) / contentChecks.length)
       : 0;
 
-    const seoChecks = websiteHealth?.checks.filter((c) => c.category === "marketing") ?? [];
+    const seoChecks = websiteHealth?.checks.filter((c) =>
+      ["seo", "social"].includes(c.category)
+    ) ?? [];
     const seoScore = seoChecks.length > 0
       ? Math.round(seoChecks.reduce((s, c) => s + c.score, 0) / seoChecks.length)
       : 0;

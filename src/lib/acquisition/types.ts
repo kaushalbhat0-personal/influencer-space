@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type AcquisitionStrategy = "youtube" | "manual" | "demo_seed" | "instagram" | "twitch" | "website" | "tiktok" | "unknown";
+export type AcquisitionStrategy = "youtube" | "manual" | "demo_seed" | "instagram" | "twitch" | "website" | "tiktok" | "google_business" | "unknown";
 
 /**
  * @deprecated Use BusinessProfile from @/lib/acquisition/business-types instead.

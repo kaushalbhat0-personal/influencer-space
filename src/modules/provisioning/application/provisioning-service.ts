@@ -30,6 +30,10 @@ interface ProvisioningInputBase {
   templateId?: string;
   strategyId?: string;
   sections?: string[];
+  /** Classified / user-overridden business category (e.g. "film", "food"). */
+  category?: string;
+  /** Industry label (e.g. "Film Producer", "Restaurant"). */
+  industry?: string;
   generatedContent?: {
     heroTitle?: string;
     heroSubtitle?: string;
@@ -131,7 +135,11 @@ export class ProvisioningService {
       throw new Error("Creator name must be at least 2 characters");
     }
 
-    const personalization = websitePersonalizer.personalize(creatorName, input.sourceUrl);
+    const personalization = websitePersonalizer.personalize(
+      creatorName,
+      input.sourceUrl,
+      input.category,
+    );
     logger.info("Metadata fetched — profile personalized", "provisioning", { correlation, metadata: { creatorName, runId } });
 
     const tempPassword = generateTemporaryPassword();
@@ -159,9 +167,11 @@ export class ProvisioningService {
         bio: input.generatedContent?.aboutSection || "",
         heroTitle: input.generatedContent?.heroTitle || creatorName,
         aboutText: input.generatedContent?.aboutSection || "",
+        category: input.category || input.industry || "",
+        industry: input.industry || "",
       };
       const seoConfig = { title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription };
-      const influencerData = { name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: null, niche: input.sourcePlatform || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
+      const influencerData = { name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: null, niche: input.category || personalization.niche || input.sourcePlatform || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
       const heroData = { title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" };
       const metaData = { templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() };
 

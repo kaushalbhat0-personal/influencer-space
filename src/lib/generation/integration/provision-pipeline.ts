@@ -77,6 +77,8 @@ export function buildProvisioningInput(params: {
   sourcePlatform: string;
   planCode: string;
   pipelineResult: PipelineResult;
+  category?: string;
+  industry?: string;
 }) {
   const { themeData, seoData, heroSection } = extractArtifactData(params.pipelineResult);
   const bp = params.pipelineResult.blueprint;
@@ -85,6 +87,8 @@ export function buildProvisioningInput(params: {
     creatorName: params.creatorName,
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,
+    category: params.category,
+    industry: params.industry,
     generatedContent: bp ? {
       heroTitle: (heroSection?.props?.headline as string) ?? bp.website.title,
       heroSubtitle: (heroSection?.props?.subheadline as string) ?? "",

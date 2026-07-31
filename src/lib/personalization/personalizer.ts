@@ -4,12 +4,67 @@ import type { Niche } from "./niche";
 export interface PersonalizationResult {
   templateId: string;
   themePackageId: string;
+  niche: Niche;
   tagline: string;
   bio: string;
   heroTitle: string;
   heroSubtitle: string;
   seoTitle: string;
   seoDescription: string;
+}
+
+/** Map external classification category strings onto the personalization Niche enum. */
+const CATEGORY_TO_NICHE: Record<string, Niche> = {
+  film: "entertainment",
+  cinema: "entertainment",
+  celebrity: "entertainment",
+  entertainment: "entertainment",
+  comedy: "entertainment",
+  food: "restaurant",
+  restaurant: "restaurant",
+  cooking: "restaurant",
+  chef: "restaurant",
+  fitness: "fitness",
+  gym: "fitness",
+  sports: "sports",
+  health: "health",
+  wellness: "fitness",
+  coach: "fitness",
+  coaching: "fitness",
+  gaming: "gaming",
+  education: "education",
+  teacher: "education",
+  finance: "business",
+  business: "business",
+  agency: "business",
+  freelancer: "business",
+  freelance: "business",
+  consultant: "business",
+  consulting: "business",
+  marketing: "business",
+  saas: "technology",
+  technology: "technology",
+  tech: "technology",
+  music: "music",
+  musician: "music",
+  art: "art",
+  artist: "art",
+  photography: "photography",
+  photographer: "photography",
+  travel: "travel",
+  fashion: "fashion",
+  beauty: "fashion",
+  lifestyle: "lifestyle",
+};
+
+export function categoryToNiche(category: string): Niche {
+  const key = (category || "").toLowerCase().trim();
+  if (CATEGORY_TO_NICHE[key]) return CATEGORY_TO_NICHE[key];
+  // Fall back to a partial match (e.g. "Film Producer" → "film").
+  for (const [candidate, niche] of Object.entries(CATEGORY_TO_NICHE)) {
+    if (key.includes(candidate)) return niche;
+  }
+  return "general";
 }
 
 const NICHE_TEMPLATES: Record<Niche, string> = {
@@ -177,10 +232,12 @@ function generateSeoDescription(name: string, niche: Niche): string {
 }
 
 class WebsitePersonalizer {
-  personalize(name: string, sourceUrl?: string): PersonalizationResult {
-    const niche = sourceUrl
-      ? nicheDetector.detectFromUrl(sourceUrl)
-      : nicheDetector.detect(name);
+  personalize(name: string, sourceUrl?: string, category?: string): PersonalizationResult {
+    const niche = category
+      ? categoryToNiche(category)
+      : sourceUrl
+        ? nicheDetector.detectFromUrl(sourceUrl)
+        : nicheDetector.detect(name);
 
     const templateId = NICHE_TEMPLATES[niche] || "gaming";
     const themePackageId = NICHE_THEMES[niche] || "neon-dark";
@@ -194,6 +251,7 @@ class WebsitePersonalizer {
     return {
       templateId,
       themePackageId,
+      niche,
       tagline: generateTagline(displayName, niche),
       bio: generateBio(displayName, niche),
       heroTitle: generateHeroTitle(displayName),

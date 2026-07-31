@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
-import type { DashboardMetrics, DashboardActivity, DashboardHealthCheck, QuickStartStep } from "./types";
+import type { DashboardMetrics, DashboardActivity, QuickStartStep } from "./types";
 
 export const dashboardService = {
   async getMetrics(tenantId: string): Promise<DashboardMetrics> {
@@ -85,24 +85,6 @@ export const dashboardService = {
       description: e.action,
       timestamp: e.createdAt,
     }));
-  },
-
-  async getHealthChecks(tenantId: string): Promise<DashboardHealthCheck[]> {
-    const [products, orders, gallery, tenant, seoSetting] = await Promise.all([
-      prisma.product.count({ where: { tenantId, status: "PUBLISHED" } }),
-      prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
-      prisma.galleryImage.count({ where: { tenantId } }),
-      prisma.tenant.findUnique({ where: { id: tenantId }, select: { customDomain: true } }),
-      prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
-    ]);
-
-    return [
-      { label: "Products", score: products > 0 ? 100 : 0, done: products > 0, href: "/admin/products" },
-      { label: "Orders", score: orders > 0 ? 100 : 0, done: orders > 0, href: "/admin/orders" },
-      { label: "Gallery", score: gallery > 0 ? 100 : 0, done: gallery > 0, href: "/admin/gallery" },
-      { label: "Custom Domain", score: tenant?.customDomain ? 100 : 0, done: !!tenant?.customDomain, href: "/admin/settings/domain" },
-      { label: "SEO", score: seoSetting ? 100 : 0, done: !!seoSetting, href: "/admin/seo" },
-    ];
   },
 
   async getQuickStartSteps(tenantId: string): Promise<QuickStartStep[]> {

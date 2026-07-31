@@ -1,5 +1,6 @@
 import type { CreatorAcquisitionAdapter, AcquisitionResult } from "@/lib/acquisition/types";
 import type { BusinessProfile } from "@/lib/acquisition/business-types";
+import { inferCategory } from "@/lib/acquisition/classify";
 import { Grid } from "lucide-react";
 
 let YouTubeScraperService: { fetchChannelMetadata: (url: string) => Promise<YouTubeChannelMeta | null> } | null = null;
@@ -63,6 +64,7 @@ export class YouTubeAcquisitionAdapter implements CreatorAcquisitionAdapter {
       const products = this.inferProducts(meta.title);
       const palette = this.inferPalette();
       const warnings: string[] = [];
+      const { category, industry } = inferCategory(meta.title, meta.description);
 
       if (products.length === 0) warnings.push("No products could be inferred from channel data.");
       if (!meta.description) warnings.push("Channel has no description — bio will be empty.");
@@ -83,8 +85,8 @@ export class YouTubeAcquisitionAdapter implements CreatorAcquisitionAdapter {
         profile: {
           businessName: meta.title,
           ownerName: meta.title,
-          category: "",
-          industry: "",
+          category,
+          industry,
           tagline: meta.customUrl || meta.title,
           description: meta.description?.slice(0, 500) || "",
           audience: "",
