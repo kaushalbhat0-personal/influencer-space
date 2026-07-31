@@ -16,7 +16,6 @@ export type { BuilderOverviewData, HealthCategory } from "./builder-overview.act
 
 export {
   loadBuilderPages, saveBuilderPages,
-  publishWebsite as publishBuilderWebsite,
   listSnapshots, rollbackToVersion,
 } from "./builder.actions";
 

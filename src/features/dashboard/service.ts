@@ -20,7 +20,7 @@ export const dashboardService = {
       prisma.tenant.findUnique({ where: { id: tenantId }, select: { subdomain: true, customDomain: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } }, select: { id: true, value: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } }, select: { id: true } }),
-      prisma.website.findUnique({ where: { tenantId }, select: { id: true } }),
+      prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } }),
     ]);
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 
@@ -49,6 +49,7 @@ export const dashboardService = {
     return {
       productCount: products.length,
       activeProductCount: products.filter((p) => p.isActive).length,
+      publishedProductCount: publishedCount,
       orderCount: await prisma.productOrder.count({
         where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
       }),
@@ -66,6 +67,7 @@ export const dashboardService = {
       hasSeo,
       profileCompletion,
       testimonialCount,
+      currentTheme: website?.themePackageId ?? null,
       recentVersions,
     };
   },

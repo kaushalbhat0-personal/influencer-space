@@ -59,11 +59,48 @@ describe("PublishSnapshotService.list", () => {
 });
 
 describe("PublishSnapshotService.rollback", () => {
-  it("returns empty pages when no canonical data exists", async () => {
+  it("throws when the snapshot has no layout pages", async () => {
     mockPublishSnapshotFindUnique.mockResolvedValue({
       snapshot: { someField: "value" },
     });
+    await expect(service.rollback("w-1", 1)).rejects.toThrow("no layout pages");
+  });
+
+  it("restores builder pages from a canonical snapshot", async () => {
+    mockPublishSnapshotFindUnique.mockResolvedValue({
+      snapshot: {
+        layout: {
+          pages: [
+            {
+              id: "p1", name: "Home", slug: "/", isHome: true, order: 0,
+              sections: [
+                { id: "s1", moduleId: "hero.default", config: { title: "Hi" }, order: 0, visible: true },
+              ],
+            },
+          ],
+        },
+      },
+    });
     const result = await service.rollback("w-1", 1);
-    expect(result.pages).toEqual([]);
+    expect(result.pages).toHaveLength(1);
+    expect(result.pages[0].slug).toBe("/");
+    expect(result.pages[0].sections[0].slots[0].moduleId).toBe("hero.default");
+  });
+
+  it("restores from legacy canonical.layout shape", async () => {
+    mockPublishSnapshotFindUnique.mockResolvedValue({
+      snapshot: {
+        canonical: {
+          layout: {
+            pages: [
+              { id: "p1", name: "Home", slug: "/", isHome: true, order: 0, sections: [] },
+            ],
+          },
+        },
+      },
+    });
+    const result = await service.rollback("w-1", 1);
+    expect(result.pages).toHaveLength(1);
+    expect(result.pages[0].name).toBe("Home");
   });
 });

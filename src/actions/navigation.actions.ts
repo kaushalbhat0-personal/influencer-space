@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { navigationService } from "@/lib/navigation/service";
+import { publishingService } from "@/lib/publishing/service";
 import type { NavigationItem } from "@/types/snapshot";
 
 async function requireTenant(): Promise<string> {
@@ -27,6 +28,8 @@ export async function saveNavigation(
   try {
     const tenantId = await requireTenant();
     await navigationService.save(tenantId, items);
+    // Navigation is presentation — flag the snapshot stale until publish.
+    await publishingService.markChangesPending(tenantId).catch(() => {});
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to save navigation" };

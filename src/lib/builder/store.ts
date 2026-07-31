@@ -38,6 +38,7 @@ export class BuilderStore {
       history: [],
       historyIndex: -1,
     };
+    this.emitStoreChanged();
   }
 
   /** Serialize current pages (without ephemeral state) for persistence. */
@@ -46,10 +47,33 @@ export class BuilderStore {
   }
 
   /** Mark the store as dirty (unsaved changes). */
-  markDirty(): void { this.state = { ...this.state, isDirty: true }; }
+  markDirty(): void {
+    this.state = { ...this.state, isDirty: true };
+    this.emitStoreChanged();
+  }
 
   /** Mark the store as clean (changes saved). */
-  markClean(): void { this.state = { ...this.state, isDirty: false }; }
+  markClean(): void {
+    this.state = { ...this.state, isDirty: false };
+    this.emitStoreChanged();
+  }
+
+  /** Toggle a section's visibility through the history (persists to draft). */
+  setSectionVisibility(pageId: PageId, sectionId: SectionId, visible: boolean): void {
+    const page = this.getPage(pageId);
+    if (!page) return;
+    const section = page.sections.find((s) => s.id === sectionId);
+    if (!section || section.visible === visible) return;
+    this.pushHistory("visibility-change");
+    const sections = page.sections.map((s) => (s.id === sectionId ? { ...s, visible } : s));
+    this.updatePageSections(pageId, sections);
+    builderQuery.invalidate();
+    this.emitStoreChanged();
+  }
+
+  private emitStoreChanged(): void {
+    builderEvents.emit("store:changed", { isDirty: this.state.isDirty, timestamp: Date.now() });
+  }
 
   private createDefaultPage(): BuilderPage {
     const pageId = `page_${uid()}`;
@@ -109,6 +133,7 @@ export class BuilderStore {
     newHistory.push(entry);
     if (newHistory.length > 50) newHistory.shift();
     this.state = { ...this.state, history: newHistory, historyIndex: newHistory.length - 1, isDirty: true };
+    this.emitStoreChanged();
   }
 
   undo(): boolean {

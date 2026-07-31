@@ -2,7 +2,10 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
+import { publishingService } from "@/lib/publishing/service";
+import { normalizeThemeId } from "@/lib/theme";
 
 const FONT_MAP: Record<string, { heading: string; body: string }> = {
   geist: { heading: "Geist, system-ui, sans-serif", body: "Geist, system-ui, sans-serif" },
@@ -51,8 +54,39 @@ export async function updateTheme(
 
     await websiteRepository.updateTheme(existing.id, { themeColors, themeFonts, themeConfig });
 
+    // Theme is presentation — flag the snapshot as stale so the dashboard
+    // shows "changes pending" until the creator publishes.
+    await publishingService.markChangesPending(tenantId).catch(() => {});
+
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Theme update failed" };
+  }
+}
+
+export async function applyThemePackage(
+  tenantId: string,
+  themePackageId: string,
+): Promise<{ success: boolean; themeId?: string; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.tenantId || session.user.tenantId !== tenantId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const website = await prisma.website.findUnique({ where: { tenantId }, select: { id: true } });
+    if (!website) return { success: false, error: "Website not found" };
+
+    const canonicalId = normalizeThemeId(themePackageId);
+    await prisma.website.update({
+      where: { id: website.id },
+      data: { themePackageId: canonicalId },
+    });
+
+    await publishingService.markChangesPending(tenantId).catch(() => {});
+
+    return { success: true, themeId: canonicalId };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Theme apply failed" };
   }
 }

@@ -167,7 +167,8 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               publishedVersion={metrics.publishedVersion}
               publishedAt={metrics.publishedAt}
               recentVersions={metrics.recentVersions}
-              hasProducts={metrics.productCount > 0}
+              hasProducts={metrics.publishedProductCount > 0}
+              currentTheme={metrics.currentTheme}
             />
           </DashboardGridSide>
         </DashboardGrid>

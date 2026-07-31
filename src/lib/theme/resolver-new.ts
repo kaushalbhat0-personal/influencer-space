@@ -40,7 +40,15 @@ export class ThemeResolver {
       overrides?: Partial<ResolvedSnapshotTheme>;
     },
   ): ResolvedSnapshotTheme | null {
-    const theme = themeRegistry.getById(themeId);
+    let theme = themeRegistry.getById(themeId);
+
+    // Legacy preset IDs (e.g. "neon-dark") are resolved through their slug so
+    // websites provisioned with the old theme system still render the theme
+    // they were assigned instead of silently falling back to the default.
+    if (!theme) {
+      theme = themeRegistry.getAll().find((t) => t.slug === themeId);
+    }
+
     if (!theme) {
       // Fallback: try default theme
       const defaultTheme = themeRegistry.getById("com.creatos.neon-dark");
@@ -117,3 +125,15 @@ export class ThemeResolver {
 }
 
 export const themeResolver = new ThemeResolver();
+
+/**
+ * Resolve a stored theme id (possibly a legacy preset slug such as
+ * "neon-dark") into the canonical registry id ("com.creatos.neon-dark").
+ * Falls back to the default theme when the id is unknown.
+ */
+export function normalizeThemeId(id: string | null | undefined): string {
+  if (!id) return "com.creatos.neon-dark";
+  if (themeRegistry.getById(id)) return id;
+  const bySlug = themeRegistry.getAll().find((t) => t.slug === id);
+  return bySlug?.id ?? "com.creatos.neon-dark";
+}

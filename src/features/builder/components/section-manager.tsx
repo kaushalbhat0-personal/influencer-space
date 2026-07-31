@@ -196,7 +196,10 @@ export function SectionManager({ className }: { className?: string }) {
     const page = canvas.pages.find((p) => p.id === canvas.activePageId);
     if (!page) return;
     const section = page.sections.find((s) => s.id === id);
-    if (section) { section.visible = !section.visible; refresh(); }
+    if (section) {
+      builderStore.setSectionVisibility(page.id, id, !section.visible);
+      setTimeout(refresh, 50);
+    }
   }, [refresh]);
 
   return (

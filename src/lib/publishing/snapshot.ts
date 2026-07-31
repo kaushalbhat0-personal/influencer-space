@@ -44,30 +44,48 @@ export class PublishSnapshotService {
       if (!snap) throw new Error(`Snapshot version ${version} not found`);
 
       const data = snap.snapshot as Record<string, unknown>;
-      const canonical = data.canonical as Record<string, unknown> | undefined;
 
-      if (canonical) {
-        const layout = canonical.layout as Record<string, unknown> | undefined;
-        const pages = layout?.pages as Array<Record<string, unknown>> | undefined;
-        if (pages) {
-          return { pages: pages.map((p: any) => ({
-            id: p.id, name: p.name, slug: p.slug, isHome: p.isHome, order: p.order,
-            theme: "", metadata: {},
-            sections: (p.sections ?? []).map((s: any) => ({
-              id: s.id, name: s.moduleId, order: s.order, visible: s.visible ?? true,
-              locked: false, metadata: {},
-              slots: [{
-                id: `slot_${s.id}`,
-                moduleId: s.moduleId,
-                parentId: null, order: 0, visible: true, locked: false,
-                config: s.config ?? {}, metadata: {},
-              }],
-            })),
-          })) as BuilderPage[] };
-        }
+      // Canonical shape (written by serializeSnapshot): top-level `layout`.
+      // Legacy artifact shape: `canonical.layout`. Both are supported so old
+      // snapshots restore correctly.
+      const layout = (data.layout ?? (data.canonical as Record<string, unknown> | undefined)?.layout) as
+        | Record<string, unknown>
+        | undefined;
+      const pages = layout?.pages as Array<Record<string, unknown>> | undefined;
+
+      if (!Array.isArray(pages)) {
+        throw new Error(`Snapshot version ${version} has no layout pages`);
       }
 
-      return { pages: [] };
+      return {
+        pages: pages.map((p: any) => ({
+          id: p.id ?? `page_${crypto.randomUUID()}`,
+          name: p.name ?? "Home",
+          slug: p.slug ?? "/",
+          isHome: (p.isHome ?? p.slug === "/") || false,
+          order: p.order ?? 0,
+          theme: "",
+          metadata: p.metadata ?? {},
+          sections: ((p.sections ?? []) as Array<Record<string, unknown>>).map((s: any) => ({
+            id: s.id ?? `section_${crypto.randomUUID()}`,
+            name: typeof s.name === "string" && s.name ? s.name : (s.moduleId as string) ?? "Section",
+            order: s.order ?? 0,
+            visible: s.visible ?? true,
+            locked: false,
+            metadata: s.metadata ?? {},
+            slots: [{
+              id: `slot_${s.id ?? crypto.randomUUID()}`,
+              moduleId: s.moduleId as string,
+              parentId: null,
+              order: 0,
+              visible: s.visible ?? true,
+              locked: false,
+              config: s.config ?? {},
+              metadata: {},
+            }],
+          })),
+        })) as BuilderPage[],
+      };
     } catch (error) {
       throw error;
     }

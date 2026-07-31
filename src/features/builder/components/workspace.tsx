@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { ResizablePanel } from "./panel";
 import { BuilderToolbar } from "./toolbar";
 import { BuilderSidebar } from "./sidebar";
 import { BuilderProperties } from "./properties";
 import { InteractiveCanvas } from "../canvas/interactive-canvas";
 import { builderStore } from "@/lib/builder/store";
+import { builderEvents } from "@/lib/builder/events";
 import { builderPersistence } from "./persistence";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
+import { applyThemePackage } from "@/actions/theme.actions";
+import { normalizeThemeId } from "@/lib/theme/resolver-new";
 import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-overview.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import { Upload, ExternalLink } from "lucide-react";
@@ -40,6 +43,7 @@ export function BuilderWorkspace() {
   const [completionPct, setCompletionPct] = useState(0);
   const [overviewData, setOverviewData] = useState<BuilderOverviewData | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [, forceRender] = useReducer((x: number) => x + 1, 0);
 
   useEffect(() => {
     loadBuilderPages()
@@ -66,7 +70,7 @@ export function BuilderWorkspace() {
       if (r.success && r.data) {
         const d = r.data;
         setThemeName(d.website.themePackageId);
-        setCurrentThemeId(d.website.themePackageId);
+        setCurrentThemeId(normalizeThemeId(d.website.themePackageId));
         setBlueprintName(d.blueprint?.name ?? null);
         setPlanCode(d.subscription?.plan ?? null);
         setCreatorName(d.tenant.name);
@@ -80,36 +84,61 @@ export function BuilderWorkspace() {
     }).catch(() => {});
   }, []);
 
+  // Re-render whenever the store's dirty flag changes so the autosave effect
+  // below re-evaluates. The store is a plain class (not reactive), so this
+  // subscription is what makes autosave fire reliably.
+  useEffect(() => {
+    return builderEvents.subscribe("store:changed", () => forceRender());
+  }, []);
+
   useEffect(() => {
     builderPersistence.save({ sidebarCollapsed: leftCollapsed, responsiveMode: device });
   }, [leftCollapsed, device]);
 
+  const performSave = useCallback(async (themeId: string | null, activeThemeId: string | null) => {
+    setSaving(true);
+    const tenantId = overviewData?.tenant.id;
+    try {
+      if (themeId && themeId !== activeThemeId && tenantId) {
+        // Theme is website-level, not per-page: persist to Website.themePackageId.
+        const themeRes = await applyThemePackage(tenantId, themeId);
+        if (themeRes.success && themeRes.themeId) {
+          setCurrentThemeId(themeRes.themeId);
+          setThemeName(themeRes.themeId);
+          setPreviewThemeId(null);
+        } else {
+          setStatusMsg("Theme save failed");
+          return;
+        }
+      }
+      const pages = builderStore.serialize();
+      const res = await saveBuilderPages(pages);
+      if (res.success) {
+        builderStore.markClean();
+        setStatusMsg("Saved");
+      } else {
+        setStatusMsg("Save failed");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [overviewData]);
+
   useEffect(() => {
     if (!builderStore.isDirty || loading) return;
     if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
-    autoSaveRef.current = setTimeout(async () => {
-      setSaving(true);
-      if (previewThemeId && previewThemeId !== currentThemeId) {
-        const pages = builderStore.serialize();
-        pages.forEach((p) => { p.theme = previewThemeId; });
-        const res = await saveBuilderPages(pages);
-        if (res.success) {
-          builderStore.markClean();
-          setCurrentThemeId(previewThemeId);
-          setPreviewThemeId(null);
-          setThemeName(previewThemeId);
-          setStatusMsg("Saved");
-        } else setStatusMsg("Save failed");
-      } else {
-        const pages = builderStore.serialize();
-        const res = await saveBuilderPages(pages);
-        if (res.success) { builderStore.markClean(); setStatusMsg("Saved"); }
-        else setStatusMsg("Save failed");
-      }
-      setSaving(false);
+    autoSaveRef.current = setTimeout(() => {
+      performSave(previewThemeId, currentThemeId);
     }, 2000);
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
-  }, [builderStore.isDirty, loading, previewThemeId, currentThemeId]);
+  }, [builderStore.isDirty, loading, previewThemeId, currentThemeId, performSave]);
+
+  // Ctrl+S / save command → persist immediately (no debounce).
+  useEffect(() => {
+    return builderEvents.subscribe("save:requested", () => {
+      if (builderStore.isDirty) performSave(previewThemeId, currentThemeId);
+    });
+  }, [performSave, previewThemeId, currentThemeId]);
 
   const handleThemePreview = useCallback((themeId: string) => {
     setPreviewThemeId(themeId);
@@ -147,15 +176,7 @@ export function BuilderWorkspace() {
         publishStatus={publishStatus}
         storefrontUrl={storefrontUrl}
         onDeviceChange={(d) => { setDevice(d); builderStore.setDevice(d); }}
-        onSave={async () => {
-          setSaving(true);
-          setStatusMsg("Saving...");
-          const pages = builderStore.serialize();
-          const res = await saveBuilderPages(pages);
-          if (res.success) { builderStore.markClean(); setStatusMsg("Saved"); }
-          else setStatusMsg("Save failed");
-          setSaving(false);
-        }}
+        onSave={() => { setStatusMsg("Saving..."); performSave(previewThemeId, currentThemeId); }}
         saving={saving}
       />
 
@@ -197,13 +218,7 @@ export function BuilderWorkspace() {
           <span className="text-zinc-700">v{builderStore.publish.version}</span>
           <span className="text-zinc-800">|</span>
           <button
-            onClick={async () => {
-              setSaving(true);
-              const pages = builderStore.serialize();
-              const res = await saveBuilderPages(pages);
-              if (res.success) builderStore.markClean();
-              setSaving(false);
-            }}
+            onClick={() => performSave(previewThemeId, currentThemeId)}
             disabled={saving}
             className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
           >

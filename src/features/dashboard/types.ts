@@ -1,6 +1,7 @@
 export interface DashboardMetrics {
   productCount: number;
   activeProductCount: number;
+  publishedProductCount: number;
   orderCount: number;
   revenue: number;
   galleryCount: number;
@@ -16,6 +17,7 @@ export interface DashboardMetrics {
   hasSeo: boolean;
   profileCompletion: number;
   testimonialCount: number;
+  currentTheme: string | null;
   recentVersions: Array<{ version: number; createdAt: string }>;
 }
 

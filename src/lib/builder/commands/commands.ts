@@ -1,6 +1,7 @@
 import type { BuilderCommand, CommandResult } from "./types";
 import type { ElementId, SectionId, PageId, BuilderCanvas } from "../types";
 import { builderStore } from "../store";
+import { builderEvents } from "../events";
 
 function ok(name: string, id: string, data: unknown = null): CommandResult {
   return { success: true, commandId: id, commandName: name, executedAt: Date.now(), durationMs: 0, error: null, data };
@@ -82,7 +83,13 @@ export const setZoomCommand: BuilderCommand<{ zoom: number }> = {
 export const saveCommand: BuilderCommand<void> = {
   name: "save", description: "Save builder state", category: "file",
   canExecute: () => builderStore.isDirty,
-  execute: (_i, ctx) => { void _i; return ok("save", ctx.commandId, { saved: true }); },
+  execute: (_i, ctx) => {
+    void _i;
+    // The actual persistence happens in BuilderWorkspace which subscribes to
+    // this event, so keyboard shortcuts and toolbar both trigger a real save.
+    builderEvents.emit("save:requested", { timestamp: Date.now() });
+    return ok("save", ctx.commandId, { saved: true });
+  },
   undo: (_c) => { void _c; return err("save", "", "Cannot undo save"); },
 };
 

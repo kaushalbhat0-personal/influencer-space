@@ -9,14 +9,26 @@ export interface PublishResult {
 }
 
 export class PublishRepository {
+  /**
+   * Compute the next version number across ALL snapshots for the website
+   * (live + preview). Live and preview previously computed their own
+   * sequences, which collided on the `@@unique([websiteId, version])`
+   * constraint (publish-after-preview and preview-after-publish both failed).
+   */
+  private async nextVersion(websiteId: string, tx: Prisma.TransactionClient): Promise<number> {
+    const agg = await tx.publishSnapshot.aggregate({
+      where: { websiteId },
+      _max: { version: true },
+    });
+    return (agg._max.version ?? 0) + 1;
+  }
+
   async createPublish(
     websiteId: string,
     snapshot: PublishedSnapshot,
   ): Promise<PublishResult> {
     return prisma.$transaction(async (tx) => {
-      const existing = await tx.publishStatus.findUnique({ where: { websiteId } });
-      const nextVersion = (existing?.liveVersion ?? 0) + 1;
-
+      const nextVersion = await this.nextVersion(websiteId, tx);
       snapshot.metadata.version = nextVersion;
 
       const snap = await tx.publishSnapshot.create({
@@ -43,11 +55,7 @@ export class PublishRepository {
     snapshot: PublishedSnapshot,
   ): Promise<PublishResult> {
     return prisma.$transaction(async (tx) => {
-      const existing = await tx.publishSnapshot.findFirst({
-        where: { websiteId, state: "preview" },
-        orderBy: { version: "desc" },
-      });
-      const nextVersion = (existing?.version ?? 0) + 1;
+      const nextVersion = await this.nextVersion(websiteId, tx);
 
       snapshot.metadata.version = nextVersion;
 

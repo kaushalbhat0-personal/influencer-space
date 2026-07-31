@@ -48,12 +48,19 @@ export async function loadBuilderPages(): Promise<{ success: boolean; pages?: Bu
   try {
     const websiteId = await getWebsiteId();
 
+    // DB pages are the source of truth for the builder draft. The onboarding
+    // artifact is a one-time seed and must NOT shadow real edits, so it is
+    // only used when the creator has never saved any pages.
+    const pages = await builderService.load(websiteId);
+    if (pages.length > 0) {
+      return { success: true, pages };
+    }
+
     const artifactPages = await tryLoadFromArtifact(websiteId);
     if (artifactPages) {
       return { success: true, pages: artifactPages };
     }
 
-    const pages = await builderService.load(websiteId);
     return { success: true, pages };
   } catch (e) {
     return { success: false, error: String(e) };
@@ -89,10 +96,6 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
   }
 }
 
-export async function publishWebsite(_pages: BuilderPage[]): Promise<{ success: boolean; version?: number; error?: string }> {
-  return { success: false, error: "Publishing from builder is no longer supported. Use the Dashboard to publish." };
-}
-
 export async function listSnapshots(): Promise<{ success: boolean; snapshots?: { version: number; state: string; createdAt: Date }[]; error?: string }> {
   try {
     const websiteId = await getWebsiteId();
@@ -107,9 +110,11 @@ export async function rollbackToVersion(version: number): Promise<{ success: boo
   try {
     const websiteId = await getWebsiteId();
     const data = await publishSnapshotService.rollback(websiteId, version);
+    if (data.pages.length === 0) {
+      return { success: false, error: `Snapshot version ${version} contains no pages` };
+    }
 
     await builderService.save(websiteId, data.pages);
-
     return { success: true, pages: data.pages };
   } catch (e) {
     return { success: false, error: String(e) };

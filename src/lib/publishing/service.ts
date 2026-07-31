@@ -23,6 +23,7 @@ import { websiteAggregateService } from "@/modules/tenant/application/website-ag
 import { navigationService } from "@/lib/navigation/service";
 import { themeResolver } from "@/lib/theme/resolver-new";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
+import { resolveModuleId } from "@/lib/registry/resolve-module";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { publishRepository } from "@/modules/tenant/infrastructure/publishing-repository";
@@ -120,6 +121,11 @@ export class PublishingService {
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
 
+      const blocking = await this.collectBlockingIssues(builderPages);
+      if (blocking.length > 0) {
+        return { success: false, error: blocking.join("; ") };
+      }
+
       const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
       const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
       const resolvedTheme = themeResolver.resolveForSnapshot(
@@ -160,13 +166,20 @@ export class PublishingService {
             slug: p.slug,
             isHome: p.isHome,
             order: p.order,
-            sections: p.sections.map((s) => ({
-              id: s.id,
-              moduleId: s.slots.length > 0 ? s.slots[0]!.moduleId : s.name,
-              config: s.slots.length > 0 ? s.slots[0]!.config : {},
-              order: s.order,
-              visible: s.visible,
-            })),
+            // Publish EVERY block in a section (not just the first slot).
+            // Sections with no blocks are omitted — an empty section cannot
+            // render and would otherwise emit an unregistered module id.
+            sections: p.sections.flatMap((s) =>
+              s.slots.length > 0
+                ? s.slots.map((slot, i) => ({
+                    id: `${s.id}__${slot.id}`,
+                    moduleId: slot.moduleId,
+                    config: slot.config ?? {},
+                    order: s.order * 100 + i,
+                    visible: s.visible && slot.visible !== false,
+                  }))
+                : [],
+            ),
           })),
         },
         theme: {
@@ -215,6 +228,9 @@ export class PublishingService {
         revalidatePath("/", "layout");
         revalidatePath("/admin/dashboard");
         revalidatePath(`/${tenant.subdomain}`);
+        if (tenant.customDomain) {
+          revalidatePath(`/${tenant.customDomain}`);
+        }
       } catch {
         // cache invalidation is fire-and-forget; already committed
       }
@@ -264,7 +280,28 @@ export class PublishingService {
         navigationService.getOrGenerate(tenantId),
       ]);
 
-      const resolvedTheme = themeResolver.resolveForSnapshot(website.themePackageId ?? FALLBACK_THEME_ID);
+      const websiteColors = (website.themeColors ?? {}) as Record<string, string>;
+      const websiteFonts = (website.themeFonts ?? {}) as Record<string, string>;
+      const resolvedTheme = themeResolver.resolveForSnapshot(
+        website.themePackageId ?? FALLBACK_THEME_ID,
+        "dark",
+        {
+          overrides: Object.keys(websiteColors).length > 0 || Object.keys(websiteFonts).length > 0 ? {
+            colors: {
+              primary: websiteColors.primary,
+              secondary: websiteColors.secondary,
+              accent: websiteColors.accent,
+              background: websiteColors.background,
+              foreground: websiteColors.foreground,
+              muted: websiteColors.muted,
+            },
+            typography: {
+              heading: websiteFonts.heading,
+              body: websiteFonts.body,
+            },
+          } as Partial<ResolvedSnapshotTheme> : undefined,
+        },
+      );
       const previewSnapshot: PublishedSnapshot = {
         _schema: "creatorstore.snapshot",
         _version: 1,
@@ -273,11 +310,17 @@ export class PublishingService {
         layout: {
           pages: builderPages.map((p) => ({
             id: p.id, name: p.name, slug: p.slug, isHome: p.isHome, order: p.order,
-            sections: p.sections.map((s) => ({
-              id: s.id, moduleId: s.slots.length > 0 ? s.slots[0]!.moduleId : s.name,
-              config: s.slots.length > 0 ? s.slots[0]!.config : {},
-              order: s.order, visible: s.visible,
-            })),
+            sections: p.sections.flatMap((s) =>
+              s.slots.length > 0
+                ? s.slots.map((slot, i) => ({
+                    id: `${s.id}__${slot.id}`,
+                    moduleId: slot.moduleId,
+                    config: slot.config ?? {},
+                    order: s.order * 100 + i,
+                    visible: s.visible && slot.visible !== false,
+                  }))
+                : [],
+            ),
           })),
         },
         theme: {
@@ -319,11 +362,17 @@ export class PublishingService {
 
       const { publishSnapshotService } = await import("./snapshot");
       const data = await publishSnapshotService.rollback(website.id, version);
+      if (data.pages.length === 0) {
+        return { success: false, error: `Snapshot version ${version} contains no pages` };
+      }
 
       const builderService = await import("@/lib/builder/builder-service").then(
         (m) => new m.BuilderService(),
       );
       await builderService.save(website.id, data.pages);
+
+      // Rollback restores the DRAFT; the live site stays as-is until republish.
+      await this.markChangesPending(tenantId);
 
       logger.info("Rollback completed", "publishing", { duration: Date.now() - startTime, metadata: { tenantId, version } });
       metricsService.recordOutcome("publish", true, { tenantId, operation: "rollback" });
@@ -365,10 +414,68 @@ export class PublishingService {
       });
       if (!hasDomain?.customDomain) issues.push("Using subdomain. Consider adding a custom domain.");
 
+      const website = await prisma.website.findUnique({
+        where: { tenantId },
+        select: { id: true },
+      });
+      if (website) {
+        const builderService = await import("@/lib/builder/builder-service").then(
+          (m) => new m.BuilderService(),
+        );
+        const pages = await builderService.load(website.id);
+        const blocking = await this.collectBlockingIssues(pages);
+        if (blocking.length > 0) issues.push(...blocking);
+        if (pages.length === 0) issues.push("No pages. The builder is empty.");
+      }
+
       return { success: true, issues };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Validation failed" };
     }
+  }
+
+  /**
+   * Blocking issues that prevent a publish: no homepage, duplicate slugs,
+   * or unknown (unregistered) components. Non-blocking warnings (products,
+   * custom domain) are reported separately by validateBeforePublish.
+   */
+  private async collectBlockingIssues(pages: BuilderPage[]): Promise<string[]> {
+    const issues: string[] = [];
+
+    if (pages.length === 0) {
+      return ["No pages to publish. Add sections in the builder first."];
+    }
+
+    if (!pages.some((p) => p.isHome)) {
+      issues.push("No homepage selected. Mark one page as Home.");
+    }
+
+    const slugSeen = new Set<string>();
+    for (const page of pages) {
+      const slug = page.slug || "/";
+      if (slugSeen.has(slug)) {
+        issues.push(`Duplicate page slug: "${slug}".`);
+      }
+      slugSeen.add(slug);
+    }
+
+    const { componentRegistry } = await import("@/lib/registry/components");
+    const unknown = new Set<string>();
+    for (const page of pages) {
+      for (const section of page.sections) {
+        for (const slot of section.slots) {
+          const moduleId = resolveModuleId(slot.moduleId);
+          if (!componentRegistry.get(moduleId)) {
+            unknown.add(moduleId);
+          }
+        }
+      }
+    }
+    for (const moduleId of Array.from(unknown)) {
+      issues.push(`Unknown component: "${moduleId}". Remove it in the builder.`);
+    }
+
+    return issues;
   }
 
   private async loadBuilderPages(websiteId: string): Promise<BuilderPage[]> {
