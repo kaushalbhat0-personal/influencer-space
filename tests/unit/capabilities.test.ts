@@ -44,9 +44,9 @@ describe("Capabilities — Constants", () => {
     expect(PLAN_CODES).toContain("agency_growth");
   });
 
-  it("should define all 23 feature IDs", () => {
+  it("should define all feature IDs", () => {
     const ids = Object.values(FEATURE_IDS);
-    expect(ids.length).toBe(24);
+    expect(ids.length).toBe(36);
     expect(ids).toContain("max_products");
     expect(ids).toContain("custom_domain");
     expect(ids).toContain("seo");
@@ -159,7 +159,7 @@ describe("Capabilities — Features", () => {
 
   it("should list all feature IDs", () => {
     const ids = getAllFeatureIds();
-    expect(ids.length).toBe(23);
+    expect(ids.length).toBe(35);
   });
 
   it("should filter features by category", () => {
@@ -172,7 +172,7 @@ describe("Capabilities — Features", () => {
   });
 
   it("should have complete FEATURE_CATALOG", () => {
-    expect(Object.keys(FEATURE_CATALOG).length).toBe(23);
+    expect(Object.keys(FEATURE_CATALOG).length).toBe(35);
   });
 });
 
@@ -335,7 +335,7 @@ describe("Capabilities — Engine.planSummary", () => {
     expect(summary).not.toBeNull();
     expect(summary!.code).toBe("creator_free");
     expect(summary!.name).toBe("Starter");
-    expect(summary!.featureCount).toBe(23);
+    expect(summary!.featureCount).toBe(35);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
   });
 
@@ -534,7 +534,7 @@ describe("Capabilities — Mapper", () => {
     const plan = getPlan("creator_free")!;
     const summary = toPlanSummary(plan);
     expect(summary.code).toBe("creator_free");
-    expect(summary.featureCount).toBe(23);
+    expect(summary.featureCount).toBe(35);
   });
 
   it("should format feature comparison", () => {
@@ -620,7 +620,7 @@ describe("Capabilities — Service Delegation", () => {
 
   it("should delegate feature accessors", () => {
     expect(capabilityService.getFeatureInfo("max_products").label).toBe("Products");
-    expect(capabilityService.getAllFeatureIds().length).toBe(23);
+    expect(capabilityService.getAllFeatureIds().length).toBe(35);
   });
 
   it("should delegate limit functions", () => {
