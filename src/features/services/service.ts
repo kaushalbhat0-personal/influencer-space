@@ -19,6 +19,7 @@ function toServiceData(o: {
     duration: (meta.duration as string) ?? null,
     imageUrl: (meta.imageUrl as string) ?? null,
     category: (meta.category as string) ?? null,
+    featured: (meta.featured as boolean) ?? false,
     status: (o.status === "published" ? "PUBLISHED" : "DRAFT") as ServiceData["status"],
     isActive: o.status === "published",
     createdAt: o.createdAt,
@@ -51,6 +52,7 @@ export const serviceService = {
           duration: input.duration ?? null,
           imageUrl: input.imageUrl ?? null,
           category: input.category ?? null,
+          featured: input.featured ?? false,
         })),
       },
     });
@@ -74,6 +76,7 @@ export const serviceService = {
           duration: input.duration ?? null,
           imageUrl: input.imageUrl ?? null,
           category: input.category ?? null,
+          featured: input.featured ?? existingMeta.featured ?? false,
         })),
       },
     });

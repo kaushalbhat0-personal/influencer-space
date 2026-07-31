@@ -1,6 +1,8 @@
 export type HeroDataType = {
   videoUrl: string;
   posterUrl: string;
+  videoAssetId: string;
+  posterAssetId: string;
   title: string;
   subtitle: string;
   tagline: string;
@@ -19,6 +21,8 @@ export type HeroDataType = {
 export const defaultHeroData: HeroDataType = {
   videoUrl: "",
   posterUrl: "",
+  videoAssetId: "",
+  posterAssetId: "",
   title: "Welcome",
   subtitle: "",
   tagline: "",

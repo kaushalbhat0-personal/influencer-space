@@ -6,6 +6,7 @@ export interface ServiceData {
   duration: string | null;
   imageUrl: string | null;
   category: string | null;
+  featured: boolean;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   isActive: boolean;
   createdAt: Date;
@@ -18,5 +19,6 @@ export interface ServiceFormInput {
   duration?: string;
   imageUrl?: string;
   category?: string;
+  featured?: boolean;
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
 }

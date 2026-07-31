@@ -263,6 +263,7 @@ export class LayoutEngine {
         price: c.price,
         imageUrl: c.imageUrl,
         category: c.category,
+        featured: c.featured,
       }));
       config.resolvedTitle = "Courses";
     } else if (moduleId.startsWith("services.")) {
@@ -274,6 +275,7 @@ export class LayoutEngine {
         duration: s.duration,
         imageUrl: s.imageUrl,
         category: s.category,
+        featured: s.featured,
       }));
       config.resolvedTitle = "Services";
     }

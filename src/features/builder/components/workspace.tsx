@@ -13,10 +13,11 @@ import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 import { applyThemePackage } from "@/actions/theme.actions";
+import { publishWebsite } from "@/actions/publish.actions";
 import { normalizeThemeId } from "@/lib/theme/resolver-new";
 import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-overview.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { Upload, ExternalLink } from "lucide-react";
+import { Upload, ExternalLink, Rocket, Loader2 } from "lucide-react";
 
 export function BuilderWorkspace() {
   useKeyboardShortcuts();
@@ -44,6 +45,7 @@ export function BuilderWorkspace() {
   const [overviewData, setOverviewData] = useState<BuilderOverviewData | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     loadBuilderPages()
@@ -140,6 +142,28 @@ export function BuilderWorkspace() {
     });
   }, [performSave, previewThemeId, currentThemeId]);
 
+  // Publish through the SAME server action the Dashboard uses. Saves the
+  // draft first so the publish always reads the latest builder pages.
+  const handlePublish = useCallback(async () => {
+    setPublishing(true);
+    setStatusMsg("Saving draft...");
+    await performSave(previewThemeId, currentThemeId);
+    setStatusMsg("Publishing...");
+    try {
+      const res = await publishWebsite();
+      if (res.success) {
+        setStatusMsg("Published");
+        window.location.reload();
+      } else {
+        setStatusMsg("Publish failed");
+        setPublishing(false);
+      }
+    } catch {
+      setStatusMsg("Publish failed");
+      setPublishing(false);
+    }
+  }, [performSave, previewThemeId, currentThemeId]);
+
   const handleThemePreview = useCallback((themeId: string) => {
     setPreviewThemeId(themeId);
     builderStore.markDirty();
@@ -224,6 +248,19 @@ export function BuilderWorkspace() {
           >
             <Upload className="h-3 w-3" />
             Save
+          </button>
+          <span className="text-zinc-800">|</span>
+          <button
+            onClick={handlePublish}
+            disabled={saving || publishing}
+            className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2.5 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
+          >
+            {publishing ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Rocket className="h-3 w-3" />
+            )}
+            {publishing ? "Publishing..." : "Publish"}
           </button>
           <span className="text-zinc-800">|</span>
           <a href={storefrontUrl} target="_blank" rel="noopener noreferrer"

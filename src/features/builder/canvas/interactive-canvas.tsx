@@ -1,14 +1,26 @@
 "use client";
 
-import { useEffect, memo } from "react";
-import { builderQuery } from "@/lib/builder/query";
+import { useEffect, useState, memo } from "react";
 import { builderEvents } from "@/lib/builder/events";
 import { ComponentRenderer } from "@/lib/renderer";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { builderStore } from "@/lib/builder/store";
+import { builderPagesToLayoutSnapshot, slotIdFromSectionId } from "@/lib/builder/layout";
+import { layoutEngine } from "@/lib/storefront/layout-engine";
+import { themeResolver } from "@/lib/theme/resolver-new";
+import { getLivePreviewData } from "@/actions/builder-preview.actions";
+import type { PublishedSnapshot } from "@/types/snapshot";
 
 const DEVICE_WIDTHS: Record<string, number> = { mobile: 375, tablet: 768, desktop: 1200 };
 
+const FALLBACK_THEME_ID = "com.creatos.neon-dark";
+
+/**
+ * Builder preview — renders through the SAME runtime as the storefront:
+ * live aggregate → LayoutEngine → registry renderers. No placeholders, no
+ * builder-only rendering. The preview always equals Published Blueprint
+ * (theme + layout rules) + Current Draft (builder pages) + live content.
+ */
 export const InteractiveCanvas = memo(function InteractiveCanvas({
   device,
   zoom,
@@ -16,10 +28,24 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
   device: string;
   zoom: number;
 }) {
-  const hierarchy = builderQuery.getCanvasHierarchy();
-  const slotElements = hierarchy.slots.filter((s) => s.visible);
+  const [liveContent, setLiveContent] = useState<PublishedSnapshot["content"] | null>(null);
+  const [themePackageId, setThemePackageId] = useState<string | null>(null);
+  const [dataReady, setDataReady] = useState(false);
 
-  // Force re-render on store changes
+  useEffect(() => {
+    let cancelled = false;
+    getLivePreviewData().then((res) => {
+      if (cancelled) return;
+      if (res.success && res.content) {
+        setLiveContent(res.content as PublishedSnapshot["content"]);
+        setThemePackageId(res.themePackageId ?? null);
+      }
+      setDataReady(true);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Force re-render on store changes (edits reflect against the cached live content).
   useEffect(() => {
     const handler = () => {};
     const unsubs = [
@@ -28,6 +54,33 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
     ];
     return () => unsubs.forEach((u) => u());
   }, []);
+
+  const sections = (() => {
+    if (!dataReady || !liveContent) return [];
+    const resolvedTheme = themeResolver.resolveForSnapshot(themePackageId ?? FALLBACK_THEME_ID, "dark");
+    const snapshot: PublishedSnapshot = {
+      _schema: "creatorstore.snapshot",
+      _version: 1,
+      metadata: {
+        version: 0,
+        publishedAt: new Date().toISOString(),
+        previousVersion: null,
+        correlationId: "builder-preview",
+        generatedBy: "dashboard",
+      },
+      content: liveContent,
+      layout: builderPagesToLayoutSnapshot(builderStore.serialize()),
+      theme: resolvedTheme ?? {
+        packageId: FALLBACK_THEME_ID,
+        colors: { primary: "#6366F1", secondary: "#818CF8", accent: "#A5B4FC", background: "#09090b", foreground: "#fafafa", muted: "#a1a1aa" },
+        typography: { heading: "Inter", body: "Inter" },
+      },
+      navigation: [],
+      renderingHints: {},
+    };
+    const doc = layoutEngine.resolve(snapshot);
+    return doc.pages.flatMap((p) => p.sections).filter((s) => s.visible !== false);
+  })();
 
   return (
     <div className="relative flex-1 overflow-auto bg-zinc-900/50">
@@ -46,7 +99,14 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
           </div>
 
           <div className="relative min-h-[600px] p-4">
-            {slotElements.length === 0 && (
+            {!dataReady && (
+              <div className="flex flex-col items-center gap-4 pt-12 text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-s8ul-cyan border-t-transparent" />
+                <p className="text-xs text-zinc-500">Loading live preview...</p>
+              </div>
+            )}
+
+            {dataReady && sections.length === 0 && (
               <div className="flex flex-col items-center gap-4 pt-12 text-center">
                 <div className="h-16 w-16 rounded-full bg-zinc-800" />
                 <h2 className="text-sm font-semibold text-zinc-300">Your Website Preview</h2>
@@ -54,23 +114,26 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
               </div>
             )}
 
-            {slotElements.map((slot) => (
-              <div
-                key={slot.id}
-                data-element-id={slot.id}
-                data-module={slot.moduleId}
-                className="relative mb-2"
-              >
-                <ComponentErrorBoundary componentId={slot.moduleId}>
-                  <ComponentRenderer
-                    componentId={slot.moduleId}
-                    props={slot.config}
-                    elementId={slot.id}
-                    viewport={builderStore.canvas.device}
-                  />
-                </ComponentErrorBoundary>
-              </div>
-            ))}
+            {sections.map((section) => {
+              const slotId = slotIdFromSectionId(section.id);
+              return (
+                <div
+                  key={section.id}
+                  data-element-id={slotId}
+                  data-module={section.moduleId}
+                  className="relative mb-2"
+                >
+                  <ComponentErrorBoundary componentId={section.moduleId}>
+                    <ComponentRenderer
+                      componentId={section.moduleId}
+                      props={section.config}
+                      elementId={slotId}
+                      viewport={builderStore.canvas.device}
+                    />
+                  </ComponentErrorBoundary>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

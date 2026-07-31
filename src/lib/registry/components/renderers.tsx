@@ -38,7 +38,7 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 
 /* ─── Hero ─────────────────────────────────────────────── */
 
-export function HeroRenderer({ props, elementId }: RendererProps) {
+export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const p = props as Record<string, string>;
   const hasMedia = Boolean(p.videoUrl || p.posterUrl);
   const videoAlign = responsiveAlignmentClass(
@@ -91,25 +91,25 @@ export function HeroRenderer({ props, elementId }: RendererProps) {
         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
           {p.title || ""}
         </h1>
-        {(elementId || p.tagline) && (
-          <p className="mt-3 text-base text-zinc-400">{p.tagline || ""}</p>
+        {p.tagline && (
+          <p className="mt-3 text-base text-zinc-400">{p.tagline}</p>
         )}
-        {(elementId || p.subtitle) && (
-          <p className="mt-1 text-sm text-zinc-500">{p.subtitle || ""}</p>
+        {p.subtitle && (
+          <p className="mt-1 text-sm text-zinc-500">{p.subtitle}</p>
         )}
         <div className="mt-6 flex items-center justify-center gap-3">
-          {(elementId || p.cta) && (
+          {p.cta && (
             p.ctaLink ? (
               <a href={p.ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
-                {p.cta || ""}
+                {p.cta}
               </a>
             ) : (
               <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
-                {p.cta || ""}
+                {p.cta}
               </span>
             )
           )}
-          {(elementId || p.ctaSecondaryText) && (
+          {p.ctaSecondaryText && (
             p.ctaSecondaryLink ? (
               <a href={p.ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
                 {p.ctaSecondaryText}
@@ -553,17 +553,24 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
         <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course: Record<string, unknown>, i: number) => (
-            <div key={i} className="overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50">
-              {course.imageUrl ? (
-                <CreatorImage
-                  src={String(course.imageUrl)}
-                  alt={String(course.title || "")}
-                  variant="card"
-                  className="w-full"
-                />
-              ) : (
-                <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900" />
-              )}
+            <div key={i} className="group overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50 transition-colors hover:border-white/25">
+              <div className="relative">
+                {course.imageUrl ? (
+                  <CreatorImage
+                    src={String(course.imageUrl)}
+                    alt={String(course.title || "")}
+                    variant="card"
+                    className="w-full transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                )}
+                {Boolean(course.featured) && (
+                  <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-black">
+                    Featured
+                  </span>
+                )}
+              </div>
               <div className="p-4">
                 <p className="text-xs font-semibold text-s8ul-cyan">{(String(course.category || "")).toUpperCase() || "COURSE"}</p>
                 <p className="mt-1 text-sm font-medium text-white">{String(course.title || "")}</p>
@@ -594,17 +601,24 @@ export function ServicesRenderer({ props }: RendererProps) {
         <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service: Record<string, unknown>, i: number) => (
-            <div key={i} className="overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50 text-center">
-              {service.imageUrl ? (
-                <CreatorImage
-                  src={String(service.imageUrl)}
-                  alt={String(service.title || "")}
-                  variant="card"
-                  className="w-full"
-                />
-              ) : (
-                <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900" />
-              )}
+            <div key={i} className="group overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50 text-center transition-colors hover:border-white/25">
+              <div className="relative">
+                {service.imageUrl ? (
+                  <CreatorImage
+                    src={String(service.imageUrl)}
+                    alt={String(service.title || "")}
+                    variant="card"
+                    className="w-full transition-transform duration-300 group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                )}
+                {Boolean(service.featured) && (
+                  <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-black">
+                    Featured
+                  </span>
+                )}
+              </div>
               <div className="p-6">
                 {!!service.category && (
                   <p className="text-xs font-semibold text-s8ul-cyan">{String(service.category).toUpperCase()}</p>

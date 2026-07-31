@@ -6,6 +6,7 @@ export const courseFormSchema = z.object({
   price: z.number().min(0),
   imageUrl: z.string().url().optional().or(z.literal("")),
   category: z.string().optional(),
+  featured: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).optional(),
 });
 

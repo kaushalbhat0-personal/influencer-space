@@ -38,6 +38,8 @@ export function SettingsForm({
 
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
+  const [videoAssetId, setVideoAssetId] = useState<string>(heroData.videoAssetId || "");
+  const [posterAssetId, setPosterAssetId] = useState<string>(heroData.posterAssetId || "");
 
   const [videoDesktopAlignment, setVideoDesktopAlignment] = useState<"top" | "center" | "bottom">(
     heroData.videoDesktopAlignment as "top" | "center" | "bottom" || "center"
@@ -77,6 +79,8 @@ export function SettingsForm({
   useEffect(() => { setLiveShowBadge(!!heroData.showLiveBadge); }, [heroData.showLiveBadge]);
   useEffect(() => { setVideoUrl(heroData.videoUrl || ""); }, [heroData.videoUrl]);
   useEffect(() => { setPosterUrl(heroData.posterUrl || ""); }, [heroData.posterUrl]);
+  useEffect(() => { setVideoAssetId(heroData.videoAssetId || ""); }, [heroData.videoAssetId]);
+  useEffect(() => { setPosterAssetId(heroData.posterAssetId || ""); }, [heroData.posterAssetId]);
 
   function alignmentButtons(
     desktopAlign: string,
@@ -133,6 +137,7 @@ export function SettingsForm({
 
     const formData = new FormData();
     formData.set("videoUrl", videoUrl);
+    formData.set("videoAssetId", videoAssetId);
     formData.set("videoDesktopAlignment", videoDesktopAlignment);
     formData.set("videoMobileAlignment", videoMobileAlignment);
 
@@ -149,6 +154,7 @@ export function SettingsForm({
 
     const formData = new FormData();
     formData.set("posterUrl", posterUrl);
+    formData.set("posterAssetId", posterAssetId);
     formData.set("imageDesktopAlignment", imageDesktopAlignment);
     formData.set("imageMobileAlignment", imageMobileAlignment);
 
@@ -204,13 +210,16 @@ export function SettingsForm({
               <h3 className="text-lg font-semibold text-white">Hero Video</h3>
               <MediaField
                 label="Hero Video"
-                value={{ url: videoUrl }}
+                value={{ url: videoUrl, assetId: videoAssetId }}
                 folder="hero"
                 accept="video/*"
                 entityType="hero"
                 entityId={tenantId}
                 entityField="videoUrl"
-                onChange={(v) => setVideoUrl(v?.url ?? "")}
+                onChange={(v) => {
+                  setVideoUrl(v?.url ?? "");
+                  setVideoAssetId(v?.assetId ?? "");
+                }}
               />
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
@@ -238,13 +247,16 @@ export function SettingsForm({
               <h3 className="text-lg font-semibold text-white">Hero Poster Image</h3>
               <MediaField
                 label="Hero Poster Image"
-                value={{ url: posterUrl }}
+                value={{ url: posterUrl, assetId: posterAssetId }}
                 folder="hero"
                 accept="image/*"
                 entityType="hero"
                 entityId={tenantId}
                 entityField="posterUrl"
-                onChange={(v) => setPosterUrl(v?.url ?? "")}
+                onChange={(v) => {
+                  setPosterUrl(v?.url ?? "");
+                  setPosterAssetId(v?.assetId ?? "");
+                }}
               />
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>

@@ -63,6 +63,8 @@ export class WebsiteAggregateService {
         description: (heroData as Record<string, unknown>)?.description as string ?? "",
         videoUrl: (heroData as Record<string, unknown>)?.videoUrl as string | null ?? null,
         posterUrl: (heroData as Record<string, unknown>)?.posterUrl as string | null ?? null,
+        videoAssetId: (heroData as Record<string, unknown>)?.videoAssetId as string | null ?? null,
+        posterAssetId: (heroData as Record<string, unknown>)?.posterAssetId as string | null ?? null,
         ctaText: (heroData as Record<string, unknown>)?.ctaText as string ?? "",
         ctaLink: (heroData as Record<string, unknown>)?.ctaLink as string ?? "",
         ctaSecondaryText: (heroData as Record<string, unknown>)?.ctaSecondaryText as string ?? "",
@@ -157,6 +159,7 @@ export class WebsiteAggregateService {
             price: o.price,
             imageUrl: (meta?.imageUrl as string | undefined) ?? null,
             category: (meta?.category as string | undefined) ?? null,
+            featured: (meta?.featured as boolean | undefined) ?? false,
           };
         }),
       services: offerings
@@ -171,6 +174,7 @@ export class WebsiteAggregateService {
             duration: (meta?.duration as string | undefined) ?? null,
             imageUrl: (meta?.imageUrl as string | undefined) ?? null,
             category: (meta?.category as string | undefined) ?? null,
+            featured: (meta?.featured as boolean | undefined) ?? false,
           };
         }),
     };
@@ -186,6 +190,18 @@ export class WebsiteAggregateService {
       }
       if (brand.bannerAssetId && resolved[brand.bannerAssetId]) {
         result.identity.bannerUrl = resolved[brand.bannerAssetId];
+      }
+    }
+
+    // Hero media: resolve video/poster from their asset ids so the storefront
+    // always receives the current storage URL, not a stale baked URL.
+    if (result.hero.videoAssetId || result.hero.posterAssetId) {
+      const resolved = await mediaService.resolveUrls([result.hero.videoAssetId, result.hero.posterAssetId]);
+      if (result.hero.videoAssetId && resolved[result.hero.videoAssetId]) {
+        result.hero.videoUrl = resolved[result.hero.videoAssetId];
+      }
+      if (result.hero.posterAssetId && resolved[result.hero.posterAssetId]) {
+        result.hero.posterUrl = resolved[result.hero.posterAssetId];
       }
     }
 

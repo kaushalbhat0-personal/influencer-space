@@ -19,6 +19,7 @@ import { revalidatePath } from "next/cache";
 import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
+import { builderPagesToLayoutSnapshot } from "@/lib/builder/layout";
 import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
 import { themeResolver } from "@/lib/theme/resolver-new";
@@ -159,29 +160,7 @@ export class PublishingService {
           generatedBy: "dashboard",
         },
         content: aggregate,
-        layout: {
-          pages: builderPages.map((p) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            isHome: p.isHome,
-            order: p.order,
-            // Publish EVERY block in a section (not just the first slot).
-            // Sections with no blocks are omitted — an empty section cannot
-            // render and would otherwise emit an unregistered module id.
-            sections: p.sections.flatMap((s) =>
-              s.slots.length > 0
-                ? s.slots.map((slot, i) => ({
-                    id: `${s.id}__${slot.id}`,
-                    moduleId: slot.moduleId,
-                    config: slot.config ?? {},
-                    order: s.order * 100 + i,
-                    visible: s.visible && slot.visible !== false,
-                  }))
-                : [],
-            ),
-          })),
-        },
+        layout: builderPagesToLayoutSnapshot(builderPages),
         theme: {
           packageId: resolvedTheme?.packageId ?? websiteFull?.themePackageId ?? FALLBACK_THEME_ID,
           colors: {
@@ -307,22 +286,7 @@ export class PublishingService {
         _version: 1,
         metadata: { version: 0, publishedAt: new Date().toISOString(), previousVersion: null, correlationId: `preview_${website.id}`, generatedBy: "dashboard" },
         content: aggregate,
-        layout: {
-          pages: builderPages.map((p) => ({
-            id: p.id, name: p.name, slug: p.slug, isHome: p.isHome, order: p.order,
-            sections: p.sections.flatMap((s) =>
-              s.slots.length > 0
-                ? s.slots.map((slot, i) => ({
-                    id: `${s.id}__${slot.id}`,
-                    moduleId: slot.moduleId,
-                    config: slot.config ?? {},
-                    order: s.order * 100 + i,
-                    visible: s.visible && slot.visible !== false,
-                  }))
-                : [],
-            ),
-          })),
-        },
+        layout: builderPagesToLayoutSnapshot(builderPages),
         theme: {
           packageId: resolvedTheme?.packageId ?? website.themePackageId ?? FALLBACK_THEME_ID,
           colors: { primary: resolvedTheme?.colors.primary ?? "#6366F1", secondary: resolvedTheme?.colors.secondary ?? "#818CF8", accent: resolvedTheme?.colors.accent ?? "#A5B4FC", background: resolvedTheme?.colors.background ?? "#09090b", foreground: resolvedTheme?.colors.foreground ?? "#fafafa", muted: resolvedTheme?.colors.muted ?? "#a1a1aa" },

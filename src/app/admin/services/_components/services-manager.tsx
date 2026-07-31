@@ -39,6 +39,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
       duration: item.duration ?? undefined,
       imageUrl: item.imageUrl ?? undefined,
       category: item.category ?? undefined,
+      featured: item.featured,
       status: item.status,
     });
     setDrawerOpen(true);
@@ -166,6 +167,10 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
             <Input label="Duration" value={form.duration ?? ""} onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))} placeholder="e.g. 45 min" />
           </div>
           <Input label="Category" value={form.category ?? ""} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={form.featured ?? false} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))} className="rounded border-white/10" />
+            <span className="text-sm text-zinc-300">Featured on storefront</span>
+          </label>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-zinc-400">Status</label>
             <select

@@ -7,6 +7,7 @@ export const serviceFormSchema = z.object({
   duration: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   category: z.string().optional(),
+  featured: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).optional(),
   isActive: z.boolean().optional(),
 });

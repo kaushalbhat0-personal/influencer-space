@@ -110,6 +110,7 @@ export interface WebsiteAggregate {
     price: number;
     imageUrl: string | null;
     category: string | null;
+    featured?: boolean;
   }>;
   services: Array<{
     id: string;
@@ -119,6 +120,7 @@ export interface WebsiteAggregate {
     duration: string | null;
     imageUrl?: string | null;
     category?: string | null;
+    featured?: boolean;
   }>;
 }
 
@@ -129,6 +131,8 @@ export interface HeroContent {
   tagline?: string;
   videoUrl?: string | null;
   posterUrl?: string | null;
+  videoAssetId?: string | null;
+  posterAssetId?: string | null;
   ctaText?: string;
   ctaLink?: string;
   ctaSecondaryText?: string;

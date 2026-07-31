@@ -18,6 +18,7 @@ function toCourseData(o: {
     price: o.price,
     imageUrl: (meta.imageUrl as string) ?? null,
     category: (meta.category as string) ?? null,
+    featured: (meta.featured as boolean) ?? false,
     status: (o.status === "published" ? "PUBLISHED" : "DRAFT") as CourseData["status"],
     moduleCount: 0,
     lessonCount: 0,
@@ -59,6 +60,7 @@ export const courseService = {
         metadata: JSON.parse(JSON.stringify({
           imageUrl: input.imageUrl ?? null,
           category: input.category ?? null,
+          featured: input.featured ?? false,
         })),
       },
     });
@@ -81,6 +83,7 @@ export const courseService = {
           ...existingMeta,
           imageUrl: input.imageUrl ?? null,
           category: input.category ?? null,
+          featured: input.featured ?? existingMeta.featured ?? false,
         })),
       },
     });

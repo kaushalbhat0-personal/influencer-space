@@ -38,6 +38,7 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
       price: item.price,
       imageUrl: item.imageUrl ?? undefined,
       category: item.category ?? undefined,
+      featured: item.featured,
       status: item.status,
     });
     setDrawerOpen(true);
@@ -164,6 +165,10 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
             <Input label="Price (₹)" type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))} />
             <Input label="Category" value={form.category ?? ""} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="e.g. Gaming" />
           </div>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={form.featured ?? false} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))} className="rounded border-white/10" />
+            <span className="text-sm text-zinc-300">Featured on storefront</span>
+          </label>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-zinc-400">Status</label>
             <select

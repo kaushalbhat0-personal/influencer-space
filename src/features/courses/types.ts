@@ -5,6 +5,7 @@ export interface CourseData {
   price: number;
   imageUrl: string | null;
   category: string | null;
+  featured: boolean;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   moduleCount: number;
   lessonCount: number;
@@ -17,5 +18,6 @@ export interface CourseFormInput {
   price: number;
   imageUrl?: string;
   category?: string;
+  featured?: boolean;
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
 }

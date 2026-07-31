@@ -23,6 +23,8 @@ async function requireAuth(tenantId: string): Promise<void> {
 const heroPartialSchema = z.object({
   videoUrl: z.string().optional(),
   posterUrl: z.string().optional(),
+  videoAssetId: z.string().optional(),
+  posterAssetId: z.string().optional(),
   title: z.string().optional(),
   subtitle: z.string().optional(),
   tagline: z.string().optional(),
