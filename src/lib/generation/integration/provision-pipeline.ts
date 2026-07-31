@@ -81,10 +81,7 @@ export function buildProvisioningInput(params: {
   const { themeData, seoData, heroSection } = extractArtifactData(params.pipelineResult);
   const bp = params.pipelineResult.blueprint;
 
-  return {
-    runId: params.runId,
-    authenticatedUserId: params.authenticatedUserId,
-    mode: params.authenticatedUserId ? "attach_existing_user" as const : undefined,
+  const base = {
     creatorName: params.creatorName,
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,
@@ -105,6 +102,21 @@ export function buildProvisioningInput(params: {
       layoutDensity: "standard",
       darkMode: (themeData as any)?.mode === "dark",
     } : undefined,
+  };
+
+  if (params.authenticatedUserId) {
+    return {
+      ...base,
+      runId: params.runId,
+      mode: "attach_existing_user" as const,
+      authenticatedUserId: params.authenticatedUserId,
+    };
+  }
+
+  return {
+    ...base,
+    runId: params.runId,
+    mode: "create_new_admin" as const,
   };
 }
 

@@ -21,13 +21,9 @@ import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import { correlationService } from "@/lib/platform/correlation";
 
-export type ProvisioningMode = "create_creator" | "attach_existing_user";
+export type ProvisioningMode = "create_new_admin" | "attach_existing_user";
 
-export interface ProvisioningInput {
-  /** @deprecated Use mode: "attach_existing_user" + authenticatedUserId instead. */
-  authenticatedUserId?: string;
-  /** Explicit provisioning intent. Defaults to "create_creator" when absent. */
-  mode?: ProvisioningMode;
+interface ProvisioningInputBase {
   creatorName: string;
   sourceUrl?: string;
   sourcePlatform?: string;
@@ -52,6 +48,18 @@ export interface ProvisioningInput {
     darkMode?: boolean;
   };
 }
+
+export type ProvisioningInput =
+  | (ProvisioningInputBase & {
+      /** Attach an existing user to the new tenant. Use for marketing signup / self-onboarding. */
+      mode: "attach_existing_user";
+      authenticatedUserId: string;
+    })
+  | (ProvisioningInputBase & {
+      /** Create a brand new admin user. Use for Super Admin import. */
+      mode?: "create_new_admin";
+      authenticatedUserId?: never;
+    });
 
 export interface ProvisioningResult {
   success: boolean;
@@ -183,7 +191,7 @@ export class ProvisioningService {
           { key: "provisioning_meta", value: metaData },
         ], tx as Prisma.TransactionClient);
 
-        const user = input.mode === "attach_existing_user" && input.authenticatedUserId
+        const user = input.mode === "attach_existing_user"
           ? await userRepository.safeUpdate(input.authenticatedUserId, {
               tenantId: tenant.id,
               role: "ADMIN",
