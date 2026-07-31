@@ -153,12 +153,17 @@ export class LayoutEngine {
     content: WebsiteAggregate,
   ): Record<string, unknown> {
     const config = { ...layoutConfig };
+    const tracePrefix = "[RuntimeTrace] LayoutEngine.composeSectionConfig";
 
     if (moduleId.startsWith("hero.")) {
       Object.assign(config, content.hero);
-      if (content.hero.ctaText && !config.cta) {
+      if (content.hero.ctaText) {
         config.cta = content.hero.ctaText;
       }
+      if (content.hero.ctaSecondaryText) {
+        config.ctaSecondary = content.hero.ctaSecondaryText;
+      }
+      console.log(tracePrefix, "hero", { title: content.hero.title, cta: config.cta, ctaSecondary: config.ctaSecondary, hasVideo: !!content.hero.videoUrl, hasPoster: !!content.hero.posterUrl });
     } else if (moduleId.startsWith("about.")) {
       config.title = config.title || content.identity.name || "About";
       config.content = config.content || content.identity.bio || "";
@@ -178,6 +183,7 @@ export class LayoutEngine {
       config.resolvedTitle = content.identity.name
         ? `${content.identity.name}'s Products`
         : "Products";
+      console.log(tracePrefix, "products", { aggCount: content.products.length, resolvedCount: productEntries.length });
     } else if (moduleId.startsWith("gallery.")) {
       const imageEntries: Record<string, unknown>[] = content.gallery.map((g) => ({
         id: g.id,
@@ -190,6 +196,7 @@ export class LayoutEngine {
       }));
       config.resolvedData = imageEntries;
       config.resolvedTitle = "Gallery";
+      console.log(tracePrefix, "gallery", { aggCount: content.gallery.length, resolvedCount: imageEntries.length });
     } else if (moduleId.startsWith("links.") || moduleId === "links.default") {
       const linkEntries: Record<string, unknown>[] = content.links.map((l) => ({
         url: l.url,
@@ -201,6 +208,7 @@ export class LayoutEngine {
       }
       config.resolvedData = linkEntries;
       config.resolvedTitle = "Connect With Me";
+      console.log(tracePrefix, "links", { aggCount: content.links.length, resolvedCount: linkEntries.length });
     } else if (moduleId.startsWith("footer.")) {
       config.copyright = config.copyright || `© ${content.identity.name} — CreatorStore`;
     } else if (moduleId.startsWith("contact.")) {
@@ -217,6 +225,7 @@ export class LayoutEngine {
         rating: t.rating,
       }));
       config.resolvedTitle = "Testimonials";
+      console.log(tracePrefix, "testimonials", { aggCount: content.testimonials.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("faq.")) {
       config.resolvedData = content.faq.map((f) => ({
         question: f.question,
@@ -226,6 +235,7 @@ export class LayoutEngine {
         category: f.category,
       }));
       config.resolvedTitle = "FAQ";
+      console.log(tracePrefix, "faq", { aggCount: content.faq.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("timeline.")) {
       config.resolvedData = content.timeline.map((t) => ({
         year: t.year,
@@ -235,6 +245,7 @@ export class LayoutEngine {
         imageUrl: t.imageUrl,
       }));
       config.resolvedTitle = "Timeline";
+      console.log(tracePrefix, "timeline", { aggCount: content.timeline.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("games.")) {
       config.resolvedData = (content.games ?? []).map((g) => ({
         id: g.id,
@@ -244,6 +255,7 @@ export class LayoutEngine {
         genre: g.genre,
       }));
       config.resolvedTitle = "Games";
+      console.log(tracePrefix, "games", { aggCount: (content.games ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("contentFeed.")) {
       config.resolvedData = (content.contentFeed ?? []).map((f) => ({
         id: f.id,
@@ -255,6 +267,7 @@ export class LayoutEngine {
         permalink: f.permalink,
       }));
       config.resolvedTitle = "Latest Content";
+      console.log(tracePrefix, "contentFeed", { aggCount: (content.contentFeed ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("courses.")) {
       config.resolvedData = (content.courses ?? []).map((c) => ({
         id: c.id,
@@ -266,6 +279,7 @@ export class LayoutEngine {
         featured: c.featured,
       }));
       config.resolvedTitle = "Courses";
+      console.log(tracePrefix, "courses", { aggCount: (content.courses ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("services.")) {
       config.resolvedData = (content.services ?? []).map((s) => ({
         id: s.id,
@@ -278,6 +292,7 @@ export class LayoutEngine {
         featured: s.featured,
       }));
       config.resolvedTitle = "Services";
+      console.log(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     }
 
     return config;

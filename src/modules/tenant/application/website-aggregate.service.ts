@@ -207,6 +207,27 @@ export class WebsiteAggregateService {
 
     return result;
   }
+
+  async buildWithTrace(tenantId: string): Promise<WebsiteAggregate> {
+    const agg = await this.build(tenantId);
+    if (typeof console !== "undefined") {
+      console.log("[RuntimeTrace] Aggregate built:", {
+        hero: agg.hero.title ? "present" : "empty",
+        products: agg.products.length,
+        gallery: agg.gallery.length,
+        links: agg.links.length,
+        testimonials: agg.testimonials.length,
+        faq: agg.faq.length,
+        timeline: agg.timeline.length,
+        games: agg.games.length,
+        contentFeed: agg.contentFeed.length,
+        courses: agg.courses.length,
+        services: agg.services.length,
+        identity: agg.identity.name || "empty",
+      });
+    }
+    return agg;
+  }
 }
 
 export const websiteAggregateService = new WebsiteAggregateService();

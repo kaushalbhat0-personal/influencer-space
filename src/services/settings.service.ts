@@ -93,7 +93,7 @@ export const SettingsService = {
        ON CONFLICT ("tenantId", "key")
        DO UPDATE SET
          "value" = (COALESCE("Setting"."value", '{}'::jsonb) || EXCLUDED."value")
-           - (SELECT COALESCE(jsonb_agg("k"), '[]'::jsonb)
+           - ARRAY(SELECT "k"::text
               FROM jsonb_each(EXCLUDED."value") AS kv("k", "v")
               WHERE kv."v" = 'null'::jsonb),
          "updatedAt" = NOW()`,

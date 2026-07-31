@@ -9,7 +9,7 @@ import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
   ShoppingBag, Image, User, HelpCircle, Trophy, Gamepad2, Rss,
   Link2, MessageSquare, Mail, CreditCard, BookOpen, Music,
-  MessageCircle, Sparkles, Layout, GripVertical,
+  MessageCircle, Sparkles, Layout, GripVertical, Briefcase,
 } from "lucide-react";
 
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
@@ -17,7 +17,7 @@ const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
   testimonials: MessageSquare, faq: HelpCircle, timeline: Trophy,
   games: Gamepad2, contentFeed: Rss, links: Link2, footer: Layout,
   contact: Mail, newsletter: Rss, pricing: CreditCard, courses: BookOpen,
-  embed: Music, social: MessageCircle,
+  services: Briefcase, embed: Music, social: MessageCircle,
 };
 
 function getIcon(sectionName: string) {
@@ -33,6 +33,8 @@ const EDIT_LINKS: Record<string, string> = {
   "faq.default": "/admin/faq", "timeline.default": "/admin/milestones",
   "games.default": "/admin/games", "links.default": "/admin/links",
   "contentFeed.default": "/admin/settings/content",
+  "courses.default": "/admin/courses",
+  "services.default": "/admin/services",
 };
 
 const CONTENT_LABELS: Record<string, string> = {
@@ -40,13 +42,31 @@ const CONTENT_LABELS: Record<string, string> = {
   faq: "Items", timeline: "Events", games: "Games", links: "Links",
   hero: "Hero", about: "About", footer: "Footer", contact: "Contact",
   newsletter: "Subscribers", pricing: "Plans", courses: "Courses",
-  embed: "Embeds", social: "Links", contentFeed: "Posts",
+  services: "Services", embed: "Embeds", social: "Links", contentFeed: "Posts",
 };
 
 const DEFAULT_SECTIONS = [
   "Hero", "About", "Products", "Gallery", "Timeline",
-  "Testimonials", "FAQ", "Newsletter", "Contact", "Footer",
+  "Testimonials", "FAQ", "Courses", "Services", "Games",
+  "ContentFeed", "Newsletter", "Contact", "Footer",
 ];
+
+const SECTION_MODULE_MAP: Record<string, string> = {
+  Hero: "hero.default",
+  About: "about.default",
+  Products: "products.grid",
+  Gallery: "gallery.grid",
+  Timeline: "timeline.default",
+  Testimonials: "testimonials.default",
+  FAQ: "faq.default",
+  Courses: "courses.default",
+  Services: "services.default",
+  Games: "games.default",
+  ContentFeed: "contentFeed.default",
+  Newsletter: "newsletter.default",
+  Contact: "contact.default",
+  Footer: "footer.default",
+};
 
 interface SectionData {
   id: string;
@@ -170,7 +190,11 @@ export function SectionManager({ className }: { className?: string }) {
   }, [refresh]);
 
   const addSection = useCallback((name: string) => {
-    builderStore.addSection(name);
+    const sec = builderStore.addSection(name);
+    const moduleId = SECTION_MODULE_MAP[name];
+    if (moduleId) {
+      builderStore.insertComponent(moduleId, sec.id, 0);
+    }
     setTimeout(refresh, 50);
   }, [refresh]);
 

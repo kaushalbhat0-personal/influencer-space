@@ -97,7 +97,7 @@ export function BuilderWorkspace() {
     builderPersistence.save({ sidebarCollapsed: leftCollapsed, responsiveMode: device });
   }, [leftCollapsed, device]);
 
-  const performSave = useCallback(async (themeId: string | null, activeThemeId: string | null) => {
+  const performSave = useCallback(async (themeId: string | null, activeThemeId: string | null): Promise<boolean> => {
     setSaving(true);
     const tenantId = overviewData?.tenant.id;
     try {
@@ -110,7 +110,7 @@ export function BuilderWorkspace() {
           setPreviewThemeId(null);
         } else {
           setStatusMsg("Theme save failed");
-          return;
+          return false;
         }
       }
       const pages = builderStore.serialize();
@@ -118,9 +118,14 @@ export function BuilderWorkspace() {
       if (res.success) {
         builderStore.markClean();
         setStatusMsg("Saved");
+        return true;
       } else {
-        setStatusMsg("Save failed");
+        setStatusMsg(res.error || "Save failed");
+        return false;
       }
+    } catch (e) {
+      setStatusMsg(e instanceof Error ? e.message : "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -147,7 +152,12 @@ export function BuilderWorkspace() {
   const handlePublish = useCallback(async () => {
     setPublishing(true);
     setStatusMsg("Saving draft...");
-    await performSave(previewThemeId, currentThemeId);
+    const saved = await performSave(previewThemeId, currentThemeId);
+    if (!saved) {
+      setStatusMsg("Save failed — cannot publish");
+      setPublishing(false);
+      return;
+    }
     setStatusMsg("Publishing...");
     try {
       const res = await publishWebsite();
@@ -155,11 +165,11 @@ export function BuilderWorkspace() {
         setStatusMsg("Published");
         window.location.reload();
       } else {
-        setStatusMsg("Publish failed");
+        setStatusMsg(res.error || "Publish failed");
         setPublishing(false);
       }
-    } catch {
-      setStatusMsg("Publish failed");
+    } catch (e) {
+      setStatusMsg(e instanceof Error ? e.message : "Publish failed");
       setPublishing(false);
     }
   }, [performSave, previewThemeId, currentThemeId]);
