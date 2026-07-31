@@ -140,16 +140,18 @@ export function StorefrontStatusCard({
             {publishing ? "Publishing..." : (hasUnpublishedChanges ? "Publish Changes" : "Publish Now")}
           </button>
         )}
-        <Link
-          href={storefrontUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
-        >
-          <ExternalLink className="h-4 w-4" />
-          <span className="flex-1">Visit website</span>
-          <span className="text-[10px] text-zinc-600">new tab</span>
-        </Link>
+        {hasLiveVersion && (
+          <Link
+            href={storefrontUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span className="flex-1">Visit website</span>
+            <span className="text-[10px] text-zinc-600">new tab</span>
+          </Link>
+        )}
         <Link
           href="/builder"
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
@@ -158,16 +160,18 @@ export function StorefrontStatusCard({
           <span className="flex-1">Open builder</span>
           <span className="text-[10px] text-zinc-600">{isLive ? "edit" : "design"}</span>
         </Link>
-        <Link
-          href={`${storefrontUrl}?preview=true`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
-        >
-          <Globe className="h-4 w-4" />
-          <span className="flex-1">Preview Draft</span>
-          <span className="text-[10px] text-zinc-600">new tab</span>
-        </Link>
+        {(hasLiveVersion || publishState === "preview") && (
+          <Link
+            href={`${storefrontUrl}?preview=true`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+          >
+            <Globe className="h-4 w-4" />
+            <span className="flex-1">Preview Draft</span>
+            <span className="text-[10px] text-zinc-600">new tab</span>
+          </Link>
+        )}
         {recentVersions.length > 0 && (
           <>
             <button

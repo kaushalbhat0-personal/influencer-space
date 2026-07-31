@@ -181,7 +181,7 @@ export class ProvisioningService {
           socialLinks,
         }, tx as Prisma.TransactionClient);
 
-        await publishRepository.createStatus(website.id, "live", new Date(), tx as Prisma.TransactionClient);
+        await publishRepository.createStatus(website.id, "draft", new Date(), tx as Prisma.TransactionClient);
 
         await websiteSettingsRepository.createBatch(tenant.id, [
           { key: "brand_config", value: brandConfig },

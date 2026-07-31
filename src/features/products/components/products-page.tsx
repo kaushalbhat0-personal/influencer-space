@@ -8,15 +8,17 @@ import { EditDrawer } from "@/features/_shared/components/edit-drawer";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { ImageManager } from "@/components/products/ImageManager";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { ProductData, ProductFormInput } from "../types";
 import { createProduct, updateProduct, deleteProduct } from "../actions";
 
 interface ProductsPageProps {
   initialData: ProductData[];
+  tenantId: string;
 }
 
-export function ProductsPage({ initialData }: ProductsPageProps) {
+export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
   const [products, setProducts] = useState<ProductData[]>(initialData);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ProductData | null>(null);
@@ -25,11 +27,12 @@ export function ProductsPage({ initialData }: ProductsPageProps) {
     name: "",
     price: 0,
     type: "digital",
+    status: "PUBLISHED",
   });
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", price: 0, type: "digital" });
+    setForm({ name: "", price: 0, type: "digital", status: "PUBLISHED" });
     setDrawerOpen(true);
   };
 
@@ -148,6 +151,46 @@ export function ProductsPage({ initialData }: ProductsPageProps) {
           <Textarea label="Description" value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
           <Input label="Price (₹)" type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))} />
           <Input label="Slug" value={form.slug ?? ""} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-zinc-400">Type</label>
+              <select
+                value={form.type}
+                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ProductFormInput["type"] }))}
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+              >
+                <option value="digital">Digital</option>
+                <option value="physical">Physical</option>
+                <option value="service">Service</option>
+                <option value="membership">Membership</option>
+                <option value="bundle">Bundle</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-zinc-400">Status</label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ProductFormInput["status"] }))}
+                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+              >
+                <option value="PUBLISHED">Published</option>
+                <option value="DRAFT">Draft</option>
+                <option value="ARCHIVED">Archived</option>
+              </select>
+            </div>
+          </div>
+          <ImageManager
+            tenantId={tenantId}
+            images={(form.images ?? []).map((url, i) => ({ url, alt: "", order: i }))}
+            onChange={(images) => {
+              const urls = images.map((img) => img.url);
+              setForm((f) => ({
+                ...f,
+                images: urls,
+                imageUrl: urls[0] ?? undefined,
+              }));
+            }}
+          />
           <div className="flex gap-4">
             <button
               onClick={handleSave}

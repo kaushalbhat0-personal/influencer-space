@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { serviceService } from "./service";
 import { serviceFormSchema } from "./validators";
 import type { ServiceFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function listServices() {
   const session = await getServerSession(authOptions);
@@ -22,5 +23,6 @@ export async function createService(input: ServiceFormInput) {
   const parsed = serviceFormSchema.parse(input);
   const result = await serviceService.create(tenantId, parsed as ServiceFormInput);
   revalidatePath("/admin/services");
+  await afterContentChange(tenantId);
   return result;
 }

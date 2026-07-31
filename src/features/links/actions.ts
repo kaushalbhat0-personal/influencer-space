@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { linkService } from "./service";
 import type { LinkFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function listLinks() {
   const session = await getServerSession(authOptions);
@@ -20,6 +21,7 @@ export async function createLink(input: LinkFormInput) {
 
   const result = await linkService.create(tenantId, input);
   revalidatePath("/admin/links");
+  await afterContentChange(tenantId);
   return result;
 }
 
@@ -29,6 +31,7 @@ export async function updateLink(id: string, input: Partial<LinkFormInput>) {
 
   const result = await linkService.update(id, input);
   revalidatePath("/admin/links");
+  await afterContentChange(session.user.tenantId);
   return result;
 }
 
@@ -38,4 +41,5 @@ export async function deleteLink(id: string) {
 
   await linkService.delete(id);
   revalidatePath("/admin/links");
+  await afterContentChange(session.user.tenantId);
 }

@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 async function requireTenant(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -56,8 +57,9 @@ export async function deleteAsset(assetId: string): Promise<{
   error?: string;
 }> {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
     await mediaService.delete(assetId);
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Delete failed" };

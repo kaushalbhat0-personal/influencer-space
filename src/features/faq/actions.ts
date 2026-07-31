@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { faqService } from "./service";
 import { faqFormSchema } from "./validators";
 import type { FAQFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function listFAQ() {
   const session = await getServerSession(authOptions);
@@ -22,6 +23,7 @@ export async function createFAQItem(input: FAQFormInput) {
   const parsed = faqFormSchema.parse(input);
   const result = await faqService.create(tenantId, parsed as FAQFormInput);
   revalidatePath("/admin/faq");
+  await afterContentChange(tenantId);
   return result;
 }
 
@@ -32,4 +34,5 @@ export async function deleteFAQItem(id: string) {
 
   await faqService.delete(tenantId, id);
   revalidatePath("/admin/faq");
+  await afterContentChange(tenantId);
 }

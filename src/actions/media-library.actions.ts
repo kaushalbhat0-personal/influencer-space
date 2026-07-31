@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { assetRepository } from "@/lib/media/repositories/asset-repository";
 import { mediaService } from "@/lib/media/service";
 import { uploadAsset } from "./media.actions";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 async function requireTenant(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -50,8 +51,9 @@ export async function getAsset(assetId: string) {
 
 export async function deleteAssetFromLibrary(assetId: string) {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
     await mediaService.delete(assetId);
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Delete failed" };
@@ -60,8 +62,9 @@ export async function deleteAssetFromLibrary(assetId: string) {
 
 export async function purgeAsset(assetId: string) {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
     await mediaService.purge(assetId);
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Purge failed" };
@@ -70,7 +73,7 @@ export async function purgeAsset(assetId: string) {
 
 export async function replaceAsset(assetId: string, formData: FormData) {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
     const file = formData.get("file") as File | null;
     if (!file) return { success: false, error: "No file provided" };
 
@@ -79,6 +82,7 @@ export async function replaceAsset(assetId: string, formData: FormData) {
       assetId,
       file: { filename: file.name, mimeType: file.type, size: file.size, buffer },
     });
+    await afterContentChange(tenantId);
 
     return { success: true, url: result.url };
   } catch (error) {

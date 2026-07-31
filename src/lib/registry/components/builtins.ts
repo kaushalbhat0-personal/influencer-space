@@ -5,7 +5,7 @@ import {
   GalleryRenderer, ProductsRenderer, TimelineRenderer,
   LinksRenderer, TestimonialsRenderer, FaqRenderer,
   ContactRenderer, NewsletterRenderer, PricingRenderer,
-  CoursesRenderer, SpotifyRenderer, YouTubeRenderer,
+  CoursesRenderer, ServicesRenderer, SpotifyRenderer, YouTubeRenderer,
   DiscordRenderer, InstagramRenderer,
   GamesRenderer, ContentFeedRenderer,
 } from "./renderers";
@@ -185,6 +185,16 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "My Courses" },
     renderer: CoursesRenderer,
+  },
+  {
+    id: "services.default", type: "services", name: "Services", category: "services",
+    icon: "Briefcase", description: "Services and coaching packages",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [], responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Services" },
+    renderer: ServicesRenderer,
   },
   {
     id: "embed.spotify", type: "embed", name: "Spotify Player", category: "embed",

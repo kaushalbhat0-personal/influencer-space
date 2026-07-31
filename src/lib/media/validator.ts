@@ -43,8 +43,10 @@ const ALLOWED_FOLDERS = [
   "hero",
   "products",
   "timeline",
+  "milestones",
   "games",
   "feed",
+  "library",
   "general",
 ];
 

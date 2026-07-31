@@ -38,6 +38,7 @@ export async function POST(req: Request) {
     const planCode: string = notes.planCode || "creator_pro";
     const workspaceId: string = notes.workspaceId || "";
     const orderId: string = payload.payload?.payment?.entity?.order_id || "";
+    const paymentId: string = payload.payload?.payment?.entity?.id || "";
 
     try {
       if (workspaceId) {
@@ -56,6 +57,26 @@ export async function POST(req: Request) {
       }
     } catch (error) {
       captureError(error, { service: "razorpay-webhook", operation: "paymentCaptured" });
+    }
+
+    // Complete Creator CMS product orders (storefront guest purchases)
+    const productId: string = notes.productId || "";
+    const dbOrderId: string = notes.orderId || "";
+    if (productId && dbOrderId) {
+      try {
+        const dbOrder = await prisma.productOrder.findUnique({
+          where: { id: dbOrderId },
+          select: { id: true, status: true },
+        });
+        if (dbOrder && dbOrder.status === "PENDING") {
+          await prisma.productOrder.update({
+            where: { id: dbOrder.id },
+            data: { status: "COMPLETED", razorpayPaymentId: paymentId },
+          });
+        }
+      } catch (error) {
+        captureError(error, { service: "razorpay-webhook", operation: "productOrderCaptured" });
+      }
     }
   }
 

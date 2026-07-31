@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrl } from "@/lib/config/platform";
 import { getPublishedPageData } from "@/services/published.service";
+import { mergeLiveContent } from "@/lib/storefront/live-content";
 import { layoutEngine } from "@/lib/storefront/layout-engine";
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
@@ -15,7 +16,12 @@ async function getSnapshotData(slug: string, preview?: boolean) {
   if (!tenant) return null;
   const mode = preview ? "preview" : "live";
   const published = await getPublishedPageData(tenant.id, mode);
-  return { tenantId: published.tenantId, snapshot: published.snapshot };
+  if (!published.snapshot) return { tenantId: tenant.id, snapshot: null };
+  const snapshot = await mergeLiveContent(
+    published.snapshot as unknown as Parameters<typeof layoutEngine.resolve>[0],
+    tenant.id,
+  );
+  return { tenantId: tenant.id, snapshot };
 }
 
 function getCanonicalUrl(slug: string): string {
@@ -56,7 +62,7 @@ export default async function PublicPage({
   const doc = layoutEngine.resolve(data.snapshot as unknown as Parameters<typeof layoutEngine.resolve>[0]);
   const { theme, navigation, jsonLd, pages } = doc;
 
-  const allSections = pages.flatMap((p) => p.sections);
+  const allSections = pages.flatMap((p) => p.sections).filter((s) => s.visible !== false);
 
   return (
     <>

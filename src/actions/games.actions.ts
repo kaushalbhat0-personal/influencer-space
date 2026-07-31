@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GAMES_ROUTE } from "@/lib/constants";
 import { logAction } from "@/lib/audit";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 const gameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -61,6 +62,7 @@ export async function createGame(
 
     await logAction(tenantId, "createGame", { gameId: result.id, name: result.name });
     revalidatePath(GAMES_ROUTE);
+    await afterContentChange(tenantId);
     return { success: true };
   } catch {
     return { success: false, error: "Failed to create game" };
@@ -105,6 +107,7 @@ export async function updateGame(
 
     await logAction(tenantId, "updateGame", { gameId: id });
     revalidatePath(GAMES_ROUTE);
+    await afterContentChange(tenantId);
     return { success: true };
   } catch {
     return { success: false, error: "Failed to update game" };
@@ -117,6 +120,7 @@ export async function deleteGame(id: string): Promise<GameActionState> {
     await prisma.game.delete({ where: { id } });
     await logAction(tenantId, "deleteGame", { gameId: id });
     revalidatePath(GAMES_ROUTE);
+    await afterContentChange(tenantId);
     return { success: true };
   } catch {
     return { success: false, error: "Failed to delete game" };

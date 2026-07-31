@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { logAction } from "@/lib/audit";
 import type { FeedItemRow } from "@/services/content-feed.service";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -56,6 +57,7 @@ export async function togglePinItem(
 
     await logAction(tenantId, "togglePinItem", { itemId: id, pinned: newPinned });
     revalidatePath("/admin/settings/content");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {
@@ -86,6 +88,7 @@ export async function toggleHideItem(
 
     await logAction(tenantId, "toggleHideItem", { itemId: id, hidden: newHidden });
     revalidatePath("/admin/settings/content");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {
@@ -111,6 +114,7 @@ export async function deleteFeedItem(
 
     await logAction(tenantId, "deleteFeedItem", { itemId: id, caption: existing.caption ?? null, platform: existing.platform });
     revalidatePath("/admin/settings/content");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {

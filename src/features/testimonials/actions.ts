@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { testimonialService } from "./service";
 import { testimonialFormSchema } from "./validators";
 import type { TestimonialFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function listTestimonials() {
   const session = await getServerSession(authOptions);
@@ -22,6 +23,7 @@ export async function createTestimonial(input: TestimonialFormInput) {
   const parsed = testimonialFormSchema.parse(input);
   const result = await testimonialService.create(tenantId, parsed as TestimonialFormInput);
   revalidatePath("/admin/testimonials");
+  await afterContentChange(tenantId);
   return result;
 }
 
@@ -32,4 +34,5 @@ export async function deleteTestimonial(id: string) {
 
   await testimonialService.delete(tenantId, id);
   revalidatePath("/admin/testimonials");
+  await afterContentChange(tenantId);
 }

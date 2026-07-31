@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { courseService } from "./service";
 import type { CourseFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function listCourses() {
   const session = await getServerSession(authOptions);
@@ -26,5 +27,6 @@ export async function createCourse(input: CourseFormInput) {
 
   const result = await courseService.create(tenantId, input);
   revalidatePath("/admin/courses");
+  await afterContentChange(tenantId);
   return result;
 }

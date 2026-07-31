@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { seoService } from "./service";
 import type { SEOFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function getSEO() {
   const session = await getServerSession(authOptions);
@@ -20,5 +21,6 @@ export async function updateSEO(input: SEOFormInput) {
 
   const result = await seoService.update(tenantId, input);
   revalidatePath("/admin/seo");
+  await afterContentChange(tenantId);
   return result;
 }

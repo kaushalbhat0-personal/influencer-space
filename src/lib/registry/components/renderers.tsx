@@ -8,6 +8,7 @@ import {
   type ContactActionResult,
 } from "@/actions/storefront.actions";
 import { CreatorImage, CreatorVideo } from "@/components/shared";
+import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
 
 
 interface RendererProps {
@@ -199,6 +200,17 @@ export function ProductsRenderer({ props }: RendererProps) {
               )}
               <p className="text-sm font-medium text-zinc-300">{String(prod.name || "")}</p>
               <p className="text-xs text-zinc-500">{prod.price ? `₹${Number(prod.price).toLocaleString()}` : ""}</p>
+              {prod.id ? (
+                <BuyNowButton
+                  productId={String(prod.id)}
+                  productName={String(prod.name || "")}
+                  imageUrl={prod.imageUrl ? String(prod.imageUrl) : undefined}
+                />
+              ) : (
+                <p className="mt-1.5 w-full rounded-lg bg-white/5 py-2 text-center text-xs font-semibold text-zinc-600">
+                  Buy Now
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -469,8 +481,7 @@ export function PricingRenderer({ props }: RendererProps) {
 
 /* ─── Courses ──────────────────────────────────────────── */
 
-export function CoursesRenderer({ props }: RendererProps) {
-  const p = props as Record<string, unknown>;
+export function CoursesRenderer({ props }: RendererProps) {  const p = props as Record<string, unknown>;
   const courses = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || String(p.title || "Courses");
   if (!useVisibility(props, courses.length > 0)) return null;
@@ -506,6 +517,37 @@ export function CoursesRenderer({ props }: RendererProps) {
   }
 
   return <EmptyState label="Add your courses" />;
+}
+
+/* ─── Services ─────────────────────────────────────────── */
+
+export function ServicesRenderer({ props }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const services = (p.resolvedData as Record<string, unknown>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Services");
+  if (!useVisibility(props, services.length > 0)) return null;
+
+  if (services.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-12">
+        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service: Record<string, unknown>, i: number) => (
+            <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-6 text-center">
+              <p className="text-sm font-semibold text-white">{String(service.title || "")}</p>
+              {!!service.description && <p className="mt-1 text-xs text-zinc-500">{String(service.description)}</p>}
+              <p className="mt-3 text-lg font-bold text-zinc-100">
+                {typeof service.price === "number" ? `₹${service.price.toLocaleString()}` : String(service.price || "")}
+              </p>
+              {!!service.duration && <p className="mt-1 text-xs text-zinc-500">{String(service.duration)}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return <EmptyState label="Add your services" />;
 }
 
 /* ─── Embed: Spotify ───────────────────────────────────── */

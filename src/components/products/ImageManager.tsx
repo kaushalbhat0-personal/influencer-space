@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef } from "react";
-import { X } from "lucide-react";
-import { ImageUploader } from "@/components/admin/ImageUploader";
-import type { ImageUploaderHandle } from "@/components/admin/ImageUploader";
+import { useRef, useState } from "react";
+import { Upload, X } from "lucide-react";
+import { uploadAsset } from "@/actions/media.actions";
 
 export interface ManagedImage {
   url: string;
@@ -26,7 +25,9 @@ export function ImageManager({
   folder = "products",
   maxImages = 10,
 }: ImageManagerProps) {
-  const uploaderRef = useRef<ImageUploaderHandle>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRemove = (index: number) => {
     onChange(images.filter((_, i) => i !== index).map((img, i) => ({ ...img, order: i })));
@@ -39,6 +40,32 @@ export function ImageManager({
     [next[index], next[target]] = [next[target], next[index]];
     onChange(next.map((img, i) => ({ ...img, order: i })));
   };
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("folder", folder);
+    formData.set("entityType", "product");
+
+    try {
+      const result = await uploadAsset(formData);
+      if (result.success && result.assetId && result.url) {
+        onChange([...images, { url: result.url, alt: "", order: images.length }]);
+      } else {
+        setError(result.error ?? "Upload failed");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -89,13 +116,30 @@ export function ImageManager({
           </div>
         ))}
         {images.length < maxImages && (
-          <ImageUploader
-            ref={uploaderRef}
-            tenantId={tenantId}
-            folder={folder}
-          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-white/10 bg-zinc-900/50 text-zinc-600 transition-colors hover:border-white/20 hover:text-zinc-300 disabled:opacity-50"
+            aria-label="Add image"
+          >
+            {uploading ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-300" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+          </button>
         )}
       </div>
+      {error && <p className="text-xs text-red-400">{error}</p>}
       <p className="text-[11px] text-zinc-600">
         {images.length}/{maxImages} images · First image is primary
       </p>

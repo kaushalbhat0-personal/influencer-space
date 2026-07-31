@@ -2,8 +2,6 @@
 
 import { getRazorpayInstance } from "@/lib/razorpay";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { validateCoupon, applyCoupon, calculateTax } from "@/lib/commerce/coupons";
 
@@ -20,24 +18,18 @@ export type CheckoutResult = {
   tax?: number;
 };
 
-async function requireTenant(): Promise<string> {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  return session.user.tenantId;
-}
-
 export async function createCheckout(
   productId: string,
   fanEmail: string,
   couponCode?: string
 ): Promise<CheckoutResult> {
   try {
-    const tenantId = await requireTenant();
-
     const product = await prisma.product.findFirst({
-      where: { id: productId, tenantId, isActive: true },
+      where: { id: productId, isActive: true, status: "PUBLISHED", archivedAt: null },
     });
     if (!product) return { success: false, error: "Product not found" };
+
+    const tenantId = product.tenantId;
 
     let amount = product.price;
     let discountAmount = 0;
@@ -126,8 +118,6 @@ export async function verifyPayment(
   razorpaySignature: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const tenantId = await requireTenant();
-
     const body = razorpayOrderId + "|" + razorpayPaymentId;
     const crypto = await import("crypto");
     const expectedSignature = crypto
@@ -144,6 +134,10 @@ export async function verifyPayment(
     });
     if (!order) return { success: false, error: "Order not found" };
 
+    if (order.status === "COMPLETED") {
+      return { success: true };
+    }
+
     await prisma.productOrder.update({
       where: { id: order.id },
       data: {
@@ -152,7 +146,7 @@ export async function verifyPayment(
       },
     });
 
-    await logAction(tenantId, "checkout:verified", {
+    await logAction(order.tenantId, "checkout:verified", {
       orderId: order.id,
       razorpayOrderId,
       razorpayPaymentId,

@@ -28,6 +28,8 @@ vi.mock("@/lib/prisma", () => ({
     generationSession: { findMany: vi.fn().mockResolvedValue([]) },
     analyticsEvent: { findMany: vi.fn().mockResolvedValue([]) },
     workspace: { findUnique: vi.fn().mockResolvedValue(null) },
+    website: { findUnique: vi.fn().mockResolvedValue({ id: "w1" }) },
+    publishSnapshot: { findMany: vi.fn().mockResolvedValue([]) },
   },
 }));
 
@@ -37,7 +39,7 @@ beforeEach(() => { vi.clearAllMocks(); });
 
 describe("Dashboard service", () => {
   it("getMetrics returns all metrics", async () => {
-    mockProductFindMany.mockResolvedValue([{ id: "1", isActive: true }, { id: "2", isActive: false }]);
+    mockProductFindMany.mockResolvedValue([{ id: "1", isActive: true, status: "PUBLISHED" }, { id: "2", isActive: false, status: "DRAFT" }]);
     mockOrderCount.mockResolvedValue(5);
     mockOrderAggregate.mockResolvedValue({ _sum: { amount: 10000 } });
     mockGalleryCount.mockResolvedValue(20);

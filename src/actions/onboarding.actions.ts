@@ -42,7 +42,7 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
       success: true,
       platform: result.platform,
       creatorName: result.knowledgeGraph.creator.name,
-      avatarUrl: result.knowledgeGraph.creator.bio,
+      avatarUrl: result.channelMeta?.thumbnailUrl || "",
       followers: result.knowledgeGraph.creator.followers,
       category: result.knowledgeGraph.creator.niche,
       persona: { id: result.personaMatch.persona.id, name: result.personaMatch.persona.name },
@@ -206,12 +206,6 @@ export async function runCreatorGeneration(
       });
     }
 
-    try {
-      await markOnboardingComplete(provisioned.tenantId);
-    } catch {
-      // onboarding_completed upsert is best-effort; dashboard uses it for recovery UX
-    }
-
     const ws = await workspaceRepository.findByTenantId(provisioned.tenantId);
     const resolvedWorkspaceId = ws?.id;
 
@@ -266,6 +260,7 @@ export async function runCreatorGeneration(
         markStage("publishing", "failed", msg);
         if (generationSessionId) {
           await sessionService.updateStage(generationSessionId, "publishing", "failed", msg);
+          await sessionService.fail(generationSessionId, msg).catch(() => {});
         }
         return { success: false, stages, error: msg, retryable: true, tenantId: provisioned.tenantId };
       }
@@ -273,6 +268,12 @@ export async function runCreatorGeneration(
     markStage("publishing", "completed");
     if (generationSessionId) {
       await sessionService.updateStage(generationSessionId, "publishing", "completed");
+    }
+
+    try {
+      await markOnboardingComplete(provisioned.tenantId);
+    } catch {
+      // onboarding_completed upsert is best-effort; dashboard uses it for recovery UX
     }
 
     await logAction(provisioned.tenantId, "onboarding:completed", {

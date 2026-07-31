@@ -12,6 +12,9 @@ const COMPAT_MAP: Record<string, string> = {
   newsletter: "newsletter.default",
   pricing: "pricing.default",
   courses: "courses.default",
+  games: "games.default",
+  contentFeed: "contentFeed.default",
+  services: "services.default",
 
   featured_products: "products.grid",
   product_grid: "products.grid",

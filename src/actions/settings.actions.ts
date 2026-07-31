@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -94,6 +95,7 @@ export async function updateHeroData(
 
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
@@ -139,6 +141,7 @@ export async function updateHeroPartial(
 
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
@@ -169,6 +172,7 @@ export async function updateSocialChannels(
     await SettingsService.updateTenantChannels(tenantId, parsed.data);
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
@@ -258,6 +262,7 @@ export async function updateThemeConfig(
 
     revalidatePath("/admin/appearance");
     revalidatePath("/");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {

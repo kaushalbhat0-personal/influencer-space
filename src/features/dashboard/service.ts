@@ -5,7 +5,7 @@ import type { DashboardMetrics, DashboardActivity, DashboardHealthCheck, QuickSt
 export const dashboardService = {
   async getMetrics(tenantId: string): Promise<DashboardMetrics> {
     const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website] = await Promise.all([
-      prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true } }),
+      prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true, status: true } }),
       prisma.productOrder.aggregate({
         where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
         _sum: { amount: true },
@@ -24,7 +24,8 @@ export const dashboardService = {
     ]);
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 
-    const hasProducts = products.length > 0;
+    const publishedCount = products.filter((p) => p.status === "PUBLISHED").length;
+    const hasProducts = publishedCount > 0;
     const hasGallery = gallery > 0;
     const hasCustomDomain = !!tenant?.customDomain;
     const hasTestimonials = testimonialCount > 0;
@@ -48,7 +49,9 @@ export const dashboardService = {
     return {
       productCount: products.length,
       activeProductCount: products.filter((p) => p.isActive).length,
-      orderCount: await prisma.productOrder.count({ where: { tenantId } }),
+      orderCount: await prisma.productOrder.count({
+        where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
+      }),
       revenue: revenue._sum.amount ?? 0,
       galleryCount: gallery,
       linkCount: links,
@@ -84,8 +87,8 @@ export const dashboardService = {
 
   async getHealthChecks(tenantId: string): Promise<DashboardHealthCheck[]> {
     const [products, orders, gallery, tenant, seoSetting] = await Promise.all([
-      prisma.product.count({ where: { tenantId } }),
-      prisma.productOrder.count({ where: { tenantId } }),
+      prisma.product.count({ where: { tenantId, status: "PUBLISHED" } }),
+      prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
       prisma.galleryImage.count({ where: { tenantId } }),
       prisma.tenant.findUnique({ where: { id: tenantId }, select: { customDomain: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
@@ -102,7 +105,7 @@ export const dashboardService = {
 
   async getQuickStartSteps(tenantId: string): Promise<QuickStartStep[]> {
     const [products, gallery, tenant, seoSetting, testimonialSetting] = await Promise.all([
-      prisma.product.count({ where: { tenantId } }),
+      prisma.product.count({ where: { tenantId, status: "PUBLISHED" } }),
       prisma.galleryImage.count({ where: { tenantId } }),
       prisma.tenant.findUnique({ where: { id: tenantId }, select: { customDomain: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
@@ -111,9 +114,9 @@ export const dashboardService = {
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 
     return [
-      { id: "add-product", label: "Add your first product", description: "Create a product or service to sell", done: products > 0, href: "/admin/products/new", estimatedMinutes: 5 },
+      { id: "add-product", label: "Add your first product", description: "Create a product or service to sell", done: products > 0, href: "/admin/products", estimatedMinutes: 5 },
       { id: "upload-gallery", label: "Upload gallery images", description: "Showcase your work with images", done: gallery > 0, href: "/admin/gallery", estimatedMinutes: 10 },
-      { id: "add-testimonials", label: "Add testimonials", description: "Build trust with social proof", done: testimonialCount > 0, href: "/admin/testimonials/new", estimatedMinutes: 5 },
+      { id: "add-testimonials", label: "Add testimonials", description: "Build trust with social proof", done: testimonialCount > 0, href: "/admin/testimonials", estimatedMinutes: 5 },
       { id: "setup-seo", label: "Set up SEO", description: "Optimize for search engines", done: !!seoSetting, href: "/admin/seo", estimatedMinutes: 15 },
       { id: "custom-domain", label: "Configure custom domain", description: "Use your own domain name", done: !!tenant?.customDomain, href: "/admin/settings/domain", estimatedMinutes: 10 },
     ];

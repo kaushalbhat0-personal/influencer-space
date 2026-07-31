@@ -10,7 +10,7 @@ import type { WebsiteAggregate } from "@/types/snapshot";
 
 export class WebsiteAggregateService {
   async build(tenantId: string): Promise<WebsiteAggregate> {
-    const [brand, heroData, products, gallery, links, seoData, website, timelineEvents, gameList, feedItems, testimonialsData, faqData] = await Promise.all([
+    const [brand, heroData, products, gallery, links, seoData, website, timelineEvents, gameList, feedItems, testimonialsData, faqData, offerings] = await Promise.all([
       brandRepository.findByTenantId(tenantId),
       SettingsService.getHeroData(tenantId),
       productRepository.findPublished(tenantId),
@@ -32,6 +32,11 @@ export class WebsiteAggregateService {
       }),
       SettingsService.getSettingByKey(tenantId, "testimonials"),
       SettingsService.getSettingByKey(tenantId, "faq"),
+      prisma.offering.findMany({
+        where: { tenantId, status: "published" },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, type: true, title: true, description: true, price: true, metadata: true },
+      }),
     ]);
 
     const rawTestimonials = Array.isArray(testimonialsData)
@@ -136,6 +141,31 @@ export class WebsiteAggregateService {
         caption: item.caption,
         permalink: item.permalink,
       })),
+      courses: offerings
+        .filter((o) => o.type === "course")
+        .map((o) => {
+          const meta = o.metadata as Record<string, unknown> | null;
+          return {
+            id: o.id,
+            title: o.title,
+            description: o.description,
+            price: o.price,
+            imageUrl: (meta?.imageUrl as string | undefined) ?? null,
+            category: (meta?.category as string | undefined) ?? null,
+          };
+        }),
+      services: offerings
+        .filter((o) => o.type === "coaching")
+        .map((o) => {
+          const meta = o.metadata as Record<string, unknown> | null;
+          return {
+            id: o.id,
+            title: o.title,
+            description: o.description,
+            price: o.price,
+            duration: (meta?.duration as string | undefined) ?? null,
+          };
+        }),
     };
 
     if (brand?.avatarAssetId || brand?.bannerAssetId) {

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CreatorImage } from "@/components/shared/CreatorImage";
-import { MediaUploadField } from "@/components/shared/MediaUploadField";
-import { listAssets, deleteAssetFromLibrary, purgeAsset } from "@/actions/media-library.actions";
+import { listAssets, deleteAssetFromLibrary, purgeAsset, replaceAsset } from "@/actions/media-library.actions";
 import type { AssetFilters } from "@/lib/media/repositories/asset-queries";
 
 interface AssetItem {
@@ -195,6 +194,7 @@ export function MediaLibrary() {
           asset={detail}
           onDelete={() => handleDelete(detail.id)}
           onPurge={() => handlePurge(detail.id)}
+          onReplaced={() => load()}
           onClose={() => { setSelectedId(null); setDetail(null); }}
         />
       )}
@@ -212,11 +212,13 @@ function AssetDetailPanel({
   asset,
   onDelete,
   onPurge,
+  onReplaced,
   onClose,
 }: {
   asset: AssetItem;
   onDelete: () => void;
   onPurge: () => void;
+  onReplaced: () => void;
   onClose: () => void;
 }) {
   const isVideo = asset.mimeType?.startsWith("video/");
@@ -282,13 +284,7 @@ function AssetDetailPanel({
       <div className="space-y-2">
         {!isDeleted && (
           <>
-            <MediaUploadField
-              label="Replace File"
-              folder="replace"
-              accept={isVideo ? "video/*" : "image/*"}
-              onUploadComplete={async ({ url: _url }) => {
-              }}
-            />
+            <ReplaceFileControl assetId={asset.id} onReplaced={onReplaced} isVideo={isVideo} />
             {asset.referenceCount === 0 ? (
               <button onClick={onDelete} className="w-full rounded-lg border border-red-500/30 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors">
                 Delete Asset
@@ -304,6 +300,65 @@ function AssetDetailPanel({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function ReplaceFileControl({
+  assetId,
+  onReplaced,
+  isVideo,
+}: {
+  assetId: string;
+  onReplaced: () => void;
+  isVideo: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [message, setMessage] = useState<string>("");
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setStatus("idle");
+    setMessage("");
+
+    const formData = new FormData();
+    formData.set("file", file);
+
+    const result = await replaceAsset(assetId, formData);
+    setUploading(false);
+
+    if (result.success) {
+      setStatus("success");
+      setMessage("File replaced");
+      if (inputRef.current) inputRef.current.value = "";
+      onReplaced();
+    } else {
+      setStatus("error");
+      setMessage(result.error ?? "Replace failed");
+    }
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-xs font-medium text-zinc-400">Replace File</label>
+      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300">
+        <input
+          ref={inputRef}
+          type="file"
+          accept={isVideo ? "video/*" : "image/*"}
+          onChange={handleFile}
+          className="hidden"
+          disabled={uploading}
+        />
+        {uploading ? "Uploading..." : "Choose New File"}
+      </label>
+      {status === "success" && <p className="text-[10px] text-emerald-400">{message}</p>}
+      {status === "error" && <p className="text-[10px] text-red-400">{message}</p>}
     </div>
   );
 }

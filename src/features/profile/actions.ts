@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { profileService } from "./service";
 import { profileUpdateSchema } from "./validators";
 import type { ProfileUpdate } from "./validators";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function getProfile() {
   const session = await getServerSession(authOptions);
@@ -22,5 +23,6 @@ export async function updateProfile(input: ProfileUpdate) {
   const parsed = profileUpdateSchema.parse(input);
   const result = await profileService.updateProfile(tenantId, parsed as Parameters<typeof profileService.updateProfile>[1]);
   revalidatePath("/admin/profile");
+  await afterContentChange(tenantId, { revalidateDashboard: true });
   return result;
 }

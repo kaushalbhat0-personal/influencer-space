@@ -46,7 +46,7 @@ export const productService = {
         imageUrl: input.imageUrl ?? null,
         images: input.images ?? [],
         slug: input.slug ?? input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
-        status: input.status ?? "DRAFT",
+        status: input.status ?? "PUBLISHED",
         isActive: input.isActive ?? true,
         isFeatured: input.isFeatured ?? false,
         seoTitle: input.seoTitle ?? null,

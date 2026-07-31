@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { productService } from "./service";
 import { productFormSchema } from "./validators";
 import type { ProductFormInput } from "./types";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export async function listProducts() {
   const session = await getServerSession(authOptions);
@@ -28,6 +29,7 @@ export async function createProduct(input: ProductFormInput) {
   const parsed = productFormSchema.parse(input);
   const result = await productService.create(tenantId, parsed as ProductFormInput);
   revalidatePath("/admin/products");
+  await afterContentChange(tenantId, { revalidateDashboard: true });
   return result;
 }
 
@@ -37,6 +39,7 @@ export async function updateProduct(id: string, input: Partial<ProductFormInput>
 
   const result = await productService.update(id, input);
   revalidatePath("/admin/products");
+  await afterContentChange(session.user.tenantId, { revalidateDashboard: true });
   return result;
 }
 
@@ -46,4 +49,5 @@ export async function deleteProduct(id: string) {
 
   await productService.delete(id);
   revalidatePath("/admin/products");
+  await afterContentChange(session.user.tenantId, { revalidateDashboard: true });
 }

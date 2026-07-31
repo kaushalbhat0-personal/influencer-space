@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 const createMilestoneSchema = z.object({
   year: z.string().min(1, "Year is required").max(10),
@@ -85,6 +86,7 @@ export async function createMilestone(
 
     await logAction(tenantId, "createMilestone", { milestoneId: event.id, title: event.title });
     revalidatePath("/admin/milestones");
+    await afterContentChange(tenantId);
     return { success: true, data: event };
   } catch (error) {
     return {
@@ -141,6 +143,7 @@ export async function updateExistingMilestone(
 
     await logAction(tenantId, "updateMilestone", { milestoneId: id });
     revalidatePath("/admin/milestones");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {
@@ -168,6 +171,7 @@ export async function removeMilestone(
 
     await logAction(tenantId, "deleteMilestone", { milestoneId: id, title: existing.title });
     revalidatePath("/admin/milestones");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     return {

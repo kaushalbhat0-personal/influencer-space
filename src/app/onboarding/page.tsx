@@ -195,6 +195,7 @@ export default function OnboardingPage() {
       );
 
       if (res.success && res.result) {
+        clearPolling();
         if (res.goldenValidation) {
           setGoldenScore(res.goldenValidation.overallScore);
         }
@@ -212,14 +213,17 @@ export default function OnboardingPage() {
           router.replace("/admin/dashboard");
         }, 2000);
       } else if (res.retryable && res.tenantId) {
+        clearPolling();
         setRetryInfo({ tenantId: res.tenantId });
         setError(res.error || "Publishing failed. You can retry or continue to your dashboard.");
         setStep("error");
       } else {
+        clearPolling();
         setError(res.error || "Generation failed. Please try again.");
         setStep("error");
       }
     } catch (err) {
+      clearPolling();
       setError(err instanceof Error ? err.message : "Generation failed");
       setStep("error");
     }
@@ -227,12 +231,13 @@ export default function OnboardingPage() {
   }, [sourceUrl, workspaceName, router, clearPolling]);
 
   const handleRetry = useCallback(() => {
+    clearPolling();
     setError(null);
     setStep("import");
     setSessionStages([]);
     setProgressPercent(0);
     setElapsedMs(0);
-  }, []);
+  }, [clearPolling]);
 
   const handleRetryPublish = useCallback(async () => {
     if (!retryInfo) return;
@@ -257,6 +262,11 @@ export default function OnboardingPage() {
   const handleGoToDashboard = useCallback(async () => {
     if (retryInfo?.tenantId) {
       await markOnboardingComplete(retryInfo.tenantId);
+    }
+    try {
+      await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
+    } catch {
+      // session refresh is best-effort; redirect will re-validate
     }
     router.replace("/admin/dashboard");
   }, [retryInfo, router]);

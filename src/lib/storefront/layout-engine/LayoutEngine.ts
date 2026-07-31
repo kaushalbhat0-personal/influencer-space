@@ -234,6 +234,45 @@ export class LayoutEngine {
         imageUrl: t.imageUrl,
       }));
       config.resolvedTitle = "Timeline";
+    } else if (moduleId.startsWith("games.")) {
+      config.resolvedData = (content.games ?? []).map((g) => ({
+        id: g.id,
+        name: g.name,
+        logoUrl: g.logoUrl,
+        description: g.description,
+        genre: g.genre,
+      }));
+      config.resolvedTitle = "Games";
+    } else if (moduleId.startsWith("contentFeed.")) {
+      config.resolvedData = (content.contentFeed ?? []).map((f) => ({
+        id: f.id,
+        platform: f.platform,
+        mediaType: f.mediaType,
+        url: f.url,
+        thumbnailUrl: f.thumbnailUrl,
+        caption: f.caption,
+        permalink: f.permalink,
+      }));
+      config.resolvedTitle = "Latest Content";
+    } else if (moduleId.startsWith("courses.")) {
+      config.resolvedData = (content.courses ?? []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        price: c.price,
+        imageUrl: c.imageUrl,
+        category: c.category,
+      }));
+      config.resolvedTitle = "Courses";
+    } else if (moduleId.startsWith("services.")) {
+      config.resolvedData = (content.services ?? []).map((s) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description,
+        price: s.price,
+        duration: s.duration,
+      }));
+      config.resolvedTitle = "Services";
     }
 
     return config;

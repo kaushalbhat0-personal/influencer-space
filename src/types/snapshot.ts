@@ -103,6 +103,21 @@ export interface WebsiteAggregate {
   timeline: TimelineContent[];
   games: GameContent[];
   contentFeed: ContentFeedContent[];
+  courses: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    price: number;
+    imageUrl: string | null;
+    category: string | null;
+  }>;
+  services: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    price: number;
+    duration: string | null;
+  }>;
 }
 
 export interface HeroContent {

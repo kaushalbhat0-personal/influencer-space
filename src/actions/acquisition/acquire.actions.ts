@@ -7,6 +7,7 @@ import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
 import { captureError } from "@/lib/observability/error-tracker";
+import { markOnboardingComplete } from "@/actions/onboarding.actions";
 import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord, AcquisitionProvisionResult } from "@/lib/acquisition/types";
 
@@ -137,6 +138,12 @@ export async function acquireAndProvision(
     record.completeness = publishResult.success ? 100 : 0;
 
     const status = publishResult.success ? "published" : "failed";
+
+    if (publishResult.success) {
+      await markOnboardingComplete(provisionResult.tenantId).catch((err) => {
+        captureError(err, { service: "acquisition-actions", operation: "markOnboardingComplete" });
+      });
+    }
 
     await logAction(provisionResult.tenantId, "acquisition:completed", {
       strategy, recordId, creatorName: businessName, status,

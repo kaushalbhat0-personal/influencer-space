@@ -220,7 +220,7 @@ describe("provisioningService.provision", () => {
     expect(mockTxWebsiteCreate).toHaveBeenCalled();
     expect(mockTxBrandCreate).toHaveBeenCalled();
     expect(mockTxPublishStatusCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ state: "live" }) }),
+      expect.objectContaining({ data: expect.objectContaining({ state: "draft" }) }),
     );
     expect(mockTxSettingCreate).toHaveBeenCalledTimes(5);
     expect(mockTxUserCreate).toHaveBeenCalledWith(
