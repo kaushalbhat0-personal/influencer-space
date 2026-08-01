@@ -198,19 +198,21 @@ export class LayoutEngine {
       config.resolvedTitle = "Gallery";
       console.log(tracePrefix, "gallery", { aggCount: content.gallery.length, resolvedCount: imageEntries.length });
     } else if (moduleId.startsWith("links.") || moduleId === "links.default") {
-      const linkEntries: Record<string, unknown>[] = content.links.map((l) => ({
+      // IMPLEMENTATION-18A: the Links section is PRESENTATION ONLY — it renders
+      // Hero's social/streaming links. Hero is the single source of truth; the
+      // separate AffiliateLink table is no longer a storefront data source.
+      const heroLinks = content.hero.socialLinks ?? [];
+      const linkEntries: Record<string, unknown>[] = heroLinks.map((l) => ({
         url: l.url,
-        platform: l.title,
-        label: l.title,
+        platform: l.label || l.platform,
+        label: l.label || l.platform,
       }));
-      for (const s of content.identity.socialLinks) {
-        linkEntries.push({ url: s.url, platform: s.platform, label: s.platform });
-      }
       config.resolvedData = linkEntries;
       config.resolvedTitle = "Connect With Me";
-      console.log(tracePrefix, "links", { aggCount: content.links.length, resolvedCount: linkEntries.length });
+      console.log(tracePrefix, "links", { heroLinks: heroLinks.length, resolvedCount: linkEntries.length });
     } else if (moduleId.startsWith("footer.")) {
       config.copyright = config.copyright || `© ${content.identity.name} — CreatorStore`;
+      config.socialLinks = content.hero.socialLinks ?? [];
     } else if (moduleId.startsWith("contact.")) {
       config.title = config.title || "Get In Touch";
     } else if (moduleId.startsWith("newsletter.")) {

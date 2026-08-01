@@ -98,14 +98,23 @@ export class WebsiteAggregateService {
       ? (faqData as Record<string, unknown>[])
       : [];
 
+    // Hero is the single source of truth for social/streaming links and bio.
+    const heroRecord = (heroData as Record<string, unknown>) ?? {};
+    const heroSocialLinks = Array.isArray(heroRecord.socialLinks)
+      ? (heroRecord.socialLinks as Array<{ platform: string; url: string; label?: string }>)
+      : [];
+    const heroBio = (heroRecord.bio as string) ?? "";
+
     const result: WebsiteAggregate = {
       identity: {
         name: brand?.name ?? website?.tenant?.name ?? "",
         tagline: brand?.tagline ?? "",
-        bio: brand?.bio ?? "",
+        bio: (heroBio || brand?.bio) ?? "",
         avatarUrl: brand?.avatarUrl ?? null,
         bannerUrl: brand?.bannerUrl ?? null,
-        socialLinks: (brand?.socialLinks as Array<{ platform: string; url: string }>) ?? [],
+        socialLinks: heroSocialLinks.length > 0
+          ? heroSocialLinks
+          : ((brand?.socialLinks as Array<{ platform: string; url: string }>) ?? []),
       },
       hero: {
         title: (heroData as Record<string, unknown>)?.title as string ?? "",
@@ -116,6 +125,10 @@ export class WebsiteAggregateService {
         posterUrl: (heroData as Record<string, unknown>)?.posterUrl as string | null ?? null,
         videoAssetId: (heroData as Record<string, unknown>)?.videoAssetId as string | null ?? null,
         posterAssetId: (heroData as Record<string, unknown>)?.posterAssetId as string | null ?? null,
+        backgroundUrl: (heroData as Record<string, unknown>)?.backgroundUrl as string | null ?? null,
+        backgroundAssetId: (heroData as Record<string, unknown>)?.backgroundAssetId as string | null ?? null,
+        bio: heroBio,
+        socialLinks: heroSocialLinks,
         ctaText: (heroData as Record<string, unknown>)?.ctaText as string ?? "",
         ctaLink: (heroData as Record<string, unknown>)?.ctaLink as string ?? "",
         ctaSecondaryText: (heroData as Record<string, unknown>)?.ctaSecondaryText as string ?? "",

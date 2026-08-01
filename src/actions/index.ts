@@ -100,7 +100,7 @@ export {
 export type { PublishActionResult } from "./publish.actions";
 
 export {
-  updateHeroData, updateHeroPartial, updateSocialChannels,
+  updateHeroData, updateHeroPartial, updateHeroSocialLinks, updateSocialChannels,
   updateApiKeys, updateThemeConfig,
 } from "./settings.actions";
 export type { ThemeConfigInput } from "./settings.actions";

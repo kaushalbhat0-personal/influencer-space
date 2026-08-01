@@ -25,9 +25,12 @@ const heroPartialSchema = z.object({
   posterUrl: z.string().optional(),
   videoAssetId: z.string().optional(),
   posterAssetId: z.string().optional(),
+  backgroundUrl: z.string().optional(),
+  backgroundAssetId: z.string().optional(),
   title: z.string().optional(),
   subtitle: z.string().optional(),
   tagline: z.string().optional(),
+  bio: z.string().optional(),
   ctaText: z.string().optional(),
   ctaLink: z.string().optional(),
   ctaSecondaryText: z.string().optional(),
@@ -41,6 +44,11 @@ const heroPartialSchema = z.object({
     },
     z.boolean().optional(),
   ),
+  socialLinks: z.array(z.object({
+    platform: z.string(),
+    url: z.string(),
+    label: z.string().optional(),
+  })).optional(),
   videoDesktopAlignment: z.enum(["top", "center", "bottom"]).optional(),
   videoMobileAlignment: z.enum(["top", "center", "bottom"]).optional(),
   imageDesktopAlignment: z.enum(["top", "center", "bottom"]).optional(),
@@ -153,6 +161,39 @@ export async function updateHeroPartial(
       return { success: false, error: error.message };
     }
     captureError(error, { service: "settings-actions", operation: "updateHeroPartial" });
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
+  }
+}
+
+/**
+ * Hero owns all social/streaming links. This is the SINGLE writer for
+ * hero_data.socialLinks — used by both the Hero settings form and the Links
+ * admin page (which is presentation-only).
+ */
+export async function updateHeroSocialLinks(
+  tenantId: string,
+  links: Array<{ platform: string; url: string; label?: string }>,
+): Promise<SettingsActionState> {
+  const safeLinks = links
+    .filter((l) => l.platform && l.url && l.url.trim())
+    .map((l) => ({ platform: l.platform, url: l.url.trim(), label: (l.label ?? "").trim() || undefined }));
+
+  try {
+    await requireAuth(tenantId);
+    await prisma.$transaction(async (tx) => {
+      await SettingsService.patchHeroData(tenantId, { socialLinks: safeLinks }, tx);
+      await logAction(tenantId, "updateHeroSocialLinks", { count: safeLinks.length }, tx);
+    });
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    revalidatePath("/admin/links");
+    await afterContentChange(tenantId);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
+    captureError(error, { service: "settings-actions", operation: "updateHeroSocialLinks" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }

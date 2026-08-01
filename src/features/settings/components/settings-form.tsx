@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { MediaField } from "@/components/shared/MediaField";
 import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
-import type { HeroDataType } from "@/config/hero";
+import { SocialLinksEditor } from "@/features/links/components/social-links-editor";
+import type { HeroDataType, HeroSocialLink } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.types";
 
 type SaveState = { pending: boolean; state: SettingsActionState };
@@ -63,14 +64,22 @@ export function SettingsForm({
   const [heroTitle, setHeroTitle] = useState(heroData.title || "");
   const [heroSubtitle, setHeroSubtitle] = useState(heroData.subtitle || "");
   const [heroTagline, setHeroTagline] = useState(heroData.tagline || "");
+  const [heroBio, setHeroBio] = useState(heroData.bio || "");
   const [ctaText, setCtaText] = useState(heroData.ctaText || "");
   const [ctaLink, setCtaLink] = useState(heroData.ctaLink || "");
   const [ctaSecondaryText, setCtaSecondaryText] = useState(heroData.ctaSecondaryText || "");
   const [ctaSecondaryLink, setCtaSecondaryLink] = useState(heroData.ctaSecondaryLink || "");
 
+  const [backgroundUrl, setBackgroundUrl] = useState(heroData.backgroundUrl || "");
+  const [backgroundAssetId, setBackgroundAssetId] = useState(heroData.backgroundAssetId || "");
+  const [socialLinks, setSocialLinks] = useState<HeroSocialLink[]>(
+    Array.isArray(heroData.socialLinks) ? heroData.socialLinks : [],
+  );
+
   useEffect(() => { setHeroTitle(heroData.title || ""); }, [heroData.title]);
   useEffect(() => { setHeroSubtitle(heroData.subtitle || ""); }, [heroData.subtitle]);
   useEffect(() => { setHeroTagline(heroData.tagline || ""); }, [heroData.tagline]);
+  useEffect(() => { setHeroBio(heroData.bio || ""); }, [heroData.bio]);
   useEffect(() => { setCtaText(heroData.ctaText || ""); }, [heroData.ctaText]);
   useEffect(() => { setCtaLink(heroData.ctaLink || ""); }, [heroData.ctaLink]);
   useEffect(() => { setCtaSecondaryText(heroData.ctaSecondaryText || ""); }, [heroData.ctaSecondaryText]);
@@ -81,6 +90,9 @@ export function SettingsForm({
   useEffect(() => { setPosterUrl(heroData.posterUrl || ""); }, [heroData.posterUrl]);
   useEffect(() => { setVideoAssetId(heroData.videoAssetId || ""); }, [heroData.videoAssetId]);
   useEffect(() => { setPosterAssetId(heroData.posterAssetId || ""); }, [heroData.posterAssetId]);
+  useEffect(() => { setBackgroundUrl(heroData.backgroundUrl || ""); }, [heroData.backgroundUrl]);
+  useEffect(() => { setBackgroundAssetId(heroData.backgroundAssetId || ""); }, [heroData.backgroundAssetId]);
+  useEffect(() => { setSocialLinks(Array.isArray(heroData.socialLinks) ? heroData.socialLinks : []); }, [heroData.socialLinks]);
 
   function alignmentButtons(
     desktopAlign: string,
@@ -166,6 +178,14 @@ export function SettingsForm({
     }
   }
 
+  async function handleSaveBackground() {
+    const result = await updateHeroPartial(tenantId, {
+      backgroundUrl: backgroundUrl || null,
+      backgroundAssetId: backgroundAssetId || null,
+    });
+    if (result.success) setTimeout(() => router.refresh(), 50);
+  }
+
   async function handleSaveHeroDetails() {
     setHeroDetailsSave({ pending: true, state: { success: false } });
 
@@ -173,12 +193,14 @@ export function SettingsForm({
       title: heroTitle,
       subtitle: heroSubtitle,
       tagline: heroTagline,
+      bio: heroBio,
       ctaText,
       ctaLink,
       ctaSecondaryText,
       ctaSecondaryLink,
       liveBadgeText,
       showLiveBadge: liveShowBadge,
+      socialLinks,
     };
 
     const result = await updateHeroPartial(tenantId, payload);
@@ -277,6 +299,31 @@ export function SettingsForm({
           </CardContent>
         </Card>
 
+        {/* ─── Hero Background ─── */}
+        <Card>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Hero Background</h3>
+              <MediaField
+                label="Hero Background Image"
+                value={{ url: backgroundUrl, assetId: backgroundAssetId }}
+                folder="hero"
+                accept="image/*"
+                entityType="hero"
+                entityId={tenantId}
+                entityField="backgroundUrl"
+                onChange={(v) => {
+                  setBackgroundUrl(v?.url ?? "");
+                  setBackgroundAssetId(v?.assetId ?? "");
+                }}
+              />
+              <button type="button" onClick={handleSaveBackground} className="admin-btn-cyan">
+                Save Background
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* ─── Hero Details ─── */}
         <Card>
           <CardContent>
@@ -307,6 +354,19 @@ export function SettingsForm({
                 onChange={(e) => setHeroTagline(e.target.value)}
                 placeholder="Hyderabad ki energy — global level ka game."
               />
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300" htmlFor="heroBio">
+                  Bio
+                </label>
+                <textarea
+                  id="heroBio"
+                  value={heroBio}
+                  onChange={(e) => setHeroBio(e.target.value)}
+                  rows={3}
+                  placeholder="A short bio shown in the hero and about sections."
+                  className="admin-input w-full resize-y"
+                />
+              </div>
 
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-white">Call-to-Action Buttons</h4>
@@ -349,6 +409,20 @@ export function SettingsForm({
                 </button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* ─── Social Links ─── */}
+        <Card>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Social Links</h3>
+              <p className="text-sm text-gray-500">
+                Your social, streaming and contact links — stored once in Hero and rendered on the
+                Hero, the Links section and the Footer.
+              </p>
+              <SocialLinksEditor tenantId={tenantId} initialLinks={socialLinks} />
+            </div>
           </CardContent>
         </Card>
 

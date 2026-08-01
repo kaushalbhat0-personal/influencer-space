@@ -92,7 +92,7 @@ export async function provisionNewCreator(
             name: creatorName,
             tagline: "",
             bio: "",
-          } as Prisma.InputJsonValue,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -108,7 +108,7 @@ export async function provisionNewCreator(
             subtitle: "",
             tagline: "",
             videoUrl: "",
-          } as Prisma.InputJsonValue,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -199,7 +199,7 @@ export async function magicProvisionFromYoutube(
             tagline: meta.customUrl,
             bio: meta.description || defaultConfig.bio,
             profileImage: meta.thumbnailUrl || defaultConfig.profileImage,
-          } as Prisma.InputJsonValue,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -216,7 +216,7 @@ export async function magicProvisionFromYoutube(
             tagline: meta.customUrl,
             posterUrl: meta.thumbnailUrl || defaultHeroData.posterUrl,
             videoUrl: "",
-          } as Prisma.InputJsonValue,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -493,8 +493,8 @@ export async function togglePlatformFlag(
 
     await prisma.setting.upsert({
       where: { tenantId_key: { tenantId: platformTenant.id, key: "platform_config" } },
-      update: { value: config as Prisma.InputJsonValue },
-      create: { tenantId: platformTenant.id, key: "platform_config", value: config as Prisma.InputJsonValue },
+      update: { value: config as unknown as Prisma.InputJsonValue },
+      create: { tenantId: platformTenant.id, key: "platform_config", value: config as unknown as Prisma.InputJsonValue },
     });
 
     revalidatePath("/super-admin/features");

@@ -66,7 +66,7 @@ export const SettingsService = {
     await SettingsService.upsertSetting(
       tenantId,
       "hero_data",
-      defaultHeroData as Prisma.InputJsonValue,
+      defaultHeroData as unknown as Prisma.InputJsonValue,
     ).catch((err) => { captureError(err, { service: "settings-service", operation: "getHeroData-upsert" }); });
 
     return defaultHeroData;
@@ -76,7 +76,7 @@ export const SettingsService = {
     await SettingsService.upsertSetting(
       tenantId,
       "hero_data",
-      data as Prisma.InputJsonValue,
+      data as unknown as Prisma.InputJsonValue,
     );
   },
 

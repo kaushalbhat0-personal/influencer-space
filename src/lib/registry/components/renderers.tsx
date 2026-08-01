@@ -39,25 +39,38 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 /* ─── Hero ─────────────────────────────────────────────── */
 
 export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
-  const p = props as Record<string, string>;
+  const p = props as Record<string, unknown>;
+  const title = String(p.title || "");
+  const tagline = String(p.tagline || "");
+  const subtitle = String(p.subtitle || "");
+  const cta = String(p.cta || "");
+  const ctaLink = String(p.ctaLink || "");
+  const ctaSecondaryText = String(p.ctaSecondaryText || "");
+  const ctaSecondaryLink = String(p.ctaSecondaryLink || "");
+  const liveBadgeText = String(p.liveBadgeText || "Live");
+  const showLiveBadge = Boolean(p.showLiveBadge);
+  const videoUrl = String(p.videoUrl || "");
+  const posterUrl = String(p.posterUrl || "");
   const hasMedia = Boolean(p.videoUrl || p.posterUrl);
   const videoAlign = responsiveAlignmentClass(
-    p.videoDesktopAlignment || "center",
-    p.videoMobileAlignment || "center",
+    String(p.videoDesktopAlignment || "center"),
+    String(p.videoMobileAlignment || "center"),
   );
   const imageAlign = responsiveAlignmentClass(
-    p.imageDesktopAlignment || "center",
-    p.imageMobileAlignment || "center",
+    String(p.imageDesktopAlignment || "center"),
+    String(p.imageMobileAlignment || "center"),
   );
+  const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
+  const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
   return (
     <div className="relative flex min-h-[40vh] items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black px-4">
       {hasMedia && (
         <div className="absolute inset-0">
-          {p.videoUrl ? (
+          {videoUrl ? (
             <HeroMedia
               type="video"
-              url={p.videoUrl}
-              poster={p.posterUrl}
+              url={videoUrl}
+              poster={posterUrl}
               alignmentClass={videoAlign}
               opacity="opacity-40"
               className="absolute inset-0"
@@ -69,7 +82,7 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           ) : (
             <HeroMedia
               type="image"
-              url={p.posterUrl}
+              url={posterUrl}
               alignmentClass={imageAlign}
               opacity="opacity-40"
               className="absolute inset-0"
@@ -79,48 +92,63 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
         </div>
       )}
       <div className="relative z-10 max-w-2xl text-center">
-        {Boolean(p.showLiveBadge) && (
+        {showLiveBadge && (
           <div className="mb-4 flex items-center justify-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
             </span>
-            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">{p.liveBadgeText || "Live"}</span>
+            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">{liveBadgeText}</span>
           </div>
         )}
         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          {p.title || ""}
+          {title}
         </h1>
-        {p.tagline && (
-          <p className="mt-3 text-base text-zinc-400">{p.tagline}</p>
+        {tagline && (
+          <p className="mt-3 text-base text-zinc-400">{tagline}</p>
         )}
-        {p.subtitle && (
-          <p className="mt-1 text-sm text-zinc-500">{p.subtitle}</p>
+        {subtitle && (
+          <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
         )}
         <div className="mt-6 flex items-center justify-center gap-3">
-          {p.cta && (
-            p.ctaLink ? (
-              <a href={p.ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
-                {p.cta}
+          {cta && (
+            ctaLink ? (
+              <a href={ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
+                {cta}
               </a>
             ) : (
               <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
-                {p.cta}
+                {cta}
               </span>
             )
           )}
-          {p.ctaSecondaryText && (
-            p.ctaSecondaryLink ? (
-              <a href={p.ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
-                {p.ctaSecondaryText}
+          {ctaSecondaryText && (
+            ctaSecondaryLink ? (
+              <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
+                {ctaSecondaryText}
               </a>
             ) : (
               <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300">
-                {p.ctaSecondaryText}
+                {ctaSecondaryText}
               </span>
             )
           )}
         </div>
+        {socialLinks.length > 0 && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {socialLinks.map((l, i) => (
+              <a
+                key={i}
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-white/30 hover:text-white"
+              >
+                {l.label || platformLabel(l.platform || "Link")}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -324,10 +352,27 @@ export function LinksRenderer({ props }: RendererProps) {
 /* ─── Footer ───────────────────────────────────────────── */
 
 export function FooterRenderer({ props }: RendererProps) {
-  const p = props as Record<string, string>;
+  const p = props as Record<string, unknown>;
+  const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
+  const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
   return (
     <footer className="border-t border-white/10 py-8 text-center text-sm text-zinc-600">
-      {p.copyright || "© All rights reserved"}
+      {socialLinks.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
+          {socialLinks.map((l, i) => (
+            <a
+              key={i}
+              href={l.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+            >
+              {l.label || platformLabel(l.platform || "Link")}
+            </a>
+          ))}
+        </div>
+      )}
+      {String(p.copyright || "© All rights reserved")}
     </footer>
   );
 }

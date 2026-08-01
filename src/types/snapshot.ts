@@ -124,15 +124,24 @@ export interface WebsiteAggregate {
   }>;
 }
 
+export interface HeroSocialLink {
+  platform: string;
+  url: string;
+  label?: string;
+}
+
 export interface HeroContent {
   title: string;
   subtitle: string;
   description: string;
   tagline?: string;
+  bio?: string;
   videoUrl?: string | null;
   posterUrl?: string | null;
   videoAssetId?: string | null;
   posterAssetId?: string | null;
+  backgroundUrl?: string | null;
+  backgroundAssetId?: string | null;
   ctaText?: string;
   ctaLink?: string;
   ctaSecondaryText?: string;
@@ -140,6 +149,7 @@ export interface HeroContent {
   liveBadgeText?: string;
   showLiveBadge?: boolean;
   imageUrl?: string | null;
+  socialLinks?: HeroSocialLink[];
   videoDesktopAlignment?: "top" | "center" | "bottom";
   videoMobileAlignment?: "top" | "center" | "bottom";
   imageDesktopAlignment?: "top" | "center" | "bottom";
