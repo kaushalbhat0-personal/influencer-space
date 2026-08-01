@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ExternalLink, Layout, Globe, CheckCircle2, Clock, AlertTriangle, Rocket, Loader2, History } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { publishWebsite, rollbackWebsite, previewWebsite } from "@/actions/publish.actions";
+import { publishWebsite, rollbackWebsite } from "@/actions/publish.actions";
 
 interface VersionEntry {
   version: number;
@@ -35,7 +35,6 @@ export function StorefrontStatusCard({
   className,
 }: StorefrontStatusCardProps) {
   const [publishing, setPublishing] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [showVersions, setShowVersions] = useState(false);
   const [restoringVersion, setRestoringVersion] = useState<number | null>(null);
@@ -80,20 +79,12 @@ export function StorefrontStatusCard({
     setRestoringVersion(null);
   };
 
-  const handlePreview = async () => {
-    setPreviewing(true);
-    setPublishError(null);
-    try {
-      const res = await previewWebsite();
-      if (res.success) {
-        window.open(`${storefrontUrl}?preview=true`, "_blank", "noopener,noreferrer");
-      } else {
-        setPublishError(res.error || "Preview failed");
-      }
-    } catch {
-      setPublishError("Preview failed");
-    }
-    setPreviewing(false);
+  // Preview opens the Builder Runtime full-page: the storefront renders the
+  // CURRENT DRAFT layout + live CMS content through the same LayoutEngine and
+  // registry renderers as the builder canvas and the published site. No preview
+  // snapshot is created — there is exactly one runtime.
+  const handlePreview = () => {
+    window.open(`${storefrontUrl}?preview=true`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -209,15 +200,10 @@ export function StorefrontStatusCard({
         {(hasLiveVersion || publishState === "preview") && (
           <button
             onClick={handlePreview}
-            disabled={previewing}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors disabled:opacity-50"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
           >
-            {previewing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Globe className="h-4 w-4" />
-            )}
-            <span className="flex-1">{previewing ? "Building preview..." : "Preview Draft"}</span>
+            <Globe className="h-4 w-4" />
+            <span className="flex-1">Preview Draft</span>
             <span className="text-[10px] text-zinc-600">new tab</span>
           </button>
         )}

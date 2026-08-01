@@ -382,9 +382,16 @@ describe("LayoutEngine — vocabulary resolution", () => {
 
   it("unknown IDs pass through unchanged (no silent mapping)", () => {
     const snap = minimalSnapshot();
+    snap.layout.pages[0].sections[0].moduleId = "custom.thing";
+    const doc = engine.resolve(snap);
+    expect(doc.pages[0].sections[0].moduleId).toBe("custom.thing");
+  });
+
+  it("resolves content_feed to contentFeed.default", () => {
+    const snap = minimalSnapshot();
     snap.layout.pages[0].sections[0].moduleId = "content_feed";
     const doc = engine.resolve(snap);
-    expect(doc.pages[0].sections[0].moduleId).toBe("content_feed");
+    expect(doc.pages[0].sections[0].moduleId).toBe("contentFeed.default");
   });
 });
 

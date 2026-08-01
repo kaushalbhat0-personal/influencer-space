@@ -120,7 +120,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                       <div className="h-2 w-2 rounded-full bg-s8ul-cyan" />
                       <span className="flex-1">{a.description}</span>
                       <span className="text-xs text-zinc-600">
-                        {new Date(a.timestamp).toLocaleDateString()}
+                        {new Date(a.timestamp).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                       </span>
                     </div>
                   ))}

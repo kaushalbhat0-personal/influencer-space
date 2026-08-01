@@ -10,7 +10,6 @@ export type PublishActionResult = {
   error?: string;
   status?: PublishStatus;
   version?: number;
-  previewUrl?: string;
   issues?: string[];
 };
 
@@ -52,19 +51,6 @@ export async function getPublishStatus(): Promise<PublishActionResult> {
     return { success: true, status: result.data };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Status check failed" };
-  }
-}
-
-export async function previewWebsite(): Promise<PublishActionResult> {
-  try {
-    const tenantId = await requireTenant();
-    const result = await publishingService.preview(tenantId);
-    if (!result.success) return { success: false, error: result.error };
-
-    const status = await publishingService.getStatus(tenantId);
-    return { success: true, status: status.data, version: result.version, previewUrl: status.data?.previewUrl ?? undefined };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Preview failed" };
   }
 }
 

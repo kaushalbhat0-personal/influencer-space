@@ -264,7 +264,7 @@ function AssetDetailPanel({
         )}
         {asset.duration && <div className="flex justify-between"><span className="text-zinc-500">Duration</span><span className="text-zinc-300">{asset.duration}s</span></div>}
         {asset.createdAt && (
-          <div className="flex justify-between"><span className="text-zinc-500">Uploaded</span><span className="text-zinc-300">{new Date(asset.createdAt).toLocaleDateString()}</span></div>
+          <div className="flex justify-between"><span className="text-zinc-500">Uploaded</span><span className="text-zinc-300">{new Date(asset.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span></div>
         )}
       </div>
 

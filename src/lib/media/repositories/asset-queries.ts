@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Asset, AssetReference } from "@/generated/prisma/client";
+import { normalizeAssetId } from "@/lib/media/resolve";
 
 export interface AssetFilters {
   mimeType?: string;
@@ -17,8 +18,10 @@ export interface AssetWithReferences extends Asset {
 
 export class AssetQueries {
   async findById(id: string): Promise<AssetWithReferences | null> {
+    const normalized = normalizeAssetId(id);
+    if (!normalized) return null;
     return prisma.asset.findUnique({
-      where: { id },
+      where: { id: normalized },
       include: { references: true },
     }) as Promise<AssetWithReferences | null>;
   }
@@ -86,8 +89,10 @@ export class AssetQueries {
   }
 
   async getReferenceCount(assetId: string): Promise<number> {
+    const normalized = normalizeAssetId(assetId);
+    if (!normalized) return 0;
     const asset = await prisma.asset.findUnique({
-      where: { id: assetId },
+      where: { id: normalized },
       select: { referenceCount: true },
     });
     return asset?.referenceCount ?? 0;

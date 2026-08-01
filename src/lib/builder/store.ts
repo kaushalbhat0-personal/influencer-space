@@ -7,6 +7,7 @@ import type {
 import { builderEvents } from "./events";
 import { builderQuery } from "./query";
 import { getEntityType } from "@/lib/inspector/schemas";
+import { isPresentationKey, presentationDefaults, presentationPropsFor } from "./presentation";
 
 let idCounter = Date.now();
 function uid(): string { return `el_${++idCounter}_${Math.random().toString(36).slice(2, 6)}`; }
@@ -16,9 +17,16 @@ function clonePage(page: BuilderPage): BuilderPage { return JSON.parse(JSON.stri
 
 export class BuilderStore {
   private state: BuilderState;
+  private _storeVersion = 0;
 
   constructor() {
     this.state = this.createInitialState();
+  }
+
+  /** Monotonic store version — increments on every mutation. The canvas
+   *  rerenders and the Runtime Signature is recomputed for every bump. */
+  get storeVersion(): number {
+    return this._storeVersion;
   }
 
   /** Replace store state with pages loaded from DB. */
@@ -38,6 +46,7 @@ export class BuilderStore {
       history: [],
       historyIndex: -1,
     };
+    builderQuery.invalidate();
     this.emitStoreChanged();
   }
 
@@ -72,7 +81,8 @@ export class BuilderStore {
   }
 
   private emitStoreChanged(): void {
-    builderEvents.emit("store:changed", { isDirty: this.state.isDirty, timestamp: Date.now() });
+    this._storeVersion++;
+    builderEvents.emit("store:changed", { isDirty: this.state.isDirty, timestamp: Date.now(), version: this._storeVersion });
   }
 
   private createDefaultPage(): BuilderPage {
@@ -144,6 +154,7 @@ export class BuilderStore {
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
     builderEvents.emit("history:changed", { action: "undo", index: idx });
     builderQuery.invalidate();
+    this.emitStoreChanged();
     return true;
   }
 
@@ -155,6 +166,7 @@ export class BuilderStore {
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
     builderEvents.emit("history:changed", { action: "redo", index: idx });
     builderQuery.invalidate();
+    this.emitStoreChanged();
     return true;
   }
 
@@ -166,6 +178,7 @@ export class BuilderStore {
     builderEvents.emit("node:selected", { elementId: id, multi, selectedIds: selIds });
     builderEvents.emit("selection:changed", { selectedIds: selIds, mode: multi ? "multi" : "single" });
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
 
   selectRange(from: ElementId, to: ElementId): void {
@@ -177,21 +190,24 @@ export class BuilderStore {
     const end = Math.max(fromIdx, toIdx);
     const newSet = new Set(allIds.slice(start, end + 1));
     this.state = { ...this.state, selection: { ...this.state.selection, selectedIds: newSet, mode: "range", anchorId: from, focusId: to }, canvas: { ...this.state.canvas, selectedElementIds: newSet } };
+    this.emitStoreChanged();
   }
 
   selectAll(): void {
     const allIds = this.getAllElementIds();
     const newSet = new Set(allIds);
     this.state = { ...this.state, selection: { ...this.state.selection, selectedIds: newSet, mode: "multi" }, canvas: { ...this.state.canvas, selectedElementIds: newSet } };
+    this.emitStoreChanged();
   }
 
   clearSelection(): void {
     this.state = { ...this.state, selection: { selectedIds: new Set(), mode: "single", anchorId: null, focusId: null, groupId: null }, canvas: { ...this.state.canvas, selectedElementIds: new Set() } };
     builderEvents.emit("selection:changed", { selectedIds: [], mode: "single" });
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
 
-  copy(): void { const selectedIds = this.getSelectedIds(); if (selectedIds.length === 0) return; const entries: ClipboardEntry[] = []; for (const id of selectedIds) { const slot = this.findSlotById(id); if (slot) entries.push({ type: "slot", data: { ...slot, id: uid() }, sourcePageId: this.state.canvas.activePageId ?? "", timestamp: Date.now() }); } if (entries.length > 0) this.state = { ...this.state, clipboard: [...this.state.clipboard, ...entries].slice(-20) }; }
+  copy(): void { const selectedIds = this.getSelectedIds(); if (selectedIds.length === 0) return; const entries: ClipboardEntry[] = []; for (const id of selectedIds) { const slot = this.findSlotById(id); if (slot) entries.push({ type: "slot", data: { ...slot, id: uid() }, sourcePageId: this.state.canvas.activePageId ?? "", timestamp: Date.now() }); } if (entries.length > 0) { this.state = { ...this.state, clipboard: [...this.state.clipboard, ...entries].slice(-20) }; this.emitStoreChanged(); } }
 
   cut(): void { this.copy(); const ids = this.getSelectedIds(); for (const id of ids) this.removeElement(id); this.clearSelection(); }
 
@@ -209,6 +225,7 @@ export class BuilderStore {
     const section = { ...page.sections[pageIdx]!, slots: [...page.sections[pageIdx]!.slots, ...newSlots] };
     const sections = [...page.sections]; sections[pageIdx] = section;
     this.updatePageSections(page.id, sections);
+    builderQuery.invalidate();
   }
 
   duplicate(id: ElementId): void {
@@ -226,6 +243,7 @@ export class BuilderStore {
 
   startDrag(sourceId: ElementId, sourceType: "slot" | "section"): void {
     this.state = { ...this.state, drag: { isDragging: true, sourceId, sourceType, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } };
+    this.emitStoreChanged();
   }
 
   updateDragTarget(targetSectionId: SectionId, insertionIndex: number): void {
@@ -234,18 +252,20 @@ export class BuilderStore {
 
   endDrag(): void {
     const d = this.state.drag;
-    if (!d.isDragging || !d.sourceId || !d.targetSectionId || d.insertionIndex === null) { this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } }; return; }
+    if (!d.isDragging || !d.sourceId || !d.targetSectionId || d.insertionIndex === null) { this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } }; this.emitStoreChanged(); return; }
     this.pushHistory("move");
     this.moveElementTo(d.sourceId, d.targetSectionId, d.insertionIndex);
     this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } };
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
 
-  cancelDrag(): void { this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } }; }
+  cancelDrag(): void { this.state = { ...this.state, drag: { isDragging: false, sourceId: null, sourceType: null, targetId: null, targetSectionId: null, insertionIndex: null, preview: null } }; this.emitStoreChanged(); }
 
   addPage(name: string, slug: string): BuilderPage {
     const page: BuilderPage = { id: uid(), name, slug, order: this.state.canvas.pages.length, isHome: this.state.canvas.pages.length === 0, sections: [], theme: "com.creatos.neon-dark", metadata: {} };
     this.state = { ...this.state, canvas: { ...this.state.canvas, pages: [...this.state.canvas.pages, page], activePageId: this.state.canvas.activePageId ?? page.id } };
+    this.emitStoreChanged();
     return page;
   }
 
@@ -282,9 +302,17 @@ export class BuilderStore {
     builderQuery.invalidate();
   }
 
-  /** Update a single config key on a block — used by the Property Inspector. */
+  /**
+   * Update a single config key on a block — used by the Property Inspector.
+   * Presentation-only: content keys are rejected so the Builder never persists
+   * business content (it always lives in the live CMS).
+   */
   updateBlockConfig(elementId: ElementId, key: string, value: unknown): void {
     const page = this.activePage; if (!page) return;
+    const slot = this.findSlotById(elementId);
+    if (!slot) return;
+    if (!isPresentationKey(slot.moduleId, key)) return;
+
     this.pushHistory("config-change");
     const updatedSections = page.sections.map((s) => ({
       ...s,
@@ -298,6 +326,7 @@ export class BuilderStore {
     builderEvents.emit("selection:changed", { selectedIds: this.getSelectedIds(), mode: this.state.selection.mode });
     builderEvents.emit("config:changed", { elementId, key, value });
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
 
   moveElementTo(slotId: ElementId, targetSectionId: SectionId, index: number): void {
@@ -351,16 +380,21 @@ export class BuilderStore {
     builderQuery.invalidate();
   }
 
-  /** Insert a new block (slot) from a component ID using default props from the registry. */
-  insertComponent(componentId: string, sectionId: SectionId, index?: number): void {
+  /**
+   * Insert a new block (slot) from a component ID.
+   * The config is a PresentationBlueprint only — content defaults are never
+   * seeded; content always comes from the live CMS at render time.
+   */
+  insertComponent(componentId: string, sectionId: SectionId, index?: number, defaultProps?: Record<string, unknown>): void {
     const page = this.activePage; if (!page) return;
     const section = page.sections.find((s) => s.id === sectionId); if (!section) return;
     this.pushHistory("insert-component");
     const entityType = getEntityType(componentId);
+    const presentation = defaultProps ? presentationPropsFor(componentId, defaultProps) : presentationDefaults(componentId);
     const slot: BuilderSlot = {
       id: uid(), moduleId: componentId, parentId: sectionId,
       order: index ?? section.slots.length, visible: true, locked: false,
-      config: entityType ? { entityType } : {}, metadata: {},
+      config: { ...presentation, ...(entityType ? { entityType } : {}) }, metadata: {},
     };
     const sIdx = page.sections.findIndex((s) => s.id === sectionId);
     const slots = [...section.slots];
@@ -368,6 +402,7 @@ export class BuilderStore {
     const sections = [...page.sections]; sections[sIdx] = { ...section, slots };
     this.updatePageSections(page.id, sections);
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
 
   setDevice(device: BuilderCanvas["device"]): void {
@@ -375,12 +410,14 @@ export class BuilderStore {
     this.state = { ...this.state, canvas: { ...this.state.canvas, device } };
     builderEvents.emit("device:changed", { previous, current: device });
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
   setZoom(zoom: number): void {
     const previous = this.state.canvas.zoom;
     this.state = { ...this.state, canvas: { ...this.state.canvas, zoom: Math.max(0.25, Math.min(2, zoom)) } };
     builderEvents.emit("zoom:changed", { previous, current: this.state.canvas.zoom });
     builderQuery.invalidate();
+    this.emitStoreChanged();
   }
   setHovered(id: ElementId | null): void {
     this.state = { ...this.state, canvas: { ...this.state.canvas, hoveredElementId: id } };

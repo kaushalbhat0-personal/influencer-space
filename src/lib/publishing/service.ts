@@ -19,21 +19,18 @@ import { revalidatePath } from "next/cache";
 import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
-import { builderPagesToLayoutSnapshot } from "@/lib/builder/layout";
 import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
-import { themeResolver } from "@/lib/theme/resolver-new";
-import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
 import { resolveModuleId } from "@/lib/registry/resolve-module";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import type { PublishedSnapshot } from "@/types/snapshot";
+import { buildRuntimeSnapshot, EMPTY_AGGREGATE } from "@/lib/storefront/build-snapshot";
 import { publishRepository } from "@/modules/tenant/infrastructure/publishing-repository";
 import { logger } from "@/lib/observability/logger";
 import { runWorkflow } from "@/lib/observability/workflow-diagnostics";
 import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
-
-const FALLBACK_THEME_ID = "com.creatos.neon-dark";
+import { traceRuntime } from "@/lib/observability/runtime-trace";
 
 export type PublishState = "draft" | "preview" | "live" | "archived";
 
@@ -93,6 +90,16 @@ export class PublishingService {
       });
       if (!tenant) return { success: false, error: "Tenant not found" };
 
+      // Storefront routing must exist before a publish can go live. Without a
+      // subdomain or custom domain the storefront route ([domain]) can never
+      // resolve the tenant, so the publish would produce a dead URL.
+      if (!tenant.subdomain && !tenant.customDomain) {
+        return {
+          success: false,
+          error: "Storefront routing is not configured. Set a subdomain or custom domain before publishing.",
+        };
+      }
+
       const workspace = await prisma.workspace.findUnique({ where: { tenantId } });
       if (workspace) {
         try {
@@ -111,16 +118,18 @@ export class PublishingService {
       const websiteId = website.id;
       const storeRoot = buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain);
 
-      const [builderPages, websiteFull, aggregate, navItems, correlationId] = await Promise.all([
+      const [builderPages, websiteFull, aggResult, navItems, correlationId] = await Promise.all([
         this.loadBuilderPages(websiteId),
         prisma.website.findUnique({
           where: { id: websiteId },
           select: { themePackageId: true, themeColors: true, themeFonts: true },
         }),
-        websiteAggregateService.build(tenantId),
+        websiteAggregateService.buildWithDiagnostics(tenantId),
         navigationService.getOrGenerate(tenantId),
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
+      const aggregate = aggResult.aggregate;
+      const { invalidAssetIds, skippedAssets, moduleFailures } = aggResult;
 
       const blocking = await this.collectBlockingIssues(builderPages);
       if (blocking.length > 0) {
@@ -129,64 +138,39 @@ export class PublishingService {
 
       const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
       const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
-      const resolvedTheme = themeResolver.resolveForSnapshot(
-        websiteFull?.themePackageId ?? FALLBACK_THEME_ID,
-        "dark",
-        {
-          overrides: Object.keys(websiteColors).length > 0 || Object.keys(websiteFonts).length > 0 ? {
-            colors: {
-              primary: websiteColors.primary as string | undefined,
-              secondary: websiteColors.secondary as string | undefined,
-              accent: websiteColors.accent as string | undefined,
-              background: websiteColors.background as string | undefined,
-              foreground: websiteColors.foreground as string | undefined,
-              muted: websiteColors.muted as string | undefined,
-            },
-            typography: {
-              heading: websiteFonts.heading as string | undefined,
-              body: websiteFonts.body as string | undefined,
-            },
-          } as Partial<ResolvedSnapshotTheme> : undefined,
-        },
-      );
+      const buildStart = Date.now();
+      const runtimeSnapshot = buildRuntimeSnapshot({
+        websiteId,
+        correlationId,
+        builderPages,
+        aggregate,
+        navItems,
+        themePackageId: websiteFull?.themePackageId ?? null,
+        themeColors: websiteColors,
+        themeFonts: websiteFonts,
+      });
+      const buildMs = Date.now() - buildStart;
+
+      traceRuntime({
+        runtimeType: "publish",
+        creator: aggregate.identity?.name || "",
+        theme: runtimeSnapshot.theme,
+        layout: runtimeSnapshot.layout,
+        aggregate,
+        websiteId,
+        tenantId,
+        slug: tenant.subdomain ?? tenant.customDomain ?? null,
+        correlationId,
+        timings: { aggregateMs: buildMs, totalMs: buildMs },
+        diagnostics: { invalidAssetIds, skippedAssets, moduleFailures },
+      });
+
+      // Publish copies ONLY the presentation blueprint: layout + theme +
+      // navigation. Content is never baked into the snapshot — the storefront
+      // always reads it live from the CMS (websiteAggregateService.build).
       const canonicalSnapshot: PublishedSnapshot = {
-        _schema: "creatorstore.snapshot",
-        _version: 1,
-        metadata: {
-          version: 0,
-          publishedAt: new Date().toISOString(),
-          previousVersion: null,
-          correlationId,
-          generatedBy: "dashboard",
-        },
-        content: aggregate,
-        layout: builderPagesToLayoutSnapshot(builderPages),
-        theme: {
-          packageId: resolvedTheme?.packageId ?? websiteFull?.themePackageId ?? FALLBACK_THEME_ID,
-          colors: {
-            primary: resolvedTheme?.colors.primary ?? "#6366F1",
-            secondary: resolvedTheme?.colors.secondary ?? "#818CF8",
-            accent: resolvedTheme?.colors.accent ?? "#A5B4FC",
-            background: resolvedTheme?.colors.background ?? "#09090b",
-            foreground: resolvedTheme?.colors.foreground ?? "#fafafa",
-            muted: resolvedTheme?.colors.muted ?? "#a1a1aa",
-          },
-          typography: {
-            heading: resolvedTheme?.typography.heading ?? "Inter",
-            body: resolvedTheme?.typography.body ?? "Inter",
-          },
-        },
-        navigation: navItems.map((n) => ({
-          id: n.id,
-          label: n.label,
-          href: n.href,
-          type: n.type,
-          order: n.order,
-          visible: n.visible,
-          ...(n.target ? { target: n.target } : {}),
-          ...(n.icon ? { icon: n.icon } : {}),
-        })),
-        renderingHints: {},
+        ...runtimeSnapshot,
+        content: EMPTY_AGGREGATE,
       };
 
       const result = await publishRepository.createPublish(websiteId, canonicalSnapshot);
@@ -240,77 +224,6 @@ export class PublishingService {
       return { success: true };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : "Failed to mark changes" };
-    }
-  }
-
-  async preview(tenantId: string): Promise<{ success: boolean; version?: number; error?: string }> {
-    const startTime = Date.now();
-    logger.info("Preview started", "publishing", { metadata: { tenantId } });
-    try {
-      const website = await prisma.website.findUnique({
-        where: { tenantId },
-        select: { id: true, themePackageId: true, themeColors: true, themeFonts: true },
-      });
-      if (!website) return { success: false, error: "Website not found" };
-
-      const [builderPages, aggregate, navItems] = await Promise.all([
-        this.loadBuilderPages(website.id),
-        websiteAggregateService.build(tenantId),
-        navigationService.getOrGenerate(tenantId),
-      ]);
-
-      const websiteColors = (website.themeColors ?? {}) as Record<string, string>;
-      const websiteFonts = (website.themeFonts ?? {}) as Record<string, string>;
-      const resolvedTheme = themeResolver.resolveForSnapshot(
-        website.themePackageId ?? FALLBACK_THEME_ID,
-        "dark",
-        {
-          overrides: Object.keys(websiteColors).length > 0 || Object.keys(websiteFonts).length > 0 ? {
-            colors: {
-              primary: websiteColors.primary,
-              secondary: websiteColors.secondary,
-              accent: websiteColors.accent,
-              background: websiteColors.background,
-              foreground: websiteColors.foreground,
-              muted: websiteColors.muted,
-            },
-            typography: {
-              heading: websiteFonts.heading,
-              body: websiteFonts.body,
-            },
-          } as Partial<ResolvedSnapshotTheme> : undefined,
-        },
-      );
-      const previewSnapshot: PublishedSnapshot = {
-        _schema: "creatorstore.snapshot",
-        _version: 1,
-        metadata: { version: 0, publishedAt: new Date().toISOString(), previousVersion: null, correlationId: `preview_${website.id}`, generatedBy: "dashboard" },
-        content: aggregate,
-        layout: builderPagesToLayoutSnapshot(builderPages),
-        theme: {
-          packageId: resolvedTheme?.packageId ?? website.themePackageId ?? FALLBACK_THEME_ID,
-          colors: { primary: resolvedTheme?.colors.primary ?? "#6366F1", secondary: resolvedTheme?.colors.secondary ?? "#818CF8", accent: resolvedTheme?.colors.accent ?? "#A5B4FC", background: resolvedTheme?.colors.background ?? "#09090b", foreground: resolvedTheme?.colors.foreground ?? "#fafafa", muted: resolvedTheme?.colors.muted ?? "#a1a1aa" },
-          typography: { heading: resolvedTheme?.typography.heading ?? "Inter", body: resolvedTheme?.typography.body ?? "Inter" },
-        },
-        navigation: navItems.map((n) => ({
-          id: n.id,
-          label: n.label,
-          href: n.href,
-          type: n.type,
-          order: n.order,
-          visible: n.visible,
-          ...(n.target ? { target: n.target } : {}),
-          ...(n.icon ? { icon: n.icon } : {}),
-        })),
-        renderingHints: {},
-      };
-
-      const result = await publishRepository.createPreview(website.id, previewSnapshot);
-      logger.info("Preview completed", "publishing", { duration: Date.now() - startTime, metadata: { tenantId, version: result.version } });
-      return { success: true, version: result.version };
-    } catch (error) {
-      captureError(error, { service: "publishing", operation: "preview", tenantId });
-      return { success: false, error: error instanceof Error ? error.message : "Preview failed" };
     }
   }
 

@@ -42,7 +42,7 @@ export interface BuilderEventPayloads {
   "publish:requested": { timestamp: number };
   "history:changed": { action: string; index: number };
   "transaction:committed": { transactionId: string; commandCount: number };
-  "store:changed": { isDirty: boolean; timestamp: number };
+  "store:changed": { isDirty: boolean; timestamp: number; version?: number };
   "drag:started": { elementId: ElementId; parentSectionId: SectionId };
   "drag:updated": { x: number; y: number; targetId: ElementId | null };
   "drag:targetChanged": { previousElementId: ElementId | null; newElementId: ElementId | null; dropZone: string };

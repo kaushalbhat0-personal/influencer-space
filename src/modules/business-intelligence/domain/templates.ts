@@ -12,11 +12,10 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { name: "Contact", slug: "/contact", isHome: false, order: 4 },
     ],
     sections: [
-      { moduleId: "hero.creator", pageSlug: "/", order: 0 },
-      { moduleId: "products.featured", pageSlug: "/", order: 1 },
-      { moduleId: "testimonials.carousel", pageSlug: "/", order: 2 },
-      { moduleId: "newsletter.signup", pageSlug: "/", order: 3 },
-      { moduleId: "social.proof", pageSlug: "/", order: 4 },
+      { moduleId: "hero.default", pageSlug: "/", order: 0 },
+      { moduleId: "products.grid", pageSlug: "/", order: 1 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 2 },
+      { moduleId: "newsletter.default", pageSlug: "/", order: 3 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -49,11 +48,10 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { name: "Contact", slug: "/contact", isHome: false, order: 5 },
     ],
     sections: [
-      { moduleId: "hero.professional", pageSlug: "/", order: 0 },
-      { moduleId: "services.grid", pageSlug: "/", order: 1 },
-      { moduleId: "testimonials.carousel", pageSlug: "/", order: 2 },
-      { moduleId: "pricing.table", pageSlug: "/", order: 3 },
-      { moduleId: "booking.cta", pageSlug: "/", order: 4 },
+      { moduleId: "hero.default", pageSlug: "/", order: 0 },
+      { moduleId: "services.default", pageSlug: "/", order: 1 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 2 },
+      { moduleId: "pricing.default", pageSlug: "/", order: 3 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -86,11 +84,9 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { name: "Contact", slug: "/contact", isHome: false, order: 4 },
     ],
     sections: [
-      { moduleId: "hero.restaurant", pageSlug: "/", order: 0 },
-      { moduleId: "menu.preview", pageSlug: "/", order: 1 },
-      { moduleId: "gallery.grid", pageSlug: "/", order: 2 },
-      { moduleId: "reviews.carousel", pageSlug: "/", order: 3 },
-      { moduleId: "location.map", pageSlug: "/", order: 4 },
+      { moduleId: "hero.default", pageSlug: "/", order: 0 },
+      { moduleId: "gallery.grid", pageSlug: "/", order: 1 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 2 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -123,12 +119,11 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { name: "Contact", slug: "/contact", isHome: false, order: 5 },
     ],
     sections: [
-      { moduleId: "hero.corporate", pageSlug: "/", order: 0 },
-      { moduleId: "services.grid", pageSlug: "/", order: 1 },
-      { moduleId: "case_studies.grid", pageSlug: "/", order: 2 },
-      { moduleId: "pricing.table", pageSlug: "/", order: 3 },
-      { moduleId: "testimonials.carousel", pageSlug: "/", order: 4 },
-      { moduleId: "cta.contact", pageSlug: "/", order: 5 },
+      { moduleId: "hero.default", pageSlug: "/", order: 0 },
+      { moduleId: "services.default", pageSlug: "/", order: 1 },
+      { moduleId: "pricing.default", pageSlug: "/", order: 2 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 3 },
+      { moduleId: "contact.default", pageSlug: "/", order: 4 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -161,11 +156,11 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { name: "Contact", slug: "/contact", isHome: false, order: 4 },
     ],
     sections: [
-      { moduleId: "hero.minimal", pageSlug: "/", order: 0 },
-      { moduleId: "portfolio.grid", pageSlug: "/", order: 1 },
-      { moduleId: "services.list", pageSlug: "/", order: 2 },
-      { moduleId: "testimonials.carousel", pageSlug: "/", order: 3 },
-      { moduleId: "cta.contact", pageSlug: "/", order: 4 },
+      { moduleId: "hero.default", pageSlug: "/", order: 0 },
+      { moduleId: "gallery.grid", pageSlug: "/", order: 1 },
+      { moduleId: "services.default", pageSlug: "/", order: 2 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 3 },
+      { moduleId: "contact.default", pageSlug: "/", order: 4 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -198,10 +193,9 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     ],
     sections: [
       { moduleId: "hero.fitness", pageSlug: "/", order: 0 },
-      { moduleId: "programs.grid", pageSlug: "/", order: 1 },
-      { moduleId: "pricing.table", pageSlug: "/", order: 2 },
-      { moduleId: "testimonials.carousel", pageSlug: "/", order: 3 },
-      { moduleId: "cta.signup", pageSlug: "/", order: 4 },
+      { moduleId: "services.default", pageSlug: "/", order: 1 },
+      { moduleId: "pricing.default", pageSlug: "/", order: 2 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 3 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -234,8 +228,8 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     sections: [
       { moduleId: "hero.default", pageSlug: "/", order: 0 },
       { moduleId: "products.grid", pageSlug: "/", order: 1 },
-      { moduleId: "about.summary", pageSlug: "/", order: 2 },
-      { moduleId: "cta.contact", pageSlug: "/", order: 3 },
+      { moduleId: "about.default", pageSlug: "/", order: 2 },
+      { moduleId: "contact.default", pageSlug: "/", order: 3 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },

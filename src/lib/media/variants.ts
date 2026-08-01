@@ -90,5 +90,17 @@ export function resolveImageProps(
   variant: MediaVariant,
   overrides?: Partial<VariantConfig>,
 ): VariantConfig {
-  return { ...getVariant(variant), ...overrides };
+  // Merge variant defaults with overrides. `undefined` override values must
+  // NOT clobber the variant defaults — otherwise a caller that passes
+  // `{ width: undefined, fill: undefined }` silently disables the variant's
+  // required dimensions and Next/Image throws "missing required width".
+  const merged: VariantConfig = { ...getVariant(variant) };
+  if (overrides) {
+    for (const [key, value] of Object.entries(overrides)) {
+      if (value !== undefined) {
+        (merged as unknown as Record<string, unknown>)[key] = value;
+      }
+    }
+  }
+  return merged;
 }

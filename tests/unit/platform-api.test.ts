@@ -9,17 +9,11 @@ describe("CreatorOSPlatform", () => {
     expect(platformAPI.builder.query).toBeDefined();
   });
 
-  it("should expose preview API", () => {
-    const state = platformAPI.preview.getState();
-    expect(state).toBeDefined();
-    expect(state.device).toBeDefined();
-  });
-
-  it("should expose render API", () => {
-    expect(platformAPI.render.treeBuilder).toBeDefined();
-    expect(platformAPI.render.htmlAdapter).toBeDefined();
-    expect(platformAPI.render.reactAdapter).toBeDefined();
-    expect(platformAPI.render.staticAdapter).toBeDefined();
+  it("should NOT expose a separate preview runtime", () => {
+    // IMPLEMENTATION-14: one runtime only. Builder canvas and storefront are
+    // the same renderer; preview is the builder runtime full-page.
+    expect("preview" in platformAPI).toBe(false);
+    expect("render" in platformAPI).toBe(false);
   });
 
   it("should expose telemetry API", () => {

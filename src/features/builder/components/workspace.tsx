@@ -219,11 +219,11 @@ export function BuilderWorkspace() {
           <BuilderSidebar collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} />
         </ResizablePanel>
 
-        <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-          <div className="flex-1 overflow-auto">
-            <InteractiveCanvas device={device} zoom={1} />
+          <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+            <div className="flex-1 overflow-auto">
+              <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} />
+            </div>
           </div>
-        </div>
 
         <ResizablePanel side="right" collapsed={rightCollapsed} onToggle={() => setRightCollapsed((v) => !v)} defaultWidth={260}>
           <BuilderProperties
@@ -263,6 +263,7 @@ export function BuilderWorkspace() {
           <button
             onClick={handlePublish}
             disabled={saving || publishing}
+            data-testid="builder-publish"
             className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2.5 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
           >
             {publishing ? (

@@ -149,10 +149,13 @@ export async function getBuilderOverview(): Promise<{
     const totalSections = pages.reduce((acc, p) => acc + p._count.sections, 0);
 
     const heroVal = heroSetting?.value as Record<string, unknown> | null;
-    const heroConfigured = heroVal !== null && Object.keys(heroVal).length > 0;
+    // Note: heroSetting?.value is `undefined` when the "hero" setting is
+    // absent (the app stores hero under "hero_data"). A loose `!= null` guard
+    // catches both null and undefined so Object.keys() never throws.
+    const heroConfigured = heroVal != null && Object.keys(heroVal).length > 0;
 
     const seoVal = seoSetting?.value as Record<string, unknown> | null;
-    const seoConfigured = seoVal !== null && (!!seoVal.title || !!seoVal.description);
+    const seoConfigured = seoVal != null && (!!seoVal.title || !!seoVal.description);
 
     const profileComplete = !!(brand?.name && brand?.tagline);
 

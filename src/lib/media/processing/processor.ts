@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { storageProviderFactory } from "@/lib/media/providers/factory";
 import { imageProcessor } from "./image-processor";
 import { processingQueue } from "./queue";
+import { requireAssetId } from "@/lib/media/resolve";
 import type { ImageProcessor as ImageProcessorInterface } from "./types";
 
 export class AssetProcessor {
@@ -13,7 +14,8 @@ export class AssetProcessor {
   }
 
   async processAsset(assetId: string): Promise<void> {
-    const asset = await prisma.asset.findUnique({ where: { id: assetId } });
+    const safeId = requireAssetId(assetId, { module: "media-processor", field: "processAsset" });
+    const asset = await prisma.asset.findUnique({ where: { id: safeId } });
     if (!asset) throw new Error(`Asset not found: ${assetId}`);
 
     const isImage = asset.mimeType.startsWith("image/");
@@ -64,7 +66,7 @@ export class AssetProcessor {
       }
 
       await prisma.asset.update({
-        where: { id: assetId },
+        where: { id: safeId },
         data: {
           width: imgWidth ?? asset.width ?? null,
           height: imgHeight ?? asset.height ?? null,

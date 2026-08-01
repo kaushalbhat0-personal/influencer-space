@@ -23,19 +23,6 @@ export type SnapshotData = ArtifactSnapshotRecord | {
 };
 
 export class PublishSnapshotService {
-  async getPreview(websiteId: string): Promise<{ version: number; data: SnapshotData } | null> {
-    try {
-      const snap = await prisma.publishSnapshot.findFirst({
-        where: { websiteId, state: "preview" },
-        orderBy: { version: "desc" },
-      });
-      if (!snap) return null;
-      return { version: snap.version, data: snap.snapshot as unknown as SnapshotData };
-    } catch {
-      return null;
-    }
-  }
-
   async rollback(websiteId: string, version: number): Promise<{ pages: BuilderPage[] }> {
     try {
       const snap = await prisma.publishSnapshot.findUnique({

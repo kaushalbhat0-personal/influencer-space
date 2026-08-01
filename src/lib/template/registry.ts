@@ -126,7 +126,7 @@ const MUSIC: Template = {
     {
       name: "Home", slug: "/", isHome: true, order: 0,
       sections: [
-        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.music", order: 0 }] },
+        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.default", order: 0 }] },
         { name: "About", type: "about", order: 1, blocks: [{ moduleId: "about.default", order: 0 }] },
         { name: "Products", type: "products", order: 2, blocks: [{ moduleId: "products.grid", order: 0 }] },
         { name: "Gallery", type: "gallery", order: 3, blocks: [{ moduleId: "gallery.grid", order: 0 }] },
@@ -152,7 +152,7 @@ const RESTAURANT: Template = {
     {
       name: "Home", slug: "/", isHome: true, order: 0,
       sections: [
-        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.restaurant", order: 0 }] },
+        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.default", order: 0 }] },
         { name: "About", type: "about", order: 1, blocks: [{ moduleId: "about.default", order: 0 }] },
         { name: "Products", type: "products", order: 2, blocks: [{ moduleId: "products.grid", order: 0 }] },
         { name: "Gallery", type: "gallery", order: 3, blocks: [{ moduleId: "gallery.grid", order: 0 }] },
@@ -178,7 +178,7 @@ const PORTFOLIO: Template = {
     {
       name: "Home", slug: "/", isHome: true, order: 0,
       sections: [
-        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.portfolio", order: 0, config: { fullscreen: true } }] },
+        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.default", order: 0, config: { fullscreen: true } }] },
         { name: "About", type: "about", order: 1, blocks: [{ moduleId: "about.default", order: 0 }] },
         { name: "Gallery", type: "gallery", order: 2, blocks: [{ moduleId: "gallery.grid", order: 0 }] },
         { name: "Products", type: "products", order: 3, blocks: [{ moduleId: "products.grid", order: 0 }] },
@@ -204,7 +204,7 @@ const AGENCY: Template = {
     {
       name: "Home", slug: "/", isHome: true, order: 0,
       sections: [
-        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.agency", order: 0 }] },
+        { name: "Hero", type: "hero", order: 0, blocks: [{ moduleId: "hero.default", order: 0 }] },
         { name: "About", type: "about", order: 1, blocks: [{ moduleId: "about.default", order: 0 }] },
         { name: "Products", type: "products", order: 2, blocks: [{ moduleId: "products.grid", order: 0 }] },
         { name: "Gallery", type: "gallery", order: 3, blocks: [{ moduleId: "gallery.grid", order: 0 }] },

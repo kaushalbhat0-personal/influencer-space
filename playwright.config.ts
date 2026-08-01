@@ -37,5 +37,8 @@ export default defineConfig({
     { name: "accessibility", testMatch: ["accessibility/**/*.spec.ts"], use: { ...devices["Desktop Chrome"] } },
     { name: "performance", testMatch: ["performance/**/*.spec.ts"], use: { ...devices["Desktop Chrome"] } },
     { name: "responsive", testMatch: ["responsive/**/*.spec.ts"], use: { ...devices["iPhone 13"] } },
+
+    // Level 4 — Production E2E verification (IMPLEMENTATION-15)
+    { name: "production", testMatch: ["production/**/*.spec.ts"], use: { ...devices["Desktop Chrome"] } },
   ],
 });

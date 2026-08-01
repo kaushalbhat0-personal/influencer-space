@@ -4,6 +4,7 @@ import { storageProviderFactory } from "./providers/factory";
 import { mediaValidator, type FileInfo } from "./validator";
 import { platformEventBus } from "@/lib/events";
 import { processingQueue } from "./processing/queue";
+import { filterValidAssetIds, normalizeAssetId } from "./resolve";
 
 export interface UploadOptions {
   tenantId: string;
@@ -266,7 +267,10 @@ export class MediaService {
   }
 
   async getPublicUrl(assetId: string): Promise<string | null> {
-    const asset = await assetRepository.findById(assetId);
+    const id = normalizeAssetId(assetId);
+    if (!id) return null;
+
+    const asset = await assetRepository.findById(id);
     if (!asset || asset.status === "DELETED") return null;
 
     if (asset.publicUrl) return asset.publicUrl;
@@ -276,7 +280,8 @@ export class MediaService {
   }
 
   async resolveUrls(assetIds: (string | null | undefined)[]): Promise<Record<string, string>> {
-    const ids = assetIds.filter((id): id is string => id != null);
+    // Never query Prisma with "", "null", "undefined", or a malformed id.
+    const ids = filterValidAssetIds(assetIds);
     if (ids.length === 0) return {};
 
     const result: Record<string, string> = {};

@@ -8,6 +8,17 @@ export interface PublishResult {
   websiteId: string;
 }
 
+const MAX_VERSION_RETRIES = 3;
+
+/** P2002 = unique constraint violation (concurrent version bump race). */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === "P2002"
+  );
+}
+
 export class PublishRepository {
   /**
    * Compute the next version number across ALL snapshots for the website
@@ -23,13 +34,57 @@ export class PublishRepository {
     return (agg._max.version ?? 0) + 1;
   }
 
+  /**
+   * Ensures the PublishStatus row exists BEFORE the snapshot insert. The
+   * PublishSnapshot.websiteId FK references PublishStatus.websiteId, so an
+   * insert without a prior status row fails with P2003 even though the status
+   * is upserted later in the same transaction. Creating the row first (with a
+   * neutral "draft" state) guarantees the FK is satisfied regardless of
+   * whether the website was provisioned through the full pipeline.
+   */
+  private async ensureStatusRow(tx: Prisma.TransactionClient, websiteId: string): Promise<void> {
+    await tx.publishStatus.upsert({
+      where: { websiteId },
+      create: { websiteId, state: "draft" },
+      update: {},
+    });
+  }
+
+  /**
+   * Runs the persist transaction, retrying when two concurrent publishes race
+   * on the same `@@unique([websiteId, version])` version. A retry recomputes
+   * the version from the committed max, so the second write lands on a fresh
+   * version instead of failing.
+   */
+  private async withVersionRetry<T>(
+    websiteId: string,
+    run: (tx: Prisma.TransactionClient, nextVersion: number) => Promise<T>,
+  ): Promise<T> {
+    for (let attempt = 0; attempt < MAX_VERSION_RETRIES; attempt++) {
+      try {
+        return await prisma.$transaction(async (tx) => {
+          const nextVersion = await this.nextVersion(websiteId, tx);
+          return run(tx, nextVersion);
+        });
+      } catch (error) {
+        if (isUniqueViolation(error) && attempt < MAX_VERSION_RETRIES - 1) {
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new Error("Publish version conflict after retries");
+  }
+
   async createPublish(
     websiteId: string,
     snapshot: PublishedSnapshot,
   ): Promise<PublishResult> {
-    return prisma.$transaction(async (tx) => {
-      const nextVersion = await this.nextVersion(websiteId, tx);
+    return this.withVersionRetry(websiteId, async (tx, nextVersion) => {
       snapshot.metadata.version = nextVersion;
+
+      // FK ordering: PublishStatus row must exist before PublishSnapshot insert.
+      await this.ensureStatusRow(tx, websiteId);
 
       const snap = await tx.publishSnapshot.create({
         data: {
@@ -40,41 +95,12 @@ export class PublishRepository {
         },
       });
 
-      await tx.publishStatus.upsert({
+      await tx.publishStatus.update({
         where: { websiteId },
-        create: { websiteId, state: "live", liveVersion: nextVersion, publishedAt: new Date() },
-        update: { state: "live", liveVersion: nextVersion, publishedAt: new Date() },
+        data: { state: "live", liveVersion: nextVersion, publishedAt: new Date() },
       });
 
       return { version: snap.version, websiteId };
-    });
-  }
-
-  async createPreview(
-    websiteId: string,
-    snapshot: PublishedSnapshot,
-  ): Promise<PublishResult> {
-    return prisma.$transaction(async (tx) => {
-      const nextVersion = await this.nextVersion(websiteId, tx);
-
-      snapshot.metadata.version = nextVersion;
-
-      await tx.publishSnapshot.create({
-        data: {
-          websiteId,
-          version: nextVersion,
-          state: "preview",
-          snapshot: JSON.parse(JSON.stringify(serializeSnapshot(snapshot))),
-        },
-      });
-
-      await tx.publishStatus.upsert({
-        where: { websiteId },
-        create: { websiteId, state: "preview" },
-        update: { state: "preview" },
-      });
-
-      return { version: nextVersion, websiteId };
     });
   }
 

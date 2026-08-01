@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { normalizeAssetId } from "@/lib/media/resolve";
 import type { ProfileData, SocialLink, BrandColors } from "./types";
 
 export const profileService = {
@@ -62,9 +63,9 @@ export const profileService = {
       if (input.tagline !== undefined) updateData.tagline = input.tagline;
       if (input.bio !== undefined) updateData.bio = input.bio;
       if (input.avatarUrl !== undefined) updateData.avatarUrl = input.avatarUrl;
-      if (input.avatarAssetId !== undefined) updateData.avatarAssetId = input.avatarAssetId;
+      if (input.avatarAssetId !== undefined) updateData.avatarAssetId = normalizeAssetId(input.avatarAssetId);
       if (input.bannerUrl !== undefined) updateData.bannerUrl = input.bannerUrl;
-      if (input.bannerAssetId !== undefined) updateData.bannerAssetId = input.bannerAssetId;
+      if (input.bannerAssetId !== undefined) updateData.bannerAssetId = normalizeAssetId(input.bannerAssetId);
       if (input.socialLinks !== undefined) updateData.socialLinks = input.socialLinks;
       if (Object.keys(updateData).length > 0) {
         await prisma.brand.update({ where: { id: brand.id }, data: updateData });

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
+import { requireAssetId } from "@/lib/media/resolve";
 
 export interface CreateAssetData {
   tenantId: string;
@@ -51,28 +52,32 @@ export class AssetCommands {
   }
 
   async update(id: string, data: UpdateAssetData) {
+    const safeId = requireAssetId(id, { module: "asset-commands", field: "update" });
     return prisma.asset.update({
-      where: { id },
+      where: { id: safeId },
       data: data as Prisma.AssetUpdateInput,
     });
   }
 
   async softDelete(id: string) {
+    const safeId = requireAssetId(id, { module: "asset-commands", field: "softDelete" });
     return prisma.asset.update({
-      where: { id },
+      where: { id: safeId },
       data: { status: "DELETED" },
     });
   }
 
   async restore(id: string) {
+    const safeId = requireAssetId(id, { module: "asset-commands", field: "restore" });
     return prisma.asset.update({
-      where: { id },
+      where: { id: safeId },
       data: { status: "ACTIVE" },
     });
   }
 
   async hardDelete(id: string) {
-    return prisma.asset.delete({ where: { id } });
+    const safeId = requireAssetId(id, { module: "asset-commands", field: "hardDelete" });
+    return prisma.asset.delete({ where: { id: safeId } });
   }
 }
 

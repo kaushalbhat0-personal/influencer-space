@@ -95,7 +95,7 @@ export type { ProvisionActionResult } from "./provision.actions";
 
 export {
   publishWebsite, rollbackWebsite, getPublishStatus,
-  previewWebsite, validateBeforePublish,
+  validateBeforePublish,
 } from "./publish.actions";
 export type { PublishActionResult } from "./publish.actions";
 

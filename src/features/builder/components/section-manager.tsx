@@ -4,6 +4,9 @@ import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { builderStore } from "@/lib/builder/store";
 import { builderEditor } from "@/lib/builder/commands/editor";
+import { builderEvents } from "@/lib/builder/events";
+import { componentRegistry } from "@/lib/registry/components";
+import type { ComponentCategory } from "@/lib/registry/components/types";
 import { cn } from "@/lib/utils";
 import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
@@ -15,7 +18,7 @@ import {
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
   hero: Sparkles, about: User, products: ShoppingBag, gallery: Image,
   testimonials: MessageSquare, faq: HelpCircle, timeline: Trophy,
-  games: Gamepad2, contentFeed: Rss, links: Link2, footer: Layout,
+  games: Gamepad2, contentfeed: Rss, links: Link2, footer: Layout,
   contact: Mail, newsletter: Rss, pricing: CreditCard, courses: BookOpen,
   services: Briefcase, embed: Music, social: MessageCircle,
 };
@@ -42,31 +45,34 @@ const CONTENT_LABELS: Record<string, string> = {
   faq: "Items", timeline: "Events", games: "Games", links: "Links",
   hero: "Hero", about: "About", footer: "Footer", contact: "Contact",
   newsletter: "Subscribers", pricing: "Plans", courses: "Courses",
-  services: "Services", embed: "Embeds", social: "Links", contentFeed: "Posts",
+  services: "Services", embed: "Embeds", social: "Links", contentfeed: "Posts",
 };
 
-const DEFAULT_SECTIONS = [
-  "Hero", "About", "Products", "Gallery", "Timeline",
-  "Testimonials", "FAQ", "Courses", "Services", "Games",
-  "ContentFeed", "Newsletter", "Contact", "Footer",
+/**
+ * The sidebar catalog. Each entry maps to a REGISTERED component id, so every
+ * "Add Section" click produces a section + default slot + registered component
+ * that the canvas renders immediately. The catalog is validated against the
+ * ComponentRegistry at module load — any entry whose component is not
+ * registered is dropped, so the sidebar and canvas can never diverge.
+ */
+const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId: string }[] = [
+  { name: "Hero", category: "hero", componentId: "hero.default" },
+  { name: "About", category: "about", componentId: "about.default" },
+  { name: "Products", category: "products", componentId: "products.grid" },
+  { name: "Gallery", category: "gallery", componentId: "gallery.grid" },
+  { name: "Timeline", category: "timeline", componentId: "timeline.default" },
+  { name: "Testimonials", category: "testimonials", componentId: "testimonials.default" },
+  { name: "FAQ", category: "faq", componentId: "faq.default" },
+  { name: "Courses", category: "courses", componentId: "courses.default" },
+  { name: "Services", category: "services", componentId: "services.default" },
+  { name: "Games", category: "games", componentId: "games.default" },
+  { name: "ContentFeed", category: "contentFeed", componentId: "contentFeed.default" },
+  { name: "Newsletter", category: "newsletter", componentId: "newsletter.default" },
+  { name: "Contact", category: "contact", componentId: "contact.default" },
+  { name: "Footer", category: "footer", componentId: "footer.default" },
 ];
 
-const SECTION_MODULE_MAP: Record<string, string> = {
-  Hero: "hero.default",
-  About: "about.default",
-  Products: "products.grid",
-  Gallery: "gallery.grid",
-  Timeline: "timeline.default",
-  Testimonials: "testimonials.default",
-  FAQ: "faq.default",
-  Courses: "courses.default",
-  Services: "services.default",
-  Games: "games.default",
-  ContentFeed: "contentFeed.default",
-  Newsletter: "newsletter.default",
-  Contact: "contact.default",
-  Footer: "footer.default",
-};
+const DEFAULT_SECTIONS = SECTION_CATALOG.filter((e) => componentRegistry.get(e.componentId) !== undefined);
 
 interface SectionData {
   id: string;
@@ -95,10 +101,12 @@ function SectionCard({
   const moduleId = section.moduleIds[0] ?? "";
   const editHref = moduleId ? EDIT_LINKS[moduleId] : null;
   const contentLabel = CONTENT_LABELS[section.name.toLowerCase()] ?? "Items";
+  const tid = section.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
   return (
       <div
         onClick={() => onSelect(section.id)}
+        data-testid={`builder-section-${tid}`}
         className={cn(
           "group flex items-center gap-1.5 rounded-lg px-2 py-2 cursor-pointer transition-colors",
           isSelected
@@ -134,16 +142,19 @@ function SectionCard({
 
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         <button onClick={(e) => { e.stopPropagation(); onMoveUp(section.id); }}
+          data-testid={`section-${tid}-up`}
           disabled={index === 0}
           className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400 disabled:opacity-20">
           <ArrowUp className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onMoveDown(section.id); }}
+          data-testid={`section-${tid}-down`}
           disabled={index === total - 1}
           className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400 disabled:opacity-20">
           <ArrowDown className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(section.id); }}
+          data-testid={`section-${tid}-toggle`}
           className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400">
           {section.visible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </button>
@@ -154,10 +165,12 @@ function SectionCard({
           </Link>
         )}
         <button onClick={(e) => { e.stopPropagation(); onDuplicate(section.id); }}
+          data-testid={`section-${tid}-duplicate`}
           className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400">
           <Copy className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onDelete(section.id); }}
+          data-testid={`section-${tid}-delete`}
           className="rounded p-0.5 text-zinc-700 hover:bg-red-500/20 hover:text-red-400">
           <Trash2 className="h-3 w-3" />
         </button>
@@ -185,16 +198,16 @@ export function SectionManager({ className }: { className?: string }) {
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 1500);
-    return () => clearInterval(interval);
+    // Reactive, not polled: every store mutation re-syncs the sidebar. The
+    // canvas and sidebar read the same store, so they can never diverge.
+    return builderEvents.subscribe("store:changed", () => refresh());
   }, [refresh]);
 
-  const addSection = useCallback((name: string) => {
-    const sec = builderStore.addSection(name);
-    const moduleId = SECTION_MODULE_MAP[name];
-    if (moduleId) {
-      builderStore.insertComponent(moduleId, sec.id, 0);
-    }
+  const addSection = useCallback((entry: { name: string; category: ComponentCategory; componentId: string }) => {
+    const definition = componentRegistry.get(entry.componentId);
+    if (!definition) return;
+    const sec = builderStore.addSection(entry.name);
+    builderStore.insertComponent(entry.componentId, sec.id, 0);
     setTimeout(refresh, 50);
   }, [refresh]);
 
@@ -255,13 +268,14 @@ export function SectionManager({ className }: { className?: string }) {
       <div className="border-t border-white/5 p-2">
         <p className="text-[9px] font-medium text-zinc-700 uppercase mb-1.5 px-1">Add Section</p>
         <div className="grid grid-cols-2 gap-1">
-          {DEFAULT_SECTIONS.map((name) => {
-            const Icon = getIcon(name);
+          {DEFAULT_SECTIONS.map((entry) => {
+            const Icon = getIcon(entry.name);
             return (
-              <button key={name} onClick={() => addSection(name)}
+              <button key={entry.componentId} onClick={() => addSection(entry)}
+                data-testid={`add-section-${entry.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                 className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-2 py-1.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition-colors">
                 <Icon className="h-3 w-3 shrink-0" />
-                {name}
+                {entry.name}
               </button>
             );
           })}

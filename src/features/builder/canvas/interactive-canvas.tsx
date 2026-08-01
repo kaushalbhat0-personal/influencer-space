@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, useReducer, useMemo, useCallback } from "react";
 import { builderEvents } from "@/lib/builder/events";
 import { ComponentRenderer } from "@/lib/renderer";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
@@ -9,7 +9,9 @@ import { builderPagesToLayoutSnapshot, slotIdFromSectionId } from "@/lib/builder
 import { layoutEngine } from "@/lib/storefront/layout-engine";
 import { themeResolver } from "@/lib/theme/resolver-new";
 import { getLivePreviewData } from "@/actions/builder-preview.actions";
-import type { PublishedSnapshot } from "@/types/snapshot";
+import type { PublishedSnapshot, LayoutSnapshot, ThemeSnapshot } from "@/types/snapshot";
+import { traceRuntime, computeRuntimeSignature, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
+import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
 
 const DEVICE_WIDTHS: Record<string, number> = { mobile: 375, tablet: 768, desktop: 1200 };
 
@@ -21,43 +23,124 @@ const FALLBACK_THEME_ID = "com.creatos.neon-dark";
  * builder-only rendering. The preview always equals Published Blueprint
  * (theme + layout rules) + Current Draft (builder pages) + live content.
  */
-export const InteractiveCanvas = memo(function InteractiveCanvas({
+export function InteractiveCanvas({
   device,
   zoom,
+  themePackageId: themeOverride,
 }: {
   device: string;
   zoom: number;
+  themePackageId?: string | null;
 }) {
   const [liveContent, setLiveContent] = useState<PublishedSnapshot["content"] | null>(null);
-  const [themePackageId, setThemePackageId] = useState<string | null>(null);
+  const [fetchedThemePackageId, setFetchedThemePackageId] = useState<string | null>(null);
+  const [themeColors, setThemeColors] = useState<Record<string, string>>({});
+  const [themeFonts, setThemeFonts] = useState<Record<string, string>>({});
+  const [diagnostics, setDiagnostics] = useState<AggregateTraceDiagnostics>({
+    invalidAssetIds: [], skippedAssets: 0, moduleFailures: [],
+  });
   const [dataReady, setDataReady] = useState(false);
+  const [, forceRender] = useReducer((x: number) => x + 1, 0);
 
-  useEffect(() => {
-    let cancelled = false;
-    getLivePreviewData().then((res) => {
-      if (cancelled) return;
-      if (res.success && res.content) {
-        setLiveContent(res.content as PublishedSnapshot["content"]);
-        setThemePackageId(res.themePackageId ?? null);
-      }
-      setDataReady(true);
-    });
-    return () => { cancelled = true; };
+  // Theme source: the workspace owns the authoritative theme state (current +
+  // preview). The fetched theme is only a fallback until the overview loads.
+  const themePackageId = themeOverride ?? fetchedThemePackageId ?? null;
+
+  // Live CMS content — the builder NEVER owns content. This is the same
+  // websiteAggregateService.build() the storefront uses; a refetch replaces
+  // the canvas content with whatever the Dashboard/Admin wrote.
+  const loadLiveContent = useCallback(async () => {
+    const res = await getLivePreviewData();
+    if (res.success && res.content) {
+      setLiveContent(res.content as PublishedSnapshot["content"]);
+      setFetchedThemePackageId(res.themePackageId ?? null);
+      setThemeColors(res.themeColors ?? {});
+      setThemeFonts(res.themeFonts ?? {});
+      setDiagnostics(res.diagnostics ?? { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] });
+    }
+    setDataReady(true);
   }, []);
 
-  // Force re-render on store changes (edits reflect against the cached live content).
   useEffect(() => {
-    const handler = () => {};
-    const unsubs = [
-      builderEvents.subscribe("node:inserted", handler),
-      builderEvents.subscribe("node:deleted", handler),
-    ];
-    return () => unsubs.forEach((u) => u());
+    loadLiveContent();
+  }, [loadLiveContent]);
+
+  // Dashboard edits appear in the Builder immediately when the tab regains
+  // focus — no publish, no reload, no preview step.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadLiveContent();
+    };
+    const onFocus = () => loadLiveContent();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadLiveContent]);
+
+  // Keep the preview in lockstep with the store. Any store mutation re-renders
+  // the canvas so Builder Preview always equals the draft the Sidebar shows.
+  useEffect(() => {
+    return builderEvents.subscribe("store:changed", () => forceRender());
   }, []);
 
-  const sections = (() => {
-    if (!dataReady || !liveContent) return [];
-    const resolvedTheme = themeResolver.resolveForSnapshot(themePackageId ?? FALLBACK_THEME_ID, "dark");
+  const storeHasSections = builderStore.canvas.pages.some((p) =>
+    p.sections.some((s) => s.slots.length > 0),
+  );
+
+  // Pure signature of the current draft layout. `builderStore.serialize()` is
+  // a fresh clone every render, so the memo below is keyed on this derived
+  // signature — store state itself is never memoized.
+  const serializedPages = builderStore.serialize();
+  const layoutSignature = JSON.stringify(serializedPages.map((p) => ({
+    id: p.id, slug: p.slug, isHome: p.isHome, order: p.order,
+    sections: p.sections.map((s) => ({
+      id: s.id, visible: s.visible,
+      slots: s.slots.map((sl) => ({ moduleId: sl.moduleId, order: sl.order, visible: sl.visible, config: sl.config })),
+    })),
+  })));
+
+  const resolved = useMemo(() => {
+    if (!dataReady || !liveContent) return null;
+    const hasOverrides = Object.keys(themeColors).length > 0 || Object.keys(themeFonts).length > 0;
+    const resolvedTheme = themeResolver.resolveForSnapshot(
+      themePackageId ?? FALLBACK_THEME_ID,
+      "dark",
+      hasOverrides ? {
+        overrides: {
+          colors: {
+            primary: themeColors.primary as string | undefined,
+            secondary: themeColors.secondary as string | undefined,
+            accent: themeColors.accent as string | undefined,
+            background: themeColors.background as string | undefined,
+            foreground: themeColors.foreground as string | undefined,
+            muted: themeColors.muted as string | undefined,
+          },
+          typography: {
+            heading: themeFonts.heading as string | undefined,
+            body: themeFonts.body as string | undefined,
+          },
+        } as Partial<ResolvedSnapshotTheme>,
+      } : undefined,
+    );
+    const theme: ThemeSnapshot = {
+      packageId: resolvedTheme?.packageId ?? themePackageId ?? FALLBACK_THEME_ID,
+      colors: {
+        primary: resolvedTheme?.colors.primary ?? "#6366F1",
+        secondary: resolvedTheme?.colors.secondary ?? "#818CF8",
+        accent: resolvedTheme?.colors.accent ?? "#A5B4FC",
+        background: resolvedTheme?.colors.background ?? "#09090b",
+        foreground: resolvedTheme?.colors.foreground ?? "#fafafa",
+        muted: resolvedTheme?.colors.muted ?? "#a1a1aa",
+      },
+      typography: {
+        heading: resolvedTheme?.typography.heading ?? "Inter",
+        body: resolvedTheme?.typography.body ?? "Inter",
+      },
+    };
+    const layout = builderPagesToLayoutSnapshot(serializedPages);
     const snapshot: PublishedSnapshot = {
       _schema: "creatorstore.snapshot",
       _version: 1,
@@ -69,21 +152,46 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
         generatedBy: "dashboard",
       },
       content: liveContent,
-      layout: builderPagesToLayoutSnapshot(builderStore.serialize()),
-      theme: resolvedTheme ?? {
-        packageId: FALLBACK_THEME_ID,
-        colors: { primary: "#6366F1", secondary: "#818CF8", accent: "#A5B4FC", background: "#09090b", foreground: "#fafafa", muted: "#a1a1aa" },
-        typography: { heading: "Inter", body: "Inter" },
-      },
+      layout,
+      theme,
       navigation: [],
       renderingHints: {},
     };
     const doc = layoutEngine.resolve(snapshot);
-    return doc.pages.flatMap((p) => p.sections).filter((s) => s.visible !== false);
-  })();
+    return {
+      sections: doc.pages.flatMap((p) => p.sections).filter((s) => s.visible !== false),
+      theme,
+      layout,
+    };
+    // serializedPages is derived 1:1 from layoutSignature — never memoize store state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, themeFonts]);
+
+  const sections = resolved?.sections ?? [];
+
+  // Emit the SAME runtime trace + Runtime Signature as storefront/publish, so
+  // the builder preview can be compared bit-for-bit against production.
+  const signature = dataReady && liveContent && resolved
+    ? computeRuntimeSignature({ theme: resolved.theme, layout: resolved.layout, aggregate: liveContent })
+    : "";
+  useEffect(() => {
+    if (!dataReady || !liveContent || !resolved) return;
+    traceRuntime({
+      runtimeType: "builder",
+      creator: liveContent.identity?.name || "",
+      theme: resolved.theme,
+      layout: resolved.layout,
+      aggregate: liveContent,
+      slug: null,
+      storeVersion: builderStore.storeVersion,
+      timings: { resolveMs: 0 },
+      diagnostics,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, dataReady, liveContent, resolved, diagnostics]);
 
   return (
-    <div className="relative flex-1 overflow-auto bg-zinc-900/50">
+    <div className="relative flex-1 overflow-auto bg-zinc-900/50" data-testid="builder-canvas" data-runtime-signature={signature}>
       <div className="flex min-h-full items-start justify-center p-8">
         <div
           className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50 transition-all"
@@ -106,11 +214,21 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
               </div>
             )}
 
-            {dataReady && sections.length === 0 && (
+            {dataReady && !storeHasSections && (
               <div className="flex flex-col items-center gap-4 pt-12 text-center">
                 <div className="h-16 w-16 rounded-full bg-zinc-800" />
                 <h2 className="text-sm font-semibold text-zinc-300">Your Website Preview</h2>
                 <p className="max-w-xs text-xs text-zinc-600">Add sections from the left sidebar to get started.</p>
+              </div>
+            )}
+
+            {dataReady && storeHasSections && sections.length === 0 && (
+              <div className="flex flex-col items-center gap-4 pt-12 text-center">
+                <div className="h-16 w-16 rounded-full bg-zinc-800" />
+                <h2 className="text-sm font-semibold text-zinc-300">Your Website Preview</h2>
+                <p className="max-w-xs text-xs text-zinc-600">
+                  Preview data is still loading. If this persists, check your site content or refresh.
+                </p>
               </div>
             )}
 
@@ -145,4 +263,4 @@ export const InteractiveCanvas = memo(function InteractiveCanvas({
       )}
     </div>
   );
-});
+}

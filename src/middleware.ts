@@ -11,12 +11,45 @@ if (!secret && process.env.NODE_ENV === "production") {
   throw new Error("NEXTAUTH_SECRET is required in production");
 }
 
-const platformDomains = [
-  "localhost:3000",
-  "influencer-space-alpha.vercel.app",
-];
+/**
+ * Platform domains (marketing/admin/builder) vs tenant subdomains.
+ *
+ * Any host NOT in this list is treated as a tenant host and rewritten to the
+ * storefront route. The list is derived from the deployment environment so the
+ * actual deployment domain is always recognized as a platform domain — a
+ * hardcoded list that omits the real domain rewrites the platform host as a
+ * tenant host, which produces a 404 on every storefront URL while
+ * /admin and /builder keep working.
+ */
+function getPlatformDomains(): string[] {
+  const domains = new Set<string>(["localhost:3000", "influencer-space-alpha.vercel.app"]);
 
-const DEFAULT_TENANT = process.env.DEFAULT_TENANT_SUBDOMAIN || "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl) {
+    try {
+      const u = new URL(appUrl);
+      if (u.host) domains.add(u.host);
+      if (u.hostname && u.hostname !== u.host) domains.add(u.hostname);
+    } catch {
+      // Ignore malformed app URL.
+    }
+  }
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) domains.add(vercelUrl);
+
+  const extra = process.env.PLATFORM_DOMAINS;
+  if (extra) {
+    for (const d of extra.split(",")) {
+      const trimmed = d.trim();
+      if (trimmed) domains.add(trimmed);
+    }
+  }
+
+  return Array.from(domains);
+}
+
+const platformDomains = getPlatformDomains();
 
 function parseTenantHost(host: string): string | null {
   const hostname = host.split(":")[0]?.toLowerCase() ?? "";
@@ -66,15 +99,17 @@ export async function middleware(request: NextRequest) {
     // Only applies when:
     //   a) Request arrives on a custom tenant subdomain (e.g. owais.creatorspace.app)
     //   b) Path is a storefront slug on the platform domain
-    // DEFAULT_TENANT is a localhost-only fallback for development — never
-    // rewrites production marketing routes.
+    // Storefront slugs (e.g. /farah-khan) are handled natively by the [domain]
+    // route and carry an x-tenant-host header; admin/api/builder/marketing
+    // routes are never rewritten. A DEFAULT_TENANT dev fallback is intentionally
+    // NOT used here — rewriting every non-admin path (e.g. to /snax/admin/login)
+    // 404s the entire dashboard and API in development.
     const extractedTenant = parseTenantHost(host);
-    const tenantHost = extractedTenant || (process.env.NODE_ENV === "development" ? DEFAULT_TENANT || null : null);
-    if (tenantHost) {
-      headers.set("x-tenant-host", tenantHost);
+    if (extractedTenant) {
+      headers.set("x-tenant-host", extractedTenant);
       const segments = pathname.split("/").filter(Boolean);
-      if (segments.length === 0 || segments[0] !== tenantHost) {
-        const url = new URL(`/${tenantHost}${pathname}`, request.url);
+      if (segments.length === 0 || segments[0] !== extractedTenant) {
+        const url = new URL(`/${extractedTenant}${pathname}`, request.url);
         return NextResponse.rewrite(url);
       }
     }

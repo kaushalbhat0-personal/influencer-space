@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { ProcessingStatus } from "./types";
+import { requireAssetId } from "@/lib/media/resolve";
 
 /**
  * DB-based processing queue.
@@ -8,8 +9,9 @@ import type { ProcessingStatus } from "./types";
  */
 export class DbProcessingQueue {
   async enqueue(assetId: string): Promise<void> {
+    const safeId = requireAssetId(assetId, { module: "media-queue", field: "enqueue" });
     await prisma.asset.update({
-      where: { id: assetId },
+      where: { id: safeId },
       data: { processingStatus: "QUEUED" },
     });
   }
@@ -23,8 +25,9 @@ export class DbProcessingQueue {
 
     if (!asset) return null;
 
+    const safeId = requireAssetId(asset.id, { module: "media-queue", field: "dequeue" });
     await prisma.asset.update({
-      where: { id: asset.id },
+      where: { id: safeId },
       data: { processingStatus: "PROCESSING" },
     });
 
@@ -32,22 +35,25 @@ export class DbProcessingQueue {
   }
 
   async acknowledge(assetId: string): Promise<void> {
+    const safeId = requireAssetId(assetId, { module: "media-queue", field: "acknowledge" });
     await prisma.asset.update({
-      where: { id: assetId },
+      where: { id: safeId },
       data: { processingStatus: "READY" },
     });
   }
 
   async fail(assetId: string, error: string): Promise<void> {
+    const safeId = requireAssetId(assetId, { module: "media-queue", field: "fail" });
     await prisma.asset.update({
-      where: { id: assetId },
+      where: { id: safeId },
       data: { processingStatus: "FAILED", processingError: error },
     });
   }
 
   async getStatus(assetId: string): Promise<ProcessingStatus> {
+    const safeId = requireAssetId(assetId, { module: "media-queue", field: "getStatus" });
     const asset = await prisma.asset.findUnique({
-      where: { id: assetId },
+      where: { id: safeId },
       select: { processingStatus: true },
     });
     return (asset?.processingStatus as ProcessingStatus) ?? "PENDING";

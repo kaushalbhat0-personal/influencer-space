@@ -1,5 +1,6 @@
 import type { BuilderPage } from "./types";
 import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
+import { componentRegistry } from "@/lib/registry/components";
 
 interface StorefrontData {
   website?: Record<string, unknown>;
@@ -45,7 +46,11 @@ function buildPage(
     isHome,
     theme: "",
     metadata: {},
-    sections: (sectionRows ?? []).map((sec, i) => {
+    sections: (sectionRows ?? [])
+      // Drop legacy/generated section types with no registered component so
+      // the builder can never hold an unregistered moduleId.
+      .filter((sec) => componentRegistry.get(resolveModuleId(sec.type ?? "")) !== undefined)
+      .map((sec, i) => {
       const moduleId = resolveModuleId(sec.type ?? "");
       return {
         id: sec.id ?? `section_${id}_${i}`,

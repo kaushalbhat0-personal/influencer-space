@@ -6,37 +6,88 @@ import { linkRepository } from "@/modules/tenant/infrastructure/link-repository"
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { SettingsService } from "@/services/settings.service";
 import { mediaService } from "@/lib/media/service";
+import { normalizeAssetId } from "@/lib/media/resolve";
 import type { WebsiteAggregate } from "@/types/snapshot";
+
+export interface AggregateDiagnostics {
+  /** Asset ids rejected by the safe resolver (empty/malformed), with origin. */
+  invalidAssetIds: Array<{ id: string; module: string; field?: string }>;
+  /** Valid asset ids that resolved to no public URL (missing/deleted). */
+  skippedAssets: number;
+  /** Per-module query failures (module degraded, aggregate still returned). */
+  moduleFailures: string[];
+}
 
 export class WebsiteAggregateService {
   async build(tenantId: string): Promise<WebsiteAggregate> {
-    const [brand, heroData, products, gallery, links, seoData, website, timelineEvents, gameList, feedItems, testimonialsData, faqData, offerings] = await Promise.all([
-      brandRepository.findByTenantId(tenantId),
-      SettingsService.getHeroData(tenantId),
-      productRepository.findPublished(tenantId),
-      galleryRepository.findPublished(tenantId),
-      linkRepository.findPublished(tenantId),
-      SettingsService.getSeo(tenantId),
-      websiteRepository.findByTenantId(tenantId),
-      prisma.timelineEvent.findMany({
-        where: { tenantId },
-        orderBy: { year: "desc" },
-      }),
-      prisma.game.findMany({
-        where: { tenantId },
-        orderBy: { order: "asc" },
-      }),
-      prisma.contentFeedItem.findMany({
+    return (await this.buildWithCollector(tenantId, null)).aggregate;
+  }
+
+  /**
+   * Build the aggregate AND collect data-resolution diagnostics. The aggregate
+   * never hard-fails: a single broken module degrades to empty and is recorded
+   * in `moduleFailures`, so the Builder/Storefront/Publish keep working and the
+   * trace reports exactly what went wrong.
+   */
+  async buildWithDiagnostics(tenantId: string): Promise<{
+    aggregate: WebsiteAggregate;
+    invalidAssetIds: AggregateDiagnostics["invalidAssetIds"];
+    skippedAssets: number;
+    moduleFailures: string[];
+  }> {
+    const diagnostics: AggregateDiagnostics = { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] };
+    const { aggregate } = await this.buildWithCollector(tenantId, diagnostics);
+    return {
+      aggregate,
+      invalidAssetIds: diagnostics.invalidAssetIds,
+      skippedAssets: diagnostics.skippedAssets,
+      moduleFailures: diagnostics.moduleFailures,
+    };
+  }
+
+  private async buildWithCollector(
+    tenantId: string,
+    diagnostics: AggregateDiagnostics | null,
+  ): Promise<{ aggregate: WebsiteAggregate }> {
+    const safe = async <T>(name: string, fn: () => Promise<T>): Promise<T | null> => {
+      try {
+        return await fn();
+      } catch (error) {
+        if (diagnostics) {
+          diagnostics.moduleFailures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        return null;
+      }
+    };
+
+    const recordInvalidAsset = (id: string, module: string, field?: string): void => {
+      if (diagnostics) diagnostics.invalidAssetIds.push({ id, module, field });
+    };
+
+    const [
+      brand, heroData, products, gallery, links, seoData, website, timelineEvents,
+      gameList, feedItems, testimonialsData, faqData, offerings,
+    ] = await Promise.all([
+      safe("brand", () => brandRepository.findByTenantId(tenantId)),
+      safe("hero", () => SettingsService.getHeroData(tenantId)),
+      safe("products", () => productRepository.findPublished(tenantId)),
+      safe("gallery", () => galleryRepository.findPublished(tenantId)),
+      safe("links", () => linkRepository.findPublished(tenantId)),
+      safe("seo", () => SettingsService.getSeo(tenantId)),
+      safe("website", () => websiteRepository.findByTenantId(tenantId)),
+      safe("timeline", () => prisma.timelineEvent.findMany({ where: { tenantId }, orderBy: { year: "desc" } })),
+      safe("games", () => prisma.game.findMany({ where: { tenantId }, orderBy: { order: "asc" } })),
+      safe("contentFeed", () => prisma.contentFeedItem.findMany({
         where: { tenantId, hidden: false },
         orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-      }),
-      SettingsService.getSettingByKey(tenantId, "testimonials"),
-      SettingsService.getSettingByKey(tenantId, "faq"),
-      prisma.offering.findMany({
+      })),
+      safe("testimonials", () => SettingsService.getSettingByKey(tenantId, "testimonials")),
+      safe("faq", () => SettingsService.getSettingByKey(tenantId, "faq")),
+      safe("offerings", () => prisma.offering.findMany({
         where: { tenantId, status: "published" },
         orderBy: { createdAt: "desc" },
         select: { id: true, type: true, title: true, description: true, price: true, metadata: true },
-      }),
+      })),
     ]);
 
     const rawTestimonials = Array.isArray(testimonialsData)
@@ -77,7 +128,7 @@ export class WebsiteAggregateService {
         imageDesktopAlignment: (heroData as Record<string, unknown>)?.imageDesktopAlignment as "top" | "center" | "bottom" ?? "center",
         imageMobileAlignment: (heroData as Record<string, unknown>)?.imageMobileAlignment as "top" | "center" | "bottom" ?? "center",
       },
-      products: products.map((p) => ({
+      products: (products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -88,7 +139,7 @@ export class WebsiteAggregateService {
         isFeatured: p.isFeatured,
         isActive: p.isActive,
       })),
-      gallery: gallery.map((g) => ({
+      gallery: (gallery ?? []).map((g) => ({
         id: g.id,
         title: g.title,
         description: g.description,
@@ -98,7 +149,7 @@ export class WebsiteAggregateService {
         altText: g.altText,
         isFeatured: g.isFeatured,
       })),
-      links: links.map((l) => ({
+      links: (links ?? []).map((l) => ({
         id: l.id,
         title: l.title,
         url: l.url,
@@ -124,7 +175,7 @@ export class WebsiteAggregateService {
         answer: item.answer as string,
         category: (item.category as string) ?? "general",
       })),
-      timeline: timelineEvents.map((e) => ({
+      timeline: (timelineEvents ?? []).map((e) => ({
         id: e.id,
         year: e.year,
         title: e.title,
@@ -132,14 +183,14 @@ export class WebsiteAggregateService {
         imageUrl: e.imageUrl,
         stats: e.stats,
       })),
-      games: gameList.map((g) => ({
+      games: (gameList ?? []).map((g) => ({
         id: g.id,
         name: g.name,
         logoUrl: g.logoUrl,
         description: g.description,
         genre: g.genre,
       })),
-      contentFeed: feedItems.map((item) => ({
+      contentFeed: (feedItems ?? []).map((item) => ({
         id: item.id,
         platform: item.platform,
         mediaType: item.mediaType,
@@ -148,7 +199,7 @@ export class WebsiteAggregateService {
         caption: item.caption,
         permalink: item.permalink,
       })),
-      courses: offerings
+      courses: (offerings ?? [])
         .filter((o) => o.type === "course")
         .map((o) => {
           const meta = o.metadata as Record<string, unknown> | null;
@@ -162,7 +213,7 @@ export class WebsiteAggregateService {
             featured: (meta?.featured as boolean | undefined) ?? false,
           };
         }),
-      services: offerings
+      services: (offerings ?? [])
         .filter((o) => o.type === "coaching")
         .map((o) => {
           const meta = o.metadata as Record<string, unknown> | null;
@@ -181,31 +232,63 @@ export class WebsiteAggregateService {
 
     if (brand?.avatarAssetId || brand?.bannerAssetId) {
       const assetIds: string[] = [];
-      if (brand.avatarAssetId) assetIds.push(brand.avatarAssetId);
-      if (brand.bannerAssetId) assetIds.push(brand.bannerAssetId);
+      const avatarId = brand.avatarAssetId
+        ? normalizeAssetId(brand.avatarAssetId, { module: "aggregate.brand", field: "avatarAssetId" })
+        : null;
+      if (brand.avatarAssetId && !avatarId) recordInvalidAsset(brand.avatarAssetId, "aggregate.brand", "avatarAssetId");
+      if (avatarId) assetIds.push(avatarId);
 
-      const resolved = await mediaService.resolveUrls(assetIds);
-      if (brand.avatarAssetId && resolved[brand.avatarAssetId]) {
-        result.identity.avatarUrl = resolved[brand.avatarAssetId];
-      }
-      if (brand.bannerAssetId && resolved[brand.bannerAssetId]) {
-        result.identity.bannerUrl = resolved[brand.bannerAssetId];
+      const bannerId = brand.bannerAssetId
+        ? normalizeAssetId(brand.bannerAssetId, { module: "aggregate.brand", field: "bannerAssetId" })
+        : null;
+      if (brand.bannerAssetId && !bannerId) recordInvalidAsset(brand.bannerAssetId, "aggregate.brand", "bannerAssetId");
+      if (bannerId) assetIds.push(bannerId);
+
+      if (assetIds.length > 0) {
+        const resolved = await mediaService.resolveUrls(assetIds);
+        if (avatarId && resolved[avatarId]) {
+          result.identity.avatarUrl = resolved[avatarId];
+        } else if (avatarId) {
+          if (diagnostics) diagnostics.skippedAssets++;
+        }
+        if (bannerId && resolved[bannerId]) {
+          result.identity.bannerUrl = resolved[bannerId];
+        } else if (bannerId) {
+          if (diagnostics) diagnostics.skippedAssets++;
+        }
       }
     }
 
     // Hero media: resolve video/poster from their asset ids so the storefront
     // always receives the current storage URL, not a stale baked URL.
-    if (result.hero.videoAssetId || result.hero.posterAssetId) {
-      const resolved = await mediaService.resolveUrls([result.hero.videoAssetId, result.hero.posterAssetId]);
-      if (result.hero.videoAssetId && resolved[result.hero.videoAssetId]) {
-        result.hero.videoUrl = resolved[result.hero.videoAssetId];
+    // Asset ids are normalized first — "" or malformed ids are skipped and
+    // recorded so the trace reports the exact bad source.
+    const rawVideoAssetId = (heroData as Record<string, unknown>)?.videoAssetId as string | null | undefined;
+    const rawPosterAssetId = (heroData as Record<string, unknown>)?.posterAssetId as string | null | undefined;
+    const videoAssetId = rawVideoAssetId
+      ? normalizeAssetId(rawVideoAssetId, { module: "aggregate.hero", field: "videoAssetId" })
+      : null;
+    const posterAssetId = rawPosterAssetId
+      ? normalizeAssetId(rawPosterAssetId, { module: "aggregate.hero", field: "posterAssetId" })
+      : null;
+    if (rawVideoAssetId && !videoAssetId) recordInvalidAsset(rawVideoAssetId, "aggregate.hero", "videoAssetId");
+    if (rawPosterAssetId && !posterAssetId) recordInvalidAsset(rawPosterAssetId, "aggregate.hero", "posterAssetId");
+
+    if (videoAssetId || posterAssetId) {
+      const resolved = await mediaService.resolveUrls([videoAssetId, posterAssetId]);
+      if (videoAssetId && resolved[videoAssetId]) {
+        result.hero.videoUrl = resolved[videoAssetId];
+      } else if (videoAssetId) {
+        if (diagnostics) diagnostics.skippedAssets++;
       }
-      if (result.hero.posterAssetId && resolved[result.hero.posterAssetId]) {
-        result.hero.posterUrl = resolved[result.hero.posterAssetId];
+      if (posterAssetId && resolved[posterAssetId]) {
+        result.hero.posterUrl = resolved[posterAssetId];
+      } else if (posterAssetId) {
+        if (diagnostics) diagnostics.skippedAssets++;
       }
     }
 
-    return result;
+    return { aggregate: result };
   }
 
   async buildWithTrace(tenantId: string): Promise<WebsiteAggregate> {

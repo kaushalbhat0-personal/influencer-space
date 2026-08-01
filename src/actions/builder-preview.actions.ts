@@ -16,6 +16,9 @@ export async function getLivePreviewData(): Promise<{
   success: boolean;
   content?: unknown;
   themePackageId?: string | null;
+  themeColors?: Record<string, string>;
+  themeFonts?: Record<string, string>;
+  diagnostics?: { invalidAssetIds: Array<{ id: string; module: string; field?: string }>; skippedAssets: number; moduleFailures: string[] };
   error?: string;
 }> {
   try {
@@ -23,18 +26,25 @@ export async function getLivePreviewData(): Promise<{
     const tenantId = session?.user?.tenantId;
     if (!tenantId) return { success: false, error: "Unauthorized" };
 
-    const [content, website] = await Promise.all([
-      websiteAggregateService.build(tenantId),
+    const [aggResult, website] = await Promise.all([
+      websiteAggregateService.buildWithDiagnostics(tenantId),
       prisma.website.findUnique({
         where: { tenantId },
-        select: { themePackageId: true },
+        select: { themePackageId: true, themeColors: true, themeFonts: true },
       }),
     ]);
 
     return {
       success: true,
-      content: JSON.parse(JSON.stringify(content)),
+      content: JSON.parse(JSON.stringify(aggResult.aggregate)),
       themePackageId: website?.themePackageId ?? null,
+      themeColors: (website?.themeColors ?? {}) as Record<string, string>,
+      themeFonts: (website?.themeFonts ?? {}) as Record<string, string>,
+      diagnostics: {
+        invalidAssetIds: aggResult.invalidAssetIds,
+        skippedAssets: aggResult.skippedAssets,
+        moduleFailures: aggResult.moduleFailures,
+      },
     };
   } catch (error) {
     return {

@@ -203,6 +203,36 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       },
     ],
   },
+  "services.default": {
+    groups: [
+      {
+        id: "content", label: "Content",
+        fields: [
+          { key: "title", label: "Title", type: "text", defaultValue: "Services", aiEditable: true },
+        ],
+      },
+    ],
+  },
+  "games.default": {
+    groups: [
+      {
+        id: "content", label: "Content",
+        fields: [
+          { key: "title", label: "Title", type: "text", defaultValue: "Games", aiEditable: true },
+        ],
+      },
+    ],
+  },
+  "contentFeed.default": {
+    groups: [
+      {
+        id: "content", label: "Content",
+        fields: [
+          { key: "title", label: "Title", type: "text", defaultValue: "Latest Content", aiEditable: true },
+        ],
+      },
+    ],
+  },
   "embed.spotify": {
     groups: [
       {

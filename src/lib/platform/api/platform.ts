@@ -1,12 +1,16 @@
-import type { PreviewState } from "@/lib/builder/preview";
 import { builderStore } from "@/lib/builder/store";
 import { builderCommands } from "@/lib/builder/commands";
 import { builderEvents } from "@/lib/builder/events";
 import { builderQuery } from "@/lib/builder/query";
-import { previewRuntime } from "@/lib/builder/preview";
-import { renderTreeBuilder, htmlAdapter, reactAdapter, staticAdapter } from "@/lib/builder/render";
 import { platformTelemetry } from "@/lib/telemetry/telemetry";
 
+/**
+ * Platform API — IMPLEMENTATION-14.
+ *
+ * There is exactly ONE runtime: BuilderStore → LayoutEngine → ComponentRegistry.
+ * No separate preview runtime, no separate render tree. The builder canvas and
+ * the storefront are the same renderer with different layout sources.
+ */
 export interface BuilderAPI {
   readonly store: typeof builderStore;
   readonly commands: typeof builderCommands;
@@ -14,22 +18,9 @@ export interface BuilderAPI {
   readonly query: typeof builderQuery;
 }
 
-export interface PreviewAPI {
-  readonly runtime: typeof previewRuntime;
-  render(): PreviewState;
-  getState(): PreviewState;
-}
-
 export interface PlatformAPI {
   builder: BuilderAPI;
-  preview: PreviewAPI;
   telemetry: typeof platformTelemetry;
-  render: {
-    treeBuilder: typeof renderTreeBuilder;
-    htmlAdapter: typeof htmlAdapter;
-    reactAdapter: typeof reactAdapter;
-    staticAdapter: typeof staticAdapter;
-  };
 }
 
 export const platformAPI: PlatformAPI = {
@@ -39,16 +30,5 @@ export const platformAPI: PlatformAPI = {
     get events() { return builderEvents; },
     get query() { return builderQuery; },
   },
-  preview: {
-    get runtime() { return previewRuntime; },
-    render: () => previewRuntime.render(),
-    getState: () => previewRuntime.getState(),
-  },
   telemetry: platformTelemetry,
-  render: {
-    treeBuilder: renderTreeBuilder,
-    htmlAdapter,
-    reactAdapter,
-    staticAdapter,
-  },
 };
