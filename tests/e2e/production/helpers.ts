@@ -44,6 +44,10 @@ const BENIGN = [
   "failed to load resource: the server responded with a status of 404 (not found)",
   // Browser-canceled in-flight requests (navigation aborts an RSC prefetch).
   "net::err_aborted",
+  // Next.js RSC prefetch fallback ("Failed to fetch RSC payload … Falling back
+  // to browser navigation") — the app degrades gracefully; not a page error.
+  "failed to fetch rsc payload",
+  "_rsc=",
   // Third-party payment-gateway CDN resources (external dependency, not the app).
   "razorpay.com",
   "checkout-static-next.razorpay.com",
