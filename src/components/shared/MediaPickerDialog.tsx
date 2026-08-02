@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { listAssets } from "@/actions/media-library.actions";
-import { uploadAsset } from "@/actions/media.actions";
+import { uploadFileWithProgress } from "@/lib/media/client-upload";
 
 export interface PickedMedia {
   assetId: string;
@@ -74,11 +74,7 @@ export function MediaPickerDialog({
     setUploading(true);
     setUploadError(null);
 
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("folder", folder);
-
-    const result = await uploadAsset(formData);
+    const result = await uploadFileWithProgress({ file, folder });
     if (result.success && result.assetId && result.url) {
       onSelect({ assetId: result.assetId, url: result.url });
       onClose();

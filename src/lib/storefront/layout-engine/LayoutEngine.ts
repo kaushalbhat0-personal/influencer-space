@@ -6,6 +6,7 @@
 import type { PublishedSnapshot, WebsiteAggregate } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
 import { resolveModuleId, isDeprecatedSection } from "@/lib/registry/resolve-module";
+import { describeHeroMedia } from "@/lib/media/hero-media";
 
 export class LayoutEngine {
   resolve(snapshot: PublishedSnapshot): StorefrontDocument {
@@ -163,7 +164,22 @@ export class LayoutEngine {
       if (content.hero.ctaSecondaryText) {
         config.ctaSecondary = content.hero.ctaSecondaryText;
       }
-      console.log(tracePrefix, "hero", { title: content.hero.title, cta: config.cta, ctaSecondary: config.ctaSecondary, hasVideo: !!content.hero.videoUrl, hasPoster: !!content.hero.posterUrl });
+      // IMPLEMENTATION-20 (Phase D): log the exact hero media decision the
+      // renderer will make. Builder + Storefront both resolve via this engine,
+      // so identical values prove parity.
+      const heroMedia = describeHeroMedia(content.hero);
+      console.log(tracePrefix, "hero", {
+        title: content.hero.title,
+        cta: config.cta,
+        ctaSecondary: config.ctaSecondary,
+        videoAssetId: content.hero.videoAssetId ?? null,
+        videoUrl: content.hero.videoUrl ?? null,
+        posterAssetId: content.hero.posterAssetId ?? null,
+        posterUrl: content.hero.posterUrl ?? null,
+        backgroundUrl: content.hero.backgroundUrl ?? null,
+        resolvedMedia: heroMedia.resolvedMedia,
+        rendererDecision: heroMedia.rendererDecision,
+      });
     } else if (moduleId.startsWith("products.")) {
       const productEntries: Record<string, unknown>[] = content.products.map((p) => ({
         id: p.id,

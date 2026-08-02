@@ -7,6 +7,7 @@ import { websiteRepository } from "@/modules/tenant/infrastructure/website-repos
 import { SettingsService } from "@/services/settings.service";
 import { mediaService } from "@/lib/media/service";
 import { normalizeAssetId } from "@/lib/media/resolve";
+import { describeHeroMedia } from "@/lib/media/hero-media";
 import type { WebsiteAggregate } from "@/types/snapshot";
 
 export interface AggregateDiagnostics {
@@ -303,6 +304,23 @@ export class WebsiteAggregateService {
       } else if (posterAssetId) {
         if (diagnostics) diagnostics.skippedAssets++;
       }
+    }
+
+    // IMPLEMENTATION-20 (Phase D): hero media runtime instrumentation — the
+    // decision the renderer will make (video → poster → background →
+    // placeholder), plus the exact asset ids + resolved urls. Builder and
+    // Storefront both consume this aggregate, so identical values prove parity.
+    if (typeof console !== "undefined") {
+      const mediaTrace = describeHeroMedia(result.hero);
+      console.log("[RuntimeTrace] hero media:", {
+        videoAssetId: videoAssetId ?? null,
+        videoUrl: result.hero.videoUrl ?? null,
+        posterAssetId: posterAssetId ?? null,
+        posterUrl: result.hero.posterUrl ?? null,
+        backgroundUrl: result.hero.backgroundUrl ?? null,
+        resolvedMedia: mediaTrace.resolvedMedia,
+        rendererDecision: mediaTrace.rendererDecision,
+      });
     }
 
     return { aggregate: result };

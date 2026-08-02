@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, type ChangeEvent } from "react";
-import { uploadAsset } from "@/actions/media.actions";
+import { uploadFileWithProgress } from "@/lib/media/client-upload";
 import { removeAssetReference } from "@/actions/media-library.actions";
 import { MediaPickerDialog } from "./MediaPickerDialog";
 import type { MediaValue } from "./MediaField";
@@ -54,14 +54,13 @@ export function MediaFieldMulti({
 
     for (const file of list) {
       if (max && value.length + added.length >= max) break;
-      const formData = new FormData();
-      formData.set("file", file);
-      formData.set("folder", folder);
-      if (entityType) formData.set("entityType", entityType);
-      if (entityId) formData.set("entityId", entityId);
-      if (entityField) formData.set("entityField", entityField);
-
-      const result = await uploadAsset(formData);
+      const result = await uploadFileWithProgress({
+        file,
+        folder,
+        entityType,
+        entityId,
+        entityField,
+      });
       if (result.success && result.assetId && result.url) {
         added.push({ assetId: result.assetId, url: result.url });
       }

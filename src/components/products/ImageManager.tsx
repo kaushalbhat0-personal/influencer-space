@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Upload, X, Library } from "lucide-react";
-import { uploadAsset } from "@/actions/media.actions";
+import { uploadFileWithProgress } from "@/lib/media/client-upload";
 import { MediaPickerDialog } from "@/components/shared/MediaPickerDialog";
 
 export interface ManagedImage {
@@ -58,14 +58,13 @@ export function ImageManager({
     setUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("folder", folder);
-    formData.set("entityType", entityType);
-    if (entityId) formData.set("entityId", entityId);
-
     try {
-      const result = await uploadAsset(formData);
+      const result = await uploadFileWithProgress({
+        file,
+        folder,
+        entityType,
+        entityId: entityId ?? undefined,
+      });
       if (result.success && result.assetId && result.url) {
         append(result.assetId, result.url);
       } else {

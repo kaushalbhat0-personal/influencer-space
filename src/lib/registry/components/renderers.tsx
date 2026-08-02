@@ -9,6 +9,7 @@ import {
 } from "@/actions/storefront.actions";
 import { CreatorImage, CreatorVideo } from "@/components/shared";
 import { HeroMedia, responsiveAlignmentClass } from "@/components/shared/HeroMedia";
+import { resolveHeroMedia } from "@/lib/media/hero-media";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
 import { Star } from "lucide-react";
 
@@ -54,6 +55,7 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const profilePictureUrl = String(p.profilePictureUrl || "");
   const videoUrl = String(p.videoUrl || "");
   const posterUrl = String(p.posterUrl || "");
+  const backgroundUrl = String(p.backgroundUrl || "");
   const videoAlign = responsiveAlignmentClass(
     String(p.videoDesktopAlignment || "center"),
     String(p.videoMobileAlignment || "center"),
@@ -65,15 +67,19 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
   const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
 
+  // IMPLEMENTATION-20 (Phase C): ONE deterministic decision shared with the
+  // runtime trace — video → poster → background → placeholder.
+  const media = resolveHeroMedia({ videoUrl, posterUrl, backgroundUrl });
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-      {/* ── Hero media — ALWAYS renders first (video → poster → placeholder) ── */}
+      {/* ── Hero media — ALWAYS renders first; avatar never replaces it ── */}
       <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
-        {videoUrl ? (
+        {media.kind === "video" ? (
           <HeroMedia
             type="video"
-            url={videoUrl}
-            poster={posterUrl}
+            url={media.url}
+            poster={media.poster ?? undefined}
             alignmentClass={videoAlign}
             className="absolute inset-0"
             autoPlay
@@ -83,11 +89,11 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
             controls
             preload="metadata"
           />
-        ) : posterUrl ? (
+        ) : media.kind === "image" || media.kind === "background" ? (
           <HeroMedia
             type="image"
-            url={posterUrl}
-            alignmentClass={imageAlign}
+            url={media.url}
+            alignmentClass={media.kind === "background" ? "object-center" : imageAlign}
             className="absolute inset-0"
           />
         ) : (
