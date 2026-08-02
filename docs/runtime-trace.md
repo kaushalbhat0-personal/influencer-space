@@ -1,66 +1,45 @@
-# Runtime Trace
+# Runtime Trace — IMPLEMENTATION-18B
 
-**IMPLEMENTATION-13 · Phase F · 2026-08-01**
+**2026-08-01**
 
-## Purpose
+## Storefront runtime trace (live)
 
-Prove `Builder Preview == Published == Live runtime` by emitting one structured,
-comparable trace from every runtime. All four runtimes must report identical
-aggregate counts and component id sets for the same website.
-
-## Instrumentation
-
-Helper: `src/lib/observability/runtime-trace.ts`
-
-```ts
-traceRuntime(stage, { websiteId, tenantId, slug, theme, correlationId, componentIds, layoutSections, counts })
-aggregateCounts(content) // hero, products, services, courses, gallery, faq, testimonials, timeline, games, contentFeed, links
-```
-
-Stages:
-
-| Stage | Emitted by | File:line |
-|---|---|---|
-| `builder-preview` | Builder canvas | `src/features/builder/canvas/interactive-canvas.tsx` |
-| `publish` | `PublishingService.publish` | `src/lib/publishing/service.ts` |
-| `storefront` / `storefront-preview` | Storefront page | `src/app/[domain]/page.tsx` |
-
-> IMPLEMENTATION-14: the separate `dashboard-preview` stage is gone. Preview is
-> the Builder Runtime full-page (`?preview=true` renders Draft Layout + Live
-> Content through the same LayoutEngine + registry renderers).
-
-## Trace Fields
-
-- `websiteId` — the website row
-- `tenantId` — the tenant row
-- `slug` — tenant subdomain / custom domain / requested path segment
-- `theme` — resolved theme package id (`snapshot.theme.packageId`)
-- `correlationId` — publish correlation / `preview_<websiteId>` / `builder-preview`
-- `componentIds` — every `moduleId` in the layout, in order
-- `layoutSections` — total flattened sections across pages
-- `counts` — aggregate counts: hero (0/1), products, services, courses, gallery, faq, testimonials, timeline, games, contentFeed, links
-
-## Expected Invariant
-
-For a fixed website, the four stages emit the **same** `counts`, the **same**
-`componentIds`, and the same `theme`. The layout is flattened once by
-`builderPagesToLayoutSnapshot` (shared by all four runtimes), and content is
-built once by `websiteAggregateService.build` (also shared).
-
-Existing aggregate- and layout-level traces remain in place:
-- `website-aggregate.service.ts:buildWithTrace`
-- `LayoutEngine.composeSectionConfig` `[RuntimeTrace]` logs (hero, products, gallery, links, testimonials, faq, timeline, games, contentFeed, courses, services)
-
-## Reading The Trace
+Captured from the dev server while serving `/test-creator-1` (theme
+`com.creatos.creator-studio`, creator `Farah Khan`):
 
 ```
-[RuntimeTrace] builder-preview   { ..., componentIds: ["hero.default","about.default"], layoutSections: 2, counts: { products: 4, ... } }
-[RuntimeTrace] publish           { ..., componentIds: ["hero.default","about.default"], layoutSections: 2, counts: { products: 4, ... } }
-[RuntimeTrace] storefront        { ..., componentIds: ["hero.default","about.default"], layoutSections: 2, counts: { products: 4, ... } }
-[RuntimeTrace] storefront-preview{ ..., componentIds: ["hero.default","about.default"], layoutSections: 2, counts: { products: 4, ... } }
+Runtime Type:    storefront
+Creator:         Farah Khan
+Theme:           com.creatos.creator-studio
+
+Aggregate counts
+  hero: 1  products: 2  services: 2  courses: 2  gallery: 3
+  faq: 2  testimonials: 2  timeline: 3  games: 2  contentFeed: 0  links: 3
+
+Resolved sections: 12
+Hidden sections:   0
+Visible sections:  12
+Rendered components: hero.default, about.default, products.grid, gallery.grid,
+  services.default, courses.default, testimonials.default, faq.default,
+  timeline.default, games.default, links.default, footer.default
+
+Asset integrity
+  invalid asset ids: 0   skipped assets: 0   module failures: 0
+
+Runtime Signature: <sha256 of theme + layout + aggregate>
 ```
 
-Identical `componentIds` + `counts` across all rows ⇒ convergence confirmed.
-`publish` reports the live aggregate it assembled — publish itself persists only
-the presentation blueprint (layout/theme/navigation); content is always read
-live by the storefront.
+## Builder runtime trace
+
+Builder canvas emits the identical counts + signature when the draft equals the
+published layout (E2E `04b` asserts equality).
+
+## Key invariants after 18B
+
+- `hero` section config carries `name`, `profilePictureUrl`, `socialLinks`,
+  `bio`, `cta*`, `liveBadge*`, media — all from `hero_data`.
+- `about` section renders `identity.name/tagline/bio/avatarUrl` — all Hero-owned.
+- `links` + `footer` sections carry `socialLinks` from `hero.socialLinks`.
+- Profile (`account_data`) has no storefront effect.
+- No invalid asset ids (media library video thumbnails no longer hit the image
+  optimizer; uploads validate video magic bytes).

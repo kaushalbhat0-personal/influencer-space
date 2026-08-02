@@ -1,34 +1,37 @@
 import { describe, it, expect } from "vitest";
-import { profileUpdateSchema } from "../validators";
+import { accountSettingsSchema } from "../validators";
 
-describe("Profile validators", () => {
-  it("accepts valid profile update", () => {
-    const result = profileUpdateSchema.safeParse({
-      name: "Test Creator",
-      tagline: "Gaming",
-      bio: "I make content",
-      brandColors: { primary: "#ff0000", secondary: "#00ff00", accent: "#0000ff" },
+describe("Account Settings validators (IMPLEMENTATION-18B)", () => {
+  it("accepts a valid account update", () => {
+    const result = accountSettingsSchema.safeParse({
+      contactEmail: "creator@example.com",
+      phone: "+91 99999 00000",
+      timezone: "Asia/Kolkata",
+      language: "en-IN",
+      country: "India",
+      businessName: "My Studio",
+      gst: "GSTIN123",
+      currency: "INR",
+      notifications: { email: true, push: false },
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects invalid hex color", () => {
-    const result = profileUpdateSchema.safeParse({
-      name: "Test",
-      brandColors: { primary: "invalid", secondary: "#00ff00", accent: "#0000ff" },
-    });
+  it("accepts a partial update", () => {
+    const result = accountSettingsSchema.safeParse({ contactEmail: "new@example.com" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an invalid email", () => {
+    const result = accountSettingsSchema.safeParse({ contactEmail: "not-an-email" });
     expect(result.success).toBe(false);
   });
 
-  it("accepts partial update with just name", () => {
-    const result = profileUpdateSchema.safeParse({ name: "New Name" });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts social links array", () => {
-    const result = profileUpdateSchema.safeParse({
-      socialLinks: [{ platform: "twitter", url: "https://twitter.com/test" }],
-    });
-    expect(result.success).toBe(true);
+  it("does NOT accept storefront identity fields (owned by Hero)", () => {
+    // Identity fields must be ignored/not part of the account schema.
+    const parsed = accountSettingsSchema.safeParse({ name: "Should Not Be Here" });
+    expect(parsed.success).toBe(true);
+    // The schema has no `name` key — extra keys are stripped by zod default.
+    expect("name" in (parsed.data as object)).toBe(false);
   });
 });

@@ -81,7 +81,11 @@ test("03 — Builder: canvas + sidebar render, live layout edits, publish", asyn
 
   await page.goto("/builder", { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector('[data-testid="builder-canvas"]', { timeout: 30000 });
-  await page.waitForTimeout(3000);
+  await page.waitForFunction(() => {
+    const v = document.querySelector('[data-testid="builder-canvas"] video');
+    return !v || v.readyState >= 1 || v.error !== null;
+  }, { timeout: 45000 }).catch(() => {});
+  await page.waitForTimeout(4000);
 
   // Canvas renders and sidebar lists sections.
   await expect(page.locator('[data-testid="builder-canvas"]')).toBeVisible();
@@ -89,12 +93,17 @@ test("03 — Builder: canvas + sidebar render, live layout edits, publish", asyn
   await expect(productsSection).toBeVisible({ timeout: 15000 });
   await shot(page, "14-builder");
 
-  // Move Products up — canvas updates immediately (no save/reload).
+  // Move Products — the reorder arrows reveal on hover; use up when available
+  // (down otherwise, since a prior run may have left Products already first).
+  await productsSection.scrollIntoViewIfNeeded().catch(() => {});
+  await productsSection.hover({ timeout: 15000 });
   const productsUp = page.locator('[data-testid="section-products-up"]');
-  await productsUp.click().catch(async () => {
-    await productsSection.hover();
-    await productsUp.click();
-  });
+  const productsDown = page.locator('[data-testid="section-products-down"]');
+  if (await productsUp.isEnabled().catch(() => false)) {
+    await productsUp.click({ timeout: 15000 });
+  } else {
+    await productsDown.click({ timeout: 15000 });
+  }
   await page.waitForTimeout(1200);
   await shot(page, "15-builder-move-products");
 
@@ -265,12 +274,13 @@ test("07 — Media: library loads and accepts an upload", async ({ page }) => {
   await page.waitForTimeout(2000);
   await shot(page, "25-media-library");
 
-  // Open an asset detail to reveal the "Replace File" upload input, then
-  // replace the file (exercises upload + replace end-to-end).
-  const assetCard = page.locator('button[class*="aspect-square"]').first();
-  await assetCard.waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
-  if (await assetCard.count() > 0) {
-    await assetCard.click();
+  // Open an IMAGE asset's detail (not a video asset — replacing a video with a
+  // PNG would corrupt the hero video reference) to reveal the "Replace File"
+  // input, then replace the file (exercises upload + replace end-to-end).
+  const imageCard = page.locator('button[class*="aspect-square"]').filter({ has: page.locator("img") }).first();
+  await imageCard.waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
+  if (await imageCard.count() > 0) {
+    await imageCard.click();
     const fileInput = page.locator('input[type="file"]').first();
     await fileInput.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
     if (await fileInput.count() > 0) {

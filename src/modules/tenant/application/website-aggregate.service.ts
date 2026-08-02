@@ -104,13 +104,15 @@ export class WebsiteAggregateService {
       ? (heroRecord.socialLinks as Array<{ platform: string; url: string; label?: string }>)
       : [];
     const heroBio = (heroRecord.bio as string) ?? "";
+    const heroName = (heroRecord.name as string) ?? "";
+    const heroProfilePictureUrl = (heroRecord.profilePictureUrl as string) ?? "";
 
     const result: WebsiteAggregate = {
       identity: {
-        name: brand?.name ?? website?.tenant?.name ?? "",
-        tagline: brand?.tagline ?? "",
+        name: (heroName || brand?.name) ?? website?.tenant?.name ?? "",
+        tagline: ((heroRecord.tagline as string) || brand?.tagline) ?? "",
         bio: (heroBio || brand?.bio) ?? "",
-        avatarUrl: brand?.avatarUrl ?? null,
+        avatarUrl: (heroProfilePictureUrl || brand?.avatarUrl) ?? null,
         bannerUrl: brand?.bannerUrl ?? null,
         socialLinks: heroSocialLinks.length > 0
           ? heroSocialLinks
@@ -118,6 +120,8 @@ export class WebsiteAggregateService {
       },
       hero: {
         title: (heroData as Record<string, unknown>)?.title as string ?? "",
+        name: heroName,
+        profilePictureUrl: heroProfilePictureUrl,
         subtitle: (heroData as Record<string, unknown>)?.subtitle as string ?? "",
         tagline: (heroData as Record<string, unknown>)?.tagline as string ?? "",
         description: (heroData as Record<string, unknown>)?.description as string ?? "",

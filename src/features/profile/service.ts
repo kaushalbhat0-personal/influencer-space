@@ -1,127 +1,67 @@
 import { prisma } from "@/lib/prisma";
-import { normalizeAssetId } from "@/lib/media/resolve";
-import type { ProfileData, SocialLink, BrandColors } from "./types";
+import type { AccountSettingsData, AccountSettingsUpdateInput } from "./types";
 
+/**
+ * Account Settings service — IMPLEMENTATION-18B.
+ * Reads/writes account + business settings only. Identity (name, tagline, bio,
+ * profile picture, social links) is owned by Hero and never touched here.
+ */
 export const profileService = {
-  async getProfile(tenantId: string): Promise<ProfileData> {
-    const [tenant, brand, settings] = await Promise.all([
-      prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { name: true, instagramApiKey: true },
-      }),
-      prisma.brand.findFirst({
-        where: { website: { tenantId } },
-        select: { name: true, tagline: true, bio: true, avatarUrl: true, bannerUrl: true, avatarAssetId: true, bannerAssetId: true, socialLinks: true },
-      }),
-      prisma.setting.findMany({
-        where: { tenantId, key: { in: ["brand_config", "influencer_data"] } },
-        select: { key: true, value: true },
-      }),
-    ]);
-
-    const brandConfig = settings.find((s) => s.key === "brand_config")?.value as Record<string, unknown> | undefined;
-    const influencerData = settings.find((s) => s.key === "influencer_data")?.value as Record<string, unknown> | undefined;
-
-    const socialLinks: SocialLink[] = Array.isArray(brand?.socialLinks)
-      ? (brand.socialLinks as unknown as SocialLink[])
-      : Array.isArray(brandConfig?.socialLinks)
-        ? (brandConfig.socialLinks as unknown as SocialLink[])
-        : [];
-
-    const colors: BrandColors = {
-      primary: (brandConfig?.primaryColor as string) ?? "#2D1B69",
-      secondary: (brandConfig?.secondaryColor as string) ?? "#00f5ff",
-      accent: (brandConfig?.accentColor as string) ?? "#ff00e5",
-    };
+  async getProfile(tenantId: string): Promise<AccountSettingsData> {
+    const setting = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId, key: "account_data" } },
+    });
+    const value = (setting?.value ?? {}) as Record<string, unknown>;
 
     return {
-      name: brand?.name ?? tenant?.name ?? "",
-      tagline: brand?.tagline ?? "",
-      bio: brand?.bio ?? "",
-      avatarUrl: brand?.avatarUrl ?? null,
-      bannerUrl: brand?.bannerUrl ?? null,
-      avatarAssetId: brand?.avatarAssetId ?? null,
-      bannerAssetId: brand?.bannerAssetId ?? null,
-      socialLinks,
-      contactEmail: (influencerData?.contactEmail as string) ?? null,
-      categories: Array.isArray(influencerData?.categories) ? influencerData.categories as string[] : [],
-      brandColors: colors,
-      languages: Array.isArray(influencerData?.languages) ? influencerData.languages as string[] : [],
-      location: (influencerData?.location as string) ?? null,
+      contactEmail: (value.contactEmail as string) ?? null,
+      phone: (value.phone as string) ?? null,
+      timezone: (value.timezone as string) ?? null,
+      language: (value.language as string) ?? null,
+      country: (value.country as string) ?? null,
+      location: (value.location as string) ?? null,
+      businessName: (value.businessName as string) ?? null,
+      gst: (value.gst as string) ?? null,
+      taxId: (value.taxId as string) ?? null,
+      payoutPreference: (value.payoutPreference as string) ?? null,
+      currency: (value.currency as string) ?? null,
+      categories: Array.isArray(value.categories) ? value.categories as string[] : [],
+      notifications: {
+        email: (value.notifications as { email?: boolean })?.email ?? true,
+        push: (value.notifications as { push?: boolean })?.push ?? true,
+      },
     };
   },
 
-  async updateProfile(tenantId: string, input: Partial<ProfileData>): Promise<ProfileData> {
-    const brand = await prisma.brand.findFirst({
-      where: { website: { tenantId } },
-      select: { id: true },
+  async updateProfile(tenantId: string, input: AccountSettingsUpdateInput): Promise<AccountSettingsData> {
+    const existing = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId, key: "account_data" } },
+      select: { value: true },
     });
+    const current = ((existing?.value as Record<string, unknown>) ?? {}) as Record<string, unknown>;
 
-    if (brand) {
-      const updateData: Record<string, unknown> = {};
-      if (input.name !== undefined) updateData.name = input.name;
-      if (input.tagline !== undefined) updateData.tagline = input.tagline;
-      if (input.bio !== undefined) updateData.bio = input.bio;
-      if (input.avatarUrl !== undefined) updateData.avatarUrl = input.avatarUrl;
-      if (input.avatarAssetId !== undefined) updateData.avatarAssetId = normalizeAssetId(input.avatarAssetId);
-      if (input.bannerUrl !== undefined) updateData.bannerUrl = input.bannerUrl;
-      if (input.bannerAssetId !== undefined) updateData.bannerAssetId = normalizeAssetId(input.bannerAssetId);
-      if (input.socialLinks !== undefined) updateData.socialLinks = input.socialLinks;
-      if (Object.keys(updateData).length > 0) {
-        await prisma.brand.update({ where: { id: brand.id }, data: updateData });
-      }
-    }
+    const next: Record<string, unknown> = {
+      ...current,
+      ...(input.contactEmail !== undefined && { contactEmail: input.contactEmail }),
+      ...(input.phone !== undefined && { phone: input.phone }),
+      ...(input.timezone !== undefined && { timezone: input.timezone }),
+      ...(input.language !== undefined && { language: input.language }),
+      ...(input.country !== undefined && { country: input.country }),
+      ...(input.location !== undefined && { location: input.location }),
+      ...(input.businessName !== undefined && { businessName: input.businessName }),
+      ...(input.gst !== undefined && { gst: input.gst }),
+      ...(input.taxId !== undefined && { taxId: input.taxId }),
+      ...(input.payoutPreference !== undefined && { payoutPreference: input.payoutPreference }),
+      ...(input.currency !== undefined && { currency: input.currency }),
+      ...(input.categories !== undefined && { categories: input.categories }),
+      ...(input.notifications !== undefined && { notifications: input.notifications }),
+    };
 
     await prisma.setting.upsert({
-      where: { tenantId_key: { tenantId, key: "influencer_data" } },
-      create: {
-        tenantId,
-        key: "influencer_data",
-        value: JSON.parse(JSON.stringify({
-          contactEmail: input.contactEmail ?? null,
-          categories: input.categories ?? [],
-          languages: input.languages ?? [],
-          location: input.location ?? null,
-        })),
-      },
-      update: {
-        value: JSON.parse(JSON.stringify({
-          contactEmail: input.contactEmail ?? null,
-          categories: input.categories ?? [],
-          languages: input.languages ?? [],
-          location: input.location ?? null,
-        })),
-      },
+      where: { tenantId_key: { tenantId, key: "account_data" } },
+      create: { tenantId, key: "account_data", value: next as never },
+      update: { value: next as never },
     });
-
-    if (input.brandColors) {
-      const existing = await prisma.setting.findUnique({
-        where: { tenantId_key: { tenantId, key: "brand_config" } },
-        select: { value: true },
-      });
-      const existingConfig = (existing?.value as Record<string, unknown>) ?? {};
-      await prisma.setting.upsert({
-        where: { tenantId_key: { tenantId, key: "brand_config" } },
-        create: {
-          tenantId,
-          key: "brand_config",
-          value: JSON.parse(JSON.stringify({
-            ...existingConfig,
-            primaryColor: input.brandColors.primary,
-            secondaryColor: input.brandColors.secondary,
-            accentColor: input.brandColors.accent,
-          })),
-        },
-        update: {
-          value: JSON.parse(JSON.stringify({
-            ...existingConfig,
-            primaryColor: input.brandColors.primary,
-            secondaryColor: input.brandColors.secondary,
-            accentColor: input.brandColors.accent,
-          })),
-        },
-      });
-    }
 
     return this.getProfile(tenantId);
   },

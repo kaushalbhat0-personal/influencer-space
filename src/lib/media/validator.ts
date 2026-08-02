@@ -70,6 +70,11 @@ export class MediaValidator {
     const sizeError = this.validateSize(file.mimeType, file.size);
     if (sizeError) errors.push(sizeError);
 
+    // Reject empty/invalid media payloads before they reach storage — a video
+    // whose bytes are not a real container will "upload fine" but never play.
+    const magicError = this.validateMagicBytes(file.mimeType, file.buffer);
+    if (magicError) errors.push(magicError);
+
     if (folder) {
       const folderError = this.validateFolder(folder);
       if (folderError) errors.push(folderError);
@@ -79,6 +84,30 @@ export class MediaValidator {
     if (nameResult.warning) warnings.push(nameResult.warning);
 
     return { valid: errors.length === 0, errors, warnings };
+  }
+
+  validateMagicBytes(mimeType: string, buffer?: Buffer): string | null {
+    if (!buffer || buffer.length === 0) return null;
+    // MP4 / QuickTime — ISO BMFF box (ftyp) at offset 4.
+    if (mimeType === "video/mp4" || mimeType === "video/quicktime") {
+      const hasFtyp =
+        buffer.length > 12 &&
+        buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70;
+      if (!hasFtyp) return "File does not look like a valid MP4 video";
+    }
+    // WebM — EBML magic.
+    if (mimeType === "video/webm") {
+      const hasEbml =
+        buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3;
+      if (!hasEbml) return "File does not look like a valid WebM video";
+    }
+    // Ogg — OggS magic.
+    if (mimeType === "video/ogg") {
+      const hasOgg =
+        buffer[0] === 0x4f && buffer[1] === 0x67 && buffer[2] === 0x67 && buffer[3] === 0x53;
+      if (!hasOgg) return "File does not look like a valid Ogg video";
+    }
+    return null;
   }
 
   validateReplacement(assetMimeType: string, newFile: FileInfo): ValidationResult {

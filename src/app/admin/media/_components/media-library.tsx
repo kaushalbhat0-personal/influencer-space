@@ -130,7 +130,11 @@ export function MediaLibrary() {
                 }`}
               >
                 {asset.publicUrl ? (
-                  <CreatorImage src={asset.publicUrl} alt={asset.originalFilename} variant="thumbnail" className="h-full w-full" />
+                  asset.mimeType?.startsWith("video/") ? (
+                    <video src={asset.publicUrl} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                  ) : (
+                    <CreatorImage src={asset.publicUrl} alt={asset.originalFilename} variant="thumbnail" className="h-full w-full" />
+                  )
                 ) : (
                   <div className="flex h-full items-center justify-center bg-zinc-800">
                     <span className="text-xs text-zinc-600">No preview</span>
@@ -173,7 +177,11 @@ export function MediaLibrary() {
               >
                 <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-zinc-800">
                   {asset.publicUrl ? (
-                    <CreatorImage src={asset.publicUrl} alt="" variant="thumbnail" className="h-full w-full" />
+                    asset.mimeType?.startsWith("video/") ? (
+                      <video src={asset.publicUrl} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                    ) : (
+                      <CreatorImage src={asset.publicUrl} alt="" variant="thumbnail" className="h-full w-full" />
+                    )
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-zinc-600">N/A</div>
                   )}

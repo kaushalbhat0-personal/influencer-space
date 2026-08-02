@@ -44,6 +44,7 @@ interface HeroMediaProps {
   playsInline?: boolean;
   loop?: boolean;
   controls?: boolean;
+  preload?: "auto" | "metadata" | "none";
   poster?: string;
   onEnded?: () => void;
 }
@@ -59,6 +60,7 @@ export function HeroMedia({
   playsInline = true,
   loop = true,
   controls = false,
+  preload,
   poster,
   onEnded,
 }: HeroMediaProps) {
@@ -75,6 +77,7 @@ export function HeroMedia({
         playsInline={playsInline}
         loop={loop}
         controls={controls}
+        preload={preload}
         onEnded={onEnded}
         className={mediaClass}
       />

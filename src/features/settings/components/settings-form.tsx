@@ -75,6 +75,9 @@ export function SettingsForm({
   const [socialLinks, setSocialLinks] = useState<HeroSocialLink[]>(
     Array.isArray(heroData.socialLinks) ? heroData.socialLinks : [],
   );
+  const [creatorName, setCreatorName] = useState(heroData.name || "");
+  const [profilePictureUrl, setProfilePictureUrl] = useState(heroData.profilePictureUrl || "");
+  const [profilePictureAssetId, setProfilePictureAssetId] = useState(heroData.profilePictureAssetId || "");
 
   useEffect(() => { setHeroTitle(heroData.title || ""); }, [heroData.title]);
   useEffect(() => { setHeroSubtitle(heroData.subtitle || ""); }, [heroData.subtitle]);
@@ -93,6 +96,9 @@ export function SettingsForm({
   useEffect(() => { setBackgroundUrl(heroData.backgroundUrl || ""); }, [heroData.backgroundUrl]);
   useEffect(() => { setBackgroundAssetId(heroData.backgroundAssetId || ""); }, [heroData.backgroundAssetId]);
   useEffect(() => { setSocialLinks(Array.isArray(heroData.socialLinks) ? heroData.socialLinks : []); }, [heroData.socialLinks]);
+  useEffect(() => { setCreatorName(heroData.name || ""); }, [heroData.name]);
+  useEffect(() => { setProfilePictureUrl(heroData.profilePictureUrl || ""); }, [heroData.profilePictureUrl]);
+  useEffect(() => { setProfilePictureAssetId(heroData.profilePictureAssetId || ""); }, [heroData.profilePictureAssetId]);
 
   function alignmentButtons(
     desktopAlign: string,
@@ -186,10 +192,22 @@ export function SettingsForm({
     if (result.success) setTimeout(() => router.refresh(), 50);
   }
 
+  async function handleSaveIdentity() {
+    const result = await updateHeroPartial(tenantId, {
+      name: creatorName,
+      tagline: heroTagline,
+      bio: heroBio,
+      profilePictureUrl: profilePictureUrl || null,
+      profilePictureAssetId: profilePictureAssetId || null,
+    });
+    if (result.success) setTimeout(() => router.refresh(), 50);
+  }
+
   async function handleSaveHeroDetails() {
     setHeroDetailsSave({ pending: true, state: { success: false } });
 
     const payload = {
+      name: creatorName,
       title: heroTitle,
       subtitle: heroSubtitle,
       tagline: heroTagline,
@@ -324,6 +342,61 @@ export function SettingsForm({
           </CardContent>
         </Card>
 
+        {/* ─── Creator Identity ─── */}
+        <Card>
+          <CardContent>
+            <div className="space-y-5">
+              <h3 className="text-lg font-semibold text-white">Creator Identity</h3>
+              <p className="text-sm text-gray-500">
+                Your public identity — shown on the Hero, About section and Footer. Owned by Hero.
+              </p>
+              <MediaField
+                label="Profile Picture"
+                value={{ url: profilePictureUrl, assetId: profilePictureAssetId }}
+                folder="profile"
+                accept="image/*"
+                entityType="hero"
+                entityId={tenantId}
+                entityField="profilePictureUrl"
+                onChange={(v) => {
+                  setProfilePictureUrl(v?.url ?? "");
+                  setProfilePictureAssetId(v?.assetId ?? "");
+                }}
+              />
+              <Input
+                id="creatorName"
+                label="Name"
+                value={creatorName}
+                onChange={(e) => setCreatorName(e.target.value)}
+                placeholder="Farah Khan"
+              />
+              <Input
+                id="creatorTagline"
+                label="Tagline"
+                value={heroTagline}
+                onChange={(e) => setHeroTagline(e.target.value)}
+                placeholder="Your tagline"
+              />
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300" htmlFor="creatorBio">
+                  Bio
+                </label>
+                <textarea
+                  id="creatorBio"
+                  value={heroBio}
+                  onChange={(e) => setHeroBio(e.target.value)}
+                  rows={3}
+                  placeholder="A short bio shown in the hero and about sections."
+                  className="admin-input w-full resize-y"
+                />
+              </div>
+              <button type="button" onClick={handleSaveIdentity} className="admin-btn-cyan">
+                Save Identity
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* ─── Hero Details ─── */}
         <Card>
           <CardContent>
@@ -347,26 +420,6 @@ export function SettingsForm({
                 onChange={(e) => setHeroSubtitle(e.target.value)}
                 placeholder="S8UL Esports | BGMI Pro | Content Creator"
               />
-              <Input
-                id="heroTagline"
-                label="Tagline"
-                value={heroTagline}
-                onChange={(e) => setHeroTagline(e.target.value)}
-                placeholder="Hyderabad ki energy — global level ka game."
-              />
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300" htmlFor="heroBio">
-                  Bio
-                </label>
-                <textarea
-                  id="heroBio"
-                  value={heroBio}
-                  onChange={(e) => setHeroBio(e.target.value)}
-                  rows={3}
-                  placeholder="A short bio shown in the hero and about sections."
-                  className="admin-input w-full resize-y"
-                />
-              </div>
 
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-white">Call-to-Action Buttons</h4>

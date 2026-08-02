@@ -1,26 +1,26 @@
 import { z } from "zod/v4";
-import { socialLinkSchema } from "@/features/_shared/validators";
 
-export const brandColorsSchema = z.object({
-  primary: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color"),
-  secondary: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color"),
-  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color"),
-});
-
-export const profileUpdateSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  tagline: z.string().max(200).optional(),
-  bio: z.string().max(2000).optional(),
-  avatarUrl: z.string().url().nullable().optional(),
-  bannerUrl: z.string().url().nullable().optional(),
-  avatarAssetId: z.string().nullable().optional(),
-  bannerAssetId: z.string().nullable().optional(),
-  socialLinks: z.array(socialLinkSchema).optional(),
+/**
+ * Account settings validation — no storefront identity fields.
+ * Creator identity lives in Hero.
+ */
+export const accountSettingsSchema = z.object({
   contactEmail: z.string().email().nullable().optional(),
-  categories: z.array(z.string()).optional(),
-  brandColors: brandColorsSchema.optional(),
-  languages: z.array(z.string()).optional(),
+  phone: z.string().nullable().optional(),
+  timezone: z.string().nullable().optional(),
+  language: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
+  businessName: z.string().nullable().optional(),
+  gst: z.string().nullable().optional(),
+  taxId: z.string().nullable().optional(),
+  payoutPreference: z.string().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  categories: z.array(z.string()).optional(),
+  notifications: z.object({
+    email: z.boolean().optional(),
+    push: z.boolean().optional(),
+  }).optional(),
 });
 
-export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
+export type AccountSettingsUpdate = z.infer<typeof accountSettingsSchema>;

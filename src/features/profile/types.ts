@@ -1,43 +1,38 @@
-export interface ProfileData {
-  name: string;
-  tagline: string;
-  bio: string;
-  avatarUrl: string | null;
-  bannerUrl: string | null;
-  avatarAssetId: string | null;
-  bannerAssetId: string | null;
-  socialLinks: SocialLink[];
+/**
+ * Account Settings — IMPLEMENTATION-18B.
+ *
+ * Profile is now ACCOUNT settings only. Creator identity (name, tagline, bio,
+ * profile picture, social links) is owned by Hero and edited there. Profile no
+ * longer writes any storefront-visible identity field.
+ */
+export interface AccountSettingsData {
   contactEmail: string | null;
-  categories: string[];
-  brandColors: BrandColors;
-  languages: string[];
+  phone: string | null;
+  timezone: string | null;
+  language: string | null;
+  country: string | null;
   location: string | null;
+  businessName: string | null;
+  gst: string | null;
+  taxId: string | null;
+  payoutPreference: string | null;
+  currency: string | null;
+  categories: string[];
+  notifications: { email: boolean; push: boolean };
 }
 
-export interface SocialLink {
-  platform: string;
-  url: string;
-  label?: string;
-}
-
-export interface BrandColors {
-  primary: string;
-  secondary: string;
-  accent: string;
-}
-
-export interface ProfileUpdateInput {
-  name?: string;
-  tagline?: string;
-  bio?: string;
-  avatarUrl?: string | null;
-  bannerUrl?: string | null;
-  avatarAssetId?: string | null;
-  bannerAssetId?: string | null;
-  socialLinks?: SocialLink[];
+export interface AccountSettingsUpdateInput {
   contactEmail?: string | null;
-  categories?: string[];
-  brandColors?: BrandColors;
-  languages?: string[];
+  phone?: string | null;
+  timezone?: string | null;
+  language?: string | null;
+  country?: string | null;
   location?: string | null;
+  businessName?: string | null;
+  gst?: string | null;
+  taxId?: string | null;
+  payoutPreference?: string | null;
+  currency?: string | null;
+  categories?: string[];
+  notifications?: { email: boolean; push: boolean };
 }

@@ -132,6 +132,9 @@ export interface HeroSocialLink {
 
 export interface HeroContent {
   title: string;
+  name?: string;
+  profilePictureUrl?: string | null;
+  profilePictureAssetId?: string | null;
   subtitle: string;
   description: string;
   tagline?: string;

@@ -68,7 +68,10 @@ async function main() {
     const tenantId = website.tenantId;
 
     const [brand, affiliateLinks, heroSetting] = await Promise.all([
-      prisma.brand.findUnique({ where: { websiteId: website.id }, select: { socialLinks: true } }),
+      prisma.brand.findUnique({
+        where: { websiteId: website.id },
+        select: { name: true, tagline: true, bio: true, avatarUrl: true, avatarAssetId: true, socialLinks: true },
+      }),
       prisma.affiliateLink.findMany({ where: { tenantId, isActive: true }, select: { title: true, url: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "hero_data" } } }),
     ]);
@@ -101,15 +104,25 @@ async function main() {
 
     const merged = mergeLinks(existingSocial, [...brandLinks, ...affiliateLinksMapped, ...heroCtaLinks]);
 
-    if (merged.length !== existingSocial.length) {
+    // ── Creator identity: copy Brand identity into Hero (no overwrite) ──
+    const identityPatches: Record<string, unknown> = {};
+    if (brand && typeof hero.name !== "string" && brand.name) identityPatches.name = brand.name;
+    if (brand && typeof hero.tagline !== "string" && brand.tagline) identityPatches.tagline = brand.tagline;
+    if (brand && typeof hero.bio !== "string" && brand.bio) identityPatches.bio = brand.bio;
+    if (brand && !hero.profilePictureUrl && brand.avatarUrl) {
+      identityPatches.profilePictureUrl = brand.avatarUrl;
+      if (brand.avatarAssetId && !hero.profilePictureAssetId) identityPatches.profilePictureAssetId = brand.avatarAssetId;
+    }
+
+    if (merged.length !== existingSocial.length || Object.keys(identityPatches).length > 0) {
       const action = apply ? "→ merged" : "→ would merge";
-      console.log(`${tenantId} ${action}: ${existingSocial.length} → ${merged.length} link(s)`);
+      console.log(`${tenantId} ${action}: links ${existingSocial.length} → ${merged.length}; identity keys ${Object.keys(identityPatches).join(",") || "none"}`);
       for (const l of merged) console.log(`    ${l.platform.padEnd(10)} ${l.url}`);
       if (apply) {
         await prisma.setting.upsert({
           where: { tenantId_key: { tenantId, key: "hero_data" } },
-          update: { value: { ...hero, socialLinks: merged } as never },
-          create: { tenantId, key: "hero_data", value: { ...hero, socialLinks: merged } as never },
+          update: { value: { ...hero, socialLinks: merged, ...identityPatches } as never },
+          create: { tenantId, key: "hero_data", value: { ...hero, socialLinks: merged, ...identityPatches } as never },
         });
         migrated++;
       }

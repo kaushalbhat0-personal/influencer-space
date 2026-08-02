@@ -39,6 +39,9 @@ export type HeroDataType = {
   posterAssetId: string | null;
   backgroundUrl: string;
   backgroundAssetId: string | null;
+  name: string;
+  profilePictureUrl: string;
+  profilePictureAssetId: string | null;
   title: string;
   subtitle: string;
   tagline: string;
@@ -63,6 +66,9 @@ export const defaultHeroData: HeroDataType = {
   posterAssetId: null,
   backgroundUrl: "",
   backgroundAssetId: null,
+  name: "",
+  profilePictureUrl: "",
+  profilePictureAssetId: null,
   title: "Welcome",
   subtitle: "",
   tagline: "",

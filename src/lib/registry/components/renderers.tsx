@@ -41,7 +41,9 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const p = props as Record<string, unknown>;
   const title = String(p.title || "");
+  const name = String(p.name || p.title || "");
   const tagline = String(p.tagline || "");
+  const bio = String(p.bio || "");
   const subtitle = String(p.subtitle || "");
   const cta = String(p.cta || "");
   const ctaLink = String(p.ctaLink || "");
@@ -49,6 +51,7 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const ctaSecondaryLink = String(p.ctaSecondaryLink || "");
   const liveBadgeText = String(p.liveBadgeText || "Live");
   const showLiveBadge = Boolean(p.showLiveBadge);
+  const profilePictureUrl = String(p.profilePictureUrl || "");
   const videoUrl = String(p.videoUrl || "");
   const posterUrl = String(p.posterUrl || "");
   const hasMedia = Boolean(p.videoUrl || p.posterUrl);
@@ -62,93 +65,107 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   );
   const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
   const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
+
   return (
-    <div className="relative flex min-h-[40vh] items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black px-4">
+    <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+      {/* ── Hero media (video / image) ── */}
       {hasMedia && (
-        <div className="absolute inset-0">
+        <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
           {videoUrl ? (
             <HeroMedia
               type="video"
               url={videoUrl}
               poster={posterUrl}
               alignmentClass={videoAlign}
-              opacity="opacity-40"
               className="absolute inset-0"
               autoPlay
               muted
               loop
               playsInline
+              controls
+              preload="metadata"
             />
           ) : (
             <HeroMedia
               type="image"
               url={posterUrl}
               alignmentClass={imageAlign}
-              opacity="opacity-40"
               className="absolute inset-0"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-zinc-950" />
         </div>
       )}
-      <div className="relative z-10 max-w-2xl text-center">
-        {showLiveBadge && (
-          <div className="mb-4 flex items-center justify-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-            </span>
-            <span className="text-sm font-semibold uppercase tracking-wider text-red-400">{liveBadgeText}</span>
-          </div>
-        )}
-        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          {title}
-        </h1>
-        {tagline && (
-          <p className="mt-3 text-base text-zinc-400">{tagline}</p>
-        )}
-        {subtitle && (
-          <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
-        )}
-        <div className="mt-6 flex items-center justify-center gap-3">
-          {cta && (
-            ctaLink ? (
-              <a href={ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
-                {cta}
-              </a>
-            ) : (
-              <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
-                {cta}
-              </span>
-            )
+
+      {/* ── Overlapping profile picture + identity ── */}
+      <div className={hasMedia ? "-mt-[18%] sm:-mt-[12%] relative z-10" : "relative z-10 pt-16"}>
+        <div className="mx-auto max-w-2xl px-4 pb-16 text-center">
+          {profilePictureUrl && (
+            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 sm:h-36 sm:w-36">
+              <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
+            </div>
           )}
-          {ctaSecondaryText && (
-            ctaSecondaryLink ? (
-              <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
-                {ctaSecondaryText}
-              </a>
-            ) : (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300">
-                {ctaSecondaryText}
+
+          {showLiveBadge && (
+            <div className="mb-3 flex items-center justify-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
               </span>
-            )
+              <span className="text-sm font-semibold uppercase tracking-wider text-red-400">{liveBadgeText}</span>
+            </div>
+          )}
+
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">{name || title}</h1>
+
+          {title && title !== name && (
+            <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">{title}</h2>
+          )}
+          {tagline && <p className="mt-3 text-base text-zinc-400">{tagline}</p>}
+          {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">{bio}</p>}
+          {!bio && subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {cta && (
+              ctaLink ? (
+                <a href={ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
+                  {cta}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
+                  {cta}
+                </span>
+              )
+            )}
+            {ctaSecondaryText && (
+              ctaSecondaryLink ? (
+                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
+                  {ctaSecondaryText}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300">
+                  {ctaSecondaryText}
+                </span>
+              )
+            )}
+          </div>
+
+          {socialLinks.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              {socialLinks.map((l, i) => (
+                <a
+                  key={i}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-white/30 hover:text-white"
+                >
+                  {l.label || platformLabel(l.platform || "Link")}
+                </a>
+              ))}
+            </div>
           )}
         </div>
-        {socialLinks.length > 0 && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {socialLinks.map((l, i) => (
-              <a
-                key={i}
-                href={l.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-white/30 hover:text-white"
-              >
-                {l.label || platformLabel(l.platform || "Link")}
-              </a>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
