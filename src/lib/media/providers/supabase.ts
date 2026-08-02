@@ -52,6 +52,24 @@ export class SupabaseStorageProvider implements StorageProvider {
     if (error) throw new Error(`Supabase delete failed: ${error.message}`);
   }
 
+  async deleteMany(storageKeys: string[]): Promise<{ removed: number; failed: string[] }> {
+    if (storageKeys.length === 0) return { removed: 0, failed: [] };
+    // Supabase remove() accepts up to 1000 keys per call; chunk for safety.
+    const failed: string[] = [];
+    let removed = 0;
+    for (let i = 0; i < storageKeys.length; i += 900) {
+      const chunk = storageKeys.slice(i, i + 900);
+      const { data, error } = await this.client.storage.from(BUCKET).remove(chunk);
+      if (error) {
+        failed.push(...chunk);
+      } else {
+        removed += (data ?? []).length;
+        // Keys Supabase did not return were already absent — still removed (404 state).
+      }
+    }
+    return { removed, failed };
+  }
+
   async getPublicUrl(storageKey: string): Promise<string> {
     const { data } = this.client.storage.from(BUCKET).getPublicUrl(storageKey);
     return data.publicUrl;

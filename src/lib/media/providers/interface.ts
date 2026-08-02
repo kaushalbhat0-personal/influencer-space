@@ -20,6 +20,8 @@ export interface StorageProvider {
   readonly name: string;
   upload(storageKey: string, input: UploadInput): Promise<UploadResult>;
   delete(storageKey: string): Promise<void>;
+  /** Bulk storage removal (no N+1). Returns the keys that failed to remove. */
+  deleteMany?(storageKeys: string[]): Promise<{ removed: number; failed: string[] }>;
   getPublicUrl(storageKey: string): Promise<string>;
   list(prefix: string): Promise<string[]>;
   exists(storageKey: string): Promise<boolean>;
