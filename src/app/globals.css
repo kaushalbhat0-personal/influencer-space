@@ -9,6 +9,15 @@
 :root {
   --surface-root: #0A0A0B;
   --surface-base: #18181B;
+  --surface-card: #18181B;
+  --surface-card-hover: #27272A;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --on-primary: #ffffff;
+  --primary-hover: #4f46e5;
+  --live: #ef4444;
   --surface-raised: #27272A;
   --surface-overlay: #3F3F46;
   --surface-glass: rgba(10, 10, 11, 0.88);

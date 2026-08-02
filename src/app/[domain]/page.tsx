@@ -147,7 +147,7 @@ export default async function PublicPage({
           Preview Mode — changes are not public
         </div>
       )}
-      <main id="main-content" className="min-h-screen text-white pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
+      <main id="main-content" className="min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
         ))}

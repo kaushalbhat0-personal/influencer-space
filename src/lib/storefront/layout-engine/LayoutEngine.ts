@@ -32,8 +32,15 @@ export class LayoutEngine {
       "--brand-accent": c.accent,
       "--surface-root": c.background,
       "--surface-base": c.foreground,
+      "--surface-card": deriveSurface(c.background, c.foreground),
+      "--surface-card-hover": deriveSurface(c.background, c.foreground, 1.4),
+      "--border": deriveBorder(c.background),
       "--text-primary": c.foreground,
       "--text-secondary": c.muted,
+      "--text-muted": c.muted,
+      "--on-primary": deriveOnColor(c.primary),
+      "--primary-hover": deriveShade(c.primary, 0.82),
+      "--live": "#ef4444",
     };
   }
 
@@ -369,3 +376,55 @@ export class LayoutEngine {
 }
 
 export const layoutEngine = new LayoutEngine();
+
+// ── Theme integration helpers (derived from the existing snapshot colors) ──
+
+function hexToRgb(hex: string): [number, number, number] {
+  const m = hex.replace("#", "").trim();
+  if (m.length === 3) {
+    return [
+      parseInt(m[0]! + m[0]!, 16),
+      parseInt(m[1]! + m[1]!, 16),
+      parseInt(m[2]! + m[2]!, 16),
+    ];
+  }
+  const r = parseInt(m.slice(0, 2), 16);
+  const g = parseInt(m.slice(2, 4), 16);
+  const b = parseInt(m.slice(4, 6), 16);
+  return [Number.isFinite(r) ? r : 0, Number.isFinite(g) ? g : 0, Number.isFinite(b) ? b : 0];
+}
+
+function rgbToHex([r, g, b]: [number, number, number]): string {
+  const to = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+function luminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+/** Card surface: dark themes lift from the background; light themes sink. */
+function deriveSurface(bg: string, _fg: string, factor = 1): string {
+  const isDark = luminance(bg) < 0.5;
+  const [r, g, b] = hexToRgb(bg);
+  const delta = isDark ? 14 * factor : -10 * factor;
+  return rgbToHex([r + delta, g + delta, b + delta]);
+}
+
+/** Border: subtle white on dark themes, subtle black on light themes. */
+function deriveBorder(bg: string): string {
+  const isDark = luminance(bg) < 0.5;
+  return isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+}
+
+/** Foreground color that reads on a given background. */
+function deriveOnColor(bg: string): string {
+  return luminance(bg) < 0.5 ? "#ffffff" : "#09090b";
+}
+
+/** Darken (factor < 1) or lighten (factor > 1) a hex color. */
+function deriveShade(hex: string, factor: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex([r * factor, g * factor, b * factor]);
+}

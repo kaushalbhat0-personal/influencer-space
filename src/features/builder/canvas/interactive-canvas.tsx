@@ -161,6 +161,7 @@ export function InteractiveCanvas({
     return {
       sections: doc.pages.flatMap((p) => p.sections).filter((s) => s.visible !== false),
       theme,
+      themeVars: doc.theme,
       layout,
     };
     // serializedPages is derived 1:1 from layoutSignature — never memoize store state.
@@ -191,11 +192,11 @@ export function InteractiveCanvas({
   }, [signature, dataReady, liveContent, resolved, diagnostics]);
 
   return (
-    <div className="relative flex-1 overflow-auto bg-zinc-900/50" data-testid="builder-canvas" data-runtime-signature={signature}>
+    <div className="relative flex-1 overflow-auto bg-[var(--surface-root,#0A0A0B)]" data-testid="builder-canvas" data-runtime-signature={signature}>
       <div className="flex min-h-full items-start justify-center p-8">
         <div
-          className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50 transition-all"
-          style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center" }}
+          className="relative overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-root,#0A0A0B)] shadow-2xl shadow-black/50 transition-all"
+          style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center", ...(resolved?.themeVars as React.CSSProperties | undefined) }}
         >
           <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">
             <div className="flex gap-1">

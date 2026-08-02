@@ -209,10 +209,10 @@ export function GalleryRenderer({ props }: RendererProps) {
   if (images.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
           {images.slice(0, 12).map((img: Record<string, unknown>, i: number) => (
-            <div key={i} className="aspect-square overflow-hidden rounded-lg bg-zinc-800">
+            <div key={i} className="aspect-square overflow-hidden rounded-lg bg-[var(--surface-card-hover,#27272A)]">
               {img.isVideo && img.videoUrl ? (
                 <video
                   src={img.videoUrl as string}
@@ -231,7 +231,7 @@ export function GalleryRenderer({ props }: RendererProps) {
                   className="h-full w-full"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-zinc-700">
+                <div className="flex h-full items-center justify-center text-[var(--text-muted,#71717A)]">
                   {img.isVideo ? "Video" : "Image"}
                 </div>
               )}
@@ -257,10 +257,10 @@ export function ProductsRenderer({ props }: RendererProps) {
   if (products.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
           {products.map((prod: Record<string, unknown>, idx: number) => (
-            <div key={idx} className="group rounded-lg border border-white/10 bg-zinc-900/50 p-4 transition-colors hover:border-white/25 hover:bg-zinc-900">
+            <div key={idx} className="group rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 transition-colors hover:border-[var(--brand-primary,#6366F1)] hover:bg-[var(--surface-card,#18181B)]">
               <div className="relative mb-2 overflow-hidden rounded">
                 {prod.imageUrl ? (
                   <CreatorImage
@@ -270,8 +270,8 @@ export function ProductsRenderer({ props }: RendererProps) {
                     className="w-full transition-transform duration-300 group-hover:scale-[1.03]"
                   />
                 ) : (
-                  <div className="flex aspect-video items-center justify-center rounded bg-zinc-800">
-                    <span className="text-xs text-zinc-600">{String((prod.name as string)?.[0] ?? "P")}</span>
+                  <div className="flex aspect-video items-center justify-center rounded bg-[var(--surface-card-hover,#27272A)]">
+                    <span className="text-xs text-[var(--text-muted,#71717A)]">{String((prod.name as string)?.[0] ?? "P")}</span>
                   </div>
                 )}
                 {Boolean(prod.isFeatured) && (
@@ -280,8 +280,8 @@ export function ProductsRenderer({ props }: RendererProps) {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-zinc-300">{String(prod.name || "")}</p>
-              <p className="text-xs text-zinc-500">{prod.price ? `₹${Number(prod.price).toLocaleString()}` : ""}</p>
+              <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(prod.name || "")}</p>
+              <p className="text-xs text-[var(--text-muted,#71717A)]">{prod.price ? `₹${Number(prod.price).toLocaleString()}` : ""}</p>
               {prod.id ? (
                 <BuyNowButton
                   productId={String(prod.id)}
@@ -289,7 +289,7 @@ export function ProductsRenderer({ props }: RendererProps) {
                   imageUrl={prod.imageUrl ? String(prod.imageUrl) : undefined}
                 />
               ) : (
-                <p className="mt-1.5 w-full rounded-lg bg-white/5 py-2 text-center text-xs font-semibold text-zinc-600">
+                <p className="mt-1.5 w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
                   Buy Now
                 </p>
               )}
@@ -314,13 +314,13 @@ export function TimelineRenderer({ props }: RendererProps) {
   if (milestones.length > 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12">
-        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-8 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="space-y-6">
           {milestones.map((m: Record<string, string>, i: number) => (
             <div key={i} className="relative border-l-2 border-zinc-800 pl-6">
-              <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-zinc-950" />
+              <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-[var(--surface-root,#0A0A0B)]" />
               {m.imageUrl && (
-                <div className="mb-2 w-full max-w-xs overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                <div className="mb-2 w-full max-w-xs overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card-hover,#27272A)]">
                   <CreatorImage
                     src={m.imageUrl}
                     alt={m.title || m.name || "Milestone"}
@@ -330,8 +330,8 @@ export function TimelineRenderer({ props }: RendererProps) {
                 </div>
               )}
               <p className="text-xs font-semibold text-s8ul-cyan">{m.year}</p>
-              <p className="mt-1 text-sm font-medium text-white">{m.title || m.name}</p>
-              <p className="text-xs text-zinc-500">{m.description || ""}</p>
+              <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{m.title || m.name}</p>
+              <p className="text-xs text-[var(--text-muted,#71717A)]">{m.description || ""}</p>
             </div>
           ))}
         </div>
@@ -353,10 +353,10 @@ export function LinksRenderer({ props }: RendererProps) {
   if (links.length > 0) {
     return (
       <div className="mx-auto max-w-md px-4 py-12 text-center">
-        <h2 className="mb-6 text-xl font-bold text-white">{title}</h2>
+        <h2 className="mb-6 text-xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="space-y-3">
           {links.map((link: Record<string, string>, i: number) => (
-            <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg bg-white/5 px-4 py-3 text-sm font-medium text-zinc-300 hover:bg-white/10 transition-colors">
+            <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg bg-[var(--surface-card-hover,#27272A)] px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)] hover:bg-[var(--surface-card-hover,#27272A)] transition-colors">
               <span>{link.platform || link.label || "Link"}</span>
             </a>
           ))}
@@ -375,7 +375,7 @@ export function FooterRenderer({ props }: RendererProps) {
   const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
   const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
   return (
-    <footer className="border-t border-white/10 py-8 text-center text-sm text-zinc-600">
+    <footer className="border-t border-[var(--border,rgba(255,255,255,0.08))] py-8 text-center text-sm text-[var(--text-muted,#71717A)]">
       {socialLinks.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
           {socialLinks.map((l, i) => (
@@ -384,7 +384,7 @@ export function FooterRenderer({ props }: RendererProps) {
               href={l.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+              className="text-xs text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]"
             >
               {l.label || platformLabel(l.platform || "Link")}
             </a>
@@ -408,10 +408,10 @@ export function TestimonialsRenderer({ props }: RendererProps) {
   if (items.length > 0) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12">
-        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-8 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, items.length)}, 1fr)` } as React.CSSProperties}>
           {items.map((item: Record<string, string>, i: number) => (
-            <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4">
+            <div key={i} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4">
               <div className="mb-2 flex items-center gap-2">
                 {item.avatarUrl ? (
                   <CreatorImage
@@ -421,13 +421,13 @@ export function TestimonialsRenderer({ props }: RendererProps) {
                     className="h-8 w-8 rounded-full"
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-zinc-500">
+                  <div className="h-8 w-8 rounded-full bg-[var(--surface-card-hover,#27272A)] flex items-center justify-center text-xs text-[var(--text-muted,#71717A)]">
                     {(item.name || "?")[0]}
                   </div>
                 )}
                 <div>
-                  <p className="text-xs font-medium text-zinc-300">{item.name || "Anonymous"}</p>
-                  {item.handle && <p className="text-[10px] text-zinc-600">{item.handle}</p>}
+                  <p className="text-xs font-medium text-[var(--text-primary,#FAFAFA)]">{item.name || "Anonymous"}</p>
+                  {item.handle && <p className="text-[10px] text-[var(--text-muted,#71717A)]">{item.handle}</p>}
                 </div>
               </div>
               {item.rating && Number(item.rating) > 0 && (
@@ -437,7 +437,7 @@ export function TestimonialsRenderer({ props }: RendererProps) {
                   ))}
                 </div>
               )}
-              <p className="text-xs italic text-zinc-400">{item.content || item.message || ""}</p>
+              <p className="text-xs italic text-[var(--text-secondary,#A1A1AA)]">{item.content || item.message || ""}</p>
             </div>
           ))}
         </div>
@@ -459,15 +459,15 @@ export function FaqRenderer({ props }: RendererProps) {
   if (items.length > 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12">
-        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="space-y-3">
           {items.map((item: Record<string, string>, i: number) => (
-            <details key={i} className="group rounded-lg border border-white/10 bg-zinc-900/50">
-              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-zinc-300">
+            <details key={i} className="group rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60">
+              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">
                 {item.question || item.q}
-                <svg className="h-4 w-4 text-zinc-500 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg className="h-4 w-4 text-[var(--text-muted,#71717A)] transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </summary>
-              <div className="border-t border-white/5 px-4 py-3 text-xs text-zinc-500">{item.answer || item.a}</div>
+              <div className="border-t border-white/5 px-4 py-3 text-xs text-[var(--text-muted,#71717A)]">{item.answer || item.a}</div>
             </details>
           ))}
         </div>
@@ -490,9 +490,9 @@ export function ContactRenderer({ props }: RendererProps) {
   if (state.success) {
     return (
       <div className="mx-auto max-w-lg px-4 py-12 text-center">
-        <h2 className="mb-2 text-2xl font-bold text-white">{p.title || "Get In Touch"}</h2>
-        <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-6">
-          <p className="text-sm text-zinc-400">Thanks for reaching out! I&apos;ll get back to you soon.</p>
+        <h2 className="mb-2 text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{p.title || "Get In Touch"}</h2>
+        <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
+          <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">Thanks for reaching out! I&apos;ll get back to you soon.</p>
         </div>
       </div>
     );
@@ -500,26 +500,26 @@ export function ContactRenderer({ props }: RendererProps) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12">
-      <h2 className="mb-2 text-center text-2xl font-bold text-white">{p.title || "Get In Touch"}</h2>
-      <p className="mb-6 text-center text-sm text-zinc-500">Have a question or want to collaborate? Reach out!</p>
+      <h2 className="mb-2 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{p.title || "Get In Touch"}</h2>
+      <p className="mb-6 text-center text-sm text-[var(--text-muted,#71717A)]">Have a question or want to collaborate? Reach out!</p>
       <form action={async (fd) => {
         fd.set("tenantId", tenantId);
         action(fd);
       }} className="space-y-4">
         <input type="hidden" name="tenantId" value={tenantId} />
         <div>
-          <label className="mb-1 block text-xs text-zinc-500">Name</label>
-          <input name="name" required maxLength={200} className="w-full rounded-lg border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-300 placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your name" />
+          <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Name</label>
+          <input name="name" required maxLength={200} className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your name" />
           {state.fieldErrors?.name && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.name[0]}</p>}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-500">Email</label>
-          <input name="email" type="email" required maxLength={200} className="w-full rounded-lg border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-300 placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="your@email.com" />
+          <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Email</label>
+          <input name="email" type="email" required maxLength={200} className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="your@email.com" />
           {state.fieldErrors?.email && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
         </div>
         <div>
-          <label className="mb-1 block text-xs text-zinc-500">Message</label>
-          <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full resize-none rounded-lg border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-300 placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your message..." />
+          <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Message</label>
+          <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full resize-none rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your message..." />
           {state.fieldErrors?.message && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.message[0]}</p>}
         </div>
         {state.error && <p className="text-xs text-red-400">{state.error}</p>}
@@ -541,9 +541,9 @@ export function NewsletterRenderer({ props }: RendererProps) {
   if (state.success) {
     return (
       <div className="mx-auto max-w-lg px-4 py-12 text-center">
-        <h2 className="mb-2 text-2xl font-bold text-white">{p.title || "Subscribe"}</h2>
-        <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-6">
-          <p className="text-sm text-zinc-400">You&apos;re subscribed! Stay tuned for updates.</p>
+        <h2 className="mb-2 text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{p.title || "Subscribe"}</h2>
+        <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
+          <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">You&apos;re subscribed! Stay tuned for updates.</p>
         </div>
       </div>
     );
@@ -551,14 +551,14 @@ export function NewsletterRenderer({ props }: RendererProps) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12 text-center">
-      <h2 className="mb-2 text-2xl font-bold text-white">{p.title || "Subscribe"}</h2>
-      <p className="mb-6 text-sm text-zinc-500">Stay updated with the latest content and announcements.</p>
+      <h2 className="mb-2 text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{p.title || "Subscribe"}</h2>
+      <p className="mb-6 text-sm text-[var(--text-muted,#71717A)]">Stay updated with the latest content and announcements.</p>
       <form action={async (fd) => {
         fd.set("tenantId", tenantId);
         action(fd);
       }} className="flex gap-2">
         <input type="hidden" name="tenantId" value={tenantId} />
-        <input name="email" type="email" required className="flex-1 rounded-lg border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-300 placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
+        <input name="email" type="email" required className="flex-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
         <button type="submit" className="rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">{p.buttonText || "Subscribe"}</button>
       </form>
       {state.error && <p className="mt-2 text-xs text-red-400">{state.error}</p>}
@@ -578,18 +578,18 @@ export function PricingRenderer({ props }: RendererProps) {
   if (plans.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-8 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan: Record<string, unknown>, i: number) => {
             const isPopular = Boolean(plan.isPopular);
             return (
-              <div key={i} className={`relative rounded-lg border ${isPopular ? "border-s8ul-cyan/30 bg-s8ul-cyan/5" : "border-white/10 bg-zinc-900/50"} p-6 text-center`}>
+              <div key={i} className={`relative rounded-lg border ${isPopular ? "border-s8ul-cyan/30 bg-s8ul-cyan/5" : "border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60"} p-6 text-center`}>
                 {isPopular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-s8ul-cyan px-3 py-0.5 text-[10px] font-semibold text-black">Popular</span>}
-                <p className="text-sm font-medium text-zinc-400">{String(plan.name || "")}</p>
-                <p className="mt-2 text-3xl font-bold text-white">{typeof plan.price === "number" ? `₹${plan.price.toLocaleString()}` : String(plan.price || "")}</p>
-                <p className="mt-1 text-xs text-zinc-500">{String(plan.description || plan.desc || "")}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">{String(plan.name || "")}</p>
+                <p className="mt-2 text-3xl font-bold text-[var(--text-primary,#FAFAFA)]">{typeof plan.price === "number" ? `₹${plan.price.toLocaleString()}` : String(plan.price || "")}</p>
+                <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(plan.description || plan.desc || "")}</p>
                 {!!plan.cta && (
-                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-s8ul-cyan text-black" : "border border-white/10 text-zinc-300"} px-4 py-2 text-sm font-semibold`}>
+                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-s8ul-cyan text-black" : "border border-[var(--border,rgba(255,255,255,0.08))] text-[var(--text-primary,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
                     {String(plan.cta)}
                   </button>
                 )}
@@ -614,10 +614,10 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
   if (courses.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-8 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course: Record<string, unknown>, i: number) => (
-            <div key={i} className="group overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50 transition-colors hover:border-white/25">
+            <div key={i} className="group overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
                 {course.imageUrl ? (
                   <CreatorImage
@@ -637,8 +637,8 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
               </div>
               <div className="p-4">
                 <p className="text-xs font-semibold text-s8ul-cyan">{(String(course.category || "")).toUpperCase() || "COURSE"}</p>
-                <p className="mt-1 text-sm font-medium text-white">{String(course.title || "")}</p>
-                {!!course.description && <p className="mt-1 text-xs text-zinc-500">{String(course.description)}</p>}
+                <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(course.title || "")}</p>
+                {!!course.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(course.description)}</p>}
                 {!!course.price && <p className="mt-2 text-sm font-semibold text-zinc-200">{typeof course.price === "number" ? `₹${course.price.toLocaleString()}` : String(course.price)}</p>}
               </div>
             </div>
@@ -662,10 +662,10 @@ export function ServicesRenderer({ props }: RendererProps) {
   if (services.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-8 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-8 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service: Record<string, unknown>, i: number) => (
-            <div key={i} className="group overflow-hidden rounded-lg border border-white/10 bg-zinc-900/50 text-center transition-colors hover:border-white/25">
+            <div key={i} className="group overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 text-center transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
                 {service.imageUrl ? (
                   <CreatorImage
@@ -687,12 +687,12 @@ export function ServicesRenderer({ props }: RendererProps) {
                 {!!service.category && (
                   <p className="text-xs font-semibold text-s8ul-cyan">{String(service.category).toUpperCase()}</p>
                 )}
-                <p className="mt-1 text-sm font-semibold text-white">{String(service.title || "")}</p>
-                {!!service.description && <p className="mt-1 text-xs text-zinc-500">{String(service.description)}</p>}
+                <p className="mt-1 text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(service.title || "")}</p>
+                {!!service.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(service.description)}</p>}
                 <p className="mt-3 text-lg font-bold text-zinc-100">
                   {typeof service.price === "number" ? `₹${service.price.toLocaleString()}` : String(service.price || "")}
                 </p>
-                {!!service.duration && <p className="mt-1 text-xs text-zinc-500">{String(service.duration)}</p>}
+                {!!service.duration && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(service.duration)}</p>}
               </div>
             </div>
           ))}
@@ -780,13 +780,13 @@ export function DiscordRenderer({ props }: RendererProps) {
       <div className="mx-auto max-w-md px-4 py-12 text-center">
         <div className="rounded-lg bg-indigo-900/20 p-6">
           <p className="text-3xl">💬</p>
-          <p className="mt-2 text-sm font-medium text-zinc-300">Discord Community</p>
-          <p className="mt-1 text-xs text-zinc-500">Join the conversation</p>
+          <p className="mt-2 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">Discord Community</p>
+          <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">Join the conversation</p>
           <a
             href={inviteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+            className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] transition-colors hover:bg-indigo-500"
           >
             {label}
           </a>
@@ -809,7 +809,7 @@ export function InstagramRenderer({ props }: RendererProps) {
   if (username) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12">
-        <p className="mb-4 text-center text-sm font-medium text-zinc-400">
+        <p className="mb-4 text-center text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">
           <a
             href={`https://instagram.com/${username}`}
             target="_blank"
@@ -821,13 +821,13 @@ export function InstagramRenderer({ props }: RendererProps) {
         </p>
         <div className="grid grid-cols-3 gap-2">
           {Array.from({ length: Math.min(limit, 6) }).map((_, i) => (
-            <div key={i} className="aspect-square rounded bg-gradient-to-br from-pink-900/30 to-purple-900/30 flex items-center justify-center text-xs text-zinc-600">
+            <div key={i} className="aspect-square rounded bg-gradient-to-br from-pink-900/30 to-purple-900/30 flex items-center justify-center text-xs text-[var(--text-muted,#71717A)]">
               📷
             </div>
           ))}
         </div>
-        <p className="mt-3 text-center text-[10px] text-zinc-600">
-          <a href={`https://instagram.com/${username}`} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition-colors">View on Instagram</a>
+        <p className="mt-3 text-center text-[10px] text-[var(--text-muted,#71717A)]">
+          <a href={`https://instagram.com/${username}`} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-secondary,#A1A1AA)] transition-colors">View on Instagram</a>
         </p>
       </div>
     );
@@ -847,22 +847,22 @@ export function GamesRenderer({ props }: RendererProps) {
   if (games.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {games.map((game: Record<string, string>, i: number) => (
-            <div key={i} className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-center">
+            <div key={i} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 text-center">
               {game.logoUrl ? (
                 <div className="mx-auto mb-3 h-20 w-20">
                   <CreatorImage src={game.logoUrl} alt={game.name} variant="logo" />
                 </div>
               ) : (
-                <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 text-2xl text-zinc-600">
+                <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--surface-card-hover,#27272A)] text-2xl text-[var(--text-muted,#71717A)]">
                   {(game.name || "G")[0]}
                 </div>
               )}
-              <p className="text-sm font-medium text-white">{game.name}</p>
-              {game.genre && <p className="mt-1 text-xs text-zinc-500">{game.genre}</p>}
-              {game.description && <p className="mt-2 text-xs text-zinc-500">{game.description}</p>}
+              <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{game.name}</p>
+              {game.genre && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{game.genre}</p>}
+              {game.description && <p className="mt-2 text-xs text-[var(--text-muted,#71717A)]">{game.description}</p>}
             </div>
           ))}
         </div>
@@ -884,7 +884,7 @@ export function ContentFeedRenderer({ props }: RendererProps) {
   if (items.length > 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h2 className="mb-6 text-center text-2xl font-bold text-white">{title}</h2>
+        <h2 className="mb-6 text-center text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((item: Record<string, string>, i: number) => {
             const isVideo = item.mediaType === "video";
@@ -894,7 +894,7 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                 href={item.permalink || "#"}
                 target={item.permalink ? "_blank" : undefined}
                 rel={item.permalink ? "noopener noreferrer" : undefined}
-                className="group relative overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-white/[0.06] transition-all hover:ring-white/20"
+                className="group relative overflow-hidden rounded-xl bg-[var(--surface-card,#18181B)] ring-1 ring-white/[0.06] transition-all hover:ring-white/20"
                 style={{ aspectRatio: isVideo ? "9 / 16" : "1 / 1" }}
               >
                 {(item.thumbnailUrl || item.url) ? (
@@ -905,14 +905,14 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                     className="h-full w-full transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-zinc-800">
-                    <span className="text-xs text-zinc-600">No media</span>
+                  <div className="flex h-full items-center justify-center bg-[var(--surface-card-hover,#27272A)]">
+                    <span className="text-xs text-[var(--text-muted,#71717A)]">No media</span>
                   </div>
                 )}
                 {isVideo && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm transition-transform group-hover:scale-110">
-                      <svg className="ml-0.5 h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="ml-0.5 h-5 w-5 text-[var(--text-primary,#FAFAFA)]" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
@@ -920,10 +920,10 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                 )}
                 {item.caption && (
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 opacity-0 transition-opacity group-hover:opacity-100">
-                    <p className="line-clamp-2 text-xs leading-relaxed text-white/90">{item.caption}</p>
+                    <p className="line-clamp-2 text-xs leading-relaxed text-[var(--text-primary,#FAFAFA)]/90">{item.caption}</p>
                   </div>
                 )}
-                <div className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/80 backdrop-blur-sm">
+                <div className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-primary,#FAFAFA)]/80 backdrop-blur-sm">
                   {item.platform || "social"}
                 </div>
               </a>

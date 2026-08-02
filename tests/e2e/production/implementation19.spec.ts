@@ -20,8 +20,8 @@ test("J1 — Hero media renders first with overlapping avatar; About is gone", a
   const media = page.locator('section#hero video, section#hero img').first();
   await expect(media).toBeAttached({ timeout: 15000 });
 
-  // The overlap class (30–40% overlap) is present.
-  const overlap = await page.locator('[class*="-mt-[30%]"], [class*="-mt-[22%]"]').count();
+  // The overlap class (~35% overlap, IMPLEMENTATION-21) is present.
+  const overlap = await page.locator('[class*="-mt-[35%]"], [class*="-mt-[24%]"]').count();
   expect(overlap).toBeGreaterThan(0);
 
   // No About section on the storefront.

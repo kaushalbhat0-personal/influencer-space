@@ -101,15 +101,20 @@ function deepFreeze<T>(obj: T): T {
 describe("LayoutEngine — theme", () => {
   it("converts snapshot theme to CSS custom properties", () => {
     const doc = engine.resolve(minimalSnapshot());
-    expect(doc.theme).toEqual({
-      "--brand-primary": "#6366F1",
-      "--brand-secondary": "#818CF8",
-      "--brand-accent": "#A5B4FC",
-      "--surface-root": "#09090b",
-      "--surface-base": "#fafafa",
-      "--text-primary": "#fafafa",
-      "--text-secondary": "#a1a1aa",
-    });
+    expect(doc.theme["--brand-primary"]).toBe("#6366F1");
+    expect(doc.theme["--brand-secondary"]).toBe("#818CF8");
+    expect(doc.theme["--brand-accent"]).toBe("#A5B4FC");
+    expect(doc.theme["--surface-root"]).toBe("#09090b");
+    expect(doc.theme["--surface-base"]).toBe("#fafafa");
+    expect(doc.theme["--text-primary"]).toBe("#fafafa");
+    expect(doc.theme["--text-secondary"]).toBe("#a1a1aa");
+    // IMPLEMENTATION-24: semantic tokens derived from the snapshot colors.
+    expect(doc.theme["--surface-card"]).toBeDefined();
+    expect(doc.theme["--surface-card-hover"]).toBeDefined();
+    expect(doc.theme["--border"]).toBeDefined();
+    expect(doc.theme["--on-primary"]).toBeDefined();
+    expect(doc.theme["--primary-hover"]).toBeDefined();
+    expect(doc.theme["--live"]).toBe("#ef4444");
   });
 
   it("uses gaming-dark theme colors from full snapshot", () => {
