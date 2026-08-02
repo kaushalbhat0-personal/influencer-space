@@ -23,6 +23,19 @@ export const CATEGORY_LABELS: Record<ThemeCategory, string> = {
 
 export type ThemeStatus = "active" | "deprecated" | "coming_soon";
 
+/** IMPLEMENTATION-25: subscription tier that unlocks a theme. */
+export type ThemeTier = "free" | "starter" | "pro" | "business" | "enterprise";
+
+export const THEME_TIERS: ThemeTier[] = ["free", "starter", "pro", "business", "enterprise"];
+
+export const TIER_LABELS: Record<ThemeTier, string> = {
+  free: "Free",
+  starter: "Starter",
+  pro: "Pro",
+  business: "Business",
+  enterprise: "Enterprise",
+};
+
 export interface ThemeVariant {
   mode: "light" | "dark";
   tokens: ThemeDesignTokens;
@@ -128,6 +141,10 @@ export interface ThemeDefinition {
   category: ThemeCategory;
   tags: string[];
   premium: boolean;
+  /** IMPLEMENTATION-25: subscription tier (defaults to free). */
+  tier?: ThemeTier;
+  /** Recommended for the creator's niche (curation). */
+  recommended?: boolean;
   status: ThemeStatus;
   supportsDarkMode: boolean;
   supportsRTL: boolean;

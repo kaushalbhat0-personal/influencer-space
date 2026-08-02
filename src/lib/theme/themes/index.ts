@@ -12,6 +12,7 @@ import { luxuryThemes } from "./luxury";
 import { restaurantThemes } from "./restaurant";
 import { educationThemes } from "./education";
 import { podcastThemes } from "./podcast";
+import { catalogThemes } from "./catalog";
 
 interface PartialTokens {
   colors?: Partial<ColorTokens>;
@@ -32,6 +33,8 @@ export function createTheme(
   tags: string[],
   opts?: {
     premium?: boolean;
+    tier?: "free" | "starter" | "pro" | "business" | "enterprise";
+    recommended?: boolean;
     featured?: boolean;
     supportsDarkMode?: boolean;
     supportsRTL?: boolean;
@@ -51,6 +54,7 @@ export function createTheme(
     darkTokens?: PartialTokens;
   },
 ): ThemeDefinition {
+  const tier = opts?.tier;
   const variants: ThemeDefinition["variants"] = [];
   const hasDark = opts?.supportsDarkMode !== false;
   const hasLight = opts?.darkTokens !== undefined || opts?.supportsDarkMode === true;
@@ -87,7 +91,9 @@ export function createTheme(
     tokenVersion: 1,
     category,
     tags,
-    premium: opts?.premium ?? false,
+    premium: opts?.premium ?? (tier ? tier !== "free" : false),
+    tier,
+    recommended: opts?.recommended,
     status: "active",
     supportsDarkMode: opts?.supportsDarkMode ?? false,
     supportsRTL: opts?.supportsRTL ?? false,
@@ -123,4 +129,5 @@ export const ALL_THEMES: ThemeDefinition[] = [
   ...restaurantThemes,
   ...educationThemes,
   ...podcastThemes,
+  ...catalogThemes,
 ];
