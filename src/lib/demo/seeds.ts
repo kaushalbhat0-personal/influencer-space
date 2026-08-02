@@ -17,7 +17,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("12-Week Program", 2999, "Complete transformation plan"), p("Meal Plan", 999, "Custom nutrition guide"), p("1-on-1 Coaching", 4999, "Weekly sessions") ],
     testimonials: [ t("Rahul M.", "Lost 12kg in 3 months!"), t("Priya S.", "Best investment in my health") ],
     faq: [ f("Do I need equipment?", "Basic equipment recommended."), f("Is it suitable for beginners?", "Yes, all levels welcome.") ],
-    pages: ["hero", "about", "products", "testimonials", "faq", "contact"],
+    pages: ["hero", "products", "testimonials", "faq", "contact"],
   },
   {
     id: "yoga-studio", industry: "Yoga Studio", persona: "Instructor",
@@ -28,7 +28,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Monthly Unlimited", 1999, "All classes access"), p("21-Day Challenge", 999, "Daily sessions"), p("Meditation Course", 799, "Stress relief") ],
     testimonials: [ t("Anjali K.", "Found peace and flexibility."), t("Vikram R.", "Life-changing practice") ],
     faq: [ f("Do I need a mat?", "Yes, any yoga mat works."), f("Can I join mid-month?", "Absolutely, pro-rated.") ],
-    pages: ["hero", "about", "classes", "testimonials", "faq"],
+    pages: ["hero", "classes", "testimonials", "faq"],
   },
   {
     id: "photographer", industry: "Photographer", persona: "Creative",
@@ -39,7 +39,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Wedding Package", 49999, "Full-day coverage"), p("Portrait Session", 4999, "1-hour, 20 edits"), p("Preset Pack", 1499, "25 Lightroom presets") ],
     testimonials: [ t("Neha & Arjun", "Our wedding photos are magical."), t("Rohit G.", "Professional and creative") ],
     faq: [ f("How many photos do I get?", "500+ edited images."), f("Do you travel?", "Yes, pan-India.") ],
-    pages: ["hero", "portfolio", "about", "testimonials", "contact"],
+    pages: ["hero", "portfolio", "testimonials", "contact"],
   },
   {
     id: "fashion-brand", industry: "Fashion Brand", persona: "Creator",
@@ -50,7 +50,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Signature Tee", 1499, "Premium cotton"), p("Limited Jacket", 4999, "Handcrafted"), p("Accessories Bundle", 2499, "Curated set") ],
     testimonials: [ t("Meera L.", "My go-to brand now."), t("Karan D.", "Quality is unmatched") ],
     faq: [ f("What sizes are available?", "XS to XXL."), f("Do you ship internationally?", "Yes, worldwide.") ],
-    pages: ["hero", "collection", "about", "testimonials", "faq"],
+    pages: ["hero", "collection", "testimonials", "faq"],
   },
   {
     id: "digital-agency", industry: "Digital Agency", persona: "Agency",
@@ -72,7 +72,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Stock Market Course", 4999, "Complete beginner-to-pro"), p("Option Trading Mastery", 7999, "Advanced strategies"), p("Investment Toolkit", 999, "Templates & calculators") ],
     testimonials: [ t("Amit P.", "Finally understand markets."), t("Sneha R.", "My portfolio is up 40%") ],
     faq: [ f("Do I need prior knowledge?", "No, starts from basics."), f("Is this for Indian markets?", "Yes, NSE/BSE focused.") ],
-    pages: ["hero", "courses", "about", "testimonials", "faq"],
+    pages: ["hero", "courses", "testimonials", "faq"],
   },
   {
     id: "restaurant-chef", industry: "Restaurant / Chef", persona: "Creator",
@@ -83,7 +83,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Cooking Masterclass", 2999, "20+ recipe video course"), p("Recipe eBook", 599, "50 signature recipes"), p("Spice Kit", 1499, "Premium spices delivered") ],
     testimonials: [ t("Deepa M.", "My family loves the recipes!"), t("Vikram S.", "Finally cooking like a pro") ],
     faq: [ f("Are ingredients easy to find?", "Yes, all locally available."), f("Do you offer vegetarian options?", "Full vegetarian section.") ],
-    pages: ["hero", "menu", "about", "testimonials", "faq"],
+    pages: ["hero", "menu", "testimonials", "faq"],
   },
   {
     id: "dentist-clinic", industry: "Dentist / Clinic", persona: "Professional",
@@ -94,7 +94,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Teeth Whitening", 4999, "Professional whitening"), p("Dental Checkup", 999, "Complete examination"), p("Invisalign Consultation", 1999, "Clear aligner assessment") ],
     testimonials: [ t("Ravi K.", "Painless treatment!"), t("Sunita P.", "Best dentist in the area") ],
     faq: [ f("Do you accept insurance?", "Yes, all major providers."), f("Is parking available?", "Free parking on-site.") ],
-    pages: ["hero", "services", "about", "testimonials", "faq", "contact"],
+    pages: ["hero", "services", "testimonials", "faq", "contact"],
   },
   {
     id: "lawyer-legal", industry: "Lawyer / Legal", persona: "Professional",
@@ -105,7 +105,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Legal Consultation", 2499, "1-hour session"), p("Document Review", 4999, "Contract analysis"), p("Representation Package", 14999, "Full case handling") ],
     testimonials: [ t("Arun G.", "Won my case in record time."), t("Lakshmi N.", "Professional and thorough") ],
     faq: [ f("Do you offer free consultation?", "First 15 minutes free."), f("What areas do you cover?", "Corporate, civil, family law.") ],
-    pages: ["hero", "services", "about", "testimonials", "faq", "contact"],
+    pages: ["hero", "services", "testimonials", "faq", "contact"],
   },
   {
     id: "architect-firm", industry: "Architect / Firm", persona: "Professional",
@@ -127,7 +127,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Property Valuation", 4999, "Detailed market analysis"), p("Buyer's Guide", 999, "Complete home-buying toolkit"), p("Investment Consult", 9999, "Portfolio strategy") ],
     testimonials: [ t("The Iyer Family", "Found our home in 2 weeks."), t("Rajat M.", "Best investment decision ever") ],
     faq: [ f("Do you cover all areas?", "Pan-India coverage."), f("What's the buying process?", "Search → Visit → Negotiate → Close.") ],
-    pages: ["hero", "listings", "about", "testimonials", "faq"],
+    pages: ["hero", "listings", "testimonials", "faq"],
   },
   {
     id: "music-teacher", industry: "Music Teacher", persona: "Creator",
@@ -138,7 +138,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Beginner Guitar Course", 1999, "12-week structured course"), p("Piano Fundamentals", 2499, "Learn to read and play"), p("Vocal Training", 1499, "Find your voice") ],
     testimonials: [ t("Aditya K.", "Playing my first song in 2 months!"), t("Maya S.", "Patient and talented teacher") ],
     faq: [ f("Do I need my own instrument?", "Yes, any basic instrument works."), f("What ages do you teach?", "6 to 60+.") ],
-    pages: ["hero", "courses", "about", "testimonials", "faq"],
+    pages: ["hero", "courses", "testimonials", "faq"],
   },
   {
     id: "travel-creator", industry: "Travel Creator", persona: "Creator",
@@ -149,7 +149,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Travel Planning Service", 2999, "Personalized itinerary"), p("Packing Guide eBook", 599, "Ultimate packing checklist"), p("Preset Pack", 999, "Travel photo presets") ],
     testimonials: [ t("Rohan D.", "Planned my entire Europe trip!"), t("Kavita L.", "Authentic and useful content") ],
     faq: [ f("Do you plan group trips?", "Yes, twice a year."), f("What's your favorite country?", "Japan, hands down.") ],
-    pages: ["hero", "destinations", "about", "testimonials", "faq"],
+    pages: ["hero", "destinations", "testimonials", "faq"],
   },
   {
     id: "interior-designer", industry: "Interior Designer", persona: "Creative",
@@ -193,7 +193,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("GST Filing (Monthly)", 1999, "Complete GST compliance"), p("ITR Filing", 1499, "Income tax return"), p("Business Audit", 14999, "Annual audit package") ],
     testimonials: [ t("StartupZen", "Saved us lakhs in taxes."), t("RetailMart Ltd.", "Reliable and professional") ],
     faq: [ f("Do you handle notices?", "Yes, full representation."), f("What's included in GST filing?", "Return filing + reconciliation.") ],
-    pages: ["hero", "services", "about", "testimonials", "faq"],
+    pages: ["hero", "services", "testimonials", "faq"],
   },
   {
     id: "artist-painter", industry: "Artist / Painter", persona: "Creative",
@@ -204,7 +204,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Original Canvas (Medium)", 14999, "24x36 original painting"), p("Commissioned Portrait", 24999, "Custom portrait"), p("Art Print Set", 2999, "3 high-quality prints") ],
     testimonials: [ t("Ananya R.", "The centerpiece of my living room."), t("GalleryNine", "Consistently outstanding work") ],
     faq: [ f("Do you ship internationally?", "Yes, worldwide shipping."), f("Can I visit your studio?", "By appointment.") ],
-    pages: ["hero", "gallery", "about", "testimonials", "faq"],
+    pages: ["hero", "gallery", "testimonials", "faq"],
   },
   {
     id: "nutrition-coach", industry: "Nutrition Coach", persona: "Coach",
@@ -215,7 +215,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Personalized Diet Plan", 1999, "30-day custom plan"), p("Gut Health Program", 2999, "6-week protocol"), p("Nutrition Consultation", 999, "1-hour session") ],
     testimonials: [ t("Rohini K.", "Lost 8kg without starving!"), t("Manish T.", "My energy levels are through the roof") ],
     faq: [ f("Do you prescribe supplements?", "Food-first approach."), f("Is this suitable for diabetics?", "Yes, specialized plans available.") ],
-    pages: ["hero", "programs", "about", "testimonials", "faq"],
+    pages: ["hero", "programs", "testimonials", "faq"],
   },
   {
     id: "language-academy", industry: "Language Academy", persona: "Creator",
@@ -226,7 +226,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Beginner Course (3 Months)", 4999, "Structured language course"), p("Conversation Practice", 1999, "10 live sessions"), p("Exam Prep (IELTS/DELE)", 7999, "Full preparation course") ],
     testimonials: [ t("Shweta P.", "Speaking Spanish confidently now!"), t("Arun K.", "Cleared B1 in 4 months") ],
     faq: [ f("What languages do you offer?", "Spanish, French, German, Japanese."), f("Are classes live or recorded?", "Both options available.") ],
-    pages: ["hero", "courses", "about", "testimonials", "faq"],
+    pages: ["hero", "courses", "testimonials", "faq"],
   },
   {
     id: "jewelry-store", industry: "Jewelry Store", persona: "Creator",
@@ -237,7 +237,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Gold Plated Necklace", 2999, "Delicate chain with pendant"), p("Silver Earring Set", 1999, "Set of 3 pairs"), p("Custom Name Bracelet", 1499, "Personalized jewelry") ],
     testimonials: [ t("Priya M.", "Gorgeous packaging and quality."), t("Rajat S.", "Perfect anniversary gift") ],
     faq: [ f("Is it real gold?", "Gold-plated over sterling silver."), f("Do you offer gift wrapping?", "Yes, complimentary.") ],
-    pages: ["hero", "collection", "about", "testimonials", "faq"],
+    pages: ["hero", "collection", "testimonials", "faq"],
   },
   {
     id: "ngo-charity", industry: "NGO / Charity", persona: "Organization",
@@ -270,7 +270,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     products: [ p("Preset Bundle", 999, "10 Lightroom presets"), p("Content Calendar Template", 599, "Notion template"), p("1-on-1 Creator Coaching", 2999, "Grow your channel") ],
     testimonials: [ t("Fan Priya", "Your content made me start creating!"), t("BrandX", "Our best influencer collab") ],
     faq: [ f("What gear do you use?", "Sony A7III + 24-70mm."), f("Do you do brand deals?", "Yes, DM for inquiries.") ],
-    pages: ["hero", "content", "about", "testimonials", "faq"],
+    pages: ["hero", "content", "testimonials", "faq"],
   },
   {
     id: "gaming-creator", industry: "Gaming Creator", persona: "Gamer",

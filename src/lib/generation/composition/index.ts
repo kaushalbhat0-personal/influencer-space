@@ -6,7 +6,6 @@ export { HeroComposer } from "./hero-composer";
 export { ProductComposer } from "./product-composer";
 export { GalleryComposer } from "./gallery-composer";
 export { FeedComposer } from "./feed-composer";
-export { AboutComposer } from "./about-composer";
 export { ContactComposer } from "./contact-composer";
 export { FooterComposer } from "./footer-composer";
 export { ThemeComposer } from "./theme-composer";

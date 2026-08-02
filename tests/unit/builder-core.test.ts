@@ -97,7 +97,7 @@ describe("BuilderCore", () => {
 
     it("should query hierarchy", () => {
       const hierarchy = builderQuery.getCanvasHierarchy();
-      expect(hierarchy.sections.length).toBeGreaterThanOrEqual(2);
+      expect(hierarchy.sections.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

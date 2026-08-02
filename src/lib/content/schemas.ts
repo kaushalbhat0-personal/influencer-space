@@ -11,12 +11,6 @@ export const HeroContentSchema = z.object({
   showLiveBadge: z.boolean().default(false),
 });
 
-export const AboutContentSchema = z.object({
-  title: z.string().default("About"),
-  content: z.string().describe("2-4 sentences about the creator"),
-  imageUrl: z.string().nullable(),
-});
-
 export const FaqContentSchema = z.object({
   title: z.string().default("FAQ"),
   items: z.array(z.object({
@@ -79,7 +73,6 @@ export const ContactContentSchema = z.object({
 });
 
 export type HeroContent = z.infer<typeof HeroContentSchema>;
-export type AboutContent = z.infer<typeof AboutContentSchema>;
 export type FaqContent = z.infer<typeof FaqContentSchema>;
 export type SeoContent = z.infer<typeof SeoContentSchema>;
 export type CtaContent = z.infer<typeof CtaContentSchema>;

@@ -10,13 +10,13 @@ import type { ComponentCategory } from "@/lib/registry/components/types";
 import { cn } from "@/lib/utils";
 import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
-  ShoppingBag, Image, User, HelpCircle, Trophy, Gamepad2, Rss,
+  ShoppingBag, Image, HelpCircle, Trophy, Gamepad2, Rss,
   Link2, MessageSquare, Mail, CreditCard, BookOpen, Music,
   MessageCircle, Sparkles, Layout, GripVertical, Briefcase,
 } from "lucide-react";
 
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
-  hero: Sparkles, about: User, products: ShoppingBag, gallery: Image,
+  hero: Sparkles, products: ShoppingBag, gallery: Image,
   testimonials: MessageSquare, faq: HelpCircle, timeline: Trophy,
   games: Gamepad2, contentfeed: Rss, links: Link2, footer: Layout,
   contact: Mail, newsletter: Rss, pricing: CreditCard, courses: BookOpen,
@@ -31,7 +31,7 @@ function getIcon(sectionName: string) {
 const EDIT_LINKS: Record<string, string> = {
   "hero.default": "/admin/settings", "hero.gaming": "/admin/settings",
   "hero.fitness": "/admin/settings", "hero.education": "/admin/settings",
-  "about.default": "/admin/profile", "products.grid": "/admin/products",
+  "products.grid": "/admin/products",
   "gallery.grid": "/admin/gallery", "testimonials.default": "/admin/testimonials",
   "faq.default": "/admin/faq", "timeline.default": "/admin/milestones",
   "games.default": "/admin/games", "links.default": "/admin/links",
@@ -43,7 +43,7 @@ const EDIT_LINKS: Record<string, string> = {
 const CONTENT_LABELS: Record<string, string> = {
   products: "Products", gallery: "Images", testimonials: "Testimonials",
   faq: "Items", timeline: "Events", games: "Games", links: "Links",
-  hero: "Hero", about: "About", footer: "Footer", contact: "Contact",
+  hero: "Hero", footer: "Footer", contact: "Contact",
   newsletter: "Subscribers", pricing: "Plans", courses: "Courses",
   services: "Services", embed: "Embeds", social: "Links", contentfeed: "Posts",
 };
@@ -57,7 +57,6 @@ const CONTENT_LABELS: Record<string, string> = {
  */
 const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId: string }[] = [
   { name: "Hero", category: "hero", componentId: "hero.default" },
-  { name: "About", category: "about", componentId: "about.default" },
   { name: "Products", category: "products", componentId: "products.grid" },
   { name: "Gallery", category: "gallery", componentId: "gallery.grid" },
   { name: "Timeline", category: "timeline", componentId: "timeline.default" },

@@ -7,7 +7,6 @@ export interface WidgetDefinition {
 
 export const WIDGET_REGISTRY: WidgetDefinition[] = [
   { type: "hero", label: "Hero Section", tier: "free" },
-  { type: "about", label: "About", tier: "free" },
   { type: "products", label: "Products", tier: "free" },
   { type: "services", label: "Services", tier: "free" },
   { type: "gallery", label: "Gallery", tier: "free" },

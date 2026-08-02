@@ -29,6 +29,10 @@ export interface UpdateAssetData {
   largeUrl?: string;
   storageKey?: string;
   checksum?: string;
+  blurHash?: string;
+  dominantColor?: string;
+  processingStatus?: string;
+  processingError?: string | null;
 }
 
 export class AssetCommands {

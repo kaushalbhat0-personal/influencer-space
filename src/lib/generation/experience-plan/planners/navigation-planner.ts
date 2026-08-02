@@ -38,7 +38,6 @@ export class NavigationPlanner implements Planner {
         { label: "Courses", href: "/courses" },
         { label: "Notes", href: "/notes" },
         { label: "Results", href: "/results" },
-        { label: "About", href: "/about" },
       ],
       finance: [
         { label: "Home", href: "/" },
@@ -52,70 +51,60 @@ export class NavigationPlanner implements Planner {
         { label: "Portfolio", href: "/portfolio" },
         { label: "Prints", href: "/shop" },
         { label: "Workshops", href: "/workshops" },
-        { label: "About", href: "/about" },
       ],
       fitness: [
         { label: "Home", href: "/" },
         { label: "Programs", href: "/programs" },
         { label: "Coaching", href: "/coaching" },
         { label: "Nutrition", href: "/nutrition" },
-        { label: "About", href: "/about" },
       ],
       food: [
         { label: "Home", href: "/" },
         { label: "Recipes", href: "/recipes" },
         { label: "Cookbook", href: "/shop" },
         { label: "Blog", href: "/blog" },
-        { label: "About", href: "/about" },
       ],
       travel: [
         { label: "Home", href: "/" },
         { label: "Destinations", href: "/destinations" },
         { label: "Guides", href: "/guides" },
         { label: "Gallery", href: "/gallery" },
-        { label: "About", href: "/about" },
       ],
       music: [
         { label: "Home", href: "/" },
         { label: "Music", href: "/music" },
         { label: "Shows", href: "/shows" },
         { label: "Merch", href: "/shop" },
-        { label: "About", href: "/about" },
       ],
       art: [
         { label: "Home", href: "/" },
         { label: "Gallery", href: "/gallery" },
         { label: "Shop", href: "/shop" },
         { label: "Commissions", href: "/commissions" },
-        { label: "About", href: "/about" },
       ],
       lifestyle: [
         { label: "Home", href: "/" },
         { label: "Blog", href: "/blog" },
         { label: "Style", href: "/style" },
         { label: "Shop", href: "/shop" },
-        { label: "About", href: "/about" },
       ],
       sports: [
         { label: "Home", href: "/" },
         { label: "Highlights", href: "/highlights" },
         { label: "Training", href: "/training" },
         { label: "Shop", href: "/shop" },
-        { label: "About", href: "/about" },
       ],
       news: [
         { label: "Home", href: "/" },
         { label: "Latest", href: "/latest" },
         { label: "Analysis", href: "/analysis" },
         { label: "Subscribe", href: "/subscribe" },
-        { label: "About", href: "/about" },
       ],
       comedy: [
         { label: "Home", href: "/" },
         { label: "Videos", href: "/videos" },
         { label: "Shows", href: "/shows" },
         { label: "Merch", href: "/shop" },
-        { label: "About", href: "/about" },
       ],
       celebrity: [
         { label: "Home", href: "/" },
@@ -129,12 +118,10 @@ export class NavigationPlanner implements Planner {
         { label: "Projects", href: "/projects" },
         { label: "Blog", href: "/blog" },
         { label: "Products", href: "/products" },
-        { label: "About", href: "/about" },
       ],
     };
     return linkSets[niche] ?? [
       { label: "Home", href: "/" },
-      { label: "About", href: "/about" },
       { label: "Contact", href: "/contact" },
     ];
   }

@@ -5,7 +5,7 @@
 
 import type { PublishedSnapshot, WebsiteAggregate } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
-import { resolveModuleId } from "@/lib/registry/resolve-module";
+import { resolveModuleId, isDeprecatedSection } from "@/lib/registry/resolve-module";
 
 export class LayoutEngine {
   resolve(snapshot: PublishedSnapshot): StorefrontDocument {
@@ -164,11 +164,6 @@ export class LayoutEngine {
         config.ctaSecondary = content.hero.ctaSecondaryText;
       }
       console.log(tracePrefix, "hero", { title: content.hero.title, cta: config.cta, ctaSecondary: config.ctaSecondary, hasVideo: !!content.hero.videoUrl, hasPoster: !!content.hero.posterUrl });
-    } else if (moduleId.startsWith("about.")) {
-      config.title = config.title || content.identity.name || "About";
-      config.content = config.content || content.identity.bio || "";
-      config.imageUrl = config.imageUrl || content.identity.avatarUrl;
-      config.tagline = config.tagline || content.identity.tagline || "";
     } else if (moduleId.startsWith("products.")) {
       const productEntries: Record<string, unknown>[] = content.products.map((p) => ({
         id: p.id,
@@ -308,16 +303,20 @@ export class LayoutEngine {
       name: page.name,
       slug: page.slug,
       isHome: page.isHome,
-      sections: page.sections.map((section) => {
-        const moduleId = resolveModuleId(section.moduleId);
-        return {
-          id: section.id,
-          moduleId,
-          config: this.composeSectionConfig(moduleId, section.config, snapshot.content),
-          order: section.order,
-          visible: section.visible,
-        };
-      }),
+      sections: page.sections
+        .map((section) => {
+          const moduleId = resolveModuleId(section.moduleId);
+          return {
+            id: section.id,
+            moduleId,
+            config: this.composeSectionConfig(moduleId, section.config, snapshot.content),
+            order: section.order,
+            visible: section.visible,
+          };
+        })
+        // IMPLEMENTATION-19: About was removed — Hero is the identity section.
+        // Old layouts containing About migrate automatically by dropping it.
+        .filter((section) => !isDeprecatedSection(section.moduleId)),
     }));
   }
 

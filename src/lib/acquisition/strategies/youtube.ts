@@ -96,7 +96,7 @@ export class YouTubeAcquisitionAdapter implements CreatorAcquisitionAdapter {
           socialLinks: [{ platform: "youtube", url: `https://youtube.com/@${handle}` }],
           logoUrl: meta.thumbnailUrl,
           palette,
-          pages: ["home", "products", "about", "contact"],
+          pages: ["home", "products", "contact"],
         } as BusinessProfile,
       };
     } catch {
@@ -119,7 +119,7 @@ export class YouTubeAcquisitionAdapter implements CreatorAcquisitionAdapter {
           offers: [],
           socialLinks: [{ platform: "youtube", url: `https://youtube.com/@${handle}` }],
           palette: { primary: "#6366f1", secondary: "#a78bfa" },
-          pages: ["home", "products", "about", "contact"],
+          pages: ["home", "products", "contact"],
         } as BusinessProfile,
       };
     }

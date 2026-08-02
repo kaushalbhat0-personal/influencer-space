@@ -59,7 +59,7 @@ describe("EvaluationRegistry", () => {
   it("registers all default rules", () => {
     const registry = new EvaluationRegistry();
     const rules = registry.getAll();
-    expect(rules.length).toBeGreaterThanOrEqual(19);
+    expect(rules.length).toBeGreaterThanOrEqual(18);
   });
 
   it("filters rules by category", () => {

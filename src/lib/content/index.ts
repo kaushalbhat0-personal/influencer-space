@@ -28,13 +28,12 @@ export {
 export { ContentStudio, contentStudio } from "./studio";
 export { contentGeneratorRegistry } from "./generators/registry";
 export { HeroGenerator } from "./generators/hero";
-export { AboutGenerator } from "./generators/about";
 export { SeoGenerator } from "./generators/seo";
 export { registerContentPrompts } from "./prompts";
 export type { ContentGenerator, GeneratorInput, GeneratorResult } from "./generators/interface";
 export type { StudioOutput } from "./studio";
 export type {
-  HeroContent, AboutContent, FaqContent, SeoContent,
+  HeroContent, FaqContent, SeoContent,
   CtaContent, NewsletterContent, TestimonialContent,
   PricingContent, LinksContent, ContactContent,
 } from "./schemas";

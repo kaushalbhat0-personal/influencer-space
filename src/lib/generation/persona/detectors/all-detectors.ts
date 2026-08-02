@@ -20,7 +20,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("hybrid"), typicalProducts: ["Digital goods", "Merch"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.brand.existingBranding) s += 15;
@@ -35,7 +35,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Branded products", "Services"],
     contentStyle: cs("promotional"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 3 && g.brand.existingBranding) s += 50;
@@ -51,7 +51,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: [],
     contentStyle: cs("inspirational"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length === 0 && g.content.contentQuality === "high") s += 40;
@@ -67,7 +67,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: [],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "low", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length === 0 && g.content.contentQuality === "low") s += 40;
@@ -86,7 +86,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Courses", "Workbooks", "Templates"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "faq"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 2 && g.products.some(p => p.type === "digital")) s += 40;
@@ -103,7 +103,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Coaching sessions", "Workshops"],
     contentStyle: cs("inspirational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "about", "products", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.businessModel.type === "services") s += 30;
@@ -120,7 +120,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Consulting", "Strategy sessions"],
     contentStyle: cs("educational"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "about", "products", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.businessModel.type === "services" && g.creator.followers > 5000) s += 30;
@@ -137,7 +137,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Lessons", "Resources", "Worksheets"],
     contentStyle: cs("educational"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "products", "about", "faq"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["educational", "tutorial", "lesson"].includes(t))) s += 35;
@@ -155,7 +155,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("community"), typicalProducts: ["Mentorship", "Community access"],
     contentStyle: cs("inspirational"), audienceType: at("community"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "about", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.audience.interests.some(i => i.toLowerCase().includes("mentorship") || i.toLowerCase().includes("growth") || i.toLowerCase().includes("development"))) s += 30;
@@ -172,7 +172,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("community"), typicalProducts: ["Community membership", "Events"],
     contentStyle: cs("educational"), audienceType: at("community"),
     socialProofEmphasis: "high", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.socialLinks.length >= 4) s += 35;
@@ -189,7 +189,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Programs", "Certifications", "Bootcamps"],
     contentStyle: cs("educational"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "about", "faq", "testimonials"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq", "testimonials"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 3) s += 40;
@@ -208,7 +208,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Merch", "Subscriptions"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["stream", "live", "gameplay"].includes(t))) s += 35;
@@ -226,7 +226,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Branded merch", "Coaching"],
     contentStyle: cs("entertainment"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.creator.followers > 100000) s += 40;
@@ -243,7 +243,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Guides", "Walkthroughs", "Courses"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["tutorial", "guide", "walkthrough", "how to"].includes(t))) s += 40;
@@ -260,7 +260,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Merch", "Donations"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["challenge", "speedrun", "funny", "montage"].includes(t))) s += 35;
@@ -278,7 +278,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Merch"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["entertainment", "funny", "variety"].includes(t))) s += 30;
@@ -296,7 +296,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("community"), typicalProducts: ["Community access", "Events"],
     contentStyle: cs("entertainment"), audienceType: at("community"),
     socialProofEmphasis: "high", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.socialLinks.length >= 4) s += 35;
@@ -316,7 +316,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Wedding packages", "Prints"],
     contentStyle: cs("storytelling"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/wedding|bride|groom|engagement/)) s += 45;
@@ -333,7 +333,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Portrait sessions", "Headshots"],
     contentStyle: cs("storytelling"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/portrait|headshot|posing/)) s += 40;
@@ -350,7 +350,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Prints", "Presets", "Workshops"],
     contentStyle: cs("inspirational"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/nature|landscape|wildlife|outdoor/)) s += 40;
@@ -366,7 +366,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Prints", "Presets", "Guides"],
     contentStyle: cs("storytelling"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/travel|wanderlust|destination|adventure/)) s += 35;
@@ -383,7 +383,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Product shoots", "Brand campaigns"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "gallery", "products", "about", "testimonials"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "testimonials"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/commercial|product|brand|advertising/)) s += 40;
@@ -400,7 +400,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Fine art prints", "Framed prints"],
     contentStyle: cs("inspirational"), audienceType: at("luxury"),
     socialProofEmphasis: "medium", pricingEmphasis: "high",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 3) s += 40;
@@ -419,7 +419,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["SaaS subscriptions", "API access"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "about", "faq", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 1 && g.products.some(p => p.type === "subscription")) s += 40;
@@ -435,7 +435,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Code templates", "Courses", "Tools"],
     contentStyle: cs("technical"), audienceType: at("niche"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/developer|engineer|coding|programming|open source/)) s += 35;
@@ -452,7 +452,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Web development", "Design services"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "testimonials", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.businessModel.type === "services") s += 30;
@@ -469,7 +469,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Consulting", "Development"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "about", "products", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/freelance|independent|consultant/)) s += 35;
@@ -486,7 +486,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Courses", "Workshops", "Templates"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "faq"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["educational", "tutorial", "course"].includes(t))) s += 35;
@@ -503,7 +503,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Templates", "Themes", "Assets"],
     contentStyle: cs("technical"), audienceType: at("niche"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 3) s += 40;
@@ -519,7 +519,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("community"), typicalProducts: ["Sponsorships", "Consulting"],
     contentStyle: cs("technical"), audienceType: at("community"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/open source|contributor|maintainer/)) s += 40;
@@ -539,7 +539,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Training sessions", "Workout plans"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/personal trainer|fitness coach|training/)) s += 35;
@@ -556,7 +556,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Online programs", "Coaching app"],
     contentStyle: cs("inspirational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/online coach|remote|digital program/)) s += 35;
@@ -573,7 +573,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Meal plans", "Nutrition coaching"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "faq", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/nutrition|diet|meal plan|nutritionist/)) s += 45;
@@ -589,7 +589,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Yoga classes", "Meditation guides"],
     contentStyle: cs("inspirational"), audienceType: at("community"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "about", "products", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/yoga|meditation|mindfulness|asana/)) s += 45;
@@ -605,7 +605,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Memberships", "Merch"],
     contentStyle: cs("promotional"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/gym|studio|facility|fitness center/)) s += 40;
@@ -621,7 +621,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("community"), typicalProducts: ["Community access", "Challenges"],
     contentStyle: cs("inspirational"), audienceType: at("community"),
     socialProofEmphasis: "high", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "testimonials", "social_links"], onboardingDefaults: {},
+    defaultModules: ["hero", "testimonials", "social_links"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.socialLinks.length >= 3) s += 30;
@@ -641,7 +641,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Recipe books", "Cooking courses"],
     contentStyle: cs("educational"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/recipe|cook|bake|kitchen|delicious/)) s += 35;
@@ -658,7 +658,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Menu items", "Catering"],
     contentStyle: cs("promotional"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/restaurant|cafe|bistro|eatery/)) s += 45;
@@ -674,7 +674,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Digital recipe cards"],
     contentStyle: cs("storytelling"), audienceType: at("general"),
     socialProofEmphasis: "low", pricingEmphasis: "low",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/home cook|family recipe|homemade/)) s += 40;
@@ -691,7 +691,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Baked goods", "Decorating kits"],
     contentStyle: cs("inspirational"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/bake|bakery|pastry|bread|cake/)) s += 45;
@@ -707,7 +707,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Guides", "Reviews"],
     contentStyle: cs("storytelling"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/food blogger|review|taste|dining|restaurant review/)) s += 35;
@@ -727,7 +727,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Travel guides", "Presets"],
     contentStyle: cs("storytelling"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/explore|adventure|destination|travel/)) s += 35;
@@ -744,7 +744,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Luxury guides", "Concierge"],
     contentStyle: cs("inspirational"), audienceType: at("luxury"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/luxury|exclusive|resort|5-star|premium/)) s += 45;
@@ -760,7 +760,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Guided trips", "Gear"],
     contentStyle: cs("storytelling"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/adventure guide|expedition|trek|outdoor/)) s += 40;
@@ -776,7 +776,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Family guides", "Itineraries"],
     contentStyle: cs("storytelling"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/family|kids|parents|family travel/)) s += 45;
@@ -792,7 +792,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Nomad guides", "Workspaces"],
     contentStyle: cs("inspirational"), audienceType: at("community"),
     socialProofEmphasis: "high", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/digital nomad|remote work|work from anywhere/)) s += 40;
@@ -812,7 +812,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Music", "Merch", "Tickets"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/singer|vocalist|songwriter|artist/)) s += 40;
@@ -828,7 +828,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Beats", "Production services"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/producer|beat|instrumental|producing/)) s += 40;
@@ -844,7 +844,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["DJ sets", "Booking"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/dj|disc jockey|mix|club dj/)) s += 45;
@@ -860,7 +860,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Albums", "Merch", "Tickets"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/band|group|ensemble|orchestra/)) s += 40;
@@ -876,7 +876,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Compositions", "Scoring"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "medium", pricingEmphasis: "high",
-    defaultModules: ["hero", "about", "products", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/composer|composition|orchestrate|score/)) s += 45;
@@ -895,7 +895,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Prints", "Commissions", "Digital art"],
     contentStyle: cs("inspirational"), audienceType: at("niche"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/illustrator|illustration|drawing/)) s += 40;
@@ -911,7 +911,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Original paintings", "Prints"],
     contentStyle: cs("inspirational"), audienceType: at("luxury"),
     socialProofEmphasis: "medium", pricingEmphasis: "high",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/painter|painting|canvas|oil|watercolor/)) s += 45;
@@ -927,7 +927,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Digital art", "NFTs", "Prints"],
     contentStyle: cs("technical"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/digital artist|digital art|nft|3d/)) s += 40;
@@ -943,7 +943,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Commissions", "Custom pieces"],
     contentStyle: cs("behind_the_scenes"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "about", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/commission|custom order|request/)) s += 40;
@@ -959,7 +959,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Exhibition pieces", "Limited editions"],
     contentStyle: cs("inspirational"), audienceType: at("luxury"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/gallery|exhibition|art show|featured/)) s += 40;
@@ -975,7 +975,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Prints", "Posters", "Framed art"],
     contentStyle: cs("promotional"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 3) s += 45;
@@ -994,7 +994,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Style guides", "Affiliate"],
     contentStyle: cs("inspirational"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "low",
-    defaultModules: ["hero", "gallery", "about", "social_links"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "social_links"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/fashion|style|outfit|trendy|wardrobe/)) s += 35;
@@ -1011,7 +1011,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Clothing", "Accessories", "Collections"],
     contentStyle: cs("storytelling"), audienceType: at("luxury"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "gallery", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/designer|fashion design|collection|couture/)) s += 40;
@@ -1027,7 +1027,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Styling sessions", "Wardrobe audits"],
     contentStyle: cs("educational"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "about", "gallery", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/stylist|personal stylist|wardrobe|image consultant/)) s += 45;
@@ -1043,7 +1043,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Collections", "Branded goods"],
     contentStyle: cs("promotional"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.products.length >= 4 && g.brand.existingBranding) s += 45;
@@ -1060,7 +1060,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Digital products", "Merch"],
     contentStyle: cs("behind_the_scenes"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "gallery", "social_links"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "social_links"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/lifestyle|daily|vlog|routine|life/)) s += 35;
@@ -1077,7 +1077,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Beauty guides", "Brand collabs"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "gallery", "about", "products", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "gallery", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/beauty|makeup|skincare|cosmetic|tutorial/)) s += 40;
@@ -1096,7 +1096,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("direct_sales"), typicalProducts: ["Merch", "Training programs"],
     contentStyle: cs("inspirational"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/athlete|player|sports|competitor/)) s += 35;
@@ -1113,7 +1113,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Coaching", "Training plans"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/coach|training|drill|practice/)) s += 40;
@@ -1129,7 +1129,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Programs", "Camps", "Memberships"],
     contentStyle: cs("educational"), audienceType: at("community"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "about", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/academy|camp|facility|center/)) s += 40;
@@ -1145,7 +1145,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Merch", "Subscriptions"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/sports|commentary|analysis|highlights/)) s += 35;
@@ -1165,7 +1165,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Articles", "Investigations"],
     contentStyle: cs("educational"), audienceType: at("professional"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/journalist|reporter|correspondent|investigative/)) s += 40;
@@ -1181,7 +1181,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Subscriptions", "Sponsorships"],
     contentStyle: cs("educational"), audienceType: at("niche"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "about", "products", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/newsletter|curated|digest|weekly/)) s += 40;
@@ -1197,7 +1197,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Reports", "Analysis", "Data"],
     contentStyle: cs("technical"), audienceType: at("professional"),
     socialProofEmphasis: "medium", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/research|analysis|report|data/)) s += 40;
@@ -1213,7 +1213,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Content", "Ad space"],
     contentStyle: cs("educational"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "about", "products", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/media|outlet|publication|platform/)) s += 40;
@@ -1233,7 +1233,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Courses", "Guides", "Templates"],
     contentStyle: cs("educational"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "faq", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "faq", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["educational", "tutorial", "guide", "analysis"].includes(t))) s += 30;
@@ -1250,7 +1250,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Consultation", "Wealth management", "Planning"],
     contentStyle: cs("educational"), audienceType: at("professional"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "about", "products", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.businessModel.type === "services" && g.creator.followers > 5000) s += 30;
@@ -1267,7 +1267,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("education"), typicalProducts: ["Investment guides", "Market reports", "Courses"],
     contentStyle: cs("technical"), audienceType: at("niche"),
     socialProofEmphasis: "medium", pricingEmphasis: "medium",
-    defaultModules: ["hero", "products", "about", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/investor|trading|stock|crypto|market|portfolio/)) s += 35;
@@ -1287,7 +1287,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("service_based"), typicalProducts: ["Show tickets", "Merch", "Premium content"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "medium",
-    defaultModules: ["hero", "about", "products", "gallery", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.content.topContentTypes.some(t => ["comedy", "entertainment", "funny", "sketch"].includes(t))) s += 30;
@@ -1305,7 +1305,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("content_monetization"), typicalProducts: ["Merch", "Channel memberships"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "medium", pricingEmphasis: "low",
-    defaultModules: ["hero", "about", "social_links", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "social_links", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (bio(g).match(/sketch|parody|satire|character|impression/)) s += 35;
@@ -1326,7 +1326,7 @@ export const ALL_DETECTORS: PersonaDetector[] = [
     businessModel: bm("hybrid"), typicalProducts: ["Branded merchandise", "Exclusive content", "Brand deals"],
     contentStyle: cs("entertainment"), audienceType: at("general"),
     socialProofEmphasis: "high", pricingEmphasis: "high",
-    defaultModules: ["hero", "products", "about", "gallery", "testimonials", "contact"], onboardingDefaults: {},
+    defaultModules: ["hero", "products", "gallery", "testimonials", "contact"], onboardingDefaults: {},
   }, g => {
     let s = 0;
     if (g.creator.followers > 500000) s += 30;

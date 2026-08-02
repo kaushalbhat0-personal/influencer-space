@@ -7,7 +7,7 @@ export class SeoGenerator implements ContentGenerator {
   readonly description = "Generate SEO metadata";
   readonly schema = SeoContentSchema;
   readonly componentIds = [];
-  readonly dependsOn: string[] = ["hero", "about"];
+  readonly dependsOn: string[] = ["hero"];
 
   async generate(input: GeneratorInput): Promise<GeneratorResult> {
     const t0 = performance.now();

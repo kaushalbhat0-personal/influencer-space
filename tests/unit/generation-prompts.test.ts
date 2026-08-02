@@ -213,9 +213,9 @@ describe("Prompt definitions integration", () => {
     const registry = new VersionedPromptRegistry();
     registerPromptDefinitions(registry);
     const all = registry.list();
-    expect(all.length).toBeGreaterThan(10);
+    expect(all.length).toBeGreaterThanOrEqual(9);
     expect(all.some((t) => t.stage === "hero")).toBe(true);
-    expect(all.some((t) => t.stage === "about")).toBe(true);
+    expect(all.some((t) => t.stage === "about")).toBe(false);
     expect(all.some((t) => t.stage === "seo")).toBe(true);
     expect(all.some((t) => t.stage === "branding")).toBe(true);
     expect(all.some((t) => t.stage === "products")).toBe(true);

@@ -10,7 +10,6 @@ import { HeroComposer } from "./hero-composer";
 import { ProductComposer } from "./product-composer";
 import { GalleryComposer } from "./gallery-composer";
 import { FeedComposer } from "./feed-composer";
-import { AboutComposer } from "./about-composer";
 import { ContactComposer } from "./contact-composer";
 import { ThemeComposer } from "./theme-composer";
 import { SEOComposer } from "./seo-composer";
@@ -24,7 +23,6 @@ export class LayoutComposer {
   private productComposer = new ProductComposer();
   private galleryComposer = new GalleryComposer();
   private feedComposer = new FeedComposer();
-  private aboutComposer = new AboutComposer();
   private contactComposer = new ContactComposer();
   private themeComposer = new ThemeComposer();
   private seoComposer = new SEOComposer();
@@ -38,7 +36,8 @@ export class LayoutComposer {
     const products = this.productComposer.compose(graph);
     const gallery = this.galleryComposer.compose(graph);
     const feed = this.feedComposer.compose(graph);
-    const about = this.aboutComposer.compose(graph);
+    // IMPLEMENTATION-19: About was removed — Hero is the identity section.
+    const about: SectionBlueprint | null = null;
     const contact = this.contactComposer.compose(graph.seo.slug, graph.creator.name);
     const theme = this.themeComposer.compose(graph);
     const seo = this.seoComposer.compose(graph);

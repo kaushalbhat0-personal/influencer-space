@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BaseEvaluationRule } from "./base";
 import { HeadlineExistsRule, CTAExistsRule, ThemeColorsAppliedRule, NicheConsistencyRule } from "./branding";
-import { EmptySectionsRule, PlaceholderTextRule, SEOCompletenessRule, AboutQualityRule } from "./content";
+import { EmptySectionsRule, PlaceholderTextRule, SEOCompletenessRule } from "./content";
 import { ProductsExistRule, PricingValidRule, CTAConfiguredRule } from "./commerce";
 import { NavigationExistsRule, MobileNavigationRule, SectionOrderingRule, AccessibilityEssentialsRule } from "./ux";
 import { ArtifactValidationRule, BlueprintValidationRule, SnapshotCompletenessRule, RequiredMetadataRule } from "./technical";
@@ -41,7 +41,6 @@ export class EvaluationRegistry {
       new EmptySectionsRule(),
       new PlaceholderTextRule(),
       new SEOCompletenessRule(),
-      new AboutQualityRule(),
       new ProductsExistRule(),
       new PricingValidRule(),
       new CTAConfiguredRule(),

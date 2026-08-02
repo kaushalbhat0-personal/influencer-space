@@ -76,18 +76,6 @@ export const COMPONENT_SCHEMAS: Record<string, ComponentSchema> = {
       },
     ],
   },
-  "about.default": {
-    groups: [
-      {
-        id: "content", label: "Content",
-        fields: [
-          { key: "title", label: "Title", type: "text", defaultValue: "About Me", inlineEditable: true, aiEditable: true },
-          { key: "content", label: "Bio", type: "textarea", defaultValue: "", inlineEditable: true, aiEditable: true, aiRegenerate: true },
-          { key: "imageUrl", label: "Profile Image", type: "url", defaultValue: "" },
-        ],
-      },
-    ],
-  },
   "footer.default": {
     groups: [
       {

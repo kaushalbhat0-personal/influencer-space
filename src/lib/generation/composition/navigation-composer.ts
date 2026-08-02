@@ -47,7 +47,6 @@ export class NavigationComposer {
       home: "Home",
       products: "ShoppingBag",
       gallery: "Image",
-      about: "Info",
       contact: "Mail",
       blog: "FileText",
     };

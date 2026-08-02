@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { MediaField } from "@/components/shared/MediaField";
+import { MediaField, type MediaValue } from "@/components/shared/MediaField";
 import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
 import { SocialLinksEditor } from "@/features/links/components/social-links-editor";
@@ -29,18 +29,20 @@ export function SettingsForm({
   tenantId: string;
 }) {
   const router = useRouter();
-  const heroDetailFormRef = useRef<HTMLFormElement>(null);
-  const apiKeysFormRef = useRef<HTMLFormElement>(null);
+  const heroMediaFormRef = useRef<HTMLFormElement>(null);
 
-  const [videoSave, setVideoSave] = useState<SaveState>(emptyState);
-  const [posterSave, setPosterSave] = useState<SaveState>(emptyState);
-  const [heroDetailsSave, setHeroDetailsSave] = useState<SaveState>(emptyState);
+  const [mediaSave, setMediaSave] = useState<SaveState>(emptyState);
+  const [identitySave, setIdentitySave] = useState<SaveState>(emptyState);
+  const [buttonsSave, setButtonsSave] = useState<SaveState>(emptyState);
+  const [liveBadgeSave, setLiveBadgeSave] = useState<SaveState>(emptyState);
   const [apiKeysSave, setApiKeysSave] = useState<SaveState>(emptyState);
 
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
   const [videoAssetId, setVideoAssetId] = useState<string>(heroData.videoAssetId || "");
   const [posterAssetId, setPosterAssetId] = useState<string>(heroData.posterAssetId || "");
+  const [backgroundUrl, setBackgroundUrl] = useState(heroData.backgroundUrl || "");
+  const [backgroundAssetId, setBackgroundAssetId] = useState(heroData.backgroundAssetId || "");
 
   const [videoDesktopAlignment, setVideoDesktopAlignment] = useState<"top" | "center" | "bottom">(
     heroData.videoDesktopAlignment as "top" | "center" | "bottom" || "center"
@@ -55,50 +57,28 @@ export function SettingsForm({
     heroData.imageMobileAlignment as "top" | "center" | "bottom" || "center"
   );
 
-  const [youtubeApiKey, setYoutubeApiKey] = useState("");
-  const [instagramApiKey, setInstagramApiKey] = useState("");
-
-  const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
-  const [liveShowBadge, setLiveShowBadge] = useState<boolean>(!!heroData.showLiveBadge);
-
+  const [creatorName, setCreatorName] = useState(heroData.name || "");
+  const [profilePictureUrl, setProfilePictureUrl] = useState(heroData.profilePictureUrl || "");
+  const [profilePictureAssetId, setProfilePictureAssetId] = useState(heroData.profilePictureAssetId || "");
   const [heroTitle, setHeroTitle] = useState(heroData.title || "");
   const [heroSubtitle, setHeroSubtitle] = useState(heroData.subtitle || "");
   const [heroTagline, setHeroTagline] = useState(heroData.tagline || "");
   const [heroBio, setHeroBio] = useState(heroData.bio || "");
+
   const [ctaText, setCtaText] = useState(heroData.ctaText || "");
   const [ctaLink, setCtaLink] = useState(heroData.ctaLink || "");
   const [ctaSecondaryText, setCtaSecondaryText] = useState(heroData.ctaSecondaryText || "");
   const [ctaSecondaryLink, setCtaSecondaryLink] = useState(heroData.ctaSecondaryLink || "");
 
-  const [backgroundUrl, setBackgroundUrl] = useState(heroData.backgroundUrl || "");
-  const [backgroundAssetId, setBackgroundAssetId] = useState(heroData.backgroundAssetId || "");
+  const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
+  const [liveShowBadge, setLiveShowBadge] = useState<boolean>(!!heroData.showLiveBadge);
+
   const [socialLinks, setSocialLinks] = useState<HeroSocialLink[]>(
     Array.isArray(heroData.socialLinks) ? heroData.socialLinks : [],
   );
-  const [creatorName, setCreatorName] = useState(heroData.name || "");
-  const [profilePictureUrl, setProfilePictureUrl] = useState(heroData.profilePictureUrl || "");
-  const [profilePictureAssetId, setProfilePictureAssetId] = useState(heroData.profilePictureAssetId || "");
 
-  useEffect(() => { setHeroTitle(heroData.title || ""); }, [heroData.title]);
-  useEffect(() => { setHeroSubtitle(heroData.subtitle || ""); }, [heroData.subtitle]);
-  useEffect(() => { setHeroTagline(heroData.tagline || ""); }, [heroData.tagline]);
-  useEffect(() => { setHeroBio(heroData.bio || ""); }, [heroData.bio]);
-  useEffect(() => { setCtaText(heroData.ctaText || ""); }, [heroData.ctaText]);
-  useEffect(() => { setCtaLink(heroData.ctaLink || ""); }, [heroData.ctaLink]);
-  useEffect(() => { setCtaSecondaryText(heroData.ctaSecondaryText || ""); }, [heroData.ctaSecondaryText]);
-  useEffect(() => { setCtaSecondaryLink(heroData.ctaSecondaryLink || ""); }, [heroData.ctaSecondaryLink]);
-  useEffect(() => { setLiveBadgeText(heroData.liveBadgeText || ""); }, [heroData.liveBadgeText]);
-  useEffect(() => { setLiveShowBadge(!!heroData.showLiveBadge); }, [heroData.showLiveBadge]);
-  useEffect(() => { setVideoUrl(heroData.videoUrl || ""); }, [heroData.videoUrl]);
-  useEffect(() => { setPosterUrl(heroData.posterUrl || ""); }, [heroData.posterUrl]);
-  useEffect(() => { setVideoAssetId(heroData.videoAssetId || ""); }, [heroData.videoAssetId]);
-  useEffect(() => { setPosterAssetId(heroData.posterAssetId || ""); }, [heroData.posterAssetId]);
-  useEffect(() => { setBackgroundUrl(heroData.backgroundUrl || ""); }, [heroData.backgroundUrl]);
-  useEffect(() => { setBackgroundAssetId(heroData.backgroundAssetId || ""); }, [heroData.backgroundAssetId]);
-  useEffect(() => { setSocialLinks(Array.isArray(heroData.socialLinks) ? heroData.socialLinks : []); }, [heroData.socialLinks]);
-  useEffect(() => { setCreatorName(heroData.name || ""); }, [heroData.name]);
-  useEffect(() => { setProfilePictureUrl(heroData.profilePictureUrl || ""); }, [heroData.profilePictureUrl]);
-  useEffect(() => { setProfilePictureAssetId(heroData.profilePictureAssetId || ""); }, [heroData.profilePictureAssetId]);
+  const [youtubeApiKey, setYoutubeApiKey] = useState("");
+  const [instagramApiKey, setInstagramApiKey] = useState("");
 
   function alignmentButtons(
     desktopAlign: string,
@@ -150,38 +130,24 @@ export function SettingsForm({
     );
   }
 
-  async function handleSaveVideo() {
-    setVideoSave({ pending: true, state: { success: false } });
-
-    const formData = new FormData();
-    formData.set("videoUrl", videoUrl);
-    formData.set("videoAssetId", videoAssetId);
-    formData.set("videoDesktopAlignment", videoDesktopAlignment);
-    formData.set("videoMobileAlignment", videoMobileAlignment);
-
-    const result = await updateHeroData(tenantId, { success: false }, formData);
-    setVideoSave({ pending: false, state: result });
-
-    if (result.success) {
-      setTimeout(() => router.refresh(), 50);
-    }
+  function flash(routerRefresh: boolean) {
+    if (routerRefresh) setTimeout(() => router.refresh(), 50);
   }
 
-  async function handleSavePoster() {
-    setPosterSave({ pending: true, state: { success: false } });
-
+  async function handleSaveMedia(overrides?: { videoUrl?: string; videoAssetId?: string; posterUrl?: string; posterAssetId?: string }) {
+    setMediaSave({ pending: true, state: { success: false } });
     const formData = new FormData();
-    formData.set("posterUrl", posterUrl);
-    formData.set("posterAssetId", posterAssetId);
+    formData.set("videoUrl", overrides?.videoUrl ?? videoUrl);
+    formData.set("videoAssetId", overrides?.videoAssetId ?? videoAssetId);
+    formData.set("posterUrl", overrides?.posterUrl ?? posterUrl);
+    formData.set("posterAssetId", overrides?.posterAssetId ?? posterAssetId);
+    formData.set("videoDesktopAlignment", videoDesktopAlignment);
+    formData.set("videoMobileAlignment", videoMobileAlignment);
     formData.set("imageDesktopAlignment", imageDesktopAlignment);
     formData.set("imageMobileAlignment", imageMobileAlignment);
-
     const result = await updateHeroData(tenantId, { success: false }, formData);
-    setPosterSave({ pending: false, state: result });
-
-    if (result.success) {
-      setTimeout(() => router.refresh(), 50);
-    }
+    setMediaSave({ pending: false, state: result });
+    if (result.success) flash(true);
   }
 
   async function handleSaveBackground() {
@@ -189,45 +155,44 @@ export function SettingsForm({
       backgroundUrl: backgroundUrl || null,
       backgroundAssetId: backgroundAssetId || null,
     });
-    if (result.success) setTimeout(() => router.refresh(), 50);
+    if (result.success) flash(true);
   }
 
-  async function handleSaveIdentity() {
+  async function handleSaveIdentity(overrides?: { profilePictureUrl?: string; profilePictureAssetId?: string }) {
+    setIdentitySave({ pending: true, state: { success: false } });
     const result = await updateHeroPartial(tenantId, {
-      name: creatorName,
-      tagline: heroTagline,
-      bio: heroBio,
-      profilePictureUrl: profilePictureUrl || null,
-      profilePictureAssetId: profilePictureAssetId || null,
-    });
-    if (result.success) setTimeout(() => router.refresh(), 50);
-  }
-
-  async function handleSaveHeroDetails() {
-    setHeroDetailsSave({ pending: true, state: { success: false } });
-
-    const payload = {
       name: creatorName,
       title: heroTitle,
       subtitle: heroSubtitle,
       tagline: heroTagline,
       bio: heroBio,
+      profilePictureUrl: (overrides?.profilePictureUrl ?? profilePictureUrl) || null,
+      profilePictureAssetId: (overrides?.profilePictureAssetId ?? profilePictureAssetId) || null,
+    });
+    setIdentitySave({ pending: false, state: result });
+    if (result.success) flash(true);
+  }
+
+  async function handleSaveButtons() {
+    setButtonsSave({ pending: true, state: { success: false } });
+    const result = await updateHeroPartial(tenantId, {
       ctaText,
       ctaLink,
       ctaSecondaryText,
       ctaSecondaryLink,
+    });
+    setButtonsSave({ pending: false, state: result });
+    if (result.success) flash(true);
+  }
+
+  async function handleSaveLiveBadge() {
+    setLiveBadgeSave({ pending: true, state: { success: false } });
+    const result = await updateHeroPartial(tenantId, {
       liveBadgeText,
       showLiveBadge: liveShowBadge,
-      socialLinks,
-    };
-
-    const result = await updateHeroPartial(tenantId, payload);
-
-    if (result.success) {
-      setTimeout(() => router.refresh(), 50);
-    }
-
-    setHeroDetailsSave({ pending: false, state: result });
+    });
+    setLiveBadgeSave({ pending: false, state: result });
+    if (result.success) flash(true);
   }
 
   async function handleSaveApiKeys(formData: FormData) {
@@ -240,14 +205,22 @@ export function SettingsForm({
     if (result.success) router.refresh();
   }
 
+  function mediaField(field: string, onChange: (v: MediaValue | null) => void) {
+    return (v: MediaValue | null) => onChange(v);
+  }
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8 items-start">
       <div className="space-y-8">
-        {/* ─── Hero Video ─── */}
+        {/* ─── Hero Media (video · poster · background) ─── */}
         <Card>
           <CardContent>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Hero Video</h3>
+            <form ref={heroMediaFormRef} onSubmit={(e) => { e.preventDefault(); handleSaveMedia(); }} className="space-y-5">
+              <h3 className="text-lg font-semibold text-white">Hero Media</h3>
+              <p className="text-sm text-gray-500">
+                The media renders first, full-width, behind your profile picture. Video takes priority over the poster.
+              </p>
+
               <MediaField
                 label="Hero Video"
                 value={{ url: videoUrl, assetId: videoAssetId }}
@@ -256,35 +229,17 @@ export function SettingsForm({
                 entityType="hero"
                 entityId={tenantId}
                 entityField="videoUrl"
-                onChange={(v) => {
+                onChange={mediaField("videoUrl", (v) => {
                   setVideoUrl(v?.url ?? "");
                   setVideoAssetId(v?.assetId ?? "");
-                }}
+                })}
+                onUploadComplete={(v) => handleSaveMedia({ videoUrl: v.url ?? "", videoAssetId: v.assetId ?? "" })}
               />
               <div>
-                <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
+                <h4 className="text-sm font-semibold text-white mb-3">Video Focal Point Alignment</h4>
                 {alignmentButtons(videoDesktopAlignment, videoMobileAlignment, setVideoDesktopAlignment, setVideoMobileAlignment)}
               </div>
-              {videoSave.state.success && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Video settings saved!
-                </div>
-              )}
-              {videoSave.state.error && (
-                <p className="text-sm text-red-400">{videoSave.state.error}</p>
-              )}
-              <button type="button" onClick={handleSaveVideo} disabled={videoSave.pending} className="admin-btn-cyan">
-                {videoSave.pending ? "Saving..." : "Save Video"}
-              </button>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* ─── Hero Poster Image ─── */}
-        <Card>
-          <CardContent>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Hero Poster Image</h3>
               <MediaField
                 label="Hero Poster Image"
                 value={{ url: posterUrl, assetId: posterAssetId }}
@@ -293,35 +248,17 @@ export function SettingsForm({
                 entityType="hero"
                 entityId={tenantId}
                 entityField="posterUrl"
-                onChange={(v) => {
+                onChange={mediaField("posterUrl", (v) => {
                   setPosterUrl(v?.url ?? "");
                   setPosterAssetId(v?.assetId ?? "");
-                }}
+                })}
+                onUploadComplete={(v) => handleSaveMedia({ posterUrl: v.url ?? "", posterAssetId: v.assetId ?? "" })}
               />
               <div>
-                <h4 className="text-sm font-semibold text-white mb-3">Focal Point Alignment</h4>
+                <h4 className="text-sm font-semibold text-white mb-3">Poster Focal Point Alignment</h4>
                 {alignmentButtons(imageDesktopAlignment, imageMobileAlignment, setImageDesktopAlignment, setImageMobileAlignment)}
               </div>
-              {posterSave.state.success && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Poster settings saved!
-                </div>
-              )}
-              {posterSave.state.error && (
-                <p className="text-sm text-red-400">{posterSave.state.error}</p>
-              )}
-              <button type="button" onClick={handleSavePoster} disabled={posterSave.pending} className="admin-btn-cyan">
-                {posterSave.pending ? "Saving..." : "Save Poster Image"}
-              </button>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* ─── Hero Background ─── */}
-        <Card>
-          <CardContent>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Hero Background</h3>
               <MediaField
                 label="Hero Background Image"
                 value={{ url: backgroundUrl, assetId: backgroundAssetId }}
@@ -330,15 +267,27 @@ export function SettingsForm({
                 entityType="hero"
                 entityId={tenantId}
                 entityField="backgroundUrl"
-                onChange={(v) => {
+                onChange={mediaField("backgroundUrl", (v) => {
                   setBackgroundUrl(v?.url ?? "");
                   setBackgroundAssetId(v?.assetId ?? "");
-                }}
+                })}
+                onUploadComplete={() => handleSaveBackground()}
               />
-              <button type="button" onClick={handleSaveBackground} className="admin-btn-cyan">
-                Save Background
-              </button>
-            </div>
+
+              {mediaSave.state.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Hero media saved!
+                </div>
+              )}
+              {mediaSave.state.error && (
+                <p className="text-sm text-red-400">{mediaSave.state.error}</p>
+              )}
+              <div className="pt-1">
+                <button type="submit" disabled={mediaSave.pending} className="admin-btn-cyan">
+                  {mediaSave.pending ? "Saving..." : "Save Hero Media"}
+                </button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
@@ -348,7 +297,7 @@ export function SettingsForm({
             <div className="space-y-5">
               <h3 className="text-lg font-semibold text-white">Creator Identity</h3>
               <p className="text-sm text-gray-500">
-                Your public identity — shown on the Hero, About section and Footer. Owned by Hero.
+                Your public identity — the profile picture, name, headline, tagline and bio shown in the Hero. Owned by Hero.
               </p>
               <MediaField
                 label="Profile Picture"
@@ -358,10 +307,11 @@ export function SettingsForm({
                 entityType="hero"
                 entityId={tenantId}
                 entityField="profilePictureUrl"
-                onChange={(v) => {
+                onChange={mediaField("profilePictureUrl", (v) => {
                   setProfilePictureUrl(v?.url ?? "");
                   setProfilePictureAssetId(v?.assetId ?? "");
-                }}
+                })}
+                onUploadComplete={(v) => handleSaveIdentity({ profilePictureUrl: v.url ?? "", profilePictureAssetId: v.assetId ?? "" })}
               />
               <Input
                 id="creatorName"
@@ -369,6 +319,13 @@ export function SettingsForm({
                 value={creatorName}
                 onChange={(e) => setCreatorName(e.target.value)}
                 placeholder="Farah Khan"
+              />
+              <Input
+                id="heroTitle"
+                label="Headline"
+                value={heroTitle}
+                onChange={(e) => setHeroTitle(e.target.value)}
+                placeholder="S8UL Esports | BGMI Pro | Content Creator"
               />
               <Input
                 id="creatorTagline"
@@ -386,82 +343,82 @@ export function SettingsForm({
                   value={heroBio}
                   onChange={(e) => setHeroBio(e.target.value)}
                   rows={3}
-                  placeholder="A short bio shown in the hero and about sections."
+                  placeholder="A short bio shown in the hero."
                   className="admin-input w-full resize-y"
                 />
               </div>
-              <button type="button" onClick={handleSaveIdentity} className="admin-btn-cyan">
-                Save Identity
+              {identitySave.state.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Identity saved!
+                </div>
+              )}
+              {identitySave.state.error && (
+                <p className="text-sm text-red-400">{identitySave.state.error}</p>
+              )}
+              <button type="button" onClick={() => handleSaveIdentity()} disabled={identitySave.pending} className="admin-btn-cyan">
+                {identitySave.pending ? "Saving..." : "Save Identity"}
               </button>
             </div>
           </CardContent>
         </Card>
 
-        {/* ─── Hero Details ─── */}
+        {/* ─── Buttons ─── */}
         <Card>
           <CardContent>
-            <form ref={heroDetailFormRef} onSubmit={(e) => { e.preventDefault(); handleSaveHeroDetails(); }} className="space-y-6">
-              <h3 className="text-lg font-semibold text-white">Hero Details</h3>
-              <p className="text-sm text-gray-500">
-                Control the hero title, subtitle, call-to-action buttons, and live badge.
-              </p>
-
-              <Input
-                id="heroTitle"
-                label="Title"
-                value={heroTitle}
-                onChange={(e) => setHeroTitle(e.target.value)}
-                placeholder="Raj 'Snax' Varma"
-              />
-              <Input
-                id="heroSubtitle"
-                label="Subtitle"
-                value={heroSubtitle}
-                onChange={(e) => setHeroSubtitle(e.target.value)}
-                placeholder="S8UL Esports | BGMI Pro | Content Creator"
-              />
-
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-white">Call-to-Action Buttons</h4>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input id="ctaText" label="Primary Button Text" value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="Subscribe" />
-                  <Input id="ctaLink" label="Primary Button Link" value={ctaLink} onChange={(e) => setCtaLink(e.target.value)} placeholder="https://youtube.com/@..." />
-                  <Input id="ctaSecondaryText" label="Secondary Button Text" value={ctaSecondaryText} onChange={(e) => setCtaSecondaryText(e.target.value)} placeholder="Follow on IG" />
-                  <Input id="ctaSecondaryLink" label="Secondary Button Link" value={ctaSecondaryLink} onChange={(e) => setCtaSecondaryLink(e.target.value)} placeholder="https://instagram.com/..." />
-                </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Buttons</h3>
+              <p className="text-sm text-gray-500">Call-to-action buttons shown in the Hero.</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input id="ctaText" label="Primary Button Text" value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="Subscribe" />
+                <Input id="ctaLink" label="Primary Button Link" value={ctaLink} onChange={(e) => setCtaLink(e.target.value)} placeholder="https://youtube.com/@..." />
+                <Input id="ctaSecondaryText" label="Secondary Button Text" value={ctaSecondaryText} onChange={(e) => setCtaSecondaryText(e.target.value)} placeholder="Follow on IG" />
+                <Input id="ctaSecondaryLink" label="Secondary Button Link" value={ctaSecondaryLink} onChange={(e) => setCtaSecondaryLink(e.target.value)} placeholder="https://instagram.com/..." />
               </div>
-
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-white">Live Badge</h4>
-                <Input
-                  id="liveBadgeText" label="Live Badge Text"
-                  value={liveBadgeText} placeholder="Live on YouTube"
-                  onChange={(e) => setLiveBadgeText(e.target.value)}
-                />
-                <label className="flex items-center gap-3">
-                  <input type="checkbox" checked={liveShowBadge}
-                    onChange={(e) => setLiveShowBadge(e.target.checked)}
-                    className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
-                  />
-                  <span className="text-sm text-gray-300">Show Live Badge</span>
-                </label>
-              </div>
-
-              {heroDetailsSave.state.success && (
+              {buttonsSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  Hero details saved!
+                  Buttons saved!
                 </div>
               )}
-              {heroDetailsSave.state.error && (
-                <p className="text-sm text-red-400">{heroDetailsSave.state.error}</p>
+              {buttonsSave.state.error && (
+                <p className="text-sm text-red-400">{buttonsSave.state.error}</p>
               )}
+              <button type="button" onClick={handleSaveButtons} disabled={buttonsSave.pending} className="admin-btn-cyan">
+                {buttonsSave.pending ? "Saving..." : "Save Buttons"}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
 
-              <div className="pt-2">
-                <button type="button" onClick={handleSaveHeroDetails} disabled={heroDetailsSave.pending} className="admin-btn-cyan">
-                  {heroDetailsSave.pending ? "Saving..." : "Save Hero Details"}
-                </button>
-              </div>
-            </form>
+        {/* ─── Live Badge ─── */}
+        <Card>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Live Badge</h3>
+              <p className="text-sm text-gray-500">A live/streaming indicator shown in the Hero.</p>
+              <Input
+                id="liveBadgeText" label="Live Badge Text"
+                value={liveBadgeText} placeholder="Live on YouTube"
+                onChange={(e) => setLiveBadgeText(e.target.value)}
+              />
+              <label className="flex items-center gap-3">
+                <input type="checkbox" checked={liveShowBadge}
+                  onChange={(e) => setLiveShowBadge(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
+                />
+                <span className="text-sm text-gray-300">Show Live Badge</span>
+              </label>
+              {liveBadgeSave.state.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Live badge saved!
+                </div>
+              )}
+              {liveBadgeSave.state.error && (
+                <p className="text-sm text-red-400">{liveBadgeSave.state.error}</p>
+              )}
+              <button type="button" onClick={handleSaveLiveBadge} disabled={liveBadgeSave.pending} className="admin-btn-cyan">
+                {liveBadgeSave.pending ? "Saving..." : "Save Live Badge"}
+              </button>
+            </div>
           </CardContent>
         </Card>
 
@@ -479,12 +436,12 @@ export function SettingsForm({
           </CardContent>
         </Card>
 
-        {/* ─── API Integrations ─── */}
+        {/* ─── Developer APIs ─── */}
         <Card>
           <CardContent>
-            <form ref={apiKeysFormRef} action={handleSaveApiKeys} className="space-y-6">
+            <form action={handleSaveApiKeys} className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Developer / API Integrations</h3>
+                <h3 className="text-lg font-semibold text-white">Developer APIs</h3>
                 <p className="text-sm text-gray-400">
                   Provide your own API keys to automatically display your latest videos and posts on your live website.
                   These are stored securely and never exposed to the client.
@@ -534,10 +491,10 @@ export function SettingsForm({
             videoMobileAlignment={videoMobileAlignment}
             imageDesktopAlignment={imageDesktopAlignment}
             imageMobileAlignment={imageMobileAlignment}
-            profileUrl={null}
-            name=""
-            tagline={heroTagline}
-            bio=""
+            profileUrl={profilePictureUrl || heroData.profilePictureUrl || null}
+            name={creatorName || heroData.name || ""}
+            tagline={heroTagline || heroData.tagline || ""}
+            bio={heroBio || heroData.bio || ""}
             liveBadgeText={liveBadgeText}
             showLiveBadge={liveShowBadge}
           />

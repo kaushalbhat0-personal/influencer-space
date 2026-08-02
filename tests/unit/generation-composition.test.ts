@@ -7,7 +7,6 @@ import { HeroComposer } from "@/lib/generation/composition/hero-composer";
 import { ProductComposer } from "@/lib/generation/composition/product-composer";
 import { GalleryComposer } from "@/lib/generation/composition/gallery-composer";
 import { FeedComposer } from "@/lib/generation/composition/feed-composer";
-import { AboutComposer } from "@/lib/generation/composition/about-composer";
 import { ContactComposer } from "@/lib/generation/composition/contact-composer";
 import { FooterComposer } from "@/lib/generation/composition/footer-composer";
 import { ThemeComposer } from "@/lib/generation/composition/theme-composer";
@@ -93,9 +92,9 @@ describe("PageComposer", () => {
     expect(pages.find((p) => p.type === "products")?.visible).toBe(false);
   });
 
-  it("creates about and contact pages", () => {
+  it("creates contact page and omits about page (removed)", () => {
     const pages = composer.compose(mockGraph());
-    expect(pages.find((p) => p.type === "about")?.visible).toBe(true);
+    expect(pages.find((p) => p.type === "about")).toBeUndefined();
     expect(pages.find((p) => p.type === "contact")?.visible).toBe(true);
   });
 });
@@ -203,19 +202,6 @@ describe("FeedComposer", () => {
     const feed = composer.compose(mockGraph());
     expect(feed.enabled).toBe(true);
     expect(feed.limit).toBe(9);
-  });
-});
-
-// ===================== About Composer =====================
-describe("AboutComposer", () => {
-  let composer: AboutComposer;
-
-  beforeEach(() => { composer = new AboutComposer(); });
-
-  it("creates about section", () => {
-    const about = composer.compose(mockGraph());
-    expect(about.props.title).toContain("Test Creator");
-    expect(about.props.stats.length).toBeGreaterThan(0);
   });
 });
 
@@ -417,7 +403,7 @@ describe("SectionComposer", () => {
     expect(types).toContain("hero");
     expect(types).toContain("featured_products");
     expect(types).toContain("content_feed");
-    expect(types).toContain("about");
+    expect(types).not.toContain("about");
     expect(types).toContain("contact_form");
     expect(types).toContain("footer");
     expect(types).toContain("social_links");

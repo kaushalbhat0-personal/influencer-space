@@ -228,8 +228,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     sections: [
       { moduleId: "hero.default", pageSlug: "/", order: 0 },
       { moduleId: "products.grid", pageSlug: "/", order: 1 },
-      { moduleId: "about.default", pageSlug: "/", order: 2 },
-      { moduleId: "contact.default", pageSlug: "/", order: 3 },
+      { moduleId: "contact.default", pageSlug: "/", order: 2 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },

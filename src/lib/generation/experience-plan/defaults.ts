@@ -70,7 +70,7 @@ export const DEFAULTS: ExperiencePlan = {
     hidden: [],
   },
   page: {
-    pageTypes: ["home", "about", "contact"],
+    pageTypes: ["home", "contact"],
     homePageSections: ["hero"],
   },
   conversionGoal: {

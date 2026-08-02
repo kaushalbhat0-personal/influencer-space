@@ -10,22 +10,22 @@ export interface BusinessCategory {
 }
 
 export const BUSINESS_CATEGORIES: BusinessCategory[] = [
-  { id: "creator", label: "Creator", icon: User, suggestedOfferTypes: ["digital_download", "membership", "consultation"], suggestedPages: ["home", "products", "about", "contact"] },
-  { id: "coach", label: "Coach", icon: GraduationCap, suggestedOfferTypes: ["course", "consultation", "membership"], suggestedPages: ["home", "services", "about", "contact"] },
-  { id: "consultant", label: "Consultant", icon: Briefcase, suggestedOfferTypes: ["consultation", "service", "course"], suggestedPages: ["home", "services", "about", "contact"] },
+  { id: "creator", label: "Creator", icon: User, suggestedOfferTypes: ["digital_download", "membership", "consultation"], suggestedPages: ["home", "products", "contact"] },
+  { id: "coach", label: "Coach", icon: GraduationCap, suggestedOfferTypes: ["course", "consultation", "membership"], suggestedPages: ["home", "services", "contact"] },
+  { id: "consultant", label: "Consultant", icon: Briefcase, suggestedOfferTypes: ["consultation", "service", "course"], suggestedPages: ["home", "services", "contact"] },
   { id: "freelancer", label: "Freelancer", icon: Pen, suggestedOfferTypes: ["service", "consultation", "digital_download"], suggestedPages: ["home", "services", "portfolio", "contact"] },
-  { id: "agency", label: "Agency", icon: Building2, suggestedOfferTypes: ["service", "consultation", "retainer"], suggestedPages: ["home", "services", "about", "contact"] },
-  { id: "restaurant", label: "Restaurant", icon: Utensils, suggestedOfferTypes: ["booking", "gift_card", "physical_product"], suggestedPages: ["home", "menu", "about", "contact"] },
-  { id: "fitness", label: "Gym / Fitness", icon: Dumbbell, suggestedOfferTypes: ["membership", "booking", "digital_download"], suggestedPages: ["home", "services", "about", "contact"] },
-  { id: "teacher", label: "Teacher", icon: BookOpen, suggestedOfferTypes: ["course", "digital_download", "consultation"], suggestedPages: ["home", "courses", "about", "contact"] },
-  { id: "photographer", label: "Photographer", icon: Camera, suggestedOfferTypes: ["service", "digital_download", "physical_product"], suggestedPages: ["home", "portfolio", "about", "contact"] },
+  { id: "agency", label: "Agency", icon: Building2, suggestedOfferTypes: ["service", "consultation", "retainer"], suggestedPages: ["home", "services", "contact"] },
+  { id: "restaurant", label: "Restaurant", icon: Utensils, suggestedOfferTypes: ["booking", "gift_card", "physical_product"], suggestedPages: ["home", "menu", "contact"] },
+  { id: "fitness", label: "Gym / Fitness", icon: Dumbbell, suggestedOfferTypes: ["membership", "booking", "digital_download"], suggestedPages: ["home", "services", "contact"] },
+  { id: "teacher", label: "Teacher", icon: BookOpen, suggestedOfferTypes: ["course", "digital_download", "consultation"], suggestedPages: ["home", "courses", "contact"] },
+  { id: "photographer", label: "Photographer", icon: Camera, suggestedOfferTypes: ["service", "digital_download", "physical_product"], suggestedPages: ["home", "portfolio", "contact"] },
   { id: "developer", label: "Developer", icon: Code, suggestedOfferTypes: ["service", "digital_download", "consultation"], suggestedPages: ["home", "services", "portfolio", "contact"] },
   { id: "designer", label: "Designer", icon: Palette, suggestedOfferTypes: ["service", "digital_download", "consultation"], suggestedPages: ["home", "portfolio", "services", "contact"] },
-  { id: "musician", label: "Musician", icon: Music, suggestedOfferTypes: ["digital_download", "membership", "physical_product"], suggestedPages: ["home", "music", "about", "contact"] },
-  { id: "artist", label: "Artist", icon: PenTool, suggestedOfferTypes: ["digital_download", "physical_product", "commission"], suggestedPages: ["home", "gallery", "about", "contact"] },
-  { id: "author", label: "Author", icon: BookOpen, suggestedOfferTypes: ["digital_download", "course", "membership"], suggestedPages: ["home", "books", "about", "contact"] },
-  { id: "startup", label: "Startup", icon: Rocket, suggestedOfferTypes: ["service", "consultation", "saas"], suggestedPages: ["home", "product", "about", "contact"] },
-  { id: "other", label: "Other", icon: Store, suggestedOfferTypes: ["service", "digital_download", "physical_product"], suggestedPages: ["home", "products", "about", "contact"] },
+  { id: "musician", label: "Musician", icon: Music, suggestedOfferTypes: ["digital_download", "membership", "physical_product"], suggestedPages: ["home", "music", "contact"] },
+  { id: "artist", label: "Artist", icon: PenTool, suggestedOfferTypes: ["digital_download", "physical_product", "commission"], suggestedPages: ["home", "gallery", "contact"] },
+  { id: "author", label: "Author", icon: BookOpen, suggestedOfferTypes: ["digital_download", "course", "membership"], suggestedPages: ["home", "books", "contact"] },
+  { id: "startup", label: "Startup", icon: Rocket, suggestedOfferTypes: ["service", "consultation", "saas"], suggestedPages: ["home", "product", "contact"] },
+  { id: "other", label: "Other", icon: Store, suggestedOfferTypes: ["service", "digital_download", "physical_product"], suggestedPages: ["home", "products", "contact"] },
 ];
 
 export interface OfferType {

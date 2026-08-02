@@ -35,7 +35,7 @@ export class ManualAcquisitionAdapter implements CreatorAcquisitionAdapter {
         offers: [],
         socialLinks: [],
         palette: { primary: "#6366f1", secondary: "#a78bfa" },
-        pages: ["home", "products", "about", "contact"],
+        pages: ["home", "products", "contact"],
       } as BusinessProfile,
     };
   }

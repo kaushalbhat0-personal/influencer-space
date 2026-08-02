@@ -35,11 +35,8 @@ function injectContent(
       result.cta = content.heroCta;
       result.buttonText = content.heroCta;
     }
-  }
-
-  if (moduleId.startsWith("about.")) {
-    if (content.aboutSection) result.content = content.aboutSection;
-    if (content.tagline) result.title = content.tagline;
+    // IMPLEMENTATION-19: About removed — creator bio lives in Hero.
+    if (content.aboutSection && !result.bio) result.bio = content.aboutSection;
   }
 
   if (moduleId.startsWith("footer.")) {

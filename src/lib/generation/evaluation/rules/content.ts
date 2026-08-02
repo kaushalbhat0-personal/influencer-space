@@ -58,18 +58,3 @@ export class SEOCompletenessRule extends BaseEvaluationRule {
     }, Math.min(penalty, this.weight));
   }
 }
-
-export class AboutQualityRule extends BaseEvaluationRule {
-  readonly id = "content.about_quality";
-  readonly category = "content" as const;
-  readonly weight = 10;
-  readonly description = "About section has meaningful content";
-
-  evaluate(ctx: EvaluationContext): EvaluationRuleResult {
-    const about = ctx.blueprint.about;
-    const bio = about?.props?.bio as string | undefined;
-    if (bio && bio.length >= 30) return this.pass(`About section has ${bio.length} characters`);
-    if (bio && bio.length >= 10) return this.fail("About section is too short", { action: "regenerate", summary: "Expand about section", details: "The about section should be at least 30 characters to tell the creator's story.", priority: "medium" }, 5);
-    return this.fail("About section is empty", { action: "generate", summary: "Create about section", details: "An about section helps visitors connect with the creator and builds trust.", priority: "high" });
-  }
-}

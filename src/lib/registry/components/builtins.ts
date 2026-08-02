@@ -1,7 +1,7 @@
 import { componentRegistry } from "./registry";
 import type { ComponentDefinition } from "./types";
 import {
-  HeroRenderer, AboutRenderer, FooterRenderer,
+  HeroRenderer, FooterRenderer,
   GalleryRenderer, ProductsRenderer, TimelineRenderer,
   LinksRenderer, TestimonialsRenderer, FaqRenderer,
   ContactRenderer, NewsletterRenderer, PricingRenderer,
@@ -55,18 +55,6 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "Learn Something New", subtitle: "", cta: "Start Learning" },
     renderer: HeroRenderer,
-  },
-
-  // ── About ────────────────────────────────────────────────
-  {
-    id: "about.default", type: "about", name: "About", category: "about",
-    icon: "User", description: "About section with bio, image, and social links",
-    version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: false,
-    supportsResponsive: true, supportsSEO: true,
-    animations: [], responsive: { mobile: true, tablet: true, desktop: true },
-    validation: { schema: {} },
-    defaultProps: { title: "About Me", content: "", imageUrl: "" },
-    renderer: AboutRenderer,
   },
 
   // ── Gallery ──────────────────────────────────────────────

@@ -48,9 +48,6 @@ export class SectionComposer {
         const galleryTitle = plan.gallery.titleStyle === "persona_name" ? `Portfolio — ${name}` : vocab.gallery.sectionTitle;
         enhanced.props = { ...enhanced.props, title: galleryTitle, layout: plan.gallery.layout, lightbox: plan.gallery.lightboxEnabled };
       }
-      if (s.type === "about") {
-        enhanced.props = { ...enhanced.props, title: vocab.about.sectionTitle.replace("{name}", name) };
-      }
       if (s.type === "contact_form") {
         enhanced.props = { ...enhanced.props, title: vocab.contact.sectionTitle, successMessage: vocab.contact.successMessage };
       }

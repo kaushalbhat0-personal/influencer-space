@@ -95,13 +95,6 @@ export class BuilderStore {
         ],
         metadata: {},
       },
-      {
-        id: `sec_${uid()}`, name: "About", order: 1, visible: true, locked: false,
-        slots: [
-          { id: `slot_${uid()}`, moduleId: "about.default", parentId: null, order: 0, visible: true, locked: false, config: {}, metadata: {} },
-        ],
-        metadata: {},
-      },
     ];
     return { id: pageId, name: "Home", slug: "/", order: 0, isHome: true, sections, theme: "default", metadata: {} };
   }

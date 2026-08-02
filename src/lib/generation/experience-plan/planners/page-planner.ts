@@ -11,7 +11,7 @@ export class PagePlanner implements Planner {
 
   plan(_graph: KnowledgeGraph, profile: ExperienceProfile, context: PlanningContext): Partial<ExperiencePlan> {
     const { persona } = profile;
-    const pageTypes: string[] = ["home", "about", "contact"];
+    const pageTypes: string[] = ["home", "contact"];
     if (context.commerceReadiness !== "none") pageTypes.push("products");
     if (persona.socialProofEmphasis === "high" || persona.contentStyle === "inspirational" || persona.contentStyle === "storytelling" || persona.contentStyle === "behind_the_scenes") {
       pageTypes.push("gallery");

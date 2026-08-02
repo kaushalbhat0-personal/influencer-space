@@ -54,7 +54,6 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const profilePictureUrl = String(p.profilePictureUrl || "");
   const videoUrl = String(p.videoUrl || "");
   const posterUrl = String(p.posterUrl || "");
-  const hasMedia = Boolean(p.videoUrl || p.posterUrl);
   const videoAlign = responsiveAlignmentClass(
     String(p.videoDesktopAlignment || "center"),
     String(p.videoMobileAlignment || "center"),
@@ -68,38 +67,43 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-      {/* ── Hero media (video / image) ── */}
-      {hasMedia && (
-        <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
-          {videoUrl ? (
-            <HeroMedia
-              type="video"
-              url={videoUrl}
-              poster={posterUrl}
-              alignmentClass={videoAlign}
-              className="absolute inset-0"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
-            />
-          ) : (
-            <HeroMedia
-              type="image"
-              url={posterUrl}
-              alignmentClass={imageAlign}
-              className="absolute inset-0"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-zinc-950" />
-        </div>
-      )}
+      {/* ── Hero media — ALWAYS renders first (video → poster → placeholder) ── */}
+      <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
+        {videoUrl ? (
+          <HeroMedia
+            type="video"
+            url={videoUrl}
+            poster={posterUrl}
+            alignmentClass={videoAlign}
+            className="absolute inset-0"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            preload="metadata"
+          />
+        ) : posterUrl ? (
+          <HeroMedia
+            type="image"
+            url={posterUrl}
+            alignmentClass={imageAlign}
+            className="absolute inset-0"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800/60 via-zinc-900/60 to-black">
+            <div className="flex flex-col items-center gap-2 text-zinc-600">
+              <span className="text-2xl">✦</span>
+              <span className="text-xs tracking-wide">Your hero goes here</span>
+            </div>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-zinc-950" />
+      </div>
 
-      {/* ── Overlapping profile picture + identity ── */}
-      <div className={hasMedia ? "-mt-[18%] sm:-mt-[12%] relative z-10" : "relative z-10 pt-16"}>
-        <div className="mx-auto max-w-2xl px-4 pb-16 text-center">
+      {/* ── Overlapping profile picture + identity (never above the media) ── */}
+      <div className="-mt-[30%] sm:-mt-[22%] relative z-10">
+        <div className="mx-auto max-w-2xl px-4 pb-16 pt-2 text-center sm:pb-20">
           {profilePictureUrl && (
             <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 sm:h-36 sm:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
@@ -167,30 +171,6 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ─── About ────────────────────────────────────────────── */
-
-export function AboutRenderer({ props }: RendererProps) {
-  const p = props as Record<string, string>;
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-12 text-center">
-      <h2 className="text-2xl font-bold text-white">
-        {p.title || "About"}
-      </h2>
-      {p.tagline && (
-        <p className="mt-2 text-base text-zinc-500">{p.tagline}</p>
-      )}
-      <div className="mt-4 text-zinc-400">
-        {p.content || ""}
-      </div>
-      {p.imageUrl && (
-        <div className="mx-auto mt-6 h-32 w-32">
-          <CreatorImage src={p.imageUrl} alt="Profile photo" variant="avatar" />
-        </div>
-      )}
     </div>
   );
 }

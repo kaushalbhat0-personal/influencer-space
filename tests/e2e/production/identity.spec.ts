@@ -77,8 +77,8 @@ test("I3 — Storefront hero renders Hero-owned name and overlapping profile pic
   const body = await page.locator("body").innerText();
   // Hero-owned name is rendered as the H1.
   expect(body).toContain("Farah Khan");
-  // The overlapping avatar style is present.
-  const overlap = await page.locator('[class*="-mt-[18%]"], [class*="-mt-[12%]"]').count();
+  // The overlapping avatar style is present (30–40% overlap, IMPLEMENTATION-19).
+  const overlap = await page.locator('[class*="-mt-[30%]"], [class*="-mt-[22%]"]').count();
   expect(overlap).toBeGreaterThan(0);
   // A profile image renders in the hero.
   const avatarImg = await page.locator('section#hero img[src*="supabase"]').count();

@@ -2,7 +2,6 @@ import type { BlueprintDefinition } from "../types";
 
 const BASE_NAV = [
   { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-  { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
   { id: "contact", label: "Contact", href: "#contact", type: "anchor" as const, order: 10, visible: true },
 ];
 
@@ -20,7 +19,6 @@ const CREATOR_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 2, visible: true },
       { id: "sec-gallery", moduleId: "gallery.grid", order: 3, visible: true },
       { id: "sec-timeline", moduleId: "timeline.default", order: 4, visible: true },
@@ -54,8 +52,8 @@ const CREATOR_BLUEPRINT: BlueprintDefinition = {
     industry: ["content creation", "gaming", "streaming"],
     businessGoals: ["build audience", "sell merchandise", "grow community"],
     requiredQuestions: ["What is your main content platform?", "What products do you sell?"],
-    recommendedSections: ["hero", "about", "products", "gallery", "links"],
-    contentPrompts: { hero: "Create an engaging hero section", about: "Write a compelling bio" },
+    recommendedSections: ["hero", "products", "gallery", "links"],
+    contentPrompts: { hero: "Create an engaging hero section" },
     imagePrompts: { hero: "A professional banner image", avatar: "A high-quality profile photo" },
     seoPrompts: { title: "Generate an SEO title", description: "Generate a meta description" },
     generationHints: { tone: "energetic", audienceFocus: "fans" },
@@ -79,7 +77,6 @@ const PORTFOLIO_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-gallery", moduleId: "gallery.grid", order: 2, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 3, visible: true },
       { id: "sec-contact", moduleId: "contact.default", order: 4, visible: true },
@@ -103,8 +100,8 @@ const PORTFOLIO_BLUEPRINT: BlueprintDefinition = {
     industry: ["photography", "design", "art", "creative"],
     businessGoals: ["attract clients", "showcase work", "build reputation"],
     requiredQuestions: ["What type of work do you create?", "What is your specialty?"],
-    recommendedSections: ["hero", "about", "gallery", "testimonials"],
-    contentPrompts: { hero: "Showcase your best work", about: "Tell your creative story" },
+    recommendedSections: ["hero", "gallery", "testimonials"],
+    contentPrompts: { hero: "Showcase your best work" },
     imagePrompts: { hero: "Your best portfolio piece", gallery: "Collection of your work" },
     seoPrompts: { title: "Portfolio SEO title", description: "Portfolio description" },
     generationHints: { tone: "professional", visualFocus: "high" },
@@ -128,7 +125,6 @@ const BUSINESS_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 2, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 3, visible: true },
       { id: "sec-faq", moduleId: "faq.default", order: 4, visible: true },
@@ -138,7 +134,6 @@ const BUSINESS_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "services", label: "Services", href: "#products", type: "anchor" as const, order: 2, visible: true },
     { id: "testimonials", label: "Testimonials", href: "#testimonials", type: "anchor" as const, order: 3, visible: true },
     { id: "faq", label: "FAQ", href: "#faq", type: "anchor" as const, order: 4, visible: true },
@@ -160,7 +155,7 @@ const BUSINESS_BLUEPRINT: BlueprintDefinition = {
     industry: ["consulting", "professional services", "coaching"],
     businessGoals: ["attract clients", "showcase expertise", "generate leads"],
     requiredQuestions: ["What services do you offer?", "Who is your target client?"],
-    recommendedSections: ["hero", "about", "products", "testimonials", "faq"],
+    recommendedSections: ["hero", "products", "testimonials", "faq"],
     contentPrompts: { hero: "Professional hero with value proposition" },
     imagePrompts: { hero: "Professional workspace or team photo" },
     seoPrompts: { title: "Business SEO title", description: "Business description" },
@@ -185,7 +180,6 @@ const GAMING_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.gaming", order: 0, visible: true, config: { showLiveBadge: true } },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-games", moduleId: "games.default", order: 2, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 3, visible: true },
       { id: "sec-timeline", moduleId: "timeline.default", order: 4, visible: true },
@@ -217,7 +211,7 @@ const GAMING_BLUEPRINT: BlueprintDefinition = {
     industry: ["gaming", "esports", "entertainment"],
     businessGoals: ["grow community", "sell merchandise", "stream"],
     requiredQuestions: ["What games do you play?", "What platform do you stream on?"],
-    recommendedSections: ["hero", "about", "games", "products", "links"],
+    recommendedSections: ["hero", "games", "products", "links"],
     contentPrompts: { hero: "Epic gaming hero", games: "List your games" },
     imagePrompts: { hero: "Gaming banner", games: "Game screenshots" },
     seoPrompts: { title: "Gaming SEO title", description: "Gaming description" },
@@ -242,7 +236,6 @@ const AGENCY_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-gallery", moduleId: "gallery.grid", order: 2, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 3, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 4, visible: true },
@@ -253,7 +246,6 @@ const AGENCY_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "work", label: "Work", href: "#gallery", type: "anchor" as const, order: 2, visible: true },
     { id: "services", label: "Services", href: "#products", type: "anchor" as const, order: 3, visible: true },
     { id: "testimonials", label: "Testimonials", href: "#testimonials", type: "anchor" as const, order: 4, visible: true },
@@ -276,8 +268,8 @@ const AGENCY_BLUEPRINT: BlueprintDefinition = {
     industry: ["creative agency", "marketing", "design studio"],
     businessGoals: ["attract clients", "showcase work", "build credibility"],
     requiredQuestions: ["What services does your agency offer?", "What is your specialty?"],
-    recommendedSections: ["hero", "about", "gallery", "products", "testimonials", "faq"],
-    contentPrompts: { hero: "Agency value proposition", about: "Team story" },
+    recommendedSections: ["hero", "gallery", "products", "testimonials", "faq"],
+    contentPrompts: { hero: "Agency value proposition" },
     imagePrompts: { hero: "Agency workspace", gallery: "Client work showcase" },
     seoPrompts: { title: "Agency SEO title", description: "Agency description" },
     generationHints: { tone: "professional", showcaseQuality: "high" },
@@ -301,7 +293,6 @@ const PODCAST_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-timeline", moduleId: "timeline.default", order: 2, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 3, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 4, visible: true },
@@ -332,7 +323,7 @@ const PODCAST_BLUEPRINT: BlueprintDefinition = {
     industry: ["podcasting", "media", "entertainment"],
     businessGoals: ["grow listeners", "monetize episodes", "build audience"],
     requiredQuestions: ["What is your podcast about?", "How often do you publish?"],
-    recommendedSections: ["hero", "about", "timeline", "products", "links"],
+    recommendedSections: ["hero", "timeline", "products", "links"],
     contentPrompts: { hero: "Podcast hero with latest episode" },
     imagePrompts: { hero: "Podcast cover art" },
     seoPrompts: { title: "Podcast SEO title", description: "Podcast description" },
@@ -357,7 +348,6 @@ const RESTAURANT_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-gallery", moduleId: "gallery.grid", order: 2, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 3, visible: true },
       { id: "sec-contact", moduleId: "contact.default", order: 4, visible: true },
@@ -366,7 +356,6 @@ const RESTAURANT_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "menu", label: "Menu", href: "#gallery", type: "anchor" as const, order: 2, visible: true },
     { id: "testimonials", label: "Reviews", href: "#testimonials", type: "anchor" as const, order: 3, visible: true },
     { id: "contact", label: "Contact", href: "#contact", type: "anchor" as const, order: 4, visible: true },
@@ -387,7 +376,7 @@ const RESTAURANT_BLUEPRINT: BlueprintDefinition = {
     industry: ["restaurant", "hospitality", "food service"],
     businessGoals: ["attract diners", "showcase menu", "drive reservations"],
     requiredQuestions: ["What type of cuisine do you serve?", "What is your location?"],
-    recommendedSections: ["hero", "about", "gallery", "testimonials"],
+    recommendedSections: ["hero", "gallery", "testimonials"],
     contentPrompts: {},
     imagePrompts: {},
     seoPrompts: {},
@@ -412,7 +401,6 @@ const EDUCATION_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 2, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 3, visible: true },
       { id: "sec-faq", moduleId: "faq.default", order: 4, visible: true },
@@ -422,7 +410,6 @@ const EDUCATION_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "courses", label: "Courses", href: "#products", type: "anchor" as const, order: 2, visible: true },
     { id: "faq", label: "FAQ", href: "#faq", type: "anchor" as const, order: 4, visible: true },
     { id: "contact", label: "Contact", href: "#contact", type: "anchor" as const, order: 5, visible: true },
@@ -443,7 +430,7 @@ const EDUCATION_BLUEPRINT: BlueprintDefinition = {
     industry: ["education", "e-learning", "professional development"],
     businessGoals: ["enroll students", "sell courses", "build authority"],
     requiredQuestions: ["What subjects do you teach?", "Who is your target audience?"],
-    recommendedSections: ["hero", "about", "products", "testimonials", "faq"],
+    recommendedSections: ["hero", "products", "testimonials", "faq"],
     contentPrompts: {},
     imagePrompts: {},
     seoPrompts: {},
@@ -468,7 +455,6 @@ const PHOTOGRAPHY_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-gallery", moduleId: "gallery.grid", order: 2, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 3, visible: true },
       { id: "sec-contact", moduleId: "contact.default", order: 4, visible: true },
@@ -477,7 +463,6 @@ const PHOTOGRAPHY_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "gallery", label: "Gallery", href: "#gallery", type: "anchor" as const, order: 2, visible: true },
     { id: "testimonials", label: "Testimonials", href: "#testimonials", type: "anchor" as const, order: 3, visible: true },
     { id: "contact", label: "Contact", href: "#contact", type: "anchor" as const, order: 4, visible: true },
@@ -498,7 +483,7 @@ const PHOTOGRAPHY_BLUEPRINT: BlueprintDefinition = {
     industry: ["photography", "portraits", "weddings", "events"],
     businessGoals: ["attract clients", "showcase portfolio", "book sessions"],
     requiredQuestions: ["What type of photography do you specialize in?", "What is your service area?"],
-    recommendedSections: ["hero", "about", "gallery", "testimonials"],
+    recommendedSections: ["hero", "gallery", "testimonials"],
     contentPrompts: {},
     imagePrompts: {},
     seoPrompts: {},
@@ -523,7 +508,6 @@ const LUXURY_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-gallery", moduleId: "gallery.grid", order: 2, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 3, visible: true },
       { id: "sec-contact", moduleId: "contact.default", order: 4, visible: true },
@@ -532,7 +516,6 @@ const LUXURY_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "collection", label: "Collection", href: "#gallery", type: "anchor" as const, order: 2, visible: true },
     { id: "products", label: "Products", href: "#products", type: "anchor" as const, order: 3, visible: true },
     { id: "contact", label: "Contact", href: "#contact", type: "anchor" as const, order: 4, visible: true },
@@ -553,7 +536,7 @@ const LUXURY_BLUEPRINT: BlueprintDefinition = {
     industry: ["luxury goods", "fashion", "high-end retail", "exclusive services"],
     businessGoals: ["build brand prestige", "showcase collections", "drive exclusivity"],
     requiredQuestions: ["What luxury products or services do you offer?", "What is your brand story?"],
-    recommendedSections: ["hero", "about", "gallery", "products"],
+    recommendedSections: ["hero", "gallery", "products"],
     contentPrompts: {},
     imagePrompts: {},
     seoPrompts: {},
@@ -578,7 +561,6 @@ const COMMERCE_BLUEPRINT: BlueprintDefinition = {
   pages: [
     { id: "page-home", name: "Home", slug: "/", isHome: true, order: 0, sections: [
       { id: "sec-hero", moduleId: "hero.default", order: 0, visible: true },
-      { id: "sec-about", moduleId: "about.default", order: 1, visible: true },
       { id: "sec-products", moduleId: "products.grid", order: 2, visible: true },
       { id: "sec-testimonials", moduleId: "testimonials.default", order: 3, visible: true },
       { id: "sec-faq", moduleId: "faq.default", order: 4, visible: true },
@@ -588,7 +570,6 @@ const COMMERCE_BLUEPRINT: BlueprintDefinition = {
   ],
   navigation: [
     { id: "hero", label: "Home", href: "#hero", type: "anchor" as const, order: 0, visible: true },
-    { id: "about", label: "About", href: "#about", type: "anchor" as const, order: 1, visible: true },
     { id: "shop", label: "Shop", href: "#products", type: "anchor" as const, order: 2, visible: true },
     { id: "faq", label: "FAQ", href: "#faq", type: "anchor" as const, order: 4, visible: true },
     { id: "contact", label: "Contact", href: "#contact", type: "anchor" as const, order: 5, visible: true },
@@ -609,7 +590,7 @@ const COMMERCE_BLUEPRINT: BlueprintDefinition = {
     industry: ["e-commerce", "retail", "online store"],
     businessGoals: ["sell products", "drive conversions", "grow revenue"],
     requiredQuestions: ["What products do you sell?", "Who is your target customer?"],
-    recommendedSections: ["hero", "about", "products", "testimonials", "faq"],
+    recommendedSections: ["hero", "products", "testimonials", "faq"],
     contentPrompts: {},
     imagePrompts: {},
     seoPrompts: {},

@@ -55,8 +55,9 @@ export abstract class BaseVariantStrategy {
     return [{ type: "gallery" as const, page: "gallery" as const, props: { title, layout: "masonry", columns: 3 }, reason: "Visual showcase" }];
   }
 
-  protected about(name: string) {
-    return [{ type: "about" as const, page: "about" as const, props: { title: `About ${name}`, showStats: true }, reason: "About" }];
+  protected about(_name: string): Array<{ type: SectionType; page: PageType; props: Record<string, unknown>; reason: string }> {
+    // IMPLEMENTATION-19: About removed — Hero is the identity section.
+    return [];
   }
 
   protected social(graph: KnowledgeGraph) {

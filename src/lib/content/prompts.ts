@@ -1,5 +1,5 @@
 import { promptRegistry } from "@/lib/ai/prompts/registry";
-import { HeroContentSchema, AboutContentSchema, FaqContentSchema, SeoContentSchema, CtaContentSchema, NewsletterContentSchema, TestimonialContentSchema, PricingContentSchema, LinksContentSchema, ContactContentSchema } from "./schemas";
+import { HeroContentSchema, FaqContentSchema, SeoContentSchema, CtaContentSchema, NewsletterContentSchema, TestimonialContentSchema, PricingContentSchema, LinksContentSchema, ContactContentSchema } from "./schemas";
 
 function buildSystemPrompt(schema: string): string {
   return `You are a Content Studio AI for CreatorStore.
@@ -32,7 +32,6 @@ const VERSION = "v1.0.0";
 export function registerContentPrompts(): void {
   const generators = [
     { id: "hero", schema: JSON.stringify(HeroContentSchema.shape, null, 2), count: 4 },
-    { id: "about", schema: JSON.stringify(AboutContentSchema.shape, null, 2), count: 3 },
     { id: "faq", schema: JSON.stringify(FaqContentSchema.shape, null, 2), count: 2 },
     { id: "seo", schema: JSON.stringify(SeoContentSchema.shape, null, 2), count: 3 },
     { id: "cta", schema: JSON.stringify(CtaContentSchema.shape, null, 2), count: 4 },

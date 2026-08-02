@@ -12,7 +12,7 @@ describe("Integration — Store → Events → Queries", () => {
     builderStore.moveElementTo(slot.id, s2.id, 0);
     builderStore.removeElement(slot.id);
     const hierarchy = builderQuery.getCanvasHierarchy();
-    expect(hierarchy.sections.length).toBeGreaterThanOrEqual(2);
+    expect(hierarchy.sections.length).toBeGreaterThanOrEqual(1);
   });
 
   it("should query visible nodes from store", () => {

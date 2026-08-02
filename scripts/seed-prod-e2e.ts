@@ -63,7 +63,6 @@ async function main() {
 
   const SECTIONS: { name: string; moduleId: string }[] = [
     { name: "Hero", moduleId: "hero.default" },
-    { name: "About", moduleId: "about.default" },
     { name: "Products", moduleId: "products.grid" },
     { name: "Gallery", moduleId: "gallery.grid" },
     { name: "Services", moduleId: "services.default" },

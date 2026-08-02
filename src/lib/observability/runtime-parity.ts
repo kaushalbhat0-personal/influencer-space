@@ -21,7 +21,7 @@ import type { BuilderPage } from "@/lib/builder/types";
 import type { WebsiteAggregate, LayoutSnapshot, ThemeSnapshot } from "@/types/snapshot";
 
 export type ModuleKey =
-  | "hero" | "about" | "products" | "gallery" | "services" | "courses"
+  | "hero" | "products" | "gallery" | "services" | "courses"
   | "testimonials" | "faq" | "timeline" | "games" | "links" | "footer";
 
 export interface ModuleParityRow {
@@ -44,14 +44,14 @@ export interface ParityReport {
 /** Map a moduleId to its aggregate module key. */
 function moduleKeyOf(moduleId: string): ModuleKey | null {
   const type = moduleId.split(".")[0] as ModuleKey;
-  const valid: ModuleKey[] = ["hero", "about", "products", "gallery", "services", "courses", "testimonials", "faq", "timeline", "games", "links", "footer"];
+  const valid: ModuleKey[] = ["hero", "products", "gallery", "services", "courses", "testimonials", "faq", "timeline", "games", "links", "footer"];
   return valid.includes(type) ? type : null;
 }
 
 async function dbCounts(tenantId: string, websiteId: string): Promise<Record<ModuleKey, number>> {
   const [
     products, gallery, services, courses, timeline, games, links, assets,
-    testimonialsSetting, faqSetting, heroSetting, brand,
+    testimonialsSetting, faqSetting, heroSetting,
   ] = await Promise.all([
     prisma.product.count({ where: { tenantId } }),
     prisma.galleryImage.count({ where: { tenantId } }),
@@ -64,11 +64,9 @@ async function dbCounts(tenantId: string, websiteId: string): Promise<Record<Mod
     prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } } }),
     prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "faq" } } }),
     prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "hero_data" } } }),
-    prisma.brand.findUnique({ where: { websiteId } }),
   ]);
   return {
     hero: heroSetting?.value && typeof heroSetting.value === "object" ? 1 : 0,
-    about: brand ? 1 : 0,
     products,
     gallery,
     services,
@@ -84,7 +82,7 @@ async function dbCounts(tenantId: string, websiteId: string): Promise<Record<Mod
 
 function layoutCounts(layout: LayoutSnapshot): Record<ModuleKey, number> {
   const rows: Record<ModuleKey, number> = {
-    hero: 0, about: 0, products: 0, gallery: 0, services: 0, courses: 0,
+    hero: 0, products: 0, gallery: 0, services: 0, courses: 0,
     testimonials: 0, faq: 0, timeline: 0, games: 0, links: 0, footer: 0,
   };
   for (const page of layout.pages) {
@@ -98,7 +96,7 @@ function layoutCounts(layout: LayoutSnapshot): Record<ModuleKey, number> {
 
 function renderedCounts(layout: LayoutSnapshot): Record<ModuleKey, number> {
   const rows: Record<ModuleKey, number> = {
-    hero: 0, about: 0, products: 0, gallery: 0, services: 0, courses: 0,
+    hero: 0, products: 0, gallery: 0, services: 0, courses: 0,
     testimonials: 0, faq: 0, timeline: 0, games: 0, links: 0, footer: 0,
   };
   for (const page of layout.pages) {
@@ -114,7 +112,6 @@ function renderedCounts(layout: LayoutSnapshot): Record<ModuleKey, number> {
 function aggregateModuleCounts(agg: WebsiteAggregate): Record<ModuleKey, number> {
   return {
     hero: agg.hero?.title ? 1 : 0,
-    about: agg.identity?.name ? 1 : 0,
     products: agg.products?.length ?? 0,
     gallery: agg.gallery?.length ?? 0,
     services: agg.services?.length ?? 0,

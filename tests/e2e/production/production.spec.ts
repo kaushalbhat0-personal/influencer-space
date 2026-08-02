@@ -217,7 +217,7 @@ test("05 — Live CMS: hero title change appears without publish", async ({ page
   await page.goto("/admin/settings", { waitUntil: "networkidle", timeout: 60000 });
   await page.waitForSelector("#heroTitle", { timeout: 20000 });
   await page.fill("#heroTitle", marker);
-  await page.locator("button:has-text('Save Hero Details')").click();
+  await page.locator("button:has-text('Save Identity')").click();
   await page.waitForTimeout(2000);
   await shot(page, "20-live-cms-saved");
 
@@ -281,14 +281,16 @@ test("07 — Media: library loads and accepts an upload", async ({ page }) => {
   await imageCard.waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
   if (await imageCard.count() > 0) {
     await imageCard.click();
-    const fileInput = page.locator('input[type="file"]').first();
-    await fileInput.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
-    if (await fileInput.count() > 0) {
+    // Target the Replace File input inside the detail panel (the first file
+    // input on the page is the top toolbar "Upload" button).
+    const replaceInput = page.locator('label:has-text("Choose New File") input[type="file"]').first();
+    await replaceInput.waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+    if (await replaceInput.count() > 0) {
       const png = Buffer.from(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
         "base64",
       );
-      await fileInput.setInputFiles({ name: "e2e-test.png", mimeType: "image/png", buffer: png });
+      await replaceInput.setInputFiles({ name: "e2e-test.png", mimeType: "image/png", buffer: png });
       await page.waitForTimeout(6000);
       await shot(page, "26-media-upload");
     }

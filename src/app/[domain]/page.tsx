@@ -151,18 +151,16 @@ export default async function PublicPage({
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
         ))}
-        <div className="mx-auto max-w-2xl px-4 pt-4">
-          {allSections.map((section, i) => (
-            <section
-              key={`${section.id}-${i}`}
-              id={section.moduleId?.split(".")[0] ?? `section-${i}`}
-            >
-              <ComponentErrorBoundary componentId={section.moduleId}>
-                <DataBoundRenderer slot={{ moduleId: section.moduleId, config: section.config }} />
-              </ComponentErrorBoundary>
-            </section>
-          ))}
-        </div>
+        {allSections.map((section, i) => (
+          <section
+            key={`${section.id}-${i}`}
+            id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+          >
+            <ComponentErrorBoundary componentId={section.moduleId}>
+              <DataBoundRenderer slot={{ moduleId: section.moduleId, config: section.config }} />
+            </ComponentErrorBoundary>
+          </section>
+        ))}
       </main>
     </>
   );

@@ -2,7 +2,6 @@ import type { CreatorProfile, CreatorIntelligence } from "@/lib/creators/types";
 import { contentGeneratorRegistry } from "./generators/registry";
 import type { ContentGenerator, GeneratorInput, GeneratorResult, GeneratorProvenance } from "./generators/interface";
 import { HeroGenerator } from "./generators/hero";
-import { AboutGenerator } from "./generators/about";
 import { SeoGenerator } from "./generators/seo";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
@@ -24,7 +23,6 @@ export class ContentStudio {
 
   constructor() {
     this.register(new HeroGenerator());
-    this.register(new AboutGenerator());
     this.register(new SeoGenerator());
   }
 

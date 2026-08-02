@@ -54,11 +54,10 @@ describe("BuilderStore", () => {
   });
 
   describe("sections", () => {
-    it("creating initial state has 2 default sections", () => {
+    it("creating initial state has 1 default section", () => {
       const page = store.activePage;
-      expect(page?.sections.length).toBe(2);
+      expect(page?.sections.length).toBe(1);
       expect(page?.sections[0]?.name).toBe("Hero");
-      expect(page?.sections[1]?.name).toBe("About");
     });
 
     it("addSection appends a new section", () => {
@@ -85,16 +84,20 @@ describe("BuilderStore", () => {
       if (!sectionId) { expect(false).toBe(true); return; }
       store.duplicateSection(sectionId);
       const updated = store.activePage;
-      expect(updated?.sections.length).toBe(3);
+      expect(updated?.sections.length).toBe(2);
     });
 
     it("reorderSections moves section to new position", () => {
       const page = store.activePage;
       if (!page) { expect(false).toBe(true); return; }
-      store.reorderSections(page.id, 0, 1);
+      const s1 = store.addSection("Products");
+      const s2 = store.addSection("Gallery");
+      store.reorderSections(page.id, 0, 2);
       const updated = store.activePage;
       if (!updated) { expect(false).toBe(true); return; }
-      expect(updated.sections[1]?.name).toBe("Hero");
+      expect(updated.sections[2]?.name).toBe("Hero");
+      expect(updated.sections[0]?.name).toBe(s1.name);
+      expect(updated.sections[1]?.name).toBe(s2.name);
     });
 
     it("adding a section marks store dirty", () => {

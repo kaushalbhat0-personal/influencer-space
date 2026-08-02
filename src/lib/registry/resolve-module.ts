@@ -1,6 +1,5 @@
 const COMPAT_MAP: Record<string, string> = {
   hero: "hero.default",
-  about: "about.default",
   gallery: "gallery.grid",
   products: "products.grid",
   timeline: "timeline.default",
@@ -31,4 +30,15 @@ export function resolveModuleId(type: string): string {
 export function moduleIdToDisplayName(moduleId: string): string {
   const name = moduleId.includes(".") ? moduleId.split(".")[0] : moduleId;
   return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/**
+ * IMPLEMENTATION-19: sections that have been fully removed from the product.
+ * About duplicated Hero — it is no longer a registrable section. Old layouts
+ * containing it migrate automatically by dropping it (never rendering).
+ */
+const DEPRECATED_SECTION_PREFIXES = ["about."];
+
+export function isDeprecatedSection(moduleId: string): boolean {
+  return DEPRECATED_SECTION_PREFIXES.some((p) => moduleId.toLowerCase().startsWith(p));
 }

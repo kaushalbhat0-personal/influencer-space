@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { BuilderPage } from "./types";
+import { isDeprecatedSection } from "@/lib/registry/resolve-module";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JsonValue = any;
@@ -27,24 +28,31 @@ export class BuilderService {
       isHome: p.isHome,
       theme: p.theme,
       metadata: toJson(p.config),
-      sections: p.sections.map((sec) => ({
-        id: sec.id,
-        name: sec.name,
-        order: sec.order,
-        visible: sec.visible,
-        locked: sec.locked,
-        metadata: toJson(sec.config),
-        slots: sec.blocks.map((b) => ({
-          id: b.id,
-          moduleId: b.moduleId,
-          parentId: b.parentId ?? null,
-          order: b.order,
-          visible: b.visible,
-          locked: b.locked,
-          config: toJson(b.config),
-          metadata: {},
-        })),
-      })),
+      // IMPLEMENTATION-19: deprecated sections (About) are stripped on load so
+      // old drafts migrate automatically and the sidebar can never show a
+      // section that no longer renders.
+      sections: p.sections
+        .map((sec) => ({
+          id: sec.id,
+          name: sec.name,
+          order: sec.order,
+          visible: sec.visible,
+          locked: sec.locked,
+          metadata: toJson(sec.config),
+          slots: sec.blocks
+            .filter((b) => !isDeprecatedSection(b.moduleId))
+            .map((b) => ({
+              id: b.id,
+              moduleId: b.moduleId,
+              parentId: b.parentId ?? null,
+              order: b.order,
+              visible: b.visible,
+              locked: b.locked,
+              config: toJson(b.config),
+              metadata: {},
+            })),
+        }))
+        .filter((sec) => sec.slots.length > 0),
     }));
   }
 

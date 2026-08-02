@@ -12,7 +12,7 @@ import { resolveModuleId } from "@/lib/registry/resolve-module";
  */
 const REGISTERED_IDS = [
   "hero.default", "hero.gaming", "hero.fitness", "hero.education",
-  "about.default", "gallery.grid", "products.grid", "timeline.default",
+  "gallery.grid", "products.grid", "timeline.default",
   "links.default", "footer.default", "testimonials.default", "faq.default",
   "contact.default", "newsletter.default", "pricing.default",
   "courses.default", "services.default", "embed.spotify", "embed.youtube",
@@ -57,7 +57,7 @@ describe("Component IDs — every origin emits only registered ids", () => {
 
   it("every resolveModuleId compat target resolves to a registered id", () => {
     const compatInputs = [
-      "hero", "about", "gallery", "products", "timeline", "links", "footer",
+      "hero", "gallery", "products", "timeline", "links", "footer",
       "testimonials", "faq", "contact", "newsletter", "pricing", "courses",
       "games", "contentFeed", "content_feed", "services",
       "featured_products", "product_grid", "social_links", "contact_form",

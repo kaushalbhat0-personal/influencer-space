@@ -1,6 +1,5 @@
 import type { VersionedPromptRegistry } from "../prompt-registry";
 import { Generator as HeroGenerator } from "./hero";
-import { Generator as AboutGenerator } from "./about";
 import { Generator as SEOGenerator } from "./seo";
 import { Generator as BrandingGenerator } from "./branding";
 import { Generator as ProductsGenerator } from "./products";
@@ -10,7 +9,6 @@ import { Generator as FAQGenerator } from "./faq";
 export function registerPromptDefinitions(registry: VersionedPromptRegistry): void {
   const generators = [
     new HeroGenerator(),
-    new AboutGenerator(),
     new SEOGenerator(),
     new BrandingGenerator(),
     new ProductsGenerator(),

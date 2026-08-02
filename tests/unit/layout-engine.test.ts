@@ -229,14 +229,13 @@ describe("LayoutEngine — pages", () => {
   it("preserves moduleId on each section", () => {
     const doc = engine.resolve(fullSnapshot());
     expect(doc.pages[0].sections[0].moduleId).toBe("hero.default");
-    expect(doc.pages[0].sections[1].moduleId).toBe("about.default");
-    expect(doc.pages[0].sections[2].moduleId).toBe("products.grid");
+    expect(doc.pages[0].sections[1].moduleId).toBe("products.grid");
   });
 
   it("preserves section order", () => {
     const doc = engine.resolve(fullSnapshot());
     expect(doc.pages[0].sections[0].order).toBe(0);
-    expect(doc.pages[0].sections[1].order).toBe(1);
+    expect(doc.pages[0].sections[1].order).toBe(2);
   });
 
   it("preserves visibility", () => {
@@ -261,13 +260,11 @@ describe("LayoutEngine — pages", () => {
     expect(resolvedData[0].price).toBe(499);
   });
 
-  it("injects about content from identity", () => {
+  it("drops deprecated About sections (auto-migration from old layouts)", () => {
     const doc = engine.resolve(fullSnapshot());
-    const aboutSection = doc.pages[0].sections.find((s) => s.moduleId === "about.default");
-    expect(aboutSection).toBeDefined();
-    const config = aboutSection!.config;
-    expect(config).toHaveProperty("content");
-    expect(config).toHaveProperty("imageUrl");
+    const aboutSections = doc.pages[0].sections.filter((s) => s.moduleId.startsWith("about."));
+    expect(aboutSections).toHaveLength(0);
+    expect(doc.pages[0].sections.some((s) => s.moduleId === "about.default")).toBe(false);
   });
 });
 

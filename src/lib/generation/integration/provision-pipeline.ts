@@ -93,7 +93,8 @@ export function buildProvisioningInput(params: {
       heroTitle: (heroSection?.props?.headline as string) ?? bp.website.title,
       heroSubtitle: (heroSection?.props?.subheadline as string) ?? "",
       heroCta: (heroSection?.props?.cta as string) ?? "Shop Now",
-      aboutSection: (bp.about?.props?.bio as string) ?? "",
+      // IMPLEMENTATION-19: About removed — creator bio lives in Hero.
+      aboutSection: ((heroSection?.props as Record<string, unknown>)?.bio as string) ?? "",
       tagline: bp.website.tagline,
       seoTitle: (seoData?.title as string) ?? bp.seo.title,
       seoDescription: (seoData?.description as string) ?? bp.seo.description,

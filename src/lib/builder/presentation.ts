@@ -18,7 +18,6 @@ export const PRESENTATION_DEFAULTS: Record<string, Record<string, unknown>> = {
   "hero.gaming": { showLiveBadge: true, animation: "fade" },
   "hero.fitness": { animation: "fade" },
   "hero.education": { animation: "fade" },
-  "about.default": { imagePosition: "right" },
   "gallery.grid": { columns: 3, layout: "grid", lightbox: true, animation: "stagger" },
   "products.grid": { columns: 3, animation: "stagger" },
   "timeline.default": { animation: "slide" },

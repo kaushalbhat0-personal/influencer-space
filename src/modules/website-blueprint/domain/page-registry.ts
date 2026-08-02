@@ -7,10 +7,9 @@ export interface PageDefinition {
 }
 
 export const PAGE_REGISTRY: PageDefinition[] = [
-  { slug: "/", title: "Home", purpose: "Landing page — first impression, hero, key sections", defaultVisibility: "published", allowedSections: ["hero", "about", "products", "services", "testimonials", "pricing", "gallery", "cta", "newsletter", "social", "booking", "reviews", "community", "videos"] },
+  { slug: "/", title: "Home", purpose: "Landing page — first impression, hero, key sections", defaultVisibility: "published", allowedSections: ["hero", "products", "services", "testimonials", "pricing", "gallery", "cta", "newsletter", "social", "booking", "reviews", "community", "videos"] },
   { slug: "/products", title: "Products", purpose: "Product catalog — grid or list of offerings", defaultVisibility: "published", allowedSections: ["products"] },
   { slug: "/services", title: "Services", purpose: "Service listings — grid or list of services", defaultVisibility: "published", allowedSections: ["services", "pricing", "cta"] },
-  { slug: "/about", title: "About", purpose: "About the business — story, team, mission", defaultVisibility: "published", allowedSections: ["about", "testimonials"] },
   { slug: "/contact", title: "Contact", purpose: "Contact form and information", defaultVisibility: "published", allowedSections: ["contact"] },
   { slug: "/gallery", title: "Gallery", purpose: "Photo/video gallery showcase", defaultVisibility: "published", allowedSections: ["gallery"] },
   { slug: "/portfolio", title: "Portfolio", purpose: "Work/project showcase", defaultVisibility: "published", allowedSections: ["portfolio"] },

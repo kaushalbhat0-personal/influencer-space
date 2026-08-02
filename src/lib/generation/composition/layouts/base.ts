@@ -48,8 +48,9 @@ export abstract class BaseLayoutStrategy implements LayoutStrategy {
     return [{ type: "gallery", page: "gallery", props: { title, layout: "masonry", columns: 3, showCaptions: true }, reason: "Visual showcase for creator" }];
   }
 
-  protected about(graph: KnowledgeGraph): Array<{ type: SectionType; page: PageType; props: Record<string, unknown>; reason: string }> {
-    return [{ type: "about", page: "about", props: { title: `About ${graph.creator.name}`, bio: graph.creator.bio || graph.brand.description, showStats: true, showSocialLinks: true }, reason: "Creator biography and background" }];
+  protected about(_graph: KnowledgeGraph): Array<{ type: SectionType; page: PageType; props: Record<string, unknown>; reason: string }> {
+    // IMPLEMENTATION-19: About removed — Hero is the identity section.
+    return [];
   }
 
   protected social(graph: KnowledgeGraph): Array<{ type: SectionType; page: PageType; props: Record<string, unknown>; reason: string }> {

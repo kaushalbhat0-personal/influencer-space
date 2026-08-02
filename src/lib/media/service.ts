@@ -3,8 +3,8 @@ import { assetRepository } from "./repositories/asset-repository";
 import { storageProviderFactory } from "./providers/factory";
 import { mediaValidator, type FileInfo } from "./validator";
 import { platformEventBus } from "@/lib/events";
-import { processingQueue } from "./processing/queue";
-import { filterValidAssetIds, normalizeAssetId } from "./resolve";
+import { imageProcessor } from "./processing/image-processor";
+import { filterValidAssetIds, normalizeAssetId, requireAssetId } from "./resolve";
 
 export interface UploadOptions {
   tenantId: string;
@@ -51,6 +51,9 @@ export class MediaService {
         );
       }
 
+      // Deduplicated asset may predate sync processing — make it READY now.
+      await this.processAssetNow(existing.id, options.file, options.file.size);
+
       this.emit("AssetUploaded", { assetId: existing.id, tenantId: options.tenantId, deduplicated: true });
 
       return { assetId: existing.id, url: existing.publicUrl ?? "", deduplicated: true };
@@ -89,10 +92,11 @@ export class MediaService {
       );
     }
 
-    // Queue async processing
-    processingQueue.enqueue(asset.id).catch(() => {
-      // Fire-and-forget — processing is non-critical for upload response
-    });
+    // IMPLEMENTATION-19 (Phase C): process synchronously so the asset is READY
+    // immediately — no more assets stuck at QUEUED forever (the background
+    // processor is not wired to a worker). Dimensions are extracted from the
+    // buffer we already hold, so the client sees Ready + metadata instantly.
+    await this.processAssetNow(asset.id, options.file, result.size);
 
     this.emit("AssetUploaded", { assetId: asset.id, tenantId: options.tenantId, deduplicated: false });
 
@@ -127,6 +131,9 @@ export class MediaService {
       publicUrl: result.publicUrl,
       checksum,
     });
+
+    // Re-process after replace so metadata + status stay fresh.
+    await this.processAssetNow(options.assetId, options.file, result.size);
 
     this.emit("AssetReplaced", { assetId: options.assetId, tenantId: existing.tenantId });
 
@@ -316,6 +323,55 @@ export class MediaService {
   private computeChecksum(file: FileInfo): string {
     if (!file.buffer) return "";
     return createHash("sha256").update(file.buffer).digest("hex");
+  }
+
+  /**
+   * Synchronous, best-effort asset processing run at upload/replace time.
+   * Extracts image dimensions/color from the in-memory buffer so the asset is
+   * immediately READY with metadata. Videos are marked READY directly (the
+   * pipeline renders them; duration extraction is left to a worker).
+   */
+  private async processAssetNow(assetId: string, file: FileInfo, _storedSize: number): Promise<void> {
+    const safeId = requireAssetId(assetId, { module: "media-service", field: "processAssetNow" });
+    const mimeType = file.mimeType || "";
+    const isImage = mimeType.startsWith("image/");
+    const isVideo = mimeType.startsWith("video/");
+
+    let width: number | undefined;
+    let height: number | undefined;
+    let blurHash: string | undefined;
+    let dominantColor: string | undefined;
+
+    try {
+      if (isImage && file.buffer) {
+        const extracted = await imageProcessor.extractMetadata(file.buffer, mimeType);
+        width = extracted.width;
+        height = extracted.height;
+        if (width && height) {
+          blurHash = await imageProcessor.generateBlurHash(file.buffer);
+          dominantColor = await imageProcessor.generateDominantColor(file.buffer);
+        }
+      }
+
+      await assetRepository.update(safeId, {
+        ...(width ? { width } : {}),
+        ...(height ? { height } : {}),
+        ...(blurHash ? { blurHash } : {}),
+        ...(dominantColor ? { dominantColor } : {}),
+        processingStatus: "READY",
+        processingError: null,
+      });
+    } catch (error) {
+      // Processing must never fail the upload — mark READY so the asset is usable.
+      await assetRepository
+        .update(safeId, {
+          processingStatus: "READY",
+          processingError: error instanceof Error ? error.message : "Processing failed",
+        })
+        .catch(() => {
+          // noop — asset remains usable via publicUrl regardless
+        });
+    }
   }
 
   private emit(event: string, payload: Record<string, unknown>): void {

@@ -90,7 +90,7 @@ export class YouTubeAdapter implements CreatorImportAdapter {
           logoUrl: meta.thumbnailUrl,
           faq: [],
           testimonials: [],
-          pages: ["home", "products", "about", "contact"],
+          pages: ["home", "products", "contact"],
           channelId: meta.id,
         },
       };
@@ -122,7 +122,7 @@ export class YouTubeAdapter implements CreatorImportAdapter {
           palette: { primary: "#6366f1", secondary: "#a78bfa" },
           faq: [],
           testimonials: [],
-          pages: ["home", "products", "about", "contact"],
+          pages: ["home", "products", "contact"],
           channelId: undefined,
         },
       };

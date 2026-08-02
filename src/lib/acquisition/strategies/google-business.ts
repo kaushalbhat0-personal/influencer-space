@@ -97,7 +97,7 @@ export class GoogleBusinessAcquisitionAdapter implements CreatorAcquisitionAdapt
         offers: [],
         socialLinks: [],
         palette: { primary: "#6366f1", secondary: "#a78bfa" },
-        pages: ["home", "about", "contact"],
+        pages: ["home", "contact"],
       } as BusinessProfile,
     };
   }

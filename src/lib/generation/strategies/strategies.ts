@@ -82,7 +82,7 @@ export const PRO_STRATEGY: TieredGenerationStrategy = createStrategy("pro", {
   defaultConfidenceThreshold: 0.5,
   maxAiCostPerGeneration: 0.02,
   maxAiCostPerCreatorPerMonth: 0.60,
-  promptVersions: { hero: "v1", about: "v1" },
+        promptVersions: { hero: "v1" },
 });
 
 export const ELITE_STRATEGY: TieredGenerationStrategy = createStrategy("elite", {
@@ -101,7 +101,7 @@ export const ELITE_STRATEGY: TieredGenerationStrategy = createStrategy("elite", 
   defaultConfidenceThreshold: 0.7,
   maxAiCostPerGeneration: 0.10,
   maxAiCostPerCreatorPerMonth: 3.00,
-  promptVersions: { hero: "v2", about: "v2", seo: "v1", branding: "v1" },
+        promptVersions: { hero: "v2", seo: "v1", branding: "v1" },
 });
 
 export const AGENCY_STRATEGY: TieredGenerationStrategy = createStrategy("agency", {
@@ -120,7 +120,7 @@ export const AGENCY_STRATEGY: TieredGenerationStrategy = createStrategy("agency"
   defaultConfidenceThreshold: 0.85,
   maxAiCostPerGeneration: 0.50,
   maxAiCostPerCreatorPerMonth: 10.00,
-  promptVersions: { hero: "v3", about: "v3", seo: "v2", branding: "v2", products: "v1" },
+        promptVersions: { hero: "v3", seo: "v2", branding: "v2", products: "v1" },
 });
 
 export const STRATEGY_MAP: Record<StrategyType, TieredGenerationStrategy> = {

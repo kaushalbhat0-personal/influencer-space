@@ -17,7 +17,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "YouTubers, streamers, and digital creators",
     recommendedBlueprints: ["com.creatos.creator", "com.creatos.gaming"],
     recommendedThemes: ["com.creatos.neon-dark", "com.creatos.creator-studio", "com.creatos.creator-bold", "com.creatos.stream-vibe", "com.creatos.creator-pro"],
-    recommendedModules: ["hero", "about", "products", "gallery", "links"],
+    recommendedModules: ["hero", "products", "gallery", "links"],
     keywords: ["youtube", "twitch", "tiktok", "influencer", "streamer", "gaming"],
   },
   {
@@ -25,7 +25,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Photographers and visual artists",
     recommendedBlueprints: ["com.creatos.portfolio"],
     recommendedThemes: ["com.creatos.minimal-portfolio", "com.creatos.photographer", "com.creatos.midnight-ocean", "com.creatos.designer"],
-    recommendedModules: ["hero", "about", "gallery", "testimonials"],
+    recommendedModules: ["hero", "gallery", "testimonials"],
     keywords: ["photography", "photo", "portrait", "wedding", "nature"],
   },
   {
@@ -33,7 +33,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Small businesses, consultants, and professionals",
     recommendedBlueprints: ["com.creatos.business"],
     recommendedThemes: ["com.creatos.corporate-blue", "com.creatos.professional", "com.creatos.startup", "com.creatos.executive"],
-    recommendedModules: ["hero", "about", "products", "testimonials", "faq"],
+    recommendedModules: ["hero", "products", "testimonials", "faq"],
     keywords: ["business", "consulting", "professional", "service", "corporate"],
   },
   {
@@ -41,7 +41,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Gamers, esports players, and gaming communities",
     recommendedBlueprints: ["com.creatos.gaming", "com.creatos.creator"],
     recommendedThemes: ["com.creatos.cyber-arena", "com.creatos.game-stream", "com.creatos.esports", "com.creatos.neon-dark"],
-    recommendedModules: ["hero", "about", "games", "products", "links"],
+    recommendedModules: ["hero", "games", "products", "links"],
     keywords: ["gaming", "esports", "valorant", "fortnite", "minecraft", "stream"],
   },
   {
@@ -49,7 +49,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Creative agencies, studios, and marketing firms",
     recommendedBlueprints: ["com.creatos.agency"],
     recommendedThemes: ["com.creatos.corporate-blue", "com.creatos.executive", "com.creatos.creator-pro", "com.creatos.designer"],
-    recommendedModules: ["hero", "about", "gallery", "products", "testimonials", "faq"],
+    recommendedModules: ["hero", "gallery", "products", "testimonials", "faq"],
     keywords: ["agency", "studio", "creative", "marketing", "design"],
     requiredCapability: "agency_clients",
   },
@@ -58,7 +58,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Podcasters and audio content creators",
     recommendedBlueprints: ["com.creatos.podcast"],
     recommendedThemes: ["com.creatos.podcast-studio", "com.creatos.audio-creator", "com.creatos.voice", "com.creatos.neon-dark"],
-    recommendedModules: ["hero", "about", "timeline", "products", "links"],
+    recommendedModules: ["hero", "timeline", "products", "links"],
     keywords: ["podcast", "audio", "radio", "interview", "show"],
   },
   {
@@ -66,7 +66,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Designers, artists, and creative professionals",
     recommendedBlueprints: ["com.creatos.portfolio"],
     recommendedThemes: ["com.creatos.minimal-portfolio", "com.creatos.designer", "com.creatos.midnight-ocean", "com.creatos.photographer"],
-    recommendedModules: ["hero", "about", "gallery", "testimonials", "contact"],
+    recommendedModules: ["hero", "gallery", "testimonials", "contact"],
     keywords: ["design", "art", "illustration", "creative", "portfolio"],
   },
   {
@@ -74,7 +74,7 @@ const INDUSTRIES: IndustryDefinition[] = [
     description: "Life coaches, fitness trainers, and mentors",
     recommendedBlueprints: ["com.creatos.business", "com.creatos.education"],
     recommendedThemes: ["com.creatos.coach", "com.creatos.mentor", "com.creatos.academy", "com.creatos.minimal-portfolio"],
-    recommendedModules: ["hero", "about", "products", "testimonials", "faq"],
+    recommendedModules: ["hero", "products", "testimonials", "faq"],
     keywords: ["coach", "mentor", "fitness", "life coach", "training"],
   },
 ];
