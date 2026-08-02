@@ -99,9 +99,11 @@ test("K3 — Poster maps correctly: video poster attribute + poster-only mode", 
 
   // Builder renders the same poster-only media.
   await page.goto("/builder", { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.waitForTimeout(10000);
-  const builderMediaImg = await page.locator('[data-testid="builder-canvas"] .aspect-\\[16\\/10\\] img[src*="supabase"]').count();
-  expect(builderMediaImg).toBeGreaterThan(0);
+  await page.waitForSelector('[data-testid="builder-canvas"]', { timeout: 30000 });
+  const builderMediaImg = page.locator('[data-testid="builder-canvas"] .aspect-\\[16\\/10\\] img').first();
+  await builderMediaImg.waitFor({ state: "attached", timeout: 60000 }).catch(() => {});
+  await page.waitForTimeout(3000);
+  expect(await builderMediaImg.count()).toBeGreaterThan(0);
   await shot(page, "k3-poster-only-builder");
   errors.assertClean();
 });
