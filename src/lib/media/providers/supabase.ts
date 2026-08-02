@@ -1,16 +1,30 @@
 import { createClient } from "@supabase/supabase-js";
-import type { StorageProvider, UploadInput, UploadResult } from "./interface";
+import type { StorageProvider, UploadInput, UploadResult, SignedUploadUrl } from "./interface";
 
 const BUCKET = "influencer-images";
 
 export class SupabaseStorageProvider implements StorageProvider {
   readonly name = "supabase";
+  readonly supportsSignedUpload = true;
   private client: ReturnType<typeof createClient>;
 
   constructor(url: string, serviceRoleKey: string) {
     this.client = createClient(url, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+  }
+
+  async createSignedUploadUrl(storageKey: string): Promise<SignedUploadUrl> {
+    const { data, error } = await this.client.storage.from(BUCKET).createSignedUploadUrl(storageKey);
+    if (error || !data) {
+      throw new Error(`Supabase signed-upload URL failed: ${error?.message ?? "unknown"}`);
+    }
+    const { data: urlData } = this.client.storage.from(BUCKET).getPublicUrl(data.path);
+    return {
+      uploadUrl: data.signedUrl,
+      storageKey: data.path,
+      publicUrl: urlData.publicUrl,
+    };
   }
 
   async upload(storageKey: string, input: UploadInput): Promise<UploadResult> {

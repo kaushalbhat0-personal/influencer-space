@@ -7,6 +7,7 @@ const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
 export class LocalStorageProvider implements StorageProvider {
   readonly name = "local";
+  readonly supportsSignedUpload = false;
 
   async upload(storageKey: string, input: UploadInput): Promise<UploadResult> {
     const fullPath = path.join(UPLOAD_DIR, storageKey);

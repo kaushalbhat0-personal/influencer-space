@@ -106,9 +106,13 @@ export function MediaField({
   function handleSelect(media: PickedMedia) {
     if (!media.url) return fail("Selected media has no URL");
     dereference(value, entityType, entityId, entityField);
-    onChange({ assetId: media.assetId, url: media.url });
+    const next = { assetId: media.assetId, url: media.url };
+    onChange(next);
     setPickerOpen(false);
     setError(null);
+    // IMPLEMENTATION-20: selecting from the library is a change too — auto-save
+    // so the storefront reflects it without a manual Save click.
+    onUploadComplete?.(next);
   }
 
   function ProgressBar() {

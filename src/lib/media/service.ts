@@ -103,8 +103,131 @@ export class MediaService {
     return { assetId: asset.id, url: result.publicUrl, deduplicated: false };
   }
 
-  async replace(options: ReplaceOptions): Promise<UploadResult> {
-    const existing = await assetRepository.findById(options.assetId);
+  /**
+   * Step 1 of the two-step signed upload (IMPLEMENTATION-20 Phase A):
+   * validate metadata, dedupe by checksum, and return a signed upload URL so
+   * the file body goes DIRECTLY to the storage provider — never through the
+   * app server's request-body limit (Vercel 413).
+   *
+   * Returns either a deduped existing asset or a signed upload payload.
+   * When the provider does not support signed uploads, `signed: null` is
+   * returned and the client falls back to the direct multipart route.
+   */
+  async prepareSignedUpload(options: {
+    tenantId: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+    checksum: string;
+    folder?: string;
+    entityType?: string;
+    entityId?: string;
+    entityField?: string;
+  }): Promise<
+    | { deduplicated: true; assetId: string; url: string }
+    | { deduplicated: false; signed: import("./providers/interface").SignedUploadUrl | null; storageKey: string }
+  > {
+    const folder = options.folder ?? "general";
+    const validation = mediaValidator.validateUpload(
+      { filename: options.filename, mimeType: options.mimeType, size: options.size },
+      folder,
+    );
+    if (!validation.valid) {
+      throw new MediaValidationError(validation.errors.join("; "), validation.errors);
+    }
+
+    const duplicates = await assetRepository.findDuplicates(options.tenantId, options.checksum);
+    if (duplicates.length > 0) {
+      const existing = duplicates[0];
+      if (options.entityType && options.entityId) {
+        await assetRepository.createReference(
+          existing.id,
+          options.tenantId,
+          options.entityType,
+          options.entityId,
+          options.entityField,
+        );
+      }
+      this.emit("AssetUploaded", { assetId: existing.id, tenantId: options.tenantId, deduplicated: true });
+      return { deduplicated: true, assetId: existing.id, url: existing.publicUrl ?? "" };
+    }
+
+    const ext = options.filename.split(".").pop() || "bin";
+    const storageKey = `${options.tenantId}/${folder}/${randomUUID()}.${ext}`;
+    const provider = storageProviderFactory.getProvider();
+
+    if (!provider.supportsSignedUpload || !provider.createSignedUploadUrl) {
+      return { deduplicated: false, signed: null, storageKey };
+    }
+
+    const signed = await provider.createSignedUploadUrl(storageKey);
+    return { deduplicated: false, signed, storageKey };
+  }
+
+  /**
+   * Step 2 of the two-step signed upload: register the Asset row + reference
+   * for a file the client already uploaded directly to storage.
+   */
+  async completeSignedUpload(options: {
+    tenantId: string;
+    storageKey: string;
+    publicUrl: string;
+    filename: string;
+    originalFilename: string;
+    mimeType: string;
+    size: number;
+    checksum: string;
+    folder?: string;
+    entityType?: string;
+    entityId?: string;
+    entityField?: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+    altText?: string;
+  }): Promise<UploadResult> {
+    const provider = storageProviderFactory.getProvider();
+
+    // Verify the object actually landed in storage before registering it.
+    const exists = await provider.exists(options.storageKey).catch(() => false);
+    if (!exists) throw new Error("Uploaded file not found in storage; upload did not complete");
+
+    const asset = await assetRepository.create({
+      tenantId: options.tenantId,
+      filename: options.storageKey.split("/").pop() ?? options.filename,
+      originalFilename: options.originalFilename,
+      mimeType: options.mimeType,
+      size: options.size,
+      checksum: options.checksum,
+      storageProvider: provider.name,
+      storageKey: options.storageKey,
+      publicUrl: options.publicUrl,
+      altText: options.altText,
+      width: options.width,
+      height: options.height,
+    });
+
+    await assetRepository.update(asset.id, {
+      processingStatus: "READY",
+      processingError: null,
+    });
+
+    if (options.entityType && options.entityId) {
+      await assetRepository.createReference(
+        asset.id,
+        options.tenantId,
+        options.entityType,
+        options.entityId,
+        options.entityField,
+      );
+    }
+
+    this.emit("AssetUploaded", { assetId: asset.id, tenantId: options.tenantId, deduplicated: false });
+
+    return { assetId: asset.id, url: options.publicUrl, deduplicated: false };
+  }
+
+  async replace(options: ReplaceOptions): Promise<UploadResult> {    const existing = await assetRepository.findById(options.assetId);
     if (!existing) throw new Error(`Asset not found: ${options.assetId}`);
     if (existing.status === "DELETED") throw new Error(`Cannot replace deleted asset: ${options.assetId}`);
 

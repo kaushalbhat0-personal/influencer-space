@@ -8,6 +8,7 @@ test.describe.configure({ mode: "serial" });
 const STOREFRONT_URL = `/${CREATOR_SUBDOMAIN}`;
 const VIDEO_FIXTURE = resolve("tests/fixtures/hero-sample.mp4");
 const POSTER_FIXTURE = resolve("tests/fixtures/hero-poster.png");
+const LARGE_VIDEO_FIXTURE = resolve("tests/fixtures/large-hero-sample.mp4");
 
 test("K1 — Upload contract: endpoint returns JSON, never 'Invalid server response'", async ({ page }) => {
   test.setTimeout(240000);
@@ -102,6 +103,40 @@ test("K3 — Poster maps correctly: video poster attribute + poster-only mode", 
   const builderMediaImg = await page.locator('[data-testid="builder-canvas"] .aspect-\\[16\\/10\\] img[src*="supabase"]').count();
   expect(builderMediaImg).toBeGreaterThan(0);
   await shot(page, "k3-poster-only-builder");
+  errors.assertClean();
+});
+
+test("K5 — Large video (>4.5MB) uploads without HTTP 413 via direct-to-storage", async ({ page }) => {
+  test.setTimeout(240000);
+  const errors = new ErrorCollector(page);
+  errors.install();
+  await loginAsCreator(page);
+
+  const large = readFileSync(LARGE_VIDEO_FIXTURE);
+  // The fixture is intentionally larger than Vercel's serverless body limit.
+  expect(large.length).toBeGreaterThan(4.5 * 1024 * 1024);
+
+  let saw413 = false;
+  page.on("response", (r) => {
+    if (r.url().includes("/api/media/upload-url") || r.url().includes("/api/media/register")) {
+      if (r.status() === 413) saw413 = true;
+    }
+  });
+
+  await page.goto("/admin/settings", { waitUntil: "networkidle", timeout: 60000 });
+  await page.waitForSelector("text=Hero Media", { timeout: 20000 });
+  await page.waitForTimeout(1500);
+
+  const videoInput = page.locator('input[type="file"][accept*="video"]').first();
+  await videoInput.setInputFiles({ name: "k5-large.mp4", mimeType: "video/mp4", buffer: large });
+  await page.waitForSelector("text=Uploading…", { timeout: 20000 });
+  await page.waitForSelector("text=Hero media saved!", { timeout: 90000 });
+
+  expect(saw413).toBe(false);
+  const body = await page.locator("body").innerText();
+  expect(body).not.toContain("413");
+  expect(body).not.toContain("Invalid server response");
+  await shot(page, "k5-large-upload");
   errors.assertClean();
 });
 
