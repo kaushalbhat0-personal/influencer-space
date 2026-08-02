@@ -198,6 +198,50 @@ test("L4 — Builder sidebar: collapse → expand → refresh restores panel (no
   errors.assertClean();
 });
 
+test("L6 — Hero video plays ONCE then the poster stays (no loop)", async ({ page }) => {
+  test.setTimeout(180000);
+  const errors = new ErrorCollector(page);
+  errors.install();
+  await loginAsCreator(page);
+
+  // Self-sufficient: upload the video so the hero is in video mode.
+  await page.goto("/admin/settings", { waitUntil: "networkidle", timeout: 60000 });
+  await page.waitForSelector("text=Hero Media", { timeout: 20000 });
+  await page.waitForTimeout(1500);
+  const videoInput = page.locator('input[type="file"][accept*="video"]').first();
+  await videoInput.setInputFiles({ name: "l6-video.mp4", mimeType: "video/mp4", buffer: readFileSync(VIDEO_FIXTURE) });
+  await page.waitForSelector("text=Hero media saved!", { timeout: 90000 });
+  await page.waitForTimeout(1500);
+
+  await page.goto(STOREFRONT_URL, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await page.waitForTimeout(6000);
+  const video = page.locator('section#hero video').first();
+  await expect(video).toBeAttached({ timeout: 15000 });
+  // No loop: the video plays once per page load.
+  const loop = await video.evaluate((el) => el.loop);
+  expect(loop).toBe(false);
+  const hasPoster = await video.getAttribute("poster");
+  expect(hasPoster).toBeTruthy();
+  await shot(page, "l6-video-no-loop");
+
+  // When the video ends, the poster <img> replaces it and stays visible.
+  await page.waitForFunction(() => {
+    return !document.querySelector('section#hero video') && !!document.querySelector('section#hero .aspect-\\[16\\/10\\] img');
+  }, { timeout: 60000 });
+  const poster = page.locator('section#hero .aspect-\\[16\\/10\\] img').first();
+  await expect(poster).toBeAttached();
+  const posterBox = await poster.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return { h: r.height, visible: r.height > 0 && cs.display !== "none" };
+  });
+  expect(posterBox.h).toBeGreaterThan(0);
+  expect(posterBox.visible).toBe(true);
+  await shot(page, "l6-poster-stays");
+
+  errors.assertClean();
+});
+
 test("L5 — Runtime signatures identical: Builder == Storefront; DOM matches resolved media", async ({ page }) => {
   test.setTimeout(180000);
   const errors = new ErrorCollector(page);

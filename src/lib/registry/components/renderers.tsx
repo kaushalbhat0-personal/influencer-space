@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentDefinition } from "./types";
+import { useState } from "react";
 import { useFormState } from "react-dom";
 import {
   submitStorefrontContact,
@@ -68,9 +69,13 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   // the runtime pipeline attached to content.hero. This renderer NEVER reads
   // raw videoUrl / posterUrl / backgroundUrl / *_AssetId fields.
   const resolvedMedia = String(p.resolvedMedia || "placeholder") as HeroMediaKind;
-  const mediaType = (p.mediaType as "video" | "image") || "image";
   const mediaUrl = String(p.mediaUrl || "");
   const mediaPoster = String(p.mediaPoster || "");
+
+  // IMPLEMENTATION-23: hero video plays ONCE per page load, then the poster
+  // image stays. No loop. onEnded swaps the <video> for the poster <img>.
+  const [videoEnded, setVideoEnded] = useState(false);
+  const showVideo = resolvedMedia === "video" && !videoEnded;
 
   const alignment = resolvedMedia === "video" ? videoAlign : resolvedMedia === "background" ? "object-center" : imageAlign;
 
@@ -78,7 +83,7 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
     <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
       {/* ── Hero media — ALWAYS renders first; avatar never replaces it ── */}
       <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
-        {resolvedMedia === "video" && mediaUrl ? (
+        {showVideo && mediaUrl ? (
           <HeroMedia
             type="video"
             url={mediaUrl}
@@ -87,10 +92,18 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
             className="absolute inset-0"
             autoPlay
             muted
-            loop
+            loop={false}
             playsInline
             controls
             preload="metadata"
+            onEnded={() => setVideoEnded(true)}
+          />
+        ) : resolvedMedia === "video" && mediaPoster ? (
+          <HeroMedia
+            type="image"
+            url={mediaPoster}
+            alignmentClass={imageAlign}
+            className="absolute inset-0"
           />
         ) : (resolvedMedia === "image" || resolvedMedia === "background") && mediaUrl ? (
           <HeroMedia
