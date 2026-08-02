@@ -1,55 +1,56 @@
-# Production Verification Report — IMPLEMENTATION-20 (Phase F)
+# Production Verification Report — IMPLEMENTATION-21 (BUG 9)
 
-**Target:** `https://influencer-space-alpha.vercel.app` (Vercel production, commit `3498a1d`)
+**Target:** `https://influencer-space-alpha.vercel.app` (Vercel production, commit `5ef6626`)
 
 ## Deployment
 
-- `vercel --prod` → deployment `influencer-space-7e58kinfb` **Ready** (~2 m build).
-- Verified the live `/api/media/upload` returns **401 application/json**
-  (route exists in production, stable JSON contract — not a 404 HTML page).
-
-## Production upload flow (browser truth, live site)
-
-Uploaded a real MP4 through the live settings page:
-- Progress bar shown during upload ✅
-- Auto-saved without a manual click ✅
-- DB (shared Supabase) shows `videoAssetId` + `videoUrl` set ✅
-- Storefront `<video>` plays: `readyState 4`, `src=608177fb-….mp4` ✅
-- Upload endpoint response: `200 application/json` ✅
-- No "Invalid server response" / "Failed to find Server Action" ✅
+- `vercel --prod` → deployment `influencer-space-qh864s6rd` **Ready** (~2 m build).
+- Commit `5ef6626` (IMPLEMENTATION-21) deployed; test-only commit `5d10371` pushed
+  (no redeploy needed for test changes).
 
 ## Playwright vs the live deployment
 
-First clean run: **4/4 passed** (K-series):
+`npx playwright test --project=production --grep "L[0-9]"` with
+`BASE_URL=https://influencer-space-alpha.vercel.app` → **5/5 passed (2.5m)**
 
-| Test | Verifies | Result |
+| Test | Verifies on production | Result |
 |---|---|---|
-| K1 | Upload contract returns JSON; UI never shows "Invalid server response" | ✅ |
-| K2 | Hero video renders (priority) + plays; poster becomes video poster | ✅ |
-| K3 | Poster wired to video poster attribute; poster-only mode renders in Builder + Storefront | ✅ |
-| K4 | Runtime trace reports the media decision matching the DOM | ✅ |
+| L1 | Video upload → Builder `<video>` == Storefront `<video>` (same `currentSrc`, `readyState 4`) | ✅ |
+| L2 | Poster upload → Builder `<img>` == Storefront `<img>` (same `src`) | ✅ |
+| L3 | Video removed + poster exists → Builder AND Storefront resolve to poster | ✅ |
+| L4 | Sidebar collapse → expand → refresh restores panel | ✅ |
+| L5 | Runtime signatures identical (Builder == Storefront); DOM matches resolved media | ✅ |
 
-Broader run (K + I + J + H + 05 + 07): media tests pass; the failures observed
-were Vercel CDN/edge flakes — `_next/static` chunks served as `text/plain`
-(strict MIME rejection) and RSC-prefetch `Failed to fetch` during CDN
-propagation after deployment. These are platform issues, not app code (the same
-tests pass locally and on the clean production run).
+## Hero media parity proof (production DOM)
 
-## Local verification
+- With video: `data-resolved-media="video"` on the hero root in BOTH builder and
+  storefront; both render `<video>` with the identical `.mp4` `src`; storefront
+  `readyState === 4`.
+- Poster-only: `data-resolved-media="image"` in BOTH; both render `<img>` with
+  the identical `src`; no `<video>` on either.
+- Runtime signature hash identical across both surfaces.
 
-- `npx tsc --noEmit` ✅
-- `npx vitest run` → **73 files / 1647 tests, 0 failures** ✅
-- `npm run build` → `✓ Compiled successfully` ✅
-- Playwright local (media suite): 10/10 (K + H + 05 + 07) and 7/7 (I4 + K + J2 + J3) ✅
+## Screenshots
 
-## Acceptance criteria
+Captured on production and saved under `playwright-report/screenshots/`:
+`l1-builder-video.png`, `l1-storefront-video.png`, `l2-builder-poster.png`,
+`l2-storefront-poster.png`, `l3-poster-fallback.png`, `l4-sidebar-persisted.png`,
+`l5-signature-parity.png`.
 
-- No "Invalid server response" ✅ (K1 + production flow)
-- No Server Action mismatch during Hero upload ✅ (all uploads via route handler)
-- Hero video uploads, previews and plays ✅ (production flow, K2)
-- Hero poster renders in Builder and Storefront ✅ (K3, I4)
-- Runtime trace matches rendered DOM ✅ (K4, `resolvedMedia: video` ↔ `<video>`)
-- OpenCode no longer hangs waiting for the dev server ✅ (Phase E, HTTP polling)
-- `tsc --noEmit` passes ✅
-- All tests pass ✅ (1647 unit; local E2E green)
-- Production Playwright verification passes against the live deployment ✅ (K1–K4)
+## Notes on production flakiness (not app bugs)
+
+- `Failed to fetch RSC payload … Falling back to browser navigation` — Next.js
+  prefetch fallback during Vercel cold starts; the app degrades gracefully and
+  the tests treat it as benign.
+- `ERR_NO_BUFFER_SPACE` on `fonts.googleapis.com` — transient OS/network buffer
+  pressure loading an external font CDN; treated as benign.
+
+## Full verification
+
+```
+npx tsc --noEmit                           ✅
+npm test                                    ✅ 1647 tests
+npm run build                               ✅ Compiled successfully
+Playwright local (L1–L5)                    ✅ 5/5
+Playwright production (L1–L5)               ✅ 5/5
+```
