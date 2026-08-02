@@ -7,7 +7,7 @@ import { websiteRepository } from "@/modules/tenant/infrastructure/website-repos
 import { SettingsService } from "@/services/settings.service";
 import { mediaService } from "@/lib/media/service";
 import { normalizeAssetId } from "@/lib/media/resolve";
-import { describeHeroMedia } from "@/lib/media/hero-media";
+import { describeHeroMedia, resolveHeroMediaForRuntime } from "@/lib/media/hero-media";
 import type { WebsiteAggregate } from "@/types/snapshot";
 
 export interface AggregateDiagnostics {
@@ -305,6 +305,21 @@ export class WebsiteAggregateService {
         if (diagnostics) diagnostics.skippedAssets++;
       }
     }
+
+    // IMPLEMENTATION-21 (BUG 3): resolve hero media ONCE, here, in the runtime
+    // pipeline. content.hero carries the resolved decision (resolvedMedia /
+    // mediaType / mediaUrl / mediaPoster / rendererDecision) and renderers
+    // consume ONLY those fields — never the raw *_Url / *_AssetId values.
+    const heroMediaPayload = resolveHeroMediaForRuntime({
+      videoUrl: result.hero.videoUrl,
+      posterUrl: result.hero.posterUrl,
+      backgroundUrl: result.hero.backgroundUrl,
+    });
+    result.hero.resolvedMedia = heroMediaPayload.resolvedMedia;
+    result.hero.mediaType = heroMediaPayload.mediaType;
+    result.hero.mediaUrl = heroMediaPayload.mediaUrl;
+    result.hero.mediaPoster = heroMediaPayload.mediaPoster;
+    result.hero.rendererDecision = heroMediaPayload.rendererDecision;
 
     // IMPLEMENTATION-20 (Phase D): hero media runtime instrumentation — the
     // decision the renderer will make (video → poster → background →

@@ -48,6 +48,10 @@ const BENIGN = [
   "razorpay.com",
   "checkout-static-next.razorpay.com",
   "err_blocked_by_orb",
+  // Transient OS/network buffer pressure while loading external font CDNs.
+  "err_no_buffer_space",
+  "fonts.googleapis.com",
+  "fonts.gstatic.com",
 ];
 
 /**

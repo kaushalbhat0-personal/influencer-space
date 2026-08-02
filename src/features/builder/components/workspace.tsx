@@ -25,7 +25,7 @@ export function BuilderWorkspace() {
   const persisted = builderPersistence.load();
 
   const [leftCollapsed, setLeftCollapsed] = useState(persisted.sidebarCollapsed);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(persisted.rightPanelCollapsed);
   const [device, setDevice] = useState<BuilderCanvasType["device"]>(
     (["desktop", "tablet", "mobile"] as const).includes(persisted.responsiveMode as never)
       ? persisted.responsiveMode as BuilderCanvasType["device"] : "desktop"
@@ -94,8 +94,20 @@ export function BuilderWorkspace() {
   }, []);
 
   useEffect(() => {
-    builderPersistence.save({ sidebarCollapsed: leftCollapsed, responsiveMode: device });
-  }, [leftCollapsed, device]);
+    builderPersistence.save({ sidebarCollapsed: leftCollapsed, rightPanelCollapsed: rightCollapsed, responsiveMode: device });
+  }, [leftCollapsed, rightCollapsed, device]);
+
+  // IMPLEMENTATION-21 (BUG 5/6): keyboard shortcuts ([ / ]) toggle the panels
+  // via a window event; this keeps the shortcuts decoupled from the toggles.
+  useEffect(() => {
+    const onToggle = (e: Event) => {
+      const side = (e as CustomEvent<{ side: string }>).detail?.side;
+      if (side === "left") setLeftCollapsed((v) => !v);
+      if (side === "right") setRightCollapsed((v) => !v);
+    };
+    window.addEventListener("builder:panel-toggle", onToggle);
+    return () => window.removeEventListener("builder:panel-toggle", onToggle);
+  }, []);
 
   const performSave = useCallback(async (themeId: string | null, activeThemeId: string | null): Promise<boolean> => {
     setSaving(true);

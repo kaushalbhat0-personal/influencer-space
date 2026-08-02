@@ -157,6 +157,14 @@ export interface HeroContent {
   videoMobileAlignment?: "top" | "center" | "bottom";
   imageDesktopAlignment?: "top" | "center" | "bottom";
   imageMobileAlignment?: "top" | "center" | "bottom";
+  // IMPLEMENTATION-21 (BUG 3): resolved by resolveHeroMediaForRuntime() in the
+  // aggregate. Renderers consume ONLY these fields — never the raw *_Url /
+  // *_AssetId values above.
+  resolvedMedia?: "video" | "image" | "background" | "placeholder";
+  mediaType?: "video" | "image";
+  mediaUrl?: string | null;
+  mediaPoster?: string | null;
+  rendererDecision?: string;
 }
 
 export interface CTABlock {

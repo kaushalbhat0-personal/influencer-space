@@ -29,6 +29,8 @@ export function useKeyboardShortcuts() {
       { key: "a", ctrlKey: true, description: "Select all", handler: () => builderStore.selectAll() },
       { key: "s", ctrlKey: true, description: "Save draft", handler: () => builderCommands.execute("save", {}) },
       { key: "Escape", description: "Deselect all", handler: () => builderStore.clearSelection() },
+      { key: "[", description: "Toggle left sidebar", handler: () => window.dispatchEvent(new CustomEvent("builder:panel-toggle", { detail: { side: "left" } })) },
+      { key: "]", description: "Toggle right panel", handler: () => window.dispatchEvent(new CustomEvent("builder:panel-toggle", { detail: { side: "right" } })) },
     ];
 
     shortcuts = allShortcuts;

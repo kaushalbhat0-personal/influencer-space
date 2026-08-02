@@ -9,7 +9,7 @@ import {
 } from "@/actions/storefront.actions";
 import { CreatorImage, CreatorVideo } from "@/components/shared";
 import { HeroMedia, responsiveAlignmentClass } from "@/components/shared/HeroMedia";
-import { resolveHeroMedia } from "@/lib/media/hero-media";
+import type { HeroMediaKind } from "@/lib/media/hero-media";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
 import { Star } from "lucide-react";
 
@@ -53,9 +53,6 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const liveBadgeText = String(p.liveBadgeText || "Live");
   const showLiveBadge = Boolean(p.showLiveBadge);
   const profilePictureUrl = String(p.profilePictureUrl || "");
-  const videoUrl = String(p.videoUrl || "");
-  const posterUrl = String(p.posterUrl || "");
-  const backgroundUrl = String(p.backgroundUrl || "");
   const videoAlign = responsiveAlignmentClass(
     String(p.videoDesktopAlignment || "center"),
     String(p.videoMobileAlignment || "center"),
@@ -67,20 +64,26 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
   const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
 
-  // IMPLEMENTATION-20 (Phase C): ONE deterministic decision shared with the
-  // runtime trace — video → poster → background → placeholder.
-  const media = resolveHeroMedia({ videoUrl, posterUrl, backgroundUrl });
+  // IMPLEMENTATION-21 (BUG 3): consume ONLY the resolved media decision that
+  // the runtime pipeline attached to content.hero. This renderer NEVER reads
+  // raw videoUrl / posterUrl / backgroundUrl / *_AssetId fields.
+  const resolvedMedia = String(p.resolvedMedia || "placeholder") as HeroMediaKind;
+  const mediaType = (p.mediaType as "video" | "image") || "image";
+  const mediaUrl = String(p.mediaUrl || "");
+  const mediaPoster = String(p.mediaPoster || "");
+
+  const alignment = resolvedMedia === "video" ? videoAlign : resolvedMedia === "background" ? "object-center" : imageAlign;
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+    <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
       {/* ── Hero media — ALWAYS renders first; avatar never replaces it ── */}
       <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
-        {media.kind === "video" ? (
+        {resolvedMedia === "video" && mediaUrl ? (
           <HeroMedia
             type="video"
-            url={media.url}
-            poster={media.poster ?? undefined}
-            alignmentClass={videoAlign}
+            url={mediaUrl}
+            poster={mediaPoster || undefined}
+            alignmentClass={alignment}
             className="absolute inset-0"
             autoPlay
             muted
@@ -89,11 +92,11 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
             controls
             preload="metadata"
           />
-        ) : media.kind === "image" || media.kind === "background" ? (
+        ) : (resolvedMedia === "image" || resolvedMedia === "background") && mediaUrl ? (
           <HeroMedia
             type="image"
-            url={media.url}
-            alignmentClass={media.kind === "background" ? "object-center" : imageAlign}
+            url={mediaUrl}
+            alignmentClass={alignment}
             className="absolute inset-0"
           />
         ) : (
@@ -108,7 +111,7 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
       </div>
 
       {/* ── Overlapping profile picture + identity (never above the media) ── */}
-      <div className="-mt-[30%] sm:-mt-[22%] relative z-10">
+      <div className="-mt-[35%] sm:-mt-[24%] relative z-10">
         <div className="mx-auto max-w-2xl px-4 pb-16 pt-2 text-center sm:pb-20">
           {profilePictureUrl && (
             <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 sm:h-36 sm:w-36">
