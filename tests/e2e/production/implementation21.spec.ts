@@ -35,6 +35,13 @@ test("L1 — Hero video: upload → Builder <video> == Storefront <video> (same 
   await expect(builderVideo).toBeAttached({ timeout: 45000 });
   const builderSrc = await builderVideo.getAttribute("src");
   expect(builderSrc || "").toContain(".mp4");
+  const builderBox = await builderVideo.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return { h: r.height, visible: r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0" };
+  });
+  expect(builderBox.h).toBeGreaterThan(0);
+  expect(builderBox.visible).toBe(true);
   const builderResolved = await page.locator('[data-testid="builder-canvas"] [data-resolved-media]').first().getAttribute("data-resolved-media");
   expect(builderResolved).toBe("video");
   await shot(page, "l1-builder-video");
@@ -50,6 +57,15 @@ test("L1 — Hero video: upload → Builder <video> == Storefront <video> (same 
     const v = document.querySelector('section#hero video');
     return !!v && v.readyState === 4;
   }, { timeout: 30000 }).catch(() => {});
+  // IMPLEMENTATION-22 regression guard: the media must be VISIBLE (a real
+  // bounding box) — a purged aspect-ratio class collapsed it to height:0.
+  const sfBox = await sfVideo.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return { h: r.height, visible: r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0" };
+  });
+  expect(sfBox.h).toBeGreaterThan(0);
+  expect(sfBox.visible).toBe(true);
   const sfResolved = await page.locator('section#hero [data-resolved-media]').first().getAttribute("data-resolved-media");
   expect(sfResolved).toBe("video");
   await shot(page, "l1-storefront-video");
@@ -83,6 +99,14 @@ test("L2 — Hero poster: upload → Builder <img> == Storefront <img> (same src
   await page.waitForTimeout(3000);
   const builderSrc = await builderImg.getAttribute("src");
   expect(builderSrc || "").toContain("supabase");
+  // IMPLEMENTATION-22 guard: the poster must be VISIBLE (non-zero box).
+  const builderBox = await builderImg.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return { h: r.height, visible: r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0" };
+  });
+  expect(builderBox.h).toBeGreaterThan(0);
+  expect(builderBox.visible).toBe(true);
   await shot(page, "l2-builder-poster");
 
   // Storefront renders the SAME <img>.
@@ -92,6 +116,14 @@ test("L2 — Hero poster: upload → Builder <img> == Storefront <img> (same src
   await expect(sfImg).toBeAttached({ timeout: 15000 });
   const sfSrc = await sfImg.getAttribute("src");
   expect(sfSrc).toBe(builderSrc);
+  // IMPLEMENTATION-22 guard: poster must be VISIBLE (non-zero box).
+  const sfBox = await sfImg.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return { h: r.height, visible: r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0" };
+  });
+  expect(sfBox.h).toBeGreaterThan(0);
+  expect(sfBox.visible).toBe(true);
   await shot(page, "l2-storefront-poster");
 
   errors.assertClean();
