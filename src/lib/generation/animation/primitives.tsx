@@ -26,6 +26,7 @@ export function FadeIn({
   dataStage,
   dataStatus,
   dataTestid,
+  dataSkeleton,
 }: {
   children: ReactNode;
   className?: string;
@@ -35,6 +36,7 @@ export function FadeIn({
   dataStage?: string;
   dataStatus?: string;
   dataTestid?: string;
+  dataSkeleton?: string;
 }) {
   const reduce = useReducedMotion();
   return (
@@ -43,6 +45,7 @@ export function FadeIn({
       data-stage={dataStage}
       data-status={dataStatus}
       data-testid={dataTestid}
+      data-skeleton={dataSkeleton}
       initial={animateOnMount ? { opacity: 0, y: 6 } : false}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
@@ -53,9 +56,9 @@ export function FadeIn({
   );
 }
 
-/** AnimatePresence wrapper for enter/exit sequences. */
+/** AnimatePresence wrapper for enter/exit sequences (clean crossfade). */
 export function TransitionGroup({ children }: { children: ReactNode }) {
-  return <AnimatePresence mode="popLayout" initial={false}>{children}</AnimatePresence>;
+  return <AnimatePresence mode="wait" initial={false}>{children}</AnimatePresence>;
 }
 
 /** Subtle success icon transition (scale settle, no bounce). */

@@ -2,10 +2,12 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
 import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
+import { ConstructionPreview } from "@/features/onboarding/components/construction-preview";
+import { useConstructionSnapshot } from "@/features/onboarding/hooks/use-construction-snapshot";
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
@@ -113,6 +115,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [sessionStages, setSessionStages] = useState<SessionStage[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [estimatedRemainingMs, setEstimatedRemainingMs] = useState<number | null>(null);
@@ -181,6 +184,7 @@ export default function OnboardingPage() {
         return;
       }
 
+      setSessionId(newSessionId);
       const startTime = Date.now();
       timerRef.current = setInterval(() => {
         setElapsedMs(Date.now() - startTime);
@@ -305,9 +309,15 @@ export default function OnboardingPage() {
     ? PLATFORM_ICONS[detectedPlatform]
     : Globe;
 
+  const construction = useConstructionSnapshot({
+    sessionId: sessionId ?? undefined,
+    refreshKey: experience.currentId,
+    enabled: step === "generating" && !!sessionId,
+  });
+
   return (
     <div className="min-h-screen bg-[var(--surface-root)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-6xl">
         {step === "welcome" && (
           <div className="space-y-8 text-center">
             <div className="rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-6 w-fit mx-auto">
@@ -526,7 +536,16 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === "generating" && <GenerationExperienceView experience={experience} />}
+        {step === "generating" && (
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <GenerationExperienceView experience={experience} />
+            <ConstructionPreview
+              experience={experience}
+              snapshot={construction.snapshot}
+              subdomain={workspaceName ? slugify(workspaceName) : "your-storefront"}
+            />
+          </div>
+        )}
 
         {step === "complete" && (
           <div className="text-center space-y-6">
