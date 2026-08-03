@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+﻿import { describe, it, expect } from "vitest";
 import {
   buildGenerationAnimation,
   type GenerationAnimation,
@@ -24,7 +24,8 @@ function buildExperience(input: GenerationExperienceInput): GenerationExperience
     totalStages: stages.length,
     progress: input.runtimeProgress,
     derivedProgress: 0,
-    elapsedLabel: "0s",
+    elapsedMs: 1000,
+    elapsedLabel: "1s",
     remainingLabel: null,
     hasStarted: input.hasStarted,
     hasFailure: stages.some((s) => s.status === "failed"),
@@ -39,7 +40,7 @@ function eventsAt(stageCount: number, currentIsRunning = true) {
   }));
 }
 
-describe("buildGenerationAnimation — pure mapping (animation state)", () => {
+describe("buildGenerationAnimation â€” pure mapping (animation state)", () => {
   it("maps every stage to its motion state with current/completed/failed flags", () => {
     const events = [
       ...GENERATION_STAGES.slice(0, 3).map((s) => ({ type: s.id, status: "completed" as const })),
@@ -75,7 +76,7 @@ describe("buildGenerationAnimation — pure mapping (animation state)", () => {
     expect(b.activeStageKey).toBe(GENERATION_STAGES[2].id);
   });
 
-  it("passes runtime progress through verbatim — never owns or fabricates values", () => {
+  it("passes runtime progress through verbatim â€” never owns or fabricates values", () => {
     const anim = buildGenerationAnimation(buildExperience({ events: eventsAt(4), runtimeProgress: 42, elapsedMs: 1000, estimatedRemainingMs: 4000, hasStarted: true }));
     expect(anim.progress).toBe(42);
     expect(anim.completedCount).toBe(3);
@@ -103,7 +104,7 @@ describe("buildGenerationAnimation — pure mapping (animation state)", () => {
   });
 });
 
-describe("normalizeProgress — exact value contract (no overshoot/looping)", () => {
+describe("normalizeProgress â€” exact value contract (no overshoot/looping)", () => {
   it("preserves exact runtime values", () => {
     for (const v of [0, 7, 33.333, 50, 100]) expect(normalizeProgress(v)).toBe(v);
   });
@@ -117,7 +118,7 @@ describe("normalizeProgress — exact value contract (no overshoot/looping)", ()
   });
 });
 
-describe("progressAria — accessibility contract", () => {
+describe("progressAria â€” accessibility contract", () => {
   it("exposes correct min/max/now", () => {
     expect(progressAria(55)).toEqual({ valuemin: 0, valuemax: 100, valuenow: 55 });
     expect(progressAria(33.4)).toEqual({ valuemin: 0, valuemax: 100, valuenow: 33 });
@@ -127,3 +128,4 @@ describe("progressAria — accessibility contract", () => {
 
 // Re-exported so the module type is referenced (keeps import meaningful).
 export type { GenerationAnimation };
+

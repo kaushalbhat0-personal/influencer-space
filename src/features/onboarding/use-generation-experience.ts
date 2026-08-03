@@ -30,6 +30,8 @@ export interface GenerationExperience {
   progress: number;
   /** Weight-derived progress (conservative cross-check; never exceeds reality). */
   derivedProgress: number;
+  /** Raw elapsed time from the runtime (ms). */
+  elapsedMs: number;
   elapsedLabel: string;
   remainingLabel: string | null;
   hasStarted: boolean;
@@ -77,6 +79,7 @@ export function useGenerationExperience(input: GenerationExperienceInput): Gener
       totalStages: stages.length,
       progress,
       derivedProgress,
+      elapsedMs: input.elapsedMs,
       elapsedLabel: formatDuration(input.elapsedMs),
       remainingLabel:
         input.estimatedRemainingMs != null && input.estimatedRemainingMs > 0

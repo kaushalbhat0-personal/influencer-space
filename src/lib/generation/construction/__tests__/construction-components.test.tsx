@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+﻿// @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { ConstructionPreview } from "@/features/onboarding/components/construction-preview";
@@ -57,6 +57,7 @@ function experience(completedThrough: string, failed?: string): GenerationExperi
     totalStages: stages.length,
     progress: (idx / GENERATION_STAGES.length) * 100,
     derivedProgress: 0,
+    elapsedMs: 1000,
     elapsedLabel: "1s",
     remainingLabel: null,
     hasStarted: true,
@@ -90,10 +91,10 @@ const snapshot: ConstructionSnapshotData = {
       },
     },
   ],
-  meta: { title: "Construction", description: "Preview" },
+  meta: { title: "Construction", description: "Preview", themeId: null, creatorName: null, tagline: null },
 };
 
-describe("ConstructionPreview — component + accessibility", () => {
+describe("ConstructionPreview â€” component + accessibility", () => {
   it("renders the preview frame with theme NOT applied before the theme stage", () => {
     const { container } = render(
       <ConstructionPreview experience={experience("")} snapshot={snapshot} subdomain="test-creator-1" />,
@@ -170,7 +171,7 @@ describe("Reduced motion", () => {
     });
   });
 
-  it("renders the full construction view with reduced motion — no exceptions", () => {
+  it("renders the full construction view with reduced motion â€” no exceptions", () => {
     const { container } = render(
       <ConstructionPreview experience={experience("composition")} snapshot={snapshot} subdomain="test-creator-1" />,
     );
@@ -178,3 +179,4 @@ describe("Reduced motion", () => {
     expect(container.querySelector('[data-testid="construction-preview"]')).toBeTruthy();
   });
 });
+

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+﻿import { describe, it, expect } from "vitest";
 import {
   buildConstructionState,
   stageStatusFromExperience,
@@ -28,7 +28,8 @@ function buildExperience(input: GenerationExperienceInput): GenerationExperience
     totalStages: stages.length,
     progress: input.runtimeProgress,
     derivedProgress: 0,
-    elapsedLabel: "0s",
+    elapsedMs: 1000,
+    elapsedLabel: "1s",
     remainingLabel: null,
     hasStarted: input.hasStarted,
     hasFailure: stages.some((s) => s.status === "failed"),
@@ -80,7 +81,7 @@ describe("Construction configuration integrity", () => {
   });
 });
 
-describe("buildConstructionState — eligibility is stage-driven", () => {
+describe("buildConstructionState â€” eligibility is stage-driven", () => {
   it("nothing is gated-eligible before any stage completes (shell is the base)", () => {
     const state = buildConstructionState(exp([]));
     expect(state.steps.find((s) => s.id === "shell")?.status).toBe("completed");
@@ -135,7 +136,7 @@ describe("buildConstructionState — eligibility is stage-driven", () => {
   });
 });
 
-describe("Failure handling — construction freezes, completed sections stay", () => {
+describe("Failure handling â€” construction freezes, completed sections stay", () => {
   it("keeps completed steps eligible and marks the failed step", () => {
     const events = [
       ...completed("composition").slice(0, GENERATION_STAGES.findIndex((s) => s.id === "composition") + 1),
@@ -161,7 +162,7 @@ describe("Failure handling — construction freezes, completed sections stay", (
   });
 });
 
-describe("stageStatusFromExperience — pure lookup", () => {
+describe("stageStatusFromExperience â€” pure lookup", () => {
   it("returns the stage status from the experience", () => {
     const experience = exp(completed("import_profile"));
     expect(stageStatusFromExperience(experience, "import_profile")).toBe("completed");
@@ -169,3 +170,4 @@ describe("stageStatusFromExperience — pure lookup", () => {
     expect(stageStatusFromExperience(experience, null)).toBeNull();
   });
 });
+

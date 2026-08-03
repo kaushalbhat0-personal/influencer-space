@@ -7,6 +7,7 @@ import { importCreatorProfile, runCreatorGeneration, createGenerationSession, ge
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
 import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
 import { ConstructionPreview } from "@/features/onboarding/components/construction-preview";
+import { ActivityFeedView } from "@/features/onboarding/components/activity-feed";
 import { useConstructionSnapshot } from "@/features/onboarding/hooks/use-construction-snapshot";
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
@@ -538,7 +539,10 @@ export default function OnboardingPage() {
 
         {step === "generating" && (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <GenerationExperienceView experience={experience} />
+            <div className="space-y-6">
+              <GenerationExperienceView experience={experience} />
+              <ActivityFeedView experience={experience} snapshot={construction.snapshot} />
+            </div>
             <ConstructionPreview
               experience={experience}
               snapshot={construction.snapshot}

@@ -21,7 +21,13 @@ export interface ConstructionSnapshotData {
   theme: Record<string, string>;
   navigation: Array<{ id: string; label: string; href: string; type: string; visible: boolean }>;
   sections: Array<{ sectionId: string; moduleId: string; config: Record<string, unknown> }>;
-  meta: { title: string; description: string };
+  meta: {
+    title: string;
+    description: string;
+    themeId: string | null;
+    creatorName: string | null;
+    tagline: string | null;
+  };
 }
 
 export interface GetConstructionSnapshotInput {
@@ -93,7 +99,13 @@ export async function getConstructionSnapshot(
           home?.sections
             .filter((s) => s.visible)
             .map((s) => ({ sectionId: s.id, moduleId: s.moduleId, config: s.config })) ?? [],
-        meta: { title: doc.metadata.title, description: doc.metadata.description },
+        meta: {
+          title: doc.metadata.title,
+          description: doc.metadata.description,
+          themeId: website.themePackageId ?? null,
+          creatorName: aggResult.aggregate.identity?.name ?? null,
+          tagline: aggResult.aggregate.identity?.tagline ?? null,
+        },
       },
     };
   } catch (error) {

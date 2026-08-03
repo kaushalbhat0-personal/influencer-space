@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
 import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
 import { ConstructionPreview } from "@/features/onboarding/components/construction-preview";
+import { ActivityFeedView } from "@/features/onboarding/components/activity-feed";
 import { useConstructionSnapshot } from "@/features/onboarding/hooks/use-construction-snapshot";
 import { GENERATION_STAGES, type RuntimeStageEvent } from "@/lib/generation/experience/stages";
 
@@ -48,11 +49,14 @@ function DevGenerationExperienceInner() {
       setElapsedMs(Date.now() - startRef.current);
       setTick((t) => {
         const next = Math.min(t + 1, GENERATION_STAGES.length);
+        // Real per-stage duration: how long each stage actually ran for (the
+        // hold time), so timestamps derive honestly from the runtime shape.
+        const stageDuration = pace > 0 ? pace : speed;
         const newEvents: RuntimeStageEvent[] = GENERATION_STAGES.slice(0, next).map((s, i) => {
           if (i === next - 1 && next < GENERATION_STAGES.length) {
             return { type: s.id, status: failStage === s.id ? "failed" : "running" };
           }
-          return { type: s.id, status: "completed" };
+          return { type: s.id, status: "completed", duration: stageDuration };
         });
         setEvents(newEvents);
         if (pace > 0 && next < GENERATION_STAGES.length) {
@@ -79,20 +83,21 @@ function DevGenerationExperienceInner() {
 
   return (
     <div className="min-h-screen bg-[var(--surface-root)] p-8">
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-[var(--text-primary,#FAFAFA)]">
-            Generation Experience + Animation + Construction (dev)
+            Generation Experience + Animation + Construction + Activity (dev)
           </h1>
           <span className="text-[10px] uppercase tracking-wide text-[var(--text-muted,#71717A)]">
             subdomain: {SEEDED_SUBDOMAIN} · failStage: {failStage ?? "none"} · speed: {speed}ms
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-6">
             <GenerationExperienceView experience={experience} />
           </div>
+          <ActivityFeedView experience={experience} snapshot={snapshot} className="self-start" />
           <ConstructionPreview
             experience={experience}
             snapshot={snapshot}

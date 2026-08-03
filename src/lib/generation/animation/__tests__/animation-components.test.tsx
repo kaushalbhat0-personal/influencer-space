@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+﻿// @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
@@ -40,7 +40,8 @@ function experience(overrides: Partial<GenerationExperience> = {}): GenerationEx
     totalStages: GENERATION_STAGES.length,
     progress: 55,
     derivedProgress: 40,
-    elapsedLabel: "3s",
+    elapsedMs: 1000,
+    elapsedLabel: "1s",
     remainingLabel: "~5s remaining",
     hasStarted: true,
     hasFailure: false,
@@ -49,7 +50,7 @@ function experience(overrides: Partial<GenerationExperience> = {}): GenerationEx
   };
 }
 
-describe("GenerationExperienceView — component + accessibility", () => {
+describe("GenerationExperienceView â€” component + accessibility", () => {
   beforeEach(() => {
     cleanup();
     stubMatchMedia(false);
@@ -82,9 +83,9 @@ describe("GenerationExperienceView — component + accessibility", () => {
 
   it("shows completed, current (glow indicator) and upcoming states distinctly", () => {
     const { container } = render(<GenerationExperienceView experience={experience()} />);
-    // Completed stages → success icon (emerald check).
+    // Completed stages â†’ success icon (emerald check).
     const checks = container.querySelectorAll("svg");
-    // Current stage → glow indicator (bordered, pulsing span).
+    // Current stage â†’ glow indicator (bordered, pulsing span).
     const glow = container.querySelector('[data-stage="' + GENERATION_STAGES[3].id + '"] .inline-block.h-4.w-4');
     expect(glow).toBeTruthy();
     expect(glow?.getAttribute("class") || "").toContain("rounded-full");
@@ -114,7 +115,7 @@ describe("Reduced motion", () => {
     stubMatchMedia(true);
   });
 
-  it("renders the full view instantly with reduced motion — same structure, no exceptions", () => {
+  it("renders the full view instantly with reduced motion â€” same structure, no exceptions", () => {
     const { container } = render(<GenerationExperienceView experience={experience()} />);
     const rows = Array.from(container.querySelectorAll("[data-stage]"));
     expect(rows).toHaveLength(GENERATION_STAGES.length);
@@ -122,3 +123,4 @@ describe("Reduced motion", () => {
     expect(bar.getAttribute("aria-valuenow")).toBe("55");
   });
 });
+
