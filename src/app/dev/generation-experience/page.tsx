@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
 import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
@@ -19,6 +19,14 @@ import { GENERATION_STAGES, type RuntimeStageEvent } from "@/lib/generation/expe
 const SEEDED_SUBDOMAIN = "test-creator-1";
 
 export default function DevGenerationExperiencePage() {
+  return (
+    <Suspense fallback={null}>
+      <DevGenerationExperienceInner />
+    </Suspense>
+  );
+}
+
+function DevGenerationExperienceInner() {
   const searchParams = useSearchParams();
   const failStage = searchParams.get("failStage") ?? null;
   const speed = Number(searchParams.get("speed")) || 700;
