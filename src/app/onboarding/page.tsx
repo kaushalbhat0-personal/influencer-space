@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
+import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
-  Sparkles, Layout, Clock,
+  Sparkles, Layout,
 } from "lucide-react";
 
 type OnboardingStep = "welcome" | "import" | "preview" | "generating" | "complete" | "error";
@@ -525,96 +526,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === "generating" && (
-          <div className="space-y-6" role="status" aria-live="polite">
-            <div>
-              <h1 className="text-xl font-semibold text-white">Building your storefront</h1>
-              <p className="mt-1 text-sm text-zinc-400">
-                AI is analyzing your profile, generating content, and setting up your workspace.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-400" aria-hidden="true">{experience.progress}% complete</span>
-              <span className="flex items-center gap-1.5 text-zinc-500">
-                <Clock className="h-3.5 w-3.5" />
-                {experience.elapsedLabel}
-                {experience.remainingLabel && (
-                  <span className="text-zinc-600">· {experience.remainingLabel}</span>
-                )}
-              </span>
-            </div>
-
-            <div
-              className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden"
-              role="progressbar"
-              aria-label="Storefront generation progress"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={experience.progress}
-              data-testid="generation-progress"
-            >
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out motion-reduce:transition-none"
-                style={{ width: `${experience.progress}%` }}
-              />
-            </div>
-
-            <p className="sr-only">
-              {experience.current ? `Now: ${experience.current.title}` : "Preparing workspace"}
-            </p>
-
-            <div className="space-y-1">
-              {experience.stages.map((stage) => {
-                const isCurrent = experience.currentId === stage.id;
-                const isCompleted = stage.status === "completed" || stage.status === "skipped";
-                const isFailed = stage.status === "failed";
-
-                return (
-                  <div
-                    key={stage.id}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-4 py-3 transition-all",
-                      isCompleted && "text-zinc-300",
-                      isCurrent && "bg-white/[0.03]",
-                      isFailed && "bg-red-500/5",
-                    )}
-                    data-stage={stage.id}
-                    data-status={stage.status}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : isFailed ? (
-                      <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
-                    ) : isCurrent ? (
-                      <Loader2 className="h-4 w-4 text-indigo-400 animate-spin shrink-0" />
-                    ) : (
-                      <div className="h-4 w-4 rounded-full border border-zinc-700 shrink-0" />
-                    )}
-                    <span className="text-sm flex-1">
-                      {stage.title}
-                      {isCurrent && <span className="ml-2 text-[10px] text-zinc-500">{stage.description}</span>}
-                    </span>
-                    {isFailed && stage.error && (
-                      <span className="text-[10px] text-red-400 text-right max-w-[160px] truncate" title={stage.error}>
-                        {stage.error}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {experience.hasFailure && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4">
-                <p className="text-sm text-red-400 font-medium">Some steps had issues</p>
-                <p className="text-xs text-zinc-400 mt-1">
-                  We&apos;ll proceed with what we have. You can fix things later in the builder.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+        {step === "generating" && <GenerationExperienceView experience={experience} />}
 
         {step === "complete" && (
           <div className="text-center space-y-6">
