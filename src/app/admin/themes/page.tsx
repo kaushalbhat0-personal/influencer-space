@@ -3,6 +3,7 @@ import { getThemeTier, themeUnlockedForPlan } from "@/lib/theme/tiers";
 import { planTier } from "@/lib/theme/access";
 import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/auth/require-tenant";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { ThemeMarketplaceClient } from "./_components/theme-marketplace-client";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +21,12 @@ export default async function ThemesPage() {
   try {
     const { tenantId: tid } = await requireTenant();
     tenantId = tid;
-    const [sub, website] = await Promise.all([
-      prisma.subscription.findUnique({ where: { tenantId: tid }, select: { plan: true } }),
+    // IMPLEMENTATION-33: plan resolves through Billing v2 (legacy fallback).
+    const [resolved, website] = await Promise.all([
+      resolveActivePlan(undefined, tid),
       prisma.website.findUnique({ where: { tenantId: tid }, select: { themePackageId: true } }),
     ]);
-    plan = sub?.plan ?? null;
+    plan = resolved.code ?? null;
     currentThemeId = website?.themePackageId ?? null;
   } catch {
     // Not authenticated — marketplace still renders, all themes shown locked.

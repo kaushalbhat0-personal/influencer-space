@@ -3,13 +3,17 @@ import { MetricGrid, PageSection, DashboardGrid, DashboardGridMain, DashboardGri
 import { MetricCard } from "@/components/data/MetricCard";
 import { RevenueTable } from "./_components/revenue-table";
 import { Building, CreditCard, IndianRupee, TrendingUp } from "lucide-react";
+import { listAllSubscriptions } from "@/modules/billing/application/plan-source";
+import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 
 export const dynamic = "force-dynamic";
 
+const PAID_TIERS = new Set(["pro", "business", "enterprise"]);
+
 export default async function RevenuePage() {
-  const [tenantCount, subData, agencyCount, recentPayments] = await Promise.all([
+  const [tenantCount, rows, agencyCount, recentPayments] = await Promise.all([
     prisma.tenant.count(),
-    prisma.subscription.findMany({ select: { plan: true, status: true } }),
+    listAllSubscriptions(),
     prisma.websiteAgency.count(),
     prisma.productOrder.findMany({
       orderBy: { createdAt: "desc" }, take: 10,
@@ -17,8 +21,8 @@ export default async function RevenuePage() {
     }),
   ]);
 
-  const activeSubs = subData.filter((s) => s.status === "ACTIVE" || s.status === "FREE");
-  const proCount = subData.filter((s) => s.plan === "PRO").length;
+  const activeSubs = rows.filter((r) => ["ACTIVE", "TRIALING", "FREE"].includes(r.status));
+  const proCount = rows.filter((r) => PAID_TIERS.has(resolvePlan(r.planCode).tier)).length;
   const mrr = proCount * 999;
 
   const paymentRows = recentPayments.map((o) => ({

@@ -1,13 +1,17 @@
 /**
- * Theme subscription access — IMPLEMENTATION-25.
+ * Theme subscription access — IMPLEMENTATION-25/33.
  *
  * Maps a creator's subscription plan to a theme tier band and answers whether
  * a given theme is unlocked. Single source of truth for marketplace gating
  * (lock badges, upgrade CTAs, apply blocking). No theme logic is hardcoded in
  * the UI; everything flows through this module.
+ *
+ * IMPLEMENTATION-33: the plan→tier mapping now delegates to the canonical
+ * resolver (lib/capabilities/plan-resolution) — no duplicate mapping here.
  */
 import type { ThemeTier } from "./types-new";
 import { THEME_TIERS } from "./types-new";
+import { planTierFor } from "@/lib/capabilities/plan-resolution";
 
 export function tierRank(tier: ThemeTier): number {
   return THEME_TIERS.indexOf(tier);
@@ -22,24 +26,9 @@ export const TIER_THEME_LIMITS: Record<ThemeTier, number> = {
   enterprise: Number.POSITIVE_INFINITY,
 };
 
-const PLAN_TO_TIER: Record<string, ThemeTier> = {
-  FREE: "free",
-  STARTER: "starter",
-  PRO: "pro",
-  GROWTH: "business",
-  ENTERPRISE: "enterprise",
-  FREELANCER: "free",
-  creator_free: "free",
-  creator_pro: "pro",
-  creator_elite: "business",
-  agency_free: "free",
-  agency_studio: "business",
-  agency_agency: "enterprise",
-};
-
+/** Theme tier band for any plan value (legacy string or canonical code). */
 export function planTier(plan: string | null | undefined): ThemeTier {
-  if (!plan) return "free";
-  return PLAN_TO_TIER[plan.toUpperCase()] ?? "free";
+  return planTierFor(plan);
 }
 
 export function isThemeUnlocked(tier: ThemeTier | undefined, plan: string | null | undefined): boolean {

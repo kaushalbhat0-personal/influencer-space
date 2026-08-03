@@ -3,6 +3,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 
 export interface BuilderOverviewData {
   website: {
@@ -100,7 +102,7 @@ export async function getBuilderOverview(): Promise<{
 
     const [
       brand,
-      subscription,
+      planResolved,
       publishStatus,
       productCount,
       galleryCount,
@@ -117,7 +119,7 @@ export async function getBuilderOverview(): Promise<{
       seoSetting,
     ] = await Promise.all([
       prisma.brand.findUnique({ where: { websiteId } }),
-      prisma.subscription.findUnique({ where: { tenantId } }),
+      resolveActivePlan(undefined, tenantId),
       prisma.publishStatus.findUnique({ where: { websiteId } }),
       prisma.product.count({ where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null } }),
       prisma.galleryImage.count({ where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null } }),
@@ -181,8 +183,8 @@ export async function getBuilderOverview(): Promise<{
       navigationConfigured: navItems.length > 0,
     });
 
-    const planCode = subscription?.plan ?? null;
-    const planResolved = planCode ? resolvePlanCode(planCode) : "Free";
+    const planCode = planResolved.code;
+    const planDisplay = planCode ? resolvePlan(planCode).displayName : "Free";
 
     return {
       success: true,
@@ -200,8 +202,8 @@ export async function getBuilderOverview(): Promise<{
           subdomain: tenant.subdomain,
           customDomain: tenant.customDomain,
         },
-        subscription: subscription
-          ? { plan: planResolved, status: subscription.status }
+        subscription: planResolved.code
+          ? { plan: planDisplay, status: planResolved.status ?? "ACTIVE" }
           : null,
         brand: brand ? { name: brand.name, tagline: brand.tagline, avatarUrl: brand.avatarUrl } : null,
         publishStatus: publishStatus
@@ -367,23 +369,6 @@ export async function getBuilderHealth(): Promise<{
   } catch (e) {
     return { success: false, error: String(e) };
   }
-}
-
-function resolvePlanCode(code: string): string {
-  const map: Record<string, string> = {
-    STARTER: "Free",
-    PRO: "Pro",
-    FREELANCER: "Free",
-    GROWTH: "Growth",
-    ENTERPRISE: "Enterprise",
-    creator_free: "Free",
-    creator_pro: "Pro",
-    creator_elite: "Elite",
-    agency_free: "Free",
-    agency_studio: "Studio",
-    agency_agency: "Agency",
-  };
-  return map[code] ?? code;
 }
 
 function calculateHealthScore(params: {

@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { publishingService } from "@/lib/publishing/service";
 import { normalizeThemeId } from "@/lib/theme";
+import { themeRegistry } from "@/lib/theme/registry-new";
+import { getThemeTier } from "@/lib/theme/tiers";
+import { themeEntitlementDecision } from "@/lib/theme/entitlement";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 
 const FONT_MAP: Record<string, { heading: string; body: string }> = {
   geist: { heading: "Geist, system-ui, sans-serif", body: "Geist, system-ui, sans-serif" },
@@ -78,6 +82,19 @@ export async function applyThemePackage(
     if (!website) return { success: false, error: "Website not found" };
 
     const canonicalId = normalizeThemeId(themePackageId);
+
+    // IMPLEMENTATION-33: server-side entitlement is authoritative. Client locks
+    // are visual only. Premium themes require premium_themes capability.
+    const theme = themeRegistry.getById(canonicalId);
+    const tier = theme ? getThemeTier(theme) : "free";
+    if (tier !== "free") {
+      const resolved = await resolveActivePlan(undefined, tenantId);
+      const decision = themeEntitlementDecision(tier, resolved.code);
+      if (!decision.allowed) {
+        return { success: false, error: "This theme requires an upgraded plan." };
+      }
+    }
+
     await prisma.website.update({
       where: { id: website.id },
       data: { themePackageId: canonicalId },

@@ -181,11 +181,10 @@ export class BillingService {
   }
 
   async getSubscriptionStatus(workspaceId: string): Promise<{ planCode: string; status: string; active: boolean } | null> {
-    const sub = await billingRepository.findSubscriptionByWorkspaceId(workspaceId);
+    const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
     if (!sub) return null;
-    const plan = await billingRepository.findPlanByCode("creator_free");
     return {
-      planCode: plan?.code ?? "creator_free",
+      planCode: sub.plan?.code ?? "creator_free",
       status: sub.status,
       active: sub.status === "ACTIVE" || sub.status === "TRIALING",
     };

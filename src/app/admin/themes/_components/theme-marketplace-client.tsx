@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { ThemeDefinition, ThemeTier } from "@/lib/theme/types-new";
 import { CATEGORY_LABELS, TIER_LABELS } from "@/lib/theme/types-new";
+import { isThemeUnlocked } from "@/lib/theme/access";
 import { applyThemePackage } from "@/actions/theme.actions";
 
 const FAV_KEY = "theme_favorites";
@@ -66,11 +67,10 @@ export function ThemeMarketplaceClient({
     try { localStorage.setItem(RECENT_KEY, JSON.stringify(recent)); } catch { /* noop */ }
   }, [recent, recentLoaded]);
 
-  const unlocked = useCallback((t: ThemeDefinition) => {
-    const tier = (t.tier as ThemeTier | undefined) ?? "free";
-    const order = ["free", "starter", "pro", "business", "enterprise"];
-    return order.indexOf(tier) <= order.indexOf(planTierName as ThemeTier);
-  }, [planTierName]);
+  const unlocked = useCallback(
+    (t: ThemeDefinition) => isThemeUnlocked(t.tier as ThemeTier | undefined, plan),
+    [plan],
+  );
 
   const filtered = useMemo(() => {
     let result = themes;

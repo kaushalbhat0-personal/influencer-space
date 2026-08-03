@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["tests/unit/**/*.test.ts", "tests/architecture/**/*.test.ts", "src/features/**/__tests__/*.test.ts", "src/features/**/__tests__/*.test.tsx", "src/lib/**/__tests__/*.test.ts", "src/lib/**/__tests__/*.test.tsx"],
+    include: ["tests/unit/**/*.test.ts", "tests/architecture/**/*.test.ts", "src/features/**/__tests__/*.test.ts", "src/features/**/__tests__/*.test.tsx", "src/lib/**/__tests__/*.test.ts", "src/lib/**/__tests__/*.test.tsx", "src/modules/**/__tests__/*.test.ts"],
   },
   resolve: {
     alias: {
