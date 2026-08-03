@@ -11,7 +11,7 @@ interface Props {
   completionPct: number;
   onThemePreview: (themeId: string) => void;
   previewThemeId: string | null;
-  onApplyTheme: () => void;
+  onApplyTheme: (themeId: string) => void;
   overview?: BuilderOverviewData | null;
 }
 

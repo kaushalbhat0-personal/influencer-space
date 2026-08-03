@@ -147,24 +147,27 @@ export function BuilderWorkspace() {
     if (!builderStore.isDirty || loading) return;
     if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
     autoSaveRef.current = setTimeout(() => {
-      performSave(previewThemeId, currentThemeId);
+      // IMPLEMENTATION-26: autosave persists the APPLIED theme only — a
+      // previewed (locked/free) theme is never saved.
+      performSave(currentThemeId, currentThemeId);
     }, 2000);
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
-  }, [builderStore.isDirty, loading, previewThemeId, currentThemeId, performSave]);
+  }, [builderStore.isDirty, loading, currentThemeId, performSave]);
 
   // Ctrl+S / save command → persist immediately (no debounce).
   useEffect(() => {
     return builderEvents.subscribe("save:requested", () => {
-      if (builderStore.isDirty) performSave(previewThemeId, currentThemeId);
+      if (builderStore.isDirty) performSave(currentThemeId, currentThemeId);
     });
-  }, [performSave, previewThemeId, currentThemeId]);
+  }, [performSave, currentThemeId]);
 
   // Publish through the SAME server action the Dashboard uses. Saves the
   // draft first so the publish always reads the latest builder pages.
   const handlePublish = useCallback(async () => {
     setPublishing(true);
     setStatusMsg("Saving draft...");
-    const saved = await performSave(previewThemeId, currentThemeId);
+    // Publish the APPLIED theme + draft — a preview theme is never published.
+    const saved = await performSave(currentThemeId, currentThemeId);
     if (!saved) {
       setStatusMsg("Save failed — cannot publish");
       setPublishing(false);
@@ -187,18 +190,23 @@ export function BuilderWorkspace() {
   }, [performSave, previewThemeId, currentThemeId]);
 
   const handleThemePreview = useCallback((themeId: string) => {
+    // IMPLEMENTATION-26: preview is TEMPORARY — it must never mark the draft
+    // dirty, autosave, or persist. Leaving preview restores the applied theme.
     setPreviewThemeId(themeId);
-    builderStore.markDirty();
   }, []);
 
-  const handleApplyTheme = useCallback(() => {
-    if (previewThemeId) {
-      setCurrentThemeId(previewThemeId);
-      setThemeName(previewThemeId);
+  const handleApplyTheme = useCallback(
+    async (themeId: string) => {
+      // Apply persists the theme + saves the draft (no publish).
+      if (!themeId || !overviewData?.tenant.id) return;
       setPreviewThemeId(null);
-      builderStore.markDirty();
-    }
-  }, [previewThemeId]);
+      setCurrentThemeId(themeId);
+      setThemeName(themeId);
+      await performSave(themeId, currentThemeId);
+      builderStore.markClean();
+    },
+    [performSave, currentThemeId, overviewData],
+  );
 
   if (loading) {
     return (
