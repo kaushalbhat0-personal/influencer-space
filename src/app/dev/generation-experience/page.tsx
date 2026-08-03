@@ -43,6 +43,19 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
       missingFields: string[];
       warnings: string[];
     };
+    identity?: {
+      entityType: string | null;
+      primaryNiche: string | null;
+      persona: string | null;
+      confidence: number;
+      aiUsed: boolean;
+      provider: string | null;
+      model: string | null;
+      cacheHit: boolean;
+      cost: number;
+      promptVersion: string;
+      notes: string[];
+    };
     error?: string;
   } | null>(null);
 
@@ -91,6 +104,26 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
               </p>
             )}
           </>
+        )}
+        {result?.identity && (
+          <p className="mt-1 text-[var(--text-secondary,#A1A1AA)]" data-testid="identity-line">
+            identity: <span data-testid="id-entity">{result.identity.entityType ?? "—"}</span> · niche:{" "}
+            <span data-testid="id-niche">{result.identity.primaryNiche ?? "—"}</span> · persona:{" "}
+            <span data-testid="id-persona">{result.identity.persona ?? "—"}</span> · confidence:{" "}
+            <span data-testid="id-confidence">{result.identity.confidence.toFixed(2)}</span> · ai:{" "}
+            <span data-testid="id-ai">{result.identity.aiUsed ? "used" : "skipped"}</span>
+            {result.identity.aiUsed && (
+              <>
+                {" "}· provider: <span data-testid="id-provider">{result.identity.provider ?? "—"}</span>
+                {" "}· cache: <span data-testid="id-cache">{result.identity.cacheHit ? "hit" : "miss"}</span>
+              </>
+            )}
+          </p>
+        )}
+        {result?.identity && result.identity.notes.length > 0 && (
+          <p className="mt-0.5 text-[10px] text-[var(--text-muted,#71717A)]" data-testid="id-notes">
+            {result.identity.notes.join(" · ")}
+          </p>
         )}
       </div>
     </div>

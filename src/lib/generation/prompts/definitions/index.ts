@@ -5,6 +5,7 @@ import { Generator as BrandingGenerator } from "./branding";
 import { Generator as ProductsGenerator } from "./products";
 import { Generator as CTAGenerator } from "./cta";
 import { Generator as FAQGenerator } from "./faq";
+import { CreatorIntelligenceEnrichmentGenerator } from "./creator-intelligence-enrichment";
 
 export function registerPromptDefinitions(registry: VersionedPromptRegistry): void {
   const generators = [
@@ -14,6 +15,7 @@ export function registerPromptDefinitions(registry: VersionedPromptRegistry): vo
     new ProductsGenerator(),
     new CTAGenerator(),
     new FAQGenerator(),
+    new CreatorIntelligenceEnrichmentGenerator(),
   ];
 
   for (const gen of generators) {

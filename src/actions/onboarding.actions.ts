@@ -41,6 +41,19 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
     missingFields: string[];
     warnings: string[];
   };
+  identity?: {
+    entityType: string | null;
+    primaryNiche: string | null;
+    persona: string | null;
+    confidence: number;
+    aiUsed: boolean;
+    provider: string | null;
+    model: string | null;
+    cacheHit: boolean;
+    cost: number;
+    promptVersion: string;
+    notes: string[];
+  };
   error?: string;
 }> {
   try {
@@ -86,6 +99,21 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
             populatedFields: result.acquisition.populatedFields,
             missingFields: result.acquisition.missingFields,
             warnings: result.acquisition.warnings,
+          }
+        : undefined,
+      identity: result.identityProfile
+        ? {
+            entityType: result.identityProfile.entityType,
+            primaryNiche: result.identityProfile.primaryNiche,
+            persona: result.identityProfile.persona?.name ?? null,
+            confidence: result.identityProfile.confidence,
+            aiUsed: result.identityProfile.ai.used,
+            provider: result.identityProfile.ai.provider,
+            model: result.identityProfile.ai.model,
+            cacheHit: result.identityProfile.ai.cacheHit,
+            cost: result.identityProfile.ai.cost,
+            promptVersion: result.identityProfile.ai.promptVersion,
+            notes: result.identityProfile.diagnostics.notes,
           }
         : undefined,
     };

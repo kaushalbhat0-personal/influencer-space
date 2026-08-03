@@ -18,6 +18,8 @@ import { detectPlatform } from "@/lib/generation/integration/provision-pipeline"
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import { profileAcquisitionEngine } from "@/lib/generation/acquisition/engine";
 import type { AcquisitionDiagnostics } from "@/lib/generation/acquisition/types";
+import { hybridIntelligenceEngine } from "@/lib/generation/intelligence/enrichment/engine";
+import type { IdentityProfile } from "@/lib/generation/intelligence/enrichment/types";
 
 export interface OnboardingProgress {
   state: string;
@@ -41,6 +43,8 @@ export interface ImportProfileResult {
   } | null;
   /** Unified Profile Acquisition diagnostics (observability only). */
   acquisition?: AcquisitionDiagnostics;
+  /** Hybrid Intelligence Enrichment — canonical enriched identity. */
+  identityProfile?: IdentityProfile;
 }
 
 export interface GenerateResult {
@@ -92,11 +96,35 @@ export class OnboardingService {
       personaMatch.score,
     );
 
+    // Hybrid Intelligence Enrichment — pure enhancement, never replaces
+    // deterministic intelligence. Gated by configurable confidence threshold.
+    const identityProfile = await hybridIntelligenceEngine.enrich(
+      {
+        source,
+        graphConfidence: knowledgeGraph.confidence,
+        persona: { id: personaMatch.persona.id, name: personaMatch.persona.name },
+        personaScore: personaMatch.score,
+        primaryNiche: knowledgeGraph.creator.niche || null,
+        acquisition: acquisition.diagnostics
+          ? {
+              capabilities: acquisition.diagnostics.capabilities,
+              populatedFields: acquisition.diagnostics.populatedFields,
+              missingFields: acquisition.diagnostics.missingFields,
+            }
+          : null,
+      },
+      {
+        missingFields: acquisition.diagnostics?.missingFields ?? [],
+        acquisition: acquisition.diagnostics,
+      },
+    );
+
     const channelMeta = acquisition.meta as ImportProfileResult["channelMeta"];
+    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile };
     if (channelMeta) {
-      return { platform, knowledgeGraph, personaMatch, experienceProfile, channelMeta, acquisition: acquisition.diagnostics };
+      return { ...base, channelMeta };
     }
-    return { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics };
+    return base;
   }
 
   async generate(knowledgeGraph: KnowledgeGraph, experienceProfile: ExperienceProfile): Promise<GenerateResult> {

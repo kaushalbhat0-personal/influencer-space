@@ -17,6 +17,9 @@ export interface GoldenCreatorEntry {
   expectedCommerceStage: CommerceStage;
   expectedConfidence: number;
   tags: string[];
+  /** IMPLEMENTATION-32: enriched IdentityProfile targets (regression anchors). */
+  expectedEntityType?: string;
+  expectedPrimaryNiche?: string;
 }
 
 export interface GoldenValidationDimension {
