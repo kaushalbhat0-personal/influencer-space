@@ -14,8 +14,10 @@ import { ArtifactEngine } from "@/lib/generation/artifacts/artifact-engine";
 import { ArtifactRegistry } from "@/lib/generation/artifacts/artifact-registry";
 import { provisioner } from "@/lib/generation/integration/register-generators";
 import { GoldenValidator, goldenDataset } from "@/lib/generation/golden";
-import { detectPlatform, buildContentSource, buildContentSourceFromYouTube } from "@/lib/generation/integration/provision-pipeline";
+import { detectPlatform } from "@/lib/generation/integration/provision-pipeline";
 import type { ContentSource } from "@/lib/generation/intelligence/types";
+import { profileAcquisitionEngine } from "@/lib/generation/acquisition/engine";
+import type { AcquisitionDiagnostics } from "@/lib/generation/acquisition/types";
 
 export interface OnboardingProgress {
   state: string;
@@ -37,6 +39,8 @@ export interface ImportProfileResult {
     customUrl: string;
     subscriberCount: number;
   } | null;
+  /** Unified Profile Acquisition diagnostics (observability only). */
+  acquisition?: AcquisitionDiagnostics;
 }
 
 export interface GenerateResult {
@@ -75,31 +79,11 @@ export class OnboardingService {
   }
 
   async importProfile(sourceUrl: string, _creatorId: string, creatorName: string): Promise<ImportProfileResult> {
+    // Unified Profile Acquisition — normalize once into the existing ContentSource.
+    const acquisition = await profileAcquisitionEngine.acquire(sourceUrl, creatorName);
+    const source = acquisition.source;
     const platform = detectPlatform(sourceUrl);
-    let source: ContentSource;
 
-    if (platform === "youtube") {
-      const scraper = await import("@/services/youtube-scraper.service").then(
-        (m) => m.YouTubeScraperService,
-      );
-      const channelMeta = await scraper.fetchChannelMetadata(sourceUrl);
-      if (channelMeta) {
-        source = buildContentSourceFromYouTube(sourceUrl, channelMeta);
-      } else {
-        source = buildContentSource(sourceUrl, platform, creatorName);
-      }
-
-      const knowledgeGraph = this.knowledgeBuilder.build(source);
-      const personaMatch = this.personaEngine.detect(knowledgeGraph);
-      const experienceProfile = this.experienceProfileBuilder.build(
-        knowledgeGraph,
-        personaMatch.persona,
-        personaMatch.score,
-      );
-      return { platform, knowledgeGraph, personaMatch, experienceProfile, channelMeta };
-    }
-
-    source = buildContentSource(sourceUrl, platform, creatorName);
     const knowledgeGraph = this.knowledgeBuilder.build(source);
     const personaMatch = this.personaEngine.detect(knowledgeGraph);
     const experienceProfile = this.experienceProfileBuilder.build(
@@ -107,7 +91,12 @@ export class OnboardingService {
       personaMatch.persona,
       personaMatch.score,
     );
-    return { platform, knowledgeGraph, personaMatch, experienceProfile };
+
+    const channelMeta = acquisition.meta as ImportProfileResult["channelMeta"];
+    if (channelMeta) {
+      return { platform, knowledgeGraph, personaMatch, experienceProfile, channelMeta, acquisition: acquisition.diagnostics };
+    }
+    return { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics };
   }
 
   async generate(knowledgeGraph: KnowledgeGraph, experienceProfile: ExperienceProfile): Promise<GenerateResult> {

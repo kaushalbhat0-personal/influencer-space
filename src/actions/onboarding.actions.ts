@@ -33,6 +33,14 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
   categoryConfidence?: number;
   categoryRequiresReview?: boolean;
   categoryAlternatives?: Array<{ niche: string; score: number }>;
+  acquisition?: {
+    platform: string;
+    adapter: string;
+    capabilities: string[];
+    populatedFields: string[];
+    missingFields: string[];
+    warnings: string[];
+  };
   error?: string;
 }> {
   try {
@@ -70,6 +78,16 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
       categoryConfidence: classification.confidence,
       categoryRequiresReview: classification.requiresReview,
       categoryAlternatives: classification.altNiches,
+      acquisition: result.acquisition
+        ? {
+            platform: result.acquisition.platform,
+            adapter: result.acquisition.adapter,
+            capabilities: result.acquisition.capabilities,
+            populatedFields: result.acquisition.populatedFields,
+            missingFields: result.acquisition.missingFields,
+            warnings: result.acquisition.warnings,
+          }
+        : undefined,
     };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Profile import failed" };

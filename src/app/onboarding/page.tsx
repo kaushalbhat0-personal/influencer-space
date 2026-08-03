@@ -28,6 +28,14 @@ interface ProfileData {
   categoryConfidence?: number;
   categoryRequiresReview?: boolean;
   categoryAlternatives?: Array<{ niche: string; score: number }>;
+  acquisition?: {
+    platform: string;
+    adapter: string;
+    capabilities: string[];
+    populatedFields: string[];
+    missingFields: string[];
+    warnings: string[];
+  };
 }
 
 const CATEGORY_OPTIONS = [
@@ -157,6 +165,7 @@ export default function OnboardingPage() {
         categoryConfidence: res.categoryConfidence,
         categoryRequiresReview: res.categoryRequiresReview,
         categoryAlternatives: res.categoryAlternatives,
+        acquisition: res.acquisition,
       });
       setCategoryOverride(res.category || "general");
       setWorkspaceName(res.creatorName || "My Storefront");
@@ -443,6 +452,19 @@ export default function OnboardingPage() {
                 We found your profile. Review the details and we&apos;ll generate your storefront.
               </p>
             </div>
+
+            {profileData.acquisition && (
+              <p
+                className="text-[10px] uppercase tracking-wide text-zinc-600"
+                data-testid="acquisition-status"
+                aria-label={`Profile acquisition: ${profileData.acquisition.platform} via ${profileData.acquisition.adapter}`}
+              >
+                {profileData.acquisition.platform} · adapter: {profileData.acquisition.adapter}
+                {profileData.acquisition.populatedFields.length > 0 && (
+                  <> · data: {profileData.acquisition.populatedFields.join(", ")}</>
+                )}
+              </p>
+            )}
 
             <div className="rounded-xl bg-white/[0.03] border border-white/5 p-5 space-y-4">
               <div className="flex items-center gap-4">

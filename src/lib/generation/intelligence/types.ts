@@ -26,6 +26,24 @@ export interface ContentSource {
   content: ContentItem[];
   categories: string[];
   links: string[];
+
+  // IMPLEMENTATION-31 deterministic enrichment (optional — unknown stays absent).
+  /** Verified badge, when the platform legitimately reports it. */
+  verified?: boolean;
+  /** Primary website derived from the profile/bio (hostname normalized). */
+  website?: string;
+  /** Detected languages (deterministic heuristic — never fabricated). */
+  languages?: string[];
+  /** Location when the platform provides it. */
+  location?: string;
+  /** Extracted topic keywords (deterministic, deduped). */
+  keywords?: string[];
+  /** Extracted hashtags from bio/content. */
+  hashtags?: string[];
+  /** External links classified as social networks. */
+  socialLinks?: string[];
+  /** Media summary when available. */
+  media?: { count: number; types: string[] };
 }
 
 export interface CreatorIntelligence {

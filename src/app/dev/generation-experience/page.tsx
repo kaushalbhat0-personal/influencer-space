@@ -7,15 +7,16 @@ import { GenerationExperienceView } from "@/features/onboarding/components/gener
 import { ConstructionPreview } from "@/features/onboarding/components/construction-preview";
 import { ActivityFeedView } from "@/features/onboarding/components/activity-feed";
 import { useConstructionSnapshot } from "@/features/onboarding/hooks/use-construction-snapshot";
+import { importCreatorProfile } from "@/actions/onboarding.actions";
 import { GENERATION_STAGES, type RuntimeStageEvent } from "@/lib/generation/experience/stages";
 
 /**
  * Developer visualization of the Generation Experience + Animation Runtime +
- * Storefront Construction (IMPLEMENTATION-27/28/29). Renders the runtime-driven
- * stage model and the live construction preview against REAL session-shaped
- * events, so the whole chain can be verified in the browser. This is a dev tool
- * — not a product state. Dev-only knobs: ?failStage=<id>, ?speed=ms, ?pace=ms
- * (pace holds each stage in "running" for ms before the next advances).
+ * Storefront Construction + Profile Acquisition (IMPLEMENTATION-27…31). Renders
+ * the runtime-driven stage model, live construction preview and activity feed
+ * against REAL session-shaped events, plus an acquisition probe. This is a dev
+ * tool — not a product state. Dev-only knobs: ?failStage=<id>, ?speed=ms,
+ * ?pace=ms, ?profileUrl=<any platform URL> (acquisition probe).
  */
 const SEEDED_SUBDOMAIN = "test-creator-1";
 
@@ -24,6 +25,75 @@ export default function DevGenerationExperiencePage() {
     <Suspense fallback={null}>
       <DevGenerationExperienceInner />
     </Suspense>
+  );
+}
+
+/** Dev-only acquisition probe — surfaces Unified Profile Acquisition diagnostics. */
+function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
+  const [url, setUrl] = useState(initialUrl);
+  const [result, setResult] = useState<{
+    platform?: string;
+    persona?: { name: string };
+    confidence?: number;
+    acquisition?: {
+      platform: string;
+      adapter: string;
+      capabilities: string[];
+      populatedFields: string[];
+      missingFields: string[];
+      warnings: string[];
+    };
+    error?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void importCreatorProfile(url)
+      .then((res) => {
+        if (!cancelled) setResult(res);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return (
+    <div className="rounded-xl border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] p-4" data-testid="acquisition-probe">
+      <p className="text-xs font-medium text-[var(--text-primary,#FAFAFA)]">Profile Acquisition Probe</p>
+      <div className="mt-2 flex gap-2">
+        <input
+          className="h-8 flex-1 rounded-md bg-[var(--surface-root,#09090B)] px-2 text-xs text-[var(--text-primary,#FAFAFA)] outline-none"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          aria-label="Profile URL"
+        />
+      </div>
+      <div className="mt-2 space-y-1 text-[11px]" data-testid="acquisition-result">
+        {result?.error && <p className="text-red-400">error: {result.error}</p>}
+        {result?.acquisition && (
+          <>
+            <p data-testid="acquisition-line">
+              platform: <span data-testid="acq-platform">{result.acquisition.platform}</span> · adapter:{" "}
+              <span data-testid="acq-adapter">{result.acquisition.adapter}</span> · persona:{" "}
+              <span data-testid="acq-persona">{result.persona?.name ?? "unknown"}</span> · confidence:{" "}
+              <span data-testid="acq-confidence">{result.confidence ?? 0}</span>
+            </p>
+            <p data-testid="acq-populated" className="text-[var(--text-secondary,#A1A1AA)]">
+              data: {result.acquisition.populatedFields.join(", ") || "—"}
+            </p>
+            <p data-testid="acq-missing" className="text-[var(--text-muted,#71717A)]">
+              missing: {result.acquisition.missingFields.join(", ") || "—"}
+            </p>
+            {result.acquisition.warnings.length > 0 && (
+              <p className="text-amber-400" data-testid="acq-warnings">
+                warnings: {result.acquisition.warnings.join("; ")}
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -76,6 +146,8 @@ function DevGenerationExperienceInner() {
     hasStarted: events.length > 0,
   });
 
+  const profileUrl = searchParams.get("profileUrl") ?? "https://instagram.com/cristiano";
+
   const { snapshot } = useConstructionSnapshot({
     subdomain: SEEDED_SUBDOMAIN,
     refreshKey: experience.currentId,
@@ -86,12 +158,14 @@ function DevGenerationExperienceInner() {
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-[var(--text-primary,#FAFAFA)]">
-            Generation Experience + Animation + Construction + Activity (dev)
+            Generation Experience + Animation + Construction + Activity + Acquisition (dev)
           </h1>
           <span className="text-[10px] uppercase tracking-wide text-[var(--text-muted,#71717A)]">
             subdomain: {SEEDED_SUBDOMAIN} · failStage: {failStage ?? "none"} · speed: {speed}ms
           </span>
         </div>
+
+        <AcquisitionProbe initialUrl={profileUrl} />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
           <div className="space-y-6">
