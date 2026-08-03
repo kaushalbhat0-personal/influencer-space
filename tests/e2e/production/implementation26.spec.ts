@@ -96,14 +96,21 @@ test("Q3 - Applying an unlocked theme persists + moves Current; preview leaves n
 
   // Apply → persists the theme (DB changes) + Current badge moves to the card.
   await page.locator('[data-testid="builder-apply-theme"]').click();
-  await page.waitForSelector(`[data-testid="builder-theme-${slug}"]:has-text("Current")`, { timeout: 30000 }).catch(() => {});
+
+  // Poll the DB until the applied theme matches the clicked slug (apply is
+  // persisted before the Current badge reflects).
+  let applied: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    applied = await appliedThemeId();
+    if (applied && applied.includes(slug)) break;
+    await page.waitForTimeout(1000);
+  }
+  expect(applied).toContain(slug);
+
   const card = page.locator(`[data-testid="builder-theme-${slug}"]`);
   const currentCount = await card.locator('span:has-text("Current")').count();
   expect(currentCount).toBeGreaterThan(0);
   await shot(page, "q3-applied");
-
-  const after = await appliedThemeId();
-  expect(after).toContain(slug);
   errors.assertClean();
 });
 

@@ -199,11 +199,15 @@ export function BuilderWorkspace() {
     async (themeId: string) => {
       // Apply persists the theme + saves the draft (no publish).
       if (!themeId || !overviewData?.tenant.id) return;
-      setPreviewThemeId(null);
-      setCurrentThemeId(themeId);
-      setThemeName(themeId);
-      await performSave(themeId, currentThemeId);
-      builderStore.markClean();
+      // Persist FIRST, then reflect it in state so the Current badge can never
+      // appear before the theme is actually applied.
+      const saved = await performSave(themeId, currentThemeId);
+      if (saved) {
+        setPreviewThemeId(null);
+        setCurrentThemeId(themeId);
+        setThemeName(themeId);
+        builderStore.markClean();
+      }
     },
     [performSave, currentThemeId, overviewData],
   );
