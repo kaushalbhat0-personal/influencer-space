@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
+import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
@@ -93,19 +94,6 @@ function formatElapsed(ms: number): string {
   const secs = seconds % 60;
   return `${minutes}m ${secs}s`;
 }
-
-const STAGE_LABELS: Record<string, string> = {
-  import_profile: "Importing creator",
-  knowledge_intelligence: "Building knowledge graph",
-  persona_detection: "Detecting persona",
-  planning_context: "Planning experience",
-  experience_planning: "Planning experience",
-  composition: "Composing storefront",
-  artifact_generation: "Composing storefront",
-  provisioning: "Provisioning workspace",
-  publishing: "Publishing storefront",
-  golden_validation: "Finalizing",
-};
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -303,11 +291,14 @@ export default function OnboardingPage() {
   }, [retryInfo, router]);
 
   const hasFailure = sessionStages.some((s) => s.status === "failed");
-  const allStageTypes = [
-    "import_profile", "knowledge_intelligence", "persona_detection",
-    "planning_context", "experience_planning", "composition",
-    "artifact_generation", "provisioning", "publishing", "golden_validation",
-  ];
+
+  const experience = useGenerationExperience({
+    events: sessionStages,
+    runtimeProgress: progressPercent,
+    elapsedMs,
+    estimatedRemainingMs,
+    hasStarted: step === "generating",
+  });
 
   const PlatformIcon = detectedPlatform && PLATFORM_ICONS[detectedPlatform]
     ? PLATFORM_ICONS[detectedPlatform]
@@ -535,7 +526,7 @@ export default function OnboardingPage() {
         )}
 
         {step === "generating" && (
-          <div className="space-y-6">
+          <div className="space-y-6" role="status" aria-live="polite">
             <div>
               <h1 className="text-xl font-semibold text-white">Building your storefront</h1>
               <p className="mt-1 text-sm text-zinc-400">
@@ -544,41 +535,52 @@ export default function OnboardingPage() {
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-400">{progressPercent}% complete</span>
+              <span className="text-zinc-400" aria-hidden="true">{experience.progress}% complete</span>
               <span className="flex items-center gap-1.5 text-zinc-500">
                 <Clock className="h-3.5 w-3.5" />
-                {formatElapsed(elapsedMs)}
-                {estimatedRemainingMs != null && estimatedRemainingMs > 0 && (
-                  <span className="text-zinc-600">· ~{formatElapsed(estimatedRemainingMs)} remaining</span>
+                {experience.elapsedLabel}
+                {experience.remainingLabel && (
+                  <span className="text-zinc-600">· {experience.remainingLabel}</span>
                 )}
               </span>
             </div>
 
-            <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+            <div
+              className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden"
+              role="progressbar"
+              aria-label="Storefront generation progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={experience.progress}
+              data-testid="generation-progress"
+            >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out"
-                style={{ width: `${progressPercent}%` }}
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out motion-reduce:transition-none"
+                style={{ width: `${experience.progress}%` }}
               />
             </div>
 
+            <p className="sr-only">
+              {experience.current ? `Now: ${experience.current.title}` : "Preparing workspace"}
+            </p>
+
             <div className="space-y-1">
-              {allStageTypes.map((stageKey) => {
-                const stage = sessionStages.find((s) => s.type === stageKey);
-                const stageIndex = sessionStages.findIndex((s) => s.type === stageKey);
-                const completedCount = sessionStages.filter((s) => s.status === "completed").length;
-                const isCurrent = stageIndex === completedCount && stage?.status === "running";
-                const isCompleted = stage?.status === "completed" || stage?.status === "skipped";
-                const isFailed = stage?.status === "failed";
+              {experience.stages.map((stage) => {
+                const isCurrent = experience.currentId === stage.id;
+                const isCompleted = stage.status === "completed" || stage.status === "skipped";
+                const isFailed = stage.status === "failed";
 
                 return (
                   <div
-                    key={stageKey}
+                    key={stage.id}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-4 py-3 transition-all",
                       isCompleted && "text-zinc-300",
                       isCurrent && "bg-white/[0.03]",
                       isFailed && "bg-red-500/5",
                     )}
+                    data-stage={stage.id}
+                    data-status={stage.status}
                   >
                     {isCompleted ? (
                       <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -587,15 +589,13 @@ export default function OnboardingPage() {
                     ) : isCurrent ? (
                       <Loader2 className="h-4 w-4 text-indigo-400 animate-spin shrink-0" />
                     ) : (
-                      <div className={cn(
-                        "h-4 w-4 rounded-full border shrink-0",
-                        "border-zinc-700",
-                      )} />
+                      <div className="h-4 w-4 rounded-full border border-zinc-700 shrink-0" />
                     )}
                     <span className="text-sm flex-1">
-                      {STAGE_LABELS[stageKey] ?? stageKey.replace(/_/g, " ")}
+                      {stage.title}
+                      {isCurrent && <span className="ml-2 text-[10px] text-zinc-500">{stage.description}</span>}
                     </span>
-                    {isFailed && stage?.error && (
+                    {isFailed && stage.error && (
                       <span className="text-[10px] text-red-400 text-right max-w-[160px] truncate" title={stage.error}>
                         {stage.error}
                       </span>
@@ -605,7 +605,7 @@ export default function OnboardingPage() {
               })}
             </div>
 
-            {hasFailure && (
+            {experience.hasFailure && (
               <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4">
                 <p className="text-sm text-red-400 font-medium">Some steps had issues</p>
                 <p className="text-xs text-zinc-400 mt-1">
