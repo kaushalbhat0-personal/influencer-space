@@ -27,6 +27,11 @@ import { SEED_TESTIMONIALS } from "@/lib/marketing/trust/testimonials";
 import { SEED_CASE_STUDIES } from "@/lib/marketing/trust/case-studies";
 import { SEED_COMPARISONS } from "@/lib/marketing/trust/comparison";
 import { getPlatformConfig } from "@/lib/config/platform";
+import { ExperienceSection } from "@/modules/theme/runtime/experience";
+import { THEME_EXPERIENCES } from "@/modules/theme/runtime/experience";
+
+/** IMPLEMENTATION-45: config-driven marketing experience (aurora + classic rhythm). */
+const MARKETING_EXPERIENCE = THEME_EXPERIENCES.aurora;
 
 /** IMPLEMENTATION-43 Phase 11: honest Organization schema (no fabricated claims). */
 function OrganizationSchema() {
@@ -53,11 +58,11 @@ export default async function MarketingPage() {
       {/* Section order based on audit recommendations */}
       <Hero />
 
-      {/* Trust: platform badges + metrics (flows from the hero gradient) */}
-      <Section id="trust-bar" tone="hero">
+      {/* Trust: platform badges + metrics (experience-driven background) */}
+      <ExperienceSection experience={MARKETING_EXPERIENCE} index={0} divider="bottom" id="trust-bar" data-testid="experience-trust-bar">
         <IntegrationLogos logos={SEED_LOGOS} />
         <MetricGrid metrics={SEED_METRICS} />
-      </Section>
+      </ExperienceSection>
 
       <BeforeAfter />
       <HowItWorks />
@@ -81,7 +86,6 @@ export default async function MarketingPage() {
       <Section id="case-studies" tone="neutral">
         <CaseStudyGrid caseStudies={SEED_CASE_STUDIES} />
       </Section>
-
       <Agency />
 
       {/* Trust: comparison (config-driven) */}

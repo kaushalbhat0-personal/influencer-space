@@ -75,6 +75,55 @@
   border-width: 0;
 }
 
+/* ── EXPERIENCE RUNTIME (IMPLEMENTATION-45) ────────────────────────────────
+   Motion + surface presets from the Theme Experience Runtime. CSS-only,
+   transform/opacity, honors prefers-reduced-motion via the global rule above. */
+
+.xp-float { animation: xp-float 8s ease-in-out infinite; }
+.xp-glow-pulse { animation: xp-glow-pulse 6s ease-in-out infinite; }
+.xp-gradient-shift { animation: xp-gradient-shift 14s ease-in-out infinite alternate; }
+.xp-particle-drift { animation: xp-particle-drift 20s linear infinite; }
+
+@keyframes xp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes xp-glow-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes xp-gradient-shift {
+  from { filter: hue-rotate(0deg); }
+  to { filter: hue-rotate(18deg); }
+}
+@keyframes xp-particle-drift {
+  from { background-position: 0 0; }
+  to { background-position: 0 240px; }
+}
+
+.xp-surface-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+.xp-surface-elevated {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.xp-surface-gradient-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface-root, #0a0a0b), var(--surface-root, #0a0a0b)) padding-box,
+    linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.3)) border-box;
+}
+.xp-surface-soft-glow {
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.08);
+}
+.xp-surface-floating {
+  box-shadow: var(--shadow-elevation-hover, 0 16px 40px rgba(0, 0, 0, 0.35));
+}
+
+
 /* ── FOCUS RING ─────────────────────────────────────────────────────── */
 
 *:focus-visible {

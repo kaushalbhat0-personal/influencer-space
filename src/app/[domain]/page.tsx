@@ -12,6 +12,8 @@ import { navigationService } from "@/lib/navigation/service";
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { StorefrontNav } from "@/components/storefront/StorefrontNav";
+import { themeRegistry } from "@/lib/theme/registry-new";
+import { experienceRegistry, ExperienceSection } from "@/modules/theme/runtime/experience";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { PublishedSnapshot } from "@/types/snapshot";
 
@@ -135,6 +137,15 @@ export default async function PublicPage({
 
   const allSections = pages.flatMap((p) => p.sections).filter((s) => s.visible !== false);
 
+  // IMPLEMENTATION-45: resolve the theme's Experience (configuration-driven —
+  // sections never hardcode backgrounds/decorations).
+  const themeDef = snap.theme?.packageId ? themeRegistry.getById(snap.theme.packageId) : undefined;
+  const experience = experienceRegistry.resolve({
+    id: snap.theme?.packageId ?? null,
+    category: themeDef?.category ?? null,
+    premium: themeDef?.premium ?? null,
+  });
+
   return (
     <>
       <SkipLink />
@@ -152,14 +163,18 @@ export default async function PublicPage({
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
         ))}
         {allSections.map((section, i) => (
-          <section
+          <ExperienceSection
             key={`${section.id}-${i}`}
             id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+            experience={experience}
+            index={i}
+            divider={i === 0 ? "bottom" : "bottom"}
+            data-testid={`experience-section-${i}`}
           >
             <ComponentErrorBoundary componentId={section.moduleId}>
               <DataBoundRenderer slot={{ moduleId: section.moduleId, config: section.config }} />
             </ComponentErrorBoundary>
-          </section>
+          </ExperienceSection>
         ))}
       </main>
     </>
