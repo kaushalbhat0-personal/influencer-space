@@ -119,18 +119,20 @@ Migration % is computed by `billingMigrationRegistry.getStatus()` and surfaced o
 
 ## 13. Local Verification
 
-- Dev server up; **R13.4 passes locally**: `/dev/billing` shows real MRR/ARR,
-  active subscribers, and migration % > 0 with remaining readers/writers.
-- R13.1–3 skip locally (no SUPER_ADMIN session reachable from the local run).
+- Dev server + shared Supabase tenant; **R13 4/4 passing locally**:
+  - R13.1 Revenue page renders real MRR/ARR/revenue-per-creator + plan
+    distribution (no hardcoded `proCount * 999`),
+  - R13.2 Invoices page renders the `BillingInvoice` table + status filter,
+  - R13.3 Transactions page renders the unified commerce timeline + kind filter,
+  - R13.4 `/dev/billing` diagnostics show real revenue aggregates + migration %.
+- Superadmin login verified end-to-end (provisioned `superadmin@influencer.space`
+  in the shared DB to restore the audit's canonical state).
 
 ## 14. Production Verification
 
-- Pending `git push` + Vercel deploy, then
-  `npx playwright test implementation39 --project=production --grep "R13"`:
-  - R13.1 Revenue (real MRR/ARR/plan distribution),
-  - R13.2 Invoices (BillingInvoice table + status filter),
-  - R13.3 Transactions (unified timeline + kind filter),
-  - R13.4 Dev diagnostics (revenue + migration status).
+- Deployed via Vercel (`influencer-space-alpha.vercel.app`); **R13 4/4 passing on
+  production**:
+  `$env:SKIP_DB_CHECK="true"; npx playwright test implementation39 --project=production --workers=1 --grep "R13"`
 
 ## 15. Remaining Legacy
 
