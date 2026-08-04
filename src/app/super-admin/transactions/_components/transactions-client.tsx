@@ -8,6 +8,8 @@ const KINDS = ["ALL", "event", "invoice", "payment"];
 type TxRow = { id: string; kind: string; type: string; amount: number | null; status: string; createdAt: string; tenantName: string; ref: string };
 type TxData = { rows: TxRow[]; total: number; page: number; pageSize: number };
 
+const fmtDate = (iso: string) => iso.replace("T", " ").slice(0, 16);
+
 export function TransactionsClient({ initial }: { initial: TxData }) {
   const [kind, setKind] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -71,7 +73,7 @@ export function TransactionsClient({ initial }: { initial: TxData }) {
             )}
             {data.rows.map((t) => (
               <tr key={t.id} className="border-b border-white/5" data-transaction={t.id} data-kind={t.kind}>
-                <td className="px-3 py-2 text-zinc-500 text-xs">{new Date(t.createdAt).toLocaleString()}</td>
+                <td className="px-3 py-2 text-zinc-500 text-xs">{fmtDate(t.createdAt)}</td>
                 <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-[10px] ${kindColor[t.kind] ?? "bg-white/5 text-zinc-400"}`}>{t.kind}</span></td>
                 <td className="px-3 py-2 text-zinc-300">{t.type}</td>
                 <td className="px-3 py-2 text-zinc-400">{t.tenantName}</td>

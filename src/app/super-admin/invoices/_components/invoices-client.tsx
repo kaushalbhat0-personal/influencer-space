@@ -7,6 +7,8 @@ const STATUSES = ["ALL", "PAID", "PENDING", "FAILED", "REFUNDED"];
 
 type InvoicesData = { rows: Array<{ id: string; planCode: string; amount: number; status: string; issuedAt: string; paidAt: string | null; providerReference: string | null; tenantName: string; subdomain: string }>; total: number; page: number; pageSize: number };
 
+const fmtDate = (iso: string) => iso.replace("T", " ").slice(0, 16);
+
 export function InvoicesClient({ initial }: { initial: InvoicesData }) {
   const [status, setStatus] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -72,8 +74,8 @@ export function InvoicesClient({ initial }: { initial: InvoicesData }) {
                     {inv.status}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-zinc-500 text-xs">{new Date(inv.issuedAt).toLocaleString()}</td>
-                <td className="px-3 py-2 text-zinc-500 text-xs">{inv.paidAt ? new Date(inv.paidAt).toLocaleString() : "—"}</td>
+                <td className="px-3 py-2 text-zinc-500 text-xs">{fmtDate(inv.issuedAt)}</td>
+                <td className="px-3 py-2 text-zinc-500 text-xs">{inv.paidAt ? fmtDate(inv.paidAt) : "—"}</td>
                 <td className="px-3 py-2 text-zinc-500 text-xs">{inv.providerReference ? inv.providerReference.slice(0, 14) : "—"}</td>
               </tr>
             ))}
