@@ -19,6 +19,8 @@ function runbookFor(source: string, service: string | null): string | undefined 
   return SOURCE_RUNBOOK[key] ?? SOURCE_RUNBOOK[source];
 }
 
+const fmtDate = (v: string | Date) => new Date(v).toISOString().replace("T", " ").slice(0, 16);
+
 type AlertRow = {
   id: string;
   level: string;
@@ -135,7 +137,7 @@ export function AlertsClient({ initial }: { initial: { rows: AlertRow[]; total: 
                   <td className="px-3 py-2">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] ${a.status === "ACTIVE" ? "bg-red-500/10 text-red-400" : a.status === "RESOLVED" ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-700/40 text-zinc-400"}`}>{a.status}</span>
                   </td>
-                  <td className="px-3 py-2 text-zinc-500 text-xs">{new Date(a.createdAt).toLocaleString("en-IN")}</td>
+                  <td className="px-3 py-2 text-zinc-500 text-xs">{fmtDate(a.createdAt)}</td>
                   <td className="px-3 py-2">
                     {runbookId ? (
                       <a href={`/super-admin/runbooks/${runbookId}`} className="text-xs text-s8ul-cyan hover:underline" data-testid={`runbook-${runbookId}`}>Runbook</a>

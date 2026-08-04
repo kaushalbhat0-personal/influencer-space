@@ -17,6 +17,8 @@ type JobRow = {
 
 const STATUSES = ["ALL", "QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"];
 
+const fmtDate = (v: string | Date) => new Date(v).toISOString().replace("T", " ").slice(0, 16);
+
 export function JobsClient({ initial, runners }: { initial: { rows: JobRow[]; total: number; page: number; pageSize: number }; runners: Array<{ id: string; name: string }> }) {
   const [rows, setRows] = useState<JobRow[]>(initial.rows);
   const [total, setTotal] = useState(initial.total);
@@ -111,7 +113,7 @@ export function JobsClient({ initial, runners }: { initial: { rows: JobRow[]; to
                 </td>
                 <td className="px-3 py-2 text-zinc-400">{j.type}</td>
                 <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-[10px] ${statusColor[j.status] ?? "bg-white/5 text-zinc-400"}`}>{j.status}</span></td>
-                <td className="px-3 py-2 text-zinc-500 text-xs">{j.startedAt ? new Date(j.startedAt).toLocaleString("en-IN") : "—"}</td>
+                <td className="px-3 py-2 text-zinc-500 text-xs">{j.startedAt ? fmtDate(j.startedAt) : "—"}</td>
                 <td className="px-3 py-2 text-zinc-500 text-xs">{j.durationMs != null ? `${j.durationMs}ms` : "—"}</td>
                 <td className="px-3 py-2 text-zinc-500 text-xs">{j.triggeredBy ?? "—"}</td>
                 <td className="px-3 py-2">

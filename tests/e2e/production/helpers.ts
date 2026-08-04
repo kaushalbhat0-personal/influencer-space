@@ -48,6 +48,10 @@ const BENIGN = [
   // to browser navigation") — the app degrades gracefully; not a page error.
   "failed to fetch rsc payload",
   "_rsc=",
+  // Vercel Insights / Speed Insights only exist on the Vercel platform; running
+  // the production build locally (next start) 404s them — environment artifact.
+  "_vercel/insights",
+  "_vercel/speed-insights",
   // Third-party payment-gateway CDN resources (external dependency, not the app).
   "razorpay.com",
   "checkout-static-next.razorpay.com",
