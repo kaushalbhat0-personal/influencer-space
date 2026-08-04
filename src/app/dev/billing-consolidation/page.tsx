@@ -5,6 +5,7 @@ import { resolveActivePlan, listAllSubscriptions } from "@/modules/billing/appli
 import { resolvePlan, LEGACY_READER_MIGRATION_STATUS } from "@/lib/capabilities/plan-resolution";
 import { capabilityService } from "@/lib/capabilities";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { COMMERCE_PLANS, capabilitiesForPlan } from "@/config/commerce/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,7 @@ export const dynamic = "force-dynamic";
  * Dev-only Billing v2 Consolidation diagnostics (IMPLEMENTATION-33).
  * Observability only — never changes onboarding/billing behavior.
  */
-export default async function BillingConsolidationPage() {
-  const session = await getServerSession(authOptions);
+export default async function BillingConsolidationPage() {  const session = await getServerSession(authOptions);
   if (!session?.user) {
     return <p className="p-8 text-sm text-zinc-400">Login required.</p>;
   }
@@ -49,6 +49,10 @@ export default async function BillingConsolidationPage() {
           <p>premium_themes: <span data-testid="bd-premium">{premiumDecision.allowed ? "allowed" : "denied"}</span>{premiumDecision.reason ? ` (${premiumDecision.reason})` : ""}</p>
           <p>v2 subscriptions: <span data-testid="bd-v2-count">{v2Count}</span> · legacy rows: <span data-testid="bd-legacy-count">{legacyCount}</span></p>
           <p>readers migrated: <span data-testid="bd-readers">{migrated}/{LEGACY_READER_MIGRATION_STATUS.length}</span></p>
+          <p data-testid="bd-matrix">
+            matrix plans: <span data-testid="bd-matrix-codes">{COMMERCE_PLANS.map((p) => p.code).join(", ")}</span> · current capabilities:{" "}
+            <span data-testid="bd-capabilities">{capabilitiesForPlan(resolved.code).join(", ") || "—"}</span>
+          </p>
         </div>
 
         <div className="rounded-xl border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] p-4 text-xs">

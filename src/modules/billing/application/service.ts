@@ -2,6 +2,7 @@ import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
 import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
 import { validateTransition } from "../domain/lifecycle";
+import { mappingForRazorpayEvent, statusForWebhookEvent } from "../domain/webhook";
 import { capabilityService } from "@/lib/capabilities";
 import { commissionService } from "@/lib/commission";
 import { partnerService } from "@/lib/partners";
@@ -12,7 +13,6 @@ import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import type { CheckoutResult } from "../domain/types";
-import type { FeatureId } from "@/lib/capabilities/constants";
 
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
@@ -147,6 +147,120 @@ export class BillingService {
     metricsService.recordDuration("billing_execution", Date.now() - start);
   }
 
+  /**
+   * IMPLEMENTATION-34 — handles the full Razorpay subscription lifecycle.
+   * Every webhook becomes a BillingEvent → subscription status update →
+   * capability (entitlement) refresh. Payments never unlock features directly;
+   * only these events update the subscription, and CapabilityService derives
+   * access from the updated plan.
+   */
+  async handleSubscriptionWebhook(input: {
+    eventName: string;
+    workspaceId: string;
+    planCode?: string;
+    providerReference: string;
+    idempotencyKey: string;
+    renewsAt?: Date | null;
+    amount?: number;
+  }): Promise<{ handled: boolean; status?: string; error?: string }> {
+    const { eventName, workspaceId, planCode, providerReference, idempotencyKey } = input;
+    const start = Date.now();
+
+    if (await billingRepository.isDuplicateEvent(idempotencyKey)) {
+      return { handled: false };
+    }
+
+    const mapping = mappingForRazorpayEvent(eventName);
+    if (!mapping) {
+      await this.recordWebhookEvent(input, "CHECKOUT_STARTED", "ignored");
+      return { handled: false, error: `Unmapped event: ${eventName}` };
+    }
+
+    const existing = await billingRepository.findSubscriptionByWorkspaceId(workspaceId);
+    const status = statusForWebhookEvent(eventName, (existing?.status as never) ?? null);
+    if (!status) {
+      // Illegal transition — record the event but do not mutate the subscription.
+      await billingRepository.createEvent({
+        workspaceId,
+        accountId: workspaceId,
+        type: mapping.eventType,
+        idempotencyKey,
+        payload: { eventName, planCode, providerReference, note: "status_unchanged" },
+      });
+      return { handled: false, error: `Illegal transition for ${eventName}` };
+    }
+
+    // Resolve the plan (canonical commerce code or legacy code fallback).
+    let plan = planCode ? await billingRepository.findPlanByCode(planCode) : null;
+    if (!plan && existing?.planId) {
+      plan = await prisma.billingPlan.findUnique({ where: { id: existing.planId } });
+    }
+    if (!plan) throw new Error(`Unknown plan for ${eventName}`);
+
+    const sub = await billingRepository.upsertSubscription(workspaceId, {
+      planId: plan.id,
+      status,
+      renewsAt: input.renewsAt ?? null,
+    });
+
+    await billingRepository.createEvent({
+      workspaceId,
+      accountId: workspaceId,
+      type: mapping.eventType,
+      idempotencyKey,
+      payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: status },
+    });
+
+    // Renewal / activation → paid invoice.
+    if (mapping.action === "activate" || mapping.action === "renew") {
+      const invoice = await billingRepository.createInvoice({
+        workspaceId,
+        accountId: workspaceId,
+        planCode: plan.code,
+        amount: input.amount ?? getPlan(plan.code)?.price ?? 0,
+        status: "PAID",
+      });
+      platformEventBus.publish("PaymentCaptured", {
+        workspaceId,
+        planCode: plan.code,
+        amount: input.amount ?? getPlan(plan.code)?.price ?? 0,
+        currency: "INR",
+        invoiceId: invoice.id,
+        subscriptionId: sub.id,
+      });
+    }
+
+    const tenant = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });
+    if (tenant?.tenantId) {
+      await logAction(tenant.tenantId, "billing:subscription-webhook", {
+        eventName,
+        workspaceId,
+        planCode: plan.code,
+        status,
+        providerReference,
+      }).catch((err) => captureError(err, { service: "billing", operation: "subscriptionWebhook-audit" }));
+    }
+
+    logger.info("handleSubscriptionWebhook completed", "billing", { operation: "handle_subscription_webhook", duration: Date.now() - start, metadata: { eventName, status } as Record<string, unknown> });
+    metricsService.recordDuration("billing_execution", Date.now() - start);
+    return { handled: true, status };
+  }
+
+  private async recordWebhookEvent(input: {
+    eventName: string;
+    workspaceId: string;
+    providerReference: string;
+    idempotencyKey: string;
+  }, type: string, note: string): Promise<void> {
+    await billingRepository.createEvent({
+      workspaceId: input.workspaceId,
+      accountId: input.workspaceId,
+      type,
+      idempotencyKey: input.idempotencyKey,
+      payload: { eventName: input.eventName, providerReference: input.providerReference, note },
+    });
+  }
+
   async cancelSubscription(workspaceId: string, reason?: string): Promise<void> {
     const start = Date.now();
     logger.info("cancelSubscription started", "billing", { operation: "cancel_subscription", metadata: { workspaceId } as Record<string, unknown> });
@@ -198,7 +312,14 @@ export class BillingService {
       take: 50,
     });
 
-    const planCode = subscription?.plan?.code ?? "creator_free";
+    // IMPLEMENTATION-34: read-only billing history (events + payment history).
+    const events = await prisma.billingEvent.findMany({
+      where: { workspaceId },
+      orderBy: { createdAt: "desc" },
+      take: 25,
+    });
+
+    const planCode = subscription?.plan?.code ?? "creator_launch";
     const plan = getPlan(planCode);
 
     const products = await prisma.product.count({ where: { tenantId } });
@@ -206,21 +327,39 @@ export class BillingService {
     const orders = await prisma.productOrder.count({ where: { tenantId } });
 
     return {
-      plan: plan ?? { code: "creator_free", family: "creator" as const, name: "Free", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" },
-      subscription: subscription ?? { id: "", accountId: workspaceId, workspaceId, planCode: "creator_free", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
+      plan: plan ?? { code: "creator_launch", family: "creator" as const, name: "Creator Launch", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" },
+      subscription: subscription ?? { id: "", accountId: workspaceId, workspaceId, planCode: "creator_launch", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
       invoices: invoices.map((inv) => ({
         id: inv.id, amount: inv.amount, status: inv.status, issuedAt: inv.issuedAt.toISOString(), planCode: inv.planCode,
       })),
       paymentMethods: [],
       usage: [
-        { feature: "max_products" as FeatureId, used: products, limit: 5 },
-        { feature: "max_gallery" as FeatureId, used: gallery, limit: 10 },
+        { metric: "max_products", label: "Products", used: products, limit: 5, unit: "" },
+        { metric: "max_gallery", label: "Gallery", used: gallery, limit: 10, unit: "" },
       ],
       activeProducts: products,
       activeGallery: gallery,
       storageUsed: 0,
       ordersProcessed: orders,
       messagesSent: 0,
+      history: {
+        renewalDate: subscription?.renewsAt?.toISOString() ?? null,
+        status: subscription?.status ?? null,
+        cancelledAt: subscription?.cancelledAt?.toISOString() ?? null,
+        cancellationReason: subscription?.cancellationReason ?? null,
+        events: events.map((e) => ({
+          type: e.type,
+          createdAt: e.createdAt.toISOString(),
+          payload: (e.payload as Record<string, unknown>) ?? {},
+        })),
+        paymentHistory: invoices.map((inv) => ({
+          id: inv.id,
+          amount: inv.amount,
+          status: inv.status,
+          issuedAt: inv.issuedAt.toISOString(),
+          paidAt: inv.paidAt?.toISOString() ?? null,
+        })),
+      },
     };
   }
 

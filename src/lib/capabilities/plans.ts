@@ -322,6 +322,72 @@ const plans: PlanDefinition[] = [
   },
 ];
 
+// ── IMPLEMENTATION-34: Canonical creator plans derived from the capability
+// matrix (src/config/commerce/plans.ts). Pricing + capability grants live in
+// that config; these entries make capabilityService.can(code, ...) work for
+// the new codes. Legacy creator_free/pro/elite remain for backward compat.
+import { COMMERCE_PLANS, featuresForPlan } from "@/config/commerce/plans";
+
+const BASE_FEATURES: Record<string, number | boolean | string> = {
+  max_products: 5,
+  max_gallery: 10,
+  storage_gb: 1,
+  max_messages: 100,
+  max_orders: 50,
+  max_websites: 1,
+  max_team_members: 1,
+  max_clients: DISABLED,
+  max_api_calls: 1000,
+  custom_domain: false,
+  custom_branding: false,
+  remove_branding: false,
+  analytics_basic: true,
+  analytics_advanced: false,
+  seo: true,
+  premium_themes: false,
+  ai_automation: false,
+  export_data: true,
+  priority_support: false,
+  multiple_users: false,
+  api_access: false,
+  webhooks: false,
+  white_label: false,
+  basic_builder: true,
+  advanced_builder: false,
+  marketplace_access: false,
+  template_library: true,
+  navigation_editor: true,
+  media_storage: true,
+  automation: false,
+  multiple_brands: false,
+  agency_clients: false,
+  bulk_publish: false,
+  custom_components: false,
+  api_integrations: false,
+};
+
+const CTA_BY_TYPE: Record<string, string> = { signup: "Start Free", checkout: "Upgrade", contact: "Contact Sales" };
+
+for (const config of COMMERCE_PLANS) {
+  plans.push({
+    code: config.code,
+    family: "creator",
+    name: config.name,
+    description: config.description,
+    targetAudience: config.name,
+    price: config.price ?? 0,
+    currency: config.currency,
+    cycle: config.cycle,
+    ctaLabel: config.ctaLabel ?? CTA_BY_TYPE[config.ctaType],
+    ctaType: config.ctaType,
+    features: { ...BASE_FEATURES, ...featuresForPlan(config.code) },
+    recommended: config.recommended ?? false,
+    badge: config.badge ?? "",
+    legacyAliases: [],
+    sortOrder: 10 + plans.length,
+  });
+}
+
 const planMap = new Map<string, PlanDefinition>();
 for (const plan of plans) {
   planMap.set(plan.code, plan);

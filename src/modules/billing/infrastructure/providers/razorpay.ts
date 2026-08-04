@@ -6,6 +6,7 @@
  */
 
 import type { BillingProvider, CheckoutParams, CheckoutResult } from "../../domain/types";
+import { razorpayPlanIdFor, isManualPlan } from "@/config/commerce/plans";
 import crypto from "crypto";
 
 export class RazorpayProvider implements BillingProvider {
@@ -27,8 +28,34 @@ export class RazorpayProvider implements BillingProvider {
         key_secret: this.keySecret,
       });
 
+      // IMPLEMENTATION-34: subscription checkout driven by the canonical
+      // commerce config (razorpayPlanIdFor maps internal code → Razorpay plan).
+      // Manual plans (enterprise) never create a public checkout.
+      const planId = razorpayPlanIdFor(params.planCode);
+      if (planId && !isManualPlan(params.planCode)) {
+        const subscription = await razorpay.subscriptions.create({
+          plan_id: planId,
+          total_count: 12,
+          customer_notify: 1,
+          notes: {
+            planCode: params.planCode,
+            accountId: params.accountId,
+            email: params.email ?? "",
+            workspaceId: params.accountId,
+          },
+          ...(params.email ? { customer_notify: 1, start_at: Math.floor(Date.now() / 1000) + 300 } : {}),
+        });
+        return {
+          success: true,
+          orderId: subscription.id,
+          providerOrderId: subscription.id,
+          subscriptionId: subscription.id,
+        };
+      }
+
+      // Fallback: one-time order (free/manual-adjacent flows).
       const order = await razorpay.orders.create({
-        amount: 0, // Set by caller from BillingPlan.price
+        amount: 0,
         currency: params.currency ?? "INR",
         receipt: `rcpt_${Date.now()}`,
         notes: {

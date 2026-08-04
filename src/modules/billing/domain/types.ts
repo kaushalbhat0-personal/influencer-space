@@ -91,6 +91,8 @@ export interface CheckoutResult {
   checkoutUrl?: string;
   orderId?: string;
   providerOrderId?: string;
+  /** Present for Razorpay subscription checkouts. */
+  subscriptionId?: string;
   error?: string;
 }
 

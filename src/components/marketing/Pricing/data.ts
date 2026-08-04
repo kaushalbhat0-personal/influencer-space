@@ -8,6 +8,7 @@
 
 import { getPlansByFamily, getFeatureInfo, getAllFeatureIds, DEFAULT_CURRENCY } from "@/lib/capabilities";
 import { entitlement } from "@/modules/billing/application/entitlements";
+import { getCreatorCommercePlans, getCommercePlan } from "@/config/commerce/plans";
 import type { PlanDefinition } from "@/lib/capabilities";
 
 export interface PlanWithMeta {
@@ -15,10 +16,24 @@ export interface PlanWithMeta {
   highlights: string[];
 }
 
+/**
+ * IMPLEMENTATION-34: creator pricing derives from the canonical commerce
+ * config (Launch/Grow/Scale/Enterprise). No duplicated pricing anywhere.
+ */
 export function getCreatorPlans(): PlanWithMeta[] {
-  return getPlansByFamily("creator")
-    .sort((a, b) => a.price - b.price)
-    .map((plan) => ({ plan, highlights: getHighlights(plan.code) }));
+  const catalog = getPlanDefinitionsByCode();
+  return getCreatorCommercePlans()
+    .filter((p) => catalog[p.code])
+    .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+    .map((p) => ({ plan: catalog[p.code]!, highlights: getHighlights(p.code) }));
+}
+
+function getPlanDefinitionsByCode(): Record<string, PlanDefinition> {
+  const out: Record<string, PlanDefinition> = {};
+  for (const plan of getPlansByFamily("creator")) {
+    out[plan.code] = plan;
+  }
+  return out;
 }
 
 export function getAgencyPlans(): PlanWithMeta[] {
@@ -28,16 +43,17 @@ export function getAgencyPlans(): PlanWithMeta[] {
 }
 
 export function getEnterprisePlan(): Partial<PlanDefinition> {
+  const commerce = getCommercePlan("creator_enterprise");
   return {
-    code: "agency_enterprise",
-    family: "agency",
-    name: "Enterprise",
-    description: "For large agencies with custom requirements.",
-    targetAudience: "Large agencies",
+    code: "creator_enterprise",
+    family: "creator",
+    name: commerce?.name ?? "Enterprise",
+    description: commerce?.description ?? "Custom requirements and dedicated support.",
+    targetAudience: "Growing creators and brands",
     price: 0,
     currency: DEFAULT_CURRENCY,
     cycle: "monthly",
-    ctaLabel: "Contact Sales",
+    ctaLabel: commerce?.ctaLabel ?? "Contact Sales",
     ctaType: "contact",
     features: {},
   };
