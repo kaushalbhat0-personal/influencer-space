@@ -1,4 +1,5 @@
 import { healthService, type ServiceHealth } from "@/lib/observability/health-service";
+import { getOperationsSnapshotAction } from "@/actions/operations.actions";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,28 @@ function ServiceCard({ name, health }: { name: string; health: ServiceHealth }) 
 }
 
 export default async function HealthPage() {
-  const report = await healthService.checkAll();
+  const [report, snapshot] = await Promise.all([
+    healthService.checkAll(),
+    getOperationsSnapshotAction().catch(() => null),
+  ]);
 
   const groupOrder = ["database", "storage", "registry", "partnerEngine", "commissionEngine", "payoutEngine", "eventBus", "notifications", "idempotency", "jobRunner"];
   const grouped = groupOrder
     .filter((name) => report.services[name])
     .map((name) => ({ name: formatServiceName(name), key: name, health: report.services[name] }));
+
+  // IMPLEMENTATION-40: real runtime-derived operations health (no fake checks).
+  const runtime: Array<{ label: string; state: string; detail: string }> = snapshot
+    ? [
+        { label: "Billing", state: snapshot.billing.failedPayments > 0 ? "warning" : "healthy", detail: `${snapshot.billing.activeSubscribers} active · MRR ₹${snapshot.billing.mrr.toLocaleString("en-IN")}` },
+        { label: "Publishing", state: "healthy", detail: `${snapshot.publishing.snapshots} snapshots · ${snapshot.publishing.published24h} published (24h)` },
+        { label: "Provisioning", state: snapshot.provisioning.failed > 0 ? "warning" : "healthy", detail: `${snapshot.provisioning.succeeded} succeeded · ${snapshot.provisioning.failed} failed` },
+        { label: "Generation", state: snapshot.generation.failed > 0 ? "warning" : "healthy", detail: `${snapshot.generation.succeeded} completed · ${snapshot.generation.failed} failed` },
+        { label: "Jobs", state: snapshot.jobs.failed24h > 0 ? "warning" : "healthy", detail: `${snapshot.jobs.running} running · ${snapshot.jobs.failed24h} failed (24h)` },
+        { label: "Marketplace", state: "healthy", detail: `${snapshot.marketplace.themes} themes · ${snapshot.marketplace.blueprintCount} blueprints` },
+        { label: "Alerts", state: snapshot.alerts.ACTIVE > 0 ? "warning" : "healthy", detail: `${snapshot.alerts.ACTIVE} active alerts` },
+      ]
+    : [];
 
   return (
     <div>
@@ -61,6 +78,21 @@ export default async function HealthPage() {
         {grouped.map(({ name, key, health }) => (
           <ServiceCard key={key} name={name} health={health} />
         ))}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-sm font-semibold text-white mb-3" data-testid="health-runtime-title">Operations Runtime (real)</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {runtime.map((r) => (
+            <div key={r.label} className="rounded-xl border border-white/5 bg-zinc-900/50 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-white">{r.label}</h3>
+                <HealthBadge state={r.state} />
+              </div>
+              <p className="text-xs text-zinc-500" data-testid={`health-runtime-${r.label.toLowerCase()}`}>{r.detail}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mt-8 rounded-xl border border-white/10 bg-zinc-900/30 p-4">

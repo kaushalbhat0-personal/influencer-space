@@ -2,9 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { getOperationsDashboard, getJobStatus, exportDiagnostics } from "@/actions/operations.actions";
+import { getOperationsDashboard, getJobStatus, exportDiagnostics, getOperationsSnapshotAction } from "@/actions/operations.actions";
 import { OperationsClient } from "./_components/operations-client";
-import { Activity, Timer, Users, Building2, CreditCard, TrendingUp, Database, Package } from "lucide-react";
+import { Activity, Timer, Users, Building2, CreditCard, TrendingUp, Database, Package, Globe, Rocket, Sparkles, Store, HardDrive, Cpu, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +12,77 @@ export default async function OperationsPage() {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== "SUPER_ADMIN") return <p className="text-red-400 p-8">Unauthorized</p>;
 
-  const [dashboard, jobs, diagnostics] = await Promise.all([
+  const [dashboard, jobs, diagnostics, snapshot] = await Promise.all([
     getOperationsDashboard().catch(() => null),
     getJobStatus().catch(() => []),
     exportDiagnostics().catch(() => null),
+    getOperationsSnapshotAction().catch(() => null),
   ]);
 
   const metrics = dashboard?.metrics;
   const health = dashboard?.health;
+
+  const centers: Array<{ title: string; icon: React.ReactNode; items: Array<[string, string]> }> = snapshot
+    ? [
+        {
+          title: "Publishing", icon: <Globe className="h-4 w-4" />,
+          items: [
+            ["Snapshots", `${snapshot.publishing.snapshots}`],
+            ["Websites", `${snapshot.publishing.websites}`],
+            ["Published (24h)", `${snapshot.publishing.published24h}`],
+            ["Latest", snapshot.publishing.lastPublishedAt ? new Date(snapshot.publishing.lastPublishedAt).toLocaleString("en-IN") : "—"],
+          ],
+        },
+        {
+          title: "Provisioning", icon: <Rocket className="h-4 w-4" />,
+          items: [
+            ["Runs", `${snapshot.provisioning.runs}`],
+            ["Running", `${snapshot.provisioning.running}`],
+            ["Succeeded", `${snapshot.provisioning.succeeded}`],
+            ["Failed", `${snapshot.provisioning.failed}`],
+          ],
+        },
+        {
+          title: "Generation", icon: <Sparkles className="h-4 w-4" />,
+          items: [
+            ["Sessions", `${snapshot.generation.sessions}`],
+            ["Running", `${snapshot.generation.running}`],
+            ["Completed", `${snapshot.generation.succeeded}`],
+            ["Failed", `${snapshot.generation.failed}`],
+          ],
+        },
+        {
+          title: "Marketplace", icon: <Store className="h-4 w-4" />,
+          items: [
+            ["Themes", `${snapshot.marketplace.themes}`],
+            ["Blueprints", `${snapshot.marketplace.blueprintCount}`],
+            ["Theme Usage", `${snapshot.marketplace.themeUsage}`],
+            ["Commission Rev", `₹${snapshot.marketplace.commissionRevenue.toLocaleString("en-IN")}`],
+          ],
+        },
+        {
+          title: "Storage & Media", icon: <HardDrive className="h-4 w-4" />,
+          items: [
+            ["Assets", `${snapshot.storage.assets}`],
+            ["Gallery Media", `${snapshot.storage.media}`],
+            ["Active Alerts", `${snapshot.alerts.ACTIVE}`],
+            ["Jobs (24h ok)", `${snapshot.jobs.succeeded24h}`],
+          ],
+        },
+        {
+          title: "AI Ops (real)", icon: <Cpu className="h-4 w-4" />,
+          items: [
+            ["Provider Accounts", `${snapshot.ai.providerAccounts}`],
+            ["Fetches (24h)", `${snapshot.ai.fetches24h}`],
+            ["Cache Hits", `${snapshot.ai.cachedFetches}`],
+            ["Cache Rate", snapshot.ai.fetches24h > 0 ? `${Math.round((snapshot.ai.cachedFetches / snapshot.ai.fetches24h) * 100)}%` : "—"],
+            ["Avg Latency", `${snapshot.ai.avgLatencyMs}ms`],
+            ["Quota Units", `${snapshot.ai.quotaUnits}`],
+            ["Cost", "untracked"],
+          ],
+        },
+      ]
+    : [];
 
   return (
     <ContentContainer>
@@ -37,6 +100,36 @@ export default async function OperationsPage() {
           <MetricCard label="Events (24h)" value={metrics?.eventsLast24h ?? 0} icon={Activity} />
         </MetricGrid>
       </PageSection>
+
+      {/* Operations Center */}
+      {centers.length > 0 && (
+        <PageSection>
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Platform Operations Center</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {centers.map((c) => (
+              <div key={c.title} className="admin-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-s8ul-cyan">{c.icon}</span>
+                  <h3 className="text-sm font-medium text-white">{c.title}</h3>
+                </div>
+                <div className="space-y-1.5">
+                  {c.items.map(([label, value]) => (
+                    <div key={label} className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-500">{label}</span>
+                      <span className="text-zinc-300 font-medium">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          {snapshot && snapshot.health.overall !== "healthy" && (
+            <p className="mt-3 flex items-center gap-2 text-xs text-amber-400" data-testid="ops-health-warning">
+              <AlertTriangle className="h-3.5 w-3.5" /> Platform health: {snapshot.health.overall}
+            </p>
+          )}
+        </PageSection>
+      )}
 
       {/* Engine Status */}
       <PageSection>
@@ -129,6 +222,35 @@ export default async function OperationsPage() {
               <summary className="text-sm text-s8ul-cyan cursor-pointer hover:underline">View Full Diagnostics JSON</summary>
               <pre className="mt-3 text-xs text-zinc-400 overflow-auto max-h-96 whitespace-pre-wrap font-mono">
                 {JSON.stringify(diagnostics, null, 2)}
+              </pre>
+            </details>
+          </div>
+        </PageSection>
+      )}
+
+      {/* Platform Status */}
+      {snapshot && (
+        <PageSection>
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Platform Status (operations snapshot)</h2>
+          <div className="admin-card p-4">
+            <details>
+              <summary className="text-sm text-s8ul-cyan cursor-pointer hover:underline" data-testid="ops-snapshot-summary">View Platform Status Snapshot</summary>
+              <pre className="mt-3 text-xs text-zinc-400 overflow-auto max-h-96 whitespace-pre-wrap font-mono">
+                {JSON.stringify({
+                  timestamp: snapshot.timestamp,
+                  health: snapshot.health,
+                  alerts: snapshot.alerts,
+                  jobs: snapshot.jobs,
+                  publishing: snapshot.publishing,
+                  provisioning: snapshot.provisioning,
+                  generation: snapshot.generation,
+                  billing: snapshot.billing,
+                  marketplace: snapshot.marketplace,
+                  storage: snapshot.storage,
+                  audit: snapshot.audit,
+                  ai: snapshot.ai,
+                  migration: snapshot.migration,
+                }, null, 2)}
               </pre>
             </details>
           </div>

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { Activity, Globe, UserPlus, CreditCard, Upload, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { getUnifiedActivity } from "@/actions/operations.actions";
+import { UnifiedFeed } from "./_components/unified-feed";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ function getEventMeta(action: string): { icon: React.ElementType; color: string 
 }
 
 export default async function ActivityPage() {
+  const unified = await getUnifiedActivity({ limit: 150 }).catch(() => ({ rows: [], total: 0 }));
   const [recentEvents, recentPublishes, allTenants] = await Promise.all([
     prisma.auditLog.findMany({
       orderBy: { createdAt: "desc" },
@@ -58,6 +61,12 @@ export default async function ActivityPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Platform Activity</h1>
         <p className="mt-1 text-sm text-zinc-400">Real-time operational timeline across all domains.</p>
+      </div>
+
+      <div className="mb-8 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Unified Activity Feed</h3>
+        <p className="mb-3 text-xs text-zinc-600">Audit + billing events + generation + provisioning merged chronologically.</p>
+        <UnifiedFeed initial={unified} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

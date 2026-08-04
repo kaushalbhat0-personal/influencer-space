@@ -830,6 +830,54 @@ model BillingEvent {
   @@index([createdAt])
 }
 
+/// Platform alert record (IMPLEMENTATION-40) — durable alert state replacing
+/// runtime-only alerts. Status: ACTIVE / RESOLVED / DISMISSED.
+model AlertRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  level       String   // INFO | WARNING | CRITICAL
+  status      String   @default("ACTIVE") // ACTIVE | RESOLVED | DISMISSED
+  title       String
+  message     String?
+  source      String   // health | billing | publishing | provisioning | jobs | system
+  service     String?
+  tenantId    String?  @db.Uuid
+  workspaceId String?  @db.Uuid
+  relatedJobId String? @db.Uuid
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+  dismissedAt DateTime?
+  acknowledgedBy String?
+
+  @@index([level])
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+}
+
+/// Platform job record (IMPLEMENTATION-40) — durable job runs replacing the
+/// in-process-only scheduler view. Status: QUEUED | RUNNING | SUCCEEDED | FAILED | CANCELLED.
+model JobRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  type        String   // publishing | generation | cleanup | webhook | storage | cron
+  name        String
+  status      String   @default("QUEUED")
+  scheduledAt DateTime @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  durationMs  Int?
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  error       String?
+  triggeredBy String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
 /// Financial source of truth. Immutable after payment.
 /// Created before checkout, finalized after payment success.
 model BillingInvoice {

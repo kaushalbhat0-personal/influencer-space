@@ -127,13 +127,9 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   if (workspaceId) requestHeaders.set("x-workspace-id", workspaceId);
 
-  // Compatibility: /agency/* → /workspace/*
-  if (pathname.startsWith("/agency")) {
-    const newPath = pathname.replace("/agency", "/workspace");
-    const url = new URL(newPath, request.url);
-    return NextResponse.redirect(url, { status: 308 });
-  }
-
+  // CRITICAL-02 (audit): the old `/agency/* → /workspace/*` compatibility 308
+  // redirected every real agency route to a nonexistent `/workspace`, making the
+  // entire agency console 404. The agency console lives at `/agency/**`; removed.
   // Role-based redirects for authenticated users
   const redirect = lifecycleService.redirectTo(pathname, lifecycle);
   if (redirect) {

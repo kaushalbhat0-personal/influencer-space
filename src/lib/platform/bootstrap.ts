@@ -355,3 +355,23 @@ export class PlatformBootstrap {
 }
 
 export const platformBootstrap = new PlatformBootstrap();
+
+/**
+ * IMPLEMENTATION-40: register the operational jobs at module scope so the Job
+ * Center sees real runners even though PlatformBootstrap.initialize() (which
+ * previously owned registration) is never invoked at runtime. Register is
+ * idempotent; timers are started only by the (unused) initialize() path — the
+ * persisted Job Center + Vercel cron routes are the execution paths.
+ */
+jobRunner.register({
+  id: "expire-invites",
+  name: "Expire Stale Partner Invites",
+  intervalMs: 3600000,
+  execute: async () => { const c = await partnerEngine.expireStaleInvites(); if (c > 0) log(`[Job] Expired ${c} stale invites`); },
+});
+jobRunner.register({
+  id: "cleanup-audit",
+  name: "Cleanup Old Audit Logs",
+  intervalMs: 86400000,
+  execute: async () => { const r = await purgeOldAuditLogs(90); if (r.deleted > 0) log(`[Job] Purged ${r.deleted} old audit logs`); },
+});

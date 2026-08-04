@@ -4,6 +4,7 @@ import { getDecryptedToken, refreshToken } from "@/lib/social-oauth";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { afterContentChange } from "@/lib/publishing/content-change";
+import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
 
 const BATCH_SIZE = 5;
 const MEDIA_LIMIT = 10;
@@ -446,6 +447,8 @@ export async function GET(request: NextRequest) {
       results.push({ tenantId: tenant.id, synced });
     }
 
+    await persistedJobRuntime.recordCron("Sync Socials", true, `processed ${tenants.length} tenants`);
+
     return NextResponse.json({
       ok: true,
       processed: tenants.length,
@@ -453,6 +456,7 @@ export async function GET(request: NextRequest) {
       hasMore: tenants.length === BATCH_SIZE,
     });
   } catch (error) {
+    await persistedJobRuntime.recordCron("Sync Socials", false, error instanceof Error ? error.message : "failed");
     captureError(error, { service: "sync-socials", operation: "GET" });
     return NextResponse.json(
       { error: "Sync failed", detail: error instanceof Error ? error.message : String(error) },

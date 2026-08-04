@@ -155,3 +155,97 @@ export async function exportDiagnostics() {
   requireSuperAdmin(session);
   return getDiagnostics();
 }
+
+// â”€â”€ IMPLEMENTATION-40: Operations Center actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+import { alertStore } from "@/modules/operations/application/alert-store";
+import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
+import { getOperationsSnapshot } from "@/modules/operations/application/operations-aggregator";
+
+export async function getOperationsSnapshotAction() {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  return getOperationsSnapshot();
+}
+
+export async function syncAlerts() {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  const actor = session?.user?.email ?? "super-admin";
+  const result = await alertStore.syncFromRuntime(actor);
+  await logAction("system", "operations:sync-alerts", { created: result.created });
+  return result;
+}
+
+export async function listAlerts(input: Parameters<typeof alertStore.list>[0]) {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  return alertStore.list(input);
+}
+
+export async function setAlertStatus(id: string, status: "RESOLVED" | "DISMISSED") {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  const actor = session?.user?.email ?? "super-admin";
+  return alertStore.setStatus(id, status, actor);
+}
+
+export async function listJobRuns(input: Parameters<typeof persistedJobRuntime.list>[0]) {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  return persistedJobRuntime.list(input);
+}
+
+export async function triggerPersistedJob(jobId: string) {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  const actor = session?.user?.email ?? "super-admin";
+  const result = await persistedJobRuntime.runPersisted(jobId, { type: "cron" }, actor);
+  await logAction("system", "operations:trigger-job", { jobId, ok: result.success, runId: result.runId });
+  return result;
+}
+
+export async function requeueJob(id: string) {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  return persistedJobRuntime.requeue(id);
+}
+
+export async function cancelJob(id: string) {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  return persistedJobRuntime.cancel(id);
+}
+
+/** Unified activity feed: audit + billing events + generation + provisioning. */
+export async function getUnifiedActivity(input: { kind?: string; search?: string; limit?: number } = {}) {
+  const session = await getServerSession(authOptions);
+  requireSuperAdmin(session);
+  const limit = input.limit ?? 100;
+
+  const [audit, billingEvents, generations, provisions] = await Promise.all([
+    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 300, select: { id: true, action: true, tenantId: true, createdAt: true, metadata: true } }),
+    prisma.billingEvent.findMany({ orderBy: { createdAt: "desc" }, take: 300, select: { id: true, type: true, createdAt: true, workspaceId: true } }),
+    prisma.generationSession.findMany({ orderBy: { startedAt: "desc" }, take: 300, select: { id: true, creatorName: true, status: true, startedAt: true } }),
+    prisma.creatorProvisionRun.findMany({ orderBy: { startedAt: "desc" }, take: 300, select: { id: true, creatorName: true, status: true, startedAt: true } }),
+  ]);
+
+  type Row = { id: string; kind: string; type: string; detail: string; createdAt: string };
+  const rows: Row[] = [
+    ...audit.map((a) => ({ id: `audit_${a.id}`, kind: "audit", type: a.action, detail: a.tenantId ?? "", createdAt: a.createdAt.toISOString() })),
+    ...billingEvents.map((b) => ({ id: `billing_${b.id}`, kind: "billing", type: b.type, detail: b.workspaceId ?? "", createdAt: b.createdAt.toISOString() })),
+    ...generations.map((g) => ({ id: `gen_${g.id}`, kind: "generation", type: g.status, detail: g.creatorName, createdAt: g.startedAt.toISOString() })),
+    ...provisions.map((p) => ({ id: `prov_${p.id}`, kind: "provisioning", type: p.status, detail: p.creatorName, createdAt: p.startedAt.toISOString() })),
+  ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  const filtered = rows.filter((r) => {
+    if (input.kind && input.kind !== "ALL" && r.kind !== input.kind) return false;
+    if (input.search) {
+      const q = input.search.toLowerCase();
+      return r.type.toLowerCase().includes(q) || r.detail.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  return { rows: filtered.slice(0, limit), total: filtered.length };
+}

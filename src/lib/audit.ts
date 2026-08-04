@@ -49,10 +49,14 @@ export async function logAction(
   tx?: SqlExecutor,
 ): Promise<void> {
   const client = tx || prisma;
+  // "system" is a pseudo-tenant (platform-scoped action); AuditLog.tenantId is a
+  // non-null UUID, so map it to a stable sentinel instead of crashing on the
+  // literal string (IMPLEMENTATION-40 fixes the latent runtime error).
+  const tenantUuid = tenantId === "system" ? "00000000-0000-0000-0000-000000000000" : tenantId;
   await client.$executeRawUnsafe(
     `INSERT INTO "AuditLog" ("id", "tenantId", "action", "metadata", "createdAt")
      VALUES (gen_random_uuid(), $1, $2, $3::jsonb, NOW())`,
-    tenantId,
+    tenantUuid,
     action,
     JSON.stringify(sanitizeMetadata(metadata)),
   );

@@ -1,7 +1,18 @@
 import { supabaseAdmin, supabaseClient, BUCKET } from "@/lib/supabase";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
+/**
+ * CRITICAL-01 (audit): previously unauthenticated. This endpoint lists buckets
+ * and exposes infrastructure key prefixes — now SUPER_ADMIN only.
+ */
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const results: Record<string, unknown> = {};
 
   // 1. Check env vars

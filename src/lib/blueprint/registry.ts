@@ -57,7 +57,6 @@ export class BlueprintRegistry {
   }): BlueprintDefinition[] {
     this.ensureInitialized();
     let results = Array.from(this.cache?.values() ?? []);
-
     if (options?.category) results = results.filter((b) => b.category === options.category);
     if (options?.search) {
       const q = options.search.toLowerCase();
@@ -80,6 +79,10 @@ export class BlueprintRegistry {
     }
 
     return results;
+  }
+
+  count(): number {
+    return this.getAll().length;
   }
 
   getCategories(): BlueprintCategory[] {
