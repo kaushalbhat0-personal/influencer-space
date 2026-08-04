@@ -17,7 +17,7 @@ async function loginSuperAdmin(page: import("@playwright/test").Page): Promise<b
 }
 
 test("R14.1 - CRITICAL-01: /api/test-storage requires authentication", async ({ request }) => {
-  const res = await request.get("http://localhost:3000/api/test-storage");
+  const res = await request.get("/api/test-storage");
   expect(res.status()).toBe(401);
 });
 
