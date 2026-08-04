@@ -117,8 +117,10 @@ design-system refinement) and **44B** (application + verification).
   4. Keyboard focus ring visible;
   5. Reduced-motion respected;
   6. Storefront renders in dark mode, no console errors.
-- **Production**: R18 run against `https://influencer-space-alpha.vercel.app`
-  (`BASE_URL` set) — see below.
+- **Production**: **R18 6/6 passing against the real Vercel deployment**
+  (`https://influencer-space-alpha.vercel.app`); R16 (5/5) + R17 (5/5)
+  regression green on production — the PES token/hydration changes introduced
+  no regressions.
 
 ## 16. Future Roadmap
 
