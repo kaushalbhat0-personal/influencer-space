@@ -142,12 +142,18 @@ implementation.
 
 ## 16. Playwright Local
 
-- **R14 8/8 passing locally** (dev server + shared Supabase DB).
+- **R14 8/8 passing** against the dev server AND the production build
+  (`next start`) — hydration errors fixed with deterministic date formatting.
 
 ## 17. Playwright Production
 
-- `$env:SKIP_DB_CHECK="true"; npx playwright test implementation40 --project=production --grep "R14"` —
-  verified against `https://influencer-space-alpha.vercel.app` after deploy.
+- **R14 8/8 passing against the real Vercel deployment**:
+  `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
+  npx playwright test implementation40 --project=production --grep "R14"`.
+- **R13 4/4 regression green** on real production (no IMPLEMENTATION-39 regressions).
+- Note: the `production` Playwright project defaults `BASE_URL` to
+  `localhost:3000`; true production verification requires `BASE_URL` set to the
+  deployment (documented here for future implementations).
 
 ## 18. Browser Verification
 

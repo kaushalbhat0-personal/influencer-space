@@ -7,3 +7,71 @@
 
  ✓ Starting...
  ✓ Ready in 2.4s
+{"timestamp":"2026-08-04T14:58:42.485Z","service":"supabase","environment":"production","level":"INFO","message":"Supabase URL: Set"}
+{"timestamp":"2026-08-04T14:58:42.485Z","service":"supabase","environment":"production","level":"INFO","message":"Supabase Anon Key: Set"}
+{"timestamp":"2026-08-04T14:58:42.486Z","service":"supabase","environment":"production","level":"INFO","message":"Supabase Service Key: Set"}
+{"timestamp":"2026-08-04T14:58:50.108Z","service":"nextauth-route","environment":"production","level":"INFO","message":"Auth API loaded"}
+{"timestamp":"2026-08-04T14:58:50.108Z","service":"nextauth-route","environment":"production","level":"INFO","message":"NEXTAUTH_SECRET: Set"}
+{"timestamp":"2026-08-04T14:58:50.108Z","service":"nextauth-route","environment":"production","level":"INFO","message":"NEXTAUTH_URL: http://localhost:3000"}
+{"timestamp":"2026-08-04T14:58:50.204Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T14:58:52.084Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T14:58:55.387Z","service":"job-runner","environment":"production","level":"INFO","message":"Registered: Expire Stale Partner Invites (every 3600000ms)"}
+{"timestamp":"2026-08-04T14:58:55.388Z","service":"job-runner","environment":"production","level":"INFO","message":"Registered: Cleanup Old Audit Logs (every 86400000ms)"}
+{"timestamp":"2026-08-04T14:58:55.417Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:58:56.282Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard started","operation":"get_dashboard","metadata":{}}
+{"timestamp":"2026-08-04T14:58:57.486Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:58:57.603Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard completed","operation":"get_dashboard","duration":1321,"metadata":{"result":"success"}}
+{"timestamp":"2026-08-04T14:58:57.745Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:58:57.843Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:59:13.789Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T14:59:15.158Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T14:59:16.893Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:59:18.641Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:59:18.695Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T14:59:18.771Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:18.124Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T15:00:19.590Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T15:00:21.086Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:21.556Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard started","operation":"get_dashboard","metadata":{}}
+{"timestamp":"2026-08-04T15:00:22.878Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:22.981Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard completed","operation":"get_dashboard","duration":1424,"metadata":{"result":"success"}}
+{"timestamp":"2026-08-04T15:00:23.014Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:23.086Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:26.959Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T15:00:27.606Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T15:00:28.378Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:30.022Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:30.091Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:30.127Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:32.930Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T15:00:33.536Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T15:00:34.367Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:36.117Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:36.127Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:36.270Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:37.236Z","service":"job-runner","environment":"production","level":"INFO","message":"Registered: Expire Stale Partner Invites (every 3600000ms)"}
+{"timestamp":"2026-08-04T15:00:37.236Z","service":"job-runner","environment":"production","level":"INFO","message":"Registered: Cleanup Old Audit Logs (every 86400000ms)"}
+{"timestamp":"2026-08-04T15:00:40.494Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T15:00:41.160Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T15:00:41.960Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:43.793Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:43.855Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:43.928Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:46.874Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T15:00:47.462Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T15:00:48.258Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:50.257Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:50.349Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:50.436Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:53.918Z","service":"auth","environment":"production","level":"INFO","message":"Login attempt","operation":"authorize","metadata":{"email":"superadmin@influencer.space"}}
+{"timestamp":"2026-08-04T15:00:54.529Z","service":"auth","environment":"production","level":"INFO","message":"Login successful","operation":"authorize","metadata":{"email":"superadmin@influencer.space","role":"SUPER_ADMIN"}}
+{"timestamp":"2026-08-04T15:00:55.361Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:55.362Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard started","operation":"get_dashboard","metadata":{}}
+{"timestamp":"2026-08-04T15:00:56.097Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard completed","operation":"get_dashboard","duration":735,"metadata":{"result":"success"}}
+{"timestamp":"2026-08-04T15:00:57.334Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:57.457Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:57.467Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:00:58.815Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard started","operation":"get_dashboard","metadata":{}}
+{"timestamp":"2026-08-04T15:00:59.659Z","service":"billing","environment":"production","level":"INFO","message":"getDashboard completed","operation":"get_dashboard","duration":844,"metadata":{"result":"success"}}
+{"timestamp":"2026-08-04T15:01:00.441Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
+{"timestamp":"2026-08-04T15:01:00.503Z","service":"alert-evaluator","environment":"production","level":"INFO","message":"Alert evaluation complete: 2/9 rules triggered","metadata":{"triggeredCount":2,"totalRules":9}}
