@@ -3,6 +3,9 @@ import { shot, loginAsCreator, ErrorCollector } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
+// The webhook simulator is guarded dev-only (NODE_ENV !== production).
+const IS_PROD = Boolean(process.env.BASE_URL?.includes("vercel.app"));
+
 test("R9.1 - Billing harness exposes the subscription + capability state", async ({ page }) => {
   test.setTimeout(120000);
   const errors = new ErrorCollector(page);
@@ -23,7 +26,8 @@ test("R9.1 - Billing harness exposes the subscription + capability state", async
   errors.assertClean();
 });
 
-test("R9.2 - Webhook simulator drives the lifecycle (activate → fail → cancel)", async ({ page }) => {
+test("R9.2 - Webhook simulator drives the lifecycle (activate to fail to cancel)", async ({ page }) => {
+  test.skip(IS_PROD, "dev-only webhook simulator");
   test.setTimeout(120000);
   const errors = new ErrorCollector(page);
   errors.install();
@@ -34,17 +38,17 @@ test("R9.2 - Webhook simulator drives the lifecycle (activate → fail → cance
 
   // Activate.
   await page.click('[data-testid="sim-subscription.activated"]');
-  await page.waitForFunction(() => document.querySelector('[data-testid="sim-last"]')?.textContent?.includes("handled → ACTIVE"), { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('[data-testid="sim-last"]')?.textContent?.includes("handled Ã¢â€ â€™ ACTIVE"), { timeout: 20000 });
 
-  // Payment failure → PAST_DUE.
+  // Payment failure Ã¢â€ â€™ PAST_DUE.
   await page.click('[data-testid="sim-payment.failed"]');
-  await page.waitForFunction(() => document.querySelector('[data-testid="sim-last"]')?.textContent?.includes("handled → PAST_DUE"), { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('[data-testid="sim-last"]')?.textContent?.includes("handled Ã¢â€ â€™ PAST_DUE"), { timeout: 20000 });
 
-  // Cancel → CANCELLED.
+  // Cancel Ã¢â€ â€™ CANCELLED.
   await page.click('[data-testid="sim-subscription.cancelled"]');
-  await page.waitForFunction(() => document.querySelector('[data-testid="sim-last"]')?.textContent?.includes("handled → CANCELLED"), { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('[data-testid="sim-last"]')?.textContent?.includes("handled Ã¢â€ â€™ CANCELLED"), { timeout: 20000 });
 
-  // Replay the cancelled event → idempotent (no state mutation, handled=false or status unchanged).
+  // Replay the cancelled event Ã¢â€ â€™ idempotent (no state mutation, handled=false or status unchanged).
   await page.click('[data-testid="sim-subscription.cancelled"]');
   await page.waitForTimeout(800);
 
@@ -81,6 +85,7 @@ test("R9.3 - Customer billing page shows capabilities + timeline (Billing v2 run
 });
 
 test("R9.4 - Capability transition after lifecycle events (premium lock/unlock)", async ({ page }) => {
+  test.skip(IS_PROD, "dev-only webhook simulator");
   test.setTimeout(120000);
   const errors = new ErrorCollector(page);
   errors.install();
