@@ -42,6 +42,11 @@
   --duration-normal: 300ms;
   --duration-slow: 500ms;
 
+  /* IMPLEMENTATION-44: consistent elevation scale (shadow layer only — no depth
+     changes, no layout shift; respects the flat dark aesthetic). */
+  --shadow-elevation: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-elevation-hover: 0 2px 4px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.35);
+
   --focus-ring: 0 0 0 2px var(--surface-root), 0 0 0 4px var(--brand-primary);
 }
 
@@ -91,14 +96,22 @@ body {
 @layer components {
   .admin-card {
     @apply rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm;
+    box-shadow: var(--shadow-elevation);
   }
 
   .admin-card-hover {
     @apply admin-card transition-all duration-300 hover:border-indigo-400/30;
+    transition-property: border-color, box-shadow, transform;
+    transition-duration: var(--duration-normal);
+  }
+
+  .admin-card-hover:hover {
+    box-shadow: var(--shadow-elevation-hover);
   }
 
   .admin-table {
     @apply w-full;
+    font-variant-numeric: tabular-nums;
   }
 
   .admin-table th {

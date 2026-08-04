@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
+/** IMPLEMENTATION-44: deterministic date (no locale-dependent hydration mismatch). */
+const fmtDateTime = (v: string | Date) => new Date(v).toISOString().replace("T", " ").slice(0, 16);
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -122,7 +125,7 @@ export function StorefrontStatusCard({
         {publishedAt && isLive && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-zinc-400">Published at</span>
-            <span className="text-zinc-400 text-xs">{new Date(publishedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="text-zinc-400 text-xs">{fmtDateTime(publishedAt)}</span>
           </div>
         )}
 
@@ -222,7 +225,7 @@ export function StorefrontStatusCard({
                 {recentVersions.map((v) => (
                   <div key={v.version} className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
                     <span className="text-zinc-300 font-mono">v{v.version}</span>
-                    <span className="flex-1 text-right text-zinc-500">{new Date(v.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="flex-1 text-right text-zinc-500">{fmtDateTime(v.createdAt)}</span>
                     <button
                       onClick={() => handleRestoreVersion(v.version)}
                       disabled={restoringVersion === v.version}
