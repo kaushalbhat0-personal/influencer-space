@@ -131,7 +131,10 @@ tool, useful for future marketplace themes).
   console errors; theme-runtime diagnostics resolve for all themes; responsive
   at 375px (no horizontal scroll, marketing + storefront); reduced-motion
   respected.
-- **Production**: R19 run against `https://influencer-space-alpha.vercel.app`.
+- **Production**: **R19 5/5 passing against the real Vercel deployment**
+  (`https://influencer-space-alpha.vercel.app`); R17 (5/5) + R18 (6/6)
+  regression green on production — the experience layer introduced no
+  regressions to marketing or the storefront.
 
 ## 17. Future Roadmap
 
