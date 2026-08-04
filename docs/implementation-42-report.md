@@ -105,8 +105,12 @@ commerce configuration drives every surface. No duplicate pricing.
 
 ## Playwright Production
 
-- `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
+- **R16 5/5 passing against the real Vercel deployment**:
+  `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
   npx playwright test implementation42 --project=production --grep "R16"`.
+- **Regression**: R13 (4) + R14 (8) + R15 (6) all green on real production — the
+  plan consolidation, agency restriction and marketing changes introduced no
+  regressions.
 
 ## Browser Verification
 
