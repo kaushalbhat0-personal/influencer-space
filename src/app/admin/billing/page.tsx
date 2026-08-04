@@ -37,7 +37,7 @@ export default async function BillingPage() {
   const plans = billingService.getPlans() as BillingPlan[];
 
   const billingData: BillingDashboard = {
-    plan: { code: "creator_free", family: "creator", name: "Free Forever", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
+    plan: { code: "creator_launch", family: "creator", name: "Creator Launch", description: "Get your storefront online and start selling — free.", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
     subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_free", status: "ACTIVE", trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
     invoices: [], paymentMethods: [], usage: [],
     activeProducts: productCount, activeGallery: 0, storageUsed: 0, ordersProcessed: 0, messagesSent: 0,

@@ -6,6 +6,15 @@ interface SectionProps {
   readonly className?: string;
   readonly containerClassName?: string;
   readonly background?: "none" | "subtle" | "gradient";
+  /**
+   * IMPLEMENTATION-43 Phase 7 background system: every section flows from the
+   * previous one with no abrupt black boxes.
+   *  - hero:     radial highlight + soft gradient (top of page)
+   *  - surface:  soft elevated surface (features/content)
+   *  - elevated: stronger surface + top highlight (pricing)
+   *  - neutral:  flat neutral (FAQ)
+   */
+  readonly tone?: "hero" | "surface" | "elevated" | "neutral";
 }
 
 const BG_CLASSES = {
@@ -15,17 +24,26 @@ const BG_CLASSES = {
     "bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.04),transparent_60%)]",
 } as const;
 
+const TONE_CLASSES = {
+  hero: "bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.10),transparent_55%)] bg-zinc-950",
+  surface: "bg-zinc-900/20",
+  elevated: "bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.06),transparent_60%)] bg-zinc-900/10 border-y border-white/[0.04]",
+  neutral: "bg-zinc-950",
+} as const;
+
 export function Section({
   id,
   children,
   className = "",
   containerClassName = "",
   background = "none",
+  tone,
 }: SectionProps) {
+  const toneClass = tone ? TONE_CLASSES[tone] : "";
   return (
     <section
       id={id}
-      className={`relative px-4 py-20 sm:px-8 sm:py-28 ${BG_CLASSES[background]} ${className}`}
+      className={`relative px-4 py-20 sm:px-8 sm:py-28 ${BG_CLASSES[background]} ${toneClass} ${className}`}
     >
       <div className={`mx-auto max-w-7xl ${containerClassName}`}>
         {children}

@@ -25,7 +25,7 @@ export function Pricing() {
   const entHighlights = getEnterpriseHighlights();
 
   return (
-    <section id="pricing" className="relative px-4 py-20 sm:px-8 sm:py-28">
+    <section id="pricing" className="relative px-4 py-20 sm:px-8 sm:py-28 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.06),transparent_60%)] bg-zinc-900/10 border-y border-white/[0.04]">
       <div className="mx-auto max-w-7xl">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">

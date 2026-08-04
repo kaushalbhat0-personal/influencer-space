@@ -3,8 +3,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { IndianRupee, FileText, CreditCard, TrendingUp } from "lucide-react";
+import { IndianRupee, FileText, CreditCard, TrendingUp, Users } from "lucide-react";
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { capabilityService } from "@/lib/capabilities";
+import { partnerService } from "@/modules/partner/application/partner";
 
 export const dynamic = "force-dynamic";
 
@@ -20,31 +23,46 @@ export default async function AgencyBilling() {
   const wsRecords = await prisma.workspace.findMany({ where: { agencyId }, select: { id: true } });
   const wsIds = wsRecords.map((w) => w.id);
 
-  const [invoiceData, subscriptionData] = await Promise.all([
+  const [invoiceData, subscriptionData, agencyWs, managedCreators, partner] = await Promise.all([
     wsIds.length > 0 ? billingRepository.findInvoicesByWorkspaceIds(wsIds, 20) : Promise.resolve([]),
     wsIds.length > 0 ? billingRepository.findSubscriptionsByWorkspaceIds(wsIds) : Promise.resolve([]),
+    wsRecords[0] ? resolveActivePlan(wsRecords[0]?.id, undefined) : Promise.resolve({ code: null, origin: "none" as const, status: null }),
+    prisma.agencyTenant.count({ where: { agencyId, status: "ACTIVE" } }),
+    partnerService.getById(agencyId),
   ]);
 
-  const totalRevenue = invoiceData.reduce((s, i) => s + i.amount, 0);
   const activeSubs = subscriptionData.filter((s) => s.status === "ACTIVE" || s.status === "TRIALING");
+  const creatorLimit = agencyWs.code ? capabilityService.limit(agencyWs.code, "max_clients") : 1;
+  const limitLabel = creatorLimit === -1 ? "Unlimited" : String(creatorLimit);
+  const displayName = agencyWs.code ? capabilityService.getPlan(agencyWs.code)?.name ?? agencyWs.code : "Partner Free";
 
   return (
     <ContentContainer>
-      <PageHeader title="Billing" description="Client subscriptions and revenue."
+      <PageHeader title="Billing" description="Your partner plan and the creators you manage."
         breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Billing" }]} />
 
       <PageSection>
         <MetricGrid>
-          <MetricCard label="Total Revenue" value={formatRupees(totalRevenue)} icon={IndianRupee} />
-          <MetricCard label="Active Subscriptions" value={activeSubs.length} icon={CreditCard} />
-          <MetricCard label="Invoices" value={invoiceData.length} icon={FileText} />
-          <MetricCard label="Avg per Client" value={wsIds.length > 0 ? formatRupees(Math.round(totalRevenue / wsIds.length)) : "—"} icon={TrendingUp} />
+          <MetricCard label="Partner Tier" value={displayName} icon={CreditCard} subtext={`Renews ${subscriptionData[0]?.renewsAt ? new Date(subscriptionData[0].renewsAt).toISOString().slice(0, 10) : "per your plan"}`} />
+          <MetricCard label="Managed Creators" value={managedCreators} icon={Users} subtext={`Limit: ${limitLabel}`} />
+          <MetricCard label="Creator Subscriptions" value={activeSubs.length} icon={TrendingUp} />
+          <MetricCard label="Creator Invoices" value={invoiceData.length} icon={FileText} />
         </MetricGrid>
       </PageSection>
 
+      {/* Honest policy — creators pay CreatorStore directly (Phase 5) */}
+      <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-zinc-400" data-testid="partner-subscription-policy">
+        <p className="font-medium text-zinc-200">Creator Subscription Policy</p>
+        <ul className="mt-2 space-y-1.5 text-xs text-zinc-500" role="list">
+          <li>Every creator pays CreatorStore directly for their own Creator plan (Creator Grow minimum for partner-onboarded creators).</li>
+          <li>The invoices below are the creators&apos; subscriptions billed by CreatorStore — they are not your revenue.</li>
+          <li>You may charge clients separately for setup, migration, training, branding, consulting and maintenance.</li>
+        </ul>
+      </div>
+
       {invoiceData.length > 0 && (
         <PageSection>
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Recent Invoices</h2>
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Creator Subscriptions (billed to CreatorStore)</h2>
           <div className="admin-card overflow-hidden">
             <table className="admin-table">
               <thead>
@@ -67,7 +85,7 @@ export default async function AgencyBilling() {
                         "bg-red-500/20 text-red-400"
                       }`}>{inv.status}</span>
                     </td>
-                    <td><span className="text-xs text-zinc-500">{new Date(inv.createdAt).toLocaleDateString("en-IN")}</span></td>
+                    <td><span className="text-xs text-zinc-500">{new Date(inv.createdAt).toISOString().slice(0, 10)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -79,9 +97,16 @@ export default async function AgencyBilling() {
       {invoiceData.length === 0 && (
         <div className="admin-card p-8 text-center">
           <CreditCard className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500">No billing data yet. Invoices appear when clients subscribe.</p>
+          <p className="text-sm text-zinc-500">No creator subscriptions yet. They appear when your managed creators subscribe.</p>
         </div>
       )}
+
+      <PageSection>
+        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Partner Rewards</h2>
+        <div className="admin-card p-5 text-sm text-zinc-500" data-testid="partner-rewards-coming-soon">
+          Coming soon — recurring partner rewards are being designed. No rewards or commissions are active today, and nothing is automatic.
+        </div>
+      </PageSection>
     </ContentContainer>
   );
 }

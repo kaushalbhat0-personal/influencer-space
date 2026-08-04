@@ -55,7 +55,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_launch",
     name: "Creator Launch",
-    description: "Start your creator storefront for free.",
+    description: "Get your storefront online and start selling — free, no credit card needed.",
     family: "creator",
     price: 0,
     currency: "INR",
@@ -69,7 +69,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_grow",
     name: "Creator Grow",
-    description: "Premium themes, custom domain and AI-powered creation.",
+    description: "Sell more with a custom domain, premium themes and AI-assisted creation.",
     family: "creator",
     price: 699,
     currency: "INR",
@@ -91,7 +91,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_scale",
     name: "Creator Scale",
-    description: "Maximum growth: advanced AI, API access and white label.",
+    description: "Run your creator business at full scale with advanced AI, API access and a brand you own.",
     family: "creator",
     price: 1995,
     currency: "INR",
@@ -116,7 +116,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_enterprise",
     name: "Creator Enterprise",
-    description: "Custom requirements, dedicated support, manual sales.",
+    description: "Custom requirements and dedicated support for teams and brands.",
     family: "creator",
     price: null,
     currency: "INR",
@@ -142,7 +142,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "partner_free",
     name: "Partner Free",
-    description: "For independent consultants getting started with clients.",
+    description: "Manage your first clients and explore the partner workspace — free.",
     family: "partner",
     price: 0,
     currency: "INR",
@@ -156,7 +156,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "partner_solo",
     name: "Solo Partner",
-    description: "For solo partners managing a handful of creators.",
+    description: "Run client projects with confidence: custom domains, premium themes and AI help.",
     family: "partner",
     price: 1499,
     currency: "INR",
@@ -178,7 +178,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "partner_growth",
     name: "Partner Growth",
-    description: "For growing agencies scaling a creator portfolio.",
+    description: "Grow your creator portfolio with advanced AI, analytics and API integrations.",
     family: "partner",
     price: 4999,
     currency: "INR",
@@ -200,7 +200,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "partner_scale",
     name: "Partner Scale",
-    description: "For established agencies with many managed creators.",
+    description: "Scale many creators under your own brand with white-label and priority support.",
     family: "partner",
     price: 9999,
     currency: "INR",

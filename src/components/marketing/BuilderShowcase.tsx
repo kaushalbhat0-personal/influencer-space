@@ -32,7 +32,7 @@ const BUILDER_FEATURES = [
   {
     icon: Globe,
     title: "One-Click Publish",
-    body: "Publish to your domain instantly. Changes go live immediately with zero downtime.",
+    body: "Publish your storefront to your domain and take it live in seconds — no downtime.",
   },
 ];
 

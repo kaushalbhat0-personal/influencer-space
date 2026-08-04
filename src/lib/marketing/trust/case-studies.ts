@@ -1,65 +1,9 @@
 import type { TrustCaseStudy } from "./types";
 
-const PLACEHOLDER_AVATAR = "/placeholder-avatar.svg";
-
-export const SEED_CASE_STUDIES: TrustCaseStudy[] = [
-  {
-    id: "cs-1",
-    title: "From 0 to ₹1.2L/month — How a Tech YouTuber Built a Merch Business",
-    creatorName: "Arun Kumar",
-    creatorAvatar: PLACEHOLDER_AVATAR,
-    creatorPlatform: "YouTube (150K subscribers)",
-    niche: "Tech Reviews",
-    before: "Relied on brand sponsorships as sole income. No direct revenue from audience. Link-in-bio with just social links.",
-    after: "Full storefront with merch, course, and affiliate hub. Automated checkout via UPI and cards. SEO-optimized product pages driving organic traffic.",
-    timeSaved: "2 minutes (AI generation) vs 2 weeks (building from scratch)",
-    productsLaunched: 12,
-    trafficIncrease: "3.5x",
-    conversionImprovement: "8.2%",
-    revenueIncrease: "₹1.2L/month",
-    quote:
-      "CreatorStore turned my channel into a real business. I went from hoping sponsors would call to having a storefront that makes money while I sleep.",
-    cta: "Start your creator business",
-    ctaHref: "/signup",
-    featured: true,
-  },
-  {
-    id: "cs-2",
-    title: "Agency Onboards 15 Clients in One Week with White-Label Storefronts",
-    creatorName: "Vikram Singh",
-    creatorAvatar: PLACEHOLDER_AVATAR,
-    creatorPlatform: "Creator Agency (15 clients)",
-    niche: "Multi-Niche Agency",
-    before: "Manual website building for each client. 2-3 weeks per client. Different tools for different clients. No centralized reporting.",
-    after: "AI-generated storefronts in 2 minutes per client. White-label dashboards. Centralized billing and analytics. Team collaboration.",
-    timeSaved: "From 3 weeks per client to 2 minutes",
-    productsLaunched: 45,
-    trafficIncrease: "4x",
-    conversionImprovement: "5.5%",
-    quote:
-      "My team used to spend weeks building basic websites for clients. Now we spend that time on strategy and growth. CreatorStore automated the infrastructure.",
-    cta: "Explore agency features",
-    ctaHref: "/features",
-    featured: true,
-  },
-  {
-    id: "cs-3",
-    title: "Digital Artist Replaces Linktree with a Full Storefront",
-    creatorName: "Neha Patel",
-    creatorAvatar: PLACEHOLDER_AVATAR,
-    creatorPlatform: "Instagram (80K followers)",
-    niche: "Digital Art",
-    before: "Linktree with links to different platforms. No way to sell prints directly. Manually processing orders via DMs.",
-    after: "Full storefront with print store, commission booking, and digital downloads. Automated checkout. 24/7 sales.",
-    timeSaved: "4 hours/week on order management",
-    productsLaunched: 24,
-    trafficIncrease: "2x",
-    conversionImprovement: "6.8%",
-    revenueIncrease: "₹60K/month",
-    quote:
-      "I used to spend hours a week chasing orders through Instagram DMs. CreatorStore automated everything. My storefront works for me 24/7.",
-    cta: "Build your storefront free",
-    ctaHref: "/signup",
-    featured: false,
-  },
-];
+/**
+ * IMPLEMENTATION-43 honesty audit: the previous seed contained fabricated case
+ * studies (invented creators, revenue and growth outcomes). CreatorStore does
+ * not fabricate case studies. No case study is displayed unless it is a real,
+ * verifiable story — so this seed is intentionally empty.
+ */
+export const SEED_CASE_STUDIES: TrustCaseStudy[] = [];

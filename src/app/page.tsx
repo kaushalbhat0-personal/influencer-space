@@ -26,6 +26,21 @@ import { SEED_METRICS } from "@/lib/marketing/trust/metrics";
 import { SEED_TESTIMONIALS } from "@/lib/marketing/trust/testimonials";
 import { SEED_CASE_STUDIES } from "@/lib/marketing/trust/case-studies";
 import { SEED_COMPARISONS } from "@/lib/marketing/trust/comparison";
+import { getPlatformConfig } from "@/lib/config/platform";
+
+/** IMPLEMENTATION-43 Phase 11: honest Organization schema (no fabricated claims). */
+function OrganizationSchema() {
+  const org = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "CreatorStore",
+    url: getPlatformConfig().appUrl,
+    description: "Creator platform that builds storefronts from social profiles.",
+  };
+  return (
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }} />
+  );
+}
 
 export default async function MarketingPage() {
   const comparison = SEED_COMPARISONS[0];
@@ -38,8 +53,8 @@ export default async function MarketingPage() {
       {/* Section order based on audit recommendations */}
       <Hero />
 
-      {/* Trust: platform badges + metrics */}
-      <Section id="trust-bar">
+      {/* Trust: platform badges + metrics (flows from the hero gradient) */}
+      <Section id="trust-bar" tone="hero">
         <IntegrationLogos logos={SEED_LOGOS} />
         <MetricGrid metrics={SEED_METRICS} />
       </Section>
@@ -63,7 +78,7 @@ export default async function MarketingPage() {
       />
 
       {/* Trust: case studies */}
-      <Section id="case-studies">
+      <Section id="case-studies" tone="neutral">
         <CaseStudyGrid caseStudies={SEED_CASE_STUDIES} />
       </Section>
 
@@ -76,6 +91,7 @@ export default async function MarketingPage() {
       <PricingFAQ />
       <FinalCta />
       <Footer />
+      <OrganizationSchema />
     </main>
   );
 }

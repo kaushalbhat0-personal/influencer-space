@@ -1,6 +1,6 @@
 export { TrustRegistry } from "./registry";
 export { SEED_TESTIMONIALS } from "./testimonials";
-export { SEED_METRICS, METRIC_CATEGORY_LABELS } from "./metrics";
+export { SEED_METRICS } from "./metrics";
 export { SEED_CASE_STUDIES } from "./case-studies";
 export { SEED_COMPARISONS } from "./comparison";
 export { SEED_CTAS } from "./cta";
