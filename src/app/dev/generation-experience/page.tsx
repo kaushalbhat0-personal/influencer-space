@@ -65,6 +65,18 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
       confidence: number;
       evidenceCount: number;
     };
+    blueprint?: {
+      entity: string | null;
+      layout: string;
+      themeFamily: string;
+      primaryCta: string;
+      visibleSections: string[];
+      integrations: string[];
+      monetization: string[];
+      seoType: string;
+      relationships: string[];
+      brands: string[];
+    };
     error?: string;
   } | null>(null);
 
@@ -148,6 +160,26 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
               recommendations: <span data-testid="int-recs">{result.intelligence.recommendations.theme ?? "—"} · {result.intelligence.recommendations.sections.join(", ")} · {result.intelligence.recommendations.cta ?? "—"}</span> · confidence:{" "}
               <span data-testid="int-confidence">{result.intelligence.confidence}</span> · evidence: <span data-testid="int-evidence">{result.intelligence.evidenceCount}</span>
             </p>
+          </div>
+        )}
+        {result?.blueprint && (
+          <div className="mt-2 space-y-1 text-[11px] text-[var(--text-secondary,#A1A1AA)]" data-testid="blueprint-line">
+            <p>
+              blueprint: <span data-testid="bp-entity">{result.blueprint.entity ?? "—"}</span> · layout: <span data-testid="bp-layout">{result.blueprint.layout}</span> · theme: <span data-testid="bp-theme">{result.blueprint.themeFamily}</span> · CTA: <span data-testid="bp-cta">{result.blueprint.primaryCta}</span> · SEO: <span data-testid="bp-seo">{result.blueprint.seoType}</span>
+            </p>
+            <p>
+              sections: <span data-testid="bp-sections">{result.blueprint.visibleSections.join(", ") || "—"}</span> · integrations: <span data-testid="bp-integrations">{result.blueprint.integrations.join(", ") || "—"}</span> · monetization: <span data-testid="bp-monetization">{result.blueprint.monetization.join(", ") || "—"}</span>
+            </p>
+            {result.blueprint.relationships.length > 0 && (
+              <p data-testid="bp-relationships">
+                relationships: {result.blueprint.relationships.join(" · ")}
+              </p>
+            )}
+            {result.blueprint.brands.length > 0 && (
+              <p data-testid="bp-brands">
+                brands: {result.blueprint.brands.join(", ")}
+              </p>
+            )}
           </div>
         )}
       </div>

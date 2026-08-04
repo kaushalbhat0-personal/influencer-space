@@ -24,6 +24,14 @@ export interface GoldenCreatorEntry {
   expectedNiches?: string[];
   expectedAudience?: string;
   minimumConfidence?: number;
+  /** IMPLEMENTATION-37: website blueprint regression anchors. */
+  expectedLayout?: string;
+  expectedThemeFamily?: string;
+  expectedCta?: string;
+  expectedSections?: string[];
+  expectedIntegrations?: string[];
+  expectedMonetization?: string[];
+  expectedSeoType?: string;
 }
 
 export interface GoldenValidationDimension {

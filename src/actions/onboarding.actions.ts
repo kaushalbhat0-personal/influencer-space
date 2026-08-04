@@ -63,6 +63,18 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
     confidence: number;
     evidenceCount: number;
   };
+  blueprint?: {
+    entity: string | null;
+    layout: string;
+    themeFamily: string;
+    primaryCta: string;
+    visibleSections: string[];
+    integrations: string[];
+    monetization: string[];
+    seoType: string;
+    relationships: string[];
+    brands: string[];
+  };
   error?: string;
 }> {
   try {
@@ -138,6 +150,20 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
             },
             confidence: Number(result.identityProfile.intelligence.confidence.overall.toFixed(2)),
             evidenceCount: result.identityProfile.intelligence.diagnostics.evidenceCount,
+          }
+        : undefined,
+      blueprint: result.blueprint
+        ? {
+            entity: result.blueprint.entity,
+            layout: result.blueprint.layout,
+            themeFamily: result.blueprint.theme.family,
+            primaryCta: result.blueprint.cta.primary,
+            visibleSections: result.blueprint.visibleSections,
+            integrations: result.blueprint.integrations,
+            monetization: result.blueprint.monetization,
+            seoType: result.blueprint.seo.structuredDataType,
+            relationships: result.blueprint.evidence.relationshipChains,
+            brands: result.blueprint.evidence.brands,
           }
         : undefined,
     };

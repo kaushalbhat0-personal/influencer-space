@@ -21,6 +21,9 @@ import type { AcquisitionDiagnostics } from "@/lib/generation/acquisition/types"
 import { hybridIntelligenceEngine } from "@/lib/generation/intelligence/enrichment/engine";
 import type { IdentityProfile } from "@/lib/generation/intelligence/enrichment/types";
 import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidence/detect";
+import { buildRelationshipGraph } from "@/lib/generation/intelligence/evidence/relationship";
+import { buildWebsiteBlueprint } from "@/lib/generation/blueprint/builder";
+import type { WebsiteBlueprint as WebsiteIntelligenceBlueprint } from "@/lib/generation/blueprint/types";
 
 function acquisitionCompleteness(diagnostics: AcquisitionDiagnostics | undefined): number {
   if (!diagnostics) return 0.5;
@@ -54,6 +57,8 @@ export interface ImportProfileResult {
   acquisition?: AcquisitionDiagnostics;
   /** Hybrid Intelligence Enrichment — canonical enriched identity. */
   identityProfile?: IdentityProfile;
+  /** IMPLEMENTATION-37 — canonical Website Blueprint (entity-driven storefront). */
+  blueprint?: WebsiteIntelligenceBlueprint;
 }
 
 export interface GenerateResult {
@@ -150,8 +155,36 @@ export class OnboardingService {
 
     const identityWithIntelligence: IdentityProfile = { ...identityProfile, intelligence };
 
+    // IMPLEMENTATION-37: Relationship Intelligence + Website Blueprint.
+    // Lightweight knowledge graph (FIFA → Football → Sports → Athlete;
+    // Nike → Sponsorship) then the deterministic, versioned Website Blueprint.
+    const sourceTexts = [
+      source.bio ?? "",
+      ...(source.content ?? []).map((c) => c.text ?? ""),
+      ...(source.keywords ?? []),
+      ...(source.hashtags ?? []),
+    ];
+    // The acquired platform is strong evidence (youtube → creator, twitch →
+    // streamer, instagram → influencer) — feed it into the relationship graph.
+    const relationships = buildRelationshipGraph(sourceTexts[0] ?? "", [platform, ...sourceTexts.slice(1)]);
+    const blueprint = buildWebsiteBlueprint({
+      evidence: intelligence,
+      relationships,
+      identity: {
+        entityType: identityProfile.entityType,
+        primaryNiche: intelligence.primaryNiche,
+        businessModel: intelligence.businessModels[0]?.model ?? identityProfile.businessModel,
+        audience: intelligence.audience.segments.map((a) => a.segment),
+        name: source.displayName || source.username,
+        username: source.username,
+        subdomain: source.username || "creator-store",
+      },
+    });
+
+    const identityWithBlueprint: IdentityProfile = { ...identityWithIntelligence, blueprint };
+
     const channelMeta = acquisition.meta as ImportProfileResult["channelMeta"];
-    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithIntelligence };
+    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithBlueprint, blueprint };
     if (channelMeta) {
       return { ...base, channelMeta };
     }

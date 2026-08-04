@@ -5,6 +5,8 @@ import { goldenDataset } from "@/lib/generation/golden/registry";
 import type { GoldenCreatorEntry } from "@/lib/generation/golden/types";
 import { hybridIntelligenceEngine } from "@/lib/generation/intelligence/enrichment/engine";
 import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidence/detect";
+import { buildRelationshipGraph } from "@/lib/generation/intelligence/evidence/relationship";
+import { buildWebsiteBlueprint } from "@/lib/generation/blueprint/builder";
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { EnrichmentCall } from "@/lib/generation/intelligence/enrichment/provider";
 
@@ -158,6 +160,71 @@ describe("golden dataset â€” expanded regression anchors (IMPLEMENTATION-32
       // Minimum confidence is met and every conclusion has evidence.
       expect(intel.confidence.overall, entry.name).toBeGreaterThanOrEqual(entry.minimumConfidence!);
       expect(intel.diagnostics.evidenceCount, entry.name).toBeGreaterThan(0);
+    }
+  });
+
+  it("website blueprint is deterministic, serializable and entity-driven (all profiles)", async () => {
+    const entries = goldenDataset.listAll().filter((e) => e.expectedEntityType);
+    for (const entry of entries) {
+      const bio = `${entry.name} ${entry.tags.join(" ")} ${entry.expectedPrimaryNiche ?? ""} content and updates.`.trim();
+      const evidence = buildEvidenceIntelligence({
+        sourceText: bio,
+        sourceContentTexts: [],
+        followers: 100000,
+        acquisitionCompleteness: 0.9,
+        graphNiche: entry.expectedPrimaryNiche ?? null,
+        graphConfidence: 0.6,
+        aiEntity: entry.expectedEntityType,
+        aiNiches: entry.expectedNiches ?? [],
+        aiBusinessModel: entry.expectedBusinessModel,
+        aiUsed: false,
+      });
+      const relationships = buildRelationshipGraph(bio);
+      const input = {
+        evidence,
+        relationships,
+        identity: { entityType: entry.expectedEntityType ?? null, primaryNiche: entry.expectedPrimaryNiche ?? null, businessModel: null, audience: [], name: entry.name, username: "x", subdomain: "x" },
+      };
+      const blueprint = buildWebsiteBlueprint(input);
+      const again = buildWebsiteBlueprint(input);
+
+      // Deterministic + versioned + serializable.
+      expect(JSON.stringify(blueprint)).toBe(JSON.stringify(again));
+      expect(blueprint.version).toBeGreaterThanOrEqual(1);
+      expect(JSON.parse(JSON.stringify(blueprint)).sections.length).toBe(blueprint.sections.length);
+      // Navigation derives from visible sections.
+      expect(blueprint.navigation.length).toBeGreaterThan(0);
+      expect(blueprint.visibleSections.length).toBeGreaterThan(0);
+      expect(blueprint.entity).toBe(entry.expectedEntityType);
+    }
+  });
+
+  it("blueprint matches the golden expectations for representative profiles", async () => {
+    const byName = (n: string) => goldenDataset.listAll().find((e) => e.name === n)!;
+    const cases = [
+      { entry: byName("Lionel Messi"), bio: "Football athlete. FIFA, Champions League with Real Madrid. Nike partner.", expected: { layout: "portfolio", theme: "bold-sport", cta: "Shop Merch", seo: "Person", sections: ["hero", "achievements", "sponsors"], integrations: ["youtube"], brands: ["Nike"] } },
+      { entry: byName("Pizza Napoletana"), bio: "Restaurant with a menu and table reservations. Local dining.", expected: { layout: "restaurant", theme: "warm-dining", cta: "Reserve Table", seo: "Restaurant", sections: ["hero", "menu", "reservations"], integrations: ["google_maps"] } },
+      { entry: byName("Theo (t3.gg)"), bio: "Fullstack developer. GitHub and open source. TypeScript and React.", expected: { layout: "portfolio", theme: "dark-tech", cta: "View My Work", seo: "Person", sections: ["hero", "projects", "skills", "experience", "github"], integrations: ["github"] } },
+      { entry: byName("Trainer Riya"), bio: "Fitness coach. Programs, transformations and nutrition coaching.", expected: { layout: "landing", theme: "energetic-coach", cta: "Book Session", seo: "Person", sections: ["hero", "programs", "pricing", "transformations", "booking"], integrations: ["instagram"] } },
+    ];
+    for (const { entry, bio, expected } of cases) {
+      const evidence = buildEvidenceIntelligence({ sourceText: bio, sourceContentTexts: [], followers: 100000, acquisitionCompleteness: 0.9, graphNiche: entry.expectedPrimaryNiche ?? null, graphConfidence: 0.6, aiEntity: entry.expectedEntityType, aiNiches: entry.expectedNiches ?? [], aiBusinessModel: entry.expectedBusinessModel, aiUsed: false });
+      const relationships = buildRelationshipGraph(bio);
+      const blueprint = buildWebsiteBlueprint({ evidence, relationships, identity: { entityType: entry.expectedEntityType ?? null, primaryNiche: entry.expectedPrimaryNiche ?? null, businessModel: null, audience: [], name: entry.name, username: "x", subdomain: "x" } });
+      expect(blueprint.entity, entry.name).toBe(entry.expectedEntityType);
+      expect(blueprint.layout, entry.name).toBe(expected.layout);
+      expect(blueprint.theme.family, entry.name).toBe(expected.theme);
+      expect(blueprint.cta.primary, entry.name).toBe(expected.cta);
+      expect(blueprint.seo.structuredDataType, entry.name).toBe(expected.seo);
+      for (const section of expected.sections) {
+        expect(blueprint.visibleSections, `${entry.name}: ${section}`).toContain(section);
+      }
+      for (const integration of expected.integrations) {
+        expect(blueprint.integrations, `${entry.name}: ${integration}`).toContain(integration);
+      }
+      if (expected.brands) {
+        for (const brand of expected.brands) expect(blueprint.evidence.brands, entry.name).toContain(brand);
+      }
     }
   });
 });

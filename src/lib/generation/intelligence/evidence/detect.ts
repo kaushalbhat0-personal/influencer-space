@@ -74,7 +74,7 @@ function evidenceFor(source: "bio" | "content" | "acquisition", values: string[]
 /** Detect entities (multi, weighted, evidence-backed). */
 export function detectEntities(input: EvidenceIntelligenceInput): DetectedEntity[] {
   const text = allText(input);
-  const results: DetectedEntity[] = [];
+  let results: DetectedEntity[] = [];
 
   for (const rule of ENTITY_RULES) {
     const base = matches(text, rule.keywords);
@@ -92,6 +92,18 @@ export function detectEntities(input: EvidenceIntelligenceInput): DetectedEntity
         ...evidenceFor("bio", strong.slice(0, 4), "entity"),
       ],
     });
+  }
+
+  // Specificity resolution: when a more-specific entity is detected alongside a
+  // general one, keep the specific (e.g. teacher over educator).
+  const SPECIFIC_OVERRIDES: Record<string, string> = { teacher: "educator" };
+  const detected = new Set<string>(results.map((r) => r.entity));
+  for (const [specific, general] of Object.entries(SPECIFIC_OVERRIDES)) {
+    if (detected.has(specific) && detected.has(general)) {
+      const specificEntity = results.find((r) => r.entity === specific);
+      if (specificEntity) specificEntity.confidence = Math.min(1, specificEntity.confidence + 0.15);
+      results = results.filter((r) => r.entity !== general);
+    }
   }
 
   results.sort((a, b) => b.confidence - a.confidence);

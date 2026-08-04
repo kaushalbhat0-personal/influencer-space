@@ -8,6 +8,7 @@
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { EntityType } from "./config";
 import type { EvidenceIntelligence } from "@/lib/generation/intelligence/evidence/types";
+import type { WebsiteBlueprint } from "@/lib/generation/blueprint/types";
 
 export interface IdentityEvidence {
   /** Deterministic source field this fact came from (or "ai:<field>"). */
@@ -47,6 +48,8 @@ export interface IdentityProfile {
   };
   /** IMPLEMENTATION-36: evidence-backed intelligence (entity/niches/business/audience/recommendations). */
   intelligence?: EvidenceIntelligence;
+  /** IMPLEMENTATION-37: canonical Website Blueprint for the detected creator. */
+  blueprint?: WebsiteBlueprint;
   diagnostics: EnrichmentDiagnostics;
 }
 
