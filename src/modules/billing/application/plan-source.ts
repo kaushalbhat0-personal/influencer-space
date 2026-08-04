@@ -9,6 +9,7 @@
 import { prisma } from "@/lib/prisma";
 import { billingRepository } from "../infrastructure/repository";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
+import { resolveRestrictedPlanCode } from "./plan-restriction";
 
 export type PlanOrigin = "v2" | "legacy" | "none";
 
@@ -37,7 +38,11 @@ export async function resolveActivePlan(
 ): Promise<ResolvedActivePlan> {
   if (workspaceId) {
     const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
-    if (sub?.plan?.code) return { code: sub.plan.code, origin: "v2", status: sub.status };
+    if (sub?.plan?.code) {
+      // IMPLEMENTATION-42 Phase 5: clamp Launch → Grow for agency-managed creators.
+      const code = await resolveRestrictedPlanCode({ tenantId, code: sub.plan.code });
+      return { code, origin: "v2", status: sub.status };
+    }
   }
 
   if (tenantId) {
@@ -47,13 +52,19 @@ export async function resolveActivePlan(
     });
     if (workspace) {
       const sub = await billingRepository.findSubscriptionWithPlan(workspace.id);
-      if (sub?.plan?.code) return { code: sub.plan.code, origin: "v2", status: sub.status };
+      if (sub?.plan?.code) {
+        const code = await resolveRestrictedPlanCode({ tenantId, code: sub.plan.code });
+        return { code, origin: "v2", status: sub.status };
+      }
     }
     const legacy = await prisma.subscription.findUnique({
       where: { tenantId },
       select: { plan: true, status: true },
     });
-    if (legacy?.plan) return { code: legacy.plan, origin: "legacy", status: legacy.status };
+    if (legacy?.plan) {
+      const code = await resolveRestrictedPlanCode({ tenantId, code: legacy.plan });
+      return { code, origin: "legacy", status: legacy.status };
+    }
   }
 
   return { code: null, origin: "none", status: null };

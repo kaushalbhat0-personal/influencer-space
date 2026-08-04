@@ -371,7 +371,7 @@ const CTA_BY_TYPE: Record<string, string> = { signup: "Start Free", checkout: "U
 for (const config of COMMERCE_PLANS) {
   plans.push({
     code: config.code,
-    family: "creator",
+    family: config.family === "partner" ? "agency" : "creator",
     name: config.name,
     description: config.description,
     targetAudience: config.name,

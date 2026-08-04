@@ -5,6 +5,8 @@ export type { CapabilityService } from "./service";
 
 export { getPlan, getAllPlans, getPlansByFamily } from "./plans";
 export { getFeatureInfo, getAllFeatureIds, getFeaturesByCategory, FEATURE_CATALOG } from "./features";
+export { getFeaturesByGroup, getFeatureGroups, groupForFeature, CAPABILITY_GROUP_LABELS, CAPABILITY_GROUPS } from "./features";
+export type { CapabilityGroup } from "./features";
 export { getEffectiveLimit, checkLimit, getLimitsMap, getOverLimitFeatures } from "./limits";
 
 export { validatePlanCode, validateFeatureId, validateUsageContext, validatePlanTransition, validateUsageRequest, formatPlanName, formatFeatureLabel } from "./validation";

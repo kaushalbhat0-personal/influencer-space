@@ -5,6 +5,7 @@ import { adminSetSubscription } from "@/actions/super-admin-billing.actions";
 import { useRouter } from "next/navigation";
 
 const PLANS = ["creator_launch", "creator_grow", "creator_scale", "creator_enterprise"];
+const fmtDate = (v: string | Date) => new Date(v).toISOString().replace("T", " ").slice(0, 10);
 
 type SubRow = { tenantId: string; tenantName: string; planCode: string; plan: string; status: string; currentPeriodEnd: string | null };
 
@@ -54,7 +55,7 @@ export function SubscriptionsClient({ initial }: { initial: SubRow[] }) {
                     {r.status}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-zinc-500 text-xs">{r.currentPeriodEnd ? new Date(r.currentPeriodEnd).toLocaleDateString() : "—"}</td>
+                <td className="px-3 py-2 text-zinc-500 text-xs">{r.currentPeriodEnd ? fmtDate(r.currentPeriodEnd) : "—"}</td>
                 <td className="px-3 py-2">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <select

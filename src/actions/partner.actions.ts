@@ -27,6 +27,13 @@ export async function importCreatorViaAgency(input: {
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   const actorId = ctx.session?.user.id;
 
+  // IMPLEMENTATION-42 Phase 5: agency-provisioned creators require Creator Grow
+  // minimum — Creator Launch is not available for partner-onboarded creators.
+  const { isAgencyRestrictedPlan } = await import("@/config/commerce/plans");
+  if (isAgencyRestrictedPlan(input.planCode)) {
+    return { success: false, error: "Agency-managed creators require at least Creator Grow — Creator Launch is not available." };
+  }
+
   try {
     // 1. Provision via the canonical provisioning runtime (same pipeline as
     //    confirmProvision) — Creator Intelligence + generation + workspace.

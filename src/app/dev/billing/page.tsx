@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 import { capabilityService } from "@/lib/capabilities";
-import { capabilitiesForPlan, COMMERCE_PLANS, razorpayPlanIdFor } from "@/config/commerce/plans";
+import { capabilitiesForPlan, COMMERCE_PLANS, razorpayPlanIdFor, getPartnerCommercePlans, isAgencyRestrictedPlan } from "@/config/commerce/plans";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { revenueService } from "@/modules/billing/application/revenue-service";
 import { billingMigrationRegistry } from "@/modules/billing/application/migration-registry";
+import { isTenantAgencyManaged } from "@/modules/billing/application/plan-restriction";
 import { BillingHarnessClient } from "./_components/billing-harness-client";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +66,9 @@ export default async function DevBillingPage() {
 
   const capabilities = resolved.code ? capabilitiesForPlan(resolved.code) : [];
   const enabled = resolvedPlan.code ? capabilityService.planSummary(resolvedPlan.code) : null;
+  const agencyManaged = await isTenantAgencyManaged(tenantId);
+  const unrestrictedCode = subscription?.plan?.code ?? null;
+  const restricted = agencyManaged && isAgencyRestrictedPlan(unrestrictedCode);
 
   return (
     <div className="min-h-screen bg-[var(--surface-root)] p-8">
@@ -80,6 +84,9 @@ export default async function DevBillingPage() {
             <p>plan: <span data-testid="bh-plan">{subscription?.plan?.code ?? resolvedPlan.code ?? "none"}</span> · status: <span data-testid="bh-status">{subscription?.status ?? resolved.status ?? "none"}</span></p>
             <p>renews: <span data-testid="bh-renews">{subscription?.renewsAt?.toISOString() ?? "—"}</span> · origin: <span data-testid="bh-origin">{resolved.origin}</span></p>
             <p>tier: <span data-testid="bh-tier">{resolvedPlan.tier}</span> · capability matrix: <span data-testid="bh-matrix">{resolved.code ? capabilitiesForPlan(resolved.code).join(", ") : "—"}</span></p>
+            <p data-testid="bh-partner-restriction">
+              partner-managed: <span data-testid="bh-partner-managed">{String(agencyManaged)}</span> · source plan: <span data-testid="bh-source-plan">{unrestrictedCode ?? "none"}</span> · effective: <span data-testid="bh-effective-plan">{resolved.code ?? "none"}</span>{restricted ? " · ⚠ clamped Launch → Grow (minimum)" : ""}
+            </p>
             <p data-testid="bh-capabilities">enabled: {enabled ? Object.entries(enabled.features).filter(([, v]) => (typeof v === "boolean" ? v : typeof v === "number" ? v > 0 || v === -1 : Boolean(v))).map(([k]) => k).join(", ") : "—"}</p>
             <p data-testid="bh-webhook-count">webhook events: {events.length} · v2 subs: {v2Count} · legacy: {legacyCount}</p>
             <p data-testid="bh-last-invoice">last invoice: {lastInvoice ? `${lastInvoice.planCode} ₹${lastInvoice.amount} ${lastInvoice.status}` : "—"}</p>

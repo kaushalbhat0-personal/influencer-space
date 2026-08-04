@@ -5,6 +5,8 @@ import { themeRegistry } from "@/lib/theme/registry-new";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 import { billingMigrationRegistry } from "@/modules/billing/application/migration-registry";
+import { isTenantAgencyManaged } from "@/modules/billing/application/plan-restriction";
+import { isAgencyRestrictedPlan } from "@/config/commerce/plans";
 import { MetricCard } from "@/components/data/MetricCard";
 import { TenantOrdersTable } from "./_components/tenant-orders-table";
 import { Building2, ShoppingBag, Image, Activity, Palette, CheckCircle, Clock, Shield, CreditCard, User } from "lucide-react";
@@ -19,7 +21,7 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
   });
   if (!tenant) notFound();
 
-  const [productCount, galleryCount, orderCount, website, publishStatus, health, users, subscription, recentActivity, linkCount] = await Promise.all([
+  const [productCount, galleryCount, orderCount, website, publishStatus, health, users, subscription, recentActivity, linkCount, managedByPartner] = await Promise.all([
     prisma.product.count({ where: { tenantId: tenant.id } }),
     prisma.galleryImage.count({ where: { tenantId: tenant.id } }),
     prisma.productOrder.count({ where: { tenantId: tenant.id } }),
@@ -31,10 +33,14 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
     resolveActivePlan(undefined, tenant.id),
     prisma.auditLog.findMany({ where: { tenantId: tenant.id }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, action: true, createdAt: true, metadata: true } }),
     prisma.affiliateLink.count({ where: { tenantId: tenant.id, isActive: true } }),
+    // IMPLEMENTATION-42 Phase 5/16: partner-managed + restriction diagnostics.
+    isTenantAgencyManaged(tenant.id),
   ]);
 
   const themeName = website?.themePackageId ? themeRegistry.getById(website.themePackageId)?.name ?? website.themePackageId : "None";
   const planLabel = subscription?.code ? resolvePlan(subscription.code).displayName : "Free";
+  const partnerManaged = managedByPartner;
+  const restricted = partnerManaged && (subscription?.code ? isAgencyRestrictedPlan(subscription.code) : true);
   billingMigrationRegistry.markMigrated("tenant-detail");
 
   const orders = await prisma.productOrder.findMany({
@@ -85,6 +91,15 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
                 }`}>{subscription.status}</span>
               )}
             </div>
+          </div>
+          {/* IMPLEMENTATION-42 Phase 5/16: partner-managed + restriction diagnostics */}
+          <div className="mt-2 space-y-1 text-xs text-zinc-500" data-testid="tenant-partner-restriction">
+            <p>partner-managed: <span data-testid="tenant-partner-managed">{String(partnerManaged)}</span> · plan origin: <span data-testid="tenant-plan-origin">{subscription?.origin ?? "none"}</span></p>
+            {partnerManaged && (
+              <p className={restricted ? "text-amber-400" : "text-emerald-400"} data-testid="tenant-restriction-state">
+                {restricted ? "Launch not available — minimum Creator Grow" : "Meets agency minimum (Creator Grow or higher)"}
+              </p>
+            )}
           </div>
           {users.length > 0 && (
             <div className="mt-3 space-y-1">

@@ -6,9 +6,9 @@
  * No hardcoded prices, features, or routes.
  */
 
-import { getPlansByFamily, getFeatureInfo, getAllFeatureIds, DEFAULT_CURRENCY } from "@/lib/capabilities";
+import { getPlansByFamily, getAllPlans, getFeatureInfo, getAllFeatureIds, DEFAULT_CURRENCY } from "@/lib/capabilities";
 import { entitlement } from "@/modules/billing/application/entitlements";
-import { getCreatorCommercePlans, getCommercePlan } from "@/config/commerce/plans";
+import { getCreatorCommercePlans, getPartnerCommercePlans, getCommercePlan } from "@/config/commerce/plans";
 import type { PlanDefinition } from "@/lib/capabilities";
 
 export interface PlanWithMeta {
@@ -30,16 +30,24 @@ export function getCreatorPlans(): PlanWithMeta[] {
 
 function getPlanDefinitionsByCode(): Record<string, PlanDefinition> {
   const out: Record<string, PlanDefinition> = {};
-  for (const plan of getPlansByFamily("creator")) {
+  for (const plan of getAllPlans()) {
     out[plan.code] = plan;
   }
   return out;
 }
 
+/**
+ * IMPLEMENTATION-42 Phase 3: partner (agency) pricing derives from the
+ * canonical partner commerce config (Free / Solo / Growth / Scale / Enterprise).
+ * No duplicated pricing; no fabricated "Most Popular" (Solo carries
+ * "Recommended" as a product decision).
+ */
 export function getAgencyPlans(): PlanWithMeta[] {
-  return getPlansByFamily("agency")
-    .sort((a, b) => a.price - b.price)
-    .map((plan) => ({ plan, highlights: getHighlights(plan.code) }));
+  const catalog = getPlanDefinitionsByCode();
+  return getPartnerCommercePlans()
+    .filter((p) => catalog[p.code])
+    .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+    .map((p) => ({ plan: catalog[p.code]!, highlights: getHighlights(p.code) }));
 }
 
 export function getEnterprisePlan(): Partial<PlanDefinition> {
@@ -50,6 +58,24 @@ export function getEnterprisePlan(): Partial<PlanDefinition> {
     name: commerce?.name ?? "Enterprise",
     description: commerce?.description ?? "Custom requirements and dedicated support.",
     targetAudience: "Growing creators and brands",
+    price: 0,
+    currency: DEFAULT_CURRENCY,
+    cycle: "monthly",
+    ctaLabel: commerce?.ctaLabel ?? "Contact Sales",
+    ctaType: "contact",
+    features: {},
+  };
+}
+
+/** IMPLEMENTATION-42 Phase 3: partner enterprise (Contact Sales). */
+export function getPartnerEnterprisePlan(): Partial<PlanDefinition> {
+  const commerce = getCommercePlan("partner_enterprise");
+  return {
+    code: "partner_enterprise",
+    family: "agency",
+    name: commerce?.name ?? "Partner Enterprise",
+    description: commerce?.description ?? "Custom requirements for enterprise partner programs.",
+    targetAudience: "Enterprise partner programs",
     price: 0,
     currency: DEFAULT_CURRENCY,
     cycle: "monthly",

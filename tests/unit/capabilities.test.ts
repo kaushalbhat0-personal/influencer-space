@@ -121,14 +121,16 @@ describe("Capabilities — Plans", () => {
 
   it("should list all canonical plans (no dupes)", () => {
     const all = getAllPlans();
-    // 6 legacy/agency plans + 4 canonical commerce creator plans (34).
-    expect(all.length).toBe(10);
+    // 6 legacy plans + 4 canonical commerce creator plans + 5 partner plans.
+    expect(all.length).toBe(15);
     const codes = all.map((p) => p.code);
     expect(codes).toContain("creator_free");
     expect(codes).toContain("creator_launch");
     expect(codes).toContain("creator_grow");
     expect(codes).toContain("creator_scale");
     expect(codes).toContain("creator_enterprise");
+    expect(codes).toContain("partner_solo");
+    expect(codes).toContain("partner_growth");
     expect(codes).not.toContain("agency_starter");
   });
 
@@ -138,7 +140,7 @@ describe("Capabilities — Plans", () => {
     expect(creator.every((p) => p.family === "creator")).toBe(true);
 
     const agency = getPlansByFamily("agency");
-    expect(agency.length).toBe(3);
+    expect(agency.length).toBe(8); // 3 legacy + 5 canonical partner plans
     expect(agency.every((p) => p.family === "agency")).toBe(true);
   });
 });
@@ -619,7 +621,7 @@ describe("Capabilities — Service Delegation", () => {
 
   it("should delegate plan accessors", () => {
     expect(capabilityService.getPlan("creator_free")?.name).toBe("Starter");
-    expect(capabilityService.getAllPlans().length).toBe(10);
+    expect(capabilityService.getAllPlans().length).toBe(15);
     expect(capabilityService.getPlansByFamily("creator").length).toBe(7);
     expect(capabilityService.getPlan("creator_grow")?.price).toBe(699);
     expect(capabilityService.getPlan("creator_scale")?.price).toBe(1995);

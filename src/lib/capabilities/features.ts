@@ -201,3 +201,78 @@ export function getAllFeatureIds(): string[] {
 export function getFeaturesByCategory(category: FeatureCategory): FeatureInfo[] {
   return Object.values(FEATURE_CATALOG).filter((f) => f.category === category);
 }
+
+// ── IMPLEMENTATION-42 Phase 10: logical capability groups ─────────────────────
+// One authoritative grouping so the comparison UI never scatters booleans.
+export type CapabilityGroup =
+  | "website" | "commerce" | "builder" | "ai" | "analytics" | "brand"
+  | "domain" | "marketplace" | "automation" | "api" | "support" | "storage";
+
+export const CAPABILITY_GROUP_LABELS: Record<CapabilityGroup, string> = {
+  website: "Website", commerce: "Commerce", builder: "Builder", ai: "AI",
+  analytics: "Analytics", brand: "Brand", domain: "Domain", marketplace: "Marketplace",
+  automation: "Automation", api: "API", support: "Support", storage: "Storage",
+};
+
+export const CAPABILITY_GROUPS: CapabilityGroup[] = [
+  "website", "commerce", "builder", "ai", "analytics", "brand",
+  "domain", "marketplace", "automation", "api", "support", "storage",
+];
+
+/** Feature id → logical group (derived from the authoritative catalog). */
+export const FEATURE_GROUP: Record<string, CapabilityGroup> = {
+  max_products: "commerce",
+  max_gallery: "website",
+  storage_gb: "storage",
+  max_messages: "website",
+  max_orders: "commerce",
+  max_websites: "website",
+  max_team_members: "automation",
+  max_clients: "automation",
+  max_api_calls: "api",
+  custom_domain: "domain",
+  custom_branding: "brand",
+  remove_branding: "brand",
+  analytics_basic: "analytics",
+  analytics_advanced: "analytics",
+  seo: "analytics",
+  premium_themes: "builder",
+  ai_automation: "ai",
+  export_data: "website",
+  basic_builder: "builder",
+  advanced_builder: "builder",
+  marketplace_access: "marketplace",
+  template_library: "builder",
+  navigation_editor: "builder",
+  media_storage: "storage",
+  automation: "automation",
+  multiple_brands: "brand",
+  agency_clients: "automation",
+  bulk_publish: "automation",
+  custom_components: "builder",
+  api_integrations: "api",
+  priority_support: "support",
+  multiple_users: "automation",
+  api_access: "api",
+  webhooks: "api",
+  white_label: "brand",
+  ai_credits: "ai",
+  storage_pack: "storage",
+  theme_packs: "builder",
+};
+
+export function groupForFeature(id: string): CapabilityGroup {
+  return FEATURE_GROUP[id] ?? "website";
+}
+
+export function getFeaturesByGroup(group: CapabilityGroup): FeatureInfo[] {
+  return Object.values(FEATURE_CATALOG).filter((f) => groupForFeature(f.id) === group);
+}
+
+export function getFeatureGroups(): Array<{ group: CapabilityGroup; label: string; features: FeatureInfo[] }> {
+  return CAPABILITY_GROUPS.map((g) => ({
+    group: g,
+    label: CAPABILITY_GROUP_LABELS[g],
+    features: getFeaturesByGroup(g),
+  })).filter((entry) => entry.features.length > 0);
+}

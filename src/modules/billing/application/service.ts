@@ -1,6 +1,7 @@
 import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
 import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
+import { assertEligiblePlan } from "./plan-restriction";
 import { validateTransition } from "../domain/lifecycle";
 import { mappingForRazorpayEvent, statusForWebhookEvent } from "../domain/webhook";
 import { capabilityService } from "@/lib/capabilities";
@@ -339,6 +340,11 @@ export class BillingService {
   async changePlan(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {    const target = getPlan(planCode);
     if (!target) return { success: false, error: `Unknown plan: ${planCode}` };
 
+    // IMPLEMENTATION-42 Phase 5: agency-managed creators cannot be on Launch.
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });
+    const eligible = await assertEligiblePlan({ tenantId: workspace?.tenantId, workspaceId, planCode });
+    if (!eligible.ok) return { success: false, error: eligible.error };
+
     const current = await billingRepository.findSubscriptionWithPlan(workspaceId);
     if (current?.plan?.code && current.plan.code !== planCode) {
       const currentPlan = getPlan(current.plan.code);
@@ -359,6 +365,11 @@ export class BillingService {
    */
   async adminSetPlan(workspaceId: string, planCode: string, status: "ACTIVE" | "CANCELLED" | "PAST_DUE" | "TRIALING", reason?: string): Promise<{ success: boolean; error?: string }> {
     try {
+      // IMPLEMENTATION-42 Phase 5: agency-managed creators cannot be on Launch.
+      const ws = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });
+      const eligible = await assertEligiblePlan({ tenantId: ws?.tenantId, workspaceId, planCode });
+      if (!eligible.ok) return { success: false, error: eligible.error };
+
       const plan = await billingRepository.findPlanByCode(planCode);
       if (!plan) {
         const { seedBillingCatalog } = await import("../infrastructure/catalog-seed");

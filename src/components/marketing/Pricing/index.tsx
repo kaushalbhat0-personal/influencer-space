@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { getCreatorPlans, getAgencyPlans, getEnterprisePlan, getEnterpriseHighlights } from "./data";
+import { getCreatorPlans, getAgencyPlans, getEnterprisePlan, getPartnerEnterprisePlan, getEnterpriseHighlights } from "./data";
 import { ComparisonMatrix } from "./comparison";
 import { PricingFAQ } from "./faq";
 import { Sparkles } from "lucide-react";
@@ -12,22 +12,16 @@ type PlanFamily = "creator" | "agency";
 
 const TABS: { id: PlanFamily; label: string }[] = [
   { id: "creator", label: "For Creators" },
-  { id: "agency", label: "For Agencies" },
+  { id: "agency", label: "For Partners" },
 ];
 
-const TRUST_ITEMS = ["No credit card required", "Cancel anytime", "Instant AI setup", "Secure payments via Razorpay"];
-
-function formatAnnualPrice(monthly: number): number {
-  if (monthly === 0) return 0;
-  return monthly * 10;
-}
+const TRUST_ITEMS = ["No credit card required to start", "Cancel anytime", "Secure payments via Razorpay"];
 
 export function Pricing() {
   const [tab, setTab] = useState<PlanFamily>("creator");
-  const [annual, setAnnual] = useState(false);
 
   const plans = tab === "creator" ? getCreatorPlans() : getAgencyPlans();
-  const enterprise = getEnterprisePlan();
+  const enterprise = tab === "creator" ? getEnterprisePlan() : getPartnerEnterprisePlan();
   const entHighlights = getEnterpriseHighlights();
 
   return (
@@ -59,37 +53,26 @@ export function Pricing() {
           </div>
         </div>
 
-        {/* Annual Toggle */}
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <span className={cn("text-sm transition-colors", !annual ? "text-white" : "text-zinc-500")}>Monthly</span>
-          <button
-            role="switch"
-            aria-checked={annual}
-            aria-label={annual ? "Switch to monthly billing" : "Switch to annual billing"}
-            onClick={() => setAnnual(!annual)}
-            className={cn(
-              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-              annual ? "bg-indigo-500" : "bg-zinc-800"
-            )}
-          >
-            <span className={cn(
-              "inline-block h-4 w-4 rounded-full bg-white transition-transform",
-              annual ? "translate-x-6" : "translate-x-1"
-            )} />
-          </button>
-          <span className={cn("text-sm transition-colors", annual ? "text-white" : "text-zinc-500")}>
-            Annual
-            {annual && <span className="ml-1.5 text-xs font-medium text-emerald-400">Save ~17%</span>}
-          </span>
-        </div>
+        {/* IMPLEMENTATION-42 Phase 4: partner rules (honest, no fake numbers) */}
+        {tab === "agency" && (
+          <div className="mb-8 rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-zinc-400">
+            <p className="font-medium text-zinc-200">How Partner plans work</p>
+            <ul className="mt-2 space-y-1.5 text-xs text-zinc-500" role="list">
+              <li>Partner plans are for your agency business — they do not include creator subscriptions.</li>
+              <li>Every creator pays CreatorStore directly for their own Creator plan (Creator Grow minimum for partner-onboarded creators).</li>
+              <li>You may charge clients separately for setup, migration, training, branding, consulting and maintenance.</li>
+              <li>Future partner rewards are separate from creator subscriptions — nothing is automatic today.</li>
+            </ul>
+          </div>
+        )}
 
         {plans.length === 0 ? (
           <div className="text-center py-16"><p className="text-zinc-500">No plans available. Please check back later.</p></div>
         ) : (
           <>
             <div className="grid gap-6 lg:grid-cols-3">
-              {plans.map(({ plan }) => {
-                const displayPrice = annual ? formatAnnualPrice(plan.price) : plan.price;
+              {plans.map(({ plan, highlights }) => {
+                const displayPrice = plan.price;
                 return (
                   <div
                     key={plan.code}
@@ -118,10 +101,7 @@ export function Pricing() {
                       ) : plan.price > 0 ? (
                         <div>
                           <span className="text-4xl font-bold text-white">₹{displayPrice.toLocaleString("en-IN")}</span>
-                          <span className="text-zinc-500">/{annual ? "yr" : "mo"}</span>
-                          {annual && plan.price > 0 && (
-                            <p className="text-xs text-zinc-600 mt-1">₹{plan.price.toLocaleString("en-IN")}/mo billed annually</p>
-                          )}
+                          <span className="text-zinc-500">/month</span>
                         </div>
                       ) : (
                         <span className="text-2xl font-bold text-white">Custom</span>
@@ -129,10 +109,7 @@ export function Pricing() {
                     </div>
 
                     <ul className="mt-6 flex-1 space-y-3" role="list">
-                      {(plan.family === "creator"
-                        ? ["AI website generator", "Digital products", "UPI checkout", "Social feed sync", "Analytics dashboard"]
-                        : ["Multi-tenant dashboard", "Client workspaces", "Revenue splitting", "Permission controls", "Team management"]
-                      ).map((feat) => (
+                      {(highlights.length > 0 ? highlights : ["Configure in the builder", "Publish to your storefront"]).map((feat) => (
                         <li key={feat} className="flex items-start gap-2 text-sm text-zinc-300">
                           <span className="mt-0.5 text-emerald-400 flex-shrink-0">✓</span>
                           {feat}
