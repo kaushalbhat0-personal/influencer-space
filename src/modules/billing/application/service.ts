@@ -336,8 +336,7 @@ export class BillingService {
    * driven (BillingEvent → BillingSubscription → capability refresh), so the old
    * plan's capabilities remain until the new subscription activates.
    */
-  async changePlan(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
-    const target = getPlan(planCode);
+  async changePlan(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {    const target = getPlan(planCode);
     if (!target) return { success: false, error: `Unknown plan: ${planCode}` };
 
     const current = await billingRepository.findSubscriptionWithPlan(workspaceId);
@@ -351,6 +350,44 @@ export class BillingService {
     }
 
     return this.createCheckout(workspaceId, planCode, email);
+  }
+
+  /**
+   * IMPLEMENTATION-39 — Super Admin manual plan override. Sets the Billing v2
+   * subscription directly (the legacy Subscription table is no longer written).
+   * Always produces a BillingEvent + audit so the timeline stays authoritative.
+   */
+  async adminSetPlan(workspaceId: string, planCode: string, status: "ACTIVE" | "CANCELLED" | "PAST_DUE" | "TRIALING", reason?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const plan = await billingRepository.findPlanByCode(planCode);
+      if (!plan) {
+        const { seedBillingCatalog } = await import("../infrastructure/catalog-seed");
+        await seedBillingCatalog().catch(() => {});
+        const reseeded = await billingRepository.findPlanByCode(planCode);
+        if (!reseeded) return { success: false, error: `Unknown plan: ${planCode}` };
+      }
+      const existing = await billingRepository.findSubscriptionByWorkspaceId(workspaceId);
+      const sub = await billingRepository.upsertSubscription(workspaceId, {
+        planId: (await billingRepository.findPlanByCode(planCode))!.id,
+        status,
+        cancelledAt: status === "CANCELLED" ? new Date() : null,
+        cancellationReason: status === "CANCELLED" ? reason ?? null : null,
+      });
+      await billingRepository.createEvent({
+        workspaceId,
+        accountId: workspaceId,
+        type: status === "CANCELLED" ? "SUBSCRIPTION_CANCELLED" : "SUBSCRIPTION_ACTIVATED",
+        idempotencyKey: `admin_${workspaceId}_${planCode}_${Date.now()}`,
+        payload: { planCode, previousStatus: existing?.status, newStatus: status, reason: reason ?? "super-admin" },
+      });
+      const tenant = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });
+      if (tenant?.tenantId) {
+        await logAction(tenant.tenantId, "billing:admin-set-plan", { workspaceId, planCode, status, reason }).catch(() => {});
+      }
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Failed to set plan" };
+    }
   }
 
   async getSubscriptionStatus(workspaceId: string): Promise<{ planCode: string; status: string; active: boolean } | null> {

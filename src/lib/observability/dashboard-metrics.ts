@@ -29,6 +29,8 @@ export class DashboardMetricsService {
         generationSessions,
         workspaceCount,
         tenantCount,
+        agencyCount,
+        failedBillingOps,
         subscriptionData,
       ] = await Promise.all([
         this.getPublishStats(),
@@ -36,20 +38,23 @@ export class DashboardMetricsService {
         this.getGenerationStats(),
         prisma.workspace.count(),
         prisma.tenant.count(),
+        prisma.websiteAgency.count(),
+        // IMPLEMENTATION-39: real failed-billing count from BillingEvents.
+        prisma.billingEvent.count({ where: { type: "PAYMENT_FAILED" } }),
         this.getSubscriptionRevenue(),
       ]);
 
       const metrics: DashboardMetrics = {
         failedPublishes: publishStats.failed,
         failedProvisions: provisionStats.failed,
-        failedBillingOperations: 0,
+        failedBillingOperations: failedBillingOps,
         averagePublishDurationMs: publishStats.avgDurationMs,
         averageProvisionDurationMs: provisionStats.avgDurationMs,
         generationSuccessRate: generationSessions.successRate,
         workspaceCount,
         tenantCount,
         creatorCount: tenantCount,
-        agencyCount: 0,
+        agencyCount,
         mrr: subscriptionData.mrr,
         arr: subscriptionData.mrr * 12,
         timestamp: new Date().toISOString(),

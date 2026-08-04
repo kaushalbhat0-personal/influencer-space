@@ -63,8 +63,7 @@ export async function resolveActivePlan(
  * Every subscription for admin dashboards: Billing v2 first, legacy fallback
  * for unmigrated tenants (never duplicated — v2 wins per tenant).
  */
-export async function listAllSubscriptions(): Promise<AdminSubscriptionRow[]> {
-  const [v2, legacy] = await Promise.all([
+export async function listAllSubscriptions(): Promise<AdminSubscriptionRow[]> {  const [v2, legacy] = await Promise.all([
     prisma.billingSubscription.findMany({
       include: {
         plan: { select: { code: true, name: true } },
@@ -101,6 +100,60 @@ export async function listAllSubscriptions(): Promise<AdminSubscriptionRow[]> {
   }
 
   return rows;
+}
+
+export interface TenantPlanRow {
+  tenantId: string;
+  planCode: string | null;
+  planDisplay: string;
+  origin: PlanOrigin;
+  status: string | null;
+}
+
+/**
+ * Batched active-plan resolution for many tenants (IMPLEMENTATION-39): Billing
+ * v2 subscriptions win per tenant, legacy fallback for unmigrated ones. Uses 3
+ * batched queries — no N+1.
+ */
+export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<TenantPlanRow[]> {
+  if (tenantIds.length === 0) return [];
+
+  const [workspaces, legacy] = await Promise.all([
+    prisma.workspace.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true } }),
+    prisma.subscription.findMany({
+      where: { tenantId: { in: tenantIds } },
+      select: { tenantId: true, plan: true, status: true },
+    }),
+  ]);
+
+  const subs = await prisma.billingSubscription.findMany({
+    where: { workspaceId: { in: workspaces.map((w) => w.id) } },
+    include: { plan: { select: { code: true, name: true } } },
+  });
+
+  const workspaceByTenant = new Map<string, string>();
+  for (const w of workspaces) workspaceByTenant.set(w.tenantId ?? "", w.id);
+
+  const subByWorkspace = new Map<string, { code: string; name: string; status: string }>();
+  for (const s of subs) {
+    if (s.workspaceId && s.plan?.code) subByWorkspace.set(s.workspaceId, { code: s.plan.code, name: s.plan.name, status: s.status });
+  }
+
+  const legacyByTenant = new Map<string, { plan: string; status: string }>();
+  for (const l of legacy) legacyByTenant.set(l.tenantId, { plan: l.plan, status: l.status ?? "" });
+
+  return tenantIds.map((tenantId) => {
+    const workspaceId = workspaceByTenant.get(tenantId);
+    const v2 = workspaceId ? subByWorkspace.get(workspaceId) : undefined;
+    if (v2) {
+      return { tenantId, planCode: v2.code, planDisplay: v2.name, origin: "v2" as const, status: v2.status };
+    }
+    const legacy = legacyByTenant.get(tenantId);
+    if (legacy?.plan) {
+      return { tenantId, planCode: legacy.plan, planDisplay: resolvePlan(legacy.plan).displayName, origin: "legacy" as const, status: legacy.status };
+    }
+    return { tenantId, planCode: null, planDisplay: "Free", origin: "none" as const, status: null };
+  });
 }
 
 export type { BillingSubscription } from "@/generated/prisma/client";

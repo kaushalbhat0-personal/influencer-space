@@ -1,45 +1,40 @@
-import { prisma } from "@/lib/prisma";
 import { MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { InvoicesTable } from "./_components/invoices-table";
-import { FileText, IndianRupee, CheckCircle2, Clock } from "lucide-react";
+import { FileText, IndianRupee, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { revenueService } from "@/modules/billing/application/revenue-service";
+import { InvoicesClient } from "./_components/invoices-client";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * IMPLEMENTATION-39: Invoices read Billing v2 (BillingInvoice) — not ProductOrder.
+ */
 export default async function InvoicesPage() {
-  let invoices: { id: string; creator: string; product: string; amount: number; status: string; createdAt: string; }[] = [];
-  try {
-    const raw = await prisma.productOrder.findMany({
-      orderBy: { createdAt: "desc" }, take: 200,
-      include: { product: { select: { name: true } }, tenant: { select: { name: true } } },
-    });
-    invoices = raw.map((o) => ({
-      id: o.id, creator: o.tenant?.name ?? "—", product: o.product?.name ?? "—",
-      amount: o.amount, status: o.status, createdAt: o.createdAt.toISOString(),
-    }));
-  } catch { /* */ }
+  const data = await revenueService.listInvoicesAdmin({ page: 1, pageSize: 50 });
 
-  const paid = invoices.filter((i) => i.status === "COMPLETED" || i.status === "PAID").length;
-  const pending = invoices.filter((i) => i.status === "PENDING").length;
-  const totalAmount = invoices.filter((i) => i.status === "COMPLETED" || i.status === "PAID").reduce((s, i) => s + i.amount, 0);
+  const paid = data.rows.filter((i) => i.status === "PAID").length;
+  const pending = data.rows.filter((i) => i.status === "PENDING").length;
+  const failed = data.rows.filter((i) => i.status === "FAILED").length;
+  const paidAmount = data.rows.filter((i) => i.status === "PAID").reduce((s, i) => s + i.amount, 0);
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Invoices</h1>
-        <p className="mt-1 text-sm text-zinc-400">All platform invoices and payment records.</p>
+        <p className="mt-1 text-sm text-zinc-400">Platform invoices from Billing v2 (BillingInvoice).</p>
       </div>
 
       <PageSection>
         <MetricGrid>
-          <MetricCard label="Total Invoiced" value={`₹${totalAmount.toLocaleString("en-IN")}`} icon={IndianRupee} />
+          <MetricCard label="Paid (this page)" value={`₹${paidAmount.toLocaleString("en-IN")}`} icon={IndianRupee} />
           <MetricCard label="Paid" value={paid} icon={CheckCircle2} />
           <MetricCard label="Pending" value={pending} icon={Clock} />
-          <MetricCard label="Total Invoices" value={invoices.length} icon={FileText} />
+          <MetricCard label="Failed" value={failed} icon={AlertTriangle} />
+          <MetricCard label="Total Invoices" value={data.total} icon={FileText} />
         </MetricGrid>
       </PageSection>
 
-      <InvoicesTable data={invoices} />
+      <InvoicesClient initial={data} />
     </div>
   );
 }

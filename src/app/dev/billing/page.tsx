@@ -6,6 +6,8 @@ import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 import { capabilityService } from "@/lib/capabilities";
 import { capabilitiesForPlan, COMMERCE_PLANS, razorpayPlanIdFor } from "@/config/commerce/plans";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { revenueService } from "@/modules/billing/application/revenue-service";
+import { billingMigrationRegistry } from "@/modules/billing/application/migration-registry";
 import { BillingHarnessClient } from "./_components/billing-harness-client";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,10 @@ export default async function DevBillingPage() {
     prisma.billingSubscription.count(),
     prisma.subscription.count(),
   ]);
+
+  // IMPLEMENTATION-39: real revenue aggregates + migration status.
+  const revenue = await revenueService.getRevenueDashboard().catch(() => null);
+  const migration = billingMigrationRegistry.getStatus();
 
   const workspace = membership[0]?.workspace ?? null;
   const tenantId = session.user.tenantId ?? workspace?.tenantId ?? null;
@@ -80,8 +86,7 @@ export default async function DevBillingPage() {
           </div>
 
           <div className="rounded-xl border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] p-4 text-xs">
-            <p className="mb-2 font-medium text-[var(--text-primary,#FAFAFA)]">Plan mapping (config)</p>
-            <ul className="space-y-1" data-testid="bh-plan-mapping">
+            <p className="mb-2 font-medium text-[var(--text-primary,#FAFAFA)]">Plan mapping (config)</p>            <ul className="space-y-1" data-testid="bh-plan-mapping">
               {COMMERCE_PLANS.map((p) => (
                 <li key={p.code} data-plan={p.code} className="flex justify-between text-[var(--text-secondary,#A1A1AA)]">
                   <span>{p.code}</span>
@@ -95,6 +100,19 @@ export default async function DevBillingPage() {
         {workspace && (
           <BillingHarnessClient workspaceId={workspace.id} tenantId={tenantId ?? ""} planCode={subscription?.plan?.code ?? resolvedPlan.code ?? "creator_launch"} />
         )}
+
+        <div className="rounded-xl border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] p-4 text-xs">
+          <p className="mb-2 font-medium text-[var(--text-primary,#FAFAFA)]" data-testid="bh-revenue">Revenue aggregates (Billing v2)</p>
+          <p data-testid="bh-revenue-line">
+            MRR: <span data-testid="bh-mrr">₹{revenue?.mrr ?? 0}</span> · ARR: <span data-testid="bh-arr">₹{revenue?.arr ?? 0}</span> · active subscribers: <span data-testid="bh-active-subs">{revenue?.activeSubscribers ?? 0}</span> · revenue/creator: <span data-testid="bh-arpc">₹{revenue?.averageRevenuePerCreator ?? 0}</span> · growth: <span data-testid="bh-growth">{revenue?.growth.growthPercent ?? 0}%</span>
+          </p>
+          <p className="mt-1">
+            plan distribution: <span data-testid="bh-plan-distribution">{revenue?.planDistribution.map((p) => `${p.planName}:${p.count}`).join(", ") || "none"}</span> · paid invoices: <span data-testid="bh-paid-invoices">{revenue?.totalPaidInvoices ?? 0}</span>
+          </p>
+          <p className="mt-1 text-[var(--text-muted,#71717A)]" data-testid="bh-migration">
+            migration: <span data-testid="bh-migration-pct">{migration.migrationPercent}%</span> ({migration.migratedCount}/{migration.total}) · remaining readers: <span data-testid="bh-remaining-readers">{migration.remainingReaders.length}</span> · remaining writers: <span data-testid="bh-remaining-writers">{migration.remainingWriters.length}</span>
+          </p>
+        </div>
 
         <div className="rounded-xl border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] p-4 text-xs">
           <p className="mb-2 font-medium text-[var(--text-primary,#FAFAFA)]">Billing Timeline (events)</p>

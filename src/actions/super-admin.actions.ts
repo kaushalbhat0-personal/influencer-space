@@ -14,6 +14,9 @@ import { revalidatePath } from "next/cache";
 import { toSubdomain } from "@/lib/utils";
 import { purgeOldAuditLogs } from "@/lib/audit";
 import { logger } from "@/lib/observability/logger";
+import { billingService } from "@/modules/billing/application/service";
+import { billingMigrationRegistry } from "@/modules/billing/application/migration-registry";
+import { canonicalPlanCode } from "@/lib/capabilities/plan-resolution";
 import type { Prisma } from "@/generated/prisma/client";
 
 const DEFAULT_PASSWORD = "CreatorLaunch2026!";
@@ -401,11 +404,19 @@ export async function updateSubscriptionPlan(
   }
 
   try {
-    await prisma.subscription.upsert({
-      where: { tenantId },
-      update: { plan, status },
-      create: { tenantId, plan, status },
-    });
+    // IMPLEMENTATION-39: writes Billing v2 via BillingService (legacy Subscription
+    // is now read-only migration compatibility). Status maps FREE→ACTIVE.
+    const workspace = await prisma.workspace.findFirst({ where: { tenantId }, select: { id: true } });
+    if (!workspace) return { success: false, error: "Workspace not found" };
+    const canonical = canonicalPlanCode(plan) ?? plan;
+    const result = await billingService.adminSetPlan(
+      workspace.id,
+      canonical,
+      status === "CANCELLED" ? "CANCELLED" : "ACTIVE",
+      "super-admin updateSubscriptionPlan",
+    );
+    if (!result.success) return { success: false, error: result.error };
+    billingMigrationRegistry.markMigrated("update-subscription-plan");
     revalidatePath("/super-admin");
     return { success: true };
   } catch (error) {

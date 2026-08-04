@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { websiteHealthEngine } from "@/lib/platform/health/engine";
 import { themeRegistry } from "@/lib/theme/registry-new";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { resolvePlan } from "@/lib/capabilities/plan-resolution";
+import { billingMigrationRegistry } from "@/modules/billing/application/migration-registry";
 import { MetricCard } from "@/components/data/MetricCard";
 import { TenantOrdersTable } from "./_components/tenant-orders-table";
 import { Building2, ShoppingBag, Image, Activity, Palette, CheckCircle, Clock, Shield, CreditCard, User } from "lucide-react";
@@ -24,13 +27,15 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
     prisma.publishStatus.findFirst({ where: { website: { tenantId: tenant.id } }, select: { state: true, liveVersion: true, publishedAt: true } }),
     websiteHealthEngine.evaluate(tenant.id).catch(() => null),
     prisma.user.findMany({ where: { tenantId: tenant.id }, select: { id: true, name: true, email: true, role: true } }),
-    prisma.subscription.findUnique({ where: { tenantId: tenant.id }, select: { plan: true, status: true } }),
+    // IMPLEMENTATION-39: Billing v2 is the only runtime source of truth.
+    resolveActivePlan(undefined, tenant.id),
     prisma.auditLog.findMany({ where: { tenantId: tenant.id }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, action: true, createdAt: true, metadata: true } }),
     prisma.affiliateLink.count({ where: { tenantId: tenant.id, isActive: true } }),
   ]);
 
   const themeName = website?.themePackageId ? themeRegistry.getById(website.themePackageId)?.name ?? website.themePackageId : "None";
-  const planLabel = subscription?.plan?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? "Free";
+  const planLabel = subscription?.code ? resolvePlan(subscription.code).displayName : "Free";
+  billingMigrationRegistry.markMigrated("tenant-detail");
 
   const orders = await prisma.productOrder.findMany({
     where: { tenantId: tenant.id },
