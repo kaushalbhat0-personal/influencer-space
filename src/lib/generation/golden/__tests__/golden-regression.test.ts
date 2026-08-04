@@ -7,6 +7,8 @@ import { hybridIntelligenceEngine } from "@/lib/generation/intelligence/enrichme
 import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidence/detect";
 import { buildRelationshipGraph } from "@/lib/generation/intelligence/evidence/relationship";
 import { buildWebsiteBlueprint } from "@/lib/generation/blueprint/builder";
+import { composeStorefront } from "@/lib/generation/intelligence/composition/engine";
+import { componentRegistry } from "@/lib/registry/components";
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { EnrichmentCall } from "@/lib/generation/intelligence/enrichment/provider";
 
@@ -225,6 +227,56 @@ describe("golden dataset â€” expanded regression anchors (IMPLEMENTATION-32
       if (expected.brands) {
         for (const brand of expected.brands) expect(blueprint.evidence.brands, entry.name).toContain(brand);
       }
+    }
+  });
+
+  it("blueprint → composition → builder aggregate is deterministic for all profiles", async () => {
+    const entries = goldenDataset.listAll().filter((e) => e.expectedEntityType);
+    for (const entry of entries) {
+      const bio = `${entry.name} ${entry.tags.join(" ")} ${entry.expectedPrimaryNiche ?? ""} content and updates.`.trim();
+      const evidence = buildEvidenceIntelligence({
+        sourceText: bio,
+        sourceContentTexts: [entry.platform],
+        followers: 100000,
+        acquisitionCompleteness: 0.9,
+        graphNiche: entry.expectedPrimaryNiche ?? null,
+        graphConfidence: 0.6,
+        aiEntity: entry.expectedEntityType,
+        aiNiches: entry.expectedNiches ?? [],
+        aiBusinessModel: entry.expectedBusinessModel,
+        aiUsed: false,
+      });
+      const relationships = buildRelationshipGraph(bio, [entry.platform]);
+      const blueprint = buildWebsiteBlueprint({
+        evidence,
+        relationships,
+        identity: { entityType: entry.expectedEntityType ?? null, primaryNiche: entry.expectedPrimaryNiche ?? null, businessModel: null, audience: [], name: entry.name, username: "x", subdomain: "x" },
+      });
+      const input = {
+        blueprint,
+        identity: { entityType: blueprint.entity, name: entry.name, username: "x", bio, tagline: null, avatarUrl: null, socialLinks: [entry.url], subdomain: "x" },
+        evidence,
+        relationships,
+      };
+      const composition = composeStorefront(input);
+      const again = composeStorefront(input);
+
+      // Deterministic + versioned + serializable.
+      expect(composition.version).toBe(1);
+      expect(composition.diagnostics.deterministicSignature).toBe(again.diagnostics.deterministicSignature);
+      expect(JSON.stringify(composition)).toBe(JSON.stringify(again));
+
+      // Builder pages exist and every visible section maps to a REGISTERED component.
+      expect(composition.builder.pages.length).toBeGreaterThan(0);
+      for (const page of composition.builder.pages) {
+        for (const section of page.sections) {
+          for (const slot of section.slots) {
+            expect(componentRegistry.get(slot.moduleId), `${entry.name}: ${slot.moduleId}`).toBeTruthy();
+          }
+        }
+      }
+      // No visible blueprint section is left unmapped.
+      expect(composition.diagnostics.unmappedSections).toEqual([]);
     }
   });
 });

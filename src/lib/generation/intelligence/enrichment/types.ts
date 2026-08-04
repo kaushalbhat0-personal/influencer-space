@@ -9,6 +9,7 @@ import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { EntityType } from "./config";
 import type { EvidenceIntelligence } from "@/lib/generation/intelligence/evidence/types";
 import type { WebsiteBlueprint } from "@/lib/generation/blueprint/types";
+import type { StorefrontComposition } from "@/lib/generation/intelligence/composition/types";
 
 export interface IdentityEvidence {
   /** Deterministic source field this fact came from (or "ai:<field>"). */
@@ -50,6 +51,8 @@ export interface IdentityProfile {
   intelligence?: EvidenceIntelligence;
   /** IMPLEMENTATION-37: canonical Website Blueprint for the detected creator. */
   blueprint?: WebsiteBlueprint;
+  /** IMPLEMENTATION-38: executable Storefront Composition (Builder draft). */
+  composition?: StorefrontComposition;
   diagnostics: EnrichmentDiagnostics;
 }
 

@@ -77,6 +77,17 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
       relationships: string[];
       brands: string[];
     };
+    composition?: {
+      version: number;
+      entity: string | null;
+      themeId: string;
+      layout: string;
+      sectionCount: number;
+      visibleSections: string[];
+      builderPages: number;
+      heroMedia: string;
+      deterministicSignature: string;
+    };
     error?: string;
   } | null>(null);
 
@@ -180,6 +191,16 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
                 brands: {result.blueprint.brands.join(", ")}
               </p>
             )}
+          </div>
+        )}
+        {result?.composition && (
+          <div className="mt-2 space-y-1 text-[11px] text-[var(--text-secondary,#A1A1AA)]" data-testid="composition-line">
+            <p>
+              composition: <span data-testid="cp-theme">{result.composition.themeId}</span> · layout: <span data-testid="cp-layout">{result.composition.layout}</span> · hero media: <span data-testid="cp-hero">{result.composition.heroMedia}</span> · signature: <span data-testid="cp-signature">{result.composition.deterministicSignature}</span>
+            </p>
+            <p>
+              sections: <span data-testid="cp-sections">{result.composition.sectionCount} ({result.composition.visibleSections.length} visible)</span> · builder pages: <span data-testid="cp-pages">{result.composition.builderPages}</span>
+            </p>
           </div>
         )}
       </div>

@@ -24,6 +24,8 @@ import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidenc
 import { buildRelationshipGraph } from "@/lib/generation/intelligence/evidence/relationship";
 import { buildWebsiteBlueprint } from "@/lib/generation/blueprint/builder";
 import type { WebsiteBlueprint as WebsiteIntelligenceBlueprint } from "@/lib/generation/blueprint/types";
+import { composeStorefront } from "@/lib/generation/intelligence/composition/engine";
+import type { StorefrontComposition } from "@/lib/generation/intelligence/composition/types";
 
 function acquisitionCompleteness(diagnostics: AcquisitionDiagnostics | undefined): number {
   if (!diagnostics) return 0.5;
@@ -59,6 +61,8 @@ export interface ImportProfileResult {
   identityProfile?: IdentityProfile;
   /** IMPLEMENTATION-37 — canonical Website Blueprint (entity-driven storefront). */
   blueprint?: WebsiteIntelligenceBlueprint;
+  /** IMPLEMENTATION-38 — executable Storefront Composition (Builder draft). */
+  composition?: StorefrontComposition;
 }
 
 export interface GenerateResult {
@@ -183,8 +187,28 @@ export class OnboardingService {
 
     const identityWithBlueprint: IdentityProfile = { ...identityWithIntelligence, blueprint };
 
+    // IMPLEMENTATION-38: executable Storefront Composition — blueprint → Builder
+    // Aggregate configuration (deterministic, versioned, zero AI cost).
+    const composition = composeStorefront({
+      blueprint,
+      identity: {
+        entityType: identityProfile.entityType,
+        name: source.displayName || source.username,
+        username: source.username,
+        bio: source.bio || null,
+        tagline: source.website ?? null,
+        avatarUrl: source.avatarUrl || null,
+        socialLinks: source.socialLinks ?? source.links ?? [],
+        subdomain: source.username || "creator-store",
+      },
+      evidence: intelligence,
+      relationships,
+    });
+
+    const identityWithComposition: IdentityProfile = { ...identityWithBlueprint, composition };
+
     const channelMeta = acquisition.meta as ImportProfileResult["channelMeta"];
-    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithBlueprint, blueprint };
+    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithComposition, blueprint, composition };
     if (channelMeta) {
       return { ...base, channelMeta };
     }
