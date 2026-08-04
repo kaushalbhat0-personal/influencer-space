@@ -168,8 +168,11 @@ model; IMPLEMENTATION-42 commission/settlement will attach to the Partner concep
 
 ## 19. Playwright Production
 
-- `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
+- **R15 6/6 passing against the real Vercel deployment**:
+  `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
   npx playwright test implementation41 --project=production --grep "R15"`.
+- **Regression**: R13 (4/4) + R14 (8/8) green on real production — the new roles,
+  removed routes and agency activation introduced no regressions.
 
 ## 20. Browser Verification
 
