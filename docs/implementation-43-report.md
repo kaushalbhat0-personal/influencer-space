@@ -107,8 +107,11 @@ billing or runtime changes.
 
 ## Playwright Production
 
-- `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
+- **R17 5/5 passing against the real Vercel deployment**:
+  `$env:BASE_URL="https://influencer-space-alpha.vercel.app"; $env:SKIP_DB_CHECK="true";
   npx playwright test implementation43 --project=production --grep "R17"`.
+- **Regression**: R16 (5/5) green on real production — the pricing copy + grouped
+  comparison changes introduced no regressions.
 
 ## Browser Verification
 
