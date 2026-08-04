@@ -15,6 +15,9 @@ interface SubscriptionManagerProps {
   onUpgrade: (planCode: string) => void;
   onDowngrade: (planCode: string) => void;
   onCancel: () => void;
+  onResume?: () => void;
+  onRetry?: () => void;
+  capabilities?: string[];
   loading?: boolean;
   error?: string;
 }
@@ -48,7 +51,7 @@ function formatFeatureValue(val: number | boolean | string): string {
 
 export function SubscriptionManager({
   currentPlan, subscription, availablePlans,
-  onUpgrade, onDowngrade, onCancel, loading, error,
+  onUpgrade, onDowngrade, onCancel, onResume, onRetry, capabilities, loading, error,
 }: SubscriptionManagerProps) {
   const statusInfo = formatSubscriptionStatus(subscription.status);
 
@@ -149,7 +152,30 @@ export function SubscriptionManager({
               Cancel Subscription
             </Button>
           )}
+          {(subscription.status === "CANCELLED" || subscription.status === "PAST_DUE") && onResume && (
+            <Button size="sm" variant="outline" onClick={onResume} disabled={loading} aria-label="Resume subscription">
+              Resume Subscription
+            </Button>
+          )}
+          {subscription.status === "PAST_DUE" && onRetry && (
+            <Button size="sm" variant="default" onClick={onRetry} disabled={loading} aria-label="Retry payment">
+              Retry Payment
+            </Button>
+          )}
         </div>
+
+        {capabilities && capabilities.length > 0 && (
+          <div className="rounded-lg bg-white/[0.03] p-4">
+            <p className="text-xs text-zinc-400 font-medium mb-2">Capabilities Granted</p>
+            <div className="flex flex-wrap gap-1.5" data-testid="billing-capabilities">
+              {capabilities.map((cap) => (
+                <span key={cap} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-zinc-300">
+                  {cap}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </DashboardWidget>
   );

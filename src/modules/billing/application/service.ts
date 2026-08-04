@@ -13,6 +13,7 @@ import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import type { CheckoutResult } from "../domain/types";
+import type { BillingLineItem } from "@/lib/billing/types";
 
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
@@ -191,7 +192,13 @@ export class BillingService {
     }
 
     // Resolve the plan (canonical commerce code or legacy code fallback).
+    // Ensure the BillingPlan row exists from the canonical catalog if missing.
     let plan = planCode ? await billingRepository.findPlanByCode(planCode) : null;
+    if (!plan && planCode) {
+      const { seedBillingCatalog } = await import("../infrastructure/catalog-seed");
+      await seedBillingCatalog().catch(() => {});
+      plan = await billingRepository.findPlanByCode(planCode);
+    }
     if (!plan && existing?.planId) {
       plan = await prisma.billingPlan.findUnique({ where: { id: existing.planId } });
     }
@@ -275,6 +282,8 @@ export class BillingService {
     await billingRepository.upsertSubscription(workspaceId, {
       planId: sub.planId,
       status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancellationReason: reason ?? null,
     });
 
     await billingRepository.createEvent({
@@ -292,6 +301,56 @@ export class BillingService {
 
     logger.info("cancelSubscription completed", "billing", { operation: "cancel_subscription", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
     metricsService.recordDuration("billing_execution", Date.now() - start);
+  }
+
+  /**
+   * IMPLEMENTATION-35 — resume a CANCELLED/PAST_DUE subscription. Produces a
+   * BillingEvent and updates state via the lifecycle (events stay authoritative).
+   */
+  async resumeSubscription(workspaceId: string): Promise<void> {
+    const sub = await billingRepository.findSubscriptionByWorkspaceId(workspaceId);
+    if (!sub) throw new Error("No subscription");
+    validateTransition(sub.status as never, "ACTIVE");
+
+    await billingRepository.upsertSubscription(workspaceId, {
+      planId: sub.planId,
+      status: "ACTIVE",
+      cancelledAt: null,
+      cancellationReason: null,
+    });
+
+    await billingRepository.createEvent({
+      workspaceId,
+      accountId: workspaceId,
+      type: "SUBSCRIPTION_RESUMED",
+      idempotencyKey: `resume_${workspaceId}_${Date.now()}`,
+      payload: { previousStatus: sub.status, newStatus: "ACTIVE" },
+    });
+
+    platformEventBus.publish("SubscriptionActivated", { workspaceId, planCode: sub.planId, previousStatus: sub.status });
+  }
+
+  /**
+   * IMPLEMENTATION-35 — change plan (upgrade/downgrade). Validates the transition
+   * then creates a NEW Razorpay subscription checkout. Activation is webhook-
+   * driven (BillingEvent → BillingSubscription → capability refresh), so the old
+   * plan's capabilities remain until the new subscription activates.
+   */
+  async changePlan(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
+    const target = getPlan(planCode);
+    if (!target) return { success: false, error: `Unknown plan: ${planCode}` };
+
+    const current = await billingRepository.findSubscriptionWithPlan(workspaceId);
+    if (current?.plan?.code && current.plan.code !== planCode) {
+      const currentPlan = getPlan(current.plan.code);
+      const canChange =
+        current.status === "ACTIVE" || current.status === "TRIALING" || current.status === "PAST_DUE";
+      if (!canChange && current.status !== "CANCELLED") {
+        return { success: false, error: `Cannot change plan from status ${current.status}` };
+      }
+    }
+
+    return this.createCheckout(workspaceId, planCode, email);
   }
 
   async getSubscriptionStatus(workspaceId: string): Promise<{ planCode: string; status: string; active: boolean } | null> {
@@ -327,10 +386,25 @@ export class BillingService {
     const orders = await prisma.productOrder.count({ where: { tenantId } });
 
     return {
+      planCode,
       plan: plan ?? { code: "creator_launch", family: "creator" as const, name: "Creator Launch", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" },
       subscription: subscription ?? { id: "", accountId: workspaceId, workspaceId, planCode: "creator_launch", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
       invoices: invoices.map((inv) => ({
-        id: inv.id, amount: inv.amount, status: inv.status, issuedAt: inv.issuedAt.toISOString(), planCode: inv.planCode,
+        id: inv.id,
+        planCode: inv.planCode,
+        planName: getPlan(inv.planCode)?.name ?? inv.planCode,
+        amount: inv.amount,
+        taxAmount: inv.taxAmount ?? 0,
+        total: (inv.amount ?? 0) + (inv.taxAmount ?? 0),
+        currency: inv.currency ?? "INR",
+        status: inv.status as never,
+        issuedAt: inv.issuedAt.toISOString(),
+        paidAt: inv.paidAt?.toISOString() ?? null,
+        dueAt: inv.dueAt?.toISOString() ?? null,
+        invoiceUrl: inv.invoiceUrl ?? null,
+        provider: inv.provider ?? null,
+        providerReference: inv.providerReference ?? null,
+        lineItems: (inv.lineItems as unknown as BillingLineItem[]) ?? [],
       })),
       paymentMethods: [],
       usage: [

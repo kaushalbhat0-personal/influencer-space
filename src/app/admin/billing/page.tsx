@@ -29,7 +29,7 @@ export default async function BillingPage() {
     const upgradeUrl = process.env.NEXT_PUBLIC_UPGRADE_URL;
 
     return (
-      <BillingPageClient billingData={billingData} availablePlans={plans} upgradeUrl={upgradeUrl} />
+      <BillingPageClient billingData={billingData} availablePlans={plans} upgradeUrl={upgradeUrl} workspaceId={workspace.id} tenantId={tenant.id} />
     );
   }
 
@@ -43,5 +43,5 @@ export default async function BillingPage() {
     activeProducts: productCount, activeGallery: 0, storageUsed: 0, ordersProcessed: 0, messagesSent: 0,
   };
 
-  return <BillingPageClient billingData={billingData} availablePlans={plans} />;
+  return <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={tenant.id} tenantId={tenant.id} />;
 }

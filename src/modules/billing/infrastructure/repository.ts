@@ -73,16 +73,29 @@ export class BillingRepository {
     });
   }
 
-  async upsertSubscription(workspaceId: string, data: { planId: string; status: string; trialEndsAt?: Date | null; renewsAt?: Date | null }, tx?: Prisma.TransactionClient): Promise<BillingSubscription> {
+  async upsertSubscription(workspaceId: string, data: { planId: string; status: string; trialEndsAt?: Date | null; renewsAt?: Date | null; cancelledAt?: Date | null; cancellationReason?: string | null }, tx?: Prisma.TransactionClient): Promise<BillingSubscription> {
     const start = Date.now();
-    const existing = await this.client(tx).billingSubscription.findUnique({ where: { workspaceId } });
+    const client = this.client(tx);
+    const existing = await client.billingSubscription.findUnique({ where: { workspaceId } });
     let result: BillingSubscription;
     if (existing) {
-      result = await this.client(tx).billingSubscription.update({ where: { workspaceId }, data });
+      result = await client.billingSubscription.update({ where: { workspaceId }, data });
       logger.info("subscription updated", "billing", { operation: "update_subscription", duration: Date.now() - start, metadata: { workspaceId, planId: data.planId, status: data.status } as Record<string, unknown> });
     } else {
-      result = await this.client(tx).billingSubscription.create({
-        data: { accountId: workspaceId, workspaceId, ...data },
+      // Ensure the parent BillingAccount exists (the subscription aggregate root).
+      // BillingSubscription.accountId references BillingAccount.id — find the
+      // account by its (accountType, accountId) key, or create it (id = workspaceId)
+      // for legacy/no-v2 workspaces, then use the account's real id.
+      let account = await client.billingAccount.findUnique({
+        where: { accountType_accountId: { accountType: "tenant", accountId: workspaceId } },
+      });
+      if (!account) {
+        account = await client.billingAccount.create({
+          data: { id: workspaceId, accountType: "tenant", accountId: workspaceId },
+        });
+      }
+      result = await client.billingSubscription.create({
+        data: { accountId: account.id, workspaceId, ...data },
       });
       logger.info("subscription created", "billing", { operation: "create_subscription", duration: Date.now() - start, metadata: { workspaceId, planId: data.planId, status: data.status } as Record<string, unknown> });
     }

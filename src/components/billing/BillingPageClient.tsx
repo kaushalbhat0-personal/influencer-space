@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ContentContainer, PageSection, DashboardGrid, DashboardGridMain, DashboardGridSide } from "@/components/layout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BillingDashboard } from "./BillingDashboard";
@@ -8,12 +9,15 @@ import { SubscriptionManager } from "./SubscriptionManager";
 import { InvoiceCenter } from "./InvoiceCenter";
 import { PaymentMethodManager } from "./PaymentMethodManager";
 import { UsageDashboard } from "./UsageDashboard";
+import { changePlanAction, cancelSubscriptionAction, resumeSubscriptionAction, retryPaymentAction, getBillingDashboard } from "@/actions/billing.actions";
 import type { BillingDashboard as BillingDashboardData, BillingPlan } from "@/lib/billing";
 
 interface BillingPageClientProps {
   billingData: BillingDashboardData;
   availablePlans: BillingPlan[];
   upgradeUrl?: string;
+  workspaceId: string;
+  tenantId: string;
 }
 
 const TABS = [
@@ -24,44 +28,145 @@ const TABS = [
   { key: "usage", label: "Usage" },
 ] as const;
 
-export function BillingPageClient({ billingData, availablePlans, upgradeUrl }: BillingPageClientProps) {
+let rzpLoaded = false;
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve) => {
+    if (window.Razorpay || rzpLoaded) return resolve();
+    rzpLoaded = true;
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve();
+    document.body.appendChild(s);
+  });
+}
+
+export function BillingPageClient({ billingData, availablePlans, upgradeUrl, workspaceId, tenantId }: BillingPageClientProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [capabilities, setCapabilities] = useState<string[]>([]);
+  const [timeline, setTimeline] = useState<Array<{ type: string; createdAt: string }>>([]);
+  const [planCode, setPlanCode] = useState<string>(billingData.plan.code);
 
-  const showNotification = useCallback(() => {
+  const showNotification = useCallback((msg?: string) => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }, []);
 
-  const handleUpgrade = useCallback(async (planCode: string) => {
-    setLoading(planCode);
+  const refresh = useCallback(async () => {
+    const result = await getBillingDashboard(workspaceId, tenantId);
+    if (result.success && result.data) {
+      setCapabilities(result.data.capabilities);
+      setTimeline((result.data.history?.events ?? []).map((e: { type: string; createdAt: string }) => ({ type: e.type, createdAt: e.createdAt })));
+      setPlanCode(result.data.planCode);
+    }
+  }, [workspaceId, tenantId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  async function openSubscriptionCheckout(checkout: { subscriptionId?: string; keyId?: string; orderId?: string }) {
+    if (!checkout.subscriptionId || !checkout.keyId) {
+      setError("Checkout could not be initialized.");
+      return;
+    }
+    await loadRazorpayScript();
+    const options = {
+      key: checkout.keyId,
+      subscription_id: checkout.subscriptionId,
+      name: "CreatorStore",
+      description: "Subscription",
+      handler: () => {
+        showNotification("Subscription started — you will be notified once it activates.");
+        void refresh();
+      },
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    new (window as any).Razorpay(options).open();
+  }
+
+  const handleUpgrade = useCallback(async (target: string) => {
+    setLoading(target);
+    setError(null);
     try {
-      if (upgradeUrl) {
-        window.location.href = upgradeUrl;
+      const result = await changePlanAction(workspaceId, tenantId, target);
+      if (result.success && result.checkout) {
+        await openSubscriptionCheckout(result.checkout);
+      } else {
+        setError(result.error ?? "Upgrade failed");
       }
     } finally {
       setLoading(null);
     }
-  }, [upgradeUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId, tenantId]);
 
-  const handleDowngrade = useCallback(async (planCode: string) => {
-    setLoading(planCode);
+  const handleDowngrade = useCallback(async (target: string) => {
+    setLoading(target);
+    setError(null);
     try {
-      showNotification();
+      const result = await changePlanAction(workspaceId, tenantId, target);
+      if (result.success && result.checkout) {
+        await openSubscriptionCheckout(result.checkout);
+      } else {
+        setError(result.error ?? "Downgrade failed");
+      }
     } finally {
       setLoading(null);
     }
-  }, [showNotification]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId, tenantId]);
 
   const handleCancel = useCallback(async () => {
+    if (!window.confirm("Cancel your subscription? Premium capabilities will be removed at the end of the period.")) return;
     setLoading("cancel");
+    setError(null);
     try {
-      showNotification();
+      const result = await cancelSubscriptionAction(workspaceId, tenantId);
+      if (result.success) {
+        showNotification("Subscription cancelled.");
+        await refresh();
+      } else {
+        setError(result.error ?? "Cancellation failed");
+      }
     } finally {
       setLoading(null);
     }
-  }, [showNotification]);
+  }, [workspaceId, tenantId, refresh, showNotification]);
+
+  const handleResume = useCallback(async () => {
+    setLoading("resume");
+    setError(null);
+    try {
+      const result = await resumeSubscriptionAction(workspaceId, tenantId);
+      if (result.success) {
+        showNotification("Subscription resumed.");
+        await refresh();
+      } else {
+        setError(result.error ?? "Resume failed");
+      }
+    } finally {
+      setLoading(null);
+    }
+  }, [workspaceId, tenantId, refresh, showNotification]);
+
+  const handleRetry = useCallback(async () => {
+    setLoading("retry");
+    setError(null);
+    try {
+      const result = await retryPaymentAction(workspaceId, tenantId, planCode);
+      if (result.success && result.checkout) {
+        await openSubscriptionCheckout(result.checkout);
+      } else {
+        setError(result.error ?? "Retry failed");
+      }
+    } finally {
+      setLoading(null);
+    }
+  }, [workspaceId, tenantId, planCode]);
 
   const handleTabKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
     let newIndex = index;
@@ -95,6 +200,11 @@ export function BillingPageClient({ billingData, availablePlans, upgradeUrl }: B
         breadcrumbs={[{ label: "Settings", href: "/admin/settings" }, { label: "Billing" }]}
         status={saved ? { label: "Updated!", variant: "success" } : undefined}
       />
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400" data-testid="billing-error">
+          {error}
+        </div>
+      )}
       <nav className="mb-6 flex gap-1 border-b border-white/10 overflow-x-auto" aria-label="Billing sections" role="tablist">
         {TABS.map((tab, index) => (
           <button
@@ -132,6 +242,21 @@ export function BillingPageClient({ billingData, availablePlans, upgradeUrl }: B
               <PageSection>
                 <InvoiceCenter invoices={billingData.invoices} />
               </PageSection>
+              {timeline.length > 0 && (
+                <PageSection>
+                  <div className="admin-card p-5">
+                    <h3 className="text-sm font-semibold text-white mb-3">Billing Timeline</h3>
+                    <ol className="space-y-1.5 text-xs" data-testid="billing-timeline">
+                      {timeline.map((e, i) => (
+                        <li key={`${e.type}-${i}`} className="flex items-center justify-between text-zinc-400">
+                          <span>{e.type}</span>
+                          <span className="text-zinc-600">{new Date(e.createdAt).toLocaleString()}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </PageSection>
+              )}
             </DashboardGridMain>
             <DashboardGridSide>
               <PageSection>
@@ -175,6 +300,9 @@ export function BillingPageClient({ billingData, availablePlans, upgradeUrl }: B
             onUpgrade={handleUpgrade}
             onDowngrade={handleDowngrade}
             onCancel={handleCancel}
+            onResume={handleResume}
+            onRetry={handleRetry}
+            capabilities={capabilities}
             loading={loading !== null}
           />
         )}
