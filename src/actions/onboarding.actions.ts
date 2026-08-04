@@ -54,6 +54,15 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
     promptVersion: string;
     notes: string[];
   };
+  intelligence?: {
+    entities: Array<{ entity: string; confidence: number }>;
+    niches: Array<{ niche: string; confidence: number }>;
+    businessModels: Array<{ model: string; confidence: number }>;
+    audience: Array<{ segment: string; confidence: number }>;
+    recommendations: { theme: string | null; sections: string[]; cta: string | null };
+    confidence: number;
+    evidenceCount: number;
+  };
   error?: string;
 }> {
   try {
@@ -114,6 +123,21 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
             cost: result.identityProfile.ai.cost,
             promptVersion: result.identityProfile.ai.promptVersion,
             notes: result.identityProfile.diagnostics.notes,
+          }
+        : undefined,
+      intelligence: result.identityProfile?.intelligence
+        ? {
+            entities: result.identityProfile.intelligence.entities.map((e) => ({ entity: e.entity, confidence: Number(e.confidence.toFixed(2)) })),
+            niches: result.identityProfile.intelligence.niches.map((n) => ({ niche: n.niche, confidence: Number(n.confidence.toFixed(2)) })),
+            businessModels: result.identityProfile.intelligence.businessModels.map((b) => ({ model: b.model, confidence: Number(b.confidence.toFixed(2)) })),
+            audience: result.identityProfile.intelligence.audience.segments.map((a) => ({ segment: a.segment, confidence: Number(a.confidence.toFixed(2)) })),
+            recommendations: {
+              theme: result.identityProfile.intelligence.recommendations.theme,
+              sections: result.identityProfile.intelligence.recommendations.sections,
+              cta: result.identityProfile.intelligence.recommendations.cta,
+            },
+            confidence: Number(result.identityProfile.intelligence.confidence.overall.toFixed(2)),
+            evidenceCount: result.identityProfile.intelligence.diagnostics.evidenceCount,
           }
         : undefined,
     };

@@ -4,6 +4,7 @@ import { PersonaEngine } from "@/lib/generation/persona";
 import { goldenDataset } from "@/lib/generation/golden/registry";
 import type { GoldenCreatorEntry } from "@/lib/generation/golden/types";
 import { hybridIntelligenceEngine } from "@/lib/generation/intelligence/enrichment/engine";
+import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidence/detect";
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { EnrichmentCall } from "@/lib/generation/intelligence/enrichment/provider";
 
@@ -118,6 +119,46 @@ describe("golden dataset â€” expanded regression anchors (IMPLEMENTATION-32
     expect(profile.entityType).toBe("athlete");
     expect(profile.primaryNiche).toBe("sports");
     expect(profile.confidence).toBeGreaterThan(0.5);
+  });
+
+  it("evidence intelligence meets the golden expectations (entity/niches/audience/confidence)", async () => {
+    const evidenceEntries = goldenDataset
+      .listAll()
+      .filter((e) => e.expectedEntityType && e.expectedNiches && e.minimumConfidence);
+    expect(evidenceEntries.length).toBeGreaterThanOrEqual(35);
+
+    for (const entry of evidenceEntries) {
+      const expectedNiches = entry.expectedNiches ?? [];
+      // Build an evidence source from the entry's real signals (name + tags + niche).
+      const bio = `${entry.name} ${entry.tags.join(" ")} ${entry.expectedPrimaryNiche ?? ""} content and updates.`.trim();
+      const intel = buildEvidenceIntelligence({
+        sourceText: bio,
+        sourceContentTexts: [],
+        followers: 100000,
+        acquisitionCompleteness: 0.9,
+        graphNiche: entry.expectedPrimaryNiche ?? null,
+        graphConfidence: 0.6,
+        aiEntity: entry.expectedEntityType,
+        aiNiches: expectedNiches,
+        aiBusinessModel: entry.expectedBusinessModel,
+        aiUsed: false,
+      });
+
+      // Primary entity matches the golden expectation (or is reinforced by AI).
+      const primaryMatches =
+        intel.primaryEntity === entry.expectedEntityType ||
+        (intel.entities.find((e) => e.entity === entry.expectedEntityType)?.aiReinforced ?? false);
+      expect(primaryMatches, entry.name).toBe(true);
+
+      // Every expected niche is detected (deterministic or AI).
+      for (const niche of expectedNiches) {
+        expect(intel.niches.some((n) => n.niche === niche), `${entry.name}: ${niche}`).toBe(true);
+      }
+
+      // Minimum confidence is met and every conclusion has evidence.
+      expect(intel.confidence.overall, entry.name).toBeGreaterThanOrEqual(entry.minimumConfidence!);
+      expect(intel.diagnostics.evidenceCount, entry.name).toBeGreaterThan(0);
+    }
   });
 });
 

@@ -20,6 +20,15 @@ import { profileAcquisitionEngine } from "@/lib/generation/acquisition/engine";
 import type { AcquisitionDiagnostics } from "@/lib/generation/acquisition/types";
 import { hybridIntelligenceEngine } from "@/lib/generation/intelligence/enrichment/engine";
 import type { IdentityProfile } from "@/lib/generation/intelligence/enrichment/types";
+import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidence/detect";
+
+function acquisitionCompleteness(diagnostics: AcquisitionDiagnostics | undefined): number {
+  if (!diagnostics) return 0.5;
+  const populated = diagnostics.populatedFields.length;
+  const missing = diagnostics.missingFields.length;
+  if (populated + missing === 0) return 0.5;
+  return populated / (populated + missing);
+}
 
 export interface OnboardingProgress {
   state: string;
@@ -119,8 +128,30 @@ export class OnboardingService {
       },
     );
 
+    // IMPLEMENTATION-36: evidence-backed intelligence — multi-entity, multi-niche,
+    // business model, audience and recommendations, every conclusion traced to
+    // evidence. Deterministic-first; reuses the hybrid AI output (no extra AI call).
+    const intelligence = buildEvidenceIntelligence({
+      sourceText: source.bio ?? "",
+      sourceContentTexts: [
+        ...(source.content ?? []).map((c) => c.text ?? ""),
+        ...(source.keywords ?? []),
+        ...(source.hashtags ?? []),
+      ],
+      followers: source.followers,
+      acquisitionCompleteness: acquisitionCompleteness(acquisition.diagnostics),
+      graphNiche: knowledgeGraph.creator.niche || null,
+      graphConfidence: knowledgeGraph.confidence,
+      aiEntity: identityProfile.entityType,
+      aiNiches: identityProfile.primaryNiche ? [identityProfile.primaryNiche, ...identityProfile.secondaryNiches] : identityProfile.secondaryNiches,
+      aiBusinessModel: identityProfile.businessModel,
+      aiUsed: identityProfile.ai.used,
+    });
+
+    const identityWithIntelligence: IdentityProfile = { ...identityProfile, intelligence };
+
     const channelMeta = acquisition.meta as ImportProfileResult["channelMeta"];
-    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile };
+    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithIntelligence };
     if (channelMeta) {
       return { ...base, channelMeta };
     }

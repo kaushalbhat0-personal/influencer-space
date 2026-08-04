@@ -56,6 +56,15 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
       promptVersion: string;
       notes: string[];
     };
+    intelligence?: {
+      entities: Array<{ entity: string; confidence: number }>;
+      niches: Array<{ niche: string; confidence: number }>;
+      businessModels: Array<{ model: string; confidence: number }>;
+      audience: Array<{ segment: string; confidence: number }>;
+      recommendations: { theme: string | null; sections: string[]; cta: string | null };
+      confidence: number;
+      evidenceCount: number;
+    };
     error?: string;
   } | null>(null);
 
@@ -124,6 +133,22 @@ function AcquisitionProbe({ initialUrl }: { initialUrl: string }) {
           <p className="mt-0.5 text-[10px] text-[var(--text-muted,#71717A)]" data-testid="id-notes">
             {result.identity.notes.join(" · ")}
           </p>
+        )}
+        {result?.intelligence && (
+          <div className="mt-2 space-y-1 text-[11px] text-[var(--text-secondary,#A1A1AA)]" data-testid="intelligence-line">
+            <p>
+              entities: <span data-testid="int-entities">{result.intelligence.entities.map((e) => `${e.entity}(${e.confidence})`).join(", ") || "—"}</span> · niches:{" "}
+              <span data-testid="int-niches">{result.intelligence.niches.map((n) => `${n.niche}(${n.confidence})`).join(", ") || "—"}</span>
+            </p>
+            <p>
+              business: <span data-testid="int-business">{result.intelligence.businessModels.map((b) => `${b.model}(${b.confidence})`).join(", ") || "—"}</span> · audience:{" "}
+              <span data-testid="int-audience">{result.intelligence.audience.map((a) => a.segment).join(", ") || "—"}</span>
+            </p>
+            <p>
+              recommendations: <span data-testid="int-recs">{result.intelligence.recommendations.theme ?? "—"} · {result.intelligence.recommendations.sections.join(", ")} · {result.intelligence.recommendations.cta ?? "—"}</span> · confidence:{" "}
+              <span data-testid="int-confidence">{result.intelligence.confidence}</span> · evidence: <span data-testid="int-evidence">{result.intelligence.evidenceCount}</span>
+            </p>
+          </div>
         )}
       </div>
     </div>

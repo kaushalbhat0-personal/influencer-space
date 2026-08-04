@@ -7,6 +7,7 @@
  */
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { EntityType } from "./config";
+import type { EvidenceIntelligence } from "@/lib/generation/intelligence/evidence/types";
 
 export interface IdentityEvidence {
   /** Deterministic source field this fact came from (or "ai:<field>"). */
@@ -44,6 +45,8 @@ export interface IdentityProfile {
     confidenceBefore: number;
     confidenceAfter: number;
   };
+  /** IMPLEMENTATION-36: evidence-backed intelligence (entity/niches/business/audience/recommendations). */
+  intelligence?: EvidenceIntelligence;
   diagnostics: EnrichmentDiagnostics;
 }
 

@@ -20,6 +20,10 @@ export interface GoldenCreatorEntry {
   /** IMPLEMENTATION-32: enriched IdentityProfile targets (regression anchors). */
   expectedEntityType?: string;
   expectedPrimaryNiche?: string;
+  /** IMPLEMENTATION-36: evidence intelligence regression anchors. */
+  expectedNiches?: string[];
+  expectedAudience?: string;
+  minimumConfidence?: number;
 }
 
 export interface GoldenValidationDimension {
