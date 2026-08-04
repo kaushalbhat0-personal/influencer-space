@@ -5,6 +5,10 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { clientHealthEngine } from "@/lib/client/health";
 import { clientService } from "@/lib/client/service";
 import { themeRegistry } from "@/lib/theme/registry-new";
+import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorization";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { ClientInvite } from "./_components/client-invite";
 import { Building2, Globe, Palette, CheckCircle, Activity, ShoppingBag, Clock } from "lucide-react";
 import Link from "next/link";
 
@@ -16,6 +20,14 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     select: { id: true, name: true, subdomain: true, customDomain: true, createdAt: true },
   });
   if (!tenant) notFound();
+
+  // IMPLEMENTATION-41: IDOR guard — the session agency must manage this creator.
+  const session = await getServerSession(authOptions);
+  const agencyId = (session?.user as { agencyId?: string })?.agencyId;
+  if (agencyId) {
+    const owned = await assertAgencyOwnsTenant(session!.user.id, agencyId, tenant.id);
+    if (!owned.ok) notFound();
+  }
 
   const [website, publishStatus, productCount, health, activity] = await Promise.all([
     prisma.website.findUnique({ where: { tenantId: tenant.id }, select: { themePackageId: true, id: true } }),
@@ -40,6 +52,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         ]}
         actions={
           <div className="flex gap-2">
+            <ClientInvite tenantId={tenant.id} tenantName={tenant.name} />
             <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
               View Website
             </Link>

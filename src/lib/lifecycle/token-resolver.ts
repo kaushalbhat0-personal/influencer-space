@@ -23,8 +23,14 @@ export const LIFECYCLE_ROUTE_GUARDS: RouteGuard[] = [
   {
     prefix: "/admin",
     allowedStates: [LifecycleState.READY, LifecycleState.EDITING, LifecycleState.PUBLISHED],
-    allowedRoles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN"],
+    allowedRoles: ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENCY_STAFF", "ADMIN", "SUPPORT", "READ_ONLY"],
     redirectTo: "/onboarding",
+  },
+  {
+    prefix: "/support",
+    allowedStates: [LifecycleState.READY, LifecycleState.EDITING, LifecycleState.PUBLISHED],
+    allowedRoles: ["SUPER_ADMIN", "SUPPORT", "READ_ONLY"],
+    redirectTo: "/admin/login",
   },
   {
     prefix: "/builder",
@@ -58,7 +64,7 @@ export class LifecycleService {
     const role = token.role ?? null;
     const tenantId = token.tenantId ?? null;
 
-    if (role === "SUPER_ADMIN" || role === "AGENCY_ADMIN" || role === "AGENCY_STAFF") {
+    if (role === "SUPER_ADMIN" || role === "AGENCY_ADMIN" || role === "AGENCY_STAFF" || role === "SUPPORT" || role === "READ_ONLY") {
       return {
         state: LifecycleState.READY,
         userId: token.id,
@@ -159,6 +165,14 @@ export class LifecycleService {
     if (lifecycle.role === "AGENCY_ADMIN" || lifecycle.role === "AGENCY_STAFF") {
       if (!pathname.startsWith("/agency") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/workspace")) {
         return "/agency";
+      }
+      return null;
+    }
+
+    // IMPLEMENTATION-41: view-only roles land on the support console.
+    if (lifecycle.role === "SUPPORT" || lifecycle.role === "READ_ONLY") {
+      if (!pathname.startsWith("/support") && !pathname.startsWith("/admin/login")) {
+        return "/support";
       }
       return null;
     }

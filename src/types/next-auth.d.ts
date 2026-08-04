@@ -5,7 +5,7 @@ declare module "next-auth" {
   interface User {
     tenantId: string | null;
     agencyId?: string | null;
-    role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+    role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "SUPPORT" | "READ_ONLY";
     workspaceId?: string | null;
     workspaceType?: string | null;
     workspaceRole?: string | null;
@@ -16,7 +16,7 @@ declare module "next-auth" {
       id: string;
       tenantId: string | null;
       agencyId?: string | null;
-      role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+      role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "SUPPORT" | "READ_ONLY";
       workspaceId?: string | null;
       workspaceType?: string | null;
       workspaceRole?: string | null;
@@ -32,7 +32,7 @@ declare module "next-auth/jwt" {
     id: string;
     tenantId: string | null;
     agencyId?: string | null;
-    role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+    role: "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "SUPPORT" | "READ_ONLY";
     workspaceId?: string | null;
     workspaceType?: string | null;
     workspaceRole?: string | null;

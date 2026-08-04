@@ -56,6 +56,14 @@ export const authOptions: NextAuthOptions = {
             return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: user.agencyId, role: user.role };
           }
 
+          // IMPLEMENTATION-41: view-only roles (SUPPORT / READ_ONLY) — no tenant
+          // or agency scope; every mutation is additionally gated server-side.
+          if (user.role === "SUPPORT" || user.role === "READ_ONLY") {
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            metricsService.recordOutcome("publish", true);
+            return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: null, role: user.role, workspaceId: null, workspaceType: null, workspaceRole: null };
+          }
+
           if (user.role === "ADMIN") {
             if (credentials.tenantId && user.tenant) {
               const match = user.tenant.id === credentials.tenantId || user.tenant.subdomain === credentials.tenantId;
@@ -107,7 +115,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { id: true, role: true },
+          select: { id: true, role: true, agencyId: true },
         });
         if (!dbUser || dbUser.role !== token.role) {
           logger.warn("Session invalidated: user deleted or role changed", "auth", {
@@ -115,10 +123,31 @@ export const authOptions: NextAuthOptions = {
           });
           return { ...session, expires: new Date(0).toISOString() };
         }
+
+        // IMPLEMENTATION-41: re-validate agency membership on session refresh.
+        // A revoked agency staffer/admin must immediately lose access (no stale
+        // permissions for up to 7 days).
+        if ((dbUser.role === "AGENCY_ADMIN" || dbUser.role === "AGENCY_STAFF") && dbUser.agencyId) {
+          const membership = await prisma.workspaceMember.findFirst({
+            where: {
+              userId: dbUser.id,
+              workspace: { agencyId: dbUser.agencyId },
+              status: "ACTIVE",
+            },
+            select: { id: true },
+          });
+          if (!membership) {
+            logger.warn("Session invalidated: agency membership revoked", "auth", {
+              metadata: { userId: dbUser.id, agencyId: dbUser.agencyId } as Record<string, unknown>,
+            });
+            return { ...session, expires: new Date(0).toISOString() };
+          }
+        }
+
         session.user.id = token.id as string;
         session.user.tenantId = (token.tenantId as string) ?? null;
         session.user.agencyId = (token.agencyId as string) ?? null;
-        session.user.role = token.role as "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF";
+        session.user.role = token.role as "SUPER_ADMIN" | "ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "SUPPORT" | "READ_ONLY";
         session.user.workspaceId = (token.workspaceId as string) ?? null;
         session.user.workspaceType = (token.workspaceType as string) ?? null;
         session.user.workspaceRole = (token.workspaceRole as string) ?? null;

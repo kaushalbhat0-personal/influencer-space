@@ -12,7 +12,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { toSubdomain } from "@/lib/utils";
-import { purgeOldAuditLogs } from "@/lib/audit";
+import { purgeOldAuditLogs, logAction } from "@/lib/audit";
 import { logger } from "@/lib/observability/logger";
 import { billingService } from "@/modules/billing/application/service";
 import { billingMigrationRegistry } from "@/modules/billing/application/migration-registry";
@@ -386,6 +386,34 @@ export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTok
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("5m")
     .sign(secret);
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };
+}
+
+/**
+ * IMPLEMENTATION-41: agency impersonation — SUPER_ADMIN temporarily signs in as
+ * the agency's AGENCY_ADMIN. 5-min JWT, audited, session cookie + workspace
+ * cookie set by /api/auth/login-as; exit via normal sign-out.
+ */
+export async function generateLoginAsAgencyToken(agencyId: string): Promise<LoginAsTokenResult> {
+  const session = await getServerSession(authOptions);
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const agency = await prisma.websiteAgency.findUnique({
+    where: { id: agencyId },
+    select: { id: true, name: true },
+  });
+  if (!agency) return { success: false, error: "Agency not found" };
+
+  const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+  const token = await new SignJWT({ agencyId, type: "agency-impersonation" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("5m")
+    .sign(secret);
+  await logAction("system", "support:impersonate-agency", { agencyId, actor: session.user.email }).catch(() => {});
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };

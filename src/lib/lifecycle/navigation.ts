@@ -59,10 +59,11 @@ const DASHBOARD_NAV: NavigationConfig = {
 const AGENCY_NAV: NavigationConfig = {
   top: [
     { label: "Dashboard", href: "/agency" },
-    { label: "Creators", href: "/agency/creators" },
+    { label: "Clients", href: "/agency/clients" },
   ],
   main: [
-    { label: "Workspaces", href: "/agency/workspaces", group: "Manage" },
+    { label: "Websites", href: "/agency/websites", group: "Manage" },
+    { label: "Team", href: "/agency/team", group: "Manage" },
   ],
   footer: [
     { label: "Admin View", href: "/admin/dashboard" },

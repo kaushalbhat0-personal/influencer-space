@@ -6,6 +6,7 @@ import { provisioningService } from "@/modules/provisioning/application/provisio
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { capabilityService } from "@/lib/capabilities";
 import { prisma } from "@/lib/prisma";
+import { agencyTenantRelationship } from "@/modules/partner/application/partner-relationship";
 import { logAction } from "@/lib/audit";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
@@ -191,7 +192,26 @@ export async function confirmProvision(params: {
       return { success: false, error: `Invalid plan: ${params.planCode}` };
     }
 
-    if (ws) {
+    // IMPLEMENTATION-41: when an AGENCY_ADMIN provisions a creator, establish
+    // the canonical AgencyTenant relationship (WebsiteAgency ↔ Tenant ↔ Workspace).
+    // The creator stays the workspace OWNER (via the invitation flow) — the
+    // agency becomes a manager through AgencyTenant, never workspace OWNER.
+    let agencyTenantLinked = false;
+    if (session.user.role === "AGENCY_ADMIN" && session.user.agencyId && provisioned?.tenantId) {
+      try {
+        await agencyTenantRelationship.linkCreator({
+          agencyId: session.user.agencyId,
+          tenantId: provisioned.tenantId,
+          workspaceId: workspaceId ?? provisioned.workspaceId,
+        });
+        agencyTenantLinked = true;
+      } catch (err) {
+        captureError(err, { service: "super-admin-provision", operation: "link-creator", tenantId: provisioned.tenantId });
+        return { success: false, error: err instanceof Error ? err.message : "Failed to link creator to agency" };
+      }
+    }
+
+    if (ws && session.user.role === "SUPER_ADMIN") {
       const existingOwner = await prisma.workspaceMember.findFirst({
         where: { workspaceId: ws.id, role: "OWNER" },
         select: { userId: true },
@@ -207,6 +227,8 @@ export async function confirmProvision(params: {
       sourceUrl: params.sourceUrl,
       sourcePlatform,
       workspaceId,
+      agencyId: session.user.agencyId ?? null,
+      agencyTenantLinked,
       planCode: params.planCode,
       correlationId: undefined,
     });

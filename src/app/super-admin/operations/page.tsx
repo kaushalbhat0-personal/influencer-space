@@ -81,6 +81,15 @@ export default async function OperationsPage() {
             ["Cost", "untracked"],
           ],
         },
+        {
+          title: "Partners / Agencies", icon: <Building2 className="h-4 w-4" />,
+          items: [
+            ["Total", `${snapshot.agencies.total}`],
+            ["Active", `${snapshot.agencies.active}`],
+            ["Managed Creators", `${snapshot.agencies.managedCreators}`],
+            ["Imports (24h)", `${snapshot.agencies.imports24h}`],
+          ],
+        },
       ]
     : [];
 

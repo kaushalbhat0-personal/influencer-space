@@ -153,6 +153,7 @@ export const AGENCY_NAV: DashboardNav = {
     },
     {
       label: "Tools",
+      defaultOpen: true,
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
         { label: "Creator Import", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
@@ -162,6 +163,7 @@ export const AGENCY_NAV: DashboardNav = {
     },
     {
       label: "Manage",
+      defaultOpen: true,
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
         { label: "Domains", href: "/agency/domains", icon: Globe, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },

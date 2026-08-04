@@ -27,6 +27,7 @@ export interface OperationsSnapshot {
   audit: { entries24h: number };
   ai: { providerAccounts: number; fetches24h: number; cachedFetches: number; errorFetches: number; avgLatencyMs: number; quotaUnits: number };
   migration: { migrationPercent: number; remainingReaders: number; remainingWriters: number };
+  agencies: { total: number; active: number; managedCreators: number; imports24h: number };
 }
 
 let cache: { at: number; value: Promise<OperationsSnapshot> } | null = null;
@@ -55,6 +56,7 @@ async function buildSnapshot(): Promise<OperationsSnapshot> {
     marketplaceCounts,
     storageCounts,
     audit24h,
+    agencyCounts,
     aiCounts,
   ] = await Promise.all([
     (async () => {
@@ -89,14 +91,25 @@ async function buildSnapshot(): Promise<OperationsSnapshot> {
     (async () => {
       const [themes, themeUsage, commissions] = await Promise.all([
         Promise.resolve(themeRegistry.getAll().length),
-        prisma.website.count({ where: { themePackageId: { not: { equals: "neon-dark" } } } }),        prisma.commissionEntry.aggregate({ _sum: { partnerShare: true }, where: { status: { in: ["pending", "paid"] } } }),
+        prisma.website.count({ where: { themePackageId: { not: { equals: "neon-dark" } } } }),
+        prisma.commissionEntry.aggregate({ _sum: { partnerShare: true }, where: { status: { in: ["pending", "paid"] } } }),
       ]);
-      return { themes, blueprintCount: blueprintRegistry.count(), themeUsage, commissionRevenue: commissions._sum.partnerShare ?? 0 };    })(),
+      return { themes, blueprintCount: blueprintRegistry.count(), themeUsage, commissionRevenue: commissions._sum.partnerShare ?? 0 };
+    })(),
     (async () => {
       const [assets, media] = await Promise.all([prisma.asset.count(), prisma.galleryImage.count()]);
       return { assets, media };
     })(),
     prisma.auditLog.count({ where: { createdAt: { gte: since } } }),
+    (async () => {
+      const [total, active, managedCreators, imports24h] = await Promise.all([
+        prisma.websiteAgency.count(),
+        prisma.websiteAgency.count({ where: { status: "ACTIVE" } }),
+        prisma.agencyTenant.count({ where: { status: "ACTIVE" } }),
+        prisma.auditLog.count({ where: { action: { contains: "partner:creator-imported" }, createdAt: { gte: since } } }),
+      ]);
+      return { total, active, managedCreators, imports24h };
+    })(),
     (async () => {
       const [providerAccounts, fetchLogs] = await Promise.all([
         prisma.providerAccount.count(),
@@ -136,5 +149,6 @@ async function buildSnapshot(): Promise<OperationsSnapshot> {
     audit: { entries24h: audit24h },
     ai: aiCounts,
     migration: { migrationPercent: migration.migrationPercent, remainingReaders: migration.remainingReaders.length, remainingWriters: migration.remainingWriters.length },
+    agencies: agencyCounts,
   };
 }

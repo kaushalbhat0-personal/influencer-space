@@ -22,7 +22,7 @@ export interface LifecycleData {
   hasPublishedSnapshot: boolean;
 }
 
-export type AllowedRole = "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "ADMIN";
+export type AllowedRole = "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENCY_STAFF" | "ADMIN" | "SUPPORT" | "READ_ONLY";
 
 export interface RouteGuard {
   prefix: string;

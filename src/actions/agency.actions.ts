@@ -1,11 +1,32 @@
 "use server";
 
+/**
+ * Agency analytics (IMPLEMENTATION-41): server-authoritative. The agencyId is
+ * always taken from the authenticated session (never trusted from the client),
+ * membership is re-validated against the agency workspace, and every read is
+ * audited. No IDOR.
+ */
 import { partnerService } from "@/lib/partners";
 import { commissionService } from "@/lib/commission";
 import { payoutService } from "@/lib/payouts";
 import { prisma } from "@/lib/prisma";
+import { requireAgencyMember } from "@/modules/partner/application/authorization";
+import { logAction } from "@/lib/audit";
 
-export async function getAgencyRevenue(agencyId: string) {
+async function requireAgencyContext() {
+  const auth = await requireAgencyMember();
+  if (!auth.ok || !auth.session) {
+    return { ok: false as const, error: auth.error ?? "Unauthorized" };
+  }
+  const agencyId = auth.session.user.agencyId as string;
+  return { ok: true as const, agencyId, actor: auth.session.user.email ?? "agency" };
+}
+
+export async function getAgencyRevenue(_agencyId: string) {
+  const ctx = await requireAgencyContext();
+  if (!ctx.ok) return { success: false, error: ctx.error };
+  const agencyId = ctx.agencyId;
+
   try {
     const balance = await commissionService.getBalance(agencyId);
     const summary = await commissionService.getSummary(agencyId, "2024-01-01", "2027-12-31");
@@ -22,6 +43,7 @@ export async function getAgencyRevenue(agencyId: string) {
       _count: true,
     }) : { _sum: { amount: null }, _count: 0 };
 
+    await logAction("system", "agency:revenue-viewed", { agencyId }).catch(() => {});
     return {
       success: true,
       data: {
@@ -39,7 +61,11 @@ export async function getAgencyRevenue(agencyId: string) {
   }
 }
 
-export async function getAgencyPayouts(agencyId: string) {
+export async function getAgencyPayouts(_agencyId: string) {
+  const ctx = await requireAgencyContext();
+  if (!ctx.ok) return { success: false, error: ctx.error };
+  const agencyId = ctx.agencyId;
+
   try {
     const balance = await commissionService.getBalance(agencyId);
     const eligibility = await payoutService.checkEligibility({
@@ -53,6 +79,7 @@ export async function getAgencyPayouts(agencyId: string) {
     const batches = await payoutService.getBatchesByPartner(agencyId);
     const summary = await payoutService.getSummary(agencyId);
 
+    await logAction("system", "agency:payouts-viewed", { agencyId }).catch(() => {});
     return {
       success: true,
       data: {
@@ -81,7 +108,11 @@ export async function getAgencyPayouts(agencyId: string) {
   }
 }
 
-export async function getAgencyPartnerStats(agencyId: string) {
+export async function getAgencyPartnerStats(_agencyId: string) {
+  const ctx = await requireAgencyContext();
+  if (!ctx.ok) return { success: false, error: ctx.error };
+  const agencyId = ctx.agencyId;
+
   try {
     const partner = await partnerService.get(agencyId);
     const stats = await partnerService.getDashboard(agencyId);
@@ -90,6 +121,7 @@ export async function getAgencyPartnerStats(agencyId: string) {
       where: { agencyId, status: "ACTIVE" },
     });
 
+    await logAction("system", "agency:partner-stats-viewed", { agencyId }).catch(() => {});
     return {
       success: true,
       data: {

@@ -33,6 +33,9 @@ export interface PlatformEventPayloads {
     workspaceId: string;
     planCode: string;
     correlationId?: string;
+    /// IMPLEMENTATION-41: agency relationship context.
+    agencyId?: string | null;
+    agencyTenantLinked?: boolean;
   };
   WebsiteBeingGenerated: {
     tenantId: string;
