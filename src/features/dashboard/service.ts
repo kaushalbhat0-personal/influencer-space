@@ -1,6 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
+import { captureError } from "@/lib/observability/error-tracker";
 import type { DashboardMetrics, DashboardActivity, QuickStartStep } from "./types";
+
+/** Executes a potentially optional query and returns a safe default if the table/query fails. */
+async function safeMetric<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try { return await fn(); }
+  catch (err) {
+    captureError(err, { service: "dashboard", operation: "safeMetric" });
+    return fallback;
+  }
+}
 
 export const dashboardService = {
   async getMetrics(tenantId: string): Promise<DashboardMetrics> {
@@ -21,8 +31,8 @@ export const dashboardService = {
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } }, select: { id: true, value: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } }, select: { id: true } }),
       prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } }),
-      prisma.booking.count({ where: { tenantId } }),
-      prisma.offering.count({ where: { tenantId } }),
+      safeMetric(() => prisma.booking.count({ where: { tenantId } }), 0),
+      safeMetric(() => prisma.offering.count({ where: { tenantId } }), 0),
       prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
     ]);
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
