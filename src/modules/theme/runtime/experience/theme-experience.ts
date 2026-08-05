@@ -54,7 +54,7 @@ export type ExperienceMotion =
   | "particle-drift"
   | "parallax";
 
-export type ExperienceSurface = "flat" | "glass" | "elevated" | "gradient-border" | "soft-glow" | "floating";
+export type ExperienceSurface = "flat" | "glass" | "elevated" | "gradient-border" | "soft-glow" | "floating" | "luxury" | "neon" | "minimal";
 
 export interface ExperienceBackground {
   kind: ExperienceBackgroundKind;
@@ -220,7 +220,7 @@ const BASE: Record<string, ThemeExperience> = {
     divider: "glow",
     surface: "gradient-border",
     sections: {
-      hero: { background: { glow: "center", colors: ["rgba(234,179,8,0.14)", "rgba(202,138,4,0.08)"] }, divider: "none", heroBlend: true, surface: "flat" },
+      hero: { background: { glow: "center", colors: ["rgba(234,179,8,0.14)", "rgba(202,138,4,0.08)"] }, divider: "none", heroBlend: true, surface: "minimal" },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
     },
   },

@@ -113,7 +113,7 @@
 .xp-surface-gradient-border {
   border: 1px solid transparent;
   background:
-    linear-gradient(var(--surface-root, #0a0a0b), var(--surface-root, #0a0a0b)) padding-box,
+    linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)) padding-box,
     linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.3)) border-box;
 }
 .xp-surface-soft-glow {
@@ -121,6 +121,50 @@
 }
 .xp-surface-floating {
   box-shadow: var(--shadow-elevation-hover, 0 16px 40px rgba(0, 0, 0, 0.35));
+}
+
+/* Premium surfaces — translucent, let experience backgrounds through */
+.xp-surface-luxury {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(234, 179, 8, 0.15);
+  box-shadow: 0 4px 24px rgba(234, 179, 8, 0.06);
+}
+.xp-surface-neon {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.04), transparent);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.06);
+}
+.xp-surface-minimal {
+  background: transparent;
+  border: none;
+}
+
+/* Premium cards — inherit theme identity, no overrides */
+.xp-card-glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.xp-card-luxury {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.06), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(234, 179, 8, 0.15);
+  box-shadow: 0 2px 16px rgba(234, 179, 8, 0.04);
+}
+.xp-card-neon {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.05), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.05);
+}
+.xp-card-minimal {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Empty state — inherits experience, no generic styling */
+.xp-empty-themed {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(4px);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 

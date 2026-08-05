@@ -24,18 +24,15 @@ export function motionClass(motion: ExperienceMotion): string {
 
 export function surfaceClass(surface: ExperienceSurface): string {
   switch (surface) {
-    case "glass":
-      return "xp-surface-glass";
-    case "elevated":
-      return "xp-surface-elevated";
-    case "gradient-border":
-      return "xp-surface-gradient-border";
-    case "soft-glow":
-      return "xp-surface-soft-glow";
-    case "floating":
-      return "xp-surface-floating";
-    default:
-      return "";
+    case "glass": return "xp-surface-glass";
+    case "elevated": return "xp-surface-elevated";
+    case "gradient-border": return "xp-surface-gradient-border";
+    case "soft-glow": return "xp-surface-soft-glow";
+    case "floating": return "xp-surface-floating";
+    case "luxury": return "xp-surface-luxury";
+    case "neon": return "xp-surface-neon";
+    case "minimal": return "xp-surface-minimal";
+    default: return "";
   }
 }
 
