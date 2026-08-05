@@ -4,6 +4,7 @@ import { revenueRepository } from "@/modules/billing/infrastructure/revenue-repo
 import { MS_PER_DAY } from "@/lib/constants";
 import { logger } from "@/lib/observability/logger";
 import { metricsService } from "@/lib/observability/metrics-service";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export interface RevenueDashboard {
   mrr: number;
@@ -74,7 +75,7 @@ export class RevenueService {
     const trialUsers = subscriptions.filter((s) => s.status === "TRIALING").length;
     const mrr = subscriptions.filter((s) => s.status === "ACTIVE").reduce((sum, s) => sum + (s.plan?.price ?? 0), 0);
     const monthlyRevenue = invoices30d.filter((i) => new Date(i.issuedAt) > thirtyDaysAgo).reduce((sum, i) => sum + i.amount, 0);
-    const commissionRevenue = commissionEntries.filter((e) => e.status === "pending" || e.status === "paid").reduce((sum, e) => sum + e.partnerShare, 0);
+    const commissionRevenue = commissionEntries.filter((e) => e.status === "pending" || e.status === "cleared").reduce((sum, e) => sum + e.partnerShare, 0);
     const totalInvoiced = allInvoices._sum.amount ?? 0;
     const pendingInvoices = invoices30d.filter((i) => i.status === "PENDING").length;
     const subscriptionRevenue = invoices30d.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.amount, 0);
@@ -222,6 +223,25 @@ export class RevenueService {
     const start = Date.now();
     logger.info("updateCommissionConfig started", "billing", { operation: "update_commission_config", metadata: { config } as Record<string, unknown> });
     await revenueRepository.upsertCommissionPolicy(config);
+
+    // Sync to canonical CommissionRule engine so UI changes affect actual calculations
+    const { commissionService } = await import("@/lib/commission");
+    const { ruleEngine } = await import("@/lib/commission/rules");
+    try {
+      const existingDefault = ruleEngine.resolveRule("", "");
+      if (existingDefault && existingDefault.id) {
+        ruleEngine.removeRule(existingDefault.id);
+      }
+      commissionService.createRule({
+        platformSharePercent: config.platformPercent,
+        partnerSharePercent: config.agencyDefaultShare,
+        type: "default",
+        label: "Platform Default (from Commission Center)",
+      });
+    } catch (err) {
+      captureError(err instanceof Error ? err : new Error(String(err)), { service: "revenue", operation: "syncCommissionRule" });
+    }
+
     logger.info("updateCommissionConfig completed", "billing", { operation: "update_commission_config", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
     metricsService.recordDuration("billing_execution", Date.now() - start);
   }

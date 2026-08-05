@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { Prisma } from "@/generated/prisma/client";
+import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
 
 export type SettlementStatus =
   | "PENDING" | "READY" | "APPROVED" | "REJECTED"
@@ -129,6 +130,15 @@ export class SettlementService {
 
       if (result.settlement) {
         logger.info("Settlement created", "settlement", { operation: "createSettlement", metadata: { settlementId: result.settlement.id, partnerId: params.partnerId, totalAmount: result.settlement.totalAmount, entryCount: result.settlement.entryCount } as Record<string, unknown> });
+        partnerLedgerService.addEntry({
+          partnerId: params.partnerId,
+          type: "SETTLEMENT_CREATED",
+          amount: 0,
+          reference: result.settlement.id,
+          referenceType: "settlement",
+          description: `Settlement ${result.settlement.settlementRef} created (${result.settlement.entryCount} entries, ₹${result.settlement.netAmount})`,
+          settlementId: result.settlement.id,
+        }).catch((err) => captureError(err, { service: "settlement", operation: "ledger-create" }));
       }
       return result;
     } catch (err) {
@@ -175,6 +185,26 @@ export class SettlementService {
         });
       }
       logger.info("Settlement paid", "settlement", { operation: "updateStatus", metadata: { settlementId: id, partnerId: settlement.partnerId, amount: settlement.totalAmount, transferRef: metadata?.transferRef } as Record<string, unknown> });
+      partnerLedgerService.addEntry({
+        partnerId: settlement.partnerId,
+        type: "SETTLEMENT_PAID",
+        amount: 0,
+        reference: settlement.id,
+        referenceType: "settlement",
+        description: `Settlement ${settlement.settlementRef} paid via ${metadata?.transferRef || "manual transfer"}`,
+        settlementId: settlement.id,
+      }).catch((err) => captureError(err, { service: "settlement", operation: "ledger-paid" }));
+    }
+
+    if (status === "CANCELLED") {
+      partnerLedgerService.addEntry({
+        partnerId: settlement.partnerId,
+        type: "SETTLEMENT_CANCELLED",
+        amount: 0,
+        reference: settlement.id,
+        description: `Settlement ${settlement.settlementRef} cancelled`,
+        settlementId: settlement.id,
+      }).catch((err) => captureError(err, { service: "settlement", operation: "ledger-cancelled" }));
     }
 
     return { settlement: serializeSettlement(settlement) };
