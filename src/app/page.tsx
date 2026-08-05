@@ -15,6 +15,7 @@ import { SellAnything } from "@/components/marketing/SellAnything";
 import { Manage } from "@/components/marketing/Manage";
 import { Agency } from "@/components/marketing/Agency";
 import { CreatorShowcase } from "@/components/marketing/CreatorShowcase";
+import { StorefrontShowcase } from "@/components/marketing/StorefrontShowcase";
 import { Pricing } from "@/components/marketing/Pricing";
 import { PricingFAQ } from "@/components/marketing/PricingFAQ";
 import { FinalCta } from "@/components/marketing/FinalCta";
@@ -87,6 +88,7 @@ export default async function MarketingPage() {
         <CaseStudyGrid caseStudies={SEED_CASE_STUDIES} />
       </Section>
       <Agency />
+      <StorefrontShowcase />
 
       {/* Trust: comparison (config-driven) */}
       {comparison && <ComparisonTable comparison={comparison} />}
