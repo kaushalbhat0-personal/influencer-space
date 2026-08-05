@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { BlueprintDefinition } from "@/lib/blueprint/types";
 import { themeRegistry } from "@/lib/theme/registry-new";
 
@@ -11,6 +12,7 @@ export function BlueprintGalleryClient({
   blueprints: BlueprintDefinition[];
   categories: string[];
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedBp, setSelectedBp] = useState<BlueprintDefinition | null>(null);
@@ -80,6 +82,7 @@ export function BlueprintGalleryClient({
 }
 
 function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefinition; onClose: () => void }) {
+  const router = useRouter();
   const allRecommended = [...blueprint.recommendedThemes, ...blueprint.compatibleThemes].slice(0, 5);
   const totalSections = blueprint.pages.reduce((s, p) => s + p.sections.length, 0);
 
@@ -154,7 +157,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
         )}
 
         <div className="mt-6 flex justify-end">
-          <button onClick={onClose} className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
+          <button onClick={() => { router.push(`/admin/create?blueprint=${encodeURIComponent(blueprint.id)}`); }} className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
             Select Template
           </button>
         </div>

@@ -4,6 +4,9 @@ import { commissionLedger } from "./ledger";
 import { buildCommissionSummary } from "./queries";
 import { validateCreateRule, validateCommissionEntry } from "./validation";
 import { platformEventBus } from "@/lib/events";
+import { commissionRepository } from "./repositories/commission-repository";
+import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
+import { captureError } from "@/lib/observability/error-tracker";
 import type { CommissionRuleType, CommissionRuleStatus, LedgerEntryType } from "./constants";
 import type { CommissionRule } from "./types";
 import type { CommissionEntry, CommissionCalculation, CommissionSummary, PartnerBalance, CommissionRuleQuery, CommissionEntryQuery } from "./types";
@@ -56,6 +59,21 @@ export class CommissionService {
     if (!rule) throw new Error(`No active commission rule for partner ${params.partnerId}`);
     const calculation = this.calculate({ gross: params.gross, currency: params.currency, rule, tax: params.tax, discount: params.discount, transactionFee: params.transactionFee });
     const entry = this.createEntry({ invoiceId: params.invoiceId, partnerId: params.partnerId, subscriptionId: params.subscriptionId, planCode: params.planCode, amount: calculation, ruleId: rule.id, description: `Commission for ${params.planCode} subscription` });
+
+    // Persist to Prisma
+    commissionRepository.saveEntry(entry).catch((err) => captureError(err, { service: "commission", operation: "saveEntry" }));
+
+    // Record in Partner Ledger
+    partnerLedgerService.addEntry({
+      partnerId: params.partnerId,
+      type: "COMMISSION_EARNED",
+      amount: calculation.partnerShare,
+      reference: entry.id,
+      referenceType: "commission_entry",
+      description: `Commission for ${params.planCode} (invoice ${params.invoiceId})`,
+      commissionId: entry.id,
+    }).catch((err) => captureError(err, { service: "commission", operation: "partnerLedger-add" }));
+
     const balance = this.getBalance(params.partnerId);
     return { entry, balance };
   }

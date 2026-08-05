@@ -203,6 +203,34 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     auditCategory: "billing", analyticsKey: "payments:viewed",
     productionReady: true,
   },
+  {
+    id: "finance", title: "Finance Dashboard", group: "billing",
+    href: "/super-admin/finance", icon: TrendingUp, permission: "super_admin",
+    searchable: true, keywords: ["finance", "settlements", "partner", "payout", "liability"],
+    auditCategory: "finance", analyticsKey: "finance:viewed",
+    productionReady: true,
+  },
+  {
+    id: "settlements", title: "Settlements", group: "billing",
+    href: "/super-admin/settlements", icon: CreditCard, permission: "super_admin",
+    searchable: true, keywords: ["payout", "partner", "transfer", "bank"],
+    auditCategory: "finance", analyticsKey: "settlements:viewed",
+    productionReady: true,
+  },
+  {
+    id: "partner-ledger", title: "Partner Ledger", group: "billing",
+    href: "/super-admin/partner-ledger", icon: ScrollText, permission: "super_admin",
+    searchable: true, keywords: ["ledger", "balance", "commission", "earnings"],
+    auditCategory: "finance", analyticsKey: "partner-ledger:viewed",
+    productionReady: true,
+  },
+  {
+    id: "reconciliation", title: "Reconciliation", group: "billing",
+    href: "/super-admin/reconciliation", icon: RefreshCw, permission: "super_admin",
+    searchable: true, keywords: ["reconcile", "orphan", "imbalance", "repair"],
+    auditCategory: "finance", analyticsKey: "reconciliation:viewed",
+    productionReady: true,
+  },
 
   // ── Audit ───────────────────────────────────────────────────────
   {

@@ -4,7 +4,7 @@ import type { DashboardMetrics, DashboardActivity, QuickStartStep } from "./type
 
 export const dashboardService = {
   async getMetrics(tenantId: string): Promise<DashboardMetrics> {
-    const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website] = await Promise.all([
+    const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website, bookings, offerings, orders] = await Promise.all([
       prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true, status: true } }),
       prisma.productOrder.aggregate({
         where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
@@ -21,10 +21,14 @@ export const dashboardService = {
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } }, select: { id: true, value: true } }),
       prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } }, select: { id: true } }),
       prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } }),
+      prisma.booking.count({ where: { tenantId } }),
+      prisma.offering.count({ where: { tenantId } }),
+      prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
     ]);
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 
-    const publishedCount = products.filter((p) => p.status === "PUBLISHED").length;
+    const publishedCount = products.filter((p: { status: string }) => p.status === "PUBLISHED").length;
+
     const hasProducts = publishedCount > 0;
     const hasGallery = gallery > 0;
     const hasCustomDomain = !!tenant?.customDomain;
@@ -46,9 +50,11 @@ export const dashboardService = {
       }
     }
 
+    const activeProductCount = products.filter((p: { isActive: boolean }) => p.isActive).length;
+
     return {
       productCount: products.length,
-      activeProductCount: products.filter((p) => p.isActive).length,
+      activeProductCount,
       publishedProductCount: publishedCount,
       orderCount: await prisma.productOrder.count({
         where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
@@ -57,6 +63,9 @@ export const dashboardService = {
       galleryCount: gallery,
       linkCount: links,
       messageCount: messages,
+      bookingCount: bookings,
+      offeringCount: offerings,
+      totalOrders: orders,
       publishedVersion: publishStatus?.liveVersion ?? null,
       publishedAt: publishStatus?.publishedAt?.toISOString() ?? null,
       generationStatus: publishStatus?.state ?? null,

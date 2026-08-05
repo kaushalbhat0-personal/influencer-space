@@ -7,6 +7,9 @@ export interface DashboardMetrics {
   galleryCount: number;
   linkCount: number;
   messageCount: number;
+  bookingCount: number;
+  offeringCount: number;
+  totalOrders: number;
   publishedVersion: number | null;
   publishedAt: string | null;
   generationStatus: string | null;

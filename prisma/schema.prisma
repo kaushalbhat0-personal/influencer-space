@@ -8,13 +8,13 @@ datasource db {
 }
 
 enum Role {
-SUPER_ADMIN
-AGENCY_ADMIN
-AGENCY_STAFF
-ADMIN
-/// IMPLEMENTATION-41: view-only platform roles (no mutations).
-SUPPORT
-READ_ONLY
+  SUPER_ADMIN
+  AGENCY_ADMIN
+  AGENCY_STAFF
+  ADMIN
+  /// IMPLEMENTATION-41: view-only platform roles (no mutations).
+  SUPPORT
+  READ_ONLY
 }
 
 enum AgencyStatus {
@@ -63,32 +63,33 @@ model Tenant {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  theme              Theme?  @relation(fields: [themeId], references: [id])
-  agencyTenant       AgencyTenant?
-  workspace          Workspace?
-  users              User[]
-  products           Product[]
-  affiliateLinks     AffiliateLink[]
-  galleryImages      GalleryImage[]
-  timelineEvents     TimelineEvent[]
-  games              Game[]
-  settings           Setting[]
-  contactSubmissions ContactSubmission[]
+  theme                 Theme?                 @relation(fields: [themeId], references: [id])
+  agencyTenant          AgencyTenant?
+  workspace             Workspace?
+  users                 User[]
+  products              Product[]
+  affiliateLinks        AffiliateLink[]
+  galleryImages         GalleryImage[]
+  timelineEvents        TimelineEvent[]
+  games                 Game[]
+  settings              Setting[]
+  contactSubmissions    ContactSubmission[]
   newsletterSubscribers NewsletterSubscriber[]
-  subscription       Subscription?
-  productOrders      ProductOrder[]
-  socialStats        SocialStats[]
-  auditLogs          AuditLog[]
-  contentFeedItems   ContentFeedItem[]
-  assets             Asset[]
-  assetReferences    AssetReference[]
-  designThemes       DesignTheme[]
-  offerings          Offering[]
-  purchases          Purchase[]
-  workflows          Workflow[]
-  workflowExecutions WorkflowExecution[]
-  website            Website?
-  clientAssignments  ClientAssignment[]
+  subscription          Subscription?
+  productOrders         ProductOrder[]
+  socialStats           SocialStats[]
+  auditLogs             AuditLog[]
+  contentFeedItems      ContentFeedItem[]
+  assets                Asset[]
+  assetReferences       AssetReference[]
+  designThemes          DesignTheme[]
+  offerings             Offering[]
+  purchases             Purchase[]
+  workflows             Workflow[]
+  workflowExecutions    WorkflowExecution[]
+  website               Website?
+  clientAssignments     ClientAssignment[]
+  bookings              Booking[]
 
   @@index([customDomain])
 }
@@ -96,35 +97,35 @@ model Tenant {
 /// One Website per Tenant — the aggregate root for storefront content.
 /// Replaces the implicit website stored across Setting rows.
 model Website {
-  id               String        @id @default(uuid()) @db.Uuid
-  tenantId         String        @unique @db.Uuid
-  themePackageId   String        @default("neon-dark")
-  themeColors      Json          @default("{}")
-  themeFonts       Json          @default("{}")
-  themeConfig      Json          @default("{}")
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @unique @db.Uuid
+  themePackageId String   @default("neon-dark")
+  themeColors    Json     @default("{}")
+  themeFonts     Json     @default("{}")
+  themeConfig    Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  brand            Brand?
-  publishStatus    PublishStatus?
-  pages            Page[]
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  brand         Brand?
+  publishStatus PublishStatus?
+  pages         Page[]
 
   @@index([tenantId])
 }
 
 /// Brand identity — replaces brand_config + influencer_data settings.
 model Brand {
-  id            String   @id @default(uuid()) @db.Uuid
-  websiteId     String   @unique @db.Uuid
+  id            String  @id @default(uuid()) @db.Uuid
+  websiteId     String  @unique @db.Uuid
   name          String
-  tagline       String   @default("")
-  bio           String   @default("")
+  tagline       String  @default("")
+  bio           String  @default("")
   avatarUrl     String?
   bannerUrl     String?
-  avatarAssetId String?  @db.Uuid
-  bannerAssetId String?  @db.Uuid
-  socialLinks   Json     @default("[]")
+  avatarAssetId String? @db.Uuid
+  bannerAssetId String? @db.Uuid
+  socialLinks   Json    @default("[]")
 
   website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
 }
@@ -133,7 +134,7 @@ model Brand {
 model PublishStatus {
   id          String    @id @default(uuid()) @db.Uuid
   websiteId   String    @unique @db.Uuid
-  state       String    @default("draft")  // "draft" | "preview" | "live" | "archived"
+  state       String    @default("draft") // "draft" | "preview" | "live" | "archived"
   liveVersion Int?
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -149,12 +150,12 @@ model PublishStatus {
 /// Immutable snapshot of website state at the time of publishing.
 /// Enables rollback, preview, and version history.
 model PublishSnapshot {
-  id          String   @id @default(uuid()) @db.Uuid
-  websiteId   String   @db.Uuid
-  version     Int
-  state       String   // "live" | "preview" | "archived"
-  snapshot    Json     // full copy of pages + sections + blocks + theme
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid()) @db.Uuid
+  websiteId String   @db.Uuid
+  version   Int
+  state     String // "live" | "preview" | "archived"
+  snapshot  Json // full copy of pages + sections + blocks + theme
+  createdAt DateTime @default(now())
 
   publishStatus PublishStatus @relation(fields: [websiteId], references: [websiteId], onDelete: Cascade, map: "PublishSnapshot_websiteId_fkey")
 
@@ -176,21 +177,21 @@ model Theme {
   updatedAt       DateTime @updatedAt
 
   tenants        Tenant[]
-  agencyDefaults WebsiteAgency[]   @relation("DefaultTheme")
+  agencyDefaults WebsiteAgency[] @relation("DefaultTheme")
 }
 
 /// @deprecated Use BillingSubscription (v2) instead.
 /// Legacy per-tenant subscription model.
 /// Slated for removal after all consumers migrate to BillingSubscription.
 model Subscription {
-  id                      String    @id @default(uuid()) @db.Uuid
-  tenantId                String    @unique @db.Uuid
-  razorpaySubscriptionId  String?
-  status                  String    @default("FREE")
-  plan                    String    @default("STARTER")
-  currentPeriodEnd        DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  id                     String    @id @default(uuid()) @db.Uuid
+  tenantId               String    @unique @db.Uuid
+  razorpaySubscriptionId String?
+  status                 String    @default("FREE")
+  plan                   String    @default("STARTER")
+  currentPeriodEnd       DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -198,19 +199,19 @@ model Subscription {
 }
 
 model WebsiteAgency {
-  id                    String        @id @default(uuid()) @db.Uuid
+  id                    String       @id @default(uuid()) @db.Uuid
   name                  String
-  subdomain             String        @unique
+  subdomain             String       @unique
   customDomain          String?
-  razorpayAccountId     String?       @unique
-  razorpaySetupComplete Boolean       @default(false)
-  defaultThemeId        String?       @db.Uuid
-  platformFeePercent    Float         @default(0)
-  status                AgencyStatus  @default(TRIAL)
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  razorpayAccountId     String?      @unique
+  razorpaySetupComplete Boolean      @default(false)
+  defaultThemeId        String?      @db.Uuid
+  platformFeePercent    Float        @default(0)
+  status                AgencyStatus @default(TRIAL)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
-  defaultTheme Theme?              @relation("DefaultTheme", fields: [defaultThemeId], references: [id])
+  defaultTheme Theme?         @relation("DefaultTheme", fields: [defaultThemeId], references: [id])
   workspace    Workspace?
   users        User[]
   tenants      AgencyTenant[]
@@ -219,7 +220,7 @@ model WebsiteAgency {
 model AgencyTenant {
   id                     String   @id @default(uuid()) @db.Uuid
   agencyId               String   @db.Uuid
-  tenantId               String   @db.Uuid  @unique
+  tenantId               String   @unique @db.Uuid
   /// IMPLEMENTATION-41: the creator's TENANT workspace (single creator workspace).
   workspaceId            String?  @db.Uuid
   revSharePercent        Float    @default(20)
@@ -234,9 +235,9 @@ model AgencyTenant {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  agency WebsiteAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  agency    WebsiteAgency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workspace Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([agencyId])
 }
@@ -260,11 +261,11 @@ model Workspace {
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
-  tenant Tenant?        @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  agency WebsiteAgency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
-  members WorkspaceMember[]
-  clientAssignments ClientAssignment[]
-  agencyTenants AgencyTenant[]
+  tenant              Tenant?              @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  agency              WebsiteAgency?       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  members             WorkspaceMember[]
+  clientAssignments   ClientAssignment[]
+  agencyTenants       AgencyTenant[]
   billingSubscription BillingSubscription?
   billingEvents       BillingEvent[]
   billingInvoices     BillingInvoice[]
@@ -299,7 +300,7 @@ model ClientAssignment {
   workspaceId String   @db.Uuid
   tenantId    String   @db.Uuid
   userId      String   @db.Uuid
-  role        String   // account_manager | designer | developer | content_editor | support
+  role        String // account_manager | designer | developer | content_editor | support
   assignedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -325,10 +326,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant Tenant?        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  agency WebsiteAgency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
-  workspaceMembers   WorkspaceMember[]
-  clientAssignments  ClientAssignment[]
+  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  agency            WebsiteAgency?     @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  workspaceMembers  WorkspaceMember[]
+  clientAssignments ClientAssignment[]
 
   @@index([tenantId])
   @@index([agencyId])
@@ -364,20 +365,20 @@ model Product {
 }
 
 model ProductOrder {
-  id                String   @id @default(cuid())
-  tenantId          String   @db.Uuid
-  productId         String   @db.Uuid
-  amount            Float
-  status            String   @default("PENDING")
-  razorpayOrderId   String   @unique
-  razorpayPaymentId String?
-  fanEmail          String?
-  platformFeePercent Float  @default(5)
+  id                 String   @id @default(cuid())
+  tenantId           String   @db.Uuid
+  productId          String   @db.Uuid
+  amount             Float
+  status             String   @default("PENDING")
+  razorpayOrderId    String   @unique
+  razorpayPaymentId  String?
+  fanEmail           String?
+  platformFeePercent Float    @default(5)
   agencyFeePercent   Float?
   agencyId           String?  @db.Uuid
   routeTransferId    String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -387,17 +388,17 @@ model ProductOrder {
 }
 
 model AffiliateLink {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @db.Uuid
-  title       String
-  url         String
-  imageUrl    String?
-  imageAssetId String? @db.Uuid
-  order       Int      @default(0)
-  clicks      Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  title        String
+  url          String
+  imageUrl     String?
+  imageAssetId String?  @db.Uuid
+  order        Int      @default(0)
+  clicks       Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -475,18 +476,18 @@ model GalleryImage {
 }
 
 model TimelineEvent {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @db.Uuid
-  year        String
-  title       String
-  description String
-  imageUrl    String?
-  imageAssetId String? @db.Uuid
-  stats       String?
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  year         String
+  title        String
+  description  String
+  imageUrl     String?
+  imageAssetId String?  @db.Uuid
+  stats        String?
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -539,22 +540,22 @@ model AuditLog {
 }
 
 model ContentFeedItem {
-  id              String   @id @default(uuid()) @db.Uuid
-  tenantId        String   @db.Uuid
-  platform        String   // "instagram" | "twitch" | "youtube"
-  mediaType       String   // "image" | "video"
-  url             String   @db.Text
-  thumbnailUrl    String?  @db.Text
-  thumbnailAssetId String? @db.Uuid
-  caption         String?  @db.Text
-  permalink       String?  @db.Text
-  pinned          Boolean  @default(false)
-  hidden          Boolean  @default(false)
-  externalId      String?  // platform's native post ID (dedup key)
-  order           Int      @default(0)
-  syncedAt        DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @db.Uuid
+  platform         String // "instagram" | "twitch" | "youtube"
+  mediaType        String // "image" | "video"
+  url              String   @db.Text
+  thumbnailUrl     String?  @db.Text
+  thumbnailAssetId String?  @db.Uuid
+  caption          String?  @db.Text
+  permalink        String?  @db.Text
+  pinned           Boolean  @default(false)
+  hidden           Boolean  @default(false)
+  externalId       String? // platform's native post ID (dedup key)
+  order            Int      @default(0)
+  syncedAt         DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -628,19 +629,19 @@ model Block {
 
 /// One row per provisioning run — tracks overall status and current step.
 model CreatorProvisionRun {
-  id              String   @id @default(uuid()) @db.Uuid
-  creatorName     String
-  sourceUrl       String?
-  sourcePlatform  String?
-  tenantId        String?  @db.Uuid
-  tenantSlug      String?
-  status          String   @default("PENDING")
-  currentStep     String   @default("IMPORT_REQUESTED")
-  error           String?
-  startedAt       DateTime @default(now())
-  completedAt     DateTime?
-  durationMs      Int?
-  metadata        Json     @default("{}")
+  id             String    @id @default(uuid()) @db.Uuid
+  creatorName    String
+  sourceUrl      String?
+  sourcePlatform String?
+  tenantId       String?   @db.Uuid
+  tenantSlug     String?
+  status         String    @default("PENDING")
+  currentStep    String    @default("IMPORT_REQUESTED")
+  error          String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  durationMs     Int?
+  metadata       Json      @default("{}")
 
   events CreatorProvisionEvent[]
 
@@ -654,7 +655,7 @@ model CreatorProvisionEvent {
   id        String   @id @default(uuid()) @db.Uuid
   runId     String   @db.Uuid
   step      String
-  event     String   // "started" | "completed" | "failed"
+  event     String // "started" | "completed" | "failed"
   message   String?
   timestamp DateTime @default(now())
 
@@ -671,7 +672,7 @@ model CreatorProvisionEvent {
 model GenerationSessionEvent {
   id        String   @id @default(uuid()) @db.Uuid
   sessionId String   @db.Uuid
-  type      String   // stage_started | stage_completed | stage_failed | status_changed | progress_updated | error_occurred | warning_added | retry_initiated | workflow_linked
+  type      String // stage_started | stage_completed | stage_failed | status_changed | progress_updated | error_occurred | warning_added | retry_initiated | workflow_linked
   data      Json     @default("{}")
   timestamp DateTime @default(now())
 
@@ -682,11 +683,11 @@ model GenerationSessionEvent {
 
 /// Per-stage tracking within a GenerationSession.
 model GenerationSessionStage {
-  id          String   @id @default(uuid()) @db.Uuid
-  sessionId   String   @db.Uuid
-  type        String   // import_profile | knowledge_intelligence | persona_detection | planning_context | experience_planning | composition | artifact_generation | provisioning | publishing | golden_validation
-  status      String   // pending | running | completed | skipped | failed
-  startedAt   DateTime @default(now())
+  id          String    @id @default(uuid()) @db.Uuid
+  sessionId   String    @db.Uuid
+  type        String // import_profile | knowledge_intelligence | persona_detection | planning_context | experience_planning | composition | artifact_generation | provisioning | publishing | golden_validation
+  status      String // pending | running | completed | skipped | failed
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
   duration    Int?
   error       String?
@@ -698,30 +699,30 @@ model GenerationSessionStage {
 
 /// Every creator generation is a first-class resource with lifecycle, progress, and history.
 model GenerationSession {
-  id                   String    @id @default(uuid()) @db.Uuid
-  workspaceId          String?   @db.Uuid
-  creatorId            String?   @db.Uuid
-  creatorName          String
-  sourceUrl            String?
-  platform             String?
-  status               String    @default("created") // created | queued | running | publishing | completed | failed | cancelled | timed_out | retrying
-  currentStage         String?
-  progressPercent      Int       @default(0)
-  maxRetries           Int       @default(3)
-  retryCount           Int       @default(0)
-  workflowId           String?   @db.Uuid
-  evaluationScore      Float?
+  id                    String    @id @default(uuid()) @db.Uuid
+  workspaceId           String?   @db.Uuid
+  creatorId             String?   @db.Uuid
+  creatorName           String
+  sourceUrl             String?
+  platform              String?
+  status                String    @default("created") // created | queued | running | publishing | completed | failed | cancelled | timed_out | retrying
+  currentStage          String?
+  progressPercent       Int       @default(0)
+  maxRetries            Int       @default(3)
+  retryCount            Int       @default(0)
+  workflowId            String?   @db.Uuid
+  evaluationScore       Float?
   goldenValidationScore Float?
-  artifactVersion      Int?
-  correlationId        String?
-  storefrontUrl        String?
-  builderUrl           String?
-  dashboardUrl         String?
-  error                String?
-  warnings             Json      @default("[]")
-  startedAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  completedAt          DateTime?
+  artifactVersion       Int?
+  correlationId         String?
+  storefrontUrl         String?
+  builderUrl            String?
+  dashboardUrl          String?
+  error                 String?
+  warnings              Json      @default("[]")
+  startedAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  completedAt           DateTime?
 
   stages  GenerationSessionStage[]
   history GenerationSessionEvent[]
@@ -740,7 +741,7 @@ model GenerationSession {
 /// Replaces the polymorphic subscription pattern.
 model BillingAccount {
   id          String   @id @default(uuid()) @db.Uuid
-  accountType String   // "tenant" | "agency"
+  accountType String // "tenant" | "agency"
   accountId   String   @db.Uuid
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -755,16 +756,16 @@ model BillingAccount {
 model BillingPlan {
   id        String   @id @default(uuid()) @db.Uuid
   code      String   @unique // "creator_free", "creator_pro", "agency_starter", etc.
-  family    String            // "creator" | "agency"
+  family    String // "creator" | "agency"
   name      String
   price     Float    @default(0)
   currency  String   @default("INR")
   cycle     String   @default("monthly") // "monthly" | "annual"
-  status    String   @default("ACTIVE")  // "ACTIVE" | "DEPRECATED" | "GRANDFATHERED"
+  status    String   @default("ACTIVE") // "ACTIVE" | "DEPRECATED" | "GRANDFATHERED"
   version   Int      @default(1)
   createdAt DateTime @default(now())
 
-  features   BillingPlanFeature[]
+  features      BillingPlanFeature[]
   subscriptions BillingSubscription[]
 }
 
@@ -782,13 +783,13 @@ model BillingFeature {
 /// Join table with typed feature values.
 /// JSON reserved for future complex configurations only.
 model BillingPlanFeature {
-  planId    String @db.Uuid
-  featureId String @db.Uuid
+  planId    String   @db.Uuid
+  featureId String   @db.Uuid
   intValue  Int?
   boolValue Boolean?
   strValue  String?
 
-  plan    BillingPlan  @relation(fields: [planId], references: [id])
+  plan    BillingPlan    @relation(fields: [planId], references: [id])
   feature BillingFeature @relation(fields: [featureId], references: [id])
 
   @@id([planId, featureId])
@@ -797,21 +798,21 @@ model BillingPlanFeature {
 /// Unified subscription — one table for all billing.
 /// Separation: Payment → Billing Event → Subscription State → Feature Gate
 model BillingSubscription {
-  id          String    @id @default(uuid()) @db.Uuid
-  accountId   String    @db.Uuid
-  workspaceId String?   @unique @db.Uuid
-  planId      String    @db.Uuid
-  status      String    @default("ACTIVE") // "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED"
-  trialEndsAt DateTime?
-  renewsAt    DateTime?
-  cancelledAt DateTime?
+  id                 String    @id @default(uuid()) @db.Uuid
+  accountId          String    @db.Uuid
+  workspaceId        String?   @unique @db.Uuid
+  planId             String    @db.Uuid
+  status             String    @default("ACTIVE") // "TRIALING" | "ACTIVE" | "PAST_DUE" | "CANCELLED" | "EXPIRED"
+  trialEndsAt        DateTime?
+  renewsAt           DateTime?
+  cancelledAt        DateTime?
   cancellationReason String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  account  BillingAccount @relation(fields: [accountId], references: [id])
-  plan     BillingPlan    @relation(fields: [planId], references: [id])
-  workspace Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  account   BillingAccount @relation(fields: [accountId], references: [id])
+  plan      BillingPlan    @relation(fields: [planId], references: [id])
+  workspace Workspace?     @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([accountId])
   @@index([planId])
@@ -821,13 +822,13 @@ model BillingSubscription {
 /// Immutable billing event log. Append-only, never edited.
 /// Provides idempotency key for webhook processing.
 model BillingEvent {
-  id           String   @id @default(uuid()) @db.Uuid
-  accountId    String   @db.Uuid
-  workspaceId  String?  @db.Uuid
-  type         String   // SUBSCRIPTION_CREATED, CHECKOUT_STARTED, PAYMENT_SUCCEEDED, PAYMENT_FAILED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_RENEWED, SUBSCRIPTION_CANCELLED, REFUND_CREATED, REFUND_COMPLETED, INVOICE_ISSUED, INVOICE_PAID
-  idempotencyKey String? @unique // Prevents duplicate webhook processing
-  payload      Json?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  accountId      String   @db.Uuid
+  workspaceId    String?  @db.Uuid
+  type           String // SUBSCRIPTION_CREATED, CHECKOUT_STARTED, PAYMENT_SUCCEEDED, PAYMENT_FAILED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_RENEWED, SUBSCRIPTION_CANCELLED, REFUND_CREATED, REFUND_COMPLETED, INVOICE_ISSUED, INVOICE_PAID
+  idempotencyKey String?  @unique // Prevents duplicate webhook processing
+  payload        Json?
+  createdAt      DateTime @default(now())
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
@@ -840,20 +841,20 @@ model BillingEvent {
 /// Platform alert record (IMPLEMENTATION-40) — durable alert state replacing
 /// runtime-only alerts. Status: ACTIVE / RESOLVED / DISMISSED.
 model AlertRecord {
-  id          String   @id @default(uuid()) @db.Uuid
-  level       String   // INFO | WARNING | CRITICAL
-  status      String   @default("ACTIVE") // ACTIVE | RESOLVED | DISMISSED
-  title       String
-  message     String?
-  source      String   // health | billing | publishing | provisioning | jobs | system
-  service     String?
-  tenantId    String?  @db.Uuid
-  workspaceId String?  @db.Uuid
-  relatedJobId String? @db.Uuid
-  metadata    Json?
-  createdAt   DateTime @default(now())
-  resolvedAt  DateTime?
-  dismissedAt DateTime?
+  id             String    @id @default(uuid()) @db.Uuid
+  level          String // INFO | WARNING | CRITICAL
+  status         String    @default("ACTIVE") // ACTIVE | RESOLVED | DISMISSED
+  title          String
+  message        String?
+  source         String // health | billing | publishing | provisioning | jobs | system
+  service        String?
+  tenantId       String?   @db.Uuid
+  workspaceId    String?   @db.Uuid
+  relatedJobId   String?   @db.Uuid
+  metadata       Json?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+  dismissedAt    DateTime?
   acknowledgedBy String?
 
   @@index([level])
@@ -865,20 +866,20 @@ model AlertRecord {
 /// Platform job record (IMPLEMENTATION-40) — durable job runs replacing the
 /// in-process-only scheduler view. Status: QUEUED | RUNNING | SUCCEEDED | FAILED | CANCELLED.
 model JobRecord {
-  id          String   @id @default(uuid()) @db.Uuid
-  type        String   // publishing | generation | cleanup | webhook | storage | cron
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String // publishing | generation | cleanup | webhook | storage | cron
   name        String
-  status      String   @default("QUEUED")
-  scheduledAt DateTime @default(now())
+  status      String    @default("QUEUED")
+  scheduledAt DateTime  @default(now())
   startedAt   DateTime?
   finishedAt  DateTime?
   durationMs  Int?
-  attempts    Int      @default(0)
-  maxAttempts Int      @default(3)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
   error       String?
   triggeredBy String?
   metadata    Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([status])
   @@index([type])
@@ -888,25 +889,25 @@ model JobRecord {
 /// Financial source of truth. Immutable after payment.
 /// Created before checkout, finalized after payment success.
 model BillingInvoice {
-  id               String    @id @default(uuid()) @db.Uuid
-  accountId        String    @db.Uuid
-  workspaceId      String?   @db.Uuid
-  subscriptionId   String?   @db.Uuid
-  planCode         String
-  planVersion      Int       @default(1)
-  amount           Float
-  taxAmount        Float     @default(0)
-  currency         String    @default("INR")
-  status           String    @default("PENDING")
-  lineItems        Json?     @default("[]")
-  provider         String?
+  id                String    @id @default(uuid()) @db.Uuid
+  accountId         String    @db.Uuid
+  workspaceId       String?   @db.Uuid
+  subscriptionId    String?   @db.Uuid
+  planCode          String
+  planVersion       Int       @default(1)
+  amount            Float
+  taxAmount         Float     @default(0)
+  currency          String    @default("INR")
+  status            String    @default("PENDING")
+  lineItems         Json?     @default("[]")
+  provider          String?
   providerReference String?
-  invoiceUrl       String?
-  issuedAt         DateTime  @default(now())
-  paidAt           DateTime?
-  dueAt            DateTime?
-  metadata         Json?
-  createdAt        DateTime  @default(now())
+  invoiceUrl        String?
+  issuedAt          DateTime  @default(now())
+  paidAt            DateTime?
+  dueAt             DateTime?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
@@ -921,36 +922,36 @@ model BillingInvoice {
 
 /// Platform-wide commercial defaults. Only one ACTIVE record at a time.
 model RevenueConfiguration {
-  id                String   @id @default(uuid()) @db.Uuid
-  status            String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
-  defaultCurrency   String   @default("INR")
-  defaultTrialDays  Int      @default(14)
-  gracePeriodDays   Int      @default(7)
-  invoicePrefix     String   @default("INV")
-  autoRenew         Boolean  @default(true)
-  refundWindowDays  Int      @default(30)
-  prorationEnabled  Boolean  @default(true)
-  effectiveFrom     DateTime @default(now())
-  effectiveTo       DateTime?
-  version           Int      @default(1)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String    @id @default(uuid()) @db.Uuid
+  status           String    @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  defaultCurrency  String    @default("INR")
+  defaultTrialDays Int       @default(14)
+  gracePeriodDays  Int       @default(7)
+  invoicePrefix    String    @default("INV")
+  autoRenew        Boolean   @default(true)
+  refundWindowDays Int       @default(30)
+  prorationEnabled Boolean   @default(true)
+  effectiveFrom    DateTime  @default(now())
+  effectiveTo      DateTime?
+  version          Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 /// Commercial pricing for capability plans. Prices only — NOT entitlements.
 model CommercialPricing {
-  id            String   @id @default(uuid()) @db.Uuid
-  planCode      String   // matches capability plan code (e.g. "creator_pro")
-  workspaceType String   // "creator" | "agency"
-  monthlyPrice  Float    @default(0)
-  yearlyPrice   Float    @default(0)
-  currency      String   @default("INR")
-  status        String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
-  effectiveFrom DateTime @default(now())
+  id            String    @id @default(uuid()) @db.Uuid
+  planCode      String // matches capability plan code (e.g. "creator_pro")
+  workspaceType String // "creator" | "agency"
+  monthlyPrice  Float     @default(0)
+  yearlyPrice   Float     @default(0)
+  currency      String    @default("INR")
+  status        String    @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  effectiveFrom DateTime  @default(now())
   effectiveTo   DateTime?
-  version       Int      @default(1)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@unique([planCode, version])
   @@index([planCode, status])
@@ -958,32 +959,32 @@ model CommercialPricing {
 
 /// Commission and revenue sharing policies.
 model CommissionPolicy {
-  id                   String   @id @default(uuid()) @db.Uuid
-  status               String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
-  agencyClientPercent  Float    @default(20)
-  platformPercent      Float    @default(10)
-  referralPercent      Float    @default(5)
-  creatorDefaultShare  Float    @default(70)
-  agencyDefaultShare   Float    @default(30)
-  effectiveFrom        DateTime @default(now())
-  effectiveTo          DateTime?
-  version              Int      @default(1)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String    @id @default(uuid()) @db.Uuid
+  status              String    @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  agencyClientPercent Float     @default(20)
+  platformPercent     Float     @default(10)
+  referralPercent     Float     @default(5)
+  creatorDefaultShare Float     @default(70)
+  agencyDefaultShare  Float     @default(30)
+  effectiveFrom       DateTime  @default(now())
+  effectiveTo         DateTime?
+  version             Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 /// Global billing defaults and operational settings.
 model BillingConfiguration {
-  id              String   @id @default(uuid()) @db.Uuid
-  status          String   @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
-  taxMode         String   @default("exclusive")
-  cancellationPolicy String @default("immediate")
-  defaultRegion   String   @default("IN")
-  effectiveFrom   DateTime @default(now())
-  effectiveTo     DateTime?
-  version         Int      @default(1)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String    @id @default(uuid()) @db.Uuid
+  status             String    @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  taxMode            String    @default("exclusive")
+  cancellationPolicy String    @default("immediate")
+  defaultRegion      String    @default("IN")
+  effectiveFrom      DateTime  @default(now())
+  effectiveTo        DateTime?
+  version            Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -992,16 +993,16 @@ model BillingConfiguration {
 
 /// Normalized provider account — one per external creator source.
 model ProviderAccount {
-  id          String   @id @default(uuid()) @db.Uuid
-  provider    String   // "youtube" | "instagram" | "twitch" | "tiktok"
+  id          String    @id @default(uuid()) @db.Uuid
+  provider    String // "youtube" | "instagram" | "twitch" | "tiktok"
   externalId  String
   handle      String?
   name        String?
-  profileData Json     @default("{}")
+  profileData Json      @default("{}")
   fetchedAt   DateTime?
   expiresAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   fetchLogs ProviderFetchLog[]
 
@@ -1012,16 +1013,16 @@ model ProviderAccount {
 
 /// Log of every provider API fetch — used for debugging and quota tracking.
 model ProviderFetchLog {
-  id          String   @id @default(uuid()) @db.Uuid
-  provider    String   // "youtube" | "instagram" | ...
-  accountId   String?  @db.Uuid
-  endpoint    String
-  quotaUnits  Int      @default(1)
-  latencyMs   Int      @default(0)
-  status      String   // "success" | "error" | "cached"
-  cached      Boolean  @default(false)
-  error       String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  provider   String // "youtube" | "instagram" | ...
+  accountId  String?  @db.Uuid
+  endpoint   String
+  quotaUnits Int      @default(1)
+  latencyMs  Int      @default(0)
+  status     String // "success" | "error" | "cached"
+  cached     Boolean  @default(false)
+  error      String?
+  createdAt  DateTime @default(now())
 
   account ProviderAccount? @relation(fields: [accountId], references: [id])
 
@@ -1044,26 +1045,26 @@ model YouTubeQuotaUsage {
 
 /// Normalized creator profile — output of any provider, input to AI.
 model CreatorProfile {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String?
-  description String?
-  avatarUrl   String?
-  bannerUrl   String?
-  followers   Int      @default(0)
-  videoCount  Int      @default(0)
-  viewCount   BigInt   @default(0)
-  country     String?
-  platform    String   // "youtube" | "instagram" | ...
-  handle      String?
-  externalId  String?
-  socialLinks Json     @default("[]")
-  latestContent Json   @default("[]")
-  categories  Json     @default("[]")
-  keywords    Json     @default("[]")
-  language    String?
-  rawResponse Json?    // stored for debugging
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String?
+  description   String?
+  avatarUrl     String?
+  bannerUrl     String?
+  followers     Int      @default(0)
+  videoCount    Int      @default(0)
+  viewCount     BigInt   @default(0)
+  country       String?
+  platform      String // "youtube" | "instagram" | ...
+  handle        String?
+  externalId    String?
+  socialLinks   Json     @default("[]")
+  latestContent Json     @default("[]")
+  categories    Json     @default("[]")
+  keywords      Json     @default("[]")
+  language      String?
+  rawResponse   Json? // stored for debugging
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   intelligence CreatorIntelligence?
 
@@ -1072,25 +1073,25 @@ model CreatorProfile {
 
 /// AI-derived analysis of a CreatorProfile.
 model CreatorIntelligence {
-  id                    String   @id @default(uuid()) @db.Uuid
-  profileId             String   @unique @db.Uuid
-  niche                 String
-  subNiche              String?
-  audience              String?
-  brandPersonality      String?
-  brandTone             String?
-  visualStyle           String?
-  contentStyle          String?
-  websiteGoal           String?
-  monetization          String?
-  recommendedTheme      String?
-  recommendedTemplate   String?
-  recommendedSections   Json     @default("[]")
-  seoKeywords           Json     @default("[]")
-  confidence            Float    @default(0)
-  reasoning             String?
-  model                 String   @default("gpt-4")
-  createdAt             DateTime @default(now())
+  id                  String   @id @default(uuid()) @db.Uuid
+  profileId           String   @unique @db.Uuid
+  niche               String
+  subNiche            String?
+  audience            String?
+  brandPersonality    String?
+  brandTone           String?
+  visualStyle         String?
+  contentStyle        String?
+  websiteGoal         String?
+  monetization        String?
+  recommendedTheme    String?
+  recommendedTemplate String?
+  recommendedSections Json     @default("[]")
+  seoKeywords         Json     @default("[]")
+  confidence          Float    @default(0)
+  reasoning           String?
+  model               String   @default("gpt-4")
+  createdAt           DateTime @default(now())
 
   profile CreatorProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -1099,27 +1100,27 @@ model CreatorIntelligence {
 
 /// Aggregate root for every creator onboarding — traceable import lifecycle.
 model CreatorImport {
-  id                  String    @id @default(uuid()) @db.Uuid
-  creatorName         String
-  sourceUrl           String?
-  sourcePlatform      String?
-  provider            String?
-  providerAccountId   String?   @db.Uuid
-  creatorProfileId    String?   @db.Uuid
-  creatorIntelligenceId String? @db.Uuid
-  tenantId            String?   @db.Uuid
-  websiteId           String?   @db.Uuid
-  status              String    @default("STARTED") // STARTED | FETCHING | ANALYZING | GENERATING | COMPLETED | FAILED
-  cacheHit            Boolean   @default(false)
-  durationMs          Int?
-  warnings            Json      @default("[]")
-  errors              Json      @default("[]")
-  correlationId       String?
-  startedAt           DateTime  @default(now())
-  completedAt         DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  createdBy           String?   // userId who triggered the import
+  id                    String    @id @default(uuid()) @db.Uuid
+  creatorName           String
+  sourceUrl             String?
+  sourcePlatform        String?
+  provider              String?
+  providerAccountId     String?   @db.Uuid
+  creatorProfileId      String?   @db.Uuid
+  creatorIntelligenceId String?   @db.Uuid
+  tenantId              String?   @db.Uuid
+  websiteId             String?   @db.Uuid
+  status                String    @default("STARTED") // STARTED | FETCHING | ANALYZING | GENERATING | COMPLETED | FAILED
+  cacheHit              Boolean   @default(false)
+  durationMs            Int?
+  warnings              Json      @default("[]")
+  errors                Json      @default("[]")
+  correlationId         String?
+  startedAt             DateTime  @default(now())
+  completedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  createdBy             String? // userId who triggered the import
 
   @@index([status])
   @@index([createdAt])
@@ -1141,10 +1142,10 @@ model Asset {
   size             Int      @default(0)
   width            Int?
   height           Int?
-  duration         Int?     // Duration in seconds (for video/audio)
+  duration         Int? // Duration in seconds (for video/audio)
   checksum         String?
-  blurHash         String?  // Blur placeholder data URL
-  dominantColor    String?  // Hex color string (e.g. "#18181b")
+  blurHash         String? // Blur placeholder data URL
+  dominantColor    String? // Hex color string (e.g. "#18181b")
   storageProvider  String   @default("local")
   storageKey       String
   publicUrl        String?
@@ -1155,11 +1156,11 @@ model Asset {
   referenceCount   Int      @default(0)
   status           String   @default("ACTIVE") // ACTIVE | DELETED
   processingStatus String   @default("PENDING") // PENDING | QUEUED | PROCESSING | READY | FAILED
-  processingError  String?  // Error message if processing failed
+  processingError  String? // Error message if processing failed
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   references AssetReference[]
 
   @@index([tenantId])
@@ -1174,9 +1175,9 @@ model AssetReference {
   id         String   @id @default(uuid()) @db.Uuid
   assetId    String   @db.Uuid
   tenantId   String   @db.Uuid
-  entityType String   // e.g. "product", "gallery", "hero", "profile", "timeline", "game"
-  entityId   String   // UUID of the business entity
-  field      String?  // e.g. "imageUrl", "avatarUrl", "bannerUrl", "posterUrl", "videoUrl"
+  entityType String // e.g. "product", "gallery", "hero", "profile", "timeline", "game"
+  entityId   String // UUID of the business entity
+  field      String? // e.g. "imageUrl", "avatarUrl", "bannerUrl", "posterUrl", "videoUrl"
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -1219,7 +1220,7 @@ model DesignTheme {
 model Offering {
   id          String   @id @default(uuid()) @db.Uuid
   tenantId    String   @db.Uuid
-  type        String   // "course" | "digital_product" | "membership" | "coaching" | "webinar" | "affiliate" | "donation" | "merchandise"
+  type        String // "course" | "digital_product" | "membership" | "coaching" | "webinar" | "affiliate" | "donation" | "merchandise"
   title       String
   slug        String
   description String?
@@ -1230,7 +1231,7 @@ model Offering {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   purchases Purchase[]
 
   @@unique([tenantId, slug])
@@ -1241,20 +1242,20 @@ model Offering {
 
 /// A purchase transaction — tracks the full lifecycle.
 model Purchase {
-  id              String   @id @default(uuid()) @db.Uuid
-  offeringId      String   @db.Uuid
-  tenantId        String   @db.Uuid
-  customerEmail   String?
-  customerName    String?
-  amount          Float    @default(0)
-  currency        String   @default("INR")
-  status          String   @default("pending") // "pending" | "completed" | "fulfilled" | "refunded" | "cancelled"
-  checkoutProvider String? // "stripe" | "razorpay" | "paddle" | "lemonsqueezy"
+  id                String    @id @default(uuid()) @db.Uuid
+  offeringId        String    @db.Uuid
+  tenantId          String    @db.Uuid
+  customerEmail     String?
+  customerName      String?
+  amount            Float     @default(0)
+  currency          String    @default("INR")
+  status            String    @default("pending") // "pending" | "completed" | "fulfilled" | "refunded" | "cancelled"
+  checkoutProvider  String? // "stripe" | "razorpay" | "paddle" | "lemonsqueezy"
   providerSessionId String?
-  providerPaymentId  String?
-  fulfilledAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  providerPaymentId String?
+  fulfilledAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   offering Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
   tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1262,7 +1263,36 @@ model Purchase {
   @@index([offeringId])
   @@index([tenantId])
   @@index([status])
-  @@index([customerEmail])
+}
+
+model Booking {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @db.Uuid
+  title            String
+  description      String?
+  price            Float     @default(0)
+  currency         String    @default("INR")
+  duration         Int       @default(60)
+  slotDate         DateTime
+  slotStart        String    @default("09:00")
+  slotEnd          String    @default("10:00")
+  timezone         String    @default("Asia/Kolkata")
+  status           String    @default("pending")
+  customerName     String?
+  customerEmail    String?
+  customerPhone    String?
+  notes            String?
+  approvalRequired Boolean   @default(true)
+  approvedAt       DateTime?
+  cancelledAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([slotDate])
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1275,14 +1305,14 @@ model Workflow {
   tenantId    String   @db.Uuid
   name        String
   description String?
-  trigger     String   // Event type that activates this workflow
+  trigger     String // Event type that activates this workflow
   enabled     Boolean  @default(true)
   actions     Json     @default("[]") // Ordered list of action configurations
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  executions  WorkflowExecution[]
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  executions WorkflowExecution[]
 
   @@index([tenantId])
   @@index([trigger])
@@ -1291,18 +1321,18 @@ model Workflow {
 
 /// Immutable execution log for every workflow run.
 model WorkflowExecution {
-  id          String   @id @default(uuid()) @db.Uuid
-  workflowId  String   @db.Uuid
-  tenantId    String   @db.Uuid
-  trigger     String   // Which event triggered this execution
-  status      String   @default("pending") // "pending" | "running" | "completed" | "failed"
-  actions     Json     @default("[]")      // Snapshot of actions at execution time
-  results     Json     @default("[]")      // Per-action results (success, error, duration)
-  retries     Int      @default(0)
-  maxRetries  Int      @default(1)
+  id          String    @id @default(uuid()) @db.Uuid
+  workflowId  String    @db.Uuid
+  tenantId    String    @db.Uuid
+  trigger     String // Which event triggered this execution
+  status      String    @default("pending") // "pending" | "running" | "completed" | "failed"
+  actions     Json      @default("[]") // Snapshot of actions at execution time
+  results     Json      @default("[]") // Per-action results (success, error, duration)
+  retries     Int       @default(0)
+  maxRetries  Int       @default(1)
   durationMs  Int?
   error       String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   completedAt DateTime?
 
   workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
@@ -1320,14 +1350,14 @@ model WorkflowExecution {
 
 /// An analytics event emitted by any domain — immutable, append-only.
 model AnalyticsEvent {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String?  @db.Uuid
-  source      String
-  eventType   String
-  entityId    String?
-  payload     Json     @default("{}")
-  occurredAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String?  @db.Uuid
+  source     String
+  eventType  String
+  entityId   String?
+  payload    Json     @default("{}")
+  occurredAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
   @@index([tenantId, occurredAt])
   @@index([source, eventType])
@@ -1372,26 +1402,26 @@ enum PartnerStatus {
 }
 
 model Partner {
-  id              String        @id @db.Uuid
-  type            PartnerType   @default(agency)
-  status          PartnerStatus @default(active)
-  businessName    String
-  logo            String?
-  website         String?
-  description     String?
-  taxIdentifier   String?
-  country         String?
-  timezone        String?       @default("Asia/Kolkata")
-  supportEmail    String?
-  contactPerson   String?
-  socialLinks     Json          @default("{}")
-  settings        Json          @default("{}")
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String        @id @db.Uuid
+  type          PartnerType   @default(agency)
+  status        PartnerStatus @default(active)
+  businessName  String
+  logo          String?
+  website       String?
+  description   String?
+  taxIdentifier String?
+  country       String?
+  timezone      String?       @default("Asia/Kolkata")
+  supportEmail  String?
+  contactPerson String?
+  socialLinks   Json          @default("{}")
+  settings      Json          @default("{}")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   workspaceAssignments PartnerWorkspaceAssignment[]
-  invites               PartnerInvite[]
-  members               PartnerMember[]
+  invites              PartnerInvite[]
+  members              PartnerMember[]
 }
 
 model PartnerMember {
@@ -1408,15 +1438,15 @@ model PartnerMember {
 }
 
 model PartnerWorkspaceAssignment {
-  id            String   @id @default(uuid()) @db.Uuid
-  partnerId     String   @db.Uuid
-  workspaceId   String   @unique
+  id            String    @id @default(uuid()) @db.Uuid
+  partnerId     String    @db.Uuid
+  workspaceId   String    @unique
   workspaceName String
   workspaceSlug String?
-  status        String   @default("active")
-  reason        String   @default("created")
+  status        String    @default("active")
+  reason        String    @default("created")
   assignedBy    String
-  assignedAt    DateTime @default(now())
+  assignedAt    DateTime  @default(now())
   transferredAt DateTime?
   removedAt     DateTime?
 
@@ -1427,20 +1457,20 @@ model PartnerWorkspaceAssignment {
 }
 
 model PartnerInvite {
-  id          String   @id @default(uuid()) @db.Uuid
-  partnerId   String   @db.Uuid
-  email       String
-  role        String   @default("viewer")
-  status      String   @default("pending")
-  invitedBy   String
-  acceptedBy  String?
-  acceptedAt  DateTime?
-  declinedAt  DateTime?
-  revokedAt   DateTime?
-  expiredAt   DateTime?
-  expiresAt   DateTime
-  message     String?
-  createdAt   DateTime @default(now())
+  id         String    @id @default(uuid()) @db.Uuid
+  partnerId  String    @db.Uuid
+  email      String
+  role       String    @default("viewer")
+  status     String    @default("pending")
+  invitedBy  String
+  acceptedBy String?
+  acceptedAt DateTime?
+  declinedAt DateTime?
+  revokedAt  DateTime?
+  expiredAt  DateTime?
+  expiresAt  DateTime
+  message    String?
+  createdAt  DateTime  @default(now())
 
   partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
@@ -1451,28 +1481,28 @@ model PartnerInvite {
 // ── COMMISSION ───────────────────────────────────────────────────────────────
 
 model CommissionRule {
-  id                    String   @id @default(uuid()) @db.Uuid
-  type                  String   @default("default")
-  status                String   @default("active")
-  partnerId             String?  @db.Uuid
-  platformSharePercent  Int
-  partnerSharePercent   Int
-  effectiveFrom         DateTime @default(now())
-  effectiveTo           DateTime?
-  priority              Int      @default(100)
-  label                 String
-  description           String?
-  metadata              Json     @default("{}")
-  createdAt             DateTime @default(now())
+  id                   String    @id @default(uuid()) @db.Uuid
+  type                 String    @default("default")
+  status               String    @default("active")
+  partnerId            String?   @db.Uuid
+  platformSharePercent Int
+  partnerSharePercent  Int
+  effectiveFrom        DateTime  @default(now())
+  effectiveTo          DateTime?
+  priority             Int       @default(100)
+  label                String
+  description          String?
+  metadata             Json      @default("{}")
+  createdAt            DateTime  @default(now())
 
   @@index([partnerId])
   @@index([status, effectiveFrom, effectiveTo])
 }
 
 model CommissionEntry {
-  id              String   @id @default(uuid()) @db.Uuid
+  id              String    @id @default(uuid()) @db.Uuid
   invoiceId       String
-  partnerId       String   @db.Uuid
+  partnerId       String    @db.Uuid
   subscriptionId  String?
   planCode        String
   amount          Float
@@ -1480,15 +1510,15 @@ model CommissionEntry {
   partnerShare    Float
   platformPercent Int
   partnerPercent  Int
-  entryType       String   @default("commission_created")
-  status          String   @default("pending")
+  entryType       String    @default("commission_created")
+  status          String    @default("pending")
   description     String?
-  ruleId          String?  @db.Uuid
-  parentEntryId   String?  @db.Uuid
+  ruleId          String?   @db.Uuid
+  parentEntryId   String?   @db.Uuid
   clearedAt       DateTime?
   reversedAt      DateTime?
-  audit           Json     @default("{}")
-  createdAt       DateTime @default(now())
+  audit           Json      @default("{}")
+  createdAt       DateTime  @default(now())
 
   @@index([partnerId, createdAt])
   @@index([invoiceId])
@@ -1498,23 +1528,23 @@ model CommissionEntry {
 // ── PAYOUT ───────────────────────────────────────────────────────────────────
 
 model PayoutBatch {
-  id              String   @id @default(uuid()) @db.Uuid
-  partnerId       String   @db.Uuid
-  status          String   @default("pending")
-  provider        String   @default("manual")
-  currency        String   @default("INR")
-  total           Float
-  fee             Float    @default(0)
-  netAmount       Float
-  entryCount      Int      @default(1)
-  idempotencyKey  String   @unique
+  id                String   @id @default(uuid()) @db.Uuid
+  partnerId         String   @db.Uuid
+  status            String   @default("pending")
+  provider          String   @default("manual")
+  currency          String   @default("INR")
+  total             Float
+  fee               Float    @default(0)
+  netAmount         Float
+  entryCount        Int      @default(1)
+  idempotencyKey    String   @unique
   providerReference String?
-  bankReference   String?
-  failureReason   String?
-  audit           Json     @default("{}")
-  metadata        Json     @default("{}")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  bankReference     String?
+  failureReason     String?
+  audit             Json     @default("{}")
+  metadata          Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   reservations PayoutReservation[]
 
@@ -1524,15 +1554,15 @@ model PayoutBatch {
 }
 
 model PayoutReservation {
-  id                 String   @id @default(uuid()) @db.Uuid
-  batchId            String   @db.Uuid
-  partnerId          String   @db.Uuid
-  commissionEntryId  String
-  amount             Float
-  status             String   @default("reserved")
-  createdAt          DateTime @default(now())
-  settledAt          DateTime?
-  releasedAt         DateTime?
+  id                String    @id @default(uuid()) @db.Uuid
+  batchId           String    @db.Uuid
+  partnerId         String    @db.Uuid
+  commissionEntryId String
+  amount            Float
+  status            String    @default("reserved")
+  createdAt         DateTime  @default(now())
+  settledAt         DateTime?
+  releasedAt        DateTime?
 
   batch PayoutBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
@@ -1540,4 +1570,83 @@ model PayoutReservation {
   @@index([partnerId])
   @@index([commissionEntryId])
   @@index([status])
+}
+
+model Settlement {
+  id             String    @id @default(uuid()) @db.Uuid
+  partnerId      String    @db.Uuid
+  partnerName    String?
+  status         String    @default("PENDING")
+  provider       String    @default("manual")
+  currency       String    @default("INR")
+  totalAmount    Float
+  feeAmount      Float     @default(0)
+  netAmount      Float
+  entryCount     Int
+  approvedBy     String?
+  approvedAt     DateTime?
+  processedAt    DateTime?
+  paidAt         DateTime?
+  transferRef    String?
+  transferMethod String?
+  notes          String?
+  failureReason  String?
+  settlementRef  String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  items       SettlementItem[]
+  attachments SettlementAttachment[]
+
+  @@index([partnerId])
+  @@index([status])
+  @@index([settlementRef])
+}
+
+model SettlementItem {
+  id                String   @id @default(uuid()) @db.Uuid
+  settlementId      String   @db.Uuid
+  commissionEntryId String
+  amount            Float
+  status            String   @default("pending")
+  createdAt         DateTime @default(now())
+
+  settlement Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+
+  @@index([settlementId])
+  @@index([commissionEntryId])
+}
+
+model SettlementAttachment {
+  id           String   @id @default(uuid()) @db.Uuid
+  settlementId String   @db.Uuid
+  type         String
+  url          String
+  filename     String?
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
+
+  settlement Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+
+  @@index([settlementId])
+}
+
+model PartnerLedger {
+  id            String   @id @default(uuid()) @db.Uuid
+  partnerId     String   @db.Uuid
+  type          String
+  amount        Float
+  reference     String?
+  referenceType String?
+  description   String
+  settlementId  String?  @db.Uuid
+  commissionId  String?
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt     DateTime @default(now())
+
+  @@index([partnerId])
+  @@index([type])
+  @@index([reference])
+  @@index([settlementId])
 }

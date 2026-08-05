@@ -236,6 +236,29 @@ export class BillingService {
         invoiceId: invoice.id,
         subscriptionId: sub.id,
       });
+
+      // ── Partner Commission (auto-trigger for renewals) ──────────────────
+      try {
+        const ws = await prisma.workspace.findUnique({
+          where: { id: workspaceId },
+          select: { agencyId: true, tenantId: true },
+        });
+        if (ws?.agencyId) {
+          const partnerRecord = await partnerService.get(ws.agencyId);
+          if (partnerRecord) {
+            commissionService.processCommission({
+              invoiceId: invoice.id,
+              partnerId: ws.agencyId,
+              subscriptionId: sub.id,
+              planCode: plan.code,
+              gross: input.amount ?? getPlan(plan.code)?.price ?? 0,
+              currency: "INR",
+            });
+          }
+        }
+      } catch (err) {
+        captureError(err, { service: "billing", operation: "subscriptionWebhook-commission" });
+      }
     }
 
     const tenant = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });

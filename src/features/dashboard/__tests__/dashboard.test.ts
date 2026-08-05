@@ -30,6 +30,8 @@ vi.mock("@/lib/prisma", () => ({
     workspace: { findUnique: vi.fn().mockResolvedValue(null) },
     website: { findUnique: vi.fn().mockResolvedValue({ id: "w1" }) },
     publishSnapshot: { findMany: vi.fn().mockResolvedValue([]) },
+    booking: { count: vi.fn().mockResolvedValue(0) },
+    offering: { count: vi.fn().mockResolvedValue(0) },
   },
 }));
 

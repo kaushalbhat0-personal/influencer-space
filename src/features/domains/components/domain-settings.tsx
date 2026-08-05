@@ -25,6 +25,7 @@ export function DomainSettings({
   const [records, setRecords] = useState<VercelVerificationRecord[]>(initialVerification);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [selectedRegistrar, setSelectedRegistrar] = useState<string>("generic");
 
   async function handleAttach(formData: FormData) {
     setError(null);
@@ -135,6 +136,26 @@ export function DomainSettings({
                       </div>
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-2">
+                  <p className="text-[10px] text-zinc-500 mb-1.5">View setup instructions for your registrar:</p>
+                  <select value={selectedRegistrar} onChange={(e) => setSelectedRegistrar(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-[11px] text-zinc-400 outline-none">
+                    <option value="generic">Generic DNS</option>
+                    <option value="godaddy">GoDaddy</option>
+                    <option value="namecheap">Namecheap</option>
+                    <option value="cloudflare">Cloudflare</option>
+                    <option value="squarespace">Squarespace</option>
+                    <option value="hostinger">Hostinger</option>
+                  </select>
+                  <div className="mt-2 rounded bg-zinc-900/50 border border-zinc-800 p-2.5 text-[10px] text-zinc-500 leading-relaxed">
+                    {selectedRegistrar === "godaddy" && "1. Log in to GoDaddy → My Domains → DNS → Add. 2. Select record type (CNAME / TXT). 3. Enter the Host/Name as shown above (e.g., '_vercel' or '@'). 4. Enter the Points to/Value as shown. 5. Save. Allow 5–30 minutes for propagation."}
+                    {selectedRegistrar === "namecheap" && "1. Log in to Namecheap → Domain List → Manage → Advanced DNS. 2. Click 'Add New Record'. 3. Choose the record type from Vercel's instructions. 4. Paste the Host and Value fields. TTL can be left as Automatic. 5. Save all changes."}
+                    {selectedRegistrar === "cloudflare" && "1. Log in to Cloudflare → select domain → DNS → Records. 2. Click 'Add Record'. 3. IMPORTANT: Turn OFF the orange cloud (proxy) — set to 'DNS only' (grey cloud). 4. Enter the Name and Target from Vercel. 5. Save. Cloudflare propagates almost instantly."}
+                    {selectedRegistrar === "hostinger" && "1. Log in to Hostinger → Domains → Manage → DNS/Nameservers. 2. Go to DNS Records → Add Record. 3. Select the matching type (CNAME for www, TXT for verification). 4. Paste the Name/Points-to values from Vercel. 5. Save."}
+                    {selectedRegistrar === "squarespace" && "1. Log in to Squarespace → Settings → Domains → select domain → Advanced Settings. 2. Click 'Add custom record'. 3. Choose the record type that matches Vercel's instruction. 4. Enter the host and data values. 5. Save. Allow up to 72 hours if importing from another registrar."}
+                    {selectedRegistrar === "generic" && "Add the DNS records above at your domain registrar's DNS management page. For CNAME records, point the hostname to cname.vercel-dns.com. For TXT verification records, add exactly as shown. DNS changes can take 5 minutes to 48 hours to propagate."}
+                  </div>
                 </div>
               </div>
             )}
