@@ -33,15 +33,28 @@ export interface ImportProvider {
   icon: string;
   /** Category grouping: import existing presence, create with AI, or start fresh. */
   category: ImportCategory;
+  /** Display title shown above the provider's dedicated input. */
+  title: string;
+  /** Display subtitle shown below the title. */
+  subtitle: string;
+  /** Input type: url = single URL field, text = textarea, none = no input. */
   inputType: "url" | "text" | "none";
   placeholder: string;
+  /** Optional hint shown below the input (e.g. "Paste your channel URL"). */
+  helperText?: string;
   estimatedTime: string;
   capabilities: string[];
   available: boolean;
+  /** Whether this provider can be connected later from Settings. */
+  supportsLaterImport: boolean;
+  /** AI-specific form fields (only for inputType: "text"). */
+  aiFormFields?: Array<{ key: string; label: string; type: "text" | "textarea"; placeholder: string; required: boolean }>;
   /** Extracts a canonical CreatorProfile from the input. */
   acquire(input: string, options?: { name?: string }): Promise<CreatorProfile>;
   /** Validates whether the input matches this provider. */
   matches?(input: string): boolean;
+  /** Validates the input before analyze. Returns error string or null. */
+  validateInput?(input: string): string | null;
 }
 
 const CATEGORY_ORDER: ImportCategory[] = ["import", "ai", "fresh"];

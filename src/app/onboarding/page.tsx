@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getProvidersByCategory, type ImportProvider } from "@/lib/import-provider/registry";
 import "@/lib/import-provider/providers";
+import { ImportInputRenderer } from "@/components/onboarding/import-input-renderer";
 
 type OnboardingStep = "welcome" | "import" | "preview" | "generating" | "complete" | "error";
 
@@ -422,62 +423,36 @@ export default function OnboardingPage() {
             </p>
 
             {selectedProvider && selectedProvider.inputType !== "none" && (
-            <div>
-              <label htmlFor="onboarding-url" className="block text-xs font-medium text-zinc-400 mb-1.5">
-                Social Profile URL
-              </label>
-              <div className="relative">
-                <input
-                  id="onboarding-url"
-                  type="url"
-                  value={sourceUrl}
-                  onChange={(e) => {
-                    setSourceUrl(e.target.value);
-                    setDetectedPlatform(detectClientPlatform(e.target.value));
-                  }}
-                  placeholder="https://youtube.com/@creator"
-                  className="admin-input text-sm py-2.5 pl-10 w-full"
-                  autoFocus
-                />
-                <PlatformIcon className={cn(
-                  "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
-                  detectedPlatform
-                    ? PLATFORM_COLORS[detectedPlatform] || "text-zinc-400"
-                    : "text-zinc-600",
-                )} />
-              </div>
-            </div>
+              <ImportInputRenderer
+                provider={selectedProvider}
+                loading={loading}
+                onSubmit={(data) => {
+                  setSourceUrl(data.sourceUrl);
+                  if (data.name) setWorkspaceName(data.name);
+                  handleAnalyze();
+                }}
+              />
             )}
 
-            <div className="flex flex-wrap gap-1.5 text-[11px] text-zinc-600">
-              <span>Supported:</span>
-              <span className="text-red-400">YouTube</span>
-              <span className="text-pink-400">Instagram</span>
-              <span className="text-cyan-400">TikTok</span>
-              <span className="text-blue-400">LinkedIn</span>
-              <span className="text-purple-400">Twitch</span>
-              <span className="text-zinc-300">X</span>
-            </div>
+            {selectedProvider && selectedProvider.inputType === "none" && (
+              <div className="space-y-4">
+                <p className="text-lg font-semibold text-white">{selectedProvider.title}</p>
+                <p className="text-sm text-zinc-400">{selectedProvider.subtitle}</p>
+                <p className="text-[11px] text-zinc-600">{selectedProvider.estimatedTime}</p>
+                <button
+                  onClick={() => router.push("/admin/create")}
+                  className="btn-primary w-full py-3"
+                >
+                  Continue to Theme Selection
+                </button>
+              </div>
+            )}
 
             {error && (
               <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
                 <p className="text-xs text-red-400">{error}</p>
               </div>
             )}
-
-            <button
-              onClick={handleAnalyze}
-              disabled={!sourceUrl.trim() || loading}
-              className="btn-primary w-full py-3 disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Analyzing...
-                </span>
-              ) : (
-                "Analyze Profile"
-              )}
-            </button>
           </div>
         )}
 
