@@ -12,9 +12,9 @@ import { useConstructionSnapshot } from "@/features/onboarding/hooks/use-constru
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
-  Sparkles, Layout, Video as VideoIcon, Globe as GlobeIcon, Map, Edit3,
+  Sparkles, Layout, Globe as GlobeIcon, Map, Edit3,
 } from "lucide-react";
-import { getAvailableImportProviders, type ImportProvider } from "@/lib/import-provider/registry";
+import { getProvidersByCategory, type ImportProvider } from "@/lib/import-provider/registry";
 import "@/lib/import-provider/providers";
 
 type OnboardingStep = "welcome" | "import" | "preview" | "generating" | "complete" | "error";
@@ -107,20 +107,6 @@ function formatElapsed(ms: number): string {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${minutes}m ${secs}s`;
-}
-
-const ImportIcons: Record<string, typeof Globe> = {
-  youtube: VideoIcon, website: GlobeIcon, google_business: Map, manual_ai: Sparkles, blank: Edit3,
-};
-
-function ProviderPick({ p, selected, onPick }: { p: ImportProvider; selected: boolean; onPick: () => void }) {
-  const I = ImportIcons[p.id] || Globe;
-  return (
-    <button onClick={onPick} className={cn("flex items-start gap-3 rounded-lg border p-3 text-left w-full transition-all", selected ? "border-indigo-500/40 bg-indigo-500/[0.06]" : "border-white/[0.06] bg-zinc-900/30 hover:border-white/[0.15]")}>
-      <div className="shrink-0 h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><I className="h-4 w-4 text-indigo-400" /></div>
-      <div><p className="font-medium text-sm text-white">{p.label}</p><p className="text-[11px] text-zinc-500">{p.description}</p></div>
-    </button>
-  );
 }
 
 export default function OnboardingPage() {
@@ -390,25 +376,50 @@ export default function OnboardingPage() {
             </button>
 
             <div>
-              <h1 className="text-xl font-semibold text-white">Import your creator profile</h1>
+              <h1 className="text-xl font-semibold text-white">Build your CreatorStore</h1>
               <p className="mt-1 text-sm text-zinc-400">
-                Choose a source below. You can import more later from Settings.
+                Choose how you&apos;d like to start. Nothing is permanent — you can always import more later.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {getAvailableImportProviders().map((p) => (
-                <ProviderPick
-                  key={p.id}
-                  p={p}
-                  selected={selectedProvider?.id === p.id}
-                  onPick={() => {
-                    setSelectedProvider(p);
-                    if (p.inputType === "none") { router.push("/admin/dashboard"); }
-                  }}
-                />
-              ))}
-            </div>
+            {Array.from(getProvidersByCategory().entries()).map(([category, providers]) => (
+              <div key={category} className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                  {category === "import" ? "Import Existing Presence" : category === "ai" ? "Create with AI" : "Start Fresh"}
+                </p>
+                <div className="grid gap-2">
+                  {providers.map((p: ImportProvider) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSelectedProvider(p);
+                        if (p.inputType === "none") { router.push("/admin/dashboard"); }
+                      }}
+                      className={cn(
+                        "flex items-start gap-3 rounded-lg border p-3 text-left w-full transition-all",
+                        selectedProvider?.id === p.id
+                          ? "border-indigo-500/40 bg-indigo-500/[0.06]"
+                          : "border-white/[0.06] bg-zinc-900/30 hover:border-white/[0.15]"
+                      )}
+                    >
+                      <div className="shrink-0 h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                        {category === "import" ? <GlobeIcon className="h-4 w-4 text-indigo-400" /> : category === "ai" ? <Sparkles className="h-4 w-4 text-amber-400" /> : <Edit3 className="h-4 w-4 text-emerald-400" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm text-white">{p.label}</p>
+                        </div>
+                        <p className="text-[11px] text-zinc-500">{p.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <p className="text-center text-[11px] text-zinc-600 leading-relaxed">
+              You can always connect more profiles later from Settings.<br />
+              Your website is fully editable after generation.
+            </p>
 
             {selectedProvider && selectedProvider.inputType !== "none" && (
             <div>

@@ -24,11 +24,15 @@ export interface CreatorProfile {
   metadata?: Record<string, unknown>;
 }
 
+export type ImportCategory = "import" | "ai" | "fresh";
+
 export interface ImportProvider {
   id: string;
   label: string;
   description: string;
   icon: string;
+  /** Category grouping: import existing presence, create with AI, or start fresh. */
+  category: ImportCategory;
   inputType: "url" | "text" | "none";
   placeholder: string;
   estimatedTime: string;
@@ -38,6 +42,16 @@ export interface ImportProvider {
   acquire(input: string, options?: { name?: string }): Promise<CreatorProfile>;
   /** Validates whether the input matches this provider. */
   matches?(input: string): boolean;
+}
+
+const CATEGORY_ORDER: ImportCategory[] = ["import", "ai", "fresh"];
+
+export function getProvidersByCategory(): Map<ImportCategory, ImportProvider[]> {
+  const byCategory = new Map<ImportCategory, ImportProvider[]>();
+  for (const cat of CATEGORY_ORDER) {
+    byCategory.set(cat, getAvailableImportProviders().filter((p) => p.category === cat));
+  }
+  return byCategory;
 }
 
 const providers: Map<string, ImportProvider> = new Map();
