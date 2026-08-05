@@ -35,6 +35,23 @@ export function SectionDivider({ kind, position = "bottom" }: { kind: Experience
         return (
           <div key={key} aria-hidden className="pointer-events-none h-px w-full bg-gradient-to-r from-transparent via-indigo-400/10 to-transparent" data-testid="divider-glow" />
         );
+      case "brush":
+        return (
+          <svg key={key} aria-hidden className="pointer-events-none block h-6 w-full text-[var(--surface-root,#0A0A0B)] opacity-[0.04]" viewBox="0 0 1200 24" preserveAspectRatio="none" data-testid="divider-brush">
+            <path d="M0 16 Q150 0 300 10 T600 8 T900 12 T1200 8 V24 H0 Z" fill="currentColor" />
+          </svg>
+        );
+      case "organic":
+        return (
+          <svg key={key} aria-hidden className="pointer-events-none block h-10 w-full text-[var(--surface-root,#0A0A0B)] opacity-[0.05]" viewBox="0 0 1200 40" preserveAspectRatio="none" data-testid="divider-organic">
+            <path d="M0 20 Q100 0 200 15 T450 10 T700 18 T950 8 T1200 14 V40 H0 Z" fill="currentColor" />
+          </svg>
+        );
+      case "soft":
+        return (
+          <div key={key} aria-hidden className="pointer-events-none h-12 w-full" data-testid="divider-soft"
+            style={{ background: "linear-gradient(to bottom, rgba(99,102,241,0.03), transparent 60%)" }} />
+        );
       case "fade":
       default:
         return (

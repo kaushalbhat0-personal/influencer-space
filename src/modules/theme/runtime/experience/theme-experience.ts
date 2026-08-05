@@ -14,7 +14,11 @@ export type ExperienceBackgroundKind =
   | "mesh"
   | "radial"
   | "pattern"
+  | "multi-radial"
+  | "aurora"
   | "none";
+
+export type ExperienceDivider = "none" | "fade" | "wave" | "curve" | "diagonal" | "glow" | "brush" | "organic" | "soft";
 
 export type ExperienceDecorationPack =
   | "minimal"
@@ -49,8 +53,6 @@ export type ExperienceMotion =
   | "gradient-shift"
   | "particle-drift"
   | "parallax";
-
-export type ExperienceDivider = "none" | "fade" | "wave" | "curve" | "diagonal" | "glow";
 
 export type ExperienceSurface = "flat" | "glass" | "elevated" | "gradient-border" | "soft-glow" | "floating";
 
@@ -137,7 +139,7 @@ const BASE: Record<string, ThemeExperience> = {
     id: "aurora",
     name: "Aurora",
     premium: true,
-    background: { kind: "mesh", colors: ["rgba(129,140,248,0.16)", "rgba(192,132,252,0.10)", "rgba(34,211,238,0.08)"], glow: "center" },
+    background: { kind: "aurora", colors: ["rgba(129,140,248,0.14)", "rgba(192,132,252,0.08)", "rgba(34,211,238,0.06)", "rgba(99,102,241,0.04)"], glow: "center" },
     decoration: "blobs",
     motion: "gradient-shift",
     divider: "fade",
