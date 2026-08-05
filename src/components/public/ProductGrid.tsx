@@ -46,19 +46,34 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {products.map((product) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {products.map((product) => {
+        const allImages = product.images?.length ? product.images : product.imageUrl ? [{ url: product.imageUrl, alt: product.name, order: 0 }] : [];
+        return (
         <div
           key={product.id}
           className="group overflow-hidden rounded-xl border border-white/10 bg-zinc-900 transition-all hover:border-white/20"
         >
-          {product.imageUrl && (
-            <div className="aspect-square w-full overflow-hidden bg-zinc-800">
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
+          {allImages.length > 0 && (
+            <div className="relative aspect-square w-full overflow-hidden bg-zinc-800">
+              <div className="flex h-full w-full overflow-x-auto snap-x snap-mandatory scrollbar-none">
+                {allImages.map((img, i) => (
+                  <img
+                    key={i}
+                    src={img.url}
+                    alt={img.alt || product.name}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    className="h-full w-full flex-shrink-0 snap-center object-cover"
+                  />
+                ))}
+              </div>
+              {allImages.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                  {allImages.map((_, i) => (
+                    <div key={i} className={`h-1.5 w-1.5 rounded-full ${i === 0 ? "bg-white" : "bg-white/40"}`} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
           <div className="space-y-1.5 p-3">
@@ -79,13 +94,13 @@ export function ProductGrid({
               <BuyNowButton
                 productId={product.id}
                 productName={product.name}
-                imageUrl={product.imageUrl}
+                imageUrl={allImages[0]?.url ?? product.imageUrl}
                 themeColor={themeColor}
               />
             )}
           </div>
         </div>
-      ))}
+      )})}
     </div>
   );
 }
