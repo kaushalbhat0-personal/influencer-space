@@ -5,7 +5,7 @@ export function mapInvoice(inv: Record<string, unknown>): BillingInvoice {
   return {
     id: inv.id as string,
     accountId: inv.accountId as string,
-    planCode: (inv.planCode as string) ?? "creator_free",
+    planCode: (inv.planCode as string) ?? "creator_launch",
     planName: "",
     amount: (inv.amount as number) ?? 0,
     taxAmount: (inv.taxAmount as number) ?? 0,

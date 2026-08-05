@@ -2,9 +2,18 @@ export const PLAN_FAMILIES = ["creator", "agency"] as const;
 export type PlanFamily = (typeof PLAN_FAMILIES)[number];
 
 export const PLAN_CODES = [
+  "creator_launch",
+  "creator_grow",
+  "creator_scale",
+  "creator_enterprise",
   "creator_free",
   "creator_pro",
   "creator_elite",
+  "partner_free",
+  "partner_solo",
+  "partner_growth",
+  "partner_scale",
+  "partner_enterprise",
   "agency_free",
   "agency_studio",
   "agency_agency",
@@ -111,27 +120,34 @@ export const RESERVED_PLAN_CODES = [
 ] as const;
 
 export const UPGRADE_PATHS: Record<string, string[]> = {
-  creator_free: ["creator_pro", "creator_elite"],
-  creator_pro: ["creator_elite"],
-  creator_elite: [],
-  agency_free: ["agency_studio", "agency_agency"],
-  agency_studio: ["agency_agency"],
-  agency_agency: [],
-  agency_starter: ["agency_growth"],
-  agency_growth: [],
+  creator_launch: ["creator_grow", "creator_scale", "creator_enterprise"],
+  creator_grow: ["creator_scale", "creator_enterprise"],
+  creator_scale: ["creator_enterprise"],
+  creator_enterprise: [],
+  creator_free: ["creator_grow", "creator_scale", "creator_enterprise"],
+  creator_pro: ["creator_scale", "creator_enterprise"],
+  creator_elite: ["creator_enterprise"],
+  partner_free: ["partner_solo", "partner_growth", "partner_scale", "partner_enterprise"],
+  partner_solo: ["partner_growth", "partner_scale", "partner_enterprise"],
+  partner_growth: ["partner_scale", "partner_enterprise"],
+  partner_scale: ["partner_enterprise"],
+  partner_enterprise: [],
+  agency_free: ["partner_solo", "partner_growth", "partner_scale", "partner_enterprise"],
+  agency_studio: ["partner_growth", "partner_scale", "partner_enterprise"],
+  agency_agency: ["partner_enterprise"],
+  agency_starter: ["partner_growth", "partner_scale", "partner_enterprise"],
+  agency_growth: ["partner_scale", "partner_enterprise"],
 };
 
-// ── Canonical Plan Constants ─────────────────────────────────────────────────
-
-export const DEFAULT_CREATOR_PLAN = "creator_free";
+export const DEFAULT_CREATOR_PLAN = "creator_launch";
 export const DEFAULT_AGENCY_PLAN = "agency_free";
 export const DEFAULT_PLAN_CODE = DEFAULT_CREATOR_PLAN;
 export const DEFAULT_CURRENCY = "INR";
 export const DEFAULT_BILLING_INTERVAL = "monthly";
 export const LEGACY_PLAN_MAP: Record<string, string> = {
-  STARTER: "creator_free",
-  PRO: "creator_pro",
-  FREELANCER: "agency_starter",
-  GROWTH: "agency_growth",
-  ENTERPRISE: "agency_agency",
+  STARTER: "creator_launch",
+  PRO: "creator_grow",
+  FREELANCER: "partner_solo",
+  GROWTH: "partner_growth",
+  ENTERPRISE: "partner_enterprise",
 };

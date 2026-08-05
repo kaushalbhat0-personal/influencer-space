@@ -4,8 +4,20 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import type { ThemeDefinition, ThemeTier } from "@/lib/theme/types-new";
 import { CATEGORY_LABELS, TIER_LABELS } from "@/lib/theme/types-new";
 import { isThemeUnlocked } from "@/lib/theme/access";
+import { THEME_TIERS } from "@/lib/theme/types-new";
 import { applyThemePackage } from "@/actions/theme.actions";
+import { experienceRegistry } from "@/modules/theme/runtime/experience";
+import { EXPERIENCE_PACKS } from "@/modules/theme/runtime/experience";
+import { isExperienceAvailableForPlan } from "@/modules/theme/runtime/experience";
+import Link from "next/link";
 
+const TIER_COLORS: Record<string, string> = {
+  free: "bg-emerald-900/60 text-emerald-300",
+  starter: "bg-blue-900/60 text-blue-300",
+  pro: "bg-amber-900/60 text-amber-300",
+  business: "bg-indigo-900/60 text-indigo-300",
+  enterprise: "bg-purple-900/60 text-purple-300",
+};
 const FAV_KEY = "theme_favorites";
 const RECENT_KEY = "theme_recent";
 
@@ -38,6 +50,7 @@ export function ThemeMarketplaceClient({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [tierFilter, setTierFilter] = useState<string>("");
+  const [experienceFilter, setExperienceFilter] = useState<string>("");
   const [sort, setSort] = useState<string>("featured");
   const [onlyUnlocked, setOnlyUnlocked] = useState(false);
   const [onlyFavorites, setOnlyFavorites] = useState(false);
@@ -80,6 +93,7 @@ export function ThemeMarketplaceClient({
     }
     if (categoryFilter) result = result.filter((t) => t.category === categoryFilter);
     if (tierFilter) result = result.filter((t) => (t.tier as ThemeTier | undefined) === tierFilter);
+    if (experienceFilter) result = result.filter((t) => experienceRegistry.resolve({ id: t.id, category: t.category, premium: t.premium }).id === experienceFilter);
     if (onlyUnlocked) result = result.filter(unlocked);
     if (onlyFavorites) result = result.filter((t) => favorites.includes(t.id));
 
@@ -122,12 +136,12 @@ export function ThemeMarketplaceClient({
       {/* Plan banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/40 px-4 py-3">
         <div className="flex items-center gap-3">
-          <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${planTierName === "enterprise" ? "bg-purple-900/60 text-purple-300" : planTierName === "business" ? "bg-blue-900/60 text-blue-300" : planTierName === "pro" ? "bg-indigo-900/60 text-indigo-300" : "bg-zinc-800 text-zinc-300"}`}>
+          <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${TIER_COLORS[planTierName] ?? "bg-zinc-800 text-zinc-300"}`}>
             {planTierName}
           </span>
           <span className="text-xs text-zinc-400">{unlockedCount} of {themes.length} themes unlocked</span>
         </div>
-        <a href="/admin/billing" className="text-xs text-s8ul-cyan hover:underline">Upgrade plan →</a>
+        <Link href="/admin/billing" className="text-xs text-s8ul-cyan hover:underline">Upgrade plan →</Link>
       </div>
 
       {notice && (
@@ -151,10 +165,13 @@ export function ThemeMarketplaceClient({
         </select>
         <select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
           <option value="">All tiers</option>
-          <option value="free">Free</option>
-          <option value="starter">Starter</option>
-          <option value="pro">Pro</option>
-          <option value="business">Business</option>
+          {THEME_TIERS.map((tier) => <option key={tier} value={tier}>{TIER_LABELS[tier]}</option>)}
+        </select>
+        <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
+          <option value="">All experiences</option>
+          {Object.values(EXPERIENCE_PACKS).map((exp) => (
+            <option key={exp.id} value={exp.id}>{exp.name}{exp.premium ? " ★" : ""}</option>
+          ))}
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
           <option value="featured">Featured</option>
@@ -186,6 +203,8 @@ export function ThemeMarketplaceClient({
           const isCurrent = current === theme.id;
           const isFav = favorites.includes(theme.id);
           const cv = theme.variants[0]?.tokens.colors;
+          const exp = experienceRegistry.resolve({ id: theme.id, category: theme.category, premium: theme.premium });
+          const expAvailable = plan ? isExperienceAvailableForPlan(exp.id, plan) : false;
           return (
             <div
               key={theme.id}
@@ -216,11 +235,18 @@ export function ThemeMarketplaceClient({
               <div className="space-y-1.5 p-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{theme.name}</p>
-                  <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${tier === "free" ? "bg-emerald-900/60 text-emerald-300" : tier === "starter" ? "bg-blue-900/60 text-blue-300" : tier === "pro" ? "bg-amber-900/60 text-amber-300" : "bg-purple-900/60 text-purple-300"}`}>
-                    {TIER_LABELS[tier]}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {theme.premium && <span className="rounded bg-amber-900/60 px-1 py-0.5 text-[8px] font-bold text-amber-300">PREMIUM</span>}
+                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
+                      {TIER_LABELS[tier]}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-[10px] text-[var(--text-muted,#71717A)]">{CATEGORY_LABELS[theme.category] || theme.category} &middot; v{theme.version}</p>
+                <p className="text-[10px] text-[var(--text-muted,#71717A)]">
+                  <span className="text-zinc-500">Exp:</span> {exp.name}
+                  {exp.premium && !expAvailable && <span className="ml-1 text-amber-500">(requires upgrade)</span>}
+                </p>
                 <p className="line-clamp-2 text-[11px] text-[var(--text-secondary,#A1A1AA)]">{theme.description}</p>
                 <div className="flex flex-wrap gap-1 pt-1">
                   {theme.variants.map((v) => (
@@ -237,6 +263,15 @@ export function ThemeMarketplaceClient({
                     {applying === theme.id ? "Applying…" : "Apply Theme"}
                   </button>
                 )}
+                {!isUnlocked && (
+                  <Link
+                    href="/admin/billing"
+                    className="mt-1 block w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-center text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Upgrade to unlock
+                  </Link>
+                )}
               </div>
             </div>
           );
@@ -246,6 +281,14 @@ export function ThemeMarketplaceClient({
       {filtered.length === 0 && (
         <div className="py-16 text-center">
           <p className="text-sm text-zinc-500">No themes found matching your criteria.</p>
+          {(search || categoryFilter || tierFilter || onlyUnlocked || onlyFavorites) && (
+            <button
+              onClick={() => { setSearch(""); setCategoryFilter(""); setTierFilter(""); setOnlyUnlocked(false); setOnlyFavorites(false); }}
+              className="mt-2 text-xs text-s8ul-cyan hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       )}
 
@@ -281,7 +324,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName, onApply, applying, on
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-white">{theme.name}</h2>
-              <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${tier === "free" ? "bg-emerald-900/60 text-emerald-300" : tier === "starter" ? "bg-blue-900/60 text-blue-300" : tier === "pro" ? "bg-amber-900/60 text-amber-300" : "bg-purple-900/60 text-purple-300"}`}>
+              <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
                 {TIER_LABELS[tier]}
               </span>
             </div>
@@ -323,7 +366,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName, onApply, applying, on
         {!unlocked && (
           <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-400">
             This theme requires the <b>{TIER_LABELS[tier]}</b> plan. Upgrade to unlock its full color system, typography and preview.
-            <a href="/admin/billing" className="ml-1 text-s8ul-cyan underline">Upgrade now →</a>
+            <Link href="/admin/billing" className="ml-1 text-s8ul-cyan underline">Upgrade now →</Link>
           </div>
         )}
 
@@ -339,9 +382,9 @@ function ThemeDetailPanel({ theme, unlocked, planTierName, onApply, applying, on
               {applying ? "Applying…" : "Apply Theme"}
             </button>
           ) : (
-            <a href="/admin/billing" className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:opacity-90">
+            <Link href="/admin/billing" className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:opacity-90">
               Upgrade to unlock
-            </a>
+            </Link>
           )}
         </div>
       </div>

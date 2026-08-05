@@ -43,8 +43,8 @@ export default async function AppearancePage() {
       <div>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance</h1>
         <div className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
-          <p className="text-sm text-amber-400">Custom branding and themes require a <span className="font-semibold">Pro</span> subscription.</p>
-          <Link href="/admin/billing" className="mt-4 inline-block admin-btn-cyan px-6 py-2.5 text-sm">Upgrade to Pro</Link>
+          <p className="text-sm text-amber-400">Custom branding and themes require a <span className="font-semibold">Creator Grow</span> subscription or higher.</p>
+          <Link href="/admin/billing" className="mt-4 inline-block admin-btn-cyan px-6 py-2.5 text-sm">Upgrade Plan</Link>
         </div>
       </div>
     );

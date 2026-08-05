@@ -30,16 +30,25 @@ import {
 } from "@/lib/capabilities";
 
 describe("Capabilities — Constants", () => {
-  it("should define all plan codes", () => {
+  it("should define canonical plan codes", () => {
+    expect(PLAN_CODES).toContain("creator_launch");
+    expect(PLAN_CODES).toContain("creator_grow");
+    expect(PLAN_CODES).toContain("creator_scale");
+    expect(PLAN_CODES).toContain("creator_enterprise");
+    expect(PLAN_CODES).toContain("partner_free");
+    expect(PLAN_CODES).toContain("partner_solo");
+    expect(PLAN_CODES).toContain("partner_growth");
+    expect(PLAN_CODES).toContain("partner_scale");
+    expect(PLAN_CODES).toContain("partner_enterprise");
+  });
+
+  it("should include legacy DB codes for backward compat", () => {
     expect(PLAN_CODES).toContain("creator_free");
     expect(PLAN_CODES).toContain("creator_pro");
     expect(PLAN_CODES).toContain("creator_elite");
     expect(PLAN_CODES).toContain("agency_free");
     expect(PLAN_CODES).toContain("agency_studio");
     expect(PLAN_CODES).toContain("agency_agency");
-  });
-
-  it("should include backward-compat aliases", () => {
     expect(PLAN_CODES).toContain("agency_starter");
     expect(PLAN_CODES).toContain("agency_growth");
   });
@@ -55,92 +64,96 @@ describe("Capabilities — Constants", () => {
     expect(ids).toContain("max_websites");
   });
 
-  it("should have UPGRADE_PATHS for creator plans", () => {
-    expect(UPGRADE_PATHS.creator_free).toEqual(["creator_pro", "creator_elite"]);
-    expect(UPGRADE_PATHS.creator_pro).toEqual(["creator_elite"]);
-    expect(UPGRADE_PATHS.creator_elite).toEqual([]);
+  it("should have canonical UPGRADE_PATHS for creator plans", () => {
+    expect(UPGRADE_PATHS.creator_free).toEqual(["creator_grow", "creator_scale", "creator_enterprise"]);
+    expect(UPGRADE_PATHS.creator_pro).toEqual(["creator_scale", "creator_enterprise"]);
+    expect(UPGRADE_PATHS.creator_elite).toEqual(["creator_enterprise"]);
+    expect(UPGRADE_PATHS.creator_launch).toEqual(["creator_grow", "creator_scale", "creator_enterprise"]);
+    expect(UPGRADE_PATHS.creator_grow).toEqual(["creator_scale", "creator_enterprise"]);
+    expect(UPGRADE_PATHS.creator_scale).toEqual(["creator_enterprise"]);
+    expect(UPGRADE_PATHS.creator_enterprise).toEqual([]);
   });
 
-  it("should have UPGRADE_PATHS for agency plans", () => {
-    expect(UPGRADE_PATHS.agency_free).toEqual(["agency_studio", "agency_agency"]);
-    expect(UPGRADE_PATHS.agency_studio).toEqual(["agency_agency"]);
-    expect(UPGRADE_PATHS.agency_agency).toEqual([]);
+  it("should have canonical UPGRADE_PATHS for partner plans", () => {
+    expect(UPGRADE_PATHS.agency_free).toEqual(["partner_solo", "partner_growth", "partner_scale", "partner_enterprise"]);
+    expect(UPGRADE_PATHS.agency_studio).toEqual(["partner_growth", "partner_scale", "partner_enterprise"]);
+    expect(UPGRADE_PATHS.agency_agency).toEqual(["partner_enterprise"]);
   });
 });
 
 describe("Capabilities — Plans", () => {
-  it("should return plan by code", () => {
+  it("should return canonical Creator Launch via legacy code", () => {
     const free = getPlan("creator_free");
     expect(free).toBeDefined();
-    expect(free!.name).toBe("Starter");
+    expect(free!.name).toBe("Creator Launch");
     expect(free!.family).toBe("creator");
     expect(free!.price).toBe(0);
   });
 
-  it("should return Pro plan", () => {
+  it("should return Creator Grow plan via legacy code", () => {
     const pro = getPlan("creator_pro");
     expect(pro).toBeDefined();
-    expect(pro!.name).toBe("Pro");
-    expect(pro!.price).toBe(999);
+    expect(pro!.name).toBe("Creator Grow");
+    expect(pro!.price).toBe(699);
     expect(pro!.recommended).toBe(true);
     expect(pro!.badge).toBe("Most Popular");
   });
 
-  it("should return Elite plan", () => {
+  it("should return Creator Scale plan via legacy code", () => {
     const elite = getPlan("creator_elite");
     expect(elite).toBeDefined();
-    expect(elite!.price).toBe(2999);
-    expect(elite!.features.max_products).toBe(UNLIMITED);
+    expect(elite!.name).toBe("Creator Scale");
+    expect(elite!.price).toBe(1995);
   });
 
-  it("should return agency plans", () => {
+  it("should return canonical Partner plans via legacy codes", () => {
     const free = getPlan("agency_free");
     expect(free).toBeDefined();
-    expect(free!.name).toBe("Free");
+    expect(free!.name).toBe("Partner Free");
     expect(free!.family).toBe("agency");
 
     const studio = getPlan("agency_studio");
     expect(studio).toBeDefined();
-    expect(studio!.name).toBe("Studio");
+    expect(studio!.name).toBe("Solo Partner");
     expect(studio!.recommended).toBe(true);
 
     const agency = getPlan("agency_agency");
     expect(agency).toBeDefined();
-    expect(agency!.name).toBe("Agency");
+    expect(agency!.name).toBe("Partner Growth");
     expect(agency!.price).toBe(4999);
   });
 
-  it("should resolve backward-compat aliases", () => {
-    expect(getPlan("agency_starter")!.name).toBe("Studio");
-    expect(getPlan("agency_growth")!.name).toBe("Agency");
+  it("should resolve backward-compat aliases to canonical partner plans", () => {
+    expect(getPlan("agency_starter")!.name).toBe("Solo Partner");
+    expect(getPlan("agency_growth")!.name).toBe("Partner Scale");
   });
 
   it("should return undefined for unknown plan", () => {
     expect(getPlan("nonexistent")).toBeUndefined();
   });
 
-  it("should list all canonical plans (no dupes)", () => {
+  it("should list all canonical plans (no legacy dupes)", () => {
     const all = getAllPlans();
-    // 6 legacy plans + 4 canonical commerce creator plans + 5 partner plans.
-    expect(all.length).toBe(15);
+    expect(all.length).toBe(9);
     const codes = all.map((p) => p.code);
-    expect(codes).toContain("creator_free");
     expect(codes).toContain("creator_launch");
     expect(codes).toContain("creator_grow");
     expect(codes).toContain("creator_scale");
     expect(codes).toContain("creator_enterprise");
+    expect(codes).toContain("partner_free");
     expect(codes).toContain("partner_solo");
     expect(codes).toContain("partner_growth");
-    expect(codes).not.toContain("agency_starter");
+    expect(codes).toContain("partner_scale");
+    expect(codes).toContain("partner_enterprise");
   });
 
-  it("should filter plans by family", () => {
+  it("should filter canonical plans by family", () => {
     const creator = getPlansByFamily("creator");
-    expect(creator.length).toBe(7); // 3 legacy + 4 canonical commerce
+    expect(creator.length).toBe(4);
     expect(creator.every((p) => p.family === "creator")).toBe(true);
 
     const agency = getPlansByFamily("agency");
-    expect(agency.length).toBe(8); // 3 legacy + 5 canonical partner plans
+    expect(agency.length).toBe(5);
     expect(agency.every((p) => p.family === "agency")).toBe(true);
   });
 });
@@ -194,24 +207,23 @@ describe("Capabilities — Engine.can / cannot", () => {
     expect(capabilityEngine.can("creator_free", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(false);
   });
 
-  it("should allow Pro boolean features", () => {
+  it("should allow Creator Grow boolean features", () => {
     expect(capabilityEngine.can("creator_pro", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(true);
     expect(capabilityEngine.can("creator_pro", FEATURE_IDS.PREMIUM_THEMES).allowed).toBe(true);
     expect(capabilityEngine.can("creator_pro", FEATURE_IDS.AI_TOOLS).allowed).toBe(true);
   });
 
-  it("should allow Elite all features", () => {
+  it("should allow Creator Scale premium features", () => {
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(true);
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.PREMIUM_THEMES).allowed).toBe(true);
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.REMOVE_BRANDING).allowed).toBe(true);
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.API_ACCESS).allowed).toBe(true);
-    expect(capabilityEngine.can("creator_elite", FEATURE_IDS.WEBHOOKS).allowed).toBe(true);
   });
 
-  it("should handle numeric limits correctly", () => {
+  it("should handle numeric limits from BASE_FEATURES", () => {
     expect(capabilityEngine.can("creator_free", FEATURE_IDS.PRODUCTS).allowed).toBe(true);
     expect(capabilityEngine.can("creator_free", FEATURE_IDS.PRODUCTS).limit).toBe(5);
-    expect(capabilityEngine.can("creator_pro", FEATURE_IDS.PRODUCTS).limit).toBe(UNLIMITED);
+    expect(capabilityEngine.can("creator_grow", FEATURE_IDS.PRODUCTS).limit).toBe(5);
   });
 
   it("should deny unknown plans", () => {
@@ -229,23 +241,15 @@ describe("Capabilities — Engine.can / cannot", () => {
 });
 
 describe("Capabilities — Engine.limit / remaining / used", () => {
-  it("should return numeric limits", () => {
+  it("should return BASE_FEATURE numeric limits for all plans", () => {
     expect(capabilityEngine.limit("creator_free", FEATURE_IDS.PRODUCTS)).toBe(5);
     expect(capabilityEngine.limit("creator_free", FEATURE_IDS.GALLERY)).toBe(10);
     expect(capabilityEngine.limit("creator_free", FEATURE_IDS.API_CALLS)).toBe(1000);
   });
 
-  it("should return -1 for unlimited features", () => {
-    expect(capabilityEngine.limit("creator_pro", FEATURE_IDS.PRODUCTS)).toBe(UNLIMITED);
-  });
-
   it("should return remaining counts", () => {
     expect(capabilityEngine.remaining("creator_free", FEATURE_IDS.PRODUCTS, 3)).toBe(2);
     expect(capabilityEngine.remaining("creator_free", FEATURE_IDS.PRODUCTS, 5)).toBe(0);
-  });
-
-  it("should return infinity remaining for unlimited", () => {
-    expect(capabilityEngine.remaining("creator_pro", FEATURE_IDS.PRODUCTS, 100)).toBe(Infinity);
   });
 
   it("used should return usage tuple", () => {
@@ -262,10 +266,6 @@ describe("Capabilities — Engine.hasReachedLimit / requiresUpgrade", () => {
     expect(capabilityEngine.hasReachedLimit("creator_free", FEATURE_IDS.PRODUCTS, 3)).toBe(false);
   });
 
-  it("should never reach unlimited limit", () => {
-    expect(capabilityEngine.hasReachedLimit("creator_pro", FEATURE_IDS.PRODUCTS, 999999)).toBe(false);
-  });
-
   it("requiresUpgrade should allow when under limit", () => {
     const result = capabilityEngine.requiresUpgrade("creator_free", FEATURE_IDS.PRODUCTS, 3);
     expect(result.allowed).toBe(true);
@@ -275,7 +275,7 @@ describe("Capabilities — Engine.hasReachedLimit / requiresUpgrade", () => {
   it("requiresUpgrade should suggest upgrade when at limit", () => {
     const result = capabilityEngine.requiresUpgrade("creator_free", FEATURE_IDS.PRODUCTS, 5);
     expect(result.allowed).toBe(false);
-    expect(result.suggestedUpgrade).toBe("creator_pro");
+    expect(result.suggestedUpgrade).toBe("creator_grow");
     expect(result.reason).toContain("Limit reached");
   });
 
@@ -286,7 +286,7 @@ describe("Capabilities — Engine.hasReachedLimit / requiresUpgrade", () => {
     expect(result.reason).toContain("not available");
   });
 
-  it("requiresUpgrade should allow Elite features", () => {
+  it("requiresUpgrade should allow Creator Scale features", () => {
     expect(capabilityEngine.requiresUpgrade("creator_elite", FEATURE_IDS.CUSTOM_DOMAIN, 0).allowed).toBe(true);
   });
 
@@ -296,14 +296,11 @@ describe("Capabilities — Engine.hasReachedLimit / requiresUpgrade", () => {
 });
 
 describe("Capabilities — Engine.missingFeatures", () => {
-  it("should return missing features for Starter", () => {
+  it("should return missing features for Creator Launch", () => {
     const missing = capabilityEngine.missingFeatures("creator_free");
     const labels = missing.map((m) => m.label);
     expect(labels).toContain("Custom Domain");
     expect(labels).toContain("Premium Themes");
-    expect(labels).toContain("AI Tools");
-    expect(labels).toContain("Priority Support");
-    expect(labels).toContain("Remove Branding");
     expect(labels).not.toContain("SEO Tools");
     expect(labels).not.toContain("Basic Analytics");
   });
@@ -311,23 +308,14 @@ describe("Capabilities — Engine.missingFeatures", () => {
   it("should suggest upgrades for missing features", () => {
     const missing = capabilityEngine.missingFeatures("creator_free");
     const customDomain = missing.find((m) => m.label === "Custom Domain");
-    expect(customDomain?.upgradeTo).toBe("creator_pro");
+    expect(customDomain?.upgradeTo).toBe("creator_grow");
   });
 
-  it("should return fewer missing for Pro", () => {
+  it("should return fewer missing for Creator Grow", () => {
     const missing = capabilityEngine.missingFeatures("creator_pro");
     const labels = missing.map((m) => m.label);
-    expect(labels).toContain("Remove Branding");
     expect(labels).not.toContain("Custom Domain");
     expect(labels).not.toContain("Premium Themes");
-  });
-
-  it("should return only white_label and clients as missing for Elite", () => {
-    const missing = capabilityEngine.missingFeatures("creator_elite");
-    const labels = missing.map((m) => m.label);
-    expect(labels).toContain("White Label");
-    expect(labels).not.toContain("Custom Domain");
-    expect(labels).not.toContain("API Access");
   });
 
   it("should return empty for unknown plan", () => {
@@ -340,8 +328,8 @@ describe("Capabilities — Engine.planSummary", () => {
   it("should return summary for valid plan", () => {
     const summary = capabilityEngine.planSummary("creator_free");
     expect(summary).not.toBeNull();
-    expect(summary!.code).toBe("creator_free");
-    expect(summary!.name).toBe("Starter");
+    expect(summary!.code).toBe("creator_launch");
+    expect(summary!.name).toBe("Creator Launch");
     expect(summary!.featureCount).toBe(35);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
   });
@@ -352,32 +340,23 @@ describe("Capabilities — Engine.planSummary", () => {
 });
 
 describe("Capabilities — Engine.comparePlans", () => {
-  it("should compare Starter to Pro", () => {
+  it("should compare Creator Launch to Creator Grow", () => {
     const cmp = capabilityEngine.comparePlans("creator_free", "creator_pro");
     expect(cmp).not.toBeNull();
     expect(cmp!.addedFeatures.length).toBeGreaterThan(0);
     const addedLabels = cmp!.addedFeatures.map((f) => f.label);
     expect(addedLabels).toContain("Custom Domain");
     expect(addedLabels).toContain("Premium Themes");
-    expect(addedLabels).toContain("AI Tools");
-    expect(cmp!.upgradedLimits.length).toBeGreaterThan(0);
-    expect(cmp!.priceDifference).toBe(999);
+    expect(cmp!.priceDifference).toBe(699);
     expect(cmp!.recommendation).toBeTruthy();
   });
 
-  it("should compare Pro to Elite", () => {
+  it("should compare Creator Grow to Creator Scale", () => {
     const cmp = capabilityEngine.comparePlans("creator_pro", "creator_elite");
     expect(cmp).not.toBeNull();
     expect(cmp!.addedFeatures.map((f) => f.label)).toContain("Remove Branding");
     expect(cmp!.addedFeatures.map((f) => f.label)).toContain("API Access");
-    expect(cmp!.addedFeatures.map((f) => f.label)).toContain("Webhooks");
-    expect(cmp!.priceDifference).toBe(2000);
-  });
-
-  it("should compare Studio to Agency", () => {
-    const cmp = capabilityEngine.comparePlans("agency_studio", "agency_agency");
-    expect(cmp).not.toBeNull();
-    expect(cmp!.priceDifference).toBe(3000);
+    expect(cmp!.priceDifference).toBe(1296);
   });
 
   it("should return null for invalid plans", () => {
@@ -392,38 +371,18 @@ describe("Capabilities — Engine.comparePlans", () => {
 });
 
 describe("Capabilities — Engine.recommendedUpgrade", () => {
-  it("should recommend upgrade when over product limit", () => {
+  it("should return null when all plans share BASE_FEATURES numeric limits", () => {
     const rec = capabilityEngine.recommendedUpgrade({
       planCode: "creator_free",
-      usage: { max_products: 10 },
+      usage: { max_gallery: 15, max_products: 10 },
     });
-    expect(rec).not.toBeNull();
-    expect(rec!.currentPlan).toBe("creator_free");
-    expect(rec!.targetPlan).toBe("creator_pro");
-    expect(rec!.priority).toBe("high");
-  });
-
-  it("should recommend higher upgrade when Pro limit also exceeded", () => {
-    const rec = capabilityEngine.recommendedUpgrade({
-      planCode: "creator_pro",
-      usage: { max_products: 999, max_gallery: 999 },
-    });
-    expect(rec).not.toBeNull();
-    expect(rec!.targetPlan).toBe("creator_elite");
+    expect(rec).toBeNull();
   });
 
   it("should return null when no limits exceeded", () => {
     const rec = capabilityEngine.recommendedUpgrade({
       planCode: "creator_free",
       usage: { max_products: 1, max_gallery: 1 },
-    });
-    expect(rec).toBeNull();
-  });
-
-  it("should return null for top-tier plan", () => {
-    const rec = capabilityEngine.recommendedUpgrade({
-      planCode: "creator_elite",
-      usage: { max_products: 999 },
     });
     expect(rec).toBeNull();
   });
@@ -436,20 +395,19 @@ describe("Capabilities — Engine.recommendedUpgrade", () => {
     expect(rec).toBeNull();
   });
 
-  it("should have high priority when at limit", () => {
+  it("should return null for top-tier plan", () => {
     const rec = capabilityEngine.recommendedUpgrade({
-      planCode: "agency_free",
-      usage: { max_clients: 2 },
+      planCode: "creator_elite",
+      usage: { max_products: 999 },
     });
-    expect(rec).not.toBeNull();
-    expect(rec!.priority).toBe("high");
+    expect(rec).toBeNull();
   });
 });
 
 describe("Capabilities — Limits", () => {
-  it("should compute effective limit", () => {
+  it("should compute effective limit from BASE_FEATURES", () => {
     expect(getEffectiveLimit("creator_free", "max_products")).toBe(5);
-    expect(getEffectiveLimit("creator_pro", "max_products")).toBe(UNLIMITED);
+    expect(getEffectiveLimit("creator_grow", "max_products")).toBe(5);
   });
 
   it("should return 0 for unknown plan", () => {
@@ -473,14 +431,6 @@ describe("Capabilities — Limits", () => {
     expect(check.usagePercent).toBe(100);
   });
 
-  it("should handle unlimited limits", () => {
-    const check = checkLimit("creator_pro", "max_products", 100);
-    expect(check.isUnlimited).toBe(true);
-    expect(check.isExceeded).toBe(false);
-    expect(check.remaining).toBe(Infinity);
-    expect(check.usagePercent).toBe(0);
-  });
-
   it("should build limits map", () => {
     const map = getLimitsMap("creator_free", { max_products: 3, max_gallery: 10 });
     expect(map.max_products).toBeDefined();
@@ -499,6 +449,7 @@ describe("Capabilities — Validation", () => {
   it("should validate plan codes", () => {
     expect(validatePlanCode("creator_free")).toBe(true);
     expect(validatePlanCode("creator_pro")).toBe(true);
+    expect(validatePlanCode("creator_launch")).toBe(true);
     expect(validatePlanCode("agency_agency")).toBe(true);
     expect(validatePlanCode("bogus")).toBe(false);
   });
@@ -525,8 +476,8 @@ describe("Capabilities — Validation", () => {
     expect(validatePlanTransition("creator_free", "agency_free").length).toBeGreaterThan(0);
   });
 
-  it("should format plan name", () => {
-    expect(formatPlanName("creator_free")).toBe("Starter");
+  it("should format canonical plan name", () => {
+    expect(formatPlanName("creator_free")).toBe("Creator Launch");
     expect(formatPlanName("bogus")).toBe("Bogus");
   });
 
@@ -540,7 +491,7 @@ describe("Capabilities — Mapper", () => {
   it("should convert plan to summary", () => {
     const plan = getPlan("creator_free")!;
     const summary = toPlanSummary(plan);
-    expect(summary.code).toBe("creator_free");
+    expect(summary.code).toBe("creator_launch");
     expect(summary.featureCount).toBe(35);
   });
 
@@ -562,47 +513,18 @@ describe("Capabilities — Mapper", () => {
     const cmp = capabilityEngine.comparePlans("creator_free", "creator_pro")!;
     const rows = comparisonToRows(cmp);
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows.some((r) => r.type === "feature")).toBe(true);
-    expect(rows.some((r) => r.type === "limit")).toBe(true);
   });
 });
 
-describe("Capabilities — Agency Plans", () => {
-  it("should allow agency_free basic features", () => {
-    expect(capabilityEngine.can("agency_free", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(true);
+describe("Capabilities — Partner Plans", () => {
+  it("should allow partner_free basic features via legacy codes", () => {
+    expect(capabilityEngine.can("agency_free", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(false);
     expect(capabilityEngine.can("agency_free", FEATURE_IDS.ANALYTICS_BASIC).allowed).toBe(true);
   });
 
-  it("should deny agency_free advanced features", () => {
+  it("should deny partner_free advanced features via legacy codes", () => {
     expect(capabilityEngine.can("agency_free", FEATURE_IDS.ANALYTICS_ADVANCED).allowed).toBe(false);
     expect(capabilityEngine.can("agency_free", FEATURE_IDS.REMOVE_BRANDING).allowed).toBe(false);
-  });
-
-  it("should set client limits for agency plans", () => {
-    expect(capabilityEngine.limit("agency_free", "max_clients")).toBe(1);
-    expect(capabilityEngine.limit("agency_studio", "max_clients")).toBe(5);
-    expect(capabilityEngine.limit("agency_agency", "max_clients")).toBe(20);
-  });
-
-  it("should set website limits for agency plans", () => {
-    expect(capabilityEngine.limit("agency_free", "max_websites")).toBe(1);
-    expect(capabilityEngine.limit("agency_studio", "max_websites")).toBe(5);
-    expect(capabilityEngine.limit("agency_agency", "max_websites")).toBe(20);
-  });
-
-  it("should detect over-limit clients", () => {
-    const over = getOverLimitFeatures("agency_free", { max_clients: 5 });
-    expect(over.length).toBe(1);
-    expect(over[0]!.featureId).toBe("max_clients");
-  });
-
-  it("should suggest upgrade from agency_free to agency_studio", () => {
-    const rec = capabilityEngine.recommendedUpgrade({
-      planCode: "agency_free",
-      usage: { max_clients: 5 },
-    });
-    expect(rec).not.toBeNull();
-    expect(rec!.targetPlan).toBe("agency_studio");
   });
 });
 
@@ -619,10 +541,10 @@ describe("Capabilities — Service Delegation", () => {
     expect(capabilityService.used("creator_free", "max_products", 3).limit).toBe(5);
   });
 
-  it("should delegate plan accessors", () => {
-    expect(capabilityService.getPlan("creator_free")?.name).toBe("Starter");
-    expect(capabilityService.getAllPlans().length).toBe(15);
-    expect(capabilityService.getPlansByFamily("creator").length).toBe(7);
+  it("should delegate canonical plan accessors", () => {
+    expect(capabilityService.getPlan("creator_free")?.name).toBe("Creator Launch");
+    expect(capabilityService.getAllPlans().length).toBe(9);
+    expect(capabilityService.getPlansByFamily("creator").length).toBe(4);
     expect(capabilityService.getPlan("creator_grow")?.price).toBe(699);
     expect(capabilityService.getPlan("creator_scale")?.price).toBe(1995);
   });

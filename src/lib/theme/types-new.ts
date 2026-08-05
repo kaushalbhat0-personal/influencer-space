@@ -30,8 +30,8 @@ export const THEME_TIERS: ThemeTier[] = ["free", "starter", "pro", "business", "
 
 export const TIER_LABELS: Record<ThemeTier, string> = {
   free: "Free",
-  starter: "Starter",
-  pro: "Pro",
+  starter: "Essential",
+  pro: "Professional",
   business: "Business",
   enterprise: "Enterprise",
 };

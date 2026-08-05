@@ -6,7 +6,7 @@ import { getCreatorCommercePlans, getPartnerCommercePlans } from "@/config/comme
 
 export const metadata: Metadata = {
   title: "Pricing — CreatorStore",
-  description: "Transparent pricing for creators and partners. Creator plans from ₹699/month. Partner plans from ₹1,499/month. No fake discounts.",
+  description: "Transparent pricing for creators and partners. Creator plans from ₹699/month. Partner plans from ₹1,499/month.",
   openGraph: {
     title: "Pricing — CreatorStore",
     description: "Simple, transparent pricing for creators and partners. Pay for your creator platform. Partners charge their own service fees.",

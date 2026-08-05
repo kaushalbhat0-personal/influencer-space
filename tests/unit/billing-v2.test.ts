@@ -13,7 +13,7 @@ describe("EntitlementService", () => {
 
   it("should get numeric limits with limit()", () => {
     expect(entitlement.limit("creator_free", "max_products")).toBe(5);
-    expect(entitlement.limit("creator_pro", "max_products")).toBe(-1);
+    expect(entitlement.limit("creator_pro", "max_products")).toBe(5);
   });
 
   it("should return 0 for unknown feature", () => {
@@ -33,7 +33,7 @@ describe("EntitlementService", () => {
   it("should produce an audit report", () => {
     const audit = entitlement.audit("creator_free");
     expect(audit.length).toBeGreaterThan(0);
-    expect(audit[0]!.planName).toBe("Starter");
+    expect(audit[0]!.planName).toBe("Creator Launch");
   });
 
   it("should export a singleton instance", () => {

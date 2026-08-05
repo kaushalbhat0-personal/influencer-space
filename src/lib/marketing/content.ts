@@ -184,7 +184,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Can I use my own domain?",
-        a: "Yes. Creator Pro, Elite, and all Agency plans include custom domain support with free SSL. You can also use a CreatorStore subdomain for free.",
+        a: "Yes. Creator Grow, Creator Scale, and all Partner plans include custom domain support with free SSL. You can also use a CreatorStore subdomain for free.",
       },
       {
         q: "Is the storefront mobile-friendly?",
@@ -206,7 +206,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "What are the transaction fees?",
-        a: "The Starter plan has a 10% platform fee per transaction. The Pro plan at Rs.999/month reduces this to 5%. Higher plans have even lower fees. There are no setup fees or hidden charges.",
+        a: "CreatorStore platform fees vary by plan. The Creator Launch plan is free with standard transaction fees. Creator Grow at ₹699/month and Creator Scale at ₹1,995/month offer reduced fees and more features. There are no setup fees or hidden charges.",
       },
       {
         q: "Can I offer subscriptions or memberships?",
@@ -220,11 +220,11 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: "Can agencies use CreatorStore?",
-        a: "Yes. Agency plans support multi-client workspaces, white-label branding, team collaboration, and centralized analytics. Generate storefronts for clients in minutes.",
+        a: "Yes. Partner plans support multi-client workspaces, white-label branding, team collaboration, and centralized analytics. Generate storefronts for clients in minutes.",
       },
       {
         q: "Can I white-label CreatorStore?",
-        a: "Yes. Higher-tier agency plans include white-label options — remove CreatorStore branding and present a custom-branded dashboard to your clients.",
+        a: "Yes. Higher-tier partner plans include white-label options — remove CreatorStore branding and present a custom-branded dashboard to your clients.",
       },
       {
         q: "How does client management work?",
@@ -246,7 +246,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Is there a free plan?",
-        a: "Yes. The Starter plan is free and includes AI storefront generation, digital products, and basic analytics. Upgrade when you need more features or lower transaction fees.",
+        a: "Yes. The Creator Launch plan is free and includes AI storefront generation, digital products, and basic analytics. Upgrade to Creator Grow or Creator Scale when you need more features.",
       },
       {
         q: "How do refunds work?",

@@ -9,7 +9,7 @@ export function AgencyFeatures() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Built for{" "}
             <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-              agencies that scale
+              partners that scale
             </span>{" "}
             creators
           </h2>

@@ -256,7 +256,7 @@ export const DEMO_SEEDS: DemoSeed[] = [
     brand: { name: "CloudFlow", tagline: "Automate Everything", voice: "Modern, efficient",
       palette: { primary: "#6366F1", secondary: "#8B5CF6" } },
     content: { bio: "Next-generation workflow automation platform for modern teams.", hero: "Workflows That Work For You.", about: "Connect your tools, automate repetitive tasks, and focus on what matters.", seoTitle: "CloudFlow | Workflow Automation Platform", seoDesc: "Automate your workflows with CloudFlow." },
-    products: [ p("Starter Plan", 999, "Up to 10 workflows"), p("Pro Plan", 4999, "Unlimited workflows"), p("Enterprise", 19999, "Custom integrations") ],
+    products: [ p("Basic Workflow", 999, "Up to 10 workflows"), p("Team Workflow", 4999, "Unlimited workflows"), p("Enterprise Suite", 19999, "Custom integrations") ],
     testimonials: [ t("DevTeam Inc.", "Saved 20 hours per week."), t("AgencyFlow", "Our clients love the automation") ],
     faq: [ f("Do you offer a free trial?", "Yes, 14 days."), f("What integrations do you support?", "Slack, GitHub, Jira, Notion, +50 more.") ],
     pages: ["hero", "features", "pricing", "testimonials", "faq"],

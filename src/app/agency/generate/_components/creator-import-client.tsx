@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { importCreatorViaAgency } from "@/actions/partner.actions";
 import { useRouter } from "next/navigation";
+import { getCreatorCommercePlans } from "@/config/commerce/plans";
 
-const PLANS = ["creator_launch", "creator_grow", "creator_scale"];
+const PLANS = getCreatorCommercePlans()
+  .filter((p) => p.code !== "creator_enterprise")
+  .map((p) => ({ code: p.code, name: p.name }));
 
 export function CreatorImportClient({ agencyId }: { agencyId: string }) {
   const router = useRouter();
@@ -53,7 +56,7 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
           <div>
             <label className="mb-1 block text-xs text-zinc-400">Plan</label>
             <select className={input} value={form.planCode} onChange={(e) => setForm({ ...form, planCode: e.target.value })} aria-label="Plan" data-testid="ci-plan">
-              {PLANS.map((p) => <option key={p} value={p}>{p.replace("creator_", "").toUpperCase()}</option>)}
+              {PLANS.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
             </select>
           </div>
           <button onClick={submit} disabled={busy || !form.creatorName || !form.email} className="rounded-md bg-indigo-500 px-4 py-2 text-sm text-white hover:bg-indigo-600 disabled:opacity-50" data-testid="ci-submit">

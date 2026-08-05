@@ -15,30 +15,30 @@ export function SectionDivider({ kind, position = "bottom" }: { kind: Experience
     switch (kind) {
       case "wave":
         return (
-          <svg key={key} aria-hidden className="pointer-events-none block h-8 w-full text-[var(--surface-root,#0A0A0B)]" viewBox="0 0 1200 32" preserveAspectRatio="none" data-testid="divider-wave">
+          <svg key={key} aria-hidden className="pointer-events-none block h-8 w-full text-[var(--surface-root,#0A0A0B)] opacity-[0.06]" viewBox="0 0 1200 32" preserveAspectRatio="none" data-testid="divider-wave">
             <path d="M0 16 Q300 0 600 16 T1200 16 V32 H0 Z" fill="currentColor" />
           </svg>
         );
       case "curve":
         return (
-          <svg key={key} aria-hidden className="pointer-events-none block h-8 w-full text-[var(--surface-root,#0A0A0B)]" viewBox="0 0 1200 32" preserveAspectRatio="none" data-testid="divider-curve">
+          <svg key={key} aria-hidden className="pointer-events-none block h-8 w-full text-[var(--surface-root,#0A0A0B)] opacity-[0.06]" viewBox="0 0 1200 32" preserveAspectRatio="none" data-testid="divider-curve">
             <path d="M0 32 Q600 -16 1200 32 V32 H0 Z" fill="currentColor" />
           </svg>
         );
       case "diagonal":
         return (
-          <svg key={key} aria-hidden className="pointer-events-none block h-8 w-full text-[var(--surface-root,#0A0A0B)]" viewBox="0 0 1200 32" preserveAspectRatio="none" data-testid="divider-diagonal">
+          <svg key={key} aria-hidden className="pointer-events-none block h-8 w-full text-[var(--surface-root,#0A0A0B)] opacity-[0.06]" viewBox="0 0 1200 32" preserveAspectRatio="none" data-testid="divider-diagonal">
             <polygon points="0,32 1200,0 1200,32" fill="currentColor" />
           </svg>
         );
       case "glow":
         return (
-          <div key={key} aria-hidden className="pointer-events-none h-px w-full bg-gradient-to-r from-transparent via-indigo-400/30 to-transparent" data-testid="divider-glow" />
+          <div key={key} aria-hidden className="pointer-events-none h-px w-full bg-gradient-to-r from-transparent via-indigo-400/10 to-transparent" data-testid="divider-glow" />
         );
       case "fade":
       default:
         return (
-          <div key={key} aria-hidden className="pointer-events-none h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" data-testid="divider-fade" />
+          <div key={key} aria-hidden className="pointer-events-none h-px w-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" data-testid="divider-fade" />
         );
     }
   })();

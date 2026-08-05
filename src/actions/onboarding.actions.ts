@@ -325,7 +325,7 @@ export async function runCreatorGeneration(
       creatorName,
       sourceUrl,
       sourcePlatform,
-      planCode: "creator_free",
+      planCode: "creator_launch",
       pipelineResult,
       category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
       industry: categoryOverride || profileResult.knowledgeGraph.creator.niche,

@@ -14,9 +14,9 @@ export const billingFeatureService = {
 
     return {
       plan: currentPlan ?? {
-        code: "creator_free",
-        name: "Free Forever",
-        description: "Basic features for getting started",
+        code: "creator_launch",
+        name: "Creator Launch",
+        description: "Get your storefront online and start selling — free, no credit card needed.",
         price: 0,
         currency: "INR",
         features: {},

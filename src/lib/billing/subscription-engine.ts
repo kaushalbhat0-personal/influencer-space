@@ -1,12 +1,12 @@
 import type { BillingSubscription } from "./types";
 import type { SubscriptionStatus } from "./constants";
-import { getPlan } from "@/lib/capabilities";
+import { getPlan, getAllPlans } from "@/lib/capabilities";
 
 function getPlanFamily(code: string): "creator" | "agency" | "unknown" {
   const plan = getPlan(code);
   if (plan) return plan.family;
   if (code.startsWith("creator")) return "creator";
-  if (code.startsWith("agency")) return "agency";
+  if (code.startsWith("agency") || code.startsWith("partner")) return "agency";
   return "unknown";
 }
 
@@ -33,35 +33,23 @@ export function canDowngrade(currentCode: string, targetCode: string): boolean {
 }
 
 export function getUpgradePath(currentCode: string): string[] {
-  const family = getPlanFamily(currentCode);
-  if (family === "unknown") return [];
   const currentPlan = getPlan(currentCode);
   if (!currentPlan) return [];
-  return (getPlanFamily(currentCode) === "creator"
-    ? ["creator_pro", "creator_elite"]
-    : ["agency_studio", "agency_agency"]
-  ).filter((p) => {
-    const plan = getPlan(p);
-    return plan && plan.price > currentPlan.price;
-  });
+  const family = currentPlan.family;
+  return getAllPlans()
+    .filter((p) => p.family === family && p.price > currentPlan.price)
+    .sort((a, b) => a.price - b.price)
+    .map((p) => p.code);
 }
 
 export function getDowngradePath(currentCode: string): string[] {
-  const family = getPlanFamily(currentCode);
-  if (family === "unknown") return [];
   const currentPlan = getPlan(currentCode);
   if (!currentPlan) return [];
-  const familyPlans = [
-    ...(family === "creator"
-      ? ["creator_free", "creator_pro", "creator_elite"]
-      : ["agency_free", "agency_studio", "agency_agency"]),
-  ];
-  return familyPlans
-    .filter((p) => {
-      const plan = getPlan(p);
-      return plan && plan.price < currentPlan.price;
-    })
-    .reverse();
+  const family = currentPlan.family;
+  return getAllPlans()
+    .filter((p) => p.family === family && p.price < currentPlan.price)
+    .sort((a, b) => b.price - a.price)
+    .map((p) => p.code);
 }
 
 export function canSwitchFamily(currentCode: string, targetCode: string): boolean {

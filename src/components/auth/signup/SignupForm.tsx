@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { getPlansByFamily, DEFAULT_CREATOR_PLAN } from "@/lib/capabilities";
+import { getPlansByFamily } from "@/lib/capabilities";
 import type { SignupState, Persona } from "./types";
 import { STEP_ORDER } from "./types";
 import { User, Building2, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -52,7 +52,7 @@ export function SignupForm() {
   }, []);
 
   const selectPersona = useCallback((persona: Persona) => {
-    const defaultPlan = persona === "creator" ? DEFAULT_CREATOR_PLAN : "agency_free";
+    const defaultPlan = persona === "creator" ? "creator_launch" : "partner_free";
     update({ persona, selectedPlan: state.selectedPlan || defaultPlan });
   }, [update, state.selectedPlan]);
 
@@ -87,7 +87,10 @@ export function SignupForm() {
   }, [state.email, state.password, state.name, state.persona, state.selectedPlan, update]);
 
   const currentIdx = STEP_ORDER.indexOf(state.step) + 1;
-  const isFreePlan = getPlansByFamily("creator").concat(getPlansByFamily("agency")).find((p) => p.code === state.selectedPlan)?.price === 0;
+  const plansForPersona = getPlansByFamily(state.persona === "agency" ? "agency" : "creator");
+  const selectedPlanDef = plansForPersona.find((p) => p.code === state.selectedPlan);
+  const isEnterprise = selectedPlanDef?.ctaType === "contact";
+  const isFreePlan = !isEnterprise && (selectedPlanDef?.price ?? 0) === 0;
 
   return (
     <div className="min-h-screen bg-[var(--surface-root)] flex items-center justify-center px-4 py-12">
@@ -173,7 +176,12 @@ export function SignupForm() {
               </p>
             </div>
             <div className="space-y-2">
-              {getPlansByFamily(state.persona === "agency" ? "agency" : "creator").sort((a, b) => a.price - b.price).map((plan) => (
+              {(() => {
+                const plans = getPlansByFamily(state.persona === "agency" ? "agency" : "creator");
+                const nonEnterprise = plans.filter((p) => p.ctaType !== "contact").sort((a, b) => a.price - b.price);
+                const enterprise = plans.filter((p) => p.ctaType === "contact");
+                const sorted = [...nonEnterprise, ...enterprise];
+                return sorted.map((plan) => (
                 <button
                   key={plan.code}
                   onClick={() => update({ selectedPlan: plan.code })}
@@ -191,10 +199,10 @@ export function SignupForm() {
                   <span className={cn("text-sm font-semibold",
                     state.selectedPlan === plan.code ? "text-indigo-400" : "text-zinc-300"
                   )}>
-                    {plan.price === 0 ? "Free" : `₹${plan.price}/mo`}
+                    {plan.ctaType === "contact" ? "Contact Sales" : (plan.price === 0 ? "Free" : `₹${plan.price}/mo`)}
                   </span>
                 </button>
-              ))}
+              ));})()}
             </div>
             <button onClick={next} className="btn-primary w-full py-3">Continue</button>
           </div>
@@ -260,7 +268,7 @@ export function SignupForm() {
                 {state.persona === "creator" ? "Let's build your website." : "Let's onboard your first creator."}
               </h2>
               <p className="text-sm text-zinc-500 mt-2">
-                Your account is ready. {state.selectedPlan === DEFAULT_CREATOR_PLAN ? "You're on the Free Forever plan." : ""}
+                Your account is ready. {!isEnterprise && (selectedPlanDef?.price === 0) ? "You're on the Creator Launch plan." : ""}
               </p>
             </div>
             <button

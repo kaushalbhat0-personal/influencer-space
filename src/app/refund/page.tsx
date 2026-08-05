@@ -11,9 +11,9 @@ export default function RefundPage() {
           <section>
             <h2 className="mb-2 text-lg font-semibold text-white">1. Platform Subscription Cancellation</h2>
             <p>
-              Creators on the Pro plan (₹999/month) may cancel their subscription at
+              Creators on a paid plan may cancel their subscription at
               any time. Cancellations take effect at the end of the current billing
-              cycle. You will continue to have access to Pro features until the end of
+              cycle. You will continue to have access to paid features until the end of
               the paid period. No partial refunds are provided for the remaining days
               of a billing period after cancellation.
             </p>

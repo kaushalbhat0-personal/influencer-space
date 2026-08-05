@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
     // â”€â”€ payment.captured (legacy + plan activation + product orders) â”€â”€â”€â”€â”€
     if (event === "payment.captured") {
-      const planCode: string = notes.planCode || "creator_pro";
+      const planCode: string = notes.planCode || "creator_launch";
       const orderId: string = payload.payload?.payment?.entity?.order_id || "";
       const paymentId: string = payload.payload?.payment?.entity?.id || "";
 

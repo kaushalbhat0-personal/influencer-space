@@ -87,6 +87,6 @@ describe("listAllSubscriptions — v2 + legacy union without duplication", () =>
     const t3 = rows.find((r) => r.tenantId === "t3");
     expect(t3?.origin).toBe("legacy");
     expect(t3?.planCode).toBe("STARTER");
-    expect(t3?.planDisplay).toBe("Starter");
+    expect(t3?.planDisplay).toBe("Creator Launch");
   });
 });

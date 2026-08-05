@@ -19,7 +19,7 @@ export const billingService: BillingService = {
       getUsageCounts(tenantId),
     ]);
 
-    const planCode = subscription?.planCode ?? "creator_free";
+    const planCode = subscription?.planCode ?? "creator_launch";
     const plan = getPlan(planCode);
     const usage = computeUsage(counts, planCode);
 
@@ -29,7 +29,7 @@ export const billingService: BillingService = {
         id: "",
         accountId: workspaceId,
         workspaceId,
-        planCode: "creator_free",
+        planCode: "creator_launch",
         status: "ACTIVE" as SubscriptionStatus,
         trialEndsAt: null,
         renewsAt: null,

@@ -405,7 +405,7 @@ export class BillingService {
     const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
     if (!sub) return null;
     return {
-      planCode: sub.plan?.code ?? "creator_free",
+      planCode: sub.plan?.code ?? "creator_launch",
       status: sub.status,
       active: sub.status === "ACTIVE" || sub.status === "TRIALING",
     };

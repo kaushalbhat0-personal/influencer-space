@@ -16,7 +16,7 @@ export function Agency() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Built for{" "}
             <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-              agencies
+              partners
             </span>
           </h2>
           <p className="mt-3 text-zinc-500 max-w-xl mx-auto">
@@ -41,7 +41,7 @@ export function Agency() {
 
         <div className="mt-10 text-center">
           <a href="/signup" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors">
-            Start your agency — Free →</a>
+            Start your partner journey — Free →</a>
         </div>
       </div>
     </section>

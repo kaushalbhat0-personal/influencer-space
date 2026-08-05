@@ -63,7 +63,7 @@ export default async function SuperAdminPage() {
         <StatCard label="Gallery Items" value={stats.totalGallery} accent="bg-pink-500/20 text-pink-400" icon={<Image className="h-5 w-5" />} />
         <StatCard label="Orders" value={stats.totalOrders} accent="bg-amber-500/20 text-amber-400" icon={<IndianRupee className="h-5 w-5" />} />
         <StatCard label="Revenue" value={`₹${(stats.totalRevenue).toLocaleString("en-IN")}`} accent="bg-yellow-500/20 text-yellow-400" icon={<IndianRupee className="h-5 w-5" />} />
-        <StatCard label="Pro Subs" value={stats.activeProSubscriptions} accent="bg-rose-500/20 text-rose-400" icon={<CreditCard className="h-5 w-5" />} />
+        <StatCard label="Paid Subscriptions" value={stats.activeProSubscriptions} accent="bg-rose-500/20 text-rose-400" icon={<CreditCard className="h-5 w-5" />} />
         <StatCard label="Publishes" value={stats.publishCount} accent="bg-indigo-500/20 text-indigo-400" icon={<Activity className="h-5 w-5" />} />
         <StatCard label="Audit (24h)" value={stats.auditEntries24h} accent="bg-zinc-500/20 text-zinc-400" icon={<ScrollText className="h-5 w-5" />} />
       </div>

@@ -42,7 +42,7 @@ export async function attachCustomDomain(
 
     const ws = await workspaceService.resolveTenantId().then(() => workspaceService.getCurrent());
     const sub = ws ? await billingService.getSubscriptionStatus(ws.id) : null;
-    const planCode = sub?.planCode ?? "creator_free";
+    const planCode = sub?.planCode ?? "creator_launch";
     const domainGate = entitlement.can(planCode, "custom_domain");
     if (!domainGate.allowed) {
       return { success: false, error: `Custom domains require an upgraded plan. Current plan: ${planCode}` };

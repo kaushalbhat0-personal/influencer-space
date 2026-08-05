@@ -89,7 +89,7 @@ export async function listAllSubscriptions(): Promise<AdminSubscriptionRow[]> { 
   const rows: AdminSubscriptionRow[] = v2.map((sub) => ({
     tenantId: sub.workspace?.tenant?.id ?? sub.accountId,
     tenantName: sub.workspace?.tenant?.name ?? "Unknown",
-    planCode: sub.plan?.code ?? "creator_free",
+    planCode: sub.plan?.code ?? "creator_launch",
     planDisplay: resolvePlan(sub.plan?.code ?? "").displayName,
     status: sub.status,
     currentPeriodEnd: sub.renewsAt?.toISOString() ?? null,

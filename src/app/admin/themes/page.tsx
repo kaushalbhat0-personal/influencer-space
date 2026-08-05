@@ -21,15 +21,19 @@ export default async function ThemesPage() {
   try {
     const { tenantId: tid } = await requireTenant();
     tenantId = tid;
-    // IMPLEMENTATION-33: plan resolves through Billing v2 (legacy fallback).
     const [resolved, website] = await Promise.all([
       resolveActivePlan(undefined, tid),
       prisma.website.findUnique({ where: { tenantId: tid }, select: { themePackageId: true } }),
     ]);
     plan = resolved.code ?? null;
     currentThemeId = website?.themePackageId ?? null;
-  } catch {
-    // Not authenticated — marketplace still renders, all themes shown locked.
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    if (message.includes("authenticated") || message.includes("tenant") || message.includes("session")) {
+      // Not authenticated — marketplace renders with all themes locked.
+    } else {
+      throw err;
+    }
   }
 
   const planTierName = planTier(plan);

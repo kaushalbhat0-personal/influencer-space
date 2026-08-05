@@ -26,10 +26,8 @@ export default async function BillingPage() {
     if (!billingData) {
       return <ContentContainer><p className="text-red-400">Failed to load billing data.</p></ContentContainer>;
     }
-    const upgradeUrl = process.env.NEXT_PUBLIC_UPGRADE_URL;
-
     return (
-      <BillingPageClient billingData={billingData} availablePlans={plans} upgradeUrl={upgradeUrl} workspaceId={workspace.id} tenantId={tenant.id} />
+      <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={workspace.id} tenantId={tenant.id} />
     );
   }
 
@@ -38,7 +36,7 @@ export default async function BillingPage() {
 
   const billingData: BillingDashboard = {
     plan: { code: "creator_launch", family: "creator", name: "Creator Launch", description: "Get your storefront online and start selling — free.", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
-    subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_free", status: "ACTIVE", trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
+    subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_launch", status: "ACTIVE", trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
     invoices: [], paymentMethods: [], usage: [],
     activeProducts: productCount, activeGallery: 0, storageUsed: 0, ordersProcessed: 0, messagesSent: 0,
   };

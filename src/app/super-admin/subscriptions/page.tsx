@@ -35,7 +35,7 @@ export default async function SubscriptionsPage() {
       <PageSection>
         <MetricGrid>
           <MetricCard label="Total Subscriptions" value={subs.length} icon={CreditCard} />
-          <MetricCard label="Pro / Agency" value={proCount} icon={Crown} />
+          <MetricCard label="Paid Plans" value={proCount} icon={Crown} />
           <MetricCard label="Free" value={freeCount} />
         </MetricGrid>
       </PageSection>

@@ -94,7 +94,9 @@ export default async function MarketingPage() {
       <Pricing />
       <PricingFAQ />
       <FinalCta />
-      <Footer />
+      <ExperienceSection experience={MARKETING_EXPERIENCE} index={0} divider="bottom" variant="footer">
+        <Footer />
+      </ExperienceSection>
       <OrganizationSchema />
     </main>
   );

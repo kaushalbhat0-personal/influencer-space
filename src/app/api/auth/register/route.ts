@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         },
       });
 
-      const requestedPlanCode = body.planCode || "creator_free";
+      const requestedPlanCode = body.planCode || "creator_launch";
       const billingPlan = await tx.billingPlan.findUnique({
         where: { code: requestedPlanCode },
       });

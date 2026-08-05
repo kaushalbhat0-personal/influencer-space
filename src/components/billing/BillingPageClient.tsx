@@ -15,7 +15,6 @@ import type { BillingDashboard as BillingDashboardData, BillingPlan } from "@/li
 interface BillingPageClientProps {
   billingData: BillingDashboardData;
   availablePlans: BillingPlan[];
-  upgradeUrl?: string;
   workspaceId: string;
   tenantId: string;
 }
@@ -40,7 +39,7 @@ function loadRazorpayScript(): Promise<void> {
   });
 }
 
-export function BillingPageClient({ billingData, availablePlans, upgradeUrl, workspaceId, tenantId }: BillingPageClientProps) {
+export function BillingPageClient({ billingData, availablePlans, workspaceId, tenantId }: BillingPageClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState<string | null>(null);

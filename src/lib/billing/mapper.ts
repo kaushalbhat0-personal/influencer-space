@@ -79,7 +79,7 @@ export function mapSubscription(sub: PrismaSubscription | Record<string, unknown
     id: s.id as string,
     accountId: s.accountId as string,
     workspaceId: (s.workspaceId as string) ?? "",
-    planCode: (plan?.code as string) ?? "creator_free",
+    planCode: (plan?.code as string) ?? "creator_launch",
     status: s.status as BillingSubscription["status"],
     trialEndsAt: fmtDate(s.trialEndsAt),
     renewsAt: fmtDate(s.renewsAt),

@@ -69,22 +69,22 @@ export default function TermsPage() {
               Razorpay&apos;s terms of service.
             </p>
             <p className="mt-2">
-              Platform fees are as follows: the Starter plan is free (10% transaction
-              fee per sale), and the Pro plan is ₹999 per month (5% transaction fee per
-              sale). All fees are exclusive of applicable taxes. Creators are
-              responsible for any income tax or GST obligations arising from their
-              sales.
+              Platform fees are as follows: the Creator Launch plan is free, and paid
+              plans (Creator Grow, Creator Scale) are billed monthly. All fees are
+              exclusive of applicable taxes. Creators are responsible for any income
+              tax or GST obligations arising from their sales.
             </p>
           </section>
 
           <section>
             <h2 className="mb-2 text-lg font-semibold text-white">6. Subscriptions &amp; Billing</h2>
             <p>
-              Pro plan subscriptions are billed monthly in advance at ₹999/month.
-              Subscriptions automatically renew unless cancelled at least 24 hours before
-              the end of the current billing period. Cancellations take effect at the end
-              of the current billing cycle. No partial refunds are provided for unused
-              portions of a billing period.
+              Paid plan subscriptions are billed monthly in advance. Subscription
+              prices are listed on our Pricing page. Subscriptions automatically
+              renew unless cancelled at least 24 hours before the end of the current
+              billing period. Cancellations take effect at the end of the current
+              billing cycle. No partial refunds are provided for unused portions of
+              a billing period.
             </p>
           </section>
 

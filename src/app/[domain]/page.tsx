@@ -162,20 +162,26 @@ export default async function PublicPage({
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
         ))}
-        {allSections.map((section, i) => (
+        {allSections.map((section, i) => {
+          const isFirst = i === 0;
+          const isLast = i === allSections.length - 1;
+          const sectionVariant = isFirst ? "hero" as const : isLast ? "footer" as const : "default" as const;
+          return (
           <ExperienceSection
             key={`${section.id}-${i}`}
             id={section.moduleId?.split(".")[0] ?? `section-${i}`}
             experience={experience}
             index={i}
-            divider={i === 0 ? "bottom" : "bottom"}
+            variant={sectionVariant}
+            divider="bottom"
             data-testid={`experience-section-${i}`}
           >
             <ComponentErrorBoundary componentId={section.moduleId}>
               <DataBoundRenderer slot={{ moduleId: section.moduleId, config: section.config }} />
             </ComponentErrorBoundary>
           </ExperienceSection>
-        ))}
+          );
+        })}
       </main>
     </>
   );

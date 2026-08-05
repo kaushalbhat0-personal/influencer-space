@@ -14,37 +14,50 @@ import type { ThemeTier } from "@/lib/theme/types-new";
 import { getPlan } from "./plans";
 import type { PlanDefinition } from "./types";
 import { LEGACY_PLAN_MAP, PLAN_CODES, DEFAULT_PLAN_CODE } from "./constants";
+import { LEGACY_TO_CANONICAL } from "@/config/commerce/plans";
 
 /** Consolidated plan → theme tier band (legacy + canonical codes). */
 const PLAN_TO_TIER: Record<string, ThemeTier> = {
-  // Legacy string plans.
   FREE: "free",
-  STARTER: "starter",
+  STARTER: "free",
   PRO: "pro",
   GROWTH: "business",
   ENTERPRISE: "enterprise",
   FREELANCER: "free",
-  // Canonical codes.
+  creator_launch: "free",
+  creator_grow: "pro",
+  creator_scale: "business",
+  creator_enterprise: "enterprise",
   creator_free: "free",
   creator_pro: "pro",
   creator_elite: "business",
+  partner_free: "free",
+  partner_solo: "business",
+  partner_growth: "business",
+  partner_scale: "enterprise",
+  partner_enterprise: "enterprise",
   agency_free: "free",
   agency_studio: "business",
   agency_agency: "enterprise",
-  // Legacy aliases (kept in PLAN_CODES).
   agency_starter: "business",
   agency_growth: "business",
 };
 
 const DISPLAY_FALLBACK: Record<string, string> = {
-  creator_free: "Free",
-  creator_pro: "Pro",
-  creator_elite: "Elite",
-  agency_free: "Free",
-  agency_studio: "Studio",
-  agency_agency: "Agency",
-  agency_starter: "Studio",
-  agency_growth: "Growth",
+  creator_launch: "Creator Launch",
+  creator_grow: "Creator Grow",
+  creator_scale: "Creator Scale",
+  creator_enterprise: "Creator Enterprise",
+  partner_free: "Partner Free",
+  partner_solo: "Solo Partner",
+  partner_growth: "Partner Growth",
+  partner_scale: "Partner Scale",
+  partner_enterprise: "Partner Enterprise",
+  agency_free: "Partner Free",
+  agency_studio: "Solo Partner",
+  agency_agency: "Partner Growth",
+  agency_starter: "Solo Partner",
+  agency_growth: "Partner Scale",
 };
 
 export type PlanOrigin = "canonical" | "legacy" | "none";
@@ -66,7 +79,9 @@ export interface ResolvedPlan {
 export function canonicalPlanCode(value: string | null | undefined): string | null {
   if (!value) return null;
   const lower = value.trim().toLowerCase();
-  if ((PLAN_CODES as readonly string[]).includes(lower)) return lower;
+  if ((PLAN_CODES as readonly string[]).includes(lower)) {
+    return LEGACY_TO_CANONICAL[lower] ?? lower;
+  }
   const upper = value.trim().toUpperCase();
   return LEGACY_PLAN_MAP[upper] ?? null;
 }
@@ -89,8 +104,8 @@ export function resolvePlan(value: string | null | undefined): ResolvedPlan {
   let code: string | null = null;
   let source: PlanOrigin = "none";
   if ((PLAN_CODES as readonly string[]).includes(lower)) {
-    code = lower;
-    source = "canonical";
+    code = LEGACY_TO_CANONICAL[lower] ?? lower;
+    source = Object.prototype.hasOwnProperty.call(LEGACY_TO_CANONICAL, lower) ? "legacy" : "canonical";
   } else if (LEGACY_PLAN_MAP[upper]) {
     code = LEGACY_PLAN_MAP[upper];
     source = "legacy";
@@ -100,8 +115,8 @@ export function resolvePlan(value: string | null | undefined): ResolvedPlan {
   const plan = getPlan(code) ?? null;
   return {
     code,
-    displayName: plan?.name ?? DISPLAY_FALLBACK[code] ?? plan?.name ?? code,
-    family: plan?.family ?? (code.startsWith("agency") ? "agency" : "creator"),
+    displayName: plan?.name ?? DISPLAY_FALLBACK[code] ?? code,
+    family: plan?.family ?? (code.startsWith("agency") || code.startsWith("partner") ? "agency" : "creator"),
     tier: PLAN_TO_TIER[lower] ?? PLAN_TO_TIER[code] ?? "free",
     legacy: source === "legacy",
     source,
