@@ -9,16 +9,16 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, LogOut, ChevronDown } from "lucide-react";
 
 const GROUP_LABELS: Record<AdminGroup, string> = {
-  platform: "Platform",
-  creators: "Creators",
+  overview: "Overview",
+  creators: "Creators & Partners",
   marketplace: "Marketplace",
-  operations: "Operations",
-  billing: "Billing",
-  audit: "Audit",
+  commerce: "Commerce",
+  integrity: "Integrity",
   system: "System",
+  diagnostics: "Diagnostics",
 };
 
-const DEFAULT_OPEN: AdminGroup[] = ["platform", "creators", "marketplace", "operations", "billing"];
+const DEFAULT_OPEN: AdminGroup[] = ["overview", "creators", "commerce"];
 
 export function SuperAdminSidebar() {
   const pathname = usePathname();

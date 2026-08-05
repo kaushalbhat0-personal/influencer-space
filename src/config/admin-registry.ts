@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export type AdminGroup = "platform" | "creators" | "marketplace" | "operations" | "billing" | "audit" | "system";
+export type AdminGroup = "overview" | "creators" | "commerce" | "integrity" | "marketplace" | "system" | "diagnostics";
 export type AdminPermission = "super_admin";
 
 export interface AdminModule {
@@ -29,49 +29,49 @@ export interface AdminModule {
 export const ADMIN_REGISTRY: AdminModule[] = [
   // ── Platform ────────────────────────────────────────────────────
   {
-    id: "dashboard", title: "Dashboard", group: "platform",
+    id: "dashboard", title: "Dashboard", group: "overview",
     href: "/super-admin", icon: LayoutDashboard, permission: "super_admin",
     searchable: true, keywords: ["home", "stats", "overview", "health"],
     auditCategory: "dashboard", analyticsKey: "dashboard:viewed",
     productionReady: true,
   },
   {
-    id: "operations", title: "Operations", group: "platform",
+    id: "operations", title: "Operations", group: "overview",
     href: "/super-admin/operations", icon: Activity, permission: "super_admin",
     searchable: true, keywords: ["engines", "recovery", "diagnostics", "jobs", "events"],
     auditCategory: "system", analyticsKey: "operations:viewed",
     productionReady: true,
   },
   {
-    id: "health", title: "Platform Health", group: "platform",
+    id: "health", title: "Platform Health", group: "overview",
     href: "/super-admin/health", icon: Activity, permission: "super_admin",
     searchable: true, keywords: ["status", "monitor", "uptime", "database", "storage"],
     auditCategory: "system", analyticsKey: "health:viewed",
     productionReady: true,
   },
   {
-    id: "activity", title: "Activity", group: "platform",
+    id: "activity", title: "Activity", group: "overview",
     href: "/super-admin/activity", icon: Clock, permission: "super_admin",
     searchable: true, keywords: ["timeline", "events", "recent", "history", "log"],
     auditCategory: "system", analyticsKey: "activity:viewed",
     productionReady: true,
   },
   {
-    id: "insights", title: "Insights", group: "platform",
+    id: "insights", title: "Insights", group: "overview",
     href: "/super-admin/insights", icon: Lightbulb, permission: "super_admin",
     searchable: true, keywords: ["intelligence", "alerts", "attention", "health", "summary"],
     auditCategory: "system", analyticsKey: "insights:viewed",
     productionReady: true,
   },
   {
-    id: "alerts", title: "Alerts", group: "platform",
+    id: "alerts", title: "Alerts", group: "overview",
     href: "/super-admin/alerts", icon: Bell, permission: "super_admin",
     searchable: true, keywords: ["alerts", "notifications", "warnings", "critical", "triggered", "rules"],
     auditCategory: "system", analyticsKey: "alerts:viewed",
     productionReady: true,
   },
   {
-    id: "runbooks", title: "Runbooks", group: "platform",
+    id: "runbooks", title: "Runbooks", group: "overview",
     href: "/super-admin/runbooks", icon: BookOpen, permission: "super_admin",
     searchable: true, keywords: ["runbooks", "recovery", "guides", "playbooks", "incidents", "sop"],
     auditCategory: "system", analyticsKey: "runbooks:viewed",
@@ -133,35 +133,35 @@ export const ADMIN_REGISTRY: AdminModule[] = [
 
   // ── Operations ──────────────────────────────────────────────────
   {
-    id: "generate", title: "Creator Import", group: "operations",
+    id: "generate", title: "Creator Import", group: "diagnostics",
     href: "/super-admin/generate", icon: Bot, permission: "super_admin",
     searchable: true, keywords: ["import", "website", "create", "auto", "generation"],
     auditCategory: "ai", analyticsKey: "generation:viewed",
     productionReady: true,
   },
   {
-    id: "demo-studio", title: "Demo Studio", group: "operations",
+    id: "demo-studio", title: "Demo Studio", group: "diagnostics",
     href: "/super-admin/demo-studio", icon: Sparkles, permission: "super_admin",
     searchable: true, keywords: ["demo", "generate", "showcase", "sample"],
     auditCategory: "demo", analyticsKey: "demo:viewed",
     productionReady: true,
   },
   {
-    id: "demo-publishing", title: "Publishing", group: "operations",
+    id: "demo-publishing", title: "Publishing", group: "diagnostics",
     href: "/super-admin/demo-publishing", icon: CheckCircle2, permission: "super_admin",
     searchable: true, keywords: ["review", "approve", "publish", "workflow"],
     auditCategory: "demo", analyticsKey: "demo-publishing:viewed",
     productionReady: true,
   },
   {
-    id: "demo-library", title: "Demo Library", group: "operations",
+    id: "demo-library", title: "Demo Library", group: "diagnostics",
     href: "/super-admin/demo-library", icon: Layers, permission: "super_admin",
     searchable: true, keywords: ["seeds", "library", "catalog", "industries"],
     auditCategory: "demo", analyticsKey: "demo-library:viewed",
     productionReady: true,
   },
   {
-    id: "beta", title: "Beta Program", group: "operations",
+    id: "beta", title: "Beta Program", group: "diagnostics",
     href: "/super-admin/beta", icon: UserPlus, permission: "super_admin",
     searchable: true, keywords: ["invites", "beta", "early", "access", "testers"],
     auditCategory: "beta", analyticsKey: "beta:viewed",
@@ -170,62 +170,62 @@ export const ADMIN_REGISTRY: AdminModule[] = [
 
   // ── Billing ─────────────────────────────────────────────────────
   {
-    id: "revenue", title: "Revenue Reports", group: "billing",
+    id: "revenue", title: "Revenue Reports", group: "commerce",
     href: "/super-admin/revenue", icon: TrendingUp, permission: "super_admin",
     searchable: true, keywords: ["mrr", "arr", "money", "income", "earnings"],
     auditCategory: "revenue", analyticsKey: "revenue:viewed",
     productionReady: true,
   },
   {
-    id: "revenue-management", title: "Revenue Management", group: "billing",
+    id: "revenue-management", title: "Revenue Management", group: "commerce",
     href: "/super-admin/revenue-management", icon: Percent, permission: "super_admin",
     searchable: true, keywords: ["pricing", "plans", "commissions", "billing", "settings", "rates"],
     auditCategory: "revenue", analyticsKey: "revenue-management:viewed",
     productionReady: true,
   },
   {
-    id: "subscriptions", title: "Subscriptions", group: "billing",
+    id: "subscriptions", title: "Subscriptions", group: "commerce",
     href: "/super-admin/subscriptions", icon: CreditCard, permission: "super_admin",
     searchable: true, keywords: ["plans", "billing", "recurring", "payment"],
     auditCategory: "billing", analyticsKey: "subscriptions:viewed",
     productionReady: true,
   },
   {
-    id: "invoices", title: "Invoices", group: "billing",
+    id: "invoices", title: "Invoices", group: "commerce",
     href: "/super-admin/invoices", icon: FileText, permission: "super_admin",
     searchable: false, keywords: ["receipts", "bills", "statements"],
     productionReady: true,
   },
   {
-    id: "payments", title: "Payments", group: "billing",
+    id: "payments", title: "Payments", group: "commerce",
     href: "/super-admin/payments", icon: IndianRupee, permission: "super_admin",
     searchable: true, keywords: ["transactions", "gateway", "razorpay"],
     auditCategory: "billing", analyticsKey: "payments:viewed",
     productionReady: true,
   },
   {
-    id: "finance", title: "Finance Dashboard", group: "billing",
+    id: "finance", title: "Finance Dashboard", group: "commerce",
     href: "/super-admin/finance", icon: TrendingUp, permission: "super_admin",
     searchable: true, keywords: ["finance", "settlements", "partner", "payout", "liability"],
     auditCategory: "finance", analyticsKey: "finance:viewed",
     productionReady: true,
   },
   {
-    id: "settlements", title: "Settlements", group: "billing",
+    id: "settlements", title: "Settlements", group: "commerce",
     href: "/super-admin/settlements", icon: CreditCard, permission: "super_admin",
     searchable: true, keywords: ["payout", "partner", "transfer", "bank"],
     auditCategory: "finance", analyticsKey: "settlements:viewed",
     productionReady: true,
   },
   {
-    id: "partner-ledger", title: "Partner Ledger", group: "billing",
+    id: "partner-ledger", title: "Partner Ledger", group: "commerce",
     href: "/super-admin/partner-ledger", icon: ScrollText, permission: "super_admin",
     searchable: true, keywords: ["ledger", "balance", "commission", "earnings"],
     auditCategory: "finance", analyticsKey: "partner-ledger:viewed",
     productionReady: true,
   },
   {
-    id: "reconciliation", title: "Reconciliation", group: "billing",
+    id: "reconciliation", title: "Reconciliation", group: "integrity",
     href: "/super-admin/reconciliation", icon: RefreshCw, permission: "super_admin",
     searchable: true, keywords: ["reconcile", "orphan", "imbalance", "repair"],
     auditCategory: "finance", analyticsKey: "reconciliation:viewed",
@@ -233,7 +233,7 @@ export const ADMIN_REGISTRY: AdminModule[] = [
   },
 
   {
-    id: "integrity", title: "Platform Integrity", group: "billing",
+    id: "integrity", title: "Platform Integrity", group: "integrity",
     href: "/super-admin/integrity", icon: CheckCircle2, permission: "super_admin",
     searchable: true, keywords: ["integrity", "orphan", "cleanup", "delete", "repair"],
     auditCategory: "system", analyticsKey: "integrity:viewed",
@@ -242,21 +242,21 @@ export const ADMIN_REGISTRY: AdminModule[] = [
 
   // ── Audit ───────────────────────────────────────────────────────
   {
-    id: "audit", title: "Audit Log", group: "audit",
+    id: "audit", title: "Audit Log", group: "system",
     href: "/super-admin/audit", icon: ScrollText, permission: "super_admin",
     searchable: true, keywords: ["history", "events", "trace", "log"],
     auditCategory: "system", analyticsKey: "audit:viewed",
     productionReady: true,
   },
   {
-    id: "events", title: "Events", group: "audit",
+    id: "events", title: "Events", group: "system",
     href: "/super-admin/events", icon: Timer, permission: "super_admin",
     searchable: true, keywords: ["event bus", "types", "messages", "history"],
     auditCategory: "system", analyticsKey: "events:viewed",
     productionReady: true,
   },
   {
-    id: "webhooks", title: "Webhooks", group: "audit",
+    id: "webhooks", title: "Webhooks", group: "system",
     href: "/super-admin/webhooks", icon: Globe, permission: "super_admin",
     searchable: true, keywords: ["events", "gateway", "razorpay", "stripe"],
     auditCategory: "billing", analyticsKey: "webhooks:viewed",
@@ -313,7 +313,7 @@ export function getModuleById(id: string): AdminModule | undefined {
   return ADMIN_REGISTRY.find((m) => m.id === id);
 }
 
-export const GROUP_ORDER: AdminGroup[] = ["platform", "creators", "marketplace", "operations", "billing", "audit", "system"];
+export const GROUP_ORDER: AdminGroup[] = ["overview", "creators", "commerce", "integrity", "marketplace", "system", "diagnostics"];
 
 export function getGroupedModules(): Map<AdminGroup, AdminModule[]> {
   const map = new Map<AdminGroup, AdminModule[]>();
