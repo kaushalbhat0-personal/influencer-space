@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { LifecycleService } from "@/lib/lifecycle/token-resolver";
 import { classifyRoute, requiresAuthentication } from "@/lib/platform/routes";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 const lifecycleService = new LifecycleService();
 
@@ -83,6 +84,14 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
   const classification = classifyRoute(pathname);
+
+  // Rate limit auth endpoints
+  if (pathname.startsWith("/api/auth/")) {
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const limitKey = pathname.startsWith("/api/auth/register") ? "/api/auth/register" : pathname.startsWith("/api/auth") ? "/api/auth/login" : pathname;
+    const rate = checkRateLimit(`${limitKey}:${ip}`, limitKey);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
 
   // ── Phase 1: Always-allow routes (static, internal, public marketing, public storefront, login) ──
   // These never require authentication regardless of session state.

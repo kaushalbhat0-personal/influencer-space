@@ -12,8 +12,11 @@ const DEFAULT_CONFIG: RateLimitConfig = {
 
 const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/api/auth/register": { windowMs: 3600_000, maxRequests: 5 },
+  "/api/auth/login": { windowMs: 900_000, maxRequests: 10 },
+  "/api/auth/claim-invite": { windowMs: 900_000, maxRequests: 10 },
   "/api/webhooks/razorpay": { windowMs: 1000, maxRequests: 30 },
   "/api/checkout": { windowMs: 60_000, maxRequests: 20 },
+  "/api/domain/verify": { windowMs: 60_000, maxRequests: 10 },
 };
 
 export interface RateLimitResult {
