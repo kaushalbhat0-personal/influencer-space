@@ -232,6 +232,14 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
 
+  {
+    id: "integrity", title: "Platform Integrity", group: "billing",
+    href: "/super-admin/integrity", icon: CheckCircle2, permission: "super_admin",
+    searchable: true, keywords: ["integrity", "orphan", "cleanup", "delete", "repair"],
+    auditCategory: "system", analyticsKey: "integrity:viewed",
+    productionReady: true,
+  },
+
   // ── Audit ───────────────────────────────────────────────────────
   {
     id: "audit", title: "Audit Log", group: "audit",
