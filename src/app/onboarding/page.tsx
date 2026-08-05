@@ -115,7 +115,7 @@ export default function OnboardingPage() {
   const params = useSearchParams();
   const prefillUrl = params.get("url") || "";
 
-  const [step, setStep] = useState<OnboardingStep>(prefillUrl ? "import" : "welcome");
+  const [step, setStep] = useState<OnboardingStep>(prefillUrl ? "import" : "import");
   const [sourceUrl, setSourceUrl] = useState(prefillUrl);
   const [selectedProvider, setSelectedProvider] = useState<ImportProvider | null>(null);
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(
@@ -332,50 +332,8 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-[var(--surface-root)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-6xl">
-        {step === "welcome" && (
-          <div className="space-y-8 text-center">
-            <div className="rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-6 w-fit mx-auto">
-              <Sparkles className="h-12 w-12 text-indigo-400" />
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-2xl font-bold text-white">Welcome to CreatorStore</h1>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                We&apos;ll analyze your social presence, generate a personalized storefront,
-                and set up everything you need to start selling in minutes.
-              </p>
-            </div>
-            <div className="space-y-3 text-left">
-              {[
-                { icon: LinkIcon, text: "Connect your YouTube, Instagram, or any creator profile" },
-                { icon: Sparkles, text: "AI generates your storefront — products, theme, pages & SEO" },
-                { icon: Layout, text: "Customize everything with the drag-and-drop builder" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="rounded-lg bg-white/5 p-2 shrink-0">
-                    <item.icon className="h-4 w-4 text-indigo-400" />
-                  </div>
-                  <p className="text-sm text-zinc-300 pt-1.5">{item.text}</p>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setStep("import")}
-              className="btn-primary w-full py-3"
-            >
-              Get Started
-            </button>
-          </div>
-        )}
-
         {step === "import" && (
           <div className="space-y-6">
-            <button
-              onClick={() => setStep("welcome")}
-              className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back
-            </button>
-
             <div>
               <h1 className="text-xl font-semibold text-white">Build your CreatorStore</h1>
               <p className="mt-1 text-sm text-zinc-400">
