@@ -37,19 +37,50 @@ export interface CommercePlanConfig {
   name: string;
   description: string;
   family: "creator" | "partner";
-  price: number | null; // null = manual sales (enterprise)
+  price: number | null;
   currency: string;
   cycle: "monthly" | "yearly";
-  /** Razorpay plan id — configuration-only. Code references internal codes. */
   razorpayPlanId: string | null;
-  /** Manual sales (no public checkout). */
   manual: boolean;
   capabilities: CommerceCapability[];
   recommended?: boolean;
   badge?: string;
   ctaType: "signup" | "checkout" | "contact";
   ctaLabel: string;
+  /** Human-readable marketing features for pricing/comparison pages. */
+  marketingFeatures?: string[];
+  /** Rich capability labels mapped to categories for comparison tables. */
+  comparisonGroups?: Record<string, string[]>;
+  /** Sort order on pricing pages (lower = first). */
+  sortOrder?: number;
+  /** Hidden from pricing page if true. */
+  hidden?: boolean;
+  /** Annual pricing (future). */
+  annualPrice?: number | null;
 }
+
+/** Human-readable labels for capability keys — used by pricing & comparison tables. */
+export const CAPABILITY_LABELS: Record<CommerceCapability, string> = {
+  basic_builder: "Basic Website Builder",
+  basic_themes: "Basic Themes",
+  creator_subdomain: "Creator Subdomain",
+  premium_themes: "Premium Themes",
+  custom_domain: "Custom Domain",
+  advanced_builder: "Advanced Builder",
+  ai_generation: "AI Content Generation",
+  advanced_ai: "Advanced AI",
+  social_integrations: "Social Integrations",
+  api_access: "API Access",
+  api_integrations: "API Integrations",
+  white_label: "White Label",
+  brand_removal: "Brand Removal",
+  advanced_analytics: "Advanced Analytics",
+  priority_support: "Priority Support",
+  storage: "Storage",
+  ai_credits: "AI Credits",
+  storage_pack: "Storage Pack",
+  theme_packs: "Theme Packs",
+};
 
 export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {

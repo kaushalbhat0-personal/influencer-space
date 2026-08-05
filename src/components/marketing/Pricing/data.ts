@@ -86,7 +86,8 @@ export function getPartnerEnterprisePlan(): Partial<PlanDefinition> {
 }
 
 export function getEnterpriseHighlights(): string[] {
-  return ["Unlimited clients", "Custom integrations", "Dedicated support", "SLA guarantee", "SSO + Audit logs"];
+  const commerce = getCommercePlan("creator_enterprise");
+  return commerce?.marketingFeatures ?? ["Unlimited everything", "Custom integrations", "Dedicated support", "SLA guarantee", "SSO + Audit logs"];
 }
 
 export function getComparisonFeatures(): Array<{ key: string; description: string; valueType: string }> {
