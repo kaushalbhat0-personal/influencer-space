@@ -29,20 +29,43 @@ export interface PlanEntitlements {
 
 export interface UsageRecord {
   key: string;
+  label: string;
   used: number;
   limit: number;
   remaining: number;
   isUnlimited: boolean;
   unit: string;
+  category: string;
+  usagePercent: number;
+  status: "green" | "amber" | "red";
 }
 
 export interface LimitCheck {
   allowed: boolean;
+  capability?: string;
   limit?: number;
   used?: number;
   remaining?: number;
+  usagePercent?: number;
+  status?: "green" | "amber" | "red";
   reason?: string;
   suggestedUpgrade?: string;
+  upgradeBenefits?: string[];
+}
+
+function pctStatus(pct: number): "green" | "amber" | "red" {
+  if (pct > 90) return "red";
+  if (pct >= 70) return "amber";
+  return "green";
+}
+
+function buildUpgradeBenefits(currentPlanCode: string, targetPlanCode: string): string[] {
+  const current = getCommercePlan(currentPlanCode);
+  const target = getCommercePlan(targetPlanCode);
+  if (!current || !target) return [];
+  const currentCaps = new Set(current.capabilities);
+  return target.capabilities.filter((c) => !currentCaps.has(c)).slice(0, 4)
+    .map((c) => CAPABILITY_CATALOG.find((x) => x.key === c)?.label ?? c);
 }
 
 // ── Capability Definitions ────────────────────────────────────
@@ -171,23 +194,31 @@ export const entitlementRuntime = {
   /** Check a plan against current usage. */
   checkUsage(planCode: string, key: string, used: number): LimitCheck {
     const catalog = catalogByKey.get(key);
-    if (!catalog) return { allowed: false, reason: `Unknown capability: ${key}` };
+    if (!catalog) return { allowed: false, capability: key, reason: `Unknown capability: ${key}` };
 
-    if (catalog.type === "boolean") return this.hasFeature(planCode, key);
+    if (catalog.type === "boolean") {
+      const r = this.hasFeature(planCode, key);
+      return { ...r, capability: key };
+    }
 
     const limit = this.getLimit(planCode, key);
-    if (limit === -1) return { allowed: true, limit: -1, used, remaining: Infinity };
-    if (limit === 0) return { allowed: false, limit: 0, used, remaining: 0, reason: "Not available on this plan" };
+    const usagePct = limit === -1 ? 0 : limit === 0 ? 100 : Math.round((used / limit) * 100);
+    const status = pctStatus(usagePct);
+
+    if (limit === -1) return { allowed: true, capability: key, limit: -1, used, remaining: Infinity, usagePercent: 0, status: "green" };
+    if (limit === 0) return { allowed: false, capability: key, limit: 0, used, remaining: 0, usagePercent: 100, status: "red", reason: `Not available on this plan` };
 
     const remaining = Math.max(0, limit - used);
     if (remaining === 0) {
+      const upgrade = findUpgradePlan(planCode, key);
       return {
-        allowed: false, limit, used, remaining: 0,
-        reason: `Limit reached: ${used}/${limit}`,
-        suggestedUpgrade: findUpgradePlan(planCode, key),
+        allowed: false, capability: key, limit, used, remaining: 0, usagePercent: 100, status: "red",
+        reason: `${catalog.label} limit reached`,
+        suggestedUpgrade: upgrade,
+        upgradeBenefits: upgrade ? buildUpgradeBenefits(planCode, upgrade) : undefined,
       };
     }
-    return { allowed: true, limit, used, remaining };
+    return { allowed: true, capability: key, limit, used, remaining, usagePercent: usagePct, status };
   },
 
   /** Get usage summary for a plan. */
@@ -198,12 +229,22 @@ export const entitlementRuntime = {
       .map((c) => {
         const limit = typeof c.value === "number" ? c.value : 0;
         const u = used[c.key] ?? 0;
+        const pct = limit === -1 ? 0 : limit === 0 ? 100 : Math.round((u / limit) * 100);
         return {
-          key: c.key, unit: c.unit ?? "", used: u, limit,
+          key: c.key, label: c.label, unit: c.unit ?? "", category: c.category,
+          used: u, limit,
           remaining: limit === -1 ? Infinity : Math.max(0, limit - u),
           isUnlimited: limit === -1,
+          usagePercent: pct,
+          status: pctStatus(pct),
         };
       });
+  },
+
+  /** Enforce entitlement: check usage, return canonical response if disallowed, null if ok. */
+  enforce(planCode: string, key: string, used: number): LimitCheck | null {
+    const check = this.checkUsage(planCode, key, used);
+    return check.allowed ? null : check;
   },
 };
 

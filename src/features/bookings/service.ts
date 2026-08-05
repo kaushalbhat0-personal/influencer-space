@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { entitlementRuntime } from "@/lib/entitlements/runtime";
 
 export interface BookingSlot {
   id: string;
