@@ -22,6 +22,8 @@ export interface DashboardMetrics {
   testimonialCount: number;
   currentTheme: string | null;
   recentVersions: Array<{ version: number; createdAt: string }>;
+  /** Creator Success Runtime data for guided onboarding */
+  creatorSuccess?: import("@/lib/creator-success/runtime").CreatorSuccessData;
 }
 
 export interface DashboardActivity {

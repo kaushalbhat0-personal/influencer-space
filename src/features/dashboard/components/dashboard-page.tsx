@@ -102,6 +102,33 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           ))}
         </div>
 
+        {metrics.productCount === 0 && metrics.bookingCount === 0 && metrics.orderCount === 0 ? (
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.04] p-6">
+            <h3 className="text-sm font-semibold text-white mb-1">Your website is live! Complete these next steps</h3>
+            <p className="text-xs text-zinc-400 mb-4">Take a few minutes to set up your storefront and start selling.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { label: "Customize your hero", action: "Edit Hero", href: "/admin/settings", time: "2 min" },
+                { label: "Create your first product", action: "Create Product", href: "/admin/products", time: "3 min" },
+                { label: "Enable bookings", action: "Create Booking", href: "/admin/bookings", time: "2 min" },
+                { label: "Connect your domain", action: "Connect Domain", href: "/admin/settings/domain", time: "5 min" },
+                { label: "Upload gallery images", action: "Upload Images", href: "/admin/gallery", time: "5 min" },
+                { label: "Open the Builder", action: "Open Builder", href: "/builder", time: "" },
+              ].map((step) => (
+                <Link key={step.href} href={step.href} className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-900/30 px-4 py-3 hover:bg-zinc-900/50 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="h-3 w-3 rounded-full border-2 border-zinc-700 group-hover:border-indigo-500 transition-colors" />
+                    <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{step.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {step.time && <span className="text-[10px] text-zinc-600">{step.time}</span>}
+                    <span className="text-[10px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">{step.action} →</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
         <MetricGrid>
           <MetricCard label="Products" value={metrics.productCount} sub={`${metrics.activeProductCount} active`} />
           <MetricCard label="Services" value={metrics.offeringCount} sub={`${metrics.totalOrders} orders`} />
@@ -110,6 +137,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           <MetricCard label="Gallery" value={metrics.galleryCount} />
           <MetricCard label="Avg Order" value={avgOrder} sub={metrics.orderCount > 0 ? "per order" : "No orders yet"} subColor={metrics.orderCount > 0 ? "text-zinc-500" : "text-zinc-600"} />
         </MetricGrid>
+        )}
 
         <DashboardGrid>
           <DashboardGridMain className="space-y-6">
