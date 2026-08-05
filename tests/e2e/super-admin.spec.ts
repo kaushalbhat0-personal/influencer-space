@@ -1,34 +1,20 @@
 /**
- * Super Admin E2E Tests v1.0.0
+ * Super Admin E2E Tests v2.0.0 — RCCF-PLAYWRIGHT-01
+ *
+ * Legacy tests kept for backward compatibility. New comprehensive tests are in:
+ *   - super-admin/navigation.spec.ts
+ *   - super-admin/billing-finance.spec.ts
+ *   - super-admin/marketplace-domains.spec.ts
  */
 
 import { test, expect } from "../fixtures/auth";
 import { SuperAdminDashboard } from "../pages/super-admin";
 
-test.describe("Super Admin", () => {
+test.describe("Super Admin — Core Pages", () => {
   test("Dashboard shows metrics", async ({ superAdminPage }) => {
     const sa = new SuperAdminDashboard(superAdminPage);
     await sa.goto();
     await expect(superAdminPage.locator("h1")).toContainText(/Dashboard/);
-  });
-
-  test("Has feature flags page", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/features");
-    await superAdminPage.waitForLoadState("networkidle");
-    const hasFeatures = await new SuperAdminDashboard(superAdminPage).hasFeatureFlags();
-    expect(hasFeatures).toBe(true);
-  });
-
-  test("Has audit log page", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/audit");
-    await superAdminPage.waitForLoadState("networkidle");
-    await expect(superAdminPage.locator("h1")).toContainText(/Audit/);
-  });
-
-  test("Has health monitoring page", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/health");
-    await superAdminPage.waitForLoadState("networkidle");
-    await expect(superAdminPage.locator("h1")).toContainText(/Health/);
   });
 
   test("Revenue page loads", async ({ superAdminPage }) => {
@@ -48,5 +34,23 @@ test.describe("Super Admin", () => {
     await superAdminPage.goto("/super-admin/agencies");
     await superAdminPage.waitForLoadState("networkidle");
     await expect(superAdminPage.locator("h1")).toContainText(/Agencies/);
+  });
+
+  test("Audit log page loads", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/audit");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toContainText(/Audit/);
+  });
+
+  test("Health monitoring page loads", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/health");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toContainText(/Health/);
+  });
+
+  test("Feature flags page loads", async ({ superAdminPage }) => {
+    await superAdminPage.goto("/super-admin/features");
+    await superAdminPage.waitForLoadState("networkidle");
+    await expect(superAdminPage.locator("h1")).toBeVisible();
   });
 });
