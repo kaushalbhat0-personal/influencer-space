@@ -12,8 +12,10 @@ import { useConstructionSnapshot } from "@/features/onboarding/hooks/use-constru
 import {
   CheckCircle2, Globe, AlertTriangle, Loader2, ArrowLeft,
   Video, MessageCircle, Link as LinkIcon,
-  Sparkles, Layout,
+  Sparkles, Layout, Video as VideoIcon, Globe as GlobeIcon, Map, Edit3,
 } from "lucide-react";
+import { getAvailableImportProviders, type ImportProvider } from "@/lib/import-provider/registry";
+import "@/lib/import-provider/providers";
 
 type OnboardingStep = "welcome" | "import" | "preview" | "generating" | "complete" | "error";
 
@@ -107,6 +109,20 @@ function formatElapsed(ms: number): string {
   return `${minutes}m ${secs}s`;
 }
 
+const ImportIcons: Record<string, typeof Globe> = {
+  youtube: VideoIcon, website: GlobeIcon, google_business: Map, manual_ai: Sparkles, blank: Edit3,
+};
+
+function ProviderPick({ p, selected, onPick }: { p: ImportProvider; selected: boolean; onPick: () => void }) {
+  const I = ImportIcons[p.id] || Globe;
+  return (
+    <button onClick={onPick} className={cn("flex items-start gap-3 rounded-lg border p-3 text-left w-full transition-all", selected ? "border-indigo-500/40 bg-indigo-500/[0.06]" : "border-white/[0.06] bg-zinc-900/30 hover:border-white/[0.15]")}>
+      <div className="shrink-0 h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center"><I className="h-4 w-4 text-indigo-400" /></div>
+      <div><p className="font-medium text-sm text-white">{p.label}</p><p className="text-[11px] text-zinc-500">{p.description}</p></div>
+    </button>
+  );
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -114,6 +130,7 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState<OnboardingStep>(prefillUrl ? "import" : "welcome");
   const [sourceUrl, setSourceUrl] = useState(prefillUrl);
+  const [selectedProvider, setSelectedProvider] = useState<ImportProvider | null>(null);
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(
     prefillUrl ? detectClientPlatform(prefillUrl) : null,
   );
@@ -373,12 +390,27 @@ export default function OnboardingPage() {
             </button>
 
             <div>
-              <h1 className="text-xl font-semibold text-white">Paste your creator URL</h1>
+              <h1 className="text-xl font-semibold text-white">Import your creator profile</h1>
               <p className="mt-1 text-sm text-zinc-400">
-                We&apos;ll analyze your profile and generate a storefront tailored to your brand.
+                Choose a source below. You can import more later from Settings.
               </p>
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
+              {getAvailableImportProviders().map((p) => (
+                <ProviderPick
+                  key={p.id}
+                  p={p}
+                  selected={selectedProvider?.id === p.id}
+                  onPick={() => {
+                    setSelectedProvider(p);
+                    if (p.inputType === "none") { router.push("/admin/dashboard"); }
+                  }}
+                />
+              ))}
+            </div>
+
+            {selectedProvider && selectedProvider.inputType !== "none" && (
             <div>
               <label htmlFor="onboarding-url" className="block text-xs font-medium text-zinc-400 mb-1.5">
                 Social Profile URL
@@ -404,6 +436,7 @@ export default function OnboardingPage() {
                 )} />
               </div>
             </div>
+            )}
 
             <div className="flex flex-wrap gap-1.5 text-[11px] text-zinc-600">
               <span>Supported:</span>
