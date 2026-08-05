@@ -13,12 +13,12 @@ export function FinalCta() {
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup" className="btn-primary px-10 py-3.5 text-sm">
-              Generate My Storefront — Free
+            <Link href="/signup?persona=creator" className="btn-primary px-10 py-3.5 text-sm">
+              Start as Creator
             </Link>
-            <a href="#ai-demo" className="btn-secondary px-10 py-3.5 text-sm">
-              See AI Demo
-            </a>
+            <Link href="/signup?persona=partner" className="btn-secondary px-10 py-3.5 text-sm">
+              Become a Partner
+            </Link>
           </div>
 
           <p className="mt-4 text-xs text-zinc-600">

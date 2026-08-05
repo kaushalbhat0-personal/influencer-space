@@ -24,12 +24,19 @@ export function SignupForm() {
   const router = useRouter();
   const params = useSearchParams();
   const socialUrl = params.get("url") || "";
+  const personaParam = (params.get("persona") || "") as string;
   const [state, setState] = useState<SignupState>(() => {
     const planParam = params.get("plan");
+    // Map "partner" URL param to internal "agency" persona type
+    const mappedPersona: Persona | null = personaParam === "partner" ? "agency" : personaParam === "creator" ? "creator" : null;
+    const initialPlan = planParam || null;
+    // Skip persona step if provided via URL, jump directly to plan selection.
+    const initialStep = mappedPersona ? "plan" : (initialPlan || socialUrl ? "plan" : "welcome");
     return {
       ...DEFAULT_STATE,
-      selectedPlan: planParam || null,
-      step: planParam || socialUrl ? "plan" : "welcome",
+      persona: mappedPersona,
+      selectedPlan: initialPlan,
+      step: initialStep,
     };
   });
 

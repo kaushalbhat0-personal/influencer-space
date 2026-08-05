@@ -94,8 +94,11 @@ export function MarketingNav() {
             >
               Sign In
             </Link>
-            <Link href="/signup" className="btn-primary text-sm">
-              Start Free
+            <Link href="/signup?persona=creator" className="btn-primary text-sm">
+              Start as Creator
+            </Link>
+            <Link href="/signup?persona=partner" className="rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-zinc-400 transition-colors hover:border-white/30 hover:text-white">
+              Become a Partner
             </Link>
           </div>
 
@@ -179,11 +182,18 @@ export function MarketingNav() {
                     Sign In
                   </Link>
                   <Link
-                    href="/signup"
+                    href="/signup?persona=creator"
                     onClick={close}
                     className="btn-primary w-full justify-center text-sm"
                   >
-                    Start Free
+                    Start as Creator
+                  </Link>
+                  <Link
+                    href="/signup?persona=partner"
+                    onClick={close}
+                    className="block w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors text-center"
+                  >
+                    Become a Partner
                   </Link>
                 </div>
               </div>

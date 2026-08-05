@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { MarketingEvents } from "@/lib/analytics/marketing";
 
@@ -110,6 +111,15 @@ export function HeroInput({ onSubmit }: HeroInputProps) {
         {Object.entries(PLATFORM_ICONS).map(([key, icon]) => (
           <span key={key} className={icon.color}>{icon.label}</span>
         ))}
+      </div>
+      <div className="flex items-center gap-3 pt-1">
+        <Link href="/signup?persona=creator" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+          Start as Creator without a URL →
+        </Link>
+        <span className="text-zinc-700">·</span>
+        <Link href="/signup?persona=partner" className="text-xs text-zinc-500 hover:text-zinc-300">
+          Become a Partner
+        </Link>
       </div>
     </form>
   );
