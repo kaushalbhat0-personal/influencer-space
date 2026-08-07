@@ -328,6 +328,15 @@ export const sessionService = {
   async getByCorrelationId(correlationId: string): Promise<GenerationSessionData | null> {
     return sessionRegistry.findByCorrelationId(correlationId);
   },
+
+  // RCCF-LAUNCH-TRACK-03 Phase 8: the most recent in-flight session for a
+  // creator — used to resume progress after a browser refresh.
+  async findLatestActive(creatorId: string): Promise<GenerationSessionData | null> {
+    const active = await sessionRegistry.findLatestByCreator(creatorId);
+    if (!active) return null;
+    if (["completed", "failed", "cancelled", "timed_out"].includes(active.status)) return null;
+    return active;
+  },
 };
 
 export type SessionService = typeof sessionService;

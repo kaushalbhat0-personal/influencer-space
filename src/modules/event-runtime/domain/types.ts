@@ -58,7 +58,23 @@ export type IntelligenceEventType =
   | "download.generated"
   | "download.expired"
   | "booking.confirmed"
-  | "service.completed";
+  | "service.completed"
+  // RCCF-LAUNCH-TRACK-03 — real-time generation progress events.
+  | "generation.started"
+  | "generation.profile.imported"
+  | "generation.workspace.created"
+  | "generation.runtime.initialized"
+  | "generation.website.generated"
+  | "generation.content.generated"
+  | "generation.builder.completed"
+  | "generation.quality.started"
+  | "generation.quality.completed"
+  | "generation.publish.started"
+  | "generation.publish.completed"
+  | "generation.dashboard.ready"
+  | "generation.completed"
+  | "generation.failed"
+  | "generation.cancelled";
 
 export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "knowledge.completed",
@@ -110,6 +126,21 @@ export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "download.expired",
   "booking.confirmed",
   "service.completed",
+  "generation.started",
+  "generation.profile.imported",
+  "generation.workspace.created",
+  "generation.runtime.initialized",
+  "generation.website.generated",
+  "generation.content.generated",
+  "generation.builder.completed",
+  "generation.quality.started",
+  "generation.quality.completed",
+  "generation.publish.started",
+  "generation.publish.completed",
+  "generation.dashboard.ready",
+  "generation.completed",
+  "generation.failed",
+  "generation.cancelled",
 ];
 
 export interface RuntimeEvent {

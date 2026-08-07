@@ -100,14 +100,21 @@ export class OnboardingService {
     this.artifactEngine = new ArtifactEngine(registry);
   }
 
-  async importProfile(sourceUrl: string, _creatorId: string, creatorName: string): Promise<ImportProfileResult> {
+  async importProfile(sourceUrl: string, _creatorId: string, creatorName: string, onProgress?: (stage: string) => void | Promise<void>): Promise<ImportProfileResult> {
     // Unified Profile Acquisition — normalize once into the existing ContentSource.
+    // RCCF-LAUNCH-TRACK-03: report REAL sub-phases so the onboarding UI advances
+    // honestly through the network fetch + knowledge build + persona detection
+    // instead of sitting on "import_profile" for the whole call.
+    await onProgress?.("import_profile");
     const acquisition = await profileAcquisitionEngine.acquire(sourceUrl, creatorName);
     const source = acquisition.source;
     const platform = detectPlatform(sourceUrl);
 
+    await onProgress?.("knowledge_intelligence");
     const knowledgeGraph = this.knowledgeBuilder.build(source);
+    await onProgress?.("persona_detection");
     const personaMatch = this.personaEngine.detect(knowledgeGraph);
+    await onProgress?.("planning_context");
     const experienceProfile = this.experienceProfileBuilder.build(
       knowledgeGraph,
       personaMatch.persona,

@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -271,6 +271,9 @@ export async function runCreatorGeneration(
         sourcePlatform: "youtube",
         correlationId: ctx.correlationId,
       }, "platform", ctx.correlationId);
+      // RCCF-LAUNCH-TRACK-03: canonical generation progress event.
+      const { emitGenerationEvent } = await import("@/modules/generation-progress");
+      await emitGenerationEvent(generationSessionId!, "generation.started", { creatorName, sourceUrl }).catch(() => {});
     }
 
     const stages: Array<{ stage: string; status: string; error?: string }> = [];
@@ -279,13 +282,36 @@ export async function runCreatorGeneration(
     };
 
     markStage("profile_import", "running");
-    const profileResult = existingProfileResult ?? await onboardingService.importProfile(sourceUrl, userId, creatorName);
+
+    // RCCF-LAUNCH-TRACK-03: real sub-phase progress. The import reports its
+    // genuine milestones (fetch â†’ knowledge â†’ persona â†’ planning) through a
+    // callback; the session advances in real time. NO fake timer or simulated
+    // percentages â€” the UI reflects actual backend milestones.
+    let progressStage: string | null = null;
+    const sid = generationSessionId;
+    const onImportProgress = sid
+      ? async (stage: string) => {
+          if (progressStage && progressStage !== stage) {
+            await sessionService.updateStage(sid, progressStage as never, "completed").catch(() => {});
+          }
+          progressStage = stage;
+          await sessionService.updateStage(sid, stage as never, "running").catch(() => {});
+        }
+      : undefined;
+
+    const profileResult = existingProfileResult ?? await onboardingService.importProfile(sourceUrl, userId, creatorName, onImportProgress);
     markStage("profile_import", "completed");
 
     if (generationSessionId) {
-      await sessionService.updateStage(generationSessionId, "import_profile", "completed");
+      if (progressStage) {
+        await sessionService.updateStage(generationSessionId, progressStage, "completed").catch(() => {});
+      } else {
+        await sessionService.updateStage(generationSessionId, "import_profile", "completed");
+      }
       await sessionService.updateStage(generationSessionId, "knowledge_intelligence", "completed");
       await sessionService.updateStage(generationSessionId, "persona_detection", "completed");
+      const { emitGenerationEvent } = await import("@/modules/generation-progress");
+      await emitGenerationEvent(generationSessionId!, "generation.profile.imported", { creatorName }).catch(() => {});
     }
 
     let goldenValidationResult = null;
@@ -358,6 +384,8 @@ export async function runCreatorGeneration(
       markStage("provisioning", "failed", err instanceof Error ? err.message : "Provisioning failed");
       if (generationSessionId) {
         await sessionService.fail(generationSessionId, err instanceof Error ? err.message : "Provisioning failed");
+        const { emitGenerationEvent } = await import("@/modules/generation-progress");
+        await emitGenerationEvent(generationSessionId!, "generation.failed", { stage: "provisioning", error: err instanceof Error ? err.message : "Provisioning failed" }).catch(() => {});
       }
       return { success: false, stages, error: err instanceof Error ? err.message : "Provisioning failed", retryable: false };
     }
@@ -403,7 +431,7 @@ export async function runCreatorGeneration(
     let builderData = buildBuilderArtifactData(pipelineResult);
 
     // RCCF-INTEGRATION-01 Phase 3: generation consumes the accepted goal
-    // profile — goal-preferred sections are ordered earlier in the generated
+    // profile â€” goal-preferred sections are ordered earlier in the generated
     // builder artifact (hero first, footer last). Additive; no-op without goals.
     if (builderData && goals && goals.length > 0) {
       const sections = (builderData.sections as Array<{ type: string }> | undefined) ?? [];
@@ -430,6 +458,8 @@ export async function runCreatorGeneration(
     markStage("publishing", "running");
     if (generationSessionId) {
       await sessionService.updateStage(generationSessionId, "publishing", "running");
+      const { emitGenerationEvent } = await import("@/modules/generation-progress");
+      await emitGenerationEvent(generationSessionId!, "generation.publish.started", { tenantId: provisioned.tenantId }).catch(() => {});
     }
     if (provisioned) {
       try {
@@ -444,6 +474,8 @@ export async function runCreatorGeneration(
         if (generationSessionId) {
           await sessionService.updateStage(generationSessionId, "publishing", "failed", msg);
           await sessionService.fail(generationSessionId, msg).catch(() => {});
+          const { emitGenerationEvent } = await import("@/modules/generation-progress");
+          await emitGenerationEvent(generationSessionId!, "generation.failed", { stage: "publishing", error: msg }).catch(() => {});
         }
         return { success: false, stages, error: msg, retryable: true, tenantId: provisioned.tenantId };
       }
@@ -486,6 +518,10 @@ export async function runCreatorGeneration(
           builderUrl: website ? "/builder" : undefined,
           dashboardUrl: website ? "/builder" : "/admin/dashboard",
         });
+        const { emitGenerationEvent } = await import("@/modules/generation-progress");
+        await emitGenerationEvent(generationSessionId!, "generation.publish.completed", { tenantId: provisioned.tenantId }).catch(() => {});
+        await emitGenerationEvent(generationSessionId!, "generation.dashboard.ready", { tenantId: provisioned.tenantId }).catch(() => {});
+        await emitGenerationEvent(generationSessionId!, "generation.completed", { tenantId: provisioned.tenantId }).catch(() => {});
       } catch (err) {
         captureError(err, { service: "onboarding-actions", operation: "completeGenerationSession" });
       }
@@ -611,6 +647,22 @@ export async function getGenerationSessionProgress(sessionId: string): Promise<S
     };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to get session status" };
+  }
+}
+
+/** RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery â€” resume the latest in-flight
+ *  generation session (never restart progress, never return to stage 1). */
+export async function getActiveGenerationSession(): Promise<{ success: boolean; sessionId?: string; data?: Extract<SessionProgressResult, { success: true }>["data"]; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    const active = await sessionService.findLatestActive(session.user.id);
+    if (!active) return { success: false, error: "No active session" };
+    const progress = await getGenerationSessionProgress(active.id);
+    if (!progress.success || !progress.data) return { success: false, error: "No active session" };
+    return { success: true, sessionId: active.id, data: progress.data };
+  } catch {
+    return { success: false, error: "No active session" };
   }
 }
 

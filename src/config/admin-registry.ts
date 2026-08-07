@@ -254,6 +254,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "generation-monitor", title: "Generation Monitor", group: "system",
+    href: "/super-admin/generation-monitor", icon: Activity, permission: "super_admin",
+    searchable: true, keywords: ["generation", "onboarding", "progress", "stages", "sessions", "duration"],
+    auditCategory: "system", analyticsKey: "generation-monitor:viewed",
+    productionReady: true,
+  },
+  {
     id: "invoices", title: "Invoices", group: "commerce",
     href: "/super-admin/invoices", icon: FileText, permission: "super_admin",
     searchable: false, keywords: ["receipts", "bills", "statements"],

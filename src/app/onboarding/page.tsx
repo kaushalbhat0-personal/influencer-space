@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn, slugify } from "@/lib/utils";
-import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
+import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, getActiveGenerationSession, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
 import { getOnboardingPreview, seedOnboardingIntelligence } from "@/actions/onboarding-intelligence.actions";
 import type { OnboardingPreview } from "@/modules/runtime-context";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
@@ -154,6 +154,39 @@ export default function OnboardingPage() {
     return () => clearPolling();
   }, [clearPolling]);
 
+  // RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery — resume the latest in-flight
+  // session so progress continues after a refresh (never restarts from stage 1).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const active = await getActiveGenerationSession();
+      if (cancelled || !active.success || !active.sessionId || !active.data) return;
+      setSessionId(active.sessionId);
+      setStep("generating");
+      setLoading(false);
+      setSessionStages(active.data.stages ?? []);
+      setProgressPercent(active.data.progressPercent ?? 0);
+      const startTime = Date.now() - (active.data.elapsedMs ?? 0);
+      timerRef.current = setInterval(() => setElapsedMs(Date.now() - startTime), 1000);
+      pollRef.current = setInterval(async () => {
+        const result = await getGenerationSessionProgress(active.sessionId!);
+        if (!result.success) return;
+        setSessionStages(result.data.stages);
+        if (result.data.progressPercent > 0) setProgressPercent((p) => Math.max(p, result.data.progressPercent));
+        if (result.data.status === "completed") {
+          clearPolling();
+          router.replace("/admin/dashboard");
+        }
+        if (result.data.status === "failed") {
+          clearPolling();
+          setStep("error");
+          setError("We couldn't finish building your storefront. Please try again.");
+        }
+      }, 1500);
+    })();
+    return () => { cancelled = true; };
+  }, [clearPolling, router]);
+
   const handleAnalyze = useCallback(async () => {
     if (!sourceUrl.trim()) return;
     setLoading(true);
@@ -285,9 +318,10 @@ export default function OnboardingPage() {
           // session refresh is best-effort; redirect will re-validate
         }
 
-        setTimeout(() => {
-          router.replace("/admin/dashboard");
-        }, 2000);
+        // RCCF-LAUNCH-TRACK-03 Phase 7: redirect immediately on completion —
+        // no artificial 2s wait. The dashboard is ready as soon as the backend
+        // reports generation.completed.
+        router.replace("/admin/dashboard");
       } else if (res.retryable && res.tenantId) {
         clearPolling();
         setRetryInfo({ tenantId: res.tenantId });
@@ -653,9 +687,9 @@ export default function OnboardingPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-white">
-                {retryInfo ? "Publishing failed" : "Something went wrong"}
+                {retryInfo ? "We couldn't publish your website" : "We couldn't build your storefront"}
               </h1>
-              <p className="text-zinc-400 mt-2 text-sm">{error || "Could not generate your storefront."}</p>
+              <p className="text-zinc-400 mt-2 text-sm">{error || "Something went wrong while building your storefront."}</p>
               {retryInfo && (
                 <p className="text-zinc-500 mt-3 text-xs">
                   Your storefront was created successfully. Publishing the live version failed.
@@ -703,6 +737,12 @@ export default function OnboardingPage() {
                   >
                     Go to Dashboard instead
                   </button>
+                  <a
+                    href="mailto:support@creatorspace.app?subject=Storefront%20generation%20help"
+                    className="block text-sm text-zinc-600 hover:text-zinc-400 underline underline-offset-2"
+                  >
+                    Contact Support
+                  </a>
                 </>
               )}
             </div>

@@ -131,6 +131,19 @@ export const sessionRegistry = {
     return sessions.map(mapSession);
   },
 
+  // RCCF-LAUNCH-TRACK-03 Phase 8: latest session for a creator (for refresh recovery).
+  async findLatestByCreator(creatorId: string): Promise<GenerationSessionData | null> {
+    const session = await prisma.generationSession.findFirst({
+      where: { creatorId },
+      include: {
+        stages: { orderBy: { startedAt: "asc" } },
+        history: { orderBy: { timestamp: "asc" }, take: 50 },
+      },
+      orderBy: { startedAt: "desc" },
+    });
+    return session ? mapSession(session) : null;
+  },
+
   async findByStatus(status: string, limit = 50): Promise<GenerationSessionData[]> {
     const sessions = await prisma.generationSession.findMany({
       where: { status },
