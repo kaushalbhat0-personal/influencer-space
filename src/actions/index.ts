@@ -105,6 +105,8 @@ export {
   getBusinessHealth, getBuilderBusinessHealth,
 } from "./business-health.actions";
 
+export { getExperienceIntelligence } from "./experience-intelligence.actions";
+
 export {
   getOperationsDashboard, getEvents, getEventTypes,
   rehydrateEngine, retryFailedPayouts, expireStaleInvites,

@@ -18,6 +18,7 @@ import { experienceRegistry, ExperienceSection } from "@/modules/theme/runtime/e
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { applyGoalSectionOrder, applyGoalNavigation, goalProfileService } from "@/modules/goals-runtime";
+import { contentFromAggregate, resolveAdaptiveVisibility, baseOf } from "@/modules/experience-intelligence";
 
 // IMPLEMENTATION-16: no ISR/content cache on the storefront. Content is ALWAYS
 // live (websiteAggregate.build on every request); a cached page would show
@@ -145,7 +146,14 @@ export default async function PublicPage({
     diagnostics: data.diagnostics,
   });
 
-  const allSections = pages.flatMap((p) => p.sections).filter((s) => s.visible !== false);
+  // RCCF-EPIC-08 Phase 3: adaptive visibility — conditional sections with empty
+  // content are hidden when a goal profile is set ("no empty sections").
+  // Without a goal profile this is a no-op, so existing storefronts are unchanged.
+  const hiddenBases = new Set(resolveAdaptiveVisibility(contentFromAggregate(snap.content), !!goalProfile));
+  const allSections = pages
+    .flatMap((p) => p.sections)
+    .filter((s) => s.visible !== false)
+    .filter((s) => !hiddenBases.has(baseOf(s.moduleId) as never));
 
   // IMPLEMENTATION-45: resolve the theme's Experience (configuration-driven —
   // sections never hardcode backgrounds/decorations).

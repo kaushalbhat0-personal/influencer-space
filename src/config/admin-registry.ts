@@ -78,6 +78,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "experience-intelligence", title: "Experience Intelligence", group: "overview",
+    href: "/super-admin/experience-intelligence", icon: Layers, permission: "super_admin",
+    searchable: true, keywords: ["experience", "industries", "goals", "themes", "distribution"],
+    auditCategory: "intelligence", analyticsKey: "experience-intelligence:viewed",
+    productionReady: true,
+  },
+  {
     id: "alerts", title: "Alerts", group: "overview",
     href: "/super-admin/alerts", icon: Bell, permission: "super_admin",
     searchable: true, keywords: ["alerts", "notifications", "warnings", "critical", "triggered", "rules"],

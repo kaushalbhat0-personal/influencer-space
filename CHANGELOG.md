@@ -1,6 +1,20 @@
 # Changelog
 
-## Latest — RCCF-EPIC-07: Business Health Runtime
+## Latest — RCCF-EPIC-08: Experience Intelligence Runtime
+- Experience Intelligence module (`src/modules/experience-intelligence/`) — extends the Experience System with behavior, section composition and conversion hierarchy (no AI, no duplicate runtime)
+- Section Intelligence Registry — 15 sections (priority, conversion/trust/commerce/seo weights, prerequisites, preferred goals/industries, placement, collapse rules, mobile priority)
+- Adaptive visibility — "no empty sections": conditional sections with empty content are hidden (only when a goal profile is set; storefront unchanged without goals)
+- Goal-aware homepage order (registry model + existing applyGoalSectionOrder) and navigation (existing applyGoalNavigation)
+- Trust Runtime — canonical trust profile (testimonials, achievements, timeline, social, community, health, recommendations)
+- CTA Intelligence — deterministic primary/secondary CTA per goal (Book Now, Buy Now, Start Learning, Contact Me, Join Community…)
+- Conversion Readiness Score — 8 derived dimensions (CTA, Trust, Commerce, Content, Navigation, Speed, Contact, SEO); independent of Business Health
+- Theme Intelligence — goal × theme emphasis directives (whitespace/media/trust/content)
+- Builder Experience Intelligence panel — conversion, health, goal alignment, per-section impact, recommended CTA
+- Super Admin `/super-admin/experience-intelligence` — experience/industry/goal distribution + health by experience
+- Docs: `experience-intelligence.md`, `section-intelligence.md`, `conversion-readiness.md`, `experience-composition.md`, `implementation-69-report.md`
+- Verification: tsc clean, next build green, 100 files / 1974 unit tests passing; storefront no-op without a goal profile (zero regressions)
+
+## RCCF-EPIC-07: Business Health Runtime
 - Business Health Runtime module (`src/modules/business-health/`) — a derived projection over the shared Runtime Context; owns no business data
 - Business Health Score (0–100) becomes the creator's north-star KPI
 - 12 weighted dimensions (Knowledge 20, Goal 15, Storefront 15, Success 15, Commerce 10, Brand/Trust/SEO/Config 5, Adoption 3, Perf 2, Future 0) — registry-driven, configurable weights

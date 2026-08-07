@@ -7,6 +7,7 @@ import { BuilderCompletionHints } from "@/modules/knowledge-runtime/presentation
 import { GoalBuilderSuggestions } from "@/modules/goals-runtime/presentation/goal-builder-suggestions";
 import { BuilderRecommendationPanel } from "@/modules/recommendation-runtime/presentation/builder-recommendation-panel";
 import { BusinessHealthBadge } from "@/modules/business-health/presentation/business-health-badge";
+import { BuilderExperiencePanel } from "@/modules/experience-intelligence/presentation/builder-experience-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -97,6 +98,9 @@ export function WebsitePanel({
 
         {/* Business Health + section contribution */}
         <BusinessHealthBadge />
+
+        {/* Experience Intelligence + conversion impact */}
+        <BuilderExperiencePanel />
       </div>
     </div>
   );
