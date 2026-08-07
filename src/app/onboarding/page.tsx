@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn, slugify } from "@/lib/utils";
 import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
+import { getOnboardingPreview, seedOnboardingIntelligence } from "@/actions/onboarding-intelligence.actions";
+import type { OnboardingPreview } from "@/modules/runtime-context";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
 import { GenerationExperienceView } from "@/features/onboarding/components/generation-experience-view";
 import { ConstructionPreview } from "@/features/onboarding/components/construction-preview";
@@ -17,6 +19,7 @@ import {
 import { getProvidersByCategory, type ImportProvider } from "@/lib/import-provider/registry";
 import "@/lib/import-provider/providers";
 import { ImportInputRenderer } from "@/components/onboarding/import-input-renderer";
+import { OnboardingIntelligence } from "@/components/onboarding/OnboardingIntelligence";
 
 type OnboardingStep = "welcome" | "import" | "preview" | "generating" | "complete" | "error";
 
@@ -122,6 +125,9 @@ export default function OnboardingPage() {
     prefillUrl ? detectClientPlatform(prefillUrl) : null,
   );
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [preview, setPreview] = useState<OnboardingPreview | null>(null);
+  const [useGoals, setUseGoals] = useState(true);
+  const [questionAnswers, setQuestionAnswers] = useState<Record<string, unknown>>({});
   const [categoryOverride, setCategoryOverride] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -173,6 +179,21 @@ export default function OnboardingPage() {
       });
       setCategoryOverride(res.category || "general");
       setWorkspaceName(res.creatorName || "My Storefront");
+
+      // RCCF-INTEGRATION-01 Phase 2: intelligence-first onboarding — compute the
+      // knowledge score, recommended goal profile and top recommendations from
+      // the imported profile before generation.
+      const previewResult = await getOnboardingPreview({
+        name: res.creatorName || "",
+        bio: res.bio || "",
+        category: res.category || "general",
+        platform: res.platform || platform || "unknown",
+        socialLinks: res.socialLinks || [],
+      });
+      if (previewResult.success && previewResult.data) {
+        setPreview(previewResult.data);
+        setQuestionAnswers({});
+      }
       setStep("preview");
     } else {
       setError(res.error || "Could not analyze profile");
@@ -230,6 +251,7 @@ export default function OnboardingPage() {
         undefined,
         newSessionId,
         categoryOverride || undefined,
+        useGoals && preview ? preview.goalProfile.weights : undefined,
       );
 
       if (res.success && res.result) {
@@ -240,6 +262,22 @@ export default function OnboardingPage() {
         setProgressPercent(100);
 
         await markOnboardingComplete(res.result.tenantId);
+
+        // RCCF-INTEGRATION-01 Phase 2: seed the accepted goal profile + quick
+        // answers once the tenant exists (best-effort — never blocks generation).
+        try {
+          if (useGoals && preview) {
+            const answers = Object.entries(questionAnswers)
+              .filter(([, value]) => value !== undefined && value !== null && value !== "")
+              .map(([fieldId, value]) => ({ fieldId, value }));
+            await seedOnboardingIntelligence({
+              goals: preview.goalProfile.weights,
+              answers,
+            });
+          }
+        } catch {
+          // seeding is best-effort; the flow continues
+        }
 
         try {
           await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
@@ -266,7 +304,7 @@ export default function OnboardingPage() {
       setStep("error");
     }
     setLoading(false);
-  }, [sourceUrl, workspaceName, router, clearPolling]);
+  }, [sourceUrl, workspaceName, router, clearPolling, categoryOverride, preview, questionAnswers, useGoals]);
 
   const handleRetry = useCallback(() => {
     clearPolling();
@@ -505,6 +543,16 @@ export default function OnboardingPage() {
                 </div>
               </div>
             </div>
+
+            {preview && (
+              <OnboardingIntelligence
+                preview={preview}
+                useGoals={useGoals}
+                onToggleGoals={setUseGoals}
+                questionAnswers={questionAnswers}
+                onAnswer={(fieldId, value) => setQuestionAnswers((prev) => ({ ...prev, [fieldId]: value }))}
+              />
+            )}
 
             <div>
               <label htmlFor="workspace-name" className="block text-xs font-medium text-zinc-400 mb-1.5">

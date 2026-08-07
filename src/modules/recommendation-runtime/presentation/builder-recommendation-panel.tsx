@@ -52,13 +52,17 @@ export function BuilderRecommendationPanel() {
   const relevant = (recommendations ?? []).filter(
     (r) => r.actions.builder.moduleId && r.actions.builder.moduleId === selectedBase,
   );
-  const shown = relevant.length > 0 ? relevant.slice(0, 3) : (recommendations ?? []).slice(0, 3);
+  const general = (recommendations ?? []).filter((r) => !r.actions.builder.moduleId);
+  const sectionShown = relevant.slice(0, 2);
+  const generalShown = general.slice(0, 2);
 
   return (
     <div className="rounded-lg border border-white/5 bg-zinc-900/50">
       <div className="flex items-center gap-1.5 border-b border-white/5 px-2.5 py-1.5">
         <MousePointerClick className="h-3 w-3 text-s8ul-cyan" />
-        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Recommended for this section</p>
+        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">
+          {selectedBase ? "Recommended for this section" : "Recommended"}
+        </p>
       </div>
 
       <div className="space-y-2 p-2">
@@ -73,7 +77,7 @@ export function BuilderRecommendationPanel() {
           <p className="px-1 py-2 text-[10px] text-zinc-500">No recommendations — your site is in great shape.</p>
         )}
 
-        {shown.map((recommendation) => (
+        {sectionShown.map((recommendation) => (
           <Link
             key={recommendation.id}
             href={recommendation.actions.dashboard.href}
@@ -85,7 +89,28 @@ export function BuilderRecommendationPanel() {
             </span>
             <span className="mt-0.5 block text-[10px] opacity-80 leading-snug">{recommendation.description}</span>
             <span className="mt-1 block text-[9px] uppercase tracking-wider opacity-60">
-              {selectedBase ? `for ${selectedBase} section` : recommendation.categoryLabel} · {recommendation.estimatedTime} min
+              for {selectedBase} section · {recommendation.estimatedTime} min
+            </span>
+          </Link>
+        ))}
+
+        {sectionShown.length > 0 && generalShown.length > 0 && (
+          <p className="px-1 pt-1 text-[9px] font-medium uppercase tracking-wider text-zinc-600">Also consider</p>
+        )}
+
+        {generalShown.map((recommendation) => (
+          <Link
+            key={recommendation.id}
+            href={recommendation.actions.dashboard.href}
+            className={`block rounded-lg border px-2.5 py-2 transition-colors ${SEVERITY_BY_SCORE(recommendation.score)}`}
+          >
+            <span className="flex items-center justify-between">
+              <span className="text-[10px] font-medium">{recommendation.title}</span>
+              <ArrowUpRight className="h-3 w-3 shrink-0 opacity-70" />
+            </span>
+            <span className="mt-0.5 block text-[10px] opacity-80 leading-snug">{recommendation.description}</span>
+            <span className="mt-1 block text-[9px] uppercase tracking-wider opacity-60">
+              {recommendation.categoryLabel} · {recommendation.estimatedTime} min
             </span>
           </Link>
         ))}

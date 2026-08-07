@@ -9,6 +9,8 @@ import { isTenantAgencyManaged } from "@/modules/billing/application/plan-restri
 import { isAgencyRestrictedPlan } from "@/config/commerce/plans";
 import { MetricCard } from "@/components/data/MetricCard";
 import { TenantOrdersTable } from "./_components/tenant-orders-table";
+import { runtimeContextBuilder } from "@/modules/runtime-context";
+import { IntelligenceConsole } from "@/modules/runtime-context/presentation/intelligence-console";
 import { Building2, ShoppingBag, Image, Activity, Palette, CheckCircle, Clock, Shield, CreditCard, User } from "lucide-react";
 import Link from "next/link";
 
@@ -58,6 +60,28 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
     createdAt: o.createdAt.toISOString(),
   }));
 
+  // RCCF-INTEGRATION-01 Phase 8: the Super Admin intelligence console reads the
+  // shared RuntimeContext (markShown=false so viewing a tenant never mutates
+  // its recommendation history).
+  let intelligence: React.ComponentProps<typeof IntelligenceConsole>["intelligence"] = {
+    knowledge: null, storefront: null, goalAlignment: null, success: null, recommendations: null,
+  };
+  try {
+    const context = await runtimeContextBuilder.build(tenant.id, { markShown: false });
+    intelligence = {
+      knowledge: { overall: context.knowledge.score.overall, confidence: context.knowledge.score.confidence },
+      storefront: { overall: context.storefrontScore.overall },
+      goalAlignment: { overall: context.goals.alignment.overall },
+      success: context.success ? { completionPercent: context.success.completionPercent } : null,
+      recommendations: {
+        active: context.recommendations.length,
+        top: context.recommendations[0]?.title ?? null,
+      },
+    };
+  } catch {
+    // intelligence is best-effort — the rest of the tenant page still renders
+  }
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
@@ -76,6 +100,8 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
         <MetricCard label="Theme" value={themeName} icon={Palette} />
         <MetricCard label="Health" value={health ? `${health.overallScore}%` : "—"} icon={CheckCircle} subtext={health ? `${health.checks.filter((c) => c.done).length}/${health.checks.length}` : undefined} />
       </div>
+
+      <IntelligenceConsole intelligence={intelligence} />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         {/* Subscription & Plan */}

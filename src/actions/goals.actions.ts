@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { goalRuntime } from "@/modules/goals-runtime";
 import type { GoalBuilderSuggestion, GoalCounts, GoalDashboardData, GoalMilestone, GoalProfile, SaveGoalProfileInput } from "@/modules/goals-runtime";
+import { emitEvent } from "@/modules/event-runtime";
 import { revalidatePath } from "next/cache";
 
 async function requireTenantId(): Promise<string> {
@@ -49,6 +50,7 @@ export async function saveGoalProfile(input: SaveGoalProfileInput): Promise<{
   try {
     const tenantId = await requireTenantId();
     await goalRuntime.saveProfile(tenantId, input);
+    await emitEvent("goal.updated", tenantId, undefined, { source: input.source, weights: input.weights });
     const { snapshot, ...rest } = await goalRuntime.evaluate(tenantId);
     revalidatePath("/admin/goals");
     revalidatePath("/admin/dashboard");
@@ -67,6 +69,7 @@ export async function applyRecommendedGoals(): Promise<{
   try {
     const tenantId = await requireTenantId();
     await goalRuntime.recommendAndSave(tenantId);
+    await emitEvent("goal.updated", tenantId, undefined, { source: "recommended" });
     const { snapshot, ...rest } = await goalRuntime.evaluate(tenantId);
     revalidatePath("/admin/goals");
     revalidatePath("/admin/dashboard");

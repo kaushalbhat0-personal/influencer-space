@@ -20,12 +20,24 @@ export class RecommendationRuntime {
   /** Full scored recommendation list for a creator (highest impact first). */
   async getRecommendations(tenantId: string): Promise<Recommendation[]> {
     const ctx = await recommendationContextSource.build(tenantId);
+    return this.getRecommendationsFrom(ctx, tenantId);
+  }
+
+  /**
+   * Evaluate from an already-built context (RCCF-INTEGRATION-01). Consumers of
+   * the shared RuntimeContext pass their context so nothing is rebuilt.
+   * `markShown` defaults to true for the creator's own read; super-admin reads
+   * pass false so viewing a tenant never mutates its recommendation history.
+   */
+  async getRecommendationsFrom(ctx: RecommendationContext, tenantId: string, markShown = true): Promise<Recommendation[]> {
     const history = await recommendationHistory.get(tenantId);
     const recommendations = computeRecommendations(ctx, history);
-    await recommendationHistory.markShown(
-      tenantId,
-      recommendations.slice(0, 8).map((r) => r.id),
-    );
+    if (markShown) {
+      await recommendationHistory.markShown(
+        tenantId,
+        recommendations.slice(0, 8).map((r) => r.id),
+      );
+    }
     return recommendations;
   }
 

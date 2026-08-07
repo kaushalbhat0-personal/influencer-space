@@ -35,7 +35,15 @@ function activeProfile(profile: GoalProfile | null, snapshot: KnowledgeSnapshot)
 export class RecommendationContextSource {
   async build(tenantId: string): Promise<RecommendationContext> {
     const snapshot = await knowledgeAggregateSource.buildSnapshot(tenantId);
+    return this.buildFromSnapshot(snapshot, tenantId);
+  }
 
+  /**
+   * Build from an already-built snapshot (RCCF-INTEGRATION-01). Consumers of the
+   * shared RuntimeContext pass their snapshot so the WebsiteAggregate is built
+   * once per request.
+   */
+  async buildFromSnapshot(snapshot: KnowledgeSnapshot, tenantId: string): Promise<RecommendationContext> {
     const [profile, success, publishStatus, analyticsCount, counts] = await Promise.all([
       goalProfileService.getProfile(tenantId),
       getCreatorSuccess(tenantId).catch(() => null),

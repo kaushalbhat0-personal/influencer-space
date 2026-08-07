@@ -7,6 +7,9 @@
 import { prisma } from "@/lib/prisma";
 import type { GoalProfile, GoalWeight } from "../domain/types";
 import { isKnownGoal } from "../domain/registry";
+import { sortWeightsDesc } from "./weights";
+
+export { sortWeightsDesc, primaryGoal } from "./weights";
 
 export const GOALS_SETTING_KEY = "creator_goals" as const;
 
@@ -92,15 +95,6 @@ export class GoalProfileService {
     const niche = (record?.value as { niche?: string } | null)?.niche ?? "";
     return niche;
   }
-}
-
-export function sortWeightsDesc(weights: GoalWeight[]): GoalWeight[] {
-  return [...weights].sort((a, b) => b.weight - a.weight);
-}
-
-export function primaryGoal(profile: GoalProfile | null): GoalWeight | null {
-  if (!profile || profile.weights.length === 0) return null;
-  return [...profile.weights].sort((a, b) => b.weight - a.weight)[0]!;
 }
 
 export const goalProfileService = new GoalProfileService();

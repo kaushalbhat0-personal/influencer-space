@@ -80,6 +80,8 @@ export interface WebsiteAggregate {
     bannerUrl: string | null;
     socialLinks: Array<{ platform: string; url: string }>;
   };
+  /** Creator-verified declared facts from the knowledge_completion setting. */
+  declaredFacts?: Record<string, unknown>;
   hero: HeroContent;
   products: Array<{
     id: string; name: string; description: string | null;

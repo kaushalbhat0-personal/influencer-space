@@ -54,3 +54,25 @@ export function applyGoalSectionOrder<T extends GoalSectionLike>(
     return { ...page, sections: [...hero, ...orderedMiddle, ...footer] };
   });
 }
+
+/**
+ * RCCF-INTEGRATION-01 Phase 3: re-order a generated builder-artifact section
+ * list by the creator's weighted goal profile (hero first, footer last,
+ * goal-preferred sections earlier). Applies to the pre-provisioning artifact so
+ * generated websites lead with what the creator wants to achieve. Pure and
+ * additive — no-op without a profile.
+ */
+export function applyGoalSectionPriority<T extends { type: string }>(
+  sections: T[],
+  profile: GoalProfile | null,
+): T[] {
+  if (!profile || profile.weights.length === 0) return sections;
+
+  const hero = sections.filter((s) => s.type === "hero");
+  const footer = sections.filter((s) => s.type === "footer");
+  const middle = sections.filter((s) => s.type !== "hero" && s.type !== "footer");
+  const ordered = [...middle].sort(
+    (a, b) => goalSectionScore(a.type, profile) - goalSectionScore(b.type, profile),
+  );
+  return [...hero, ...ordered, ...footer];
+}

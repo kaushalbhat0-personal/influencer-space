@@ -12,6 +12,7 @@ import { navigationService } from "@/lib/navigation/service";
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { StorefrontNav } from "@/components/storefront/StorefrontNav";
+import { TrustIndicators } from "@/components/storefront/TrustIndicators";
 import { themeRegistry } from "@/lib/theme/registry-new";
 import { experienceRegistry, ExperienceSection } from "@/modules/theme/runtime/experience";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
@@ -191,6 +192,7 @@ export default async function PublicPage({
           </ExperienceSection>
           );
         })}
+        <TrustIndicators declaredFacts={snap.content?.declaredFacts} />
       </main>
     </>
   );

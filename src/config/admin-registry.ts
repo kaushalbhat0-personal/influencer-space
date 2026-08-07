@@ -3,7 +3,7 @@ import {
   Headphones, BarChart3, CreditCard, ScrollText, Settings,
   UserCog, UserPlus, Sparkles, CheckCircle2, Bot, Globe,
   ToggleRight, Timer, FileText, IndianRupee, TrendingUp, Monitor, Clock,
-  Lightbulb, Percent, RefreshCw, Bell, BookOpen,
+  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -61,6 +61,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     href: "/super-admin/insights", icon: Lightbulb, permission: "super_admin",
     searchable: true, keywords: ["intelligence", "alerts", "attention", "health", "summary"],
     auditCategory: "system", analyticsKey: "insights:viewed",
+    productionReady: true,
+  },
+  {
+    id: "recommendations", title: "Recommendations", group: "overview",
+    href: "/super-admin/recommendations", icon: Target, permission: "super_admin",
+    searchable: true, keywords: ["recommendations", "next action", "completion", "goal", "knowledge", "suggested"],
+    auditCategory: "intelligence", analyticsKey: "recommendations:viewed",
     productionReady: true,
   },
   {

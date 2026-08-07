@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ShoppingBag, Package, Link2, Image as ImageIcon, MessageSquare, UserCheck, Layout, Settings, BarChart3, Search, Palette, CreditCard, Activity } from "lucide-react";
+import { ShoppingBag, Package, Link2, Image as ImageIcon, MessageSquare, UserCheck, Layout, Settings, BarChart3, Search, Palette, CreditCard, Activity, Calendar as CalendarIcon, Briefcase as BriefcaseIcon, BookOpen as BookOpenIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MetricGrid, DashboardGrid, DashboardGridMain, DashboardGridSide } from "@/components/layout";
 import { DashboardWidget } from "@/components/ui/DashboardWidget";
@@ -13,7 +13,9 @@ import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist"
 import { StorefrontStatusCard } from "@/components/dashboard/StorefrontStatusCard";
 import { KnowledgeScoreCard } from "@/modules/knowledge-runtime/presentation/knowledge-score-card";
 import { GoalDashboardCard } from "@/modules/goals-runtime/presentation/goal-dashboard-card";
+import { applyCommerceOrder } from "@/modules/goals-runtime/application/commerce";
 import { NextBestStepCard } from "@/modules/recommendation-runtime/presentation/next-best-step-card";
+import { SuccessMilestonesCard } from "@/components/dashboard/SuccessMilestonesCard";
 import type { DashboardData } from "../actions";
 
 interface DashboardPageProps {
@@ -29,6 +31,9 @@ interface QuickCardItem {
 
 const QUICK_CARDS: QuickCardItem[] = [
   { label: "Products", href: "/admin/products", icon: ShoppingBag, color: "text-emerald-400" },
+  { label: "Bookings", href: "/admin/bookings", icon: CalendarIcon, color: "text-sky-400" },
+  { label: "Services", href: "/admin/services", icon: BriefcaseIcon, color: "text-violet-400" },
+  { label: "Courses", href: "/admin/courses", icon: BookOpenIcon, color: "text-indigo-400" },
   { label: "Gallery", href: "/admin/gallery", icon: ImageIcon, color: "text-pink-400" },
   { label: "Testimonials", href: "/admin/testimonials", icon: UserCheck, color: "text-fuchsia-400" },
   { label: "Links", href: "/admin/links", icon: Link2, color: "text-cyan-400" },
@@ -40,6 +45,14 @@ const QUICK_CARDS: QuickCardItem[] = [
   { label: "Billing", href: "/admin/billing", icon: CreditCard, color: "text-rose-400" },
   { label: "Settings", href: "/admin/settings", icon: Settings, color: "text-zinc-400" },
 ];
+
+function commerceSurfaceOf(href: string): "products" | "bookings" | "courses" | "services" | null {
+  if (href === "/admin/products") return "products";
+  if (href === "/admin/bookings") return "bookings";
+  if (href === "/admin/courses") return "courses";
+  if (href === "/admin/services") return "services";
+  return null;
+}
 
 function MetricCard({ label, value, sub, subColor }: { label: string; value: string | number; sub?: string; subColor?: string }) {
   return (
@@ -53,7 +66,12 @@ function MetricCard({ label, value, sub, subColor }: { label: string; value: str
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const [data] = useState(initialData);
-  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations } = data;
+  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success } = data;
+
+  // RCCF-INTEGRATION-01 Phase 6: goal-aware commerce ordering — booking-first
+  // creators see Bookings first, products-first see Products first (no-op
+  // without a goal profile).
+  const quickCards = applyCommerceOrder(QUICK_CARDS, goals?.profile ?? null, (card) => commerceSurfaceOf(card.href));
 
   const checklistSteps = steps.map((s) => ({
     id: s.id,
@@ -91,7 +109,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         )}
 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-          {QUICK_CARDS.map((card) => (
+          {quickCards.map((card) => (
             <Link
               key={card.label}
               href={card.href}
@@ -107,29 +125,22 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
 
         {metrics.productCount === 0 && metrics.bookingCount === 0 && metrics.orderCount === 0 ? (
           <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.04] p-6">
-            <h3 className="text-sm font-semibold text-white mb-1">Your website is live! Complete these next steps</h3>
-            <p className="text-xs text-zinc-400 mb-4">Take a few minutes to set up your storefront and start selling.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { label: "Customize your hero", action: "Edit Hero", href: "/admin/settings", time: "2 min" },
-                { label: "Create your first product", action: "Create Product", href: "/admin/products", time: "3 min" },
-                { label: "Enable bookings", action: "Create Booking", href: "/admin/bookings", time: "2 min" },
-                { label: "Connect your domain", action: "Connect Domain", href: "/admin/settings/domain", time: "5 min" },
-                { label: "Upload gallery images", action: "Upload Images", href: "/admin/gallery", time: "5 min" },
-                { label: "Open the Builder", action: "Open Builder", href: "/builder", time: "" },
-              ].map((step) => (
-                <Link key={step.href} href={step.href} className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-900/30 px-4 py-3 hover:bg-zinc-900/50 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="h-3 w-3 rounded-full border-2 border-zinc-700 group-hover:border-indigo-500 transition-colors" />
-                    <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{step.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {step.time && <span className="text-[10px] text-zinc-600">{step.time}</span>}
-                    <span className="text-[10px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">{step.action} →</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <h3 className="text-sm font-semibold text-white mb-1">Your website is live!</h3>
+            <p className="text-xs text-zinc-400 mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
+            {success?.nextTask && !success.nextTask.done ? (
+              <Link
+                href={success.nextTask.href || "/admin/dashboard"}
+                className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-900/30 px-4 py-3 hover:bg-zinc-900/50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full border-2 border-indigo-500" />
+                  <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{success.nextTask.label}</span>
+                </div>
+                <span className="text-[10px] text-indigo-400">{success.nextTask.action} →</span>
+              </Link>
+            ) : (
+              <p className="text-xs text-zinc-500">Keep going — your next best step updates as you complete tasks.</p>
+            )}
           </div>
         ) : (
         <MetricGrid>
@@ -227,6 +238,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               />
             )}
             {goals && <GoalDashboardCard dashboard={goals.dashboard} />}
+            {success && <SuccessMilestonesCard success={success} />}
           </DashboardGridSide>
         </DashboardGrid>
       </div>

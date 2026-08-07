@@ -98,6 +98,10 @@ export {
 } from "./recommendation.actions";
 
 export {
+  getOnboardingPreview, seedOnboardingIntelligence,
+} from "./onboarding-intelligence.actions";
+
+export {
   getOperationsDashboard, getEvents, getEventTypes,
   rehydrateEngine, retryFailedPayouts, expireStaleInvites,
   runJob, getJobStatus, exportDiagnostics,

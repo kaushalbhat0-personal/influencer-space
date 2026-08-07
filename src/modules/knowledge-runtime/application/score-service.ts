@@ -45,6 +45,15 @@ export class KnowledgeScoreService {
     return this.evaluateForSnapshot(tenantId, knowledgeAggregateSource.buildSnapshot(tenantId));
   }
 
+  /**
+   * Evaluate from an already-built snapshot (RCCF-INTEGRATION-01). Consumers of
+   * the shared RuntimeContext call this so the WebsiteAggregate is built ONCE
+   * per request instead of once per runtime.
+   */
+  evaluateFromSnapshot(snapshot: KnowledgeSnapshot): Promise<KnowledgeRuntimeResult> {
+    return this.evaluateForSnapshot("", Promise.resolve(snapshot));
+  }
+
   private async evaluateForSnapshot(
     tenantId: string,
     snapshotPromise: Promise<KnowledgeSnapshot>,

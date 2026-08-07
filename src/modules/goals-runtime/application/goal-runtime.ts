@@ -56,7 +56,16 @@ export class GoalRuntime {
     return this.evaluateFrom(snapshot, profile, tenantId);
   }
 
-  private async evaluateFrom(
+  /**
+   * Evaluate from an already-built snapshot (RCCF-INTEGRATION-01). Consumers of
+   * the shared RuntimeContext call this so the WebsiteAggregate is built once.
+   */
+  async evaluateFromSnapshot(snapshot: KnowledgeSnapshot, tenantId: string): Promise<GoalRuntimeResult> {
+    const profile = await goalProfileService.getProfile(tenantId);
+    return this.evaluateFrom(snapshot, profile, tenantId);
+  }
+
+  async evaluateFrom(
     snapshot: KnowledgeSnapshot,
     profile: GoalProfile | null,
     tenantId: string,

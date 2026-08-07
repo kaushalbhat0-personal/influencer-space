@@ -7,6 +7,7 @@ import {
   type KnowledgeRuntimeResult,
 } from "@/modules/knowledge-runtime";
 import type { CompletionAnswer } from "@/modules/knowledge-runtime";
+import { emitEvent } from "@/modules/event-runtime";
 import { revalidatePath } from "next/cache";
 
 async function requireTenantId(): Promise<string> {
@@ -50,6 +51,7 @@ export async function saveKnowledgeAnswers(input: CompletionAnswer[]): Promise<{
     if (saved.errors.length > 0) {
       return { success: false, errors: saved.errors };
     }
+    await emitEvent("knowledge.completed", tenantId, undefined, { answers: input.length });
     revalidatePath("/admin/knowledge");
     revalidatePath("/admin/dashboard");
     return { success: true, data: saved.result };

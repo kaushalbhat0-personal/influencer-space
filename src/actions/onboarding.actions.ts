@@ -13,6 +13,8 @@ import { publishingService } from "@/lib/publishing/service";
 import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
+import { emitEvent } from "@/modules/event-runtime";
+import { applyGoalSectionPriority } from "@/modules/goals-runtime";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import {
@@ -27,6 +29,8 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
   creatorName?: string;
   avatarUrl?: string;
   followers?: number;
+  bio?: string;
+  socialLinks?: Array<{ platform: string; url: string }>;
   category?: string;
   persona?: { id: string; name: string };
   confidence?: number;
@@ -117,6 +121,8 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
       creatorName: result.knowledgeGraph.creator.name,
       avatarUrl: result.channelMeta?.thumbnailUrl || "",
       followers: result.knowledgeGraph.creator.followers,
+      bio: result.knowledgeGraph.creator.bio,
+      socialLinks: (result.knowledgeGraph.socialLinks ?? []).map((s) => ({ platform: s.platform, url: s.url })),
       category: result.knowledgeGraph.creator.niche,
       persona: { id: result.personaMatch.persona.id, name: result.personaMatch.persona.name },
       confidence: result.experienceProfile.confidence,
@@ -205,6 +211,7 @@ export async function runCreatorGeneration(
   existingProfileResult?: ImportProfileResult,
   precreatedSessionId?: string,
   categoryOverride?: string,
+  goals?: Array<{ goalId: string; weight: number }>,
 ): Promise<{
   success: boolean;
     stages?: Array<{ stage: string; status: string; error?: string }>;
@@ -380,7 +387,24 @@ export async function runCreatorGeneration(
     });
 
     markStage("builder_init", "running");
-    const builderData = buildBuilderArtifactData(pipelineResult);
+    let builderData = buildBuilderArtifactData(pipelineResult);
+
+    // RCCF-INTEGRATION-01 Phase 3: generation consumes the accepted goal
+    // profile — goal-preferred sections are ordered earlier in the generated
+    // builder artifact (hero first, footer last). Additive; no-op without goals.
+    if (builderData && goals && goals.length > 0) {
+      const sections = (builderData.sections as Array<{ type: string }> | undefined) ?? [];
+      builderData = {
+        ...builderData,
+        sections: applyGoalSectionPriority(sections, {
+          weights: goals.map((g) => ({ goalId: g.goalId, weight: g.weight })) as never,
+          updatedAt: new Date().toISOString(),
+          source: "recommended",
+          entityType: "",
+        }),
+      };
+    }
+
     if (builderData) {
       await prisma.setting.upsert({
         where: { tenantId_key: { tenantId: provisioned.tenantId, key: "builder_artifact" } },
@@ -584,6 +608,7 @@ export async function markOnboardingComplete(tenantId: string): Promise<{ succes
       update: { value: { completedAt: new Date().toISOString() } },
       create: { tenantId, key: "onboarding_completed", value: { completedAt: new Date().toISOString() } },
     });
+    await emitEvent("onboarding.completed", tenantId);
     return { success: true };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to mark onboarding" };

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { recommendationRuntime } from "@/modules/recommendation-runtime";
 import type { Recommendation } from "@/modules/recommendation-runtime";
+import { emitEvent } from "@/modules/event-runtime";
 import { revalidatePath } from "next/cache";
 
 async function requireTenantId(): Promise<string> {
@@ -50,6 +51,7 @@ export async function dismissRecommendation(recommendationId: string): Promise<{
   try {
     const tenantId = await requireTenantId();
     await recommendationRuntime.dismiss(tenantId, recommendationId);
+    await emitEvent("recommendation.dismissed", tenantId, recommendationId);
     revalidatePath("/admin/dashboard");
     revalidatePath("/admin/knowledge");
     return { success: true };
@@ -65,6 +67,7 @@ export async function completeRecommendation(recommendationId: string): Promise<
   try {
     const tenantId = await requireTenantId();
     await recommendationRuntime.complete(tenantId, recommendationId);
+    await emitEvent("recommendation.accepted", tenantId, recommendationId);
     revalidatePath("/admin/dashboard");
     revalidatePath("/admin/knowledge");
     return { success: true };

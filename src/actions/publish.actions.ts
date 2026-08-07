@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { publishingService } from "@/lib/publishing/service";
 import type { PublishStatus } from "@/lib/publishing/service";
+import { emitEvent } from "@/modules/event-runtime";
 
 export type PublishActionResult = {
   success: boolean;
@@ -25,6 +26,7 @@ export async function publishWebsite(): Promise<PublishActionResult> {
     const result = await publishingService.publish(tenantId);
     if (!result.success) return { success: false, error: result.error };
 
+    await emitEvent("storefront.published", tenantId, undefined, { version: result.version });
     const status = await publishingService.getStatus(tenantId);
     return { success: true, status: status.data, version: result.version };
   } catch (error) {

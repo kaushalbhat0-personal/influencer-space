@@ -52,6 +52,7 @@ export {
 } from "./application/profile-service";
 export {
   applyGoalSectionOrder,
+  applyGoalSectionPriority,
   goalSectionScore,
   type GoalSectionLike,
 } from "./application/composition";

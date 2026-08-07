@@ -6,7 +6,7 @@
 
 import type { CommerceSurface, GoalProfile } from "../domain/types";
 import { getGoal } from "../domain/registry";
-import { primaryGoal } from "./profile-service";
+import { primaryGoal } from "./weights";
 
 export type { CommerceSurface } from "../domain/types";
 

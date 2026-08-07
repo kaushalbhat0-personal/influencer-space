@@ -67,7 +67,7 @@ export class WebsiteAggregateService {
 
     const [
       brand, heroData, products, gallery, links, seoData, website, timelineEvents,
-      gameList, feedItems, testimonialsData, faqData, offerings,
+      gameList, feedItems, testimonialsData, faqData, offerings, knowledgeCompletion,
     ] = await Promise.all([
       safe("brand", () => brandRepository.findByTenantId(tenantId)),
       safe("hero", () => SettingsService.getHeroData(tenantId)),
@@ -89,7 +89,15 @@ export class WebsiteAggregateService {
         orderBy: { createdAt: "desc" },
         select: { id: true, type: true, title: true, description: true, price: true, metadata: true },
       })),
+      safe("knowledgeCompletion", () => SettingsService.getSettingByKey(tenantId, "knowledge_completion")),
     ]);
+
+    // RCCF-INTEGRATION-01 Phase 7: creator-verified declared facts (achievements,
+    // mission, languages, refund policy, community, newsletter) flow to the
+    // storefront so only facts the CREATOR confirmed are ever displayed.
+    const declaredFacts = knowledgeCompletion && typeof knowledgeCompletion === "object"
+      ? ((knowledgeCompletion as { facts?: Record<string, unknown> }).facts ?? {})
+      : {};
 
     const rawTestimonials = Array.isArray(testimonialsData)
       ? (testimonialsData as Record<string, unknown>[])
@@ -119,6 +127,7 @@ export class WebsiteAggregateService {
           ? heroSocialLinks
           : ((brand?.socialLinks as Array<{ platform: string; url: string }>) ?? []),
       },
+      declaredFacts,
       hero: {
         title: (heroData as Record<string, unknown>)?.title as string ?? "",
         name: heroName,

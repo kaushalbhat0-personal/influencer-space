@@ -1,6 +1,19 @@
 # Changelog
 
-## Latest — RCCF-EPIC-06: Recommendation Runtime
+## Latest — RCCF-INTEGRATION-01: Unified Intelligence Platform
+- Runtime Context module (`src/modules/runtime-context/`) — single WebsiteAggregate build per request, request-scoped via React.cache; dashboard/knowledge/goals/super-admin wired (kills 3× snapshot duplication from the audit)
+- Intelligence-first onboarding — knowledge score + recommended weighted goals + top 3 recommendations + adaptive questions on the preview step; accepted goals/answers seeded after provisioning
+- Generation consumes the accepted goal profile — goal-preferred sections re-order the generated builder artifact (additive, no-op without goals)
+- Success Runtime surfaced on the dashboard (milestones + next task) and Super Admin console; hardcoded next-steps block replaced
+- Commerce intelligence — goal-aware ordering wired into dashboard quick cards (previously dead `applyCommerceOrder`); prisma-free helpers for client bundles
+- Storefront intelligence — aggregate exposes `declaredFacts`; TrustIndicators strip renders creator-verified facts only
+- Super Admin Intelligence Console on the tenant page; `/super-admin/recommendations` added to the real sidebar registry
+- Runtime Event layer (`src/modules/event-runtime/`) — canonical internal event bus + durable AnalyticsEvent record; emitters for knowledge/goals/recommendations/onboarding/publish
+- Builder general recommendation panel — SEO/Domain/Publish/Analytics recommendations now surface
+- Docs: `runtime-context.md`, `intelligence-pipeline.md`, `runtime-event-contract.md`, `runtime-request-lifecycle.md`, `runtime-performance.md`, `integration-01-report.md`
+- Verification: tsc clean, next build green, 98 files / 1952 unit tests passing
+
+## RCCF-EPIC-06: Recommendation Runtime
 - Recommendation Runtime module (`src/modules/recommendation-runtime/`) — DDD domain/application/infrastructure/presentation
 - Answers "what should you do next?" from existing runtimes only: Knowledge, Goals, Success, Commerce, Experience, Storefront Score, Dashboard Metrics
 - Phase 1: Recommendation Registry — 25 canonical recommendations (category, priority, time, expected impact, prerequisites, goal affinity, knowledge/success deps, when/done/reason)
