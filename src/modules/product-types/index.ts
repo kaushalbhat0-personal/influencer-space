@@ -11,17 +11,21 @@ export interface ProductTypeDefinition {
   requiresShipping: boolean;
   requiresDownload: boolean;
   requiresBooking: boolean;
+  // RCCF-TRACK-01 Phase 2 — fulfillment strategy flags.
+  requiresManualApproval: boolean;
+  requiresInventory: boolean;
+  requiresCustomerAction: boolean;
   description: string;
 }
 
 export const PRODUCT_TYPE_REGISTRY: ProductTypeDefinition[] = [
-  { id: "digital", label: "Digital Product", requiresPayment: true, requiresShipping: false, requiresDownload: true, requiresBooking: false, description: "Deliverable by download link after payment." },
-  { id: "physical", label: "Physical Product", requiresPayment: true, requiresShipping: true, requiresDownload: false, requiresBooking: false, description: "Shipped to the customer; requires an address." },
-  { id: "course", label: "Course", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, description: "Access-based learning content." },
-  { id: "service", label: "Service", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, description: "A service delivered after purchase." },
-  { id: "booking", label: "Booking", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: true, description: "Paid appointment / time-slot booking." },
-  { id: "affiliate", label: "Affiliate Link", requiresPayment: false, requiresShipping: false, requiresDownload: false, requiresBooking: false, description: "Outbound affiliate link (no payment handled by CreatorStore)." },
-  { id: "donation", label: "Donation", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, description: "A donation to the creator." },
+  { id: "digital", label: "Digital Product", requiresPayment: true, requiresShipping: false, requiresDownload: true, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "Deliverable by download link after payment." },
+  { id: "physical", label: "Physical Product", requiresPayment: true, requiresShipping: true, requiresDownload: false, requiresBooking: false, requiresManualApproval: false, requiresInventory: true, requiresCustomerAction: false, description: "Shipped to the customer; requires an address." },
+  { id: "course", label: "Course", requiresPayment: true, requiresShipping: false, requiresDownload: true, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "Access-based learning content (delivered via download for now)." },
+  { id: "service", label: "Service", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: true, requiresInventory: false, requiresCustomerAction: false, description: "A service delivered after purchase." },
+  { id: "booking", label: "Booking", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: true, requiresManualApproval: true, requiresInventory: false, requiresCustomerAction: true, description: "Paid appointment / time-slot booking." },
+  { id: "affiliate", label: "Affiliate Link", requiresPayment: false, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "Outbound affiliate link (no payment handled by CreatorStore)." },
+  { id: "donation", label: "Donation", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "A donation to the creator." },
 ];
 
 export const PRODUCT_TYPE_BY_ID: Record<string, ProductTypeDefinition> = Object.fromEntries(

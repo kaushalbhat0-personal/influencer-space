@@ -2,6 +2,7 @@ import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer, PageHeader, MetricGrid } from "@/components/layout";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { OrdersTable } from "./_components/orders-table";
+import { FulfillmentSection } from "./_components/fulfillment-section";
 import { fetchOrders } from "@/actions/order.actions";
 import { Package, IndianRupee, CheckCircle2, Clock } from "lucide-react";
 import { MetricCard } from "@/components/data/MetricCard";
@@ -54,6 +55,11 @@ export default async function OrdersPage({
 
       <ErrorBoundary>
         <OrdersTable orders={visibleOrders} />
+      </ErrorBoundary>
+
+      {/* RCCF-TRACK-01: post-payment fulfillment */}
+      <ErrorBoundary>
+        <FulfillmentSection />
       </ErrorBoundary>
     </ContentContainer>
   );

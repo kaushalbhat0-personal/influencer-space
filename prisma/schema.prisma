@@ -374,6 +374,9 @@ model Product {
   // RCCF-IMPLEMENTATION-74: standardized commerce type.
   // digital | physical | course | service | booking | affiliate | donation
   type           String    @default("digital")
+  // RCCF-TRACK-01: secure digital delivery — the file/download link the
+  // fulfillment runtime proxies behind a signed, expiring token.
+  downloadUrl    String?
   status         String    @default("PUBLISHED")
   seoTitle       String?
   seoDescription String?
@@ -385,6 +388,7 @@ model Product {
   updatedAt      DateTime  @updatedAt
 
   orders ProductOrder[]
+  fulfillments OrderFulfillment[]
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -417,10 +421,67 @@ model ProductOrder {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  fulfillment  OrderFulfillment?
+  shippingAddress ShippingAddress?
+
   @@index([tenantId])
   @@index([productId])
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
+}
+
+/// RCCF-TRACK-01 — the post-payment fulfillment record for an order.
+model OrderFulfillment {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @unique
+  tenantId       String   @db.Uuid
+  productId      String   @db.Uuid
+  type           String   @default("digital") // digital | physical | course | service | booking | affiliate | donation
+  status         String   @default("pending") // pending | preparing | packed | shipped | delivered | ready | completed | cancelled | returned | accepted
+  trackingNumber String?
+  courier        String?
+  carrierNotes   String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  // Secure digital delivery (signed, expiring token).
+  downloadUrl    String?
+  downloadToken  String?  @unique
+  downloadExpiresAt DateTime?
+  downloadLimit  Int      @default(5)
+  downloadCount  Int      @default(0)
+  timeline       Json     @default("[]")
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  order   ProductOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+}
+
+/// RCCF-TRACK-01 — shipping address for physical orders.
+model ShippingAddress {
+  id           String  @id @default(uuid()) @db.Uuid
+  orderId      String  @unique
+  tenantId     String  @db.Uuid
+  name         String?
+  phone        String?
+  email        String?
+  line1        String?
+  line2        String?
+  city         String?
+  state        String?
+  pin          String?
+  country      String?
+  instructions String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  order ProductOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 model AffiliateLink {

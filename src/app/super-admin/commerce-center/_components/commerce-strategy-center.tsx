@@ -8,9 +8,10 @@ interface Props {
   distribution: Array<{ strategy: CommerceStrategyId; count: number }>;
   migration: { total: number; directReady: number; directIncomplete: number; reason: string };
   paymentHealth: { total: number; connected: number; pending: number; unverified: number; disconnected: number; providerDistribution: Array<{ provider: string; count: number }> } | null;
+  fulfillmentHealth: { totalOrders: number; pending: number; shipped: number; delivered: number; ready: number; cancelled: number; failed: number; downloadFailures: number; volume: number } | null;
 }
 
-export function CommerceStrategyCenter({ distribution, migration, paymentHealth }: Props) {
+export function CommerceStrategyCenter({ distribution, migration, paymentHealth, fulfillmentHealth }: Props) {
   const total = distribution.reduce((s, d) => s + d.count, 0);
 
   return (
@@ -47,6 +48,19 @@ export function CommerceStrategyCenter({ distribution, migration, paymentHealth 
           <HealthCard label="Unverified" value={String(paymentHealth.unverified)} accent="text-amber-400" />
           <HealthCard label="Disconnected" value={String(paymentHealth.disconnected)} />
           <HealthCard label="Providers" value={paymentHealth.providerDistribution.map((p) => `${p.provider} ${p.count}`).join(", ") || "—"} />
+        </div>
+      )}
+
+      {/* Fulfillment operations (RCCF-TRACK-01 Phase 9) */}
+      {fulfillmentHealth && (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+          <HealthCard label="Total orders" value={String(fulfillmentHealth.totalOrders)} />
+          <HealthCard label="Order volume" value={`₹${fulfillmentHealth.volume.toLocaleString("en-IN")}`} />
+          <HealthCard label="Awaiting fulfillment" value={String(fulfillmentHealth.pending)} accent="text-amber-400" />
+          <HealthCard label="Shipped" value={String(fulfillmentHealth.shipped)} />
+          <HealthCard label="Delivered" value={String(fulfillmentHealth.delivered)} accent="text-emerald-400" />
+          <HealthCard label="Download ready" value={String(fulfillmentHealth.ready)} />
+          <HealthCard label="Download failures" value={String(fulfillmentHealth.downloadFailures)} accent={fulfillmentHealth.downloadFailures > 0 ? "text-red-400" : undefined} />
         </div>
       )}
 

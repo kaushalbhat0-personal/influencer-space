@@ -148,6 +148,9 @@ export async function POST(req: Request) {
                 where: { id: dbOrder.id },
                 data: { status: "COMPLETED", razorpayPaymentId: paymentId },
               });
+              // RCCF-TRACK-01: create the post-payment fulfillment record.
+              const { ensureFulfillment } = await import("@/modules/fulfillment");
+              await ensureFulfillment(dbOrder.id).catch(() => {});
               await prisma.billingEvent
                 .create({
                   data: {

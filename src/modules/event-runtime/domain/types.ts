@@ -49,7 +49,16 @@ export type IntelligenceEventType =
   | "opportunity.detected"
   | "customer.activated"
   | "customer.retained"
-  | "customer.churn-risk";
+  | "customer.churn-risk"
+  // RCCF-TRACK-01 — fulfillment events.
+  | "fulfillment.created"
+  | "fulfillment.updated"
+  | "shipment.created"
+  | "shipment.delivered"
+  | "download.generated"
+  | "download.expired"
+  | "booking.confirmed"
+  | "service.completed";
 
 export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "knowledge.completed",
@@ -93,6 +102,14 @@ export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "customer.activated",
   "customer.retained",
   "customer.churn-risk",
+  "fulfillment.created",
+  "fulfillment.updated",
+  "shipment.created",
+  "shipment.delivered",
+  "download.generated",
+  "download.expired",
+  "booking.confirmed",
+  "service.completed",
 ];
 
 export interface RuntimeEvent {
