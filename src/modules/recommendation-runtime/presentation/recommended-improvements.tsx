@@ -49,8 +49,8 @@ export function RecommendedImprovements({ initial }: Props) {
   return (
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Recommended improvements</p>
-        <span className="text-xs text-zinc-600">{recommendations.length} ordered by impact</span>
+        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Suggested improvements</p>
+        <span className="text-xs text-zinc-600">{recommendations.length} sorted by impact</span>
       </div>
       <p className="mt-0.5 text-[11px] text-zinc-600">
         The highest-impact actions for your business, computed from your profile, goals and storefront.

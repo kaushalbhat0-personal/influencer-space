@@ -59,7 +59,7 @@ export function SEOScoreCard({ score, loading, error }: SEOScoreCardProps) {
   const overallLabel = scoreEngine.getScoreLabel(score.overall);
 
   return (
-    <DashboardWidget title="SEO Score" icon={Search} loading={loading} error={error}>
+    <DashboardWidget title="SEO Readiness" icon={Search} loading={loading} error={error}>
       <div className="flex flex-col items-center pt-2 pb-4">
         <ScoreRing value={score.overall} label={overallLabel.label} color={overallLabel.color} />
       </div>

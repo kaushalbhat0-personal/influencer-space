@@ -48,13 +48,13 @@ export interface RuntimeStageEvent {
 /** The canonical stage sequence (order matters). */
 export const GENERATION_STAGES: GenerationStageConfig[] = [
   { id: "import_profile", title: "Fetching creator profile", description: "Reading your social profile and public details", icon: "Link", estimatedWeight: 5, status: "pending" },
-  { id: "knowledge_intelligence", title: "Building knowledge graph", description: "Mapping your content, audience and brand signals", icon: "Brain", estimatedWeight: 10, status: "pending" },
+  { id: "knowledge_intelligence", title: "Learning about your brand", description: "Mapping your content, audience and brand signals", icon: "Brain", estimatedWeight: 10, status: "pending" },
   { id: "persona_detection", title: "Detecting persona", description: "Understanding your voice and positioning", icon: "User", estimatedWeight: 10, status: "pending" },
   { id: "planning_context", title: "Planning experience", description: "Structuring the storefront experience", icon: "Map", estimatedWeight: 10, status: "pending" },
   { id: "experience_planning", title: "Planning content", description: "Deciding pages, sections and content strategy", icon: "Layout", estimatedWeight: 10, status: "pending" },
   { id: "composition", title: "Composing storefront", description: "Composing the layout and sections", icon: "LayoutGrid", estimatedWeight: 15, status: "pending" },
   { id: "artifact_generation", title: "Generating sections", description: "Writing content, products and media", icon: "Sparkles", estimatedWeight: 15, status: "pending" },
-  { id: "provisioning", title: "Provisioning workspace", description: "Creating your storefront workspace", icon: "Database", estimatedWeight: 10, status: "pending" },
+  { id: "provisioning", title: "Setting up your workspace", description: "Creating your storefront workspace", icon: "Database", estimatedWeight: 10, status: "pending" },
   { id: "publishing", title: "Publishing storefront", description: "Publishing your live site", icon: "Rocket", estimatedWeight: 10, status: "pending" },
   { id: "golden_validation", title: "Finalizing", description: "Running quality checks", icon: "BadgeCheck", estimatedWeight: 5, status: "pending" },
 ];

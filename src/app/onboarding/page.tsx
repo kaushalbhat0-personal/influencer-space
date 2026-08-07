@@ -213,7 +213,7 @@ export default function OnboardingPage() {
       const { sessionId: newSessionId, error: sessionErr } = await createGenerationSession(sourceUrl);
 
       if (sessionErr || !newSessionId) {
-        setError(sessionErr || "Failed to start generation");
+        setError(sessionErr || "We couldn't start the build. Please try again.");
         setStep("error");
         setLoading(false);
         return;
@@ -295,12 +295,12 @@ export default function OnboardingPage() {
         setStep("error");
       } else {
         clearPolling();
-        setError(res.error || "Generation failed. Please try again.");
+        setError(res.error || "We couldn't build your storefront. Please try again.");
         setStep("error");
       }
     } catch (err) {
       clearPolling();
-      setError(err instanceof Error ? err.message : "Generation failed");
+      setError(err instanceof Error ? err.message : "We couldn't build your storefront.");
       setStep("error");
     }
     setLoading(false);
@@ -575,10 +575,10 @@ export default function OnboardingPage() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Generating...
+                  <Loader2 className="h-4 w-4 animate-spin" /> Building your storefront…
                 </span>
               ) : (
-                "Generate My Storefront"
+                "Build My Storefront"
               )}
             </button>
           </div>
@@ -613,7 +613,7 @@ export default function OnboardingPage() {
             {goldenScore !== null && (
               <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-400">Generation Quality</span>
+                  <span className="text-sm text-zinc-400">Quality Check</span>
                   <span className={cn(
                     "text-sm font-medium",
                     goldenScore >= 0.8 ? "text-emerald-400" : goldenScore >= 0.5 ? "text-amber-400" : "text-red-400",

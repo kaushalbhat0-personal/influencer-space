@@ -88,7 +88,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">Creator Import</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/10 hover:text-white">
+          <button onClick={onClose} aria-label="Close dialog" className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/10 hover:text-white">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>

@@ -583,7 +583,7 @@ function AssetDetailPanel({
     <div className="w-80 flex-shrink-0 space-y-4 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">Asset Details</h3>
-        <button onClick={onClose} className="text-zinc-500 hover:text-white text-sm">&times;</button>
+        <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-sm">&times;</button>
       </div>
 
       <div className="aspect-video overflow-hidden rounded-lg bg-zinc-800">

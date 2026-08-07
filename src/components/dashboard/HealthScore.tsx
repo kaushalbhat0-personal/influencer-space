@@ -30,7 +30,7 @@ export function HealthScore({ categories }: HealthScoreProps) {
   return (
     <div className="admin-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-white">Business Health</h3>
+        <h3 className="text-sm font-semibold text-white">Store Health</h3>
         <span className={cn("text-lg font-bold tabular-nums font-display", scoreColor(overall))}>{overall}%</span>
       </div>
       <div className="space-y-2.5">

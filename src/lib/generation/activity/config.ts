@@ -30,9 +30,9 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
   { id: "preparation", label: "Preparation", icon: "Settings2" },
   { id: "import", label: "Import", icon: "Download" },
   { id: "analysis", label: "Analysis", icon: "Brain" },
-  { id: "generation", label: "Generation", icon: "Sparkles" },
-  { id: "optimization", label: "Optimization", icon: "Image" },
-  { id: "validation", label: "Validation", icon: "BadgeCheck" },
+  { id: "generation", label: "Building", icon: "Sparkles" },
+  { id: "optimization", label: "Finishing touches", icon: "Image" },
+  { id: "validation", label: "Quality checks", icon: "BadgeCheck" },
   { id: "publishing", label: "Publishing", icon: "Rocket" },
   { id: "completion", label: "Completion", icon: "CheckCircle2" },
 ];

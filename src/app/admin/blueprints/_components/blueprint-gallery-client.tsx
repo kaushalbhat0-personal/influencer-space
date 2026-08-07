@@ -94,7 +94,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
             <h2 className="text-lg font-bold text-white">{blueprint.name}</h2>
             <p className="text-xs text-zinc-500">by {blueprint.author.name} &middot; v{blueprint.version}</p>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white text-lg">&times;</button>
+          <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-lg">&times;</button>
         </div>
 
         <p className="mt-4 text-sm text-zinc-400">{blueprint.description}</p>

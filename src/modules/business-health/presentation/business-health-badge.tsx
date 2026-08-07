@@ -64,7 +64,7 @@ export function BusinessHealthBadge() {
     <div className="rounded-lg border border-white/5 bg-zinc-900/50">
       <div className="flex items-center gap-1.5 border-b border-white/5 px-2.5 py-1.5">
         <HeartPulse className="h-3 w-3 text-emerald-400" />
-        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Business Health</p>
+        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Website Health</p>
         {health === null ? (
           <Loader2 className="ml-auto h-3 w-3 animate-spin text-zinc-600" />
         ) : (

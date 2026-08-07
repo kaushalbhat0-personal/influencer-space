@@ -330,7 +330,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName, onApply, applying, on
             </div>
             <p className="text-xs text-zinc-500">by {theme.author.name} &middot; v{theme.version} &middot; {theme.category}</p>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white text-lg">&times;</button>
+          <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-lg">&times;</button>
         </div>
 
         <div className="mt-4 h-40 rounded-lg" style={{ background: `linear-gradient(135deg, ${cv?.primary} 0%, ${cv?.secondary} 50%, ${cv?.accent} 100%)` }} />

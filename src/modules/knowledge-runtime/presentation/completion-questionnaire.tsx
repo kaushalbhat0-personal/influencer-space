@@ -58,7 +58,7 @@ export function CompletionQuestionnaire({ questions, onSaved }: Props) {
     try {
       const result = await saveKnowledgeAnswers(answers);
       if (result.success) {
-        setNotice("Saved. Your knowledge score just updated.");
+        setNotice("Saved. Your profile is more complete.");
         onSaved();
       } else {
         const fieldErrors: Record<string, string> = {};
@@ -74,7 +74,7 @@ export function CompletionQuestionnaire({ questions, onSaved }: Props) {
   if (questions.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-zinc-400">
-        No missing knowledge to ask about right now — keep improving and your score stays up to date.
+        Nothing missing right now — keep it up!
       </div>
     );
   }

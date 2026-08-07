@@ -77,13 +77,13 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
       </div>
 
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-xs text-zinc-500 space-y-3">
-        <h3 className="text-sm font-semibold text-white">Flow</h3>
+        <h3 className="text-sm font-semibold text-white">How it works</h3>
         <ol className="list-decimal space-y-1 pl-4">
-          <li>Creator Intelligence acquires the profile from the source URL.</li>
-          <li>The canonical provisioning runtime creates the workspace + builder + publishing.</li>
-          <li>The AgencyTenant relationship is established (your agency ↔ creator).</li>
-          <li>A passwordless invitation is generated — the creator sets their own password.</li>
-          <li>The creator becomes the workspace owner; you remain the manager.</li>
+          <li>We analyze the creator&apos;s public profile from their URL.</li>
+          <li>We set up their workspace, website and publishing for you.</li>
+          <li>The creator is linked to your agency.</li>
+          <li>A passwordless invitation is sent — the creator sets their own password.</li>
+          <li>The creator becomes the owner of their workspace; you remain the manager.</li>
         </ol>
         <p className="text-zinc-600">No passwords are generated or shared by the agency.</p>
       </div>

@@ -156,7 +156,7 @@ export function ActivityFeedView({
 
       {hasFailure && (
         <div className="border-t border-red-500/20 bg-red-500/10 px-4 py-2.5" data-activity-failure>
-          <p className="text-[11px] font-medium text-red-400">Generation paused</p>
+          <p className="text-[11px] font-medium text-red-400">Building paused</p>
           <p className="mt-0.5 text-[10px] text-[var(--text-secondary,#A1A1AA)]">
             Completed activity history is preserved. You can retry.
           </p>

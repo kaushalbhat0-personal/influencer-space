@@ -165,7 +165,7 @@ export function ConstructionPreview({
               <div className="mt-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4" data-construction-failure>
                 <p className="text-xs font-medium text-red-400">Construction paused</p>
                 <p className="mt-1 text-[10px] text-[var(--text-secondary,#A1A1AA)]">
-                  Completed sections are preserved. You can retry the generation.
+                  Completed sections are preserved. You can retry the build.
                 </p>
               </div>
             )}

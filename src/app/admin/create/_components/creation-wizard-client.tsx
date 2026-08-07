@@ -308,7 +308,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes }:
             Back
           </button>
           <button onClick={handleGenerate} className="rounded-lg bg-s8ul-cyan px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
-            Generate Website
+            Build Website
           </button>
         </div>
       </div>
@@ -319,7 +319,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes }:
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-s8ul-cyan border-t-transparent" />
-        <p className="mt-4 text-sm text-zinc-400">Generating your website...</p>
+        <p className="mt-4 text-sm text-zinc-400">Building your website — analyzing your profile, composing your storefront, and writing your content.</p>
       </div>
     );
   }

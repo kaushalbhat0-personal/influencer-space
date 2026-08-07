@@ -235,7 +235,7 @@ export function BuilderWorkspace() {
       <div className="flex h-screen items-center justify-center bg-zinc-950">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-s8ul-cyan border-t-transparent" />
-          <p className="text-sm text-zinc-400">Loading composer...</p>
+          <p className="text-sm text-zinc-400">Loading your editor…</p>
         </div>
       </div>
     );

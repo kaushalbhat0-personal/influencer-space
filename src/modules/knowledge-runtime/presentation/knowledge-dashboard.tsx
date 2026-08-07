@@ -33,8 +33,8 @@ export function KnowledgeDashboard({ initial, goalAlignment, recommendations }: 
 
   return (
     <FeaturePage
-      title="Knowledge"
-      description={`Measure your profile completeness and finish only what's missing. Pack: ${runtime.pack.name}.`}
+      title="Your Profile"
+      description="See how complete your brand profile is and finish only what's missing."
     >
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
@@ -80,9 +80,9 @@ export function KnowledgeDashboard({ initial, goalAlignment, recommendations }: 
           </div>
 
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Knowledge integrity</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">How we learn about you</p>
             <p className="mt-1 text-[11px] text-zinc-600">
-              This runtime measures your profile from real data. AI never invents
+              This score is based on real data from your profile. AI never invents
               products, achievements, testimonials or pricing — those always come from you.
             </p>
           </div>

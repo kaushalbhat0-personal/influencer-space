@@ -108,7 +108,7 @@ export function ImportInputRenderer({
         {provider.helperText && <p className="text-[11px] text-zinc-600">{provider.helperText}</p>}
         {validationError && <p className="text-xs text-red-400">{validationError}</p>}
         <button onClick={handleTextSubmit} disabled={!textareaValue.trim() || loading} className="btn-primary w-full py-3 disabled:opacity-50">
-          {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Generating…</span> : "Generate Storefront"}
+          {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Building…</span> : "Build Storefront"}
         </button>
       </div>
     );

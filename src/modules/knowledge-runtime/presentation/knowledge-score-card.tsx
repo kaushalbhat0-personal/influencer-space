@@ -40,7 +40,7 @@ export function KnowledgeScoreCard({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Knowledge Score</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Profile Knowledge</span>
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${scoreColor(overall)}/10 ${scoreColor(overall)}`}>
               {grade}
             </span>

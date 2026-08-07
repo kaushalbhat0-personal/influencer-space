@@ -32,7 +32,7 @@ export function WebsiteReadyClient({
         </div>
         <h1 className="text-3xl font-bold text-white">Your Website is Ready!</h1>
         <p className="mt-2 text-zinc-400">
-          Hi {creatorName}, your site has been generated and is ready to go.
+          Hi {creatorName}, your site is ready to go.
         </p>
       </div>
 

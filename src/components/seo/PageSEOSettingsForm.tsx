@@ -41,7 +41,7 @@ export function PageSEOSettingsForm({ initial, global, onSave }: PageSEOSettings
         actions={
           <div className="flex items-center gap-2">
             <Badge variant={scoreLabel.color === "emerald" ? "success" : scoreLabel.color === "amber" ? "warning" : "danger"}>
-              Score: {score.overall}
+              Readiness: {score.overall}
             </Badge>
             <Button size="sm" variant="outline" onClick={() => setShowPreview(!showPreview)}>
               <Eye className="h-3.5 w-3.5 mr-1" /> Preview

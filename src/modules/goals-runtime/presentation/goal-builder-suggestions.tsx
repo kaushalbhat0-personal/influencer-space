@@ -32,7 +32,7 @@ export function GoalBuilderSuggestions() {
     <div className="rounded-lg border border-white/5 bg-zinc-900/50">
       <div className="flex items-center gap-1.5 border-b border-white/5 px-2.5 py-1.5">
         <Target className="h-3 w-3 text-s8ul-cyan" />
-        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Goal Recommendations</p>
+        <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Suggested Goals</p>
       </div>
 
       <div className="space-y-2 p-2">
@@ -43,10 +43,10 @@ export function GoalBuilderSuggestions() {
           </div>
         )}
 
-        {error && <p className="px-1 py-2 text-[10px] text-zinc-600">Goal recommendations unavailable.</p>}
+        {error && <p className="px-1 py-2 text-[10px] text-zinc-600">Suggestions are unavailable right now.</p>}
 
         {suggestions?.length === 0 && (
-          <p className="px-1 py-2 text-[10px] text-zinc-500">Set goals on the Goals page to get targeted recommendations.</p>
+          <p className="px-1 py-2 text-[10px] text-zinc-500">Set goals on the Goals page to get targeted suggestions.</p>
         )}
 
         {suggestions?.map((suggestion) => (

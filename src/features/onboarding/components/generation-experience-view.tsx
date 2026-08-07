@@ -101,7 +101,7 @@ export function GenerationExperienceView({ experience }: { experience: Generatio
       </div>
 
       <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-zinc-600">
-        <span>Model runtime</span>
+        <span>Powered by CreatorStore AI</span>
         <span>
           {completed}/{experience.totalStages} stages
         </span>

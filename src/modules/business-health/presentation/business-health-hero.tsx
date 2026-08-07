@@ -33,7 +33,7 @@ export function BusinessHealthHero({ health, trend }: { health: BusinessHealth; 
     <div className="rounded-xl border border-s8ul-cyan/25 bg-gradient-to-br from-s8ul-cyan/[0.08] to-emerald-500/[0.05] p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Business Health</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Store Health</p>
           <div className="mt-1 flex items-end gap-3">
             <span className={`text-5xl font-bold font-display ${gradeColor(health.overallScore)}`}>
               {health.overallScore}%

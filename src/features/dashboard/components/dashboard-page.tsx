@@ -131,7 +131,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
 
         {metrics.productCount === 0 && metrics.bookingCount === 0 && metrics.orderCount === 0 ? (
           <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.04] p-6">
-            <h3 className="text-sm font-semibold text-white mb-1">Your website is live!</h3>
+            <h3 className="text-sm font-semibold text-white mb-1">Let&apos;s set up your store</h3>
             <p className="text-xs text-zinc-400 mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
             {success?.nextTask && !success.nextTask.done ? (
               <Link

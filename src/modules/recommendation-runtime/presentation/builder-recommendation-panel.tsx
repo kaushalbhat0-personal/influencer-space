@@ -61,7 +61,7 @@ export function BuilderRecommendationPanel() {
       <div className="flex items-center gap-1.5 border-b border-white/5 px-2.5 py-1.5">
         <MousePointerClick className="h-3 w-3 text-s8ul-cyan" />
         <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">
-          {selectedBase ? "Recommended for this section" : "Recommended"}
+          {selectedBase ? "Suggested for this section" : "Suggestions"}
         </p>
       </div>
 

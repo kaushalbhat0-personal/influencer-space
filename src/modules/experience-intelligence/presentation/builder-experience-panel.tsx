@@ -85,7 +85,7 @@ export function BuilderExperiencePanel() {
                 <p className="text-sm font-bold text-s8ul-cyan">{data.conversionScore.overall}%</p>
               </div>
               <div className="rounded-md border border-white/5 bg-white/[0.02] px-2 py-1.5">
-                <p className="text-[8px] uppercase tracking-wider text-zinc-500">Health</p>
+                <p className="text-[8px] uppercase tracking-wider text-zinc-500">Website</p>
                 <p className="text-sm font-bold text-emerald-400">{data.businessHealth ? `${data.businessHealth.overall}%` : "—"}</p>
               </div>
               <div className="rounded-md border border-white/5 bg-white/[0.02] px-2 py-1.5">

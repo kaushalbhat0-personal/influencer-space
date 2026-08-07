@@ -6,7 +6,7 @@ export function Table({
 }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
     <table
-      className={cn("min-w-full divide-y divide-gray-200", className)}
+      className={cn("min-w-full divide-y divide-white/10", className)}
       {...props}
     />
   );
@@ -17,7 +17,7 @@ export function TableHead({
   ...props
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn("bg-gray-50", className)} {...props} />
+    <thead className={cn("bg-white/[0.02]", className)} {...props} />
   );
 }
 
@@ -27,7 +27,7 @@ export function TableBody({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <tbody
-      className={cn("divide-y divide-gray-200 bg-white", className)}
+      className={cn("divide-y divide-white/[0.06] bg-transparent", className)}
       {...props}
     />
   );
@@ -37,7 +37,7 @@ export function TableRow({
   className,
   ...props
 }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("hover:bg-gray-50", className)} {...props} />;
+  return <tr className={cn("hover:bg-white/[0.03]", className)} {...props} />;
 }
 
 export function TableCell({
@@ -47,7 +47,7 @@ export function TableCell({
   return (
     <td
       className={cn(
-        "whitespace-nowrap px-6 py-4 text-sm text-gray-700",
+        "whitespace-nowrap px-6 py-4 text-sm text-zinc-300",
         className,
       )}
       {...props}
@@ -62,7 +62,7 @@ export function TableHeaderCell({
   return (
     <th
       className={cn(
-        "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500",
+        "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500",
         className,
       )}
       {...props}

@@ -112,7 +112,7 @@ export function NextBestStepCard({ initialRecommendation, total }: Props) {
           </span>
           {recommendation.healthLift > 0 && (
             <span className="rounded-lg border border-s8ul-cyan/25 bg-s8ul-cyan/5 px-2.5 py-1.5 text-xs">
-              <span className="text-zinc-400">Health</span>{" "}
+              <span className="text-zinc-400">Website score</span>{" "}
               <span className="font-semibold text-s8ul-cyan">+{recommendation.healthLift}</span>
             </span>
           )}
@@ -136,7 +136,7 @@ export function NextBestStepCard({ initialRecommendation, total }: Props) {
           <X className="h-3 w-3" />
           {action === "dismiss" ? "Dismissing…" : "Not now"}
         </button>
-        <span className="ml-auto text-[10px] text-zinc-600">Priority score {recommendation.score}</span>
+        <span className="ml-auto text-[10px] text-zinc-600">Impact {recommendation.score}</span>
       </div>
     </div>
   );
