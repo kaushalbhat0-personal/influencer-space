@@ -21,13 +21,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   });
   if (!tenant) notFound();
 
-  // IMPLEMENTATION-41: IDOR guard — the session agency must manage this creator.
+  // VALIDATION-02 M2: the session MUST be an agency member and own this creator.
   const session = await getServerSession(authOptions);
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
-  if (agencyId) {
-    const owned = await assertAgencyOwnsTenant(session!.user.id, agencyId, tenant.id);
-    if (!owned.ok) notFound();
-  }
+  if (!agencyId) notFound();
+  const owned = await assertAgencyOwnsTenant(session!.user.id, agencyId, tenant.id);
+  if (!owned.ok) notFound();
 
   const [website, publishStatus, productCount, health, activity] = await Promise.all([
     prisma.website.findUnique({ where: { tenantId: tenant.id }, select: { themePackageId: true, id: true } }),

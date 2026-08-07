@@ -1,5 +1,7 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { acquisitionRegistry } from "@/lib/acquisition";
 import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
@@ -17,7 +19,20 @@ function nextId(): string {
   return `acq_${Date.now()}_${counter}`;
 }
 
+/**
+ * VALIDATION-02 C1: provisioning and acquisition must be authenticated.
+ * Block anonymous callers from mass-creating tenants/sites.
+ */
+async function requireProvisioner(): Promise<{ userId: string; role: string }> {
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+  const role = session?.user?.role ?? "";
+  if (!userId) throw new Error("Unauthorized");
+  return { userId, role };
+}
+
 export async function executeStrategy(strategy: AcquisitionStrategy, input: string): Promise<AcquisitionResult> {
+  await requireProvisioner();
   const adapter = acquisitionRegistry.get(strategy);
   if (!adapter) {
     return {
@@ -67,6 +82,7 @@ export async function acquireAndProvision(
   input: string,
   profile: BusinessProfile,
 ): Promise<AcquisitionProvisionResult> {
+  await requireProvisioner();
   const businessName = profile.businessName || profile.ownerName || "Storefront";
   const startedAt = Date.now();
   const recordId = nextId();

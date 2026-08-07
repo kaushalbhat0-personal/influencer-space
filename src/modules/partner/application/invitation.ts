@@ -49,7 +49,9 @@ export class CreatorInvitationService {
     const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
     const invite: CreatorInvite = {
       token,
-      email: input.email,
+      // VALIDATION-02 F16: normalize the invite email to prevent case-variant
+      // duplicate accounts.
+      email: input.email.trim().toLowerCase(),
       creatorName: input.creatorName,
       agencyId: input.agencyId,
       tenantId: input.tenantId,
@@ -104,13 +106,23 @@ export class CreatorInvitationService {
     if (invite.status !== "pending") return { success: false, error: "Invitation already claimed" };
     if (new Date(invite.expiresAt).getTime() < Date.now()) return { success: false, error: "Invitation expired" };
 
+    // VALIDATION-02 F12: NEVER overwrite an existing account. If this email
+    // already has a user, the claim must be rejected — otherwise an agency
+    // could reset an existing creator's password / reassign their tenant.
+    const normalizedEmail = input.email.trim().toLowerCase();
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+    if (existingUser) {
+      return { success: false, error: "An account with this email already exists. Sign in instead of claiming the invitation." };
+    }
+
     const password = await bcrypt.hash(input.password, 12);
     const [user, workspace] = await Promise.all([
-      prisma.user.upsert({
-        where: { email: input.email },
-        update: { password, tenantId: invite.tenantId, agencyId: null, role: "ADMIN" },
-        create: {
-          email: input.email,
+      prisma.user.create({
+        data: {
+          email: normalizedEmail,
           name: invite.creatorName,
           password,
           tenantId: invite.tenantId,

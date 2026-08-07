@@ -66,7 +66,9 @@ export async function POST(req: Request) {
           },
         });
 
-        const requestedPlanCode = body.planCode || "agency_free";
+        // VALIDATION-02 M4: self-serve agency signup may only start on the free
+        // plan — a paid plan code in the request body is ignored.
+        const requestedPlanCode = "agency_free";
         const billingPlan = await tx.billingPlan.findUnique({
           where: { code: requestedPlanCode },
         });

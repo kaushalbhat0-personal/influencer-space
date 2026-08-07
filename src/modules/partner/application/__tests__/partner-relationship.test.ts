@@ -8,6 +8,8 @@ const h = vi.hoisted(() => ({
   websiteAgencyFindUnique: vi.fn(),
   workspaceMemberFindFirst: vi.fn(),
   userFindFirst: vi.fn(),
+  userFindUnique: vi.fn(),
+  userCreate: vi.fn(),
   userUpsert: vi.fn(),
   workspaceFindUnique: vi.fn(),
   settingFindFirst: vi.fn(),
@@ -28,7 +30,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     websiteAgency: { findUnique: h.websiteAgencyFindUnique },
     workspaceMember: { findFirst: h.workspaceMemberFindFirst, upsert: vi.fn().mockResolvedValue({}) },
-    user: { findFirst: h.userFindFirst, upsert: h.userUpsert },
+    user: { findFirst: h.userFindFirst, findUnique: h.userFindUnique, create: h.userCreate, upsert: h.userUpsert },
     workspace: { findUnique: h.workspaceFindUnique },
     setting: {
       findFirst: h.settingFindFirst,
@@ -122,13 +124,24 @@ describe("CreatorInvitationService (Part 3)", () => {
     h.settingFindMany.mockResolvedValue([
       { tenantId: "t1", value: { token: "tok123", email: "creator@x.com", status: "pending", expiresAt: new Date(Date.now() + 3600000).toISOString(), tenantId: "t1", workspaceId: "ws1", creatorName: "C" } },
     ]);
-    h.userUpsert.mockResolvedValue({ id: "u9", tenantId: "t1" });
+    h.userFindUnique.mockResolvedValue(null); // no existing account — safe to create
+    h.userCreate.mockResolvedValue({ id: "u9", tenantId: "t1" });
     const result = await invitations.claimInvitation({ token: "tok123", email: "creator@x.com", password: "supersecret123" });
     expect(result.success).toBe(true);
     expect(result.tenantId).toBe("t1");
-    expect(h.userUpsert).toHaveBeenCalledWith(expect.objectContaining({
-      create: expect.objectContaining({ role: "ADMIN" }),
+    expect(h.userCreate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ role: "ADMIN" }),
     }));
+  });
+
+  it("rejects claiming an invitation for an email that already has an account (F12)", async () => {
+    h.settingFindMany.mockResolvedValue([
+      { tenantId: "t1", value: { token: "tok456", email: "existing@x.com", status: "pending", expiresAt: new Date(Date.now() + 3600000).toISOString(), tenantId: "t1", creatorName: "C" } },
+    ]);
+    h.userFindUnique.mockResolvedValue({ id: "existing-user" });
+    const result = await invitations.claimInvitation({ token: "tok456", email: "existing@x.com", password: "supersecret123" });
+    expect(result.success).toBe(false);
+    expect(h.userCreate).not.toHaveBeenCalled();
   });
 
   it("rejects an expired invitation", async () => {

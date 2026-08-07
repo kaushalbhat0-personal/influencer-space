@@ -9,6 +9,7 @@
  */
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { billingService } from "@/modules/billing/application/service";
 import { capabilityService } from "@/lib/capabilities";
 import { COMMERCE_PLANS } from "@/config/commerce/plans";
@@ -25,16 +26,23 @@ function enabledFeatures(features: Record<string, number | boolean | string>): s
     .map(([k]) => k);
 }
 
-async function authorizeWorkspace(tenantId: string): Promise<{ session?: { user?: { id?: string; tenantId?: string | null } } }> {
+async function authorizeWorkspace(workspaceId: string, tenantId: string): Promise<{ session?: { user?: { id?: string; tenantId?: string | null } } }> {
   const session = (await getServerSession(authOptions)) as { user?: { id?: string; tenantId?: string | null } } | null;
   if (!session?.user?.tenantId || session.user.tenantId !== tenantId) {
     return {};
   }
+  // VALIDATION-02 C2: the workspace must belong to the caller's tenant —
+  // never operate on another workspace's subscription/invoices via a guessed id.
+  const workspace = await prisma.workspace.findFirst({
+    where: { id: workspaceId, tenantId },
+    select: { id: true },
+  });
+  if (!workspace) return {};
   return { session };
 }
 
 export async function getBillingDashboard(workspaceId: string, tenantId: string) {
-  const auth = await authorizeWorkspace(tenantId);
+  const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
 
   try {
@@ -65,7 +73,7 @@ export async function changePlanAction(
   planCode: string,
   email?: string,
 ): Promise<{ success: boolean; checkout?: CheckoutResult & { keyId?: string }; error?: string }> {
-  const auth = await authorizeWorkspace(tenantId);
+  const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
 
   try {
@@ -84,7 +92,7 @@ export async function changePlanAction(
 }
 
 export async function cancelSubscriptionAction(workspaceId: string, tenantId: string, reason?: string): Promise<{ success: boolean; error?: string }> {
-  const auth = await authorizeWorkspace(tenantId);
+  const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
 
   try {
@@ -96,7 +104,7 @@ export async function cancelSubscriptionAction(workspaceId: string, tenantId: st
 }
 
 export async function resumeSubscriptionAction(workspaceId: string, tenantId: string): Promise<{ success: boolean; error?: string }> {
-  const auth = await authorizeWorkspace(tenantId);
+  const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
 
   try {
@@ -108,7 +116,7 @@ export async function resumeSubscriptionAction(workspaceId: string, tenantId: st
 }
 
 export async function retryPaymentAction(workspaceId: string, tenantId: string, planCode: string, email?: string): Promise<{ success: boolean; checkout?: CheckoutResult & { keyId?: string }; error?: string }> {
-  const auth = await authorizeWorkspace(tenantId);
+  const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
 
   try {

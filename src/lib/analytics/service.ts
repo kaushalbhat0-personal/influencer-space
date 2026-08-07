@@ -22,7 +22,7 @@ export async function fetchAnalytics(
   tenantId: string,
   preset: DatePreset = "last_30_days",
 ): Promise<AnalyticsResponse> {
-  const authError = verifyTenantAccess(session, tenantId);
+  const authError = await verifyTenantAccess(session, tenantId);
   if (authError) return { success: false, error: authError };
 
   if (!validateTenantId(tenantId)) return { success: false, error: "Invalid tenant ID" };
@@ -39,7 +39,7 @@ export async function fetchAnalyticsForRange(
   tenantId: string,
   customRange: DateRange,
 ): Promise<AnalyticsResponse> {
-  const authError = verifyTenantAccess(session, tenantId);
+  const authError = await verifyTenantAccess(session, tenantId);
   if (authError) return { success: false, error: authError };
   if (!validateTenantId(tenantId)) return { success: false, error: "Invalid tenant ID" };
 

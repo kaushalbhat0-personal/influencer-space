@@ -1,14 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { clientHealthEngine } from "@/lib/client/health";
 import { agencyBranding } from "@/lib/client/branding";
 import { themeRegistry } from "@/lib/theme/registry-new";
+import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorization";
 import { Globe, Palette, CheckCircle, Activity, ShoppingBag, Building2 } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientPortalPage({ params }: { params: { tenantId: string } }) {
+  // VALIDATION-02 H1: the session agency must own this tenant (IDOR guard).
+  const session = await getServerSession(authOptions);
+  const agencyId = (session?.user as { agencyId?: string })?.agencyId;
+  if (!agencyId) notFound();
+  const owned = await assertAgencyOwnsTenant(session!.user.id, agencyId, params.tenantId);
+  if (!owned.ok) notFound();
+
   const tenant = await prisma.tenant.findUnique({
     where: { id: params.tenantId },
     select: { id: true, name: true, subdomain: true, customDomain: true },
