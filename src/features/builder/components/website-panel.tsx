@@ -3,6 +3,7 @@
 import { PanelRightClose } from "lucide-react";
 import { ThemeCard } from "./theme-card";
 import { CompletionBadge } from "./completion-badge";
+import { BuilderCompletionHints } from "@/modules/knowledge-runtime/presentation/builder-hints";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -81,6 +82,9 @@ export function WebsitePanel({
             <p>Template: {overview?.blueprint?.name ?? "Creator"}</p>
           </div>
         </div>
+
+        {/* Completion hints */}
+        <BuilderCompletionHints />
       </div>
     </div>
   );

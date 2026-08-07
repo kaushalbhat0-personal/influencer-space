@@ -1,5 +1,21 @@
 # Changelog
 
+## Latest — RCCF-EPIC-04: Knowledge Completion Runtime
+- Knowledge Completion Runtime module (`src/modules/knowledge-runtime/`) — DDD domain/application/infrastructure/presentation
+- Phase 1: canonical Knowledge Score engine (overall, 10 per-category %, confidence, missing fields)
+- Phase 2: registry-driven missing-field detection — never re-asks known data
+- Phase 3: Smart Question Engine — max 5 dynamic questions (text/choice/multichoice/action)
+- Phase 4: Category Packs — fitness, restaurant, photographer, designer, educator, creator (pack fields replace universal fields)
+- Phase 5: single Knowledge Registry — every field declarative (id, label, category, required, priority, validation, aiRelevance, generationUsage, href, source, complete/value)
+- Phase 6: `/admin/knowledge` completion dashboard + compact dashboard score card + sidebar nav item
+- Phase 7: Builder completion-hints panel (contextual, non-intrusive)
+- Phase 8: AI assist boundary — assist only, never invent facts; offline deterministic transforms
+- Phase 9: Storefront Quality Score — 7 dimensions (Knowledge, Content, Commerce, Brand, SEO, Trust, Accessibility)
+- Persistence via `knowledge_completion` (declared facts) and `knowledge_score` Settings
+- Server actions: `getKnowledgeRuntime`, `saveKnowledgeAnswers`, `getBuilderCompletionHints`
+- Docs: `docs/knowledge-runtime.md`, `docs/knowledge-score.md`, `docs/completion-engine.md`, `docs/implementation-65-report.md`
+- Verification: tsc clean, next build green, 95 files / 1901 unit tests passing
+
 ## v2.0.0 (Feature Branch: feature/v1.1-workspace-foundation)
 
 ### EPIC-01: Release Maintenance

@@ -11,6 +11,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { StorefrontStatusCard } from "@/components/dashboard/StorefrontStatusCard";
+import { KnowledgeScoreCard } from "@/modules/knowledge-runtime/presentation/knowledge-score-card";
 import type { DashboardData } from "../actions";
 
 interface DashboardPageProps {
@@ -50,7 +51,7 @@ function MetricCard({ label, value, sub, subColor }: { label: string; value: str
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const [data] = useState(initialData);
-  const { metrics, activity, health, overallScore, steps, creatorName } = data;
+  const { metrics, activity, health, overallScore, steps, creatorName, knowledge } = data;
 
   const checklistSteps = steps.map((s) => ({
     id: s.id,
@@ -207,6 +208,15 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               hasProducts={metrics.publishedProductCount > 0}
               currentTheme={metrics.currentTheme}
             />
+            {knowledge && (
+              <KnowledgeScoreCard
+                overall={knowledge.overall}
+                confidence={knowledge.confidence}
+                categories={knowledge.categories}
+                missing={knowledge.missing}
+                compact
+              />
+            )}
           </DashboardGridSide>
         </DashboardGrid>
       </div>

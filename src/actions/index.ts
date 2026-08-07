@@ -82,6 +82,11 @@ export {
 } from "./onboarding.actions";
 
 export {
+  getKnowledgeRuntime, saveKnowledgeAnswers, getBuilderCompletionHints,
+} from "./knowledge.actions";
+export type { KnowledgeRuntimeResponse } from "./knowledge.actions";
+
+export {
   getOperationsDashboard, getEvents, getEventTypes,
   rehydrateEngine, retryFailedPayouts, expireStaleInvites,
   runJob, getJobStatus, exportDiagnostics,
