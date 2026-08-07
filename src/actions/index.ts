@@ -93,6 +93,11 @@ export {
 export type { GoalsRuntimePayload } from "./goals.actions";
 
 export {
+  getRecommendations, getTopRecommendation, dismissRecommendation,
+  completeRecommendation, refreshRecommendations,
+} from "./recommendation.actions";
+
+export {
   getOperationsDashboard, getEvents, getEventTypes,
   rehydrateEngine, retryFailedPayouts, expireStaleInvites,
   runJob, getJobStatus, exportDiagnostics,

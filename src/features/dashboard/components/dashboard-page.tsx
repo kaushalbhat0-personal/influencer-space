@@ -13,6 +13,7 @@ import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist"
 import { StorefrontStatusCard } from "@/components/dashboard/StorefrontStatusCard";
 import { KnowledgeScoreCard } from "@/modules/knowledge-runtime/presentation/knowledge-score-card";
 import { GoalDashboardCard } from "@/modules/goals-runtime/presentation/goal-dashboard-card";
+import { NextBestStepCard } from "@/modules/recommendation-runtime/presentation/next-best-step-card";
 import type { DashboardData } from "../actions";
 
 interface DashboardPageProps {
@@ -52,7 +53,7 @@ function MetricCard({ label, value, sub, subColor }: { label: string; value: str
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const [data] = useState(initialData);
-  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals } = data;
+  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations } = data;
 
   const checklistSteps = steps.map((s) => ({
     id: s.id,
@@ -143,6 +144,13 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
 
         <DashboardGrid>
           <DashboardGridMain className="space-y-6">
+            {recommendations && (
+              <NextBestStepCard
+                initialRecommendation={recommendations.top}
+                total={recommendations.total}
+              />
+            )}
+
             <GlassCard className="p-5">
               <h3 className="mb-4 text-sm font-semibold text-zinc-400 uppercase tracking-wider">Recent Activity</h3>
               {activity.length > 0 ? (

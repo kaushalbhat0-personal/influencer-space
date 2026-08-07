@@ -7,25 +7,17 @@ import type { KnowledgeRuntimeResponse } from "@/actions/knowledge.actions";
 import { KnowledgeScoreCard } from "./knowledge-score-card";
 import { StorefrontScoreCard } from "./storefront-score-card";
 import { CompletionQuestionnaire } from "./completion-questionnaire";
-import { KNOWLEDGE_CATEGORY_LABELS } from "../domain/types";
+import { RecommendedImprovements } from "@/modules/recommendation-runtime/presentation/recommended-improvements";
+import type { Recommendation } from "@/modules/recommendation-runtime";
 import { getKnowledgeRuntime } from "@/actions/knowledge.actions";
 
 interface Props {
   initial: KnowledgeRuntimeResponse;
   goalAlignment?: { label: string; percent: number } | null;
+  recommendations?: Recommendation[];
 }
 
-function groupByCategory(missing: KnowledgeRuntimeResponse["score"]["missingFields"]) {
-  const groups = new Map<string, typeof missing>();
-  for (const field of missing) {
-    const key = KNOWLEDGE_CATEGORY_LABELS[field.category];
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(field);
-  }
-  return Array.from(groups.entries());
-}
-
-export function KnowledgeDashboard({ initial, goalAlignment }: Props) {
+export function KnowledgeDashboard({ initial, goalAlignment, recommendations }: Props) {
   const [runtime, setRuntime] = useState<KnowledgeRuntimeResponse>(initial);
   const [reloading, setReloading] = useState(false);
 
@@ -38,8 +30,6 @@ export function KnowledgeDashboard({ initial, goalAlignment }: Props) {
       setReloading(false);
     }
   }, []);
-
-  const missingGroups = groupByCategory(runtime.score.missingFields);
 
   return (
     <FeaturePage
@@ -57,37 +47,7 @@ export function KnowledgeDashboard({ initial, goalAlignment }: Props) {
 
           <CompletionQuestionnaire questions={runtime.questions} onSaved={refresh} />
 
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">All missing fields</p>
-              <span className="text-xs text-zinc-600">{runtime.completeness.complete}/{runtime.completeness.total} complete</span>
-            </div>
-            <div className="mt-4 space-y-4">
-              {missingGroups.length === 0 ? (
-                <p className="py-4 text-sm text-emerald-400">Nothing missing — your profile is complete.</p>
-              ) : (
-                missingGroups.map(([category, fields]) => (
-                  <div key={category}>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{category}</p>
-                    <div className="space-y-0.5">
-                      {fields.map((field) => (
-                        <Link
-                          key={field.fieldId}
-                          href={field.href}
-                          className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
-                        >
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${field.required ? "bg-amber-500" : "bg-zinc-700"}`} />
-                          <span className="flex-1">{field.label}</span>
-                          <span className="hidden text-[10px] text-zinc-600 sm:block">{field.hint}</span>
-                          <span className="text-[10px] text-s8ul-cyan opacity-0 transition-opacity group-hover:opacity-100">open →</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          {recommendations && <RecommendedImprovements initial={recommendations} />}
         </div>
 
         <div className="space-y-6 lg:col-span-2">

@@ -2,23 +2,29 @@ import { requireTenant } from "@/lib/auth/require-tenant";
 import { knowledgeScoreService } from "@/modules/knowledge-runtime";
 import { goalRuntime } from "@/modules/goals-runtime";
 import { computeGoalAlignment } from "@/modules/goals-runtime";
+import { recommendationRuntime } from "@/modules/recommendation-runtime";
 import { KnowledgeDashboard } from "@/modules/knowledge-runtime/presentation/knowledge-dashboard";
 
 export const dynamic = "force-dynamic";
 
 export default async function KnowledgePage() {
   const session = await requireTenant();
-  const runtime = await knowledgeScoreService.evaluate(session.tenantId);
 
-  // RCCF-EPIC-05: goals compose with knowledge — the knowledge dashboard also
-  // shows Goal Alignment (a storefront-quality dimension).
-  const goals = await goalRuntime.evaluate(session.tenantId);
+  // RCCF-EPIC-06: the knowledge dashboard shows Recommended Improvements
+  // (ordered by impact) instead of a flat list of missing fields.
+  const [runtime, goals, recommendations] = await Promise.all([
+    knowledgeScoreService.evaluate(session.tenantId),
+    goalRuntime.evaluate(session.tenantId),
+    recommendationRuntime.getRecommendations(session.tenantId),
+  ]);
+
   const alignment = computeGoalAlignment(goals.activeProfile, goals.snapshot);
 
   return (
     <KnowledgeDashboard
       initial={runtime}
       goalAlignment={alignment.items.length > 0 ? { label: "Goal Alignment", percent: alignment.overall } : null}
+      recommendations={recommendations}
     />
   );
 }

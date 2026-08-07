@@ -1,6 +1,27 @@
 # Changelog
 
-## Latest — RCCF-EPIC-05: Creator Goals Runtime
+## Latest — RCCF-EPIC-06: Recommendation Runtime
+- Recommendation Runtime module (`src/modules/recommendation-runtime/`) — DDD domain/application/infrastructure/presentation
+- Answers "what should you do next?" from existing runtimes only: Knowledge, Goals, Success, Commerce, Experience, Storefront Score, Dashboard Metrics
+- Phase 1: Recommendation Registry — 25 canonical recommendations (category, priority, time, expected impact, prerequisites, goal affinity, knowledge/success deps, when/done/reason)
+- Phase 2: deterministic scoring engine (Priority × Business Impact × Goal Alignment × Knowledge Gap × Ease × Progress)
+- Phase 3: categories — Critical / High Impact / Quick Wins / Growth / Optimization / Advanced
+- Phase 4: dashboard "Today's Best Next Step" card (impact, time, affected scores, Mark done / Not now)
+- Phase 5: Builder per-section recommendations panel (selection-aware)
+- Phase 6: Knowledge dashboard Recommended Improvements (impact-ordered, replaces flat missing list)
+- Phase 7: goal-affinity ranking (booking/commerce/portfolio creators get targeted improvements)
+- Phase 8: expected impact per storefront dimension + storefront lift
+- Phase 9: commerce chaining via prerequisites (product → polish → testimonials)
+- Phase 10: success milestones auto-complete recommendations (shared signals, no duplicate logic)
+- Phase 11: recommendation history (`recommendation_history` Setting: dismissed/completed/ignored/accepted + timestamps + completion scores)
+- Phase 12: `/super-admin/recommendations` analytics (most/least completed, avg time, lifts)
+- Phase 13: public API — getRecommendations / getTopRecommendation / dismiss / complete / refresh
+- Server actions: `getRecommendations`, `getTopRecommendation`, `dismissRecommendation`, `completeRecommendation`, `refreshRecommendations`
+- Docs: `docs/recommendation-runtime.md`, `docs/recommendation-registry.md`, `docs/recommendation-engine.md`, `docs/recommendation-scoring.md`, `docs/implementation-67-report.md`
+- Future evolution documented: Business Health Score rollup (post-EPIC)
+- Verification: tsc clean, next build green, 97 files / 1945 unit tests passing
+
+## RCCF-EPIC-05: Creator Goals Runtime
 - Creator Goals Runtime module (`src/modules/goals-runtime/`) — DDD domain/application/infrastructure/presentation
 - Goals compose with the Knowledge Runtime (never replace it): Knowledge = "who are you?", Goals = "what are you trying to achieve?"
 - Weighted goal profile (primary = highest weight) — creators evolve by changing weights, not the model

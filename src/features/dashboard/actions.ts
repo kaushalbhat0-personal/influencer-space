@@ -6,13 +6,14 @@ import { dashboardService } from "./service";
 import { websiteHealthEngine } from "@/lib/platform/health/engine";
 import { knowledgeScoreService } from "@/modules/knowledge-runtime";
 import { goalRuntime } from "@/modules/goals-runtime";
+import { recommendationRuntime } from "@/modules/recommendation-runtime";
 
 export async function getDashboardData() {
   const session = await getServerSession(authOptions);
   const tenantId = session?.user?.tenantId;
   if (!tenantId) throw new Error("Unauthorized");
 
-  const [metrics, activity, steps, storefrontUrl, health, knowledge, goals] = await Promise.all([
+  const [metrics, activity, steps, storefrontUrl, health, knowledge, goals, recommendations] = await Promise.all([
     dashboardService.getMetrics(tenantId),
     dashboardService.getActivity(tenantId),
     dashboardService.getQuickStartSteps(tenantId),
@@ -20,6 +21,7 @@ export async function getDashboardData() {
     websiteHealthEngine.evaluate(tenantId),
     knowledgeScoreService.evaluate(tenantId),
     goalRuntime.evaluate(tenantId),
+    recommendationRuntime.getRecommendations(tenantId),
   ]);
 
   return {
@@ -45,6 +47,10 @@ export async function getDashboardData() {
       profile: goals.profile,
       dashboard: goals.dashboard,
       alignment: goals.alignment.overall,
+    },
+    recommendations: {
+      top: recommendations[0] ?? null,
+      total: recommendations.length,
     },
     steps,
     storefrontUrl,
