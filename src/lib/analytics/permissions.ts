@@ -21,7 +21,7 @@ export async function verifyTenantAccess(session: Session | null, tenantId: stri
   if (!agencyId) return "Forbidden";
 
   const link = await prisma.agencyTenant.findFirst({
-    where: { agencyId, tenantId },
+    where: { agencyId, tenantId, status: "ACTIVE" },
     select: { id: true },
   });
   return link ? null : "Forbidden";

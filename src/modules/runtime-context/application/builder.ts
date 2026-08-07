@@ -45,7 +45,10 @@ const buildCached = requestCache(async (tenantId: string, markShown = true): Pro
     goalRuntime.evaluateFrom(snapshot, profile, tenantId),
   ]);
 
-  const recommendationContext = await recommendationContextSource.buildFromSnapshot(snapshot, tenantId);
+  const recommendationContext = await recommendationContextSource.buildFromSnapshot(snapshot, tenantId, {
+    profile,
+    success,
+  });
   const recommendations = await recommendationRuntime.getRecommendationsFrom(recommendationContext, tenantId, markShown);
 
   const storefrontScore = computeStorefrontScore(snapshot, knowledge.score.overall, {

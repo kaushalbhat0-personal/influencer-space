@@ -57,7 +57,18 @@ export class BuilderService {
   }
 
   async save(websiteId: string, pages: BuilderPage[], tx?: TxClient): Promise<void> {
-    const client = tx || prisma;
+    // VALIDATION-03: the deleteMany + recreate must be atomic. Without a
+    // transaction an interleaved save (two users / two tabs) can leave the
+    // draft partially deleted or corrupted. When no tx is provided, wrap the
+    // whole rewrite in a transaction.
+    if (tx) {
+      await this.saveInner(websiteId, pages, tx);
+      return;
+    }
+    await prisma.$transaction((t) => this.saveInner(websiteId, pages, t as TxClient));
+  }
+
+  private async saveInner(websiteId: string, pages: BuilderPage[], client: TxClient): Promise<void> {
     await client.page.deleteMany({ where: { websiteId } });
 
     for (const page of pages) {

@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
+import { assetQueries } from "@/lib/media/repositories/asset-queries";
 import { afterContentChange } from "@/lib/publishing/content-change";
 
 async function requireTenant(): Promise<string> {
@@ -58,6 +59,9 @@ export async function deleteAsset(assetId: string): Promise<{
 }> {
   try {
     const tenantId = await requireTenant();
+    // VALIDATION-03: never delete another tenant's asset.
+    const owned = await assetQueries.findOwnedById(assetId, tenantId);
+    if (!owned) return { success: false, error: "Asset not found" };
     await mediaService.delete(assetId);
     await afterContentChange(tenantId);
     return { success: true };

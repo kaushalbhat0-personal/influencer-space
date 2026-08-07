@@ -119,27 +119,37 @@ export class CreatorInvitationService {
     }
 
     const password = await bcrypt.hash(input.password, 12);
-    const [user, workspace] = await Promise.all([
-      prisma.user.create({
-        data: {
-          email: normalizedEmail,
-          name: invite.creatorName,
-          password,
-          tenantId: invite.tenantId,
-          role: "ADMIN",
-        },
-      }),
-      invite.workspaceId
-        ? prisma.workspace.findUnique({ where: { id: invite.workspaceId } })
-        : prisma.workspace.findUnique({ where: { tenantId: invite.tenantId } }),
-    ]);
-
-    if (workspace) {
-      await prisma.workspaceMember.upsert({
-        where: { workspaceId_userId: { workspaceId: workspace.id, userId: user.id } },
-        update: { role: "OWNER", status: "ACTIVE" },
-        create: { workspaceId: workspace.id, userId: user.id, role: "OWNER", status: "ACTIVE" },
-      });
+    let user;
+    try {
+      const [created, workspace] = await Promise.all([
+        prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            name: invite.creatorName,
+            password,
+            tenantId: invite.tenantId,
+            role: "ADMIN",
+          },
+        }),
+        invite.workspaceId
+          ? prisma.workspace.findUnique({ where: { id: invite.workspaceId } })
+          : prisma.workspace.findUnique({ where: { tenantId: invite.tenantId } }),
+      ]);
+      user = created;
+      if (workspace) {
+        await prisma.workspaceMember.upsert({
+          where: { workspaceId_userId: { workspaceId: workspace.id, userId: user.id } },
+          update: { role: "OWNER", status: "ACTIVE" },
+          create: { workspaceId: workspace.id, userId: user.id, role: "OWNER", status: "ACTIVE" },
+        });
+      }
+    } catch (error) {
+      // VALIDATION-03: concurrent claim (double-click / second browser) can race
+      // the existing-account check — the unique constraint surfaces as P2002.
+      if (typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002") {
+        return { success: false, error: "An account with this email already exists. Sign in instead." };
+      }
+      throw error;
     }
 
     await prisma.setting.update({

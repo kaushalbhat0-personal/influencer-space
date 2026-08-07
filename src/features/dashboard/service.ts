@@ -66,9 +66,7 @@ export const dashboardService = {
       productCount: products.length,
       activeProductCount,
       publishedProductCount: publishedCount,
-      orderCount: await prisma.productOrder.count({
-        where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
-      }),
+      orderCount: orders,
       revenue: revenue._sum.amount ?? 0,
       galleryCount: gallery,
       linkCount: links,

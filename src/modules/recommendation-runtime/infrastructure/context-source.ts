@@ -41,12 +41,17 @@ export class RecommendationContextSource {
   /**
    * Build from an already-built snapshot (RCCF-INTEGRATION-01). Consumers of the
    * shared RuntimeContext pass their snapshot so the WebsiteAggregate is built
-   * once per request.
+   * once per request. `preRead` lets a shared builder pass profile/success it
+   * already read, avoiding duplicate queries (VALIDATION-03).
    */
-  async buildFromSnapshot(snapshot: KnowledgeSnapshot, tenantId: string): Promise<RecommendationContext> {
+  async buildFromSnapshot(
+    snapshot: KnowledgeSnapshot,
+    tenantId: string,
+    preRead?: { profile?: GoalProfile | null; success?: Awaited<ReturnType<typeof getCreatorSuccess>> | null },
+  ): Promise<RecommendationContext> {
     const [profile, success, publishStatus, analyticsCount, counts] = await Promise.all([
-      goalProfileService.getProfile(tenantId),
-      getCreatorSuccess(tenantId).catch(() => null),
+      preRead?.profile !== undefined ? Promise.resolve(preRead.profile) : goalProfileService.getProfile(tenantId),
+      preRead?.success !== undefined ? Promise.resolve(preRead.success) : getCreatorSuccess(tenantId).catch(() => null),
       prisma.publishStatus.findFirst({
         where: { website: { tenantId } },
         select: { state: true },

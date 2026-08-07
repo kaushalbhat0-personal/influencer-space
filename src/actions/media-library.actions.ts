@@ -317,6 +317,9 @@ export async function createAssetReference(
 ) {
   try {
     const tenantId = await requireTenant();
+    // VALIDATION-03: never attach a reference to another tenant's asset.
+    const owned = await assetQueries.findOwnedById(assetId, tenantId);
+    if (!owned) return { success: false, error: "Asset not found" };
     await mediaService.createReference(assetId, tenantId, entityType, entityId, entityField);
     return { success: true };
   } catch (error) {
