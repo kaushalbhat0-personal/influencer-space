@@ -17,6 +17,7 @@ import { emitEvent } from "@/modules/event-runtime";
 import { applyGoalSectionPriority } from "@/modules/goals-runtime";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
+import { metricsService } from "@/lib/observability/metrics-service";
 import {
   buildProvisioningInput, buildBuilderArtifactData, detectPlatform,
 } from "@/lib/generation/integration/provision-pipeline";
@@ -300,10 +301,12 @@ export async function runCreatorGeneration(
       await sessionService.updateStage(generationSessionId, "planning_context", "running");
     }
 
+    const genStart = Date.now();
     const generateResult = await onboardingService.generate(
       profileResult.knowledgeGraph,
       profileResult.experienceProfile,
     );
+    metricsService.recordDuration("generation", Date.now() - genStart, { sourcePlatform: profileResult.platform ?? "unknown" });
     markStage("generation", "completed");
 
     if (generationSessionId) {

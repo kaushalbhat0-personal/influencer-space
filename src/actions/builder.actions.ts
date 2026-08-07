@@ -7,6 +7,7 @@ import { publishingService } from "@/lib/publishing/service";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import { workspaceContext } from "@/modules/workspace/application/workspace-context";
 import { workspacePolicy } from "@/lib/workspace/policy";
+import { metricsService } from "@/lib/observability/metrics-service";
 import type { BuilderPage } from "@/lib/builder/types";
 import { storefrontToBuilderPages } from "@/lib/builder/artifact-loader";
 
@@ -80,7 +81,9 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
 
     const websiteId = await getWebsiteId();
     const { prisma } = await import("@/lib/prisma");
+    const saveStart = Date.now();
     await builderService.save(websiteId, pages);
+    metricsService.recordDuration("builder_save", Date.now() - saveStart, { websiteId });
 
     // VALIDATION-03.5 C2: the draft is the source of truth. markChangesPending
     // is cosmetic (publish-status flag) — a failure must not report the save as

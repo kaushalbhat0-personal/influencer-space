@@ -23,14 +23,18 @@ function StatCard({ label, value, icon, accent }: { label: string; value: string
 }
 
 export default async function SuperAdminPage() {
-  const [stats, tenants, opMetrics, alertReport] = await Promise.all([
+  const opMetrics = await dashboardMetricsService.collect().catch(() => ({
+    mrr: 0, arr: 0, generationSuccessRate: 0, failedPublishes: 0,
+  } as Awaited<ReturnType<typeof dashboardMetricsService.collect>>));
+  const [stats, tenants, alertReport] = await Promise.all([
     getPlatformStats().catch(() => ({
       totalTenants: 0, totalProducts: 0, totalGallery: 0, totalOrders: 0, totalRevenue: 0,
       totalAgencies: 0, totalUsers: 0, activeProSubscriptions: 0, auditEntries24h: 0, publishCount: 0,
     })),
     getAllTenants().catch(() => []),
-    dashboardMetricsService.collect(),
-    alertEvaluator.evaluateAllRules(),
+    // RCCF-LAUNCH-01: reuse the already-collected metrics instead of a second
+    // full aggregation inside the alert evaluator.
+    alertEvaluator.evaluateAllRules(opMetrics),
   ]);
 
   const hasAlerts = alertReport.criticalCount + alertReport.warningCount > 0;

@@ -17,6 +17,9 @@ const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/api/webhooks/razorpay": { windowMs: 1000, maxRequests: 30 },
   "/api/checkout": { windowMs: 60_000, maxRequests: 20 },
   "/api/domain/verify": { windowMs: 60_000, maxRequests: 10 },
+  "/api/media/upload-url": { windowMs: 60_000, maxRequests: 60 },
+  "/api/media/upload": { windowMs: 60_000, maxRequests: 60 },
+  "/api/media/register": { windowMs: 60_000, maxRequests: 120 },
 };
 
 export interface RateLimitResult {
@@ -26,9 +29,22 @@ export interface RateLimitResult {
   retryAfterMs: number;
 }
 
+// RCCF-LAUNCH-01: bound the in-memory map — expired keys were only evicted when
+// re-hit, so a unique-IP flood grew the Map forever. Sweep periodically.
+let sweepCounter = 0;
+function sweepExpired(): void {
+  sweepCounter++;
+  if (sweepCounter % 50 !== 0) return;
+  const now = Date.now();
+  for (const [key, entry] of Array.from(requestCounts.entries())) {
+    if (now > entry.resetAt) requestCounts.delete(key);
+  }
+}
+
 export function checkRateLimit(key: string, endpoint?: string): RateLimitResult {
   const config = endpoint ? ENDPOINT_LIMITS[endpoint] : DEFAULT_CONFIG;
   const now = Date.now();
+  sweepExpired();
   const entry = requestCounts.get(key);
 
   if (!entry || now > entry.resetAt) {

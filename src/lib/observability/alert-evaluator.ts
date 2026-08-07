@@ -69,9 +69,13 @@ async function evaluateRule(rule: AlertRule, metrics: DashboardMetrics, health: 
   };
 }
 
-export async function evaluateAllRules(): Promise<AlertReport> {
+export async function evaluateAllRules(
+  preCollectedMetrics?: Awaited<ReturnType<typeof dashboardMetricsService.collect>>,
+): Promise<AlertReport> {
   const [metrics, health] = await Promise.all([
-    dashboardMetricsService.collect(),
+    // RCCF-LAUNCH-01: the super-admin dashboard already collects metrics; pass
+    // them in instead of re-running the full aggregation (duplicate work).
+    preCollectedMetrics ?? dashboardMetricsService.collect(),
     healthService.checkAll(),
   ]);
 

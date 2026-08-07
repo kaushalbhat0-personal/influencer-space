@@ -67,14 +67,22 @@ export function InteractiveCanvas({
 
   // Dashboard edits appear in the Builder immediately when the tab regains
   // focus — no publish, no reload, no preview step.
+  // RCCF-LAUNCH-01: debounced — the focus/visibility refetch rebuilt the full
+  // aggregate (~15 queries) on every tab switch / focus event.
   useEffect(() => {
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") loadLiveContent();
+    let focusTimer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = () => {
+      if (focusTimer) clearTimeout(focusTimer);
+      focusTimer = setTimeout(() => loadLiveContent(), 1500);
     };
-    const onFocus = () => loadLiveContent();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") schedule();
+    };
+    const onFocus = () => schedule();
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("focus", onFocus);
     return () => {
+      if (focusTimer) clearTimeout(focusTimer);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("focus", onFocus);
     };

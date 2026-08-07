@@ -60,10 +60,17 @@ export async function getPlatformStats(): Promise<PlatformStats> {
 }
 
 export async function getAllTenants(): Promise<TenantWithDetails[]> {
+  // RCCF-LAUNCH-01: lean select — previously the full Tenant row (incl.
+  // razorpay/IG/Twitch/YT secrets) and every user were pulled per tenant.
   const tenants = await prisma.tenant.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
-      users: { select: { id: true, email: true, name: true } },
+    select: {
+      id: true,
+      name: true,
+      subdomain: true,
+      customDomain: true,
+      createdAt: true,
+      users: { select: { id: true, email: true, name: true }, take: 1 },
       _count: { select: { users: true, products: true } },
     },
   });

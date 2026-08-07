@@ -3,6 +3,14 @@
     "src/app/admin/settings/**/*": {
       "maxDuration": 30,
       "memory": 1024
+    },
+    "src/app/[domain]/**/*": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "src/app/builder/**/*": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
   "crons": [
@@ -13,6 +21,10 @@
     {
       "path": "/api/cron/cleanup-audit",
       "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/integrity-cleanup",
+      "schedule": "0 4 * * *"
     }
   ]
 }

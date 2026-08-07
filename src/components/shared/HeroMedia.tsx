@@ -85,10 +85,15 @@ export function HeroMedia({
   }
 
   return (
+    // RCCF-LAUNCH-01: LCP image — eager + high priority. The hero media is
+    // inside a fixed-aspect container so no layout shift is introduced.
     <img
       src={url}
       alt=""
       className={mediaClass}
+      loading="eager"
+      fetchPriority="high"
+      decoding="async"
     />
   );
 }

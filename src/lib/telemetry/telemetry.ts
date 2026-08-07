@@ -17,12 +17,17 @@ export class PlatformTelemetry {
   timer(name: string, durationMs: number, labels: Record<string, string> = {}): void {
     const key = this.labelKey(name, labels);
     if (!this.timerBuckets.has(key)) this.timerBuckets.set(key, []);
-    this.timerBuckets.get(key)!.push(durationMs);
+    const arr = this.timerBuckets.get(key)!;
+    // RCCF-LAUNCH-01: bound memory — keep a fixed rolling window per timer.
+    arr.push(durationMs);
+    if (arr.length > 1000) arr.shift();
   }
 
   histogram(name: string, value: number, buckets: number[] = [1, 5, 10, 50, 100, 500, 1000, 5000]): void {
     if (!this.histograms.has(name)) this.histograms.set(name, { buckets, values: [] });
-    this.histograms.get(name)!.values.push(value);
+    const arr = this.histograms.get(name)!.values;
+    arr.push(value);
+    if (arr.length > 1000) arr.shift();
   }
 
   startSpan(name: string, traceId?: string, parentId?: string): string {

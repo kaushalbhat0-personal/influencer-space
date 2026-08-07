@@ -108,7 +108,10 @@ export async function POST(req: Request) {
         },
       });
 
-      const requestedPlanCode = body.planCode || "creator_launch";
+      // RCCF-LAUNCH-01: self-serve creator signup is FREE-only. The body
+      // previously accepted an arbitrary `planCode`, granting a paid plan in
+      // TRIALING with no verification — paid plans must come through checkout.
+      const requestedPlanCode = "creator_launch";
       const billingPlan = await tx.billingPlan.findUnique({
         where: { code: requestedPlanCode },
       });

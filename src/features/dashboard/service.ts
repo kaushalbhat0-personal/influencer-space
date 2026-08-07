@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { captureError } from "@/lib/observability/error-tracker";
+import { cache as reactCache } from "react";
 import type { DashboardMetrics, DashboardActivity, QuickStartStep } from "./types";
+
+// RCCF-LAUNCH-01: request-scoped memoization (same convention as the Runtime
+// Context builder / health engine) — getMetrics is read by the dashboard page
+// AND the context builder within the same render; dedupe the ~13 queries.
+const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  typeof reactCache === "function" ? reactCache : ((fn: (x: never) => unknown) => fn as never);
 
 /** Executes a potentially optional query and returns a safe default if the table/query fails. */
 async function safeMetric<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
@@ -13,7 +20,7 @@ async function safeMetric<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 }
 
 export const dashboardService = {
-  async getMetrics(tenantId: string): Promise<DashboardMetrics> {
+  getMetrics: requestCache(async (tenantId: string): Promise<DashboardMetrics> => {
     const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website, bookings, offerings, orders] = await Promise.all([
       prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true, status: true } }),
       prisma.productOrder.aggregate({
@@ -87,7 +94,7 @@ export const dashboardService = {
       currentTheme: website?.themePackageId ?? null,
       recentVersions,
     };
-  },
+  }),
 
   async getActivity(tenantId: string): Promise<DashboardActivity[]> {
     const events = await prisma.auditLog.findMany({

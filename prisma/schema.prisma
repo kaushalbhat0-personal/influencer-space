@@ -92,6 +92,7 @@ model Tenant {
   bookings              Booking[]
 
   @@index([customDomain])
+  @@index([createdAt])
 }
 
 /// One Website per Tenant — the aggregate root for storefront content.
@@ -110,8 +111,6 @@ model Website {
   brand         Brand?
   publishStatus PublishStatus?
   pages         Page[]
-
-  @@index([tenantId])
 }
 
 /// Brand identity — replaces brand_config + influencer_data settings.
@@ -143,7 +142,6 @@ model PublishStatus {
   website   Website           @relation(fields: [websiteId], references: [id], onDelete: Cascade)
   snapshots PublishSnapshot[]
 
-  @@index([websiteId])
   @@index([state])
 }
 
@@ -160,7 +158,6 @@ model PublishSnapshot {
   publishStatus PublishStatus @relation(fields: [websiteId], references: [websiteId], onDelete: Cascade, map: "PublishSnapshot_websiteId_fkey")
 
   @@unique([websiteId, version])
-  @@index([websiteId])
 }
 
 model Theme {
@@ -194,8 +191,6 @@ model Subscription {
   updatedAt              DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
 }
 
 model WebsiteAgency {
@@ -288,7 +283,6 @@ model WorkspaceMember {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
-  @@index([workspaceId])
   @@index([userId])
 }
 
@@ -333,6 +327,7 @@ model User {
 
   @@index([tenantId])
   @@index([agencyId])
+  @@index([role])
 }
 
 model Product {
@@ -361,7 +356,7 @@ model Product {
 
   @@index([tenantId])
   @@index([slug, tenantId])
-  @@index([status])
+  @@index([tenantId, status, isActive, order])
 }
 
 model ProductOrder {
@@ -385,6 +380,8 @@ model ProductOrder {
 
   @@index([tenantId])
   @@index([productId])
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
 }
 
 model AffiliateLink {
@@ -429,7 +426,6 @@ model NewsletterSubscriber {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, email])
-  @@index([tenantId])
 }
 
 model Setting {
@@ -442,7 +438,7 @@ model Setting {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, key])
-  @@index([tenantId])
+  @@index([key])
 }
 
 model GalleryImage {
@@ -471,8 +467,8 @@ model GalleryImage {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
-  @@index([status])
   @@index([category])
+  @@index([tenantId, status, isActive, order])
 }
 
 model TimelineEvent {
@@ -524,7 +520,6 @@ model SocialStats {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, platform])
-  @@index([tenantId])
 }
 
 model AuditLog {
@@ -584,7 +579,6 @@ model Page {
   sections Section[]
 
   @@unique([websiteId, slug])
-  @@index([websiteId])
 }
 
 /// A section within a page — holds blocks.
@@ -730,6 +724,7 @@ model GenerationSession {
   @@index([workspaceId])
   @@index([status])
   @@index([creatorId])
+  @@index([status, updatedAt])
   @@index([correlationId])
 }
 
@@ -816,7 +811,7 @@ model BillingSubscription {
 
   @@index([accountId])
   @@index([planId])
-  @@index([workspaceId])
+  @@index([planId, status])
 }
 
 /// Immutable billing event log. Append-only, never edited.
@@ -835,7 +830,7 @@ model BillingEvent {
   @@index([accountId])
   @@index([workspaceId])
   @@index([type])
-  @@index([createdAt])
+  @@index([type, createdAt])
 }
 
 /// Platform alert record (IMPLEMENTATION-40) — durable alert state replacing
@@ -914,6 +909,8 @@ model BillingInvoice {
   @@index([workspaceId])
   @@index([status])
   @@index([dueAt])
+  @@index([workspaceId, issuedAt])
+  @@index([status, issuedAt])
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1163,7 +1160,6 @@ model Asset {
   tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   references AssetReference[]
 
-  @@index([tenantId])
   @@index([checksum])
   @@index([mimeType])
   @@index([status])
@@ -1235,7 +1231,6 @@ model Offering {
   purchases Purchase[]
 
   @@unique([tenantId, slug])
-  @@index([tenantId])
   @@index([tenantId, status])
   @@index([type])
 }
@@ -1363,6 +1358,7 @@ model AnalyticsEvent {
   @@index([source, eventType])
   @@index([eventType, occurredAt])
   @@index([occurredAt])
+  @@index([tenantId, eventType, occurredAt])
 }
 
 // ── PLATFORM EVENTS ──────────────────────────────────────────────────────────
@@ -1523,6 +1519,7 @@ model CommissionEntry {
   @@index([partnerId, createdAt])
   @@index([invoiceId])
   @@index([status])
+  @@index([createdAt])
 }
 
 // ── PAYOUT ───────────────────────────────────────────────────────────────────
@@ -1600,7 +1597,6 @@ model Settlement {
 
   @@index([partnerId])
   @@index([status])
-  @@index([settlementRef])
 }
 
 model SettlementItem {

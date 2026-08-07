@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService, MediaValidationError } from "@/lib/media/service";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const tenantId = session?.user?.tenantId;
     if (!tenantId) return fail("Unauthorized", 401);
+
+    // RCCF-LAUNCH-01: bound per-tenant upload signing (60/min) — was unlimited.
+    const rate = checkRateLimit(`media:upload-url:${tenantId}`, "/api/media/upload-url");
+    if (!rate.allowed) return NextResponse.json({ success: false, error: "Too many upload requests" }, { status: 429 });
 
     let body: Record<string, unknown>;
     try {

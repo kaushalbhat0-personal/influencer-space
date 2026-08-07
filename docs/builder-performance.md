@@ -1,45 +1,48 @@
-# Builder Performance
+# Builder Performance — Final (RCCF-LAUNCH-01)
 
-RCCF-VALIDATION-03.5 · Builder Collaboration & Draft Integrity.
+## Save (the hot path)
 
-## Measured profile
-
-| Path | Query count | Notes |
+| Metric | Before | After |
 | --- | --- | --- |
-| Builder load | ~3 (website + pages/sections/blocks nested) | Light ✅. Plus preview (~16 aggregate) + overview (~18 counts) on mount. |
-| Autosave (`saveBuilderPages`) | ~1,026 for 25 pages / 500 sections / 2000 blocks | `deleteMany` + per-page `create` + per-section `create` (not batched) + per-section `block.createMany`. Sequential, in one transaction. |
-| Publish | ~28–34 | tenant/workspace/website/policy + aggregate build (~16) + nav + 4-query snapshot transaction; serializes the full layout into the snapshot JSON. |
-| Rollback | `load` + `save` (~1,026) + status flag | Same full-rewrite cost as save. |
+| Statements (100 pages / 500 sections / 5000 blocks) | ~1,100 sequential | **3** (`createManyAndReturn` for pages + sections, one `block.createMany`) |
+| Atomicity | transactional (V-03) | preserved (same `$transaction`) |
+| UUID regeneration | N/A (ids are DB-generated) | unchanged |
+| Wall-time estimate @ 2ms RTT | 2–5 s | <20 ms of round-trips |
 
-## Latency estimates (save)
+`builder-service.ts:saveInner` now builds page rows → `createManyAndReturn`,
+flattens all sections → `createManyAndReturn`, flattens all blocks →
+`createMany`. No behavioral change; load is unchanged (single nested query).
 
-- 25 pages / 500 sections / 2000 blocks ≈ **1,026 sequential queries**.
-  - ~2ms RTT → ~2s
-  - ~10ms RTT → ~10s+
-- The transaction holds locks on the website's rows for the whole duration.
+## Autosave
 
-## Findings
+- Debounce re-arms after a failed save (V-03.5 B-1) — verified.
+- `beforeunload` guard present (V-03.5 B-2).
 
-| # | Sev | Finding |
-| --- | --- | --- |
-| B-16 | Medium | `BuilderService.save` rewrites the entire document on every autosave (deleteMany + ~1,026 sequential creates). Sections aren't batched. |
-| B-17 | Low | Publish rebuilds the content aggregate (~16 queries) even though the snapshot stores layout-only; snapshot JSON is large. |
-| B-18 | Low | Storefront rebuilds the aggregate on every request (live content, by design). |
+## Preview
 
-## Recommended fixes
+- Builder focus/visibility refetch **debounced 1.5s** (`interactive-canvas.tsx`) —
+  previously each tab switch / focus event rebuilt the full aggregate (~15
+  queries + full JSON serialization).
+- The canvas `layoutSignature` still serializes per render (store.js) — marked
+  roadmap (incremental signature) since the sidebar/canvas already memoize.
 
-1. **Batch section creates** with `createMany` (25 `createMany` calls, one per
-   page) — drops ~475 queries.
-2. **Diff-based or upsert-per-row saves** keyed on stable IDs instead of full
-   delete+recreate — the real fix for large drafts (also removes the P2002 race).
-3. **Skip the aggregate rebuild during publish** when the snapshot stores
-   layout/theme/navigation only.
-4. **Draft history**: persist per-save deltas or throttled autosave snapshots
-   (bounds recovery cost).
+## Publish / rollback
 
-## Verified wins
+- Publish is atomic + versioned (V-03/V-04) and instruments `publish` duration.
+- Rollback flags changes-pending (V-03.5 B-9).
+- `builder_save` duration now recorded (`metricsService`) for P50/P95/P99.
 
-- Builder **load** is a single nested query (no N+1).
-- Save is now **atomic** (V-03), so a large save either fully commits or fully
-  rolls back.
-- Autosave failure no longer dead-stops the draft (V-03.5 B-1).
+## Recovery
+
+- Stuck generation sessions (`queued/running/publishing` > 60 min) are recovered
+  to `timed_out` by `runSafeCleanup` (V-04) — now also run nightly by the
+  `/api/cron/integrity-cleanup` job.
+
+## Enterprise-size verification
+
+- 100 pages / 500 sections / 5000 blocks: save = 3 statements; load = 1 query +
+  nested relations; transaction bounded.
+- Registered index `GenerationSession(status, updatedAt)` and
+  `ProductOrder(tenantId, createdAt)` support the growth paths.
+- Remaining roadmap: incremental draft signature (avoid per-render deep-clone)
+  and diff-based saves keyed on stable IDs (V-03.5 B-7 roadmap).

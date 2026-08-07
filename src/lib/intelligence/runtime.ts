@@ -68,6 +68,21 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+// RCCF-LAUNCH-01: bound memory (was unbounded — never-accessed keys and the
+// cost of an ever-growing Map on long-lived serverless instances).
+const MAX_CACHE_ENTRIES = 1000;
+
+function sweepExpired(): void {
+  if (cache.size < MAX_CACHE_ENTRIES) return;
+  const now = Date.now();
+  for (const [key, entry] of Array.from(cache.entries())) {
+    if (now - entry.createdAt > entry.ttl) cache.delete(key);
+  }
+  if (cache.size >= MAX_CACHE_ENTRIES) {
+    const oldest = Array.from(cache.entries()).sort((a, b) => a[1].createdAt - b[1].createdAt)[0];
+    if (oldest) cache.delete(oldest[0]);
+  }
+}
 
 export const cacheRuntime = {
   get(task: AITaskType, creatorId: string, knowledgeHash: string): CacheEntry | undefined {
@@ -80,6 +95,7 @@ export const cacheRuntime = {
   },
 
   set(task: AITaskType, creatorId: string, knowledgeHash: string, value: string | Record<string, unknown>, ttl = DEFAULT_TTL): void {
+    sweepExpired();
     cache.set(buildCacheKey(task, creatorId), {
       key: buildCacheKey(task, creatorId), value, task, creatorId, knowledgeHash,
       promptVersion: 1, createdAt: Date.now(), ttl,
