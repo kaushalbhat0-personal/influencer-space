@@ -17,8 +17,10 @@ export async function listProducts() {
 
 export async function getProduct(id: string) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  return productService.getById(id);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+  // VALIDATION-01 V-035: scope to the session tenant.
+  return productService.getById(id, tenantId);
 }
 
 export async function createProduct(input: ProductFormInput) {
@@ -35,19 +37,24 @@ export async function createProduct(input: ProductFormInput) {
 
 export async function updateProduct(id: string, input: Partial<ProductFormInput>) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
 
-  const result = await productService.update(id, input);
+  // VALIDATION-01 V-029: validate updates (blocks negative/NaN prices).
+  const parsed = productFormSchema.partial().parse(input);
+  const result = await productService.update(id, tenantId, parsed as Partial<ProductFormInput>);
   revalidatePath("/admin/products");
-  await afterContentChange(session.user.tenantId, { revalidateDashboard: true });
+  await afterContentChange(tenantId, { revalidateDashboard: true });
   return result;
 }
 
 export async function deleteProduct(id: string) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
 
-  await productService.delete(id);
+  // VALIDATION-01 V-035: scope to the session tenant.
+  await productService.delete(id, tenantId);
   revalidatePath("/admin/products");
-  await afterContentChange(session.user.tenantId, { revalidateDashboard: true });
+  await afterContentChange(tenantId, { revalidateDashboard: true });
 }

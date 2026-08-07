@@ -31,8 +31,9 @@ export const productService = {
     return rows.map(mapProduct);
   },
 
-  async getById(id: string): Promise<ProductData | null> {
-    const row = await prisma.product.findUnique({ where: { id } });
+  async getById(id: string, tenantId: string): Promise<ProductData | null> {
+    // VALIDATION-01 V-035: scope product reads to the session tenant.
+    const row = await prisma.product.findFirst({ where: { id, tenantId } });
     return row ? mapProduct(row as Record<string, unknown>) : null;
   },
 
@@ -56,7 +57,10 @@ export const productService = {
     return mapProduct(row as Record<string, unknown>);
   },
 
-  async update(id: string, input: Partial<ProductFormInput>): Promise<ProductData> {
+  async update(id: string, tenantId: string, input: Partial<ProductFormInput>): Promise<ProductData> {
+    // VALIDATION-01 V-035: scope product updates to the session tenant.
+    const existing = await prisma.product.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!existing) throw new Error("Product not found");
     const row = await prisma.product.update({
       where: { id },
       data: {
@@ -76,7 +80,10 @@ export const productService = {
     return mapProduct(row as Record<string, unknown>);
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, tenantId: string): Promise<void> {
+    // VALIDATION-01 V-035: scope product deletes to the session tenant.
+    const existing = await prisma.product.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!existing) throw new Error("Product not found");
     await prisma.product.delete({ where: { id } });
   },
 };

@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockProductFindMany, mockProductCreate, mockProductUpdate, mockProductDelete, mockProductFindUnique } = vi.hoisted(() => ({
+const { mockProductFindMany, mockProductCreate, mockProductUpdate, mockProductDelete, mockProductFindUnique, mockProductFindFirst } = vi.hoisted(() => ({
   mockProductFindMany: vi.fn(),
   mockProductCreate: vi.fn(),
   mockProductUpdate: vi.fn(),
   mockProductDelete: vi.fn(),
   mockProductFindUnique: vi.fn(),
+  mockProductFindFirst: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -16,6 +17,7 @@ vi.mock("@/lib/prisma", () => ({
       update: mockProductUpdate,
       delete: mockProductDelete,
       findUnique: mockProductFindUnique,
+      findFirst: mockProductFindFirst,
     },
   },
 }));
@@ -66,9 +68,11 @@ describe("Product service", () => {
     expect(result.price).toBe(50);
   });
 
-  it("delete calls prisma delete", async () => {
+  it("delete calls prisma delete (scoped to tenant)", async () => {
+    mockProductFindFirst.mockResolvedValue({ id: "1" });
     mockProductDelete.mockResolvedValue({});
-    await productService.delete("1");
+    await productService.delete("1", "t1");
+    expect(mockProductFindFirst).toHaveBeenCalledWith({ where: { id: "1", tenantId: "t1" }, select: { id: true } });
     expect(mockProductDelete).toHaveBeenCalledWith({ where: { id: "1" } });
   });
 

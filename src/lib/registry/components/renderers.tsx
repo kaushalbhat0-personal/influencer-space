@@ -392,6 +392,12 @@ export function FooterRenderer({ props }: RendererProps) {
         </div>
       )}
       {String(p.copyright || "© All rights reserved")}
+      {/* VALIDATION-01 V-032: legal links on the storefront footer. */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-[11px]">
+        <a href="/terms" className="text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Terms</a>
+        <a href="/privacy" className="text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Privacy</a>
+        <a href="/refund" className="text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Refunds</a>
+      </div>
     </footer>
   );
 }

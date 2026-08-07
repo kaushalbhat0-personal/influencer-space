@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { assetRepository } from "@/lib/media/repositories/asset-repository";
+import { assetQueries } from "@/lib/media/repositories/asset-queries";
 import { mediaService } from "@/lib/media/service";
 import { prisma } from "@/lib/prisma";
 import { uploadAsset } from "./media.actions";
@@ -73,7 +74,8 @@ export async function listAssets(params?: {
 export async function getAsset(assetId: string) {
   try {
     const tenantId = await requireTenant();
-    const asset = await assetRepository.findById(assetId);
+    // VALIDATION-01 V-034: scope asset reads to the session tenant.
+    const asset = await assetQueries.findOwnedById(assetId, tenantId);
     if (!asset) return { success: true, asset: null };
     const [enriched] = await attachUsage(tenantId, [asset]);
     return { success: true, asset: enriched ?? asset };
@@ -101,6 +103,9 @@ export async function resolveAssetReferences(assetId: string) {
 export async function deleteAssetFromLibrary(assetId: string) {
   try {
     const tenantId = await requireTenant();
+    // VALIDATION-01 V-034: never delete another tenant's asset.
+    const owned = await assetQueries.findOwnedById(assetId, tenantId);
+    if (!owned) return { success: false, error: "Asset not found" };
     await mediaService.delete(assetId);
     await afterContentChange(tenantId);
     return { success: true };
@@ -250,8 +255,12 @@ export async function verifyStorageObjects(storageKeys: string[]) {
   }
 }
 
-export async function purgeAsset(assetId: string) {  try {
+export async function purgeAsset(assetId: string) {
+  try {
     const tenantId = await requireTenant();
+    // VALIDATION-01 V-034: never purge another tenant's asset.
+    const owned = await assetQueries.findOwnedById(assetId, tenantId);
+    if (!owned) return { success: false, error: "Asset not found" };
     await mediaService.purge(assetId);
     await afterContentChange(tenantId);
     return { success: true };
@@ -263,6 +272,9 @@ export async function purgeAsset(assetId: string) {  try {
 export async function replaceAsset(assetId: string, formData: FormData) {
   try {
     const tenantId = await requireTenant();
+    // VALIDATION-01 V-034: never replace another tenant's asset.
+    const owned = await assetQueries.findOwnedById(assetId, tenantId);
+    if (!owned) return { success: false, error: "Asset not found" };
     const file = formData.get("file") as File | null;
     if (!file) return { success: false, error: "No file provided" };
 
@@ -286,7 +298,10 @@ export async function removeAssetReference(
   entityField?: string,
 ) {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
+    // VALIDATION-01 V-034: scope reference mutations to the session tenant.
+    const owned = await assetQueries.findOwnedById(assetId, tenantId);
+    if (!owned) return { success: false, error: "Asset not found" };
     await mediaService.removeReference(assetId, entityType, entityId, entityField);
     return { success: true };
   } catch (error) {

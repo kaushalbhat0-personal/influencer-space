@@ -113,7 +113,7 @@ export function BuilderToolbar({
             ) : (
               <Upload className="h-3 w-3" />
             )}
-            {saving ? "Saving..." : "Publish"}
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>

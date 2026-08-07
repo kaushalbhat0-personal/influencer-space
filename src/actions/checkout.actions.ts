@@ -16,6 +16,8 @@ export type CheckoutResult = {
   couponApplied?: boolean;
   discountAmount?: number;
   tax?: number;
+  /** True when the order was fulfilled without payment (free / 100% coupon). */
+  free?: boolean;
 };
 
 export async function createCheckout(
@@ -62,6 +64,32 @@ export async function createCheckout(
         fanEmail,
       },
     });
+
+    // VALIDATION-01 V-028: free products / 100%-off coupons (total ≤ 0) cannot
+    // go through Razorpay (it rejects amount 0). Complete the order immediately.
+    if (total <= 0) {
+      await prisma.productOrder.update({
+        where: { id: dbOrder.id },
+        data: { status: "COMPLETED" },
+      });
+      await logAction(tenantId, "checkout:completed", {
+        orderId: dbOrder.id,
+        productId,
+        amount: total,
+        free: true,
+        couponCode: couponCode ?? null,
+      });
+      return {
+        success: true,
+        orderId: dbOrder.id,
+        amount: total,
+        currency: "INR",
+        free: true,
+        couponApplied,
+        discountAmount,
+        tax,
+      };
+    }
 
     // Create Razorpay order
     const razorpay = getRazorpayInstance();

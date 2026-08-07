@@ -26,6 +26,19 @@ export class AssetQueries {
     }) as Promise<AssetWithReferences | null>;
   }
 
+  /**
+   * VALIDATION-01 V-034: tenant-scoped find — prevents cross-tenant asset
+   * read/delete/replace via a guessed asset id.
+   */
+  async findOwnedById(id: string, tenantId: string): Promise<AssetWithReferences | null> {
+    const normalized = normalizeAssetId(id);
+    if (!normalized) return null;
+    return prisma.asset.findFirst({
+      where: { id: normalized, tenantId },
+      include: { references: true },
+    }) as Promise<AssetWithReferences | null>;
+  }
+
   async findByTenant(tenantId: string, filters?: AssetFilters): Promise<{ assets: AssetWithReferences[]; total: number }> {
     const where: Record<string, unknown> = { tenantId };
 

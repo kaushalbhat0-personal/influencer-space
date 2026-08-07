@@ -125,6 +125,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, userId: result.userId, email }, { status: 201 });
   } catch (error) {
+    // VALIDATION-01 V-014: a concurrent duplicate-email race surfaces as P2002
+    // (the unique constraint), not an internal error.
+    if (typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002") {
+      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    }
     captureError(error, { service: "auth-register", operation: "POST" });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

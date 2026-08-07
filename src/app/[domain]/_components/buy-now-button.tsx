@@ -66,16 +66,29 @@ export function BuyNowButton({
     setLoading(true);
     setToast(null);
 
-    const loaded = await loadRazorpayScript();
-    if (!loaded) {
-      showToast("error", "Failed to load payment gateway. Please try again.");
+    const result = await createCheckout(productId, "");
+
+    // VALIDATION-01 V-028: free products / 100%-off coupons are fulfilled
+    // without Razorpay — show success directly.
+    if (result.free) {
+      showToast("success", "It's on us — enjoy your free purchase!");
+      try {
+        const confetti = (await import("canvas-confetti")).default;
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      } catch {}
       setLoading(false);
       return;
     }
 
-    const result = await createCheckout(productId, "");
     if (!result.success || !result.razorpayOrderId) {
       showToast("error", result.error || "Failed to initiate payment");
+      setLoading(false);
+      return;
+    }
+
+    const loaded = await loadRazorpayScript();
+    if (!loaded) {
+      showToast("error", "Failed to load payment gateway. Please try again.");
       setLoading(false);
       return;
     }

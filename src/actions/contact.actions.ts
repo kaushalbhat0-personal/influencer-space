@@ -57,7 +57,10 @@ export async function markMessageAsRead(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
+    // VALIDATION-01 V-038: scope message mutations to the session tenant.
+    const owned = await prisma.contactSubmission.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!owned) return { success: false, error: "Message not found" };
     await prisma.contactSubmission.update({
       where: { id },
       data: { isRead: true },
@@ -73,7 +76,10 @@ export async function deleteMessage(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireTenant();
+    const tenantId = await requireTenant();
+    // VALIDATION-01 V-038: scope message mutations to the session tenant.
+    const owned = await prisma.contactSubmission.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!owned) return { success: false, error: "Message not found" };
     await prisma.contactSubmission.delete({ where: { id } });
     revalidatePath(MESSAGES_ROUTE);
     return { success: true };

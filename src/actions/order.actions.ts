@@ -11,8 +11,9 @@ async function requireTenant(): Promise<string> {
   return session.user.tenantId;
 }
 
-export async function fetchOrders(tenantId: string): Promise<OrderRow[]> {
-  await requireTenant();
+export async function fetchOrders(_clientTenantId: string): Promise<OrderRow[]> {
+  // VALIDATION-01 V-036: always use the session tenant, never a client-supplied id.
+  const tenantId = await requireTenant();
 
   const orders = await prisma.productOrder.findMany({
     where: { tenantId },
@@ -32,8 +33,9 @@ export async function fetchOrders(tenantId: string): Promise<OrderRow[]> {
   }));
 }
 
-export async function fetchCustomers(tenantId: string) {
-  await requireTenant();
+export async function fetchCustomers(_clientTenantId: string) {
+  // VALIDATION-01 V-036: always use the session tenant.
+  const tenantId = await requireTenant();
 
   const orders = await prisma.productOrder.findMany({
     where: { tenantId, fanEmail: { not: null } },
@@ -62,8 +64,9 @@ export async function fetchCustomers(tenantId: string) {
   }));
 }
 
-export async function fetchAnalytics(tenantId: string) {
-  await requireTenant();
+export async function fetchAnalytics(_clientTenantId: string) {
+  // VALIDATION-01 V-036: always use the session tenant.
+  const tenantId = await requireTenant();
 
   const [orders, products, totalRevenue] = await Promise.all([
     prisma.productOrder.findMany({

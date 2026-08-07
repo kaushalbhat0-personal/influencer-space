@@ -166,12 +166,17 @@ export function detectPlatform(url: string): string {
 }
 
 export function buildContentSource(url: string, platform: string, creatorName: string): ContentSource {
-  const username = url.split("/").filter(Boolean).pop() || creatorName.toLowerCase().replace(/\s+/g, "");
+  // VALIDATION-01 V-006: "Build with AI" sends free text (not a URL) — treat it
+  // as the creator's description/bio instead of a bogus username/link.
+  const isFreeText = !/^https?:\/\//i.test(url) && !url.includes(".");
+  const username = isFreeText
+    ? creatorName.toLowerCase().replace(/\s+/g, "")
+    : url.split("/").filter(Boolean).pop() || creatorName.toLowerCase().replace(/\s+/g, "");
   return {
     platform,
     username,
     displayName: creatorName,
-    bio: "",
+    bio: isFreeText ? url : "",
     avatarUrl: "",
     followers: 0,
     following: 0,
@@ -179,7 +184,7 @@ export function buildContentSource(url: string, platform: string, creatorName: s
     engagement: 0,
     content: [],
     categories: [],
-    links: [url],
+    links: isFreeText ? [] : [url],
   };
 }
 

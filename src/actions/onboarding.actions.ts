@@ -18,7 +18,7 @@ import { applyGoalSectionPriority } from "@/modules/goals-runtime";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import {
-  buildProvisioningInput, buildBuilderArtifactData,
+  buildProvisioningInput, buildBuilderArtifactData, detectPlatform,
 } from "@/lib/generation/integration/provision-pipeline";
 import { nicheDetector } from "@/lib/generation/intelligence/niche-detector";
 import type { ImportProfileResult } from "@/lib/onboarding/service";
@@ -95,6 +95,16 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    // VALIDATION-01 V-005: surface unsupported social platforms with a clear
+    // error instead of silently producing an empty "manual" profile.
+    const detected = detectPlatform(sourceUrl);
+    if (["instagram", "tiktok", "linkedin", "twitter"].includes(detected)) {
+      return {
+        success: false,
+        error: `${detected.charAt(0).toUpperCase() + detected.slice(1)} import isn't supported yet. Paste a YouTube channel, a website URL, or a Google Business listing instead.`,
+      };
+    }
 
     const creatorName = session.user.name || "Creator";
     const result = await onboardingService.importProfile(sourceUrl, session.user.id, creatorName);

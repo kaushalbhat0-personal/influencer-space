@@ -234,7 +234,7 @@ export function BuilderWorkspace() {
         publishStatus={publishStatus}
         storefrontUrl={storefrontUrl}
         onDeviceChange={(d) => { setDevice(d); builderStore.setDevice(d); }}
-        onSave={() => { setStatusMsg("Saving..."); performSave(previewThemeId, currentThemeId); }}
+        onSave={() => { setStatusMsg("Saving..."); performSave(currentThemeId, currentThemeId); }}
         saving={saving}
       />
 
@@ -276,7 +276,7 @@ export function BuilderWorkspace() {
           <span className="text-zinc-700">v{builderStore.publish.version}</span>
           <span className="text-zinc-800">|</span>
           <button
-            onClick={() => performSave(previewThemeId, currentThemeId)}
+            onClick={() => performSave(currentThemeId, currentThemeId)}
             disabled={saving}
             className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
           >

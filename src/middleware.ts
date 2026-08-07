@@ -85,11 +85,13 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const classification = classifyRoute(pathname);
 
-  // Rate limit auth endpoints
-  if (pathname.startsWith("/api/auth/")) {
+  // Rate limit auth endpoints. VALIDATION-01 V-017: only credential attempts
+  // are rate-limited here — the NextAuth session/csrf pollers and sign-out must
+  // never count against the login bucket (prevents self-lockout). Registration
+  // is rate-limited inside its own route (V-016 — not double-counted).
+  if (pathname === "/api/auth/callback/credentials" || pathname === "/api/auth/signin") {
     const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-    const limitKey = pathname.startsWith("/api/auth/register") ? "/api/auth/register" : pathname.startsWith("/api/auth") ? "/api/auth/login" : pathname;
-    const rate = checkRateLimit(`${limitKey}:${ip}`, limitKey);
+    const rate = checkRateLimit(`/api/auth/login:${ip}`, "/api/auth/login");
     if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
@@ -116,8 +118,11 @@ export async function middleware(request: NextRequest) {
     const extractedTenant = parseTenantHost(host);
     if (extractedTenant) {
       headers.set("x-tenant-host", extractedTenant);
+      // VALIDATION-01 V-032: platform legal pages must not be rewritten to the
+      // tenant storefront route (which would 404 them).
+      const LEGAL_PATHS = ["/terms", "/privacy", "/refund"];
       const segments = pathname.split("/").filter(Boolean);
-      if (segments.length === 0 || segments[0] !== extractedTenant) {
+      if (!LEGAL_PATHS.includes(pathname) && (segments.length === 0 || segments[0] !== extractedTenant)) {
         const url = new URL(`/${extractedTenant}${pathname}`, request.url);
         return NextResponse.rewrite(url);
       }
