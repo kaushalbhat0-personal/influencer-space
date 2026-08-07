@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { dashboardService } from "./service";
 import { runtimeContextBuilder } from "@/modules/runtime-context";
 import { businessHealthRuntime } from "@/modules/business-health";
+import { websiteEvolutionRuntime } from "@/modules/website-evolution";
 
 export async function getDashboardData() {
   const session = await getServerSession(authOptions);
@@ -15,13 +16,15 @@ export async function getDashboardData() {
   // WebsiteAggregate build feeds knowledge, goals, success, recommendations,
   // storefront score, health and metrics (previously the snapshot was built 3x).
   const context = await runtimeContextBuilder.build(tenantId);
-  const [activity, steps, storefrontUrl, businessHealth] = await Promise.all([
+  const [activity, steps, storefrontUrl, businessHealth, evolution] = await Promise.all([
     dashboardService.getActivity(tenantId),
     dashboardService.getQuickStartSteps(tenantId),
     dashboardService.getStorefrontUrl(tenantId),
     // RCCF-EPIC-07: Business Health is computed from the SAME context (no
     // second build); record() appends an immutable projection when due.
     businessHealthRuntime.recordFrom(context, tenantId),
+    // RCCF-EPIC-09: growth-triggered evolution opportunities from the same context.
+    websiteEvolutionRuntime.detectFrom(context, tenantId),
   ]);
 
   const { metrics, health, knowledge, goals, recommendations, success, storefrontScore } = context;
@@ -67,6 +70,9 @@ export async function getDashboardData() {
       health: businessHealth.health,
       trend: businessHealth.trend.trend,
       delta: businessHealth.trend.delta,
+    },
+    evolution: {
+      opportunities: evolution.slice(0, 3),
     },
     steps,
     storefrontUrl,

@@ -1,6 +1,18 @@
 # Changelog
 
-## Latest — RCCF-EPIC-08: Experience Intelligence Runtime
+## Latest — RCCF-EPIC-09: Website Evolution Runtime
+- Website Evolution Runtime module (`src/modules/website-evolution/`) — generated websites continuously evolve based on creator growth; NEVER auto-edits, produces creator-approved evolution opportunities
+- Evolution Registry — 10 growth-triggered improvements (products>10 → collections, gallery>30 → masonry, testimonials>20 → featured reviews, …) with expected health/conversion/knowledge/trust/goal lifts + effort + change manifests
+- Opportunity detection — pure, ROI-ordered, before/after scores computed once per detection
+- Website versioning — current/previous/generated/builder/blueprint/experience versions + evolution history
+- Dashboard Evolution Feed card + Builder Evolution panel (one-click Apply / Reject / Later) + before→after health preview
+- Evolution history — accepted/rejected/ignored/deferred/applied with outcomes (evolution_history Setting)
+- Super Admin `/super-admin/evolution` — most/least adopted, avg health/conversion lifts, industry + goal differences
+- Public API — detect / preview / apply / setStatus / history / versionInfo / platformEvolution
+- Docs: `website-evolution.md`, `evolution-registry.md`, `website-versioning.md`, `implementation-70-report.md`
+- Verification: tsc clean, next build green, 101 files / 1982 unit tests passing; existing websites unchanged
+
+## RCCF-EPIC-08: Experience Intelligence Runtime
 - Experience Intelligence module (`src/modules/experience-intelligence/`) — extends the Experience System with behavior, section composition and conversion hierarchy (no AI, no duplicate runtime)
 - Section Intelligence Registry — 15 sections (priority, conversion/trust/commerce/seo weights, prerequisites, preferred goals/industries, placement, collapse rules, mobile priority)
 - Adaptive visibility — "no empty sections": conditional sections with empty content are hidden (only when a goal profile is set; storefront unchanged without goals)

@@ -108,6 +108,10 @@ export {
 export { getExperienceIntelligence } from "./experience-intelligence.actions";
 
 export {
+  getEvolutionFeed, previewEvolution, applyEvolution, setEvolutionStatus,
+} from "./evolution.actions";
+
+export {
   getOperationsDashboard, getEvents, getEventTypes,
   rehydrateEngine, retryFailedPayouts, expireStaleInvites,
   runJob, getJobStatus, exportDiagnostics,

@@ -8,6 +8,7 @@ import { GoalBuilderSuggestions } from "@/modules/goals-runtime/presentation/goa
 import { BuilderRecommendationPanel } from "@/modules/recommendation-runtime/presentation/builder-recommendation-panel";
 import { BusinessHealthBadge } from "@/modules/business-health/presentation/business-health-badge";
 import { BuilderExperiencePanel } from "@/modules/experience-intelligence/presentation/builder-experience-panel";
+import { BuilderEvolutionPanel } from "@/modules/website-evolution/presentation/builder-evolution-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -101,6 +102,9 @@ export function WebsitePanel({
 
         {/* Experience Intelligence + conversion impact */}
         <BuilderExperiencePanel />
+
+        {/* Website Evolution opportunities */}
+        <BuilderEvolutionPanel />
       </div>
     </div>
   );

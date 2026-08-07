@@ -85,6 +85,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "evolution", title: "Website Evolution", group: "overview",
+    href: "/super-admin/evolution", icon: TrendingUp, permission: "super_admin",
+    searchable: true, keywords: ["evolution", "improvements", "applied", "adoption", "growth"],
+    auditCategory: "intelligence", analyticsKey: "evolution:viewed",
+    productionReady: true,
+  },
+  {
     id: "alerts", title: "Alerts", group: "overview",
     href: "/super-admin/alerts", icon: Bell, permission: "super_admin",
     searchable: true, keywords: ["alerts", "notifications", "warnings", "critical", "triggered", "rules"],
