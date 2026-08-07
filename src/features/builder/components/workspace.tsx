@@ -40,6 +40,9 @@ export function BuilderWorkspace() {
   const [planCode, setPlanCode] = useState<string | null>(null);
   const [currentThemeId, setCurrentThemeId] = useState<string | null>(null);
   const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
+  // VALIDATION-03.5 A1: bumped after every save attempt so a FAILED autosave
+  // re-arms the debounce (otherwise autosave dies silently after one error).
+  const [saveAttempt, setSaveAttempt] = useState(0);
   const [creatorName, setCreatorName] = useState("");
   const [completionPct, setCompletionPct] = useState(0);
   const [overviewData, setOverviewData] = useState<BuilderOverviewData | null>(null);
@@ -140,6 +143,7 @@ export function BuilderWorkspace() {
       return false;
     } finally {
       setSaving(false);
+      setSaveAttempt((n) => n + 1);
     }
   }, [overviewData]);
 
@@ -152,7 +156,21 @@ export function BuilderWorkspace() {
       performSave(currentThemeId, currentThemeId);
     }, 2000);
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
-  }, [builderStore.isDirty, loading, currentThemeId, performSave]);
+    // saveAttempt in deps: a failed save re-arms the debounce (A1).
+  }, [builderStore.isDirty, loading, currentThemeId, performSave, saveAttempt]);
+
+  // VALIDATION-03.5 A5: warn before closing/navigating away with unsaved
+  // changes so work inside the 2s autosave window is never lost silently.
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (builderStore.isDirty) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 
   // Ctrl+S / save command → persist immediately (no debounce).
   useEffect(() => {

@@ -82,13 +82,18 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
     const { prisma } = await import("@/lib/prisma");
     await builderService.save(websiteId, pages);
 
-    const { tenantId } = await prisma.website.findUniqueOrThrow({
-      where: { id: websiteId },
-      select: { tenantId: true },
-    });
-
-    const result = await publishingService.markChangesPending(tenantId);
-    if (!result.success) return result;
+    // VALIDATION-03.5 C2: the draft is the source of truth. markChangesPending
+    // is cosmetic (publish-status flag) — a failure must not report the save as
+    // failed (which previously dead-stopped autosave after the draft committed).
+    try {
+      const { tenantId } = await prisma.website.findUniqueOrThrow({
+        where: { id: websiteId },
+        select: { tenantId: true },
+      });
+      await publishingService.markChangesPending(tenantId);
+    } catch {
+      // best-effort — the draft is committed.
+    }
 
     return { success: true };
   } catch (e) {
@@ -115,6 +120,21 @@ export async function rollbackToVersion(version: number): Promise<{ success: boo
     }
 
     await builderService.save(websiteId, data.pages);
+
+    // VALIDATION-03.5 B3: after restoring a draft from a snapshot, the site is
+    // no longer in sync with the live version — flag changes pending so the
+    // publish status reflects the divergence.
+    const { prisma } = await import("@/lib/prisma");
+    try {
+      const website = await prisma.website.findUniqueOrThrow({
+        where: { id: websiteId },
+        select: { tenantId: true },
+      });
+      await publishingService.markChangesPending(website.tenantId);
+    } catch {
+      // best-effort — the draft is restored.
+    }
+
     return { success: true, pages: data.pages };
   } catch (e) {
     return { success: false, error: String(e) };

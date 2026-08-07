@@ -144,7 +144,10 @@ export class BuilderStore {
     const idx = this.state.historyIndex - 1;
     const entry = this.state.history[idx];
     if (!entry) return false;
-    this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
+    // VALIDATION-03.5 F2: undo changes the canvas — mark the store dirty so the
+    // reverted state is autosaved (previously the DB kept the pre-undo content
+    // and "Draft saved" showed green while a reload discarded the undo).
+    this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx, isDirty: true };
     builderEvents.emit("history:changed", { action: "undo", index: idx });
     builderQuery.invalidate();
     this.emitStoreChanged();
@@ -156,7 +159,7 @@ export class BuilderStore {
     const idx = this.state.historyIndex + 1;
     const entry = this.state.history[idx];
     if (!entry) return false;
-    this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx };
+    this.state = { ...this.state, canvas: { ...this.state.canvas, pages: entry.snapshot.pages.map(clonePage), activePageId: entry.snapshot.activePageId, selectedElementIds: new Set(entry.snapshot.selectedElementIds) }, historyIndex: idx, isDirty: true };
     builderEvents.emit("history:changed", { action: "redo", index: idx });
     builderQuery.invalidate();
     this.emitStoreChanged();
