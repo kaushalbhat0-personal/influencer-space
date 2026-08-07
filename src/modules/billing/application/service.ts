@@ -20,7 +20,11 @@ export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
     const start = Date.now();
     logger.info("createCheckout started", "billing", { operation: "create_checkout", metadata: { workspaceId, planCode } as Record<string, unknown> });
-    const plan = getPlan(planCode);
+    // RCCF-IMPLEMENTATION-71: read the RUNTIME plan (BillingPlan) so Super Admin
+    // price/currency changes apply at checkout without a redeploy. The static
+    // registry remains the fallback if no DB row exists yet.
+    const dbPlan = await billingRepository.findPlanByCode(planCode).catch(() => null);
+    const plan = dbPlan ?? getPlan(planCode);
     if (!plan) {
       logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "error", error: `Unknown plan: ${planCode}` } as Record<string, unknown> });
       metricsService.recordDuration("billing_execution", Date.now() - start);

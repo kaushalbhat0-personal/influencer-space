@@ -28,8 +28,14 @@ import { SEED_TESTIMONIALS } from "@/lib/marketing/trust/testimonials";
 import { SEED_CASE_STUDIES } from "@/lib/marketing/trust/case-studies";
 import { SEED_COMPARISONS } from "@/lib/marketing/trust/comparison";
 import { getPlatformConfig } from "@/lib/config/platform";
+import { getPublicPricingData } from "@/modules/pricing/application/runtime";
 import { ExperienceSection } from "@/modules/theme/runtime/experience";
 import { THEME_EXPERIENCES } from "@/modules/theme/runtime/experience";
+
+// RCCF-IMPLEMENTATION-71: the homepage embeds runtime pricing — render live so
+// Super Admin pricing changes reflect immediately (falls back to defaults if
+// the DB is unavailable).
+export const dynamic = "force-dynamic";
 
 /** IMPLEMENTATION-45: config-driven marketing experience (aurora + classic rhythm). */
 const MARKETING_EXPERIENCE = THEME_EXPERIENCES.aurora;
@@ -50,6 +56,7 @@ function OrganizationSchema() {
 
 export default async function MarketingPage() {
   const comparison = SEED_COMPARISONS[0];
+  const pricingData = await getPublicPricingData();
 
   return (
     <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
@@ -93,7 +100,7 @@ export default async function MarketingPage() {
       {/* Trust: comparison (config-driven) */}
       {comparison && <ComparisonTable comparison={comparison} />}
 
-      <Pricing />
+      <Pricing data={pricingData} />
       <PricingFAQ />
       <FinalCta />
       <ExperienceSection experience={MARKETING_EXPERIENCE} index={0} divider="bottom" variant="footer">

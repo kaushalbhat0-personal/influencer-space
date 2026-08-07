@@ -1,61 +1,54 @@
 /**
- * Pricing Section — Data (RCCF-IMPLEMENTATION-70)
+ * Pricing Section — Data (RCCF-IMPLEMENTATION-71)
  *
- * Marketing consumes the Commerce Registry ONLY — no duplicated plan lists,
- * prices, features or bullets anywhere in the UI. Plan cards, comparison rows,
- * annual pricing and upgrade copy all derive from `src/config/commerce/plans.ts`
- * + the canonical capability catalog.
+ * Marketing consumes the RUNTIME pricing module (BillingPlan + registry
+ * fallback). Server components fetch `ResolvedPlan[]` via the runtime layer and
+ * pass them down; this module only provides the display math + feature-catalog
+ * helpers. No duplicated plan lists, prices or bullets anywhere in the UI.
  */
 
-import { getMarketingPlans, getEnterprisePlan, getPlanMonthlyPrice, getAnnualSavingsPercent, getUpgradeHighlights, type CommercePlanConfig } from "@/config/commerce/plans";
 import { getFeatureInfo, getAllFeatureIds } from "@/lib/capabilities";
+import type { ResolvedPlan } from "@/modules/pricing/application/runtime";
 
 export type PlanFamily = "creator" | "agency";
 
-export interface PlanWithMeta {
-  plan: CommercePlanConfig;
-  highlights: string[];
+export interface PricingData {
+  creator: ResolvedPlan[];
+  partner: ResolvedPlan[];
+  enterpriseCreator: ResolvedPlan | null;
+  enterprisePartner: ResolvedPlan | null;
 }
 
-/** Standard comparison plans (hidden/enterprise excluded), registry order. */
-export function getCreatorPlans(): PlanWithMeta[] {
-  return getMarketingPlans("creator").map((p) => ({
-    plan: p,
-    highlights: p.marketingHighlights ?? [],
-  }));
+/** Effective price for a billing cycle (annual = annualPrice/12). */
+export function getDisplayPrice(plan: ResolvedPlan, cycle: "monthly" | "yearly"): number | null {
+  if (plan.price === null) return null;
+  if (cycle === "yearly" && plan.annualPrice) return Math.round(plan.annualPrice / 12);
+  return plan.price;
 }
 
-/** Partner (agency) plans — same registry, same rules. */
-export function getAgencyPlans(): PlanWithMeta[] {
-  return getMarketingPlans("partner").map((p) => ({
-    plan: p,
-    highlights: p.marketingHighlights ?? [],
-  }));
+export function getAnnualSavings(plan: ResolvedPlan): number | null {
+  if (plan.price === null || !plan.annualPrice) return null;
+  const annualized = plan.price * 12;
+  if (annualized <= 0) return null;
+  return Math.round((1 - plan.annualPrice / annualized) * 100);
 }
 
-/** Plans that appear in the standard comparison matrix (no enterprise, no hidden). */
-export function getComparisonPlans(family: PlanFamily): CommercePlanConfig[] {
-  return getMarketingPlans(family === "agency" ? "partner" : "creator");
+/** Trial framing — Launch plans are free trials, not "free forever". */
+export function getTrialFraming(plan: ResolvedPlan): { title: string; subtitle: string } | null {
+  if (plan.price !== 0 || plan.trialDays === undefined || plan.trialDays === null) return null;
+  return {
+    title: `${plan.trialDays}-Day Free Trial`,
+    subtitle: "No credit card required. Upgrade anytime.",
+  };
 }
 
-/** Enterprise plan for a family — rendered separately under Enterprise Solutions. */
-export function getEnterprisePlanFor(family: PlanFamily): CommercePlanConfig | undefined {
-  return getEnterprisePlan(family === "agency" ? "partner" : "creator");
-}
-
-/** Effective price for a billing cycle (monthly × 12 vs annualPrice). */
-export function getDisplayPrice(plan: CommercePlanConfig, cycle: "monthly" | "yearly"): number | null {
-  return getPlanMonthlyPrice(plan, cycle);
-}
-
-export function getAnnualSavings(plan: CommercePlanConfig): number | null {
-  return getAnnualSavingsPercent(plan);
-}
-
-/** Upgrade copy: exactly what the next tier adds. */
-export function getUpgradeCopy(planCode: string): string[] {
-  return getUpgradeHighlights(planCode);
-}
+/** Recurring-revenue framing for partner plans (Phase 13). */
+export const PARTNER_VALUE_POINTS = [
+  "Earn recurring commission as your clients grow",
+  "Manage unlimited client websites from one dashboard",
+  "Your clients pay CreatorStore directly — you focus on delivery",
+  "Scale with white-label, bulk operations and API automation",
+];
 
 export function getComparisonFeatures(): Array<{ key: string; description: string; valueType: string }> {
   return getAllFeatureIds().map((id) => {
@@ -70,20 +63,3 @@ export function getFeatureLabel(feature: number | boolean | string, featureDef: 
   if (typeof feature === "number") return String(feature);
   return String(feature);
 }
-
-/** Trial framing — Launch plans are 15-day free trials, not "free forever". */
-export function getTrialFraming(plan: CommercePlanConfig): { title: string; subtitle: string } | null {
-  if (plan.price !== 0 || plan.trialDays === undefined) return null;
-  return {
-    title: `${plan.trialDays}-Day Free Trial`,
-    subtitle: "No credit card required. Upgrade anytime.",
-  };
-}
-
-/** Recurring-revenue framing for partner plans (Phase 13). */
-export const PARTNER_VALUE_POINTS = [
-  "Earn recurring commission as your clients grow",
-  "Manage unlimited client websites from one dashboard",
-  "Your clients pay CreatorStore directly — you focus on delivery",
-  "Scale with white-label, bulk operations and API automation",
-];

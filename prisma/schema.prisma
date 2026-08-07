@@ -762,9 +762,67 @@ model BillingPlan {
   // RCCF-IMPLEMENTATION-70: registry-driven marketing surface mirrored to the
   // DB so the Super Admin can propagate plan changes without a redeploy.
   marketing Json?
+  // RCCF-IMPLEMENTATION-71: the runtime config — capabilities, feature
+  // overrides, marketing, pricing (+ schedule) — edited live by Super Admin.
+  runtimeConfig Json?
+  gracePeriodDays Int? @default(0)
+  effectiveAt DateTime?
 
   features      BillingPlanFeature[]
   subscriptions BillingSubscription[]
+  pricingVersions PlanPricingVersion[]
+}
+
+/// RCCF-IMPLEMENTATION-71 — version history for every pricing change. Enables
+/// rollback + full audit (who changed, when, what).
+model PlanPricingVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  planCode   String
+  planId     String?  @db.Uuid
+  payload    Json
+  author     String?
+  changeNote String?
+  createdAt  DateTime @default(now())
+
+  plan BillingPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+
+  @@index([planCode, createdAt])
+}
+
+/// RCCF-IMPLEMENTATION-71 Phase 10 — coupon foundation (architecture only; not
+/// yet wired into checkout).
+model Coupon {
+  id              String   @id @default(uuid()) @db.Uuid
+  code            String   @unique
+  label           String
+  description     String?
+  discountPercent Int?
+  discountAmount  Float?
+  scope           String   @default("creator") // "creator" | "partner" | "platform"
+  planCodes       String[] @default([]) // plans the coupon applies to (empty = all in scope)
+  maxUses         Int?
+  usedCount       Int      @default(0)
+  active          Boolean  @default(true)
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+}
+
+/// RCCF-IMPLEMENTATION-71 Phase 11 — launch programs (Early Adopter, Founding
+/// Creator/Agency, Lifetime, Invite-only) stored canonically.
+model LaunchProgram {
+  id              String   @id @default(uuid()) @db.Uuid
+  code            String   @unique
+  name            String
+  description     String?
+  discountPercent Int?
+  discountAmount  Float?
+  scope           String   @default("platform") // "creator" | "partner" | "platform"
+  planCodes       String[] @default([]) // plans the program applies to
+  inviteOnly      Boolean  @default(false)
+  active          Boolean  @default(true)
+  maxEnrollees    Int?
+  enrolledCount   Int      @default(0)
+  createdAt       DateTime @default(now())
 }
 
 /// Typed feature definitions.

@@ -2,25 +2,26 @@
 
 import { Fragment } from "react";
 import { getFeatureInfo, getFeatureGroups } from "@/lib/capabilities";
-import { entitlement } from "@/modules/billing/application/entitlements";
-import { getComparisonPlans } from "./data";
-import { getPlan } from "@/lib/capabilities";
+import type { ResolvedPlan } from "@/modules/pricing/application/runtime";
 import { Check, Minus } from "lucide-react";
 
 interface ComparisonProps {
-  family: "creator" | "agency";
+  plans: ResolvedPlan[];
+}
+
+function featureValue(features: Record<string, number | boolean | string> | undefined, key: string, valueType: string): number | boolean | string {
+  const v = features?.[key];
+  if (v === undefined) return valueType === "boolean" ? false : 0;
+  return v;
 }
 
 /**
- * IMPLEMENTATION-43 Phase 3 + RCCF-IMPLEMENTATION-70: comparison matrix grouped
- * by the canonical capability groups. Shows ONLY standard comparison plans —
- * hidden (Partner Growth) and enterprise tiers are excluded; every value
- * derives from the entitlement runtime via the plan feature map.
+ * RCCF-IMPLEMENTATION-71: comparison matrix grouped by the canonical capability
+ * groups, driven by the RUNTIME plans (BillingPlan + registry fallback). Values
+ * come from each plan's effective feature map — Available / Limited / Unlimited
+ * are derived, nothing is hand-maintained.
  */
-export function ComparisonMatrix({ family }: ComparisonProps) {
-  const plans = getComparisonPlans(family)
-    .map((c) => getPlan(c.code))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+export function ComparisonMatrix({ plans }: ComparisonProps) {
   if (plans.length === 0) return null;
 
   const groups = getFeatureGroups();
@@ -57,18 +58,19 @@ export function ComparisonMatrix({ family }: ComparisonProps) {
                     <tr key={f.id} className="border-b border-white/[0.03]">
                       <td className="sticky left-0 z-10 bg-[#0a0a0a] py-2.5 px-4 text-zinc-400">{info.label}</td>
                       {plans.map((p) => {
-                        const val = entitlement.limit(p.code, f.id);
-                        const bool = entitlement.has(p.code, f.id);
+                        const val = featureValue(p.features, f.id, info.valueType);
                         return (
                           <td key={p.code} className="py-2.5 px-4 text-center">
                             {info.valueType === "boolean" ? (
-                              bool ? (
+                              val ? (
                                 <Check className="h-4 w-4 text-emerald-400 mx-auto" aria-label="Included" />
                               ) : (
                                 <Minus className="h-4 w-4 text-zinc-700 mx-auto" aria-label="Not included" />
                               )
                             ) : val === -1 ? (
                               <span className="text-emerald-400 font-medium">Unlimited</span>
+                            ) : val === 0 ? (
+                              <Minus className="h-4 w-4 text-zinc-700 mx-auto" aria-label="Not available" />
                             ) : (
                               <span className="text-zinc-300">{val}</span>
                             )}

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Pricing } from "@/components/marketing/Pricing";
 import { Footer } from "@/components/marketing/Footer";
-import { getCreatorCommercePlans, getPartnerCommercePlans } from "@/config/commerce/plans";
+import { getPublicPricingData, getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pricing — CreatorStore",
@@ -14,17 +16,20 @@ export const metadata: Metadata = {
 };
 
 /**
- * IMPLEMENTATION-42 Phase 15 + RCCF-IMPLEMENTATION-70: honest, config-derived
- * JSON-LD (Pricing + FAQ schema). Prices derive from the canonical commerce
- * config — never hardcoded. Hidden/enterprise tiers are excluded.
+ * RCCF-IMPLEMENTATION-71: JSON-LD derives from the RUNTIME plans (BillingPlan +
+ * registry fallback). Hidden/enterprise tiers are excluded. Never hardcoded.
  */
-function PricingSchemaJsonLd() {
-  const offers = [...getCreatorCommercePlans(), ...getPartnerCommercePlans()]
-    .filter((p) => p.price != null && !p.manual && !p.hidden && !p.enterprise)
+async function PricingSchemaJsonLd() {
+  const [creator, partner] = await Promise.all([
+    getRuntimePlansByFamily("creator"),
+    getRuntimePlansByFamily("partner"),
+  ]);
+  const offers = [...creator, ...partner]
+    .filter((p) => p.price != null && !p.hidden && !p.enterprise)
     .map((p) => ({
       "@type": "Offer",
       name: p.name,
-      description: p.description,
+      description: p.marketingDescription,
       price: String(p.price),
       priceCurrency: p.currency,
       category: p.family === "creator" ? "Creator subscription" : "Partner subscription",
@@ -54,7 +59,7 @@ function FaqSchemaJsonLd() {
   const faqs = [
     { q: "Do partner plans include creator subscriptions?", a: "No. Every creator pays CreatorStore directly for their own Creator plan. Partner plans cover your agency business only." },
     { q: "Can a partner charge clients for services?", a: "Yes. You may charge clients separately for setup, migration, training, branding, consulting and maintenance." },
-    { q: "What is the minimum plan for a creator I onboard?", a: "Partner-onboarded creators use Creator Grow (₹699/month) or higher — Creator Launch is not available for agency-managed creators." },
+    { q: "What is the minimum plan for a creator I onboard?", a: "Partner-onboarded creators use Creator Growth (₹699/month) or higher — Creator Launch is not available for agency-managed creators." },
   ];
   return (
     <script
@@ -74,12 +79,13 @@ function FaqSchemaJsonLd() {
   );
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const data = await getPublicPricingData();
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <MarketingNav />
       <div className="pt-16">
-        <Pricing />
+        <Pricing data={data} />
       </div>
       <Footer />
       <PricingSchemaJsonLd />

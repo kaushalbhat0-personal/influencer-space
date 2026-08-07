@@ -3,16 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  getCreatorPlans,
-  getAgencyPlans,
-  getEnterprisePlanFor,
-  getDisplayPrice,
-  getAnnualSavings,
-  getTrialFraming,
-  PARTNER_VALUE_POINTS,
-  type PlanFamily,
-} from "./data";
+import { getDisplayPrice, getAnnualSavings, getTrialFraming, PARTNER_VALUE_POINTS, type PricingData, type PlanFamily } from "./data";
 import { ComparisonMatrix } from "./comparison";
 import { PricingFAQ } from "./faq";
 import { Sparkles, BadgePercent } from "lucide-react";
@@ -24,12 +15,16 @@ const TABS: { id: PlanFamily; label: string }[] = [
 
 const TRUST_ITEMS = ["No credit card required to start", "15-day free trial", "Cancel anytime", "Secure payments via Razorpay"];
 
-export function Pricing() {
+interface PricingProps {
+  data: PricingData;
+}
+
+export function Pricing({ data }: PricingProps) {
   const [tab, setTab] = useState<PlanFamily>("creator");
   const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
 
-  const plans = tab === "creator" ? getCreatorPlans() : getAgencyPlans();
-  const enterprise = getEnterprisePlanFor(tab);
+  const plans = tab === "creator" ? data.creator : data.partner;
+  const enterprise = tab === "creator" ? data.enterpriseCreator : data.enterprisePartner;
   const isPartner = tab === "agency";
 
   return (
@@ -61,8 +56,8 @@ export function Pricing() {
           </div>
         </div>
 
-        {/* Billing-cycle toggle (annual pricing derived from the registry) */}
-        {plans.some((p) => p.plan.annualPrice) && (
+        {/* Billing-cycle toggle (annual pricing derived from the runtime) */}
+        {plans.some((p) => p.annualPrice) && (
           <div className="mb-8 flex items-center justify-center gap-3 text-sm" role="group" aria-label="Billing cycle">
             <span className={cn("text-sm", cycle === "monthly" ? "text-zinc-200" : "text-zinc-500")}>Monthly</span>
             <button
@@ -109,7 +104,7 @@ export function Pricing() {
         ) : (
           <>
             <div className="grid gap-6 lg:grid-cols-3">
-              {plans.map(({ plan, highlights }) => {
+              {plans.map((plan) => {
                 const price = getDisplayPrice(plan, cycle);
                 const savings = getAnnualSavings(plan);
                 const trial = getTrialFraming(plan);
@@ -159,7 +154,7 @@ export function Pricing() {
                     </div>
 
                     <ul className="mt-6 flex-1 space-y-3" role="list">
-                      {(highlights.length > 0 ? highlights : ["Configure in the builder", "Publish to your storefront"]).map((feat) => (
+                      {(plan.highlights.length > 0 ? plan.highlights : ["Configure in the builder", "Publish to your storefront"]).map((feat) => (
                         <li key={feat} className="flex items-start gap-2 text-sm text-zinc-300">
                           <span className="mt-0.5 text-emerald-400 flex-shrink-0">✓</span>
                           {feat}
@@ -187,12 +182,12 @@ export function Pricing() {
               })}
             </div>
 
-            {/* Enterprise — separate from the standard comparison (Phase 1) */}
+            {/* Enterprise — separate from the standard comparison */}
             {enterprise && (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/50 p-8 sm:flex-row">
                 <div className="max-w-xl">
                   <h3 className="text-lg font-bold text-white">{enterprise.name}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">{enterprise.marketingDescription ?? enterprise.description}</p>
+                  <p className="mt-1 text-sm text-zinc-500">{enterprise.marketingDescription || enterprise.description}</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-semibold text-white">Custom pricing</span>
@@ -215,7 +210,7 @@ export function Pricing() {
           </>
         )}
 
-        <ComparisonMatrix family={tab} />
+        <ComparisonMatrix plans={tab === "creator" ? data.creator : data.partner} />
         <PricingFAQ />
       </div>
     </section>
