@@ -1,5 +1,9 @@
 const FAQ_ITEMS = [
   {
+    q: "Is Creator Launch really free?",
+    a: "Creator Launch is a 15-day free trial — no credit card required. Launch your website today and upgrade anytime. After the trial, your site stays live; editing and publishing follow your plan's lifecycle.",
+  },
+  {
     q: "How does the AI build my storefront?",
     a: "Paste your YouTube, Instagram, or creator profile URL. Our AI analyzes your content, brand colors, niche, audience, and social links — then generates a complete storefront with products, checkout, and SEO. No manual entry needed.",
   },

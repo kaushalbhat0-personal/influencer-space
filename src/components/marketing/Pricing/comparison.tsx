@@ -1,10 +1,9 @@
 "use client";
 
 import { Fragment } from "react";
-import { cn } from "@/lib/utils";
 import { getFeatureInfo, getFeatureGroups } from "@/lib/capabilities";
 import { entitlement } from "@/modules/billing/application/entitlements";
-import { getCreatorCommercePlans, getPartnerCommercePlans } from "@/config/commerce/plans";
+import { getComparisonPlans } from "./data";
 import { getPlan } from "@/lib/capabilities";
 import { Check, Minus } from "lucide-react";
 
@@ -13,14 +12,13 @@ interface ComparisonProps {
 }
 
 /**
- * IMPLEMENTATION-43 Phase 3: comparison matrix grouped by the canonical
- * capability groups (Website / Builder / Commerce / AI / Domains / Analytics /
- * Marketplace / Branding / Automation / Developer / Support / Storage).
- * Canonical plans only — no legacy codes, no endless checkbox wall.
+ * IMPLEMENTATION-43 Phase 3 + RCCF-IMPLEMENTATION-70: comparison matrix grouped
+ * by the canonical capability groups. Shows ONLY standard comparison plans —
+ * hidden (Partner Growth) and enterprise tiers are excluded; every value
+ * derives from the entitlement runtime via the plan feature map.
  */
 export function ComparisonMatrix({ family }: ComparisonProps) {
-  const commerce = family === "creator" ? getCreatorCommercePlans() : getPartnerCommercePlans();
-  const plans = commerce
+  const plans = getComparisonPlans(family)
     .map((c) => getPlan(c.code))
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
   if (plans.length === 0) return null;

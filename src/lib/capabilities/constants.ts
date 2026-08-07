@@ -59,6 +59,17 @@ export const FEATURE_IDS = {
   BULK_PUBLISH: "bulk_publish",
   CUSTOM_COMPONENTS: "custom_components",
   API_INTEGRATIONS: "api_integrations",
+  // RCCF-IMPLEMENTATION-70: real storefront modules surfaced as tiered limits.
+  SERVICES: "max_services",
+  COURSES: "max_courses",
+  TESTIMONIALS: "max_testimonials",
+  FAQ: "max_faq",
+  TIMELINE: "max_timeline",
+  LINKS: "max_links",
+  FEED: "max_feed",
+  GAMES: "max_games",
+  BOOKINGS: "max_bookings",
+  AI_CREDITS: "ai_credits",
 } as const;
 export type FeatureId = (typeof FEATURE_IDS)[keyof typeof FEATURE_IDS];
 
@@ -72,6 +83,16 @@ export const LIMIT_FEATURES = new Set<FeatureId>([
   FEATURE_IDS.TEAM_MEMBERS,
   FEATURE_IDS.CLIENTS,
   FEATURE_IDS.API_CALLS,
+  FEATURE_IDS.SERVICES,
+  FEATURE_IDS.COURSES,
+  FEATURE_IDS.TESTIMONIALS,
+  FEATURE_IDS.FAQ,
+  FEATURE_IDS.TIMELINE,
+  FEATURE_IDS.LINKS,
+  FEATURE_IDS.FEED,
+  FEATURE_IDS.GAMES,
+  FEATURE_IDS.BOOKINGS,
+  FEATURE_IDS.AI_CREDITS,
 ]);
 
 export const BOOLEAN_FEATURES = new Set<FeatureId>([

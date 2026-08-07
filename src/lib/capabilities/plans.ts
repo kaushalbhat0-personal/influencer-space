@@ -53,7 +53,7 @@ const plans: PlanDefinition[] = COMMERCE_PLANS.map((config, i) => ({
   cycle: config.cycle,
   ctaLabel: config.ctaLabel ?? CTA_BY_TYPE[config.ctaType],
   ctaType: config.ctaType,
-  features: { ...BASE_FEATURES, ...featuresForPlan(config.code) },
+  features: { ...BASE_FEATURES, ...featuresForPlan(config.code), ...(config.featureOverrides ?? {}) },
   recommended: config.recommended ?? false,
   badge: config.badge ?? "",
   legacyAliases: [],

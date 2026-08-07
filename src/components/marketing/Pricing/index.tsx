@@ -3,26 +3,34 @@
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { getCreatorPlans, getAgencyPlans, getEnterprisePlan, getPartnerEnterprisePlan, getEnterpriseHighlights } from "./data";
+import {
+  getCreatorPlans,
+  getAgencyPlans,
+  getEnterprisePlanFor,
+  getDisplayPrice,
+  getAnnualSavings,
+  getTrialFraming,
+  PARTNER_VALUE_POINTS,
+  type PlanFamily,
+} from "./data";
 import { ComparisonMatrix } from "./comparison";
 import { PricingFAQ } from "./faq";
-import { Sparkles } from "lucide-react";
-
-type PlanFamily = "creator" | "agency";
+import { Sparkles, BadgePercent } from "lucide-react";
 
 const TABS: { id: PlanFamily; label: string }[] = [
   { id: "creator", label: "For Creators" },
   { id: "agency", label: "For Partners" },
 ];
 
-const TRUST_ITEMS = ["No credit card required to start", "Cancel anytime", "Secure payments via Razorpay"];
+const TRUST_ITEMS = ["No credit card required to start", "15-day free trial", "Cancel anytime", "Secure payments via Razorpay"];
 
 export function Pricing() {
   const [tab, setTab] = useState<PlanFamily>("creator");
+  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
 
   const plans = tab === "creator" ? getCreatorPlans() : getAgencyPlans();
-  const enterprise = tab === "creator" ? getEnterprisePlan() : getPartnerEnterprisePlan();
-  const entHighlights = getEnterpriseHighlights();
+  const enterprise = getEnterprisePlanFor(tab);
+  const isPartner = tab === "agency";
 
   return (
     <section id="pricing" className="relative px-4 py-20 sm:px-8 sm:py-28 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.06),transparent_60%)] bg-zinc-900/10 border-y border-white/[0.04]">
@@ -32,7 +40,7 @@ export function Pricing() {
             Simple{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">pricing</span>
           </h2>
-          <p className="mt-3 text-zinc-500">Start free. Upgrade when you grow.</p>
+          <p className="mt-3 text-zinc-500">Start with a free trial. Upgrade when you grow.</p>
         </div>
 
         {/* Tabs */}
@@ -53,15 +61,45 @@ export function Pricing() {
           </div>
         </div>
 
-        {/* IMPLEMENTATION-42 Phase 4: partner rules (honest, no fake numbers) */}
-        {tab === "agency" && (
+        {/* Billing-cycle toggle (annual pricing derived from the registry) */}
+        {plans.some((p) => p.plan.annualPrice) && (
+          <div className="mb-8 flex items-center justify-center gap-3 text-sm" role="group" aria-label="Billing cycle">
+            <span className={cn("text-sm", cycle === "monthly" ? "text-zinc-200" : "text-zinc-500")}>Monthly</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={cycle === "yearly"}
+              aria-label="Toggle yearly billing"
+              onClick={() => setCycle((c) => (c === "monthly" ? "yearly" : "monthly"))}
+              className={cn(
+                "relative h-6 w-11 rounded-full transition-colors",
+                cycle === "yearly" ? "bg-indigo-500" : "bg-white/10"
+              )}
+            >
+              <span className={cn(
+                "absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all",
+                cycle === "yearly" ? "left-[22px]" : "left-0.5"
+              )} />
+            </button>
+            <span className={cn("flex items-center gap-1.5 text-sm", cycle === "yearly" ? "text-zinc-200" : "text-zinc-500")}>
+              Yearly
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                <BadgePercent className="h-3 w-3" aria-hidden="true" />
+                Save ~17%
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* RCCF-IMPLEMENTATION-70 Phase 13: agency pricing philosophy */}
+        {isPartner && (
           <div className="mb-8 rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-zinc-400">
             <p className="font-medium text-zinc-200">How Partner plans work</p>
             <ul className="mt-2 space-y-1.5 text-xs text-zinc-500" role="list">
-              <li>Partner plans are for your agency business — they do not include creator subscriptions.</li>
-              <li>Every creator pays CreatorStore directly for their own Creator plan (Creator Grow minimum for partner-onboarded creators).</li>
-              <li>You may charge clients separately for setup, migration, training, branding, consulting and maintenance.</li>
-              <li>Future partner rewards are separate from creator subscriptions — nothing is automatic today.</li>
+              {PARTNER_VALUE_POINTS.map((point) => (
+                <li key={point}>• {point}</li>
+              ))}
+              <li className="pt-1 text-zinc-600">Your clients pay CreatorStore directly for their own Creator plan (Creator Growth minimum for partner-onboarded creators).</li>
             </ul>
           </div>
         )}
@@ -72,7 +110,9 @@ export function Pricing() {
           <>
             <div className="grid gap-6 lg:grid-cols-3">
               {plans.map(({ plan, highlights }) => {
-                const displayPrice = plan.price;
+                const price = getDisplayPrice(plan, cycle);
+                const savings = getAnnualSavings(plan);
+                const trial = getTrialFraming(plan);
                 return (
                   <div
                     key={plan.code}
@@ -92,19 +132,29 @@ export function Pricing() {
                     <div>
                       <h3 className="text-xl font-bold text-white">{plan.name}</h3>
                       {plan.targetAudience && <p className="mt-0.5 text-xs font-medium text-indigo-400">{plan.targetAudience}</p>}
-                      {plan.description && <p className="mt-1 text-sm text-zinc-500">{plan.description}</p>}
+                      {plan.marketingDescription && <p className="mt-1 text-sm text-zinc-500">{plan.marketingDescription}</p>}
                     </div>
 
                     <div className="mt-5">
-                      {plan.price === 0 && plan.ctaType !== "contact" ? (
-                        <span className="text-4xl font-bold text-white">Free</span>
-                      ) : plan.price > 0 ? (
+                      {trial ? (
                         <div>
-                          <span className="text-4xl font-bold text-white">₹{displayPrice.toLocaleString("en-IN")}</span>
-                          <span className="text-zinc-500">/month</span>
+                          <span className="text-2xl font-bold text-white">{trial.title}</span>
+                          <p className="mt-1 text-xs text-zinc-500">{trial.subtitle}</p>
                         </div>
-                      ) : (
+                      ) : price === null ? (
                         <span className="text-2xl font-bold text-white">Custom</span>
+                      ) : price === 0 ? (
+                        <span className="text-4xl font-bold text-white">Free</span>
+                      ) : (
+                        <div>
+                          <span className="text-4xl font-bold text-white">₹{price.toLocaleString("en-IN")}</span>
+                          <span className="text-zinc-500">/{cycle === "yearly" ? "mo billed yearly" : "month"}</span>
+                          {savings && cycle === "yearly" && (
+                            <span className="ml-2 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                              Save {savings}%
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
 
@@ -128,38 +178,28 @@ export function Pricing() {
                           plan.recommended ? "btn-primary" : "bg-white/10 text-white hover:bg-white/20"
                         )}>
                           {plan.recommended && <Sparkles className="h-4 w-4 mr-2" aria-hidden="true" />}
-                          {plan.ctaLabel ?? "Start Free"}
+                          {plan.ctaLabel ?? "Start Free Trial"}
                         </Link>
                       )}
                     </div>
                   </div>
                 );
               })}
-
-              {tab === "agency" && (
-                <div className="flex flex-col rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/50 p-8">
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{enterprise.name}</h3>
-                    <p className="mt-0.5 text-xs font-medium text-violet-400">{enterprise.targetAudience}</p>
-                    <p className="mt-1 text-sm text-zinc-500">{enterprise.description}</p>
-                  </div>
-                  <div className="mt-5">
-                    <span className="text-2xl font-bold text-white">Custom</span>
-                  </div>
-                  <ul className="mt-6 flex-1 space-y-3" role="list">
-                    {entHighlights.map((feat) => (
-                      <li key={feat} className="flex items-start gap-2 text-sm text-zinc-300">
-                        <span className="mt-0.5 text-emerald-400 flex-shrink-0">✓</span>
-                        {feat}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-8">
-                    <Link href="/contact" className="btn-secondary w-full">{enterprise.ctaLabel ?? "Contact Sales"}</Link>
-                  </div>
-                </div>
-              )}
             </div>
+
+            {/* Enterprise — separate from the standard comparison (Phase 1) */}
+            {enterprise && (
+              <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/50 p-8 sm:flex-row">
+                <div className="max-w-xl">
+                  <h3 className="text-lg font-bold text-white">{enterprise.name}</h3>
+                  <p className="mt-1 text-sm text-zinc-500">{enterprise.marketingDescription ?? enterprise.description}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-semibold text-white">Custom pricing</span>
+                  <Link href="/contact" className="btn-secondary">{enterprise.ctaLabel ?? "Contact Sales"}</Link>
+                </div>
+              </div>
+            )}
 
             {/* Trust indicators */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">

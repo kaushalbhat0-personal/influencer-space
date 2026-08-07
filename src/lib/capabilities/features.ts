@@ -192,6 +192,46 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
     id: FEATURE_IDS.API_INTEGRATIONS, label: "API Integrations", description: "Connect external APIs",
     category: "api", valueType: "boolean",
   },
+  [FEATURE_IDS.SERVICES]: {
+    id: FEATURE_IDS.SERVICES, label: "Services", description: "Maximum services",
+    category: "products", valueType: "numeric",
+  },
+  [FEATURE_IDS.COURSES]: {
+    id: FEATURE_IDS.COURSES, label: "Courses", description: "Maximum courses",
+    category: "products", valueType: "numeric",
+  },
+  [FEATURE_IDS.TESTIMONIALS]: {
+    id: FEATURE_IDS.TESTIMONIALS, label: "Testimonials", description: "Maximum testimonials",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.FAQ]: {
+    id: FEATURE_IDS.FAQ, label: "FAQs", description: "Maximum FAQ entries",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.TIMELINE]: {
+    id: FEATURE_IDS.TIMELINE, label: "Timeline Entries", description: "Maximum timeline entries",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.LINKS]: {
+    id: FEATURE_IDS.LINKS, label: "Links", description: "Maximum links",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.FEED]: {
+    id: FEATURE_IDS.FEED, label: "Feed Posts", description: "Maximum content feed posts",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.GAMES]: {
+    id: FEATURE_IDS.GAMES, label: "Games", description: "Maximum games",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.BOOKINGS]: {
+    id: FEATURE_IDS.BOOKINGS, label: "Bookings", description: "Maximum bookings",
+    category: "products", valueType: "numeric",
+  },
+  [FEATURE_IDS.AI_CREDITS]: {
+    id: FEATURE_IDS.AI_CREDITS, label: "AI Credits", description: "Monthly AI credits",
+    category: "ai", valueType: "numeric",
+  },
 };
 
 export function getAllFeatureIds(): string[] {
@@ -257,6 +297,15 @@ export const FEATURE_GROUP: Record<string, CapabilityGroup> = {
   webhooks: "api",
   white_label: "brand",
   ai_credits: "ai",
+  max_services: "commerce",
+  max_courses: "commerce",
+  max_testimonials: "website",
+  max_faq: "website",
+  max_timeline: "website",
+  max_links: "website",
+  max_feed: "website",
+  max_games: "website",
+  max_bookings: "commerce",
   storage_pack: "storage",
   theme_packs: "builder",
 };

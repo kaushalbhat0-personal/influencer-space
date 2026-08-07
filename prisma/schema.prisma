@@ -759,6 +759,9 @@ model BillingPlan {
   status    String   @default("ACTIVE") // "ACTIVE" | "DEPRECATED" | "GRANDFATHERED"
   version   Int      @default(1)
   createdAt DateTime @default(now())
+  // RCCF-IMPLEMENTATION-70: registry-driven marketing surface mirrored to the
+  // DB so the Super Admin can propagate plan changes without a redeploy.
+  marketing Json?
 
   features      BillingPlanFeature[]
   subscriptions BillingSubscription[]

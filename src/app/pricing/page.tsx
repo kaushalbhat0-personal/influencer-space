@@ -6,7 +6,7 @@ import { getCreatorCommercePlans, getPartnerCommercePlans } from "@/config/comme
 
 export const metadata: Metadata = {
   title: "Pricing — CreatorStore",
-  description: "Transparent pricing for creators and partners. Creator plans from ₹699/month. Partner plans from ₹1,499/month.",
+  description: "Transparent pricing for creators and partners. Creator plans from ₹699/month. Partner plans from ₹2,999/month.",
   openGraph: {
     title: "Pricing — CreatorStore",
     description: "Simple, transparent pricing for creators and partners. Pay for your creator platform. Partners charge their own service fees.",
@@ -14,12 +14,13 @@ export const metadata: Metadata = {
 };
 
 /**
- * IMPLEMENTATION-42 Phase 15: honest, config-derived JSON-LD (Pricing + FAQ
- * schema). Prices derive from the canonical commerce config — never hardcoded.
+ * IMPLEMENTATION-42 Phase 15 + RCCF-IMPLEMENTATION-70: honest, config-derived
+ * JSON-LD (Pricing + FAQ schema). Prices derive from the canonical commerce
+ * config — never hardcoded. Hidden/enterprise tiers are excluded.
  */
 function PricingSchemaJsonLd() {
   const offers = [...getCreatorCommercePlans(), ...getPartnerCommercePlans()]
-    .filter((p) => p.price != null && !p.manual)
+    .filter((p) => p.price != null && !p.manual && !p.hidden && !p.enterprise)
     .map((p) => ({
       "@type": "Offer",
       name: p.name,

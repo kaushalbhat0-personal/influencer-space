@@ -12,8 +12,8 @@ describe("EntitlementService", () => {
   });
 
   it("should get numeric limits with limit()", () => {
-    expect(entitlement.limit("creator_free", "max_products")).toBe(5);
-    expect(entitlement.limit("creator_pro", "max_products")).toBe(5);
+    expect(entitlement.limit("creator_free", "max_products")).toBe(3);
+    expect(entitlement.limit("creator_pro", "max_products")).toBe(-1);
   });
 
   it("should return 0 for unknown feature", () => {
@@ -26,7 +26,7 @@ describe("EntitlementService", () => {
   });
 
   it("should calculate remaining usage", () => {
-    const remaining = entitlement.remaining("creator_free", "max_products", 3);
+    const remaining = entitlement.remaining("creator_free", "max_products", 1);
     expect(remaining).toBe(2);
   });
 

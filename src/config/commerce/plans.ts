@@ -57,6 +57,26 @@ export interface CommercePlanConfig {
   hidden?: boolean;
   /** Annual pricing (future). */
   annualPrice?: number | null;
+
+  // ── RCCF-IMPLEMENTATION-70: registry-driven marketing surface ──────────────
+  /** Value-focused pitch used on the pricing card (backed by real capabilities). */
+  marketingDescription?: string;
+  /** Who this plan is for. */
+  targetAudience?: string;
+  /** Curated marketing highlights — every item maps to a real capability/module. */
+  marketingHighlights?: string[];
+  /** Order inside the pricing comparison (lower = leftmost). */
+  comparisonOrder?: number;
+  /** Free trial length in days (Launch plans). */
+  trialDays?: number;
+  /** Marks the "Most Popular" tier. */
+  popular?: boolean;
+  /** Marks the "Best Value" tier. */
+  bestValue?: boolean;
+  /** Enterprise plan — never shown in the standard comparison, only under Enterprise Solutions. */
+  enterprise?: boolean;
+  /** Per-plan numeric/boolean limit overrides merged over the base feature map (RCCF-IMPLEMENTATION-70). */
+  featureOverrides?: Record<string, number | boolean | string>;
 }
 
 /** Human-readable labels for capability keys — used by pricing & comparison tables. */
@@ -86,7 +106,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_launch",
     name: "Creator Launch",
-    description: "Get your storefront online and start selling — free, no credit card needed.",
+    description: "Your AI-generated creator website — free for the first 15 days.",
     family: "creator",
     price: 0,
     currency: "INR",
@@ -95,12 +115,47 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     manual: false,
     capabilities: ["basic_builder", "basic_themes", "creator_subdomain"],
     ctaType: "signup",
-    ctaLabel: "Start Free",
+    ctaLabel: "Start Free Trial",
+    trialDays: 15,
+    featureOverrides: {
+      max_products: 3,
+      max_gallery: 3,
+      max_services: 3,
+      max_courses: 0,
+      max_testimonials: 3,
+      max_faq: 3,
+      max_timeline: 3,
+      max_links: 3,
+      max_feed: 3,
+      max_games: 0,
+      max_bookings: 0,
+      ai_credits: 0,
+      storage_gb: 1,
+    },
+    marketingDescription: "Get online with an AI-generated creator website. 15-day free trial — no credit card required.",
+    targetAudience: "New creators getting started",
+    marketingHighlights: [
+      "AI-powered website generation",
+      "Beautiful creator website",
+      "CreatorStore subdomain",
+      "Basic themes",
+      "3 products",
+      "3 services",
+      "3 gallery items",
+      "3 testimonials",
+      "3 FAQs",
+      "3 timeline entries",
+      "3 links",
+      "3 feed posts",
+      "Mobile responsive",
+      "Community support",
+    ],
+    comparisonOrder: 1,
   },
   {
     code: "creator_grow",
-    name: "Creator Grow",
-    description: "Sell more with a custom domain, premium themes and AI-assisted creation.",
+    name: "Creator Growth",
+    description: "Unlimited products, a custom domain and premium themes — the most popular plan for growing creators.",
     family: "creator",
     price: 699,
     currency: "INR",
@@ -108,27 +163,65 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     razorpayPlanId: "plan_TLTGQBU1EXkseF",
     manual: false,
     recommended: true,
+    popular: true,
     badge: "Most Popular",
+    annualPrice: 6990,
     capabilities: [
       "premium_themes",
       "custom_domain",
       "advanced_builder",
       "ai_generation",
       "social_integrations",
+      "priority_support",
     ],
     ctaType: "checkout",
-    ctaLabel: "Upgrade to Grow",
+    ctaLabel: "Upgrade to Growth",
+    featureOverrides: {
+      max_products: -1,
+      max_gallery: -1,
+      max_services: -1,
+      max_courses: -1,
+      max_testimonials: -1,
+      max_faq: -1,
+      max_timeline: -1,
+      max_links: -1,
+      max_feed: -1,
+      max_games: 10,
+      max_bookings: 20,
+      ai_credits: 500,
+      storage_gb: 10,
+    },
+    marketingDescription: "Unlimited products and gallery, your own domain, premium themes and AI credits.",
+    targetAudience: "Most creators",
+    marketingHighlights: [
+      "Unlimited products",
+      "Unlimited gallery",
+      "Unlimited services",
+      "Premium themes",
+      "Full visual builder",
+      "Advanced experience backgrounds",
+      "Custom domain",
+      "AI credits",
+      "Analytics",
+      "SEO optimization",
+      "Premium components",
+      "Priority support",
+    ],
+    comparisonOrder: 2,
   },
   {
     code: "creator_scale",
     name: "Creator Scale",
     description: "Run your creator business at full scale with advanced AI, API access and a brand you own.",
     family: "creator",
-    price: 1995,
+    price: 1999,
     currency: "INR",
     cycle: "monthly",
     razorpayPlanId: "plan_TLTH45wQlPdW7v",
     manual: false,
+    bestValue: true,
+    badge: "Best Value",
+    annualPrice: 19990,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -143,6 +236,39 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     ],
     ctaType: "checkout",
     ctaLabel: "Upgrade to Scale",
+    featureOverrides: {
+      max_products: -1,
+      max_gallery: -1,
+      max_services: -1,
+      max_courses: -1,
+      max_testimonials: -1,
+      max_faq: -1,
+      max_timeline: -1,
+      max_links: -1,
+      max_feed: -1,
+      max_games: -1,
+      max_bookings: 100,
+      ai_credits: 2000,
+      storage_gb: 50,
+      max_team_members: 10,
+      max_api_calls: 10000,
+    },
+    marketingDescription: "Everything in Growth, plus API access, webhooks, automation, team members and advanced analytics.",
+    targetAudience: "Professional creators",
+    marketingHighlights: [
+      "Everything in Growth",
+      "API access",
+      "Webhooks",
+      "Automation",
+      "Team members",
+      "Advanced analytics",
+      "Higher AI credits",
+      "Increased storage",
+      "Faster AI generation queue",
+      "Advanced commerce",
+      "CRM integrations",
+    ],
+    comparisonOrder: 3,
   },
   {
     code: "creator_enterprise",
@@ -154,6 +280,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     cycle: "monthly",
     razorpayPlanId: null,
     manual: true,
+    enterprise: true,
+    hidden: true,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -169,53 +297,139 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     ],
     ctaType: "contact",
     ctaLabel: "Contact Sales",
+    featureOverrides: {
+      max_products: -1,
+      max_gallery: -1,
+      max_services: -1,
+      max_courses: -1,
+      max_testimonials: -1,
+      max_faq: -1,
+      max_timeline: -1,
+      max_links: -1,
+      max_feed: -1,
+      max_games: -1,
+      max_bookings: -1,
+      max_team_members: 50,
+      max_api_calls: -1,
+      ai_credits: 10000,
+      storage_gb: 500,
+    },
+    marketingDescription: "Custom plans for teams, brands and high-volume creators. Dedicated support and SLA.",
+    targetAudience: "Teams and brands",
+    marketingHighlights: [
+      "Unlimited everything",
+      "Custom integrations",
+      "Dedicated support",
+      "SLA guarantee",
+      "SSO + audit logs",
+    ],
+    comparisonOrder: 4,
   },
   {
     code: "partner_free",
-    name: "Partner Free",
-    description: "Manage your first clients and explore the partner workspace — free.",
+    name: "Partner Launch",
+    description: "Run your first client projects with the agency dashboard and workspace — free for 15 days.",
     family: "partner",
     price: 0,
     currency: "INR",
     cycle: "monthly",
     razorpayPlanId: null,
     manual: false,
+    trialDays: 15,
+    featureOverrides: {
+      max_products: 5,
+      max_gallery: 10,
+      max_services: 5,
+      max_testimonials: 10,
+      max_faq: 10,
+      max_timeline: 10,
+      max_links: 10,
+      max_feed: 10,
+      max_clients: 1,
+      max_websites: 1,
+      max_team_members: 1,
+      max_bookings: 5,
+    },
     capabilities: ["basic_builder", "basic_themes", "creator_subdomain"],
     ctaType: "signup",
-    ctaLabel: "Start Free",
+    ctaLabel: "Start Free Trial",
+    marketingDescription: "Explore the agency dashboard and workspace for free. 15-day trial — no credit card required.",
+    targetAudience: "New agencies and freelancers",
+    marketingHighlights: [
+      "Agency dashboard",
+      "Client management",
+      "Workspace management",
+      "White-label future",
+      "Community support",
+    ],
+    comparisonOrder: 1,
   },
   {
     code: "partner_solo",
     name: "Solo Partner",
     description: "Run client projects with confidence: custom domains, premium themes and AI help.",
     family: "partner",
-    price: 1499,
+    price: 2999,
     currency: "INR",
     cycle: "monthly",
     razorpayPlanId: "plan_solo",
     manual: false,
     recommended: true,
     badge: "Recommended",
+    annualPrice: 29990,
     capabilities: [
       "premium_themes",
       "custom_domain",
       "advanced_builder",
       "ai_generation",
       "social_integrations",
+      "priority_support",
     ],
     ctaType: "checkout",
     ctaLabel: "Upgrade to Solo",
+    featureOverrides: {
+      max_products: 20,
+      max_gallery: 50,
+      max_services: 20,
+      max_testimonials: 50,
+      max_faq: 50,
+      max_timeline: 50,
+      max_links: 50,
+      max_feed: 50,
+      max_games: 20,
+      max_bookings: 50,
+      max_clients: 10,
+      max_websites: 5,
+      max_team_members: 3,
+      ai_credits: 1000,
+      storage_gb: 20,
+    },
+    marketingDescription: "Run client projects with custom domains, premium themes, team members and recurring commission.",
+    targetAudience: "Independent agencies",
+    marketingHighlights: [
+      "Agency dashboard",
+      "Client management",
+      "Workspace management",
+      "Recurring commission",
+      "Team members",
+      "Partner analytics",
+      "Premium themes",
+      "Custom domain",
+      "Priority support",
+    ],
+    comparisonOrder: 2,
   },
   {
     code: "partner_growth",
     name: "Partner Growth",
-    description: "Grow your creator portfolio with advanced AI, analytics and API integrations.",
+    description: "Legacy mid-tier — retired from the public lineup; kept for existing subscribers and legacy mapping.",
     family: "partner",
     price: 4999,
     currency: "INR",
     cycle: "monthly",
     razorpayPlanId: "plan_growth",
     manual: false,
+    hidden: true,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -227,17 +441,21 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     ],
     ctaType: "checkout",
     ctaLabel: "Upgrade to Growth",
+    comparisonOrder: 3,
   },
   {
     code: "partner_scale",
     name: "Partner Scale",
     description: "Scale many creators under your own brand with white-label and priority support.",
     family: "partner",
-    price: 9999,
+    price: 7999,
     currency: "INR",
     cycle: "monthly",
     razorpayPlanId: "plan_scale",
     manual: false,
+    bestValue: true,
+    badge: "Best Value",
+    annualPrice: 79990,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -252,10 +470,42 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     ],
     ctaType: "checkout",
     ctaLabel: "Upgrade to Scale",
+    featureOverrides: {
+      max_products: 100,
+      max_gallery: 500,
+      max_services: 100,
+      max_testimonials: 500,
+      max_faq: 500,
+      max_timeline: 500,
+      max_links: 500,
+      max_feed: 500,
+      max_games: 100,
+      max_bookings: 200,
+      max_clients: 50,
+      max_websites: 20,
+      max_team_members: 10,
+      ai_credits: 5000,
+      storage_gb: 100,
+      max_api_calls: 50000,
+    },
+    marketingDescription: "Grow your agency under your own brand with white-label, API, automation and bulk operations.",
+    targetAudience: "Scaling agencies",
+    marketingHighlights: [
+      "Everything in Solo",
+      "White label",
+      "Multi-client management",
+      "Bulk operations",
+      "API access",
+      "Automation",
+      "Advanced analytics",
+      "Higher commission rates",
+      "Priority support",
+    ],
+    comparisonOrder: 4,
   },
   {
     code: "partner_enterprise",
-    name: "Partner Enterprise",
+    name: "Enterprise Partner",
     description: "Custom requirements for enterprise partner programs.",
     family: "partner",
     price: null,
@@ -263,6 +513,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     cycle: "monthly",
     razorpayPlanId: null,
     manual: true,
+    enterprise: true,
+    hidden: true,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -278,6 +530,35 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     ],
     ctaType: "contact",
     ctaLabel: "Contact Sales",
+    featureOverrides: {
+      max_products: -1,
+      max_gallery: -1,
+      max_services: -1,
+      max_courses: -1,
+      max_testimonials: -1,
+      max_faq: -1,
+      max_timeline: -1,
+      max_links: -1,
+      max_feed: -1,
+      max_games: -1,
+      max_bookings: -1,
+      max_clients: -1,
+      max_websites: -1,
+      max_team_members: 50,
+      max_api_calls: -1,
+      ai_credits: 10000,
+      storage_gb: 500,
+    },
+    marketingDescription: "Custom plans for enterprise partner programs. Dedicated support and SLA.",
+    targetAudience: "Enterprise partner programs",
+    marketingHighlights: [
+      "Unlimited clients",
+      "Custom integrations",
+      "Dedicated support",
+      "SLA guarantee",
+      "SSO + audit logs",
+    ],
+    comparisonOrder: 5,
   },
 ];
 
@@ -388,4 +669,51 @@ export function featuresForPlan(code: string): Record<string, number | boolean> 
     if (mapping) out[mapping.feature] = mapping.value;
   }
   return out;
+}
+
+// ── RCCF-IMPLEMENTATION-70: registry-driven marketing selectors ─────────────
+// Marketing surfaces consume ONLY these — no duplicated plan lists, features or
+// prices anywhere in the UI.
+
+/** Plans shown in the standard pricing comparison (no hidden/enterprise). */
+export function getMarketingPlans(family: "creator" | "partner"): CommercePlanConfig[] {
+  return COMMERCE_PLANS.filter((p) => p.family === family && !p.hidden && !p.enterprise)
+    .sort((a, b) => (a.comparisonOrder ?? (a.price ?? 0)) - (b.comparisonOrder ?? (b.price ?? 0)));
+}
+
+/** The enterprise plan for a family (shown separately under Enterprise Solutions). */
+export function getEnterprisePlan(family: "creator" | "partner"): CommercePlanConfig | undefined {
+  return COMMERCE_PLANS.find((p) => p.family === family && p.enterprise);
+}
+
+/** Effective monthly price for a billing cycle. */
+export function getPlanMonthlyPrice(plan: CommercePlanConfig, cycle: "monthly" | "yearly"): number | null {
+  if (plan.price === null) return null;
+  if (cycle === "yearly" && plan.annualPrice) return Math.round(plan.annualPrice / 12);
+  return plan.price;
+}
+
+/** Annual savings percentage (monthly × 12 vs annual price). */
+export function getAnnualSavingsPercent(plan: CommercePlanConfig): number | null {
+  if (plan.price === null || !plan.annualPrice) return null;
+  const annualized = plan.price * 12;
+  if (annualized <= 0) return null;
+  return Math.round((1 - plan.annualPrice / annualized) * 100);
+}
+
+/**
+ * Upgrade highlights: what a plan ADDS over the previous visible tier in its
+ * family. Used by the upgrade dialog to explain the value of the next step.
+ */
+export function getUpgradeHighlights(planCode: string): string[] {
+  const current = getCommercePlan(planCode);
+  if (!current) return [];
+  const tier = getMarketingPlans(current.family);
+  const idx = tier.findIndex((p) => p.code === planCode);
+  const next = tier[idx + 1];
+  if (!next) return [];
+  const prev = idx > 0 ? tier[idx - 1] : null;
+  const prevHighlights = new Set(prev?.marketingHighlights ?? []);
+  const adds = (next.marketingHighlights ?? []).filter((h) => h !== "Everything in Growth" && h !== "Everything in Solo" && !prevHighlights.has(h));
+  return adds.length > 0 ? adds : next.marketingHighlights ?? [];
 }

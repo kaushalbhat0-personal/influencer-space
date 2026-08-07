@@ -29,7 +29,7 @@ describe("IMPLEMENTATION-42 — Canonical commerce config (Phase 1/2/3)", () => 
     expect(creator.map((p) => p.code)).toEqual(["creator_launch", "creator_grow", "creator_scale", "creator_enterprise"]);
     expect(getCommercePlan("creator_launch")?.price).toBe(0);
     expect(getCommercePlan("creator_grow")?.price).toBe(699);
-    expect(getCommercePlan("creator_scale")?.price).toBe(1995);
+    expect(getCommercePlan("creator_scale")?.price).toBe(1999);
     expect(getCommercePlan("creator_enterprise")?.price).toBeNull();
   });
 
@@ -37,9 +37,9 @@ describe("IMPLEMENTATION-42 — Canonical commerce config (Phase 1/2/3)", () => 
     const partner = getPartnerCommercePlans();
     expect(partner.map((p) => p.code)).toEqual(["partner_free", "partner_solo", "partner_growth", "partner_scale", "partner_enterprise"]);
     expect(getCommercePlan("partner_free")?.price).toBe(0);
-    expect(getCommercePlan("partner_solo")?.price).toBe(1499);
+    expect(getCommercePlan("partner_solo")?.price).toBe(2999);
     expect(getCommercePlan("partner_growth")?.price).toBe(4999);
-    expect(getCommercePlan("partner_scale")?.price).toBe(9999);
+    expect(getCommercePlan("partner_scale")?.price).toBe(7999);
     expect(getCommercePlan("partner_enterprise")?.price).toBeNull();
     // Only Solo carries "Recommended" (a product decision, not fabricated).
     expect(getCommercePlan("partner_solo")?.badge).toBe("Recommended");

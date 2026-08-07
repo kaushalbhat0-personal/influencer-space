@@ -1,93 +1,60 @@
 /**
- * Pricing Section — Data
+ * Pricing Section — Data (RCCF-IMPLEMENTATION-70)
  *
- * All pricing data comes from BillingPlan catalog.
- * CTA routing is driven by plan.ctaType metadata.
- * No hardcoded prices, features, or routes.
+ * Marketing consumes the Commerce Registry ONLY — no duplicated plan lists,
+ * prices, features or bullets anywhere in the UI. Plan cards, comparison rows,
+ * annual pricing and upgrade copy all derive from `src/config/commerce/plans.ts`
+ * + the canonical capability catalog.
  */
 
-import { getPlansByFamily, getAllPlans, getFeatureInfo, getAllFeatureIds, DEFAULT_CURRENCY } from "@/lib/capabilities";
-import { entitlement } from "@/modules/billing/application/entitlements";
-import { getCreatorCommercePlans, getPartnerCommercePlans, getCommercePlan } from "@/config/commerce/plans";
-import type { PlanDefinition } from "@/lib/capabilities";
+import { getMarketingPlans, getEnterprisePlan, getPlanMonthlyPrice, getAnnualSavingsPercent, getUpgradeHighlights, type CommercePlanConfig } from "@/config/commerce/plans";
+import { getFeatureInfo, getAllFeatureIds } from "@/lib/capabilities";
+
+export type PlanFamily = "creator" | "agency";
 
 export interface PlanWithMeta {
-  plan: PlanDefinition;
+  plan: CommercePlanConfig;
   highlights: string[];
 }
 
-/**
- * IMPLEMENTATION-34: creator pricing derives from the canonical commerce
- * config (Launch/Grow/Scale/Enterprise). No duplicated pricing anywhere.
- */
+/** Standard comparison plans (hidden/enterprise excluded), registry order. */
 export function getCreatorPlans(): PlanWithMeta[] {
-  const catalog = getPlanDefinitionsByCode();
-  return getCreatorCommercePlans()
-    .filter((p) => catalog[p.code])
-    .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
-    .map((p) => ({ plan: catalog[p.code]!, highlights: getHighlights(p.code) }));
+  return getMarketingPlans("creator").map((p) => ({
+    plan: p,
+    highlights: p.marketingHighlights ?? [],
+  }));
 }
 
-function getPlanDefinitionsByCode(): Record<string, PlanDefinition> {
-  const out: Record<string, PlanDefinition> = {};
-  for (const plan of getAllPlans()) {
-    out[plan.code] = plan;
-  }
-  return out;
-}
-
-/**
- * IMPLEMENTATION-42 Phase 3: partner (agency) pricing derives from the
- * canonical partner commerce config (Free / Solo / Growth / Scale / Enterprise).
- * No duplicated pricing; no fabricated "Most Popular" (Solo carries
- * "Recommended" as a product decision).
- */
+/** Partner (agency) plans — same registry, same rules. */
 export function getAgencyPlans(): PlanWithMeta[] {
-  const catalog = getPlanDefinitionsByCode();
-  return getPartnerCommercePlans()
-    .filter((p) => catalog[p.code])
-    .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
-    .map((p) => ({ plan: catalog[p.code]!, highlights: getHighlights(p.code) }));
+  return getMarketingPlans("partner").map((p) => ({
+    plan: p,
+    highlights: p.marketingHighlights ?? [],
+  }));
 }
 
-export function getEnterprisePlan(): Partial<PlanDefinition> {
-  const commerce = getCommercePlan("creator_enterprise");
-  return {
-    code: "creator_enterprise",
-    family: "creator",
-    name: commerce?.name ?? "Enterprise",
-    description: commerce?.description ?? "Custom requirements and dedicated support.",
-    targetAudience: "Growing creators and brands",
-    price: 0,
-    currency: DEFAULT_CURRENCY,
-    cycle: "monthly",
-    ctaLabel: commerce?.ctaLabel ?? "Contact Sales",
-    ctaType: "contact",
-    features: {},
-  };
+/** Plans that appear in the standard comparison matrix (no enterprise, no hidden). */
+export function getComparisonPlans(family: PlanFamily): CommercePlanConfig[] {
+  return getMarketingPlans(family === "agency" ? "partner" : "creator");
 }
 
-/** IMPLEMENTATION-42 Phase 3: partner enterprise (Contact Sales). */
-export function getPartnerEnterprisePlan(): Partial<PlanDefinition> {
-  const commerce = getCommercePlan("partner_enterprise");
-  return {
-    code: "partner_enterprise",
-    family: "agency",
-    name: commerce?.name ?? "Partner Enterprise",
-    description: commerce?.description ?? "Custom requirements for enterprise partner programs.",
-    targetAudience: "Enterprise partner programs",
-    price: 0,
-    currency: DEFAULT_CURRENCY,
-    cycle: "monthly",
-    ctaLabel: commerce?.ctaLabel ?? "Contact Sales",
-    ctaType: "contact",
-    features: {},
-  };
+/** Enterprise plan for a family — rendered separately under Enterprise Solutions. */
+export function getEnterprisePlanFor(family: PlanFamily): CommercePlanConfig | undefined {
+  return getEnterprisePlan(family === "agency" ? "partner" : "creator");
 }
 
-export function getEnterpriseHighlights(): string[] {
-  const commerce = getCommercePlan("creator_enterprise");
-  return commerce?.marketingFeatures ?? ["Unlimited everything", "Custom integrations", "Dedicated support", "SLA guarantee", "SSO + Audit logs"];
+/** Effective price for a billing cycle (monthly × 12 vs annualPrice). */
+export function getDisplayPrice(plan: CommercePlanConfig, cycle: "monthly" | "yearly"): number | null {
+  return getPlanMonthlyPrice(plan, cycle);
+}
+
+export function getAnnualSavings(plan: CommercePlanConfig): number | null {
+  return getAnnualSavingsPercent(plan);
+}
+
+/** Upgrade copy: exactly what the next tier adds. */
+export function getUpgradeCopy(planCode: string): string[] {
+  return getUpgradeHighlights(planCode);
 }
 
 export function getComparisonFeatures(): Array<{ key: string; description: string; valueType: string }> {
@@ -104,19 +71,19 @@ export function getFeatureLabel(feature: number | boolean | string, featureDef: 
   return String(feature);
 }
 
-function getHighlights(planCode: string): string[] {
-  const h: string[] = [];
-  const p = entitlement.limit(planCode, "max_products");
-  if (p === -1) h.push("Unlimited products");
-  else h.push(`${p} products`);
-
-  if (entitlement.has(planCode, "custom_domain")) h.push("Custom domain");
-  if (entitlement.has(planCode, "custom_branding")) h.push("Remove branding");
-  if (entitlement.has(planCode, "analytics_advanced")) h.push("Advanced analytics");
-  if (entitlement.has(planCode, "ai_automation")) h.push("AI automation");
-  if (entitlement.has(planCode, "priority_support")) h.push("Priority support");
-  const c = entitlement.limit(planCode, "max_clients");
-  if (c > 0) h.push(`${c} clients`);
-  if (entitlement.has(planCode, "white_label")) h.push("White-label");
-  return h.slice(0, 5);
+/** Trial framing — Launch plans are 15-day free trials, not "free forever". */
+export function getTrialFraming(plan: CommercePlanConfig): { title: string; subtitle: string } | null {
+  if (plan.price !== 0 || plan.trialDays === undefined) return null;
+  return {
+    title: `${plan.trialDays}-Day Free Trial`,
+    subtitle: "No credit card required. Upgrade anytime.",
+  };
 }
+
+/** Recurring-revenue framing for partner plans (Phase 13). */
+export const PARTNER_VALUE_POINTS = [
+  "Earn recurring commission as your clients grow",
+  "Manage unlimited client websites from one dashboard",
+  "Your clients pay CreatorStore directly — you focus on delivery",
+  "Scale with white-label, bulk operations and API automation",
+];

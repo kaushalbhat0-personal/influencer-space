@@ -55,13 +55,18 @@ describe("Capabilities — Constants", () => {
 
   it("should define all feature IDs", () => {
     const ids = Object.values(FEATURE_IDS);
-    expect(ids.length).toBe(36);
+    expect(ids.length).toBe(46);
     expect(ids).toContain("max_products");
     expect(ids).toContain("custom_domain");
     expect(ids).toContain("seo");
     expect(ids).toContain("ai_automation");
     expect(ids).toContain("white_label");
     expect(ids).toContain("max_websites");
+    // RCCF-IMPLEMENTATION-70: real storefront modules exposed as tiered limits.
+    expect(ids).toContain("max_services");
+    expect(ids).toContain("max_courses");
+    expect(ids).toContain("max_testimonials");
+    expect(ids).toContain("ai_credits");
   });
 
   it("should have canonical UPGRADE_PATHS for creator plans", () => {
@@ -93,7 +98,7 @@ describe("Capabilities — Plans", () => {
   it("should return Creator Grow plan via legacy code", () => {
     const pro = getPlan("creator_pro");
     expect(pro).toBeDefined();
-    expect(pro!.name).toBe("Creator Grow");
+    expect(pro!.name).toBe("Creator Growth");
     expect(pro!.price).toBe(699);
     expect(pro!.recommended).toBe(true);
     expect(pro!.badge).toBe("Most Popular");
@@ -103,13 +108,13 @@ describe("Capabilities — Plans", () => {
     const elite = getPlan("creator_elite");
     expect(elite).toBeDefined();
     expect(elite!.name).toBe("Creator Scale");
-    expect(elite!.price).toBe(1995);
+    expect(elite!.price).toBe(1999);
   });
 
   it("should return canonical Partner plans via legacy codes", () => {
     const free = getPlan("agency_free");
     expect(free).toBeDefined();
-    expect(free!.name).toBe("Partner Free");
+    expect(free!.name).toBe("Partner Launch");
     expect(free!.family).toBe("agency");
 
     const studio = getPlan("agency_studio");
@@ -179,7 +184,7 @@ describe("Capabilities — Features", () => {
 
   it("should list all feature IDs", () => {
     const ids = getAllFeatureIds();
-    expect(ids.length).toBe(35);
+    expect(ids.length).toBe(45);
   });
 
   it("should filter features by category", () => {
@@ -192,7 +197,7 @@ describe("Capabilities — Features", () => {
   });
 
   it("should have complete FEATURE_CATALOG", () => {
-    expect(Object.keys(FEATURE_CATALOG).length).toBe(35);
+    expect(Object.keys(FEATURE_CATALOG).length).toBe(45);
   });
 });
 
@@ -220,10 +225,10 @@ describe("Capabilities — Engine.can / cannot", () => {
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.API_ACCESS).allowed).toBe(true);
   });
 
-  it("should handle numeric limits from BASE_FEATURES", () => {
+  it("should handle numeric limits from feature overrides", () => {
     expect(capabilityEngine.can("creator_free", FEATURE_IDS.PRODUCTS).allowed).toBe(true);
-    expect(capabilityEngine.can("creator_free", FEATURE_IDS.PRODUCTS).limit).toBe(5);
-    expect(capabilityEngine.can("creator_grow", FEATURE_IDS.PRODUCTS).limit).toBe(5);
+    expect(capabilityEngine.can("creator_free", FEATURE_IDS.PRODUCTS).limit).toBe(3);
+    expect(capabilityEngine.can("creator_grow", FEATURE_IDS.PRODUCTS).limit).toBe(-1);
   });
 
   it("should deny unknown plans", () => {
@@ -241,39 +246,41 @@ describe("Capabilities — Engine.can / cannot", () => {
 });
 
 describe("Capabilities — Engine.limit / remaining / used", () => {
-  it("should return BASE_FEATURE numeric limits for all plans", () => {
-    expect(capabilityEngine.limit("creator_free", FEATURE_IDS.PRODUCTS)).toBe(5);
-    expect(capabilityEngine.limit("creator_free", FEATURE_IDS.GALLERY)).toBe(10);
+  it("should return tiered numeric limits per plan", () => {
+    expect(capabilityEngine.limit("creator_free", FEATURE_IDS.PRODUCTS)).toBe(3);
+    expect(capabilityEngine.limit("creator_free", FEATURE_IDS.GALLERY)).toBe(3);
     expect(capabilityEngine.limit("creator_free", FEATURE_IDS.API_CALLS)).toBe(1000);
+    expect(capabilityEngine.limit("creator_grow", FEATURE_IDS.PRODUCTS)).toBe(-1);
   });
 
   it("should return remaining counts", () => {
-    expect(capabilityEngine.remaining("creator_free", FEATURE_IDS.PRODUCTS, 3)).toBe(2);
-    expect(capabilityEngine.remaining("creator_free", FEATURE_IDS.PRODUCTS, 5)).toBe(0);
+    expect(capabilityEngine.remaining("creator_free", FEATURE_IDS.PRODUCTS, 1)).toBe(2);
+    expect(capabilityEngine.remaining("creator_free", FEATURE_IDS.PRODUCTS, 3)).toBe(0);
   });
 
   it("used should return usage tuple", () => {
     const result = capabilityEngine.used("creator_free", FEATURE_IDS.PRODUCTS, 3);
     expect(result.used).toBe(3);
-    expect(result.limit).toBe(5);
-    expect(result.remaining).toBe(2);
+    expect(result.limit).toBe(3);
+    expect(result.remaining).toBe(0);
   });
 });
 
 describe("Capabilities — Engine.hasReachedLimit / requiresUpgrade", () => {
   it("should detect limit reached", () => {
     expect(capabilityEngine.hasReachedLimit("creator_free", FEATURE_IDS.PRODUCTS, 5)).toBe(true);
-    expect(capabilityEngine.hasReachedLimit("creator_free", FEATURE_IDS.PRODUCTS, 3)).toBe(false);
+    expect(capabilityEngine.hasReachedLimit("creator_free", FEATURE_IDS.PRODUCTS, 3)).toBe(true);
+    expect(capabilityEngine.hasReachedLimit("creator_free", FEATURE_IDS.PRODUCTS, 2)).toBe(false);
   });
 
   it("requiresUpgrade should allow when under limit", () => {
-    const result = capabilityEngine.requiresUpgrade("creator_free", FEATURE_IDS.PRODUCTS, 3);
+    const result = capabilityEngine.requiresUpgrade("creator_free", FEATURE_IDS.PRODUCTS, 2);
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(2);
+    expect(result.remaining).toBe(1);
   });
 
   it("requiresUpgrade should suggest upgrade when at limit", () => {
-    const result = capabilityEngine.requiresUpgrade("creator_free", FEATURE_IDS.PRODUCTS, 5);
+    const result = capabilityEngine.requiresUpgrade("creator_free", FEATURE_IDS.PRODUCTS, 3);
     expect(result.allowed).toBe(false);
     expect(result.suggestedUpgrade).toBe("creator_grow");
     expect(result.reason).toContain("Limit reached");
@@ -330,7 +337,7 @@ describe("Capabilities — Engine.planSummary", () => {
     expect(summary).not.toBeNull();
     expect(summary!.code).toBe("creator_launch");
     expect(summary!.name).toBe("Creator Launch");
-    expect(summary!.featureCount).toBe(35);
+    expect(summary!.featureCount).toBe(45);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
   });
 
@@ -356,7 +363,7 @@ describe("Capabilities — Engine.comparePlans", () => {
     expect(cmp).not.toBeNull();
     expect(cmp!.addedFeatures.map((f) => f.label)).toContain("Remove Branding");
     expect(cmp!.addedFeatures.map((f) => f.label)).toContain("API Access");
-    expect(cmp!.priceDifference).toBe(1296);
+    expect(cmp!.priceDifference).toBe(1300);
   });
 
   it("should return null for invalid plans", () => {
@@ -371,12 +378,13 @@ describe("Capabilities — Engine.comparePlans", () => {
 });
 
 describe("Capabilities — Engine.recommendedUpgrade", () => {
-  it("should return null when all plans share BASE_FEATURES numeric limits", () => {
+  it("should suggest an upgrade when tiered limits are exceeded", () => {
     const rec = capabilityEngine.recommendedUpgrade({
       planCode: "creator_free",
       usage: { max_gallery: 15, max_products: 10 },
     });
-    expect(rec).toBeNull();
+    expect(rec).not.toBeNull();
+    expect(rec!.targetPlan).toBe("creator_grow");
   });
 
   it("should return null when no limits exceeded", () => {
@@ -405,9 +413,9 @@ describe("Capabilities — Engine.recommendedUpgrade", () => {
 });
 
 describe("Capabilities — Limits", () => {
-  it("should compute effective limit from BASE_FEATURES", () => {
-    expect(getEffectiveLimit("creator_free", "max_products")).toBe(5);
-    expect(getEffectiveLimit("creator_grow", "max_products")).toBe(5);
+  it("should compute effective limit from feature overrides", () => {
+    expect(getEffectiveLimit("creator_free", "max_products")).toBe(3);
+    expect(getEffectiveLimit("creator_grow", "max_products")).toBe(-1);
   });
 
   it("should return 0 for unknown plan", () => {
@@ -415,13 +423,13 @@ describe("Capabilities — Limits", () => {
   });
 
   it("should check limit correctly", () => {
-    const check = checkLimit("creator_free", "max_products", 3);
-    expect(check.limit).toBe(5);
-    expect(check.used).toBe(3);
-    expect(check.remaining).toBe(2);
+    const check = checkLimit("creator_free", "max_products", 2);
+    expect(check.limit).toBe(3);
+    expect(check.used).toBe(2);
+    expect(check.remaining).toBe(1);
     expect(check.isUnlimited).toBe(false);
     expect(check.isExceeded).toBe(false);
-    expect(check.usagePercent).toBe(60);
+    expect(check.usagePercent).toBe(67);
   });
 
   it("should detect exceeded limit", () => {
@@ -432,14 +440,14 @@ describe("Capabilities — Limits", () => {
   });
 
   it("should build limits map", () => {
-    const map = getLimitsMap("creator_free", { max_products: 3, max_gallery: 10 });
+    const map = getLimitsMap("creator_free", { max_products: 3, max_gallery: 2 });
     expect(map.max_products).toBeDefined();
     expect(map.max_gallery).toBeDefined();
     expect(map.max_gallery.isExceeded).toBe(false);
   });
 
   it("should find over-limit features", () => {
-    const over = getOverLimitFeatures("creator_free", { max_products: 10, max_gallery: 5 });
+    const over = getOverLimitFeatures("creator_free", { max_products: 10, max_gallery: 2 });
     expect(over.length).toBe(1);
     expect(over[0]!.featureId).toBe("max_products");
   });
@@ -492,7 +500,7 @@ describe("Capabilities — Mapper", () => {
     const plan = getPlan("creator_free")!;
     const summary = toPlanSummary(plan);
     expect(summary.code).toBe("creator_launch");
-    expect(summary.featureCount).toBe(35);
+    expect(summary.featureCount).toBe(45);
   });
 
   it("should format feature comparison", () => {
@@ -536,9 +544,9 @@ describe("Capabilities — Service Delegation", () => {
   });
 
   it("should delegate limit/remaining/used", () => {
-    expect(capabilityService.limit("creator_free", "max_products")).toBe(5);
-    expect(capabilityService.remaining("creator_free", "max_products", 3)).toBe(2);
-    expect(capabilityService.used("creator_free", "max_products", 3).limit).toBe(5);
+    expect(capabilityService.limit("creator_free", "max_products")).toBe(3);
+    expect(capabilityService.remaining("creator_free", "max_products", 1)).toBe(2);
+    expect(capabilityService.used("creator_free", "max_products", 3).limit).toBe(3);
   });
 
   it("should delegate canonical plan accessors", () => {
@@ -546,16 +554,16 @@ describe("Capabilities — Service Delegation", () => {
     expect(capabilityService.getAllPlans().length).toBe(9);
     expect(capabilityService.getPlansByFamily("creator").length).toBe(4);
     expect(capabilityService.getPlan("creator_grow")?.price).toBe(699);
-    expect(capabilityService.getPlan("creator_scale")?.price).toBe(1995);
+    expect(capabilityService.getPlan("creator_scale")?.price).toBe(1999);
   });
 
   it("should delegate feature accessors", () => {
     expect(capabilityService.getFeatureInfo("max_products").label).toBe("Products");
-    expect(capabilityService.getAllFeatureIds().length).toBe(35);
+    expect(capabilityService.getAllFeatureIds().length).toBe(45);
   });
 
   it("should delegate limit functions", () => {
-    expect(capabilityService.getEffectiveLimit("creator_free", "max_products")).toBe(5);
+    expect(capabilityService.getEffectiveLimit("creator_free", "max_products")).toBe(3);
     expect(capabilityService.checkLimit("creator_free", "max_products", 6).isExceeded).toBe(true);
   });
 });

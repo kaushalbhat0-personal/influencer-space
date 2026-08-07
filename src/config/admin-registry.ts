@@ -3,7 +3,7 @@ import {
   Headphones, BarChart3, CreditCard, ScrollText, Settings,
   UserCog, UserPlus, Sparkles, CheckCircle2, Bot, Globe,
   ToggleRight, Timer, FileText, IndianRupee, TrendingUp, Monitor, Clock,
-  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target, HeartPulse,
+  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target, HeartPulse, Tag,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -216,6 +216,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     href: "/super-admin/subscriptions", icon: CreditCard, permission: "super_admin",
     searchable: true, keywords: ["plans", "billing", "recurring", "payment"],
     auditCategory: "billing", analyticsKey: "subscriptions:viewed",
+    productionReady: true,
+  },
+  {
+    id: "pricing-center", title: "Pricing Center", group: "commerce",
+    href: "/super-admin/pricing", icon: Tag, permission: "super_admin",
+    searchable: true, keywords: ["pricing", "plans", "marketing", "highlights", "badges", "annual", "trial"],
+    auditCategory: "billing", analyticsKey: "pricing:viewed",
     productionReady: true,
   },
   {

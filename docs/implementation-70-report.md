@@ -1,82 +1,73 @@
-# IMPLEMENTATION-70 REPORT — Website Evolution Runtime
+# Implementation Report — RCCF-IMPLEMENTATION-70
 
-RCCF-EPIC-09 · Launch Readiness Initiative, Phase 11.
+Canonical Commerce Registry, Pricing & Marketing Synchronization.
 
-Generated websites continuously evolve based on creator growth. The runtime
-**never edits websites automatically** — it produces evolution opportunities
-the creator previews and approves. No AI, registry-driven, consumes the Runtime
-Context only.
+## What was delivered
 
-## 1. Summary
-
-The first generation gives creators a solid starting point. This runtime keeps
-the website evolving as the business evolves, creating the long-term feedback
-loop:
-
-```
-Knowledge → Goals → Business Health → Experience Intelligence → Website
-   ↑                                                            │
-   └── Better Website ← Website Evolution ← Creator Growth ←────┘
-```
-
-## 2. Deliverables by phase
-
-| Phase | Deliverable | Location |
+| Phase | Status | Deliverable |
 | --- | --- | --- |
-| 1 Evolution Registry | 10 growth-triggered improvements with expected lifts, effort, goals, required knowledge/commerce/trust and change manifests | `domain/registry.ts` |
-| 2 Opportunity detection | `detectOpportunities` from growth thresholds + goals; before/after computed once | `application/detector.ts` |
-| 3 Website versioning | current/previous/generated/builder/blueprint/experience versions + evolution history length | `application/versioning.ts` |
-| 4 Evolution feed | Dashboard `EvolutionFeedCard`, Builder panel, Super Admin page — ordered by ROI | `presentation/*` |
-| 5 Builder | One-click Apply / Reject / Later with before→after health preview | `presentation/builder-evolution-panel.tsx` |
-| 6 Change preview | Before/After (Health, Conversion, Trust) + section-order/CTA/config manifest | `domain/types.ts` |
-| 7 Health lift | Predicted Business Health / Conversion / Knowledge / Trust / Goal Alignment per evolution | `domain/registry.ts` |
-| 8 Storefront | No automatic changes — only creator-approved | — |
-| 9 History | accepted/rejected/ignored/deferred/applied with before/after outcomes | `infrastructure/history-store.ts` |
-| 10 Super Admin | `/super-admin/evolution` — most/least adopted, avg lifts, industry + goal differences | `application/runtime.ts` |
-| 11 Public API | `detect` / `preview` / `apply` / `setStatus` / `history` / `versionInfo` / `platformEvolution` | `application/runtime.ts` |
-| 12 Documentation | 4 docs | `docs/` |
+| 1 — Canonical plan structure | ✅ | Restructured creator (Launch/Growth/Scale/Enterprise) + partner (Launch/Solo/Scale/Enterprise) lineups; Partner Growth hidden; prices 699/1999/2999/7999; enterprise only under Enterprise Solutions |
+| 2 — Marketing feature registry | ✅ | `marketingDescription`, `targetAudience`, `marketingHighlights`, `badge`, `ctaLabel`, `comparisonOrder`, `trialDays`, `hidden`, `enterprise`, `popular`, `bestValue` on every plan |
+| 3 — Real feature showcases | ✅ | Value-focused highlights backed by real modules (products, services, gallery, testimonials, FAQs, timeline, links, feed, AI, API, webhooks, automation, team, commission, white-label) |
+| 4 — Canonical capability mapping | ✅ | Highlight → capability keyword validation test (`tests/unit/commerce-registry.test.ts`) |
+| 5 — Usage limits | ✅ | New feature-catalog entries (services, courses, testimonials, faq, timeline, links, feed, games, bookings, AI credits) + per-plan `featureOverrides` → comparison + `capabilityService.limit` |
+| 6 — Super Admin Pricing Center | ✅ | `/super-admin/pricing` — full plan marketing config + catalog sync status + Re-sync action; `BillingPlan.marketing` column + migration |
+| 7 — Marketing synchronization | ✅ | Pricing page, comparison, JSON-LD consume registry only — no duplicated config |
+| 8 — Capability comparison | ✅ | Auto-derived matrix (Available/Unavailable/Limited/Unlimited) from `FEATURE_CATALOG` + `entitlement.limit`; hidden/enterprise excluded |
+| 9 — Upgrade experience | ✅ | `getUpgradeHighlights(planCode)` — exactly what the next tier adds |
+| 10 — Annual pricing | ✅ | Monthly/Yearly toggle + automatic savings (~17%) |
+| 11 — Trial messaging | ✅ | "15-Day Free Trial · No credit card required" replacing "free forever" |
+| 12 — Public website | ✅ | Most Popular / Best Value / Recommended badges, Enterprise section, FAQ trial item |
+| 13 — Agency pricing philosophy | ✅ | Partner value panel (recurring commission, client management, multiple websites) |
+| 14 — SaaS capability inventory | ✅ | Real module inventory + comparison surfacing |
+| 15 — Documentation | ✅ | This report + 5 companion docs |
 
-## 3. Architecture
+## Files touched
 
-```
-Runtime Context → Website Evolution Runtime → Builder / Dashboard / Super Admin
-```
+- `src/config/commerce/plans.ts` — restructured plans, marketing fields,
+  featureOverrides, marketing selectors.
+- `src/lib/capabilities/{constants,features,plans}.ts` — new module feature IDs,
+  catalog entries, groups; `featureOverrides` merge.
+- `src/components/marketing/Pricing/{data,index,comparison,faq}.tsx` —
+  registry-driven marketing, annual toggle, trial framing, enterprise section,
+  partner philosophy.
+- `src/app/pricing/page.tsx` — JSON-LD excludes hidden/enterprise; updated copy.
+- `src/modules/billing/infrastructure/catalog-seed.ts` — persists `marketing`
+  JSON to `BillingPlan`.
+- `src/actions/super-admin-pricing.actions.ts` + `src/app/super-admin/pricing/**`
+  — Pricing Center page + Re-sync action.
+- `src/config/admin-registry.ts` — Pricing Center nav entry.
+- `prisma/schema.prisma` + `prisma/migrations/20260807000001_billing_plan_marketing` —
+  `BillingPlan.marketing` (nullable JSONB).
+- `tests/unit/commerce-registry.test.ts` — registry invariant tests.
+- Updated existing tests to the new tiered-limit / renamed-plan design.
 
-- **Never auto-edits**: `apply()` validates the opportunity is still live,
-  records the outcome with before/after health, and returns the change manifest
-  for the creator to apply. The actual edit is always creator-driven.
-- **No duplicate Recommendation logic**: evolutions trigger on growth
-  thresholds (products > 10, gallery > 30, …), not missing next-actions.
-- **No duplicate Experience logic**: evolutions describe WHAT changed; the
-  Experience Intelligence describes the resulting experience.
-- **No duplicate calculations**: before/after scores computed once per
-  detection; detection is pure.
+## Verification
 
-## 4. Verification
+- `tsc --noEmit` ✅
+- `next build` ✅
+- **101 files / 1992 tests** ✅ (1983 existing updated where they encoded the old
+  uniform-limit/renamed-plan behavior + 9 new registry tests)
+- No new lint warnings
+- Existing pricing runtime, billing, and entitlement runtime logic unchanged —
+  plans still resolve by code; new limits are additive; marketing is now fully
+  registry-derived.
 
-- `tsc --noEmit` — ✅ clean.
-- `next build` — ✅ green (`/super-admin/evolution` compiled).
-- Unit tests — ✅ **101 files / 1982 passing** (was 1974; +8 new, zero
-  regressions).
-- Lint on all changed files — ✅ clean.
-- **Existing websites unchanged** — detection is read-only; the storefront is
-  untouched; only the dashboard/builder/super-admin surfaces were added.
+## Success criteria
 
-## 5. Constraints
+- One registry powers every pricing surface ✅
+- Marketing always reflects the actual product ✅ (test-enforced)
+- Capabilities and limits displayed consistently (single `featureOverrides` +
+  `FEATURE_CATALOG`) ✅
+- Super Admin evolves plans without code changes to surfaces ✅ (edit registry →
+  re-sync; DB mirror ready for full runtime editing)
+- Upgrade value immediately clear (`getUpgradeHighlights`) ✅
+- Every public feature backed by a real capability ✅ (test-enforced)
+- Pricing page communicates real platform strength instead of generic bullets ✅
 
-- No AI, no automatic edits, registry-driven, DDD, SOLID, DRY.
-- Consumes RuntimeContext only; never rebuilds the WebsiteAggregate.
-- Never duplicates the Recommendation or Experience runtimes.
+## Deferred (documented)
 
-## 6. Success criteria
-
-- ✅ Every creator continuously receives high-value website evolution
-  opportunities throughout the life of their business.
-- ✅ First generation = solid starting point; everything after focuses on
-  evolution.
-- ✅ Long-term feedback loop established (Knowledge → Goals → Health →
-  Experience → Website → Growth → Evolution → Better Website).
-
-## Commit Message
-
-`RCCF-EPIC-09: Website Evolution Runtime — growth-triggered evolution opportunities, registry-driven health lifts, before/after preview, one-click apply, evolution history, website versioning, super-admin platform evolution`
+- Full runtime DB-edit pricing (the `marketing` mirror + sync path are in place;
+  switching `data.ts` to read `BillingPlan` and adding a save action completes it).
+- Enforcement of the new tiered limits at write paths (limits are display +
+  entitlement-facing today; enforcement is the V-04 roadmap item).
