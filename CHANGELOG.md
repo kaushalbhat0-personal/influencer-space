@@ -1,6 +1,22 @@
 # Changelog
 
-## Latest — RCCF-INTEGRATION-01: Unified Intelligence Platform
+## Latest — RCCF-EPIC-07: Business Health Runtime
+- Business Health Runtime module (`src/modules/business-health/`) — a derived projection over the shared Runtime Context; owns no business data
+- Business Health Score (0–100) becomes the creator's north-star KPI
+- 12 weighted dimensions (Knowledge 20, Goal 15, Storefront 15, Success 15, Commerce 10, Brand/Trust/SEO/Config 5, Adoption 3, Perf 2, Future 0) — registry-driven, configurable weights
+- Health Engine consumes RuntimeContext only — never rebuilds the WebsiteAggregate, never recomputes existing scores
+- Grades (A+ … F) + next milestone + recommended focus
+- Immutable `health_history` projections (daily / significant change) + trend engine (improving/stable/declining/new)
+- Dashboard `BusinessHealthHero` — score, grade, trend, focus, expandable dimension breakdown (computed from the same context, recorded once per day)
+- Recommendation integration — every recommendation declares expected `healthLift` (+ shown on cards)
+- Builder `BusinessHealthBadge` — health score + selected section's contribution
+- Super Admin `/super-admin/business-health` platform aggregates (average, distribution, top/lowest, fastest improvers, dimension/plan/industry averages) + tenant console headline
+- Events: `business-health.updated` / `business-health.grade.changed`
+- Public API: evaluate / record / getHistory / getTrend / compare / platformHealth
+- Docs: `business-health-runtime.md`, `business-health-scoring.md`, `business-health-registry.md`, `business-health-trends.md`, `implementation-68-report.md`
+- Verification: tsc clean, next build green, 99 files / 1962 unit tests passing
+
+## RCCF-INTEGRATION-01: Unified Intelligence Platform
 - Runtime Context module (`src/modules/runtime-context/`) — single WebsiteAggregate build per request, request-scoped via React.cache; dashboard/knowledge/goals/super-admin wired (kills 3× snapshot duplication from the audit)
 - Intelligence-first onboarding — knowledge score + recommended weighted goals + top 3 recommendations + adaptive questions on the preview step; accepted goals/answers seeded after provisioning
 - Generation consumes the accepted goal profile — goal-preferred sections re-order the generated builder artifact (additive, no-op without goals)

@@ -42,6 +42,7 @@ export {
 } from "./application/categories";
 export {
   computeStorefrontLift,
+  computeHealthLift,
   activeImpacts,
   IMPACT_DIMENSIONS,
   IMPACT_LABELS,

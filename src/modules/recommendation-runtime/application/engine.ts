@@ -6,7 +6,7 @@ import { getField } from "@/modules/knowledge-runtime";
 import { getGoal } from "@/modules/goals-runtime";
 import { RECOMMENDATION_REGISTRY, getRecommendation } from "../domain/registry";
 import { scoreRecommendation } from "./scoring";
-import { computeStorefrontLift } from "./impact";
+import { computeStorefrontLift, computeHealthLift } from "./impact";
 import { RECOMMENDATION_CATEGORY_LABELS } from "../domain/types";
 import type {
   Recommendation,
@@ -45,6 +45,7 @@ function toRecommendation(
     score,
     expectedImpact: definition.expectedImpact,
     storefrontLift: computeStorefrontLift(definition.expectedImpact),
+    healthLift: computeHealthLift(definition.expectedImpact),
     goalAffinity: activeGoals.map((w) => w.goalId),
     missingKnowledge: missing,
     reasons,

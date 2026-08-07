@@ -15,6 +15,7 @@ import { KnowledgeScoreCard } from "@/modules/knowledge-runtime/presentation/kno
 import { GoalDashboardCard } from "@/modules/goals-runtime/presentation/goal-dashboard-card";
 import { applyCommerceOrder } from "@/modules/goals-runtime/application/commerce";
 import { NextBestStepCard } from "@/modules/recommendation-runtime/presentation/next-best-step-card";
+import { BusinessHealthHero } from "@/modules/business-health/presentation/business-health-hero";
 import { SuccessMilestonesCard } from "@/components/dashboard/SuccessMilestonesCard";
 import type { DashboardData } from "../actions";
 
@@ -66,7 +67,7 @@ function MetricCard({ label, value, sub, subColor }: { label: string; value: str
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const [data] = useState(initialData);
-  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success } = data;
+  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success, businessHealth } = data;
 
   // RCCF-INTEGRATION-01 Phase 6: goal-aware commerce ordering — booking-first
   // creators see Bookings first, products-first see Products first (no-op
@@ -104,6 +105,10 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       }
     >
       <div className="space-y-6">
+        {businessHealth && (
+          <BusinessHealthHero health={businessHealth.health} trend={businessHealth.trend} />
+        )}
+
         {!checklistComplete && (
           <OnboardingChecklist steps={checklistSteps} creatorName={creatorName} />
         )}

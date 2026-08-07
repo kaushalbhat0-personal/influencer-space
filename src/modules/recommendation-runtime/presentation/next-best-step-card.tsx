@@ -110,6 +110,12 @@ export function NextBestStepCard({ initialRecommendation, total }: Props) {
             <span className="text-zinc-500">Storefront</span>{" "}
             <span className="font-semibold text-emerald-400">+{recommendation.storefrontLift}%</span>
           </span>
+          {recommendation.healthLift > 0 && (
+            <span className="rounded-lg border border-s8ul-cyan/25 bg-s8ul-cyan/5 px-2.5 py-1.5 text-xs">
+              <span className="text-zinc-400">Health</span>{" "}
+              <span className="font-semibold text-s8ul-cyan">+{recommendation.healthLift}</span>
+            </span>
+          )}
         </div>
       )}
 

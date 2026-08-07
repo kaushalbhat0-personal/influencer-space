@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { dashboardService } from "./service";
 import { runtimeContextBuilder } from "@/modules/runtime-context";
+import { businessHealthRuntime } from "@/modules/business-health";
 
 export async function getDashboardData() {
   const session = await getServerSession(authOptions);
@@ -14,10 +15,13 @@ export async function getDashboardData() {
   // WebsiteAggregate build feeds knowledge, goals, success, recommendations,
   // storefront score, health and metrics (previously the snapshot was built 3x).
   const context = await runtimeContextBuilder.build(tenantId);
-  const [activity, steps, storefrontUrl] = await Promise.all([
+  const [activity, steps, storefrontUrl, businessHealth] = await Promise.all([
     dashboardService.getActivity(tenantId),
     dashboardService.getQuickStartSteps(tenantId),
     dashboardService.getStorefrontUrl(tenantId),
+    // RCCF-EPIC-07: Business Health is computed from the SAME context (no
+    // second build); record() appends an immutable projection when due.
+    businessHealthRuntime.recordFrom(context, tenantId),
   ]);
 
   const { metrics, health, knowledge, goals, recommendations, success, storefrontScore } = context;
@@ -58,6 +62,11 @@ export async function getDashboardData() {
     recommendations: {
       top: recommendations[0] ?? null,
       total: recommendations.length,
+    },
+    businessHealth: {
+      health: businessHealth.health,
+      trend: businessHealth.trend.trend,
+      delta: businessHealth.trend.delta,
     },
     steps,
     storefrontUrl,

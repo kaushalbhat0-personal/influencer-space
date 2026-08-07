@@ -18,7 +18,10 @@ export type IntelligenceEventType =
   | "booking.received"
   | "product.created"
   | "generation.completed"
-  | "onboarding.completed";
+  | "onboarding.completed"
+  | "business-health.updated"
+  | "business-health.milestone"
+  | "business-health.grade.changed";
 
 export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "knowledge.completed",
@@ -35,6 +38,9 @@ export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "product.created",
   "generation.completed",
   "onboarding.completed",
+  "business-health.updated",
+  "business-health.milestone",
+  "business-health.grade.changed",
 ];
 
 export interface RuntimeEvent {

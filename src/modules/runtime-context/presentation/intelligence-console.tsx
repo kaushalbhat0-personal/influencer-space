@@ -1,6 +1,6 @@
 "use client";
 
-import { Brain, Target, Trophy, Sparkles, Store } from "lucide-react";
+import { Brain, Target, Trophy, Sparkles, Store, HeartPulse } from "lucide-react";
 
 export interface TenantIntelligenceView {
   knowledge: { overall: number; confidence: number } | null;
@@ -8,10 +8,16 @@ export interface TenantIntelligenceView {
   goalAlignment: { overall: number } | null;
   success: { completionPercent: number } | null;
   recommendations: { active: number; top: string | null } | null;
+  businessHealth: { overall: number; grade: string } | null;
 }
 
 export function IntelligenceConsole({ intelligence }: { intelligence: TenantIntelligenceView }) {
   const items = [
+    {
+      label: "Business Health",
+      value: intelligence.businessHealth ? `${intelligence.businessHealth.overall}% · ${intelligence.businessHealth.grade}` : "—",
+      icon: <HeartPulse className="h-4 w-4 text-emerald-400" />,
+    },
     {
       label: "Knowledge",
       value: intelligence.knowledge ? `${intelligence.knowledge.overall}%` : "—",
@@ -44,7 +50,7 @@ export function IntelligenceConsole({ intelligence }: { intelligence: TenantInte
       <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
         Platform Intelligence (Runtime Context)
       </p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         {items.map((item) => (
           <div key={item.label} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
             <div className="flex items-center gap-1.5">{item.icon}<span className="text-[10px] text-zinc-500">{item.label}</span></div>

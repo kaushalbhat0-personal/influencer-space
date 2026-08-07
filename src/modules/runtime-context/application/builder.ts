@@ -63,6 +63,11 @@ const buildCached = requestCache(async (tenantId: string, markShown = true): Pro
     storefrontScore,
     health,
     metrics,
+    intelligence: {
+      publishState: recommendationContext.metrics.publishState,
+      published: recommendationContext.metrics.published,
+      analyticsActive: recommendationContext.metrics.analyticsActive,
+    },
   };
 });
 

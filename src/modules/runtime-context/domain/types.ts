@@ -32,4 +32,10 @@ export interface RuntimeContext {
   health: HealthReport;
   /** Canonical dashboard metrics. */
   metrics: DashboardMetrics;
+  /** Intelligence-derived metrics (from the recommendation context — no extra query). */
+  intelligence: {
+    publishState: string | null;
+    published: boolean;
+    analyticsActive: boolean;
+  };
 }

@@ -11,6 +11,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { TenantOrdersTable } from "./_components/tenant-orders-table";
 import { runtimeContextBuilder } from "@/modules/runtime-context";
 import { IntelligenceConsole } from "@/modules/runtime-context/presentation/intelligence-console";
+import { businessHealthRuntime } from "@/modules/business-health";
 import { Building2, ShoppingBag, Image, Activity, Palette, CheckCircle, Clock, Shield, CreditCard, User } from "lucide-react";
 import Link from "next/link";
 
@@ -64,7 +65,7 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
   // shared RuntimeContext (markShown=false so viewing a tenant never mutates
   // its recommendation history).
   let intelligence: React.ComponentProps<typeof IntelligenceConsole>["intelligence"] = {
-    knowledge: null, storefront: null, goalAlignment: null, success: null, recommendations: null,
+    knowledge: null, storefront: null, goalAlignment: null, success: null, recommendations: null, businessHealth: null,
   };
   try {
     const context = await runtimeContextBuilder.build(tenant.id, { markShown: false });
@@ -77,6 +78,10 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
         active: context.recommendations.length,
         top: context.recommendations[0]?.title ?? null,
       },
+      businessHealth: await businessHealthRuntime.evaluateFrom(context, tenant.id).then((e) => ({
+        overall: e.health.overallScore,
+        grade: e.health.grade,
+      })),
     };
   } catch {
     // intelligence is best-effort — the rest of the tenant page still renders

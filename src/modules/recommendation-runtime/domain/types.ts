@@ -124,6 +124,8 @@ export interface Recommendation {
   score: number;
   expectedImpact: ExpectedImpact;
   storefrontLift: number;
+  /** Expected Business Health lift (RCCF-EPIC-07). */
+  healthLift: number;
   goalAffinity: string[];
   missingKnowledge: string[];
   reasons: string[];

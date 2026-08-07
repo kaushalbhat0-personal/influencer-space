@@ -3,7 +3,7 @@ import {
   Headphones, BarChart3, CreditCard, ScrollText, Settings,
   UserCog, UserPlus, Sparkles, CheckCircle2, Bot, Globe,
   ToggleRight, Timer, FileText, IndianRupee, TrendingUp, Monitor, Clock,
-  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target,
+  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target, HeartPulse,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -68,6 +68,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     href: "/super-admin/recommendations", icon: Target, permission: "super_admin",
     searchable: true, keywords: ["recommendations", "next action", "completion", "goal", "knowledge", "suggested"],
     auditCategory: "intelligence", analyticsKey: "recommendations:viewed",
+    productionReady: true,
+  },
+  {
+    id: "business-health", title: "Business Health", group: "overview",
+    href: "/super-admin/business-health", icon: HeartPulse, permission: "super_admin",
+    searchable: true, keywords: ["health", "score", "kpi", "average", "distribution", "dimensions"],
+    auditCategory: "intelligence", analyticsKey: "business-health:viewed",
     productionReady: true,
   },
   {

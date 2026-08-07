@@ -6,6 +6,7 @@ import { CompletionBadge } from "./completion-badge";
 import { BuilderCompletionHints } from "@/modules/knowledge-runtime/presentation/builder-hints";
 import { GoalBuilderSuggestions } from "@/modules/goals-runtime/presentation/goal-builder-suggestions";
 import { BuilderRecommendationPanel } from "@/modules/recommendation-runtime/presentation/builder-recommendation-panel";
+import { BusinessHealthBadge } from "@/modules/business-health/presentation/business-health-badge";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -93,6 +94,9 @@ export function WebsitePanel({
 
         {/* Section recommendations */}
         <BuilderRecommendationPanel />
+
+        {/* Business Health + section contribution */}
+        <BusinessHealthBadge />
       </div>
     </div>
   );
