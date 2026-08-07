@@ -67,12 +67,16 @@ export class RecommendationRuntime {
 
   private async scoresSnapshot(tenantId: string): Promise<{ knowledge: number; goalAlignment: number; storefront: number }> {
     try {
-      const snapshot = await knowledgeAggregateSource.buildSnapshot(tenantId);
-      const profile = await recommendationContextSource.build(tenantId).then((ctx) => ctx.activeProfile);
-      const knowledge = computeKnowledgeScore(snapshot).overall;
-      const goalAlignment = computeGoalAlignment(profile, snapshot).overall;
-      const storefront = computeStorefrontScore(snapshot, knowledge, { percent: goalAlignment }).overall;
-      return { knowledge, goalAlignment, storefront };
+      // VALIDATION-05: build the context ONCE and reuse its snapshot/score —
+      // previously buildSnapshot ran, then recommendationContextSource.build
+      // built the aggregate AGAIN (2 full builds per complete()).
+      const ctx = await recommendationContextSource.build(tenantId);
+      const goalAlignment = computeGoalAlignment(ctx.activeProfile, ctx.snapshot).overall;
+      return {
+        knowledge: ctx.knowledgeScore.overall,
+        goalAlignment,
+        storefront: ctx.storefront.overall,
+      };
     } catch {
       return { knowledge: 0, goalAlignment: 0, storefront: 0 };
     }

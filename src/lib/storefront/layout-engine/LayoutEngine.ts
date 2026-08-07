@@ -7,6 +7,12 @@ import type { PublishedSnapshot, WebsiteAggregate } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
 import { resolveModuleId, isDeprecatedSection } from "@/lib/registry/resolve-module";
 
+// VALIDATION-05: per-section composition logs ran on every request in
+// production (~11 calls/section). Gate them to non-production.
+const debugLog = (...args: unknown[]): void => {
+  if (process.env.NODE_ENV !== "production") console.log(...args);
+};
+
 export class LayoutEngine {
   resolve(snapshot: PublishedSnapshot): StorefrontDocument {
     const canonicalUrl = this.buildCanonicalUrl(snapshot);
@@ -175,7 +181,7 @@ export class LayoutEngine {
       // decision from the aggregate (resolveHeroMediaForRuntime); Builder +
       // Storefront both flow through this engine, so identical values prove
       // parity.
-      console.log(tracePrefix, "hero", {
+      debugLog(tracePrefix, "hero", {
         title: content.hero.title,
         cta: config.cta,
         ctaSecondary: config.ctaSecondary,
@@ -204,7 +210,7 @@ export class LayoutEngine {
       config.resolvedTitle = content.identity.name
         ? `${content.identity.name}'s Products`
         : "Products";
-      console.log(tracePrefix, "products", { aggCount: content.products.length, resolvedCount: productEntries.length });
+      debugLog(tracePrefix, "products", { aggCount: content.products.length, resolvedCount: productEntries.length });
     } else if (moduleId.startsWith("gallery.")) {
       const imageEntries: Record<string, unknown>[] = content.gallery.map((g) => ({
         id: g.id,
@@ -217,7 +223,7 @@ export class LayoutEngine {
       }));
       config.resolvedData = imageEntries;
       config.resolvedTitle = "Gallery";
-      console.log(tracePrefix, "gallery", { aggCount: content.gallery.length, resolvedCount: imageEntries.length });
+      debugLog(tracePrefix, "gallery", { aggCount: content.gallery.length, resolvedCount: imageEntries.length });
     } else if (moduleId.startsWith("links.") || moduleId === "links.default") {
       // IMPLEMENTATION-18A: the Links section is PRESENTATION ONLY — it renders
       // Hero's social/streaming links. Hero is the single source of truth; the
@@ -230,7 +236,7 @@ export class LayoutEngine {
       }));
       config.resolvedData = linkEntries;
       config.resolvedTitle = "Connect With Me";
-      console.log(tracePrefix, "links", { heroLinks: heroLinks.length, resolvedCount: linkEntries.length });
+      debugLog(tracePrefix, "links", { heroLinks: heroLinks.length, resolvedCount: linkEntries.length });
     } else if (moduleId.startsWith("footer.")) {
       config.copyright = config.copyright || `© ${content.identity.name} — CreatorStore`;
       config.socialLinks = content.hero.socialLinks ?? [];
@@ -248,7 +254,7 @@ export class LayoutEngine {
         rating: t.rating,
       }));
       config.resolvedTitle = "Testimonials";
-      console.log(tracePrefix, "testimonials", { aggCount: content.testimonials.length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "testimonials", { aggCount: content.testimonials.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("faq.")) {
       config.resolvedData = content.faq.map((f) => ({
         question: f.question,
@@ -258,7 +264,7 @@ export class LayoutEngine {
         category: f.category,
       }));
       config.resolvedTitle = "FAQ";
-      console.log(tracePrefix, "faq", { aggCount: content.faq.length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "faq", { aggCount: content.faq.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("timeline.")) {
       config.resolvedData = content.timeline.map((t) => ({
         year: t.year,
@@ -268,7 +274,7 @@ export class LayoutEngine {
         imageUrl: t.imageUrl,
       }));
       config.resolvedTitle = "Timeline";
-      console.log(tracePrefix, "timeline", { aggCount: content.timeline.length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "timeline", { aggCount: content.timeline.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("games.")) {
       config.resolvedData = (content.games ?? []).map((g) => ({
         id: g.id,
@@ -278,7 +284,7 @@ export class LayoutEngine {
         genre: g.genre,
       }));
       config.resolvedTitle = "Games";
-      console.log(tracePrefix, "games", { aggCount: (content.games ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "games", { aggCount: (content.games ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("contentFeed.")) {
       config.resolvedData = (content.contentFeed ?? []).map((f) => ({
         id: f.id,
@@ -290,7 +296,7 @@ export class LayoutEngine {
         permalink: f.permalink,
       }));
       config.resolvedTitle = "Latest Content";
-      console.log(tracePrefix, "contentFeed", { aggCount: (content.contentFeed ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "contentFeed", { aggCount: (content.contentFeed ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("courses.")) {
       config.resolvedData = (content.courses ?? []).map((c) => ({
         id: c.id,
@@ -302,7 +308,7 @@ export class LayoutEngine {
         featured: c.featured,
       }));
       config.resolvedTitle = "Courses";
-      console.log(tracePrefix, "courses", { aggCount: (content.courses ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "courses", { aggCount: (content.courses ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("services.")) {
       config.resolvedData = (content.services ?? []).map((s) => ({
         id: s.id,
@@ -315,7 +321,7 @@ export class LayoutEngine {
         featured: s.featured,
       }));
       config.resolvedTitle = "Services";
-      console.log(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+      debugLog(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     }
 
     return config;

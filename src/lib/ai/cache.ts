@@ -8,7 +8,11 @@ import type { CreatorProfile, CreatorIntelligence } from "@/lib/creators/types";
  * This eliminates 80-95% of LLM calls for re-imported or refreshed creators.
  */
 export class IntelligenceCache {
-  private store = new Map<string, { hash: string; intelligence: CreatorIntelligence }>();
+  private store = new Map<string, { hash: string; intelligence: CreatorIntelligence; cachedAt: number }>();
+  // VALIDATION-05: bound memory (was unbounded — a stable profile cached
+  // forever and the Map grew with every distinct creator).
+  private static readonly MAX_ENTRIES = 500;
+  private static readonly TTL_MS = 48 * 60 * 60 * 1000; // 48h
 
   /** Compute a deterministic hash from the profile fields that matter. */
   private hash(profile: CreatorProfile): string {
@@ -34,6 +38,10 @@ export class IntelligenceCache {
     const key = this.makeKey(profile);
     const entry = this.store.get(key);
     if (!entry) return null;
+    if (Date.now() - entry.cachedAt > IntelligenceCache.TTL_MS) {
+      this.store.delete(key);
+      return null;
+    }
 
     const currentHash = this.hash(profile);
     if (entry.hash !== currentHash) {
@@ -46,9 +54,13 @@ export class IntelligenceCache {
 
   /** Store intelligence result keyed by profile content. */
   set(profile: CreatorProfile, intelligence: CreatorIntelligence): void {
+    if (this.store.size >= IntelligenceCache.MAX_ENTRIES) {
+      const oldestKey = this.store.keys().next().value;
+      if (oldestKey !== undefined) this.store.delete(oldestKey);
+    }
     const key = this.makeKey(profile);
     const h = this.hash(profile);
-    this.store.set(key, { hash: h, intelligence });
+    this.store.set(key, { hash: h, intelligence, cachedAt: Date.now() });
   }
 
   /** Invalidate cache for a profile. */

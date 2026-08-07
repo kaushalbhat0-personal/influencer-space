@@ -15,6 +15,14 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.vercel.app" },
       { protocol: "https", hostname: "**.supabase.co" },
+      // VALIDATION-05: the socials cron stores YouTube/Instagram/Twitch media
+      // URLs; without these hosts next/image threw "unconfigured host" and
+      // content-feed images broke on live storefronts.
+      { protocol: "https", hostname: "i.ytimg.com" },
+      { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "yt3.googleusercontent.com" },
+      { protocol: "https", hostname: "**.cdninstagram.com" },
+      { protocol: "https", hostname: "static-cdn.jtvnw.net" },
     ],
   },
   async headers() {

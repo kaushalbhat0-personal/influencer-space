@@ -1,4 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { cache as reactCache } from "react";
+
+// VALIDATION-05: request-scoped memoization — the same convention as the
+// Runtime Context builder. evaluate() is called by the tenant page, dashboard,
+// builder and the context builder; without this it ran its 13 queries once per
+// caller within the same request.
+const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  typeof reactCache === "function" ? reactCache : ((fn: (x: never) => unknown) => fn as never);
 
 export interface HealthCheck {
   id: string;
@@ -19,7 +27,7 @@ export interface HealthReport {
 }
 
 export class WebsiteHealthEngine {
-  async evaluate(tenantId: string): Promise<HealthReport> {
+  evaluate = requestCache(async (tenantId: string): Promise<HealthReport> => {
     const checks = await this.runChecks(tenantId);
 
     const overallScore = this.computeOverall(checks);
@@ -30,7 +38,7 @@ export class WebsiteHealthEngine {
       .slice(0, 5);
 
     return { overallScore, checks, categoryScores, topRecommendations };
-  }
+  });
 
   private async runChecks(tenantId: string): Promise<HealthCheck[]> {
     const [

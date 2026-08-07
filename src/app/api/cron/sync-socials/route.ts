@@ -444,6 +444,12 @@ export async function GET(request: NextRequest) {
         await afterContentChange(tenant.id);
       }
 
+      // VALIDATION-05: advance the batch cursor. Tenants are selected by
+      // `orderBy: { updatedAt: "asc" }`, but nothing in the loop bumped
+      // `updatedAt` — so the SAME 5 least-recently-updated tenants were picked
+      // on every run and the long tail was never synced.
+      await prisma.tenant.update({ where: { id: tenant.id }, data: { updatedAt: new Date() } });
+
       results.push({ tenantId: tenant.id, synced });
     }
 

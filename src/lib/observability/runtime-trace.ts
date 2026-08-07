@@ -212,13 +212,21 @@ export interface RuntimeTraceInput {
 export function traceRuntime(input: RuntimeTraceInput): string {
   if (typeof console === "undefined") return "";
 
-  const counts = aggregateCounts(input.aggregate);
-  const sections = runtimeSections(input.layout);
   const signature = computeRuntimeSignature({
     theme: input.theme,
     layout: input.layout,
     aggregate: input.aggregate,
   });
+
+  // VALIDATION-05: the block construction + two large console.log writes ran
+  // on EVERY storefront request in production (and every builder preview
+  // render). The signature is still computed — it backs the E2E
+  // `data-runtime-signature` attribute — but the diagnostic logging is gated
+  // to non-production.
+  if (process.env.NODE_ENV === "production") return signature;
+
+  const counts = aggregateCounts(input.aggregate);
+  const sections = runtimeSections(input.layout);
   const timings = input.timings ?? {};
   const diag = input.diagnostics;
 

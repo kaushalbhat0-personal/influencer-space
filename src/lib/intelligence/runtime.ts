@@ -257,6 +257,9 @@ const ESTIMATED_COST_PER_1K_TOKENS = 0.002;
 
 export const costMonitor = {
   record(entry: Omit<CostRecord, "cost" | "timestamp" | "cached">, wasCached = false): void {
+    // VALIDATION-05: cap the in-memory log (was unbounded — a long-lived
+    // serverless instance grew forever).
+    if (costLog.length >= 1000) costLog.shift();
     costLog.push({
       ...entry,
       cost: (entry.tokens / 1000) * ESTIMATED_COST_PER_1K_TOKENS,

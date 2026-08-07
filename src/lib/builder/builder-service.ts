@@ -70,46 +70,77 @@ export class BuilderService {
 
   private async saveInner(websiteId: string, pages: BuilderPage[], client: TxClient): Promise<void> {
     await client.page.deleteMany({ where: { websiteId } });
+    if (pages.length === 0) return;
 
-    for (const page of pages) {
-      const created = await client.page.create({
-        data: {
-          websiteId,
-          name: page.name,
-          slug: page.slug,
-          order: page.order,
-          isHome: page.isHome,
-          theme: page.theme,
-          config: toJson(page.metadata),
-        },
-      });
+    // VALIDATION-05: batch with createManyAndReturn (Prisma 7 / Postgres) —
+    // previously this was per-page create + per-section create + per-section
+    // block.createMany ≈ 1,100 sequential statements for 100 pages / 500
+    // sections / 5000 blocks; now 3 statements inside the same transaction.
+    const createdPages = await client.page.createManyAndReturn({
+      data: pages.map((page) => ({
+        websiteId,
+        name: page.name,
+        slug: page.slug,
+        order: page.order,
+        isHome: page.isHome,
+        theme: page.theme,
+        config: toJson(page.metadata),
+      })),
+    });
 
-      for (const section of page.sections) {
-        const createdSection = await client.section.create({
-          data: {
-            pageId: created.id,
-            name: section.name,
-            order: section.order,
-            visible: section.visible,
-            locked: section.locked,
-            config: toJson(section.metadata),
-          },
+    const sectionRows: Array<{
+      pageId: string;
+      name: string;
+      order: number;
+      visible: boolean;
+      locked: boolean;
+      config: JsonValue;
+    }> = [];
+    for (let i = 0; i < pages.length; i++) {
+      for (const section of pages[i].sections) {
+        sectionRows.push({
+          pageId: createdPages[i].id,
+          name: section.name,
+          order: section.order,
+          visible: section.visible,
+          locked: section.locked,
+          config: toJson(section.metadata),
         });
+      }
+    }
+    if (sectionRows.length === 0) return;
 
-        if (section.slots.length > 0) {
-          await client.block.createMany({
-            data: section.slots.map((slot) => ({
-              sectionId: createdSection.id,
-              moduleId: slot.moduleId,
-              parentId: slot.parentId ?? null,
-              order: slot.order,
-              visible: slot.visible,
-              locked: slot.locked,
-              config: toJson(slot.config),
-            })),
+    const createdSections = await client.section.createManyAndReturn({ data: sectionRows });
+
+    const blockRows: Array<{
+      sectionId: string;
+      moduleId: string;
+      parentId: string | null;
+      order: number;
+      visible: boolean;
+      locked: boolean;
+      config: JsonValue;
+    }> = [];
+    let s = 0;
+    for (let i = 0; i < pages.length; i++) {
+      for (const section of pages[i].sections) {
+        const sectionId = createdSections[s].id;
+        s++;
+        for (const slot of section.slots) {
+          blockRows.push({
+            sectionId,
+            moduleId: slot.moduleId,
+            parentId: slot.parentId ?? null,
+            order: slot.order,
+            visible: slot.visible,
+            locked: slot.locked,
+            config: toJson(slot.config),
           });
         }
       }
+    }
+    if (blockRows.length > 0) {
+      await client.block.createMany({ data: blockRows });
     }
   }
 }

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrl } from "@/lib/config/platform";
@@ -27,11 +28,14 @@ import Link from "next/link";
 // stale content and diverge from the Builder. The page is dynamic.
 export const dynamic = "force-dynamic";
 
-async function getSnapshotData(slug: string, preview?: boolean): Promise<{
+// VALIDATION-05: React.cache memoizes the pipeline within a single render
+// pass. generateMetadata + the page component otherwise each ran the full
+// ~18-query aggregate build — doubling storefront DB load.
+const getSnapshotData = cache(async (slug: string, preview?: boolean): Promise<{
   tenantId: string;
   snapshot: unknown | null;
   diagnostics: AggregateTraceDiagnostics;
-} | null> {
+} | null> => {
   const tenant = await prisma.tenant.findFirst({ where: { OR: [{ subdomain: slug }, { customDomain: slug }] } });
   if (!tenant) return null;
 
@@ -85,7 +89,7 @@ async function getSnapshotData(slug: string, preview?: boolean): Promise<{
     tenant.id,
   );
   return { tenantId: tenant.id, snapshot, diagnostics };
-}
+});
 
 function getCanonicalUrl(slug: string): string {
   return slug.includes(".") ? `https://${slug}` : buildStorefrontUrl(slug);
