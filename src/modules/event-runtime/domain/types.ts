@@ -42,7 +42,14 @@ export type IntelligenceEventType =
   | "payment.account.updated"
   | "payment.account.verified"
   | "payment.account.disconnected"
-  | "payment.readiness.changed";
+  | "payment.readiness.changed"
+  // RCCF-EPIC-09 — customer success events.
+  | "success.stage.changed"
+  | "risk.changed"
+  | "opportunity.detected"
+  | "customer.activated"
+  | "customer.retained"
+  | "customer.churn-risk";
 
 export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "knowledge.completed",
@@ -80,6 +87,12 @@ export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "payment.account.verified",
   "payment.account.disconnected",
   "payment.readiness.changed",
+  "success.stage.changed",
+  "risk.changed",
+  "opportunity.detected",
+  "customer.activated",
+  "customer.retained",
+  "customer.churn-risk",
 ];
 
 export interface RuntimeEvent {

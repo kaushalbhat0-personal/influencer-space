@@ -7,6 +7,7 @@ import { Building, Globe, Users, Activity, TrendingUp, AlertTriangle, Clock, Shi
 import { clientService } from "@/lib/client/service";
 import { AgencyClientsTable } from "./_components/agency-clients-table";
 import { AgencyRevenueSection } from "./_components/agency-revenue-section";
+import { AgencySuccessSection } from "./_components/agency-success-section";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,9 @@ export default async function AgencyDashboard() {
 
       {/* RCCF-IMPLEMENTATION-72: recurring subscription revenue */}
       <AgencyRevenueSection agencyId={agencyId} />
+
+      {/* RCCF-EPIC-09: client success */}
+      <AgencySuccessSection agencyId={agencyId} />
 
       {/* Attention Widget */}
       {summary.needingAttention > 0 && (

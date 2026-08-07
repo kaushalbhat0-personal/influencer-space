@@ -16,6 +16,7 @@ import { GoalDashboardCard } from "@/modules/goals-runtime/presentation/goal-das
 import { applyCommerceOrder } from "@/modules/goals-runtime/application/commerce";
 import { NextBestStepCard } from "@/modules/recommendation-runtime/presentation/next-best-step-card";
 import { BusinessHealthHero } from "@/modules/business-health/presentation/business-health-hero";
+import { SuccessJourneyCard } from "@/modules/customer-success/presentation/success-journey-card";
 import { EvolutionFeedCard } from "@/modules/website-evolution/presentation/evolution-feed-card";
 import { SuccessMilestonesCard } from "@/components/dashboard/SuccessMilestonesCard";
 import type { DashboardData } from "../actions";
@@ -109,6 +110,9 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         {businessHealth && (
           <BusinessHealthHero health={businessHealth.health} trend={businessHealth.trend} />
         )}
+
+        {/* RCCF-EPIC-09: Success Journey — stage, risk, opportunities, timeline */}
+        <SuccessJourneyCard />
 
         {!checklistComplete && (
           <OnboardingChecklist steps={checklistSteps} creatorName={creatorName} />

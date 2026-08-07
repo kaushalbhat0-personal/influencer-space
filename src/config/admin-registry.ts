@@ -240,6 +240,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "customer-success", title: "Customer Success", group: "creators",
+    href: "/super-admin/customer-success", icon: HeartPulse, permission: "super_admin",
+    searchable: true, keywords: ["customer success", "at risk", "churn", "journey", "success score", "needs help"],
+    auditCategory: "growth", analyticsKey: "customer-success:viewed",
+    productionReady: true,
+  },
+  {
     id: "invoices", title: "Invoices", group: "commerce",
     href: "/super-admin/invoices", icon: FileText, permission: "super_admin",
     searchable: false, keywords: ["receipts", "bills", "statements"],
