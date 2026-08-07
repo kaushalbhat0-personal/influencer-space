@@ -233,8 +233,12 @@ export class RevenueService {
         ruleEngine.removeRule(existingDefault.id);
       }
       commissionService.createRule({
+        // VALIDATION-04: the runtime rule is a two-way platform+partner split
+        // that must sum to 100 — the raw agencyDefaultShare (e.g. 30) alongside
+        // platformPercent (e.g. 10) failed validation, so the rule was silently
+        // never created and Commission Center edits had no runtime effect.
         platformSharePercent: config.platformPercent,
-        partnerSharePercent: config.agencyDefaultShare,
+        partnerSharePercent: 100 - config.platformPercent,
         type: "default",
         label: "Platform Default (from Commission Center)",
       });

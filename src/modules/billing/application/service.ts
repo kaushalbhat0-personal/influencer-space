@@ -479,8 +479,10 @@ export class BillingService {
       })),
       paymentMethods: [],
       usage: [
-        { metric: "max_products", label: "Products", used: products, limit: 5, unit: "" },
-        { metric: "max_gallery", label: "Gallery", used: gallery, limit: 10, unit: "" },
+        // VALIDATION-04: limits must derive from the canonical capability
+        // registry — they were hardcoded (5 / 10) and lied on paid plans.
+        { metric: "max_products", label: "Products", used: products, limit: capabilityService.limit(planCode, "max_products"), unit: "" },
+        { metric: "max_gallery", label: "Gallery", used: gallery, limit: capabilityService.limit(planCode, "max_gallery"), unit: "" },
       ],
       activeProducts: products,
       activeGallery: gallery,

@@ -12,7 +12,7 @@ import { logger } from "@/lib/observability/logger";
 export interface DependencyNode {
   model: string;
   label: string;
-  query: () => Promise<number>;
+  query: (tenantId: string) => Promise<number>;
   canDelete: boolean;
   /** "hard" = permanent, "soft" = reversible, "archive" = audit-only, "never" = forbidden */
   deletePolicy: "hard" | "soft" | "archive" | "never";
@@ -35,23 +35,23 @@ export interface IntegrityReport {
 
 // ── Tenant Dependency Graph ──────────────────────────────────
 const TENANT_DEPENDENCIES: DependencyNode[] = [
-  { model: "Website", label: "Website", query: () => prisma.website.count({ where: { tenantId: "" } }), canDelete: true, deletePolicy: "hard" },
-  { model: "User", label: "User account", query: () => prisma.user.count({ where: { tenantId: "" } }), canDelete: true, deletePolicy: "soft" },
-  { model: "Product", label: "Products", query: () => prisma.product.count({ where: { tenantId: "" } }), canDelete: true, deletePolicy: "hard" },
-  { model: "ProductOrder", label: "Orders", query: () => prisma.productOrder.count({ where: { tenantId: "" } }), canDelete: true, deletePolicy: "archive" },
-  { model: "Booking", query: () => prisma.booking.count({ where: { tenantId: "" } }), label: "Bookings", canDelete: true, deletePolicy: "hard" },
-  { model: "Offering", query: () => prisma.offering.count({ where: { tenantId: "" } }), label: "Offerings (Services/Courses)", canDelete: true, deletePolicy: "hard" },
-  { model: "Purchase", query: () => prisma.purchase.count({ where: { tenantId: "" } }), label: "Purchases", canDelete: true, deletePolicy: "archive" },
-  { model: "GalleryImage", query: () => prisma.galleryImage.count({ where: { tenantId: "" } }), label: "Gallery images", canDelete: true, deletePolicy: "hard" },
-  { model: "Asset", query: () => prisma.asset.count({ where: { tenantId: "" } }), label: "Media files", canDelete: true, deletePolicy: "hard" },
-  { model: "TimelineEvent", query: () => prisma.timelineEvent.count({ where: { tenantId: "" } }), label: "Timeline events", canDelete: true, deletePolicy: "hard" },
-  { model: "ContactSubmission", query: () => prisma.contactSubmission.count({ where: { tenantId: "" } }), label: "Messages", canDelete: true, deletePolicy: "hard" },
-  { model: "AnalyticsEvent", query: () => prisma.analyticsEvent.count({ where: { tenantId: "" } }), label: "Analytics events", canDelete: true, deletePolicy: "hard" },
-  { model: "AuditLog", query: () => prisma.auditLog.count({ where: { tenantId: "" } }), label: "Audit entries", canDelete: true, deletePolicy: "archive" },
-  { model: "BillingSubscription", query: () => prisma.billingSubscription.count({ where: { workspace: { tenantId: "" } } }), label: "Billing subscription", canDelete: true, deletePolicy: "archive" },
-  { model: "BillingInvoice", query: () => prisma.billingInvoice.count({ where: { workspace: { tenantId: "" } } }), label: "Invoices", canDelete: true, deletePolicy: "never" },
-  { model: "BillingEvent", query: () => prisma.billingEvent.count({ where: { workspace: { tenantId: "" } } }), label: "Billing events", canDelete: true, deletePolicy: "archive" },
-  { model: "Subscription", query: () => prisma.subscription.count({ where: { tenantId: "" } }), label: "Legacy subscription", canDelete: true, deletePolicy: "hard" },
+  { model: "Website", label: "Website", query: (tenantId) => prisma.website.count({ where: { tenantId } }), canDelete: true, deletePolicy: "hard" },
+  { model: "User", label: "User account", query: (tenantId) => prisma.user.count({ where: { tenantId } }), canDelete: true, deletePolicy: "soft" },
+  { model: "Product", label: "Products", query: (tenantId) => prisma.product.count({ where: { tenantId } }), canDelete: true, deletePolicy: "hard" },
+  { model: "ProductOrder", label: "Orders", query: (tenantId) => prisma.productOrder.count({ where: { tenantId } }), canDelete: true, deletePolicy: "archive" },
+  { model: "Booking", query: (tenantId) => prisma.booking.count({ where: { tenantId } }), label: "Bookings", canDelete: true, deletePolicy: "hard" },
+  { model: "Offering", query: (tenantId) => prisma.offering.count({ where: { tenantId } }), label: "Offerings (Services/Courses)", canDelete: true, deletePolicy: "hard" },
+  { model: "Purchase", query: (tenantId) => prisma.purchase.count({ where: { tenantId } }), label: "Purchases", canDelete: true, deletePolicy: "archive" },
+  { model: "GalleryImage", query: (tenantId) => prisma.galleryImage.count({ where: { tenantId } }), label: "Gallery images", canDelete: true, deletePolicy: "hard" },
+  { model: "Asset", query: (tenantId) => prisma.asset.count({ where: { tenantId } }), label: "Media files", canDelete: true, deletePolicy: "hard" },
+  { model: "TimelineEvent", query: (tenantId) => prisma.timelineEvent.count({ where: { tenantId } }), label: "Timeline events", canDelete: true, deletePolicy: "hard" },
+  { model: "ContactSubmission", query: (tenantId) => prisma.contactSubmission.count({ where: { tenantId } }), label: "Messages", canDelete: true, deletePolicy: "hard" },
+  { model: "AnalyticsEvent", query: (tenantId) => prisma.analyticsEvent.count({ where: { tenantId } }), label: "Analytics events", canDelete: true, deletePolicy: "hard" },
+  { model: "AuditLog", query: (tenantId) => prisma.auditLog.count({ where: { tenantId } }), label: "Audit entries", canDelete: true, deletePolicy: "archive" },
+  { model: "BillingSubscription", query: (tenantId) => prisma.billingSubscription.count({ where: { workspace: { tenantId } } }), label: "Billing subscription", canDelete: true, deletePolicy: "archive" },
+  { model: "BillingInvoice", query: (tenantId) => prisma.billingInvoice.count({ where: { workspace: { tenantId } } }), label: "Invoices", canDelete: true, deletePolicy: "never" },
+  { model: "BillingEvent", query: (tenantId) => prisma.billingEvent.count({ where: { workspace: { tenantId } } }), label: "Billing events", canDelete: true, deletePolicy: "archive" },
+  { model: "Subscription", query: (tenantId) => prisma.subscription.count({ where: { tenantId } }), label: "Legacy subscription", canDelete: true, deletePolicy: "hard" },
 ];
 
 // ── Dependency Preview Engine ────────────────────────────────
@@ -62,7 +62,7 @@ export async function previewTenantDeletion(tenantId: string): Promise<DeletionP
   const results = await Promise.all(
     TENANT_DEPENDENCIES.map(async (dep) => {
       try {
-        const count = await dep.query();
+        const count = await dep.query(tenantId);
         return { label: dep.label, count, policy: dep.deletePolicy };
       } catch {
         return { label: dep.label, count: 0, policy: dep.deletePolicy };
@@ -98,33 +98,41 @@ export async function safeDeleteTenant(
       operation: "delete_tenant", metadata: { tenantId, reason: options.reason, affectedRecords: preview.totalRecords } as Record<string, unknown>,
     });
 
-    // Perform deletions in reverse dependency order
-    await prisma.$transaction([
-      prisma.analyticsEvent.deleteMany({ where: { tenantId } }),
-      prisma.contactSubmission.deleteMany({ where: { tenantId } }),
-      prisma.timelineEvent.deleteMany({ where: { tenantId } }),
-      prisma.purchase.deleteMany({ where: { tenantId } }),
-      prisma.booking.deleteMany({ where: { tenantId } }),
-      prisma.productOrder.deleteMany({ where: { tenantId } }),
-      prisma.product.deleteMany({ where: { tenantId } }),
-      prisma.galleryImage.deleteMany({ where: { tenantId } }),
-      prisma.offering.deleteMany({ where: { tenantId } }),
-      prisma.asset.deleteMany({ where: { tenantId } }),
-      prisma.auditLog.deleteMany({ where: { tenantId } }),
-      prisma.subscription.deleteMany({ where: { tenantId } }),
-    ]);
+    // VALIDATION-04: a single transaction so a mid-way failure cannot leave a
+    // half-deleted tenant (previously the website/user/tenant deletes ran
+    // outside the transaction).
+    await prisma.$transaction(async (tx) => {
+      await tx.analyticsEvent.deleteMany({ where: { tenantId } });
+      await tx.contactSubmission.deleteMany({ where: { tenantId } });
+      await tx.timelineEvent.deleteMany({ where: { tenantId } });
+      await tx.purchase.deleteMany({ where: { tenantId } });
+      await tx.booking.deleteMany({ where: { tenantId } });
+      await tx.productOrder.deleteMany({ where: { tenantId } });
+      await tx.product.deleteMany({ where: { tenantId } });
+      await tx.galleryImage.deleteMany({ where: { tenantId } });
+      await tx.offering.deleteMany({ where: { tenantId } });
+      await tx.asset.deleteMany({ where: { tenantId } });
+      await tx.auditLog.deleteMany({ where: { tenantId } });
+      await tx.subscription.deleteMany({ where: { tenantId } });
 
-    // Billing-related cleanup via workspace
-    const workspace = await prisma.workspace.findUnique({ where: { tenantId } });
-    if (workspace) {
-      await prisma.billingEvent.deleteMany({ where: { workspaceId: workspace.id } });
-      await prisma.billingInvoice.deleteMany({ where: { workspaceId: workspace.id } });
-      await prisma.billingSubscription.deleteMany({ where: { workspaceId: workspace.id } });
-    }
+      // Billing + orphan-prone rows via the workspace.
+      const workspace = await tx.workspace.findUnique({ where: { tenantId } });
+      if (workspace) {
+        await tx.generationSession.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.billingEvent.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.billingInvoice.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.billingSubscription.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.workspaceMember.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.workspace.delete({ where: { id: workspace.id } });
+      }
+      await tx.creatorProvisionRun.deleteMany({ where: { tenantId } });
+      await tx.billingAccount.deleteMany({ where: { accountId: tenantId } });
+      await tx.alertRecord.deleteMany({ where: { tenantId } });
 
-    await prisma.website.deleteMany({ where: { tenantId } });
-    await prisma.user.deleteMany({ where: { tenantId } });
-    await prisma.tenant.delete({ where: { id: tenantId } });
+      await tx.website.deleteMany({ where: { tenantId } });
+      await tx.user.deleteMany({ where: { tenantId } });
+      await tx.tenant.delete({ where: { id: tenantId } });
+    });
 
     logger.info("safeDeleteTenant completed", "integrity", {
       operation: "delete_tenant", duration: Date.now() - start,
@@ -210,6 +218,20 @@ export async function runSafeCleanup(): Promise<{ cleared: number; details: stri
   const details: string[] = [];
 
   try {
+    // VALIDATION-04: recover stuck sessions — nothing ever sets `timed_out`,
+    // so a session stranded mid-action (serverless timeout, crash) stayed
+    // `running`/`publishing` forever. Mark stale active sessions timed_out so
+    // the terminal-status cleanup below (and the ops snapshot) reflect reality.
+    const staleActiveCutoff = new Date(Date.now() - 60 * 60 * 1000);
+    const stuck = await prisma.generationSession.updateMany({
+      where: { status: { in: ["queued", "running", "publishing"] }, updatedAt: { lt: staleActiveCutoff } },
+      data: { status: "timed_out" },
+    });
+    if (stuck.count > 0) {
+      cleared += stuck.count;
+      details.push(`Recovered ${stuck.count} stuck generation sessions (marked timed_out)`);
+    }
+
     // Stale generation sessions (> 7 days)
     const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const staleSessions = await prisma.generationSession.findMany({

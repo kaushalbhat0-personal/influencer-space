@@ -16,11 +16,22 @@ export default async function WebsitesPage({
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
   const pageSize = 50;
 
-  const where: Record<string, unknown> = {};
-
-  if (statusFilter) {
-    where.publishStatus = { state: statusFilter };
-  }
+  // VALIDATION-04: build ONE `where` — the status filter was previously
+  // discarded whenever a query was present, so ?status=live filtered nothing.
+  const searchWhere = query
+    ? {
+        OR: [
+          { tenant: { name: { contains: query } } },
+          { tenant: { subdomain: { contains: query } } },
+          { tenant: { customDomain: { contains: query } } },
+          { themePackageId: { contains: query } },
+        ],
+      }
+    : {};
+  const where = {
+    ...searchWhere,
+    ...(statusFilter ? { publishStatus: { state: statusFilter } } : {}),
+  };
 
   const [websites, totalCount, statusCounts] = await Promise.all([
     prisma.website.findMany({
@@ -28,25 +39,12 @@ export default async function WebsitesPage({
         tenant: { select: { id: true, name: true, subdomain: true, customDomain: true } },
         publishStatus: { select: { state: true, liveVersion: true, publishedAt: true } },
       },
-      where: query ? {
-        OR: [
-          { tenant: { name: { contains: query } } },
-          { tenant: { subdomain: { contains: query } } },
-          { tenant: { customDomain: { contains: query } } },
-          { themePackageId: { contains: query } },
-        ],
-      } : undefined,
+      where,
       orderBy: { updatedAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    prisma.website.count({ where: query ? {
-      OR: [
-        { tenant: { name: { contains: query } } },
-        { tenant: { subdomain: { contains: query } } },
-        { tenant: { customDomain: { contains: query } } },
-      ],
-    } : undefined }),
+    prisma.website.count({ where }),
     prisma.publishStatus.groupBy({ by: ["state"], _count: true }),
   ]);
 

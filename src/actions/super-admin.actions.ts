@@ -356,7 +356,29 @@ export async function deleteTenant(tenantId: string): Promise<DeleteTenantResult
       }
     }
 
-    await prisma.tenant.delete({ where: { id: tenantId } });
+    // VALIDATION-04: audit BEFORE deleting (AuditLog cascades away with the tenant).
+    await logAction(tenantId, "super-admin:tenant-deleted", { reason: "manual", via: "deleteTenant" });
+
+    // VALIDATION-04: delete orphan-prone rows explicitly and atomically. The
+    // bare tenant.delete() leaves Workspace/Members, GenerationSession,
+    // CreatorProvisionRun, BillingAccount, AlertRecord and AnalyticsEvent rows
+    // behind (several tables have no FK cascade to Tenant).
+    await prisma.$transaction(async (tx) => {
+      const workspace = await tx.workspace.findUnique({ where: { tenantId }, select: { id: true } });
+      if (workspace) {
+        await tx.generationSession.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.billingEvent.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.billingInvoice.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.billingSubscription.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.workspaceMember.deleteMany({ where: { workspaceId: workspace.id } });
+        await tx.workspace.delete({ where: { id: workspace.id } });
+      }
+      await tx.creatorProvisionRun.deleteMany({ where: { tenantId } });
+      await tx.billingAccount.deleteMany({ where: { accountId: tenantId } });
+      await tx.alertRecord.deleteMany({ where: { tenantId } });
+      await tx.analyticsEvent.deleteMany({ where: { tenantId } });
+      await tx.tenant.delete({ where: { id: tenantId } });
+    });
 
     return { success: true };
   } catch (error) {

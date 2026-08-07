@@ -4,8 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
+import { isFlagEnabled, getPlatformConfig } from "@/lib/platform/platform-config";
 
 export async function POST(req: Request) {
+  // VALIDATION-04: honor the `enableNewRegistrations` platform flag. This is a
+  // kill-switch: absent/true = open registration, explicit false = closed.
+  if ((await getPlatformConfig()).enableNewRegistrations === false) {
+    return NextResponse.json({ error: "Registration is temporarily disabled." }, { status: 503 });
+  }
+
   const ip = req.headers.get("x-forwarded-for") ?? "register";
   const rateCheck = checkRateLimit(`register:${ip}`, "/api/auth/register");
   if (!rateCheck.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
@@ -66,9 +73,10 @@ export async function POST(req: Request) {
           },
         });
 
-        // VALIDATION-02 M4: self-serve agency signup may only start on the free
-        // plan — a paid plan code in the request body is ignored.
-        const requestedPlanCode = "agency_free";
+        // VALIDATION-04: self-serve agency signup uses the canonical free plan
+        // code (`partner_free`). The legacy `agency_free` alias is NOT a DB
+        // row — using it silently skipped subscription creation.
+        const requestedPlanCode = "partner_free";
         const billingPlan = await tx.billingPlan.findUnique({
           where: { code: requestedPlanCode },
         });

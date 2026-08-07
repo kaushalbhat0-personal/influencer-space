@@ -61,7 +61,7 @@ export default async function ReconciliationPage() {
               <p className="text-xs text-emerald-400">✅ No orphans found</p>
             ) : (
               <div className="space-y-1 max-h-60 overflow-y-auto">
-                {orphanCommissions.map((e) => <div key={e.id} className="flex justify-between text-xs text-red-400"><span className="font-mono">{e.id.slice(0, 12)}</span><span>₹{e.amount as unknown as { partnerShare: number } ? (e.amount as unknown as { partnerShare: number }).partnerShare : 0}</span></div>)}
+                {orphanCommissions.map((e) => <div key={e.id} className="flex justify-between text-xs text-red-400"><span className="font-mono">{e.id.slice(0, 12)}</span><span>₹{e.amount}</span></div>)}
               </div>
             )}
           </div>

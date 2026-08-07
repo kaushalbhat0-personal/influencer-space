@@ -52,7 +52,11 @@ export async function POST(req: Request) {
   }
 
   const expected = crypto.createHmac("sha256", webhookSecret).update(rawBody).digest("hex");
-  if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) {
+  // VALIDATION-04: timingSafeEqual throws on length mismatch (empty/malformed
+  // signature) — guard first so a bad signature is a 401, not a 500.
+  const expectedBuf = Buffer.from(expected);
+  const signatureBuf = Buffer.from(signature);
+  if (expectedBuf.length !== signatureBuf.length || !crypto.timingSafeEqual(expectedBuf, signatureBuf)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 

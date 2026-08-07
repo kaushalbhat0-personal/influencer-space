@@ -19,6 +19,8 @@ import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observabilit
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { applyGoalSectionOrder, applyGoalNavigation, goalProfileService } from "@/modules/goals-runtime";
 import { contentFromAggregate, resolveAdaptiveVisibility, baseOf } from "@/modules/experience-intelligence";
+import { isFlagEnabled } from "@/lib/platform/platform-config";
+import Link from "next/link";
 
 // IMPLEMENTATION-16: no ISR/content cache on the storefront. Content is ALWAYS
 // live (websiteAggregate.build on every request); a cached page would show
@@ -119,6 +121,21 @@ export default async function PublicPage({
   const isPreview = searchParams.preview === "true";
   const data = await getSnapshotData(params.domain, isPreview);
   if (!data?.snapshot) notFound();
+
+  // VALIDATION-04: honor the `maintenanceMode` platform flag — this is the
+  // first real consumer of the feature-flag store (previously cosmetic).
+  if (!isPreview && (await isFlagEnabled("maintenanceMode"))) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6">
+        <div className="max-w-md text-center">
+          <h1 className="mb-3 text-3xl font-semibold tracking-tight text-neutral-50">Under maintenance</h1>
+          <p className="text-sm leading-relaxed text-neutral-400">
+            This site is temporarily unavailable while we perform scheduled maintenance. Please check back shortly.
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   const snap = data.snapshot as unknown as PublishedSnapshot;
   const resolveStart = performance.now();
