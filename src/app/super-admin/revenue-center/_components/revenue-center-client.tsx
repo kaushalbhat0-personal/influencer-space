@@ -145,7 +145,19 @@ export function RevenueCenterClient({ platform, health, payouts, payoutSummary, 
                   <button onClick={() => run(`settle-approve-${s.id}`, () => updateSettlementAction(s.id, "APPROVED", { approvedBy: "superadmin" }))} className="rounded-md border border-white/10 px-2 py-1 text-[10px] text-zinc-300 hover:bg-white/5">Approve</button>
                 )}
                 {s.status === "APPROVED" && (
-                  <button onClick={() => run(`settle-payout-${s.id}`, () => createPayoutAction(s.id))} className="rounded-md bg-indigo-500 px-2 py-1 text-[10px] font-semibold text-white hover:bg-indigo-400">Create payout</button>
+                  <>
+                    <button onClick={() => run(`settle-payout-${s.id}`, () => createPayoutAction(s.id))} className="rounded-md bg-indigo-500 px-2 py-1 text-[10px] font-semibold text-white hover:bg-indigo-400">Create payout</button>
+                    {/* RCCF-IMPLEMENTATION-74 Phase 10: manual agency payout — Super Admin transfers by bank/UPI and records it. */}
+                    <button
+                      onClick={() => {
+                        const ref = window.prompt(`Manual payout for ${s.settlementRef}\nEnter the transfer reference (UTR / UPI ref / bank ref):`);
+                        if (ref !== null) run(`settle-manual-${s.id}`, () => updateSettlementAction(s.id, "PAID", { transferRef: ref || `manual_${Date.now()}`, transferMethod: "manual" }));
+                      }}
+                      className="rounded-md border border-emerald-500/20 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-500/5"
+                    >
+                      Mark paid (manual)
+                    </button>
+                  </>
                 )}
               </div>
             </div>

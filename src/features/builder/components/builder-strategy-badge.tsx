@@ -1,26 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getMyCommerceStrategy } from "@/actions/commerce-strategy.actions";
+import { getMyPaymentAccount } from "@/actions/payment-account.actions";
 import { CommerceStrategyBadge } from "@/modules/commerce-strategy/presentation/strategy-badge";
 
-/** RCCF-IMPLEMENTATION-73 Phase 7 — read-only payment strategy in the Builder. */
+/** RCCF-IMPLEMENTATION-74 Phase 7 — read-only payment strategy + readiness in the Builder. */
 export function BuilderStrategyBadge() {
-  const [strategy, setStrategy] = useState<Awaited<ReturnType<typeof getMyCommerceStrategy>>["strategy"] | null>(null);
+  const [data, setData] = useState<Awaited<ReturnType<typeof getMyPaymentAccount>> | null>(null);
 
   useEffect(() => {
-    getMyCommerceStrategy().then((r) => { if (r.ok) setStrategy(r.strategy ?? null); });
+    getMyPaymentAccount().then(setData);
   }, []);
 
-  if (!strategy) return null;
+  const readiness = data?.readiness;
+  if (!readiness) return null;
+
+  const ready = readiness.readiness === "ready";
+  const missing = readiness.missing ?? [];
 
   return (
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
-      <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Payment Strategy</p>
+      <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Payment</p>
       <div className="mt-1.5">
-        <CommerceStrategyBadge strategy={strategy.id} readiness={strategy.readiness} />
+        <CommerceStrategyBadge strategy={readiness.strategy as never} />
       </div>
-      <p className="mt-1.5 text-[10px] text-zinc-600">Creators keep 100% of product revenue — no transaction fees.</p>
+      <p className={`mt-1.5 text-[10px] ${ready ? "text-emerald-400" : "text-amber-300"}`}>
+        {ready ? "Payment ready — start selling" : missing.length > 0 ? `Missing: ${missing.slice(0, 3).join(", ")}` : "Set up in Payments"}
+      </p>
     </div>
   );
 }

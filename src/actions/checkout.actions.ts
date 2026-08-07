@@ -18,6 +18,8 @@ export type CheckoutResult = {
   tax?: number;
   /** True when the order was fulfilled without payment (free / 100% coupon). */
   free?: boolean;
+  /** RCCF-IMPLEMENTATION-74: hosted checkout URL for DIRECT_CREATOR (customer pays the creator's own account). */
+  checkoutUrl?: string;
 };
 
 export async function createCheckout(
@@ -38,6 +40,18 @@ export async function createCheckout(
     // (PLATFORM_COLLECT is the only active strategy).
     const { resolveCommerceStrategy } = await import("@/modules/commerce-strategy");
     const commerceStrategy = await resolveCommerceStrategy(tenantId);
+
+    // RCCF-IMPLEMENTATION-74 Phase 6: DIRECT_CREATOR — the customer pays the
+    // creator's OWN payment account via a hosted checkout URL. CreatorStore is
+    // not in the money flow. Platform subscriptions remain unchanged.
+    if (commerceStrategy.id === "DIRECT_CREATOR") {
+      const { createDirectCheckout } = await import("@/actions/payment-account.actions");
+      const direct = await createDirectCheckout({ productId: product.id, customerEmail: fanEmail || undefined });
+      if (direct.success && direct.checkoutUrl) {
+        return { success: true, checkoutUrl: direct.checkoutUrl, orderId: undefined };
+      }
+      return { success: false, error: direct.error ?? "Creator payment account not ready" };
+    }
 
     let amount = product.price;
     let discountAmount = 0;

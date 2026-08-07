@@ -7,9 +7,10 @@ import type { CommerceStrategyId } from "@/modules/commerce-strategy/domain/type
 interface Props {
   distribution: Array<{ strategy: CommerceStrategyId; count: number }>;
   migration: { total: number; directReady: number; directIncomplete: number; reason: string };
+  paymentHealth: { total: number; connected: number; pending: number; unverified: number; disconnected: number; providerDistribution: Array<{ provider: string; count: number }> } | null;
 }
 
-export function CommerceStrategyCenter({ distribution, migration }: Props) {
+export function CommerceStrategyCenter({ distribution, migration, paymentHealth }: Props) {
   const total = distribution.reduce((s, d) => s + d.count, 0);
 
   return (
@@ -36,6 +37,18 @@ export function CommerceStrategyCenter({ distribution, migration }: Props) {
         </div>
       </div>
       <p className="mt-2 text-xs text-zinc-500">{migration.reason}</p>
+
+      {/* Payment account health (RCCF-IMPLEMENTATION-74) */}
+      {paymentHealth && (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <HealthCard label="Payment accounts" value={String(paymentHealth.total)} />
+          <HealthCard label="Connected" value={String(paymentHealth.connected)} accent="text-emerald-400" />
+          <HealthCard label="Pending setup" value={String(paymentHealth.pending)} accent="text-amber-400" />
+          <HealthCard label="Unverified" value={String(paymentHealth.unverified)} accent="text-amber-400" />
+          <HealthCard label="Disconnected" value={String(paymentHealth.disconnected)} />
+          <HealthCard label="Providers" value={paymentHealth.providerDistribution.map((p) => `${p.provider} ${p.count}`).join(", ") || "—"} />
+        </div>
+      )}
 
       {/* Strategy distribution */}
       <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
@@ -75,6 +88,15 @@ export function CommerceStrategyCenter({ distribution, migration }: Props) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function HealthCard({ label, value, accent }: { label: string; value: string; accent?: string }) {
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-500">{label}</p>
+      <p className={`mt-1 text-sm font-bold ${accent ?? "text-white"}`}>{value}</p>
     </div>
   );
 }

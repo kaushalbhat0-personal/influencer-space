@@ -36,7 +36,13 @@ export type IntelligenceEventType =
   | "payout.completed"
   // RCCF-IMPLEMENTATION-73 — commerce strategy events.
   | "commerce.strategy.resolved"
-  | "commerce.strategy.changed";
+  | "commerce.strategy.changed"
+  // RCCF-IMPLEMENTATION-74 — payment account events.
+  | "payment.account.created"
+  | "payment.account.updated"
+  | "payment.account.verified"
+  | "payment.account.disconnected"
+  | "payment.readiness.changed";
 
 export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "knowledge.completed",
@@ -69,6 +75,11 @@ export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "payout.completed",
   "commerce.strategy.resolved",
   "commerce.strategy.changed",
+  "payment.account.created",
+  "payment.account.updated",
+  "payment.account.verified",
+  "payment.account.disconnected",
+  "payment.readiness.changed",
 ];
 
 export interface RuntimeEvent {

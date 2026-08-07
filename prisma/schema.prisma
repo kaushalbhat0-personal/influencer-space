@@ -77,6 +77,7 @@ model Tenant {
   newsletterSubscribers NewsletterSubscriber[]
   subscription          Subscription?
   productOrders         ProductOrder[]
+  paymentAccount        PaymentAccount?
   socialStats           SocialStats[]
   auditLogs             AuditLog[]
   contentFeedItems      ContentFeedItem[]
@@ -237,6 +238,36 @@ model AgencyTenant {
   @@index([agencyId])
 }
 
+/// RCCF-IMPLEMENTATION-74 — the creator's canonical payment account for
+/// DIRECT_CREATOR commerce. One per tenant. Sensitive fields are encrypted
+/// (AES-256-GCM via src/lib/crypto). CreatorStore is never in the money flow.
+model PaymentAccount {
+  id                    String    @id @default(uuid()) @db.Uuid
+  tenantId              String    @unique @db.Uuid
+  provider              String    @default("razorpay") // razorpay | stripe | phonepe | cashfree | payu | manual
+  displayName           String?
+  accountHolderName     String?
+  merchantName          String?
+  upiId                 String?
+  bankAccountName       String?
+  bankAccountNumber     String? // encrypted
+  ifsc                  String?
+  settlementMode        String    @default("upi") // upi | bank
+  status                String    @default("pending") // pending | active | disconnected
+  verificationStatus    String    @default("unverified") // unverified | pending | verified | failed
+  capabilities          Json      @default("{}") // { products: true, services: true, ... }
+  providerKeyId         String? // encrypted (creator's own Razorpay key)
+  providerKeySecret     String? // encrypted (creator's own Razorpay secret)
+  lastVerifiedAt        DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([provider])
+  @@index([status])
+}
+
 /// ⛔️ DOMAIN FROZEN after Phase 2a — no schema changes without Architecture Review.
 /// Workspace is the single aggregate root for billable, member-owned contexts.
 model Workspace {
@@ -340,6 +371,9 @@ model Product {
   images         Json?     @default("[]")
   imageAssetId   String?   @db.Uuid
   slug           String?
+  // RCCF-IMPLEMENTATION-74: standardized commerce type.
+  // digital | physical | course | service | booking | affiliate | donation
+  type           String    @default("digital")
   status         String    @default("PUBLISHED")
   seoTitle       String?
   seoDescription String?
@@ -372,6 +406,11 @@ model ProductOrder {
   agencyFeePercent   Float?
   agencyId           String?  @db.Uuid
   routeTransferId    String?
+  // RCCF-IMPLEMENTATION-74: order runtime metadata (provider-agnostic).
+  commerceStrategy   String?
+  provider           String?
+  providerReference  String?
+  providerMetadata   Json?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

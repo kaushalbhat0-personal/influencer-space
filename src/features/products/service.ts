@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_PRODUCT_TYPE } from "@/modules/product-types";
 import type { ProductData, ProductFormInput } from "./types";
 
 function mapProduct(row: Record<string, unknown>): ProductData {
@@ -11,7 +12,8 @@ function mapProduct(row: Record<string, unknown>): ProductData {
     images: Array.isArray(row.images) ? row.images as string[] : [],
     slug: (row.slug as string) ?? null,
     status: (row.status as ProductData["status"]) ?? "DRAFT",
-    type: "digital",
+    // RCCF-IMPLEMENTATION-74: persist the standardized commerce type.
+    type: (row.type as ProductData["type"]) ?? DEFAULT_PRODUCT_TYPE,
     isActive: (row.isActive as boolean) ?? true,
     isFeatured: (row.isFeatured as boolean) ?? false,
     seoTitle: (row.seoTitle as string) ?? null,
@@ -47,6 +49,7 @@ export const productService = {
         imageUrl: input.imageUrl ?? null,
         images: input.images ?? [],
         slug: input.slug ?? input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        type: input.type ?? DEFAULT_PRODUCT_TYPE,
         status: input.status ?? "PUBLISHED",
         isActive: input.isActive ?? true,
         isFeatured: input.isFeatured ?? false,
@@ -70,6 +73,7 @@ export const productService = {
         ...(input.imageUrl !== undefined && { imageUrl: input.imageUrl }),
         ...(input.images !== undefined && { images: input.images }),
         ...(input.slug !== undefined && { slug: input.slug }),
+        ...(input.type !== undefined && { type: input.type }),
         ...(input.status !== undefined && { status: input.status }),
         ...(input.isActive !== undefined && { isActive: input.isActive }),
         ...(input.isFeatured !== undefined && { isFeatured: input.isFeatured }),

@@ -1,3 +1,5 @@
+import type { ProductTypeId } from "@/modules/product-types";
+
 export interface ProductData {
   id: string;
   name: string;
@@ -7,7 +9,7 @@ export interface ProductData {
   images: string[];
   slug: string | null;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  type: "digital" | "physical" | "service" | "membership" | "bundle";
+  type: ProductTypeId;
   isActive: boolean;
   isFeatured: boolean;
   seoTitle: string | null;
@@ -25,7 +27,7 @@ export interface ProductFormInput {
   images?: string[];
   slug?: string;
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-  type: "digital" | "physical" | "service" | "membership" | "bundle";
+  type: ProductTypeId;
   isActive?: boolean;
   isFeatured?: boolean;
   seoTitle?: string;

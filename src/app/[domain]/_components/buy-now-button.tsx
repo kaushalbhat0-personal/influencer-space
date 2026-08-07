@@ -80,6 +80,13 @@ export function BuyNowButton({
       return;
     }
 
+    // RCCF-IMPLEMENTATION-74: DIRECT_CREATOR — redirect to the hosted checkout
+    // on the creator's own payment account (CreatorStore is not in the money flow).
+    if (result.checkoutUrl) {
+      window.location.href = result.checkoutUrl;
+      return;
+    }
+
     if (!result.success || !result.razorpayOrderId) {
       showToast("error", result.error || "Failed to initiate payment");
       setLoading(false);
