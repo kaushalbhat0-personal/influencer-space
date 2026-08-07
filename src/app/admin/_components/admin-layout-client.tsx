@@ -7,7 +7,7 @@ import { Menu, Search, ExternalLink, Layout } from "lucide-react";
 import { AdminSidebar } from "./admin-sidebar";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CommandPalette } from "@/components/layout/CommandPalette";
-import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import { RuntimeNotificationBell } from "@/components/layout/RuntimeNotificationBell";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
@@ -60,7 +60,7 @@ export function AdminLayoutClient({
         >
           <Search className="h-5 w-5" />
         </button>
-        <NotificationCenter />
+        <RuntimeNotificationBell />
       </div>
 
       {/* Desktop topbar */}
@@ -92,7 +92,7 @@ export function AdminLayoutClient({
           <ExternalLink className="h-3.5 w-3.5" />
           View site
         </Link>
-        <NotificationCenter />
+        <RuntimeNotificationBell />
       </div>
 
       {/* Global overlays */}

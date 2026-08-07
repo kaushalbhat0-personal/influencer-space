@@ -327,17 +327,65 @@ model ClientAssignment {
   userId      String   @db.Uuid
   role        String // account_manager | designer | developer | content_editor | support
   assignedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, tenantId, userId])
-  @@index([workspaceId])
-  @@index([tenantId])
-  @@index([userId])
+  @@index([workspaceId, tenantId])
+}
+
+/// RCCF-TRACK-02 — Communication Runtime. In-app notifications.
+model Notification {
+  id         String   @id @default(uuid()) @db.Uuid
+  audience   String   // "creator" | "agency" | "super_admin"
+  recipientId String  // tenantId | agencyId | "system"
+  category   String   // commerce | orders | payments | builder | website | recommendations | business_health | billing | security | marketing | customer_success | system
+  title      String
+  body       String?
+  priority   String   @default("medium") // low | medium | high
+  channel    String   @default("in_app") // in_app | email | alert
+  data       Json?
+  readAt     DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([audience, recipientId, createdAt])
+  @@index([audience, recipientId, readAt])
+  @@index([category])
+}
+
+/// RCCF-TRACK-02 — per-category channel preferences.
+model NotificationPreference {
+  id         String  @id @default(uuid()) @db.Uuid
+  audience   String
+  recipientId String
+  category   String
+  channel    String  @default("in_app") // email | in_app | both | none
+  updatedAt  DateTime @updatedAt
+
+  @@unique([audience, recipientId, category])
+}
+
+/// RCCF-TRACK-02 — auditable delivery history + retry queue.
+model CommunicationLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  templateId String
+  recipient  String
+  channel    String   // email | in_app | alert | sms | whatsapp | push
+  status     String   @default("queued") // queued | sent | delivered | failed
+  provider   String   @default("log") // log | email | in_app | alert
+  retries    Int      @default(0)
+  maxRetries Int      @default(3)
+  error      String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([templateId])
+  @@index([recipient])
 }
 
 model User {

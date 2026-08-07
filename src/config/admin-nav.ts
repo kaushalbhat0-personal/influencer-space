@@ -4,7 +4,7 @@ import {
   Layout, Palette, Search, Globe, CreditCard,
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
   User, Menu, Sparkles, Gamepad as GamepadIcon, FolderOpen,
-  Paintbrush, LayoutTemplate, Wand2, Brain, Target, Landmark,
+  Paintbrush, LayoutTemplate, Wand2, Brain, Target, Landmark, Bell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -94,6 +94,7 @@ export const ADMIN_NAV: NavConfig = {
         { href: "/admin/settings/domain", label: "Domain", icon: Globe },
         { href: "/admin/billing", label: "Billing", icon: CreditCard },
         { href: "/admin/payments", label: "Payments", icon: Landmark },
+        { href: "/admin/notifications", label: "Notifications", icon: Bell },
         { href: "/admin/integrations", label: "Integrations", icon: Puzzle },
       ],
     },

@@ -375,3 +375,9 @@ jobRunner.register({
   intervalMs: 86400000,
   execute: async () => { const r = await purgeOldAuditLogs(90); if (r.deleted > 0) log(`[Job] Purged ${r.deleted} old audit logs`); },
 });
+
+// RCCF-TRACK-02: register the Event Runtime → Communication subscriber at module
+// scope (idempotent). Business runtimes emit events only; the communication
+// layer routes + delivers.
+import { subscribeCommunicationEvents } from "@/modules/communication/application/event-wiring";
+subscribeCommunicationEvents();
