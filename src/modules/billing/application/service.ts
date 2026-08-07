@@ -241,28 +241,36 @@ export class BillingService {
         subscriptionId: sub.id,
       });
 
-      // ── Partner Commission (auto-trigger for renewals) ──────────────────
+      // ── Partner Commission (RCCF-IMPLEMENTATION-72) ─────────────────────
+      // Recurring subscription revenue share for the agency managing the
+      // creator. Attribution runs through AgencyTenant (workspace → tenant →
+      // agency); the commission runtime is transactional + idempotent.
       try {
-        const ws = await prisma.workspace.findUnique({
-          where: { id: workspaceId },
-          select: { agencyId: true, tenantId: true },
+        const { recordSubscriptionCommission } = await import("@/lib/commission/runtime");
+        await recordSubscriptionCommission({
+          workspaceId,
+          planCode: plan.code,
+          subscriptionId: sub.id,
+          invoiceId: invoice.id,
+          amount: input.amount ?? getPlan(plan.code)?.price ?? 0,
+          event: mapping.action === "renew" ? "renewed" : "created",
         });
-        if (ws?.agencyId) {
-          const partnerRecord = await partnerService.get(ws.agencyId);
-          if (partnerRecord) {
-            commissionService.processCommission({
-              invoiceId: invoice.id,
-              partnerId: ws.agencyId,
-              subscriptionId: sub.id,
-              planCode: plan.code,
-              gross: input.amount ?? getPlan(plan.code)?.price ?? 0,
-              currency: "INR",
-            });
-          }
-        }
       } catch (err) {
         captureError(err, { service: "billing", operation: "subscriptionWebhook-commission" });
       }
+    }
+
+    // RCCF-IMPLEMENTATION-72: emit canonical subscription lifecycle events.
+    if (mapping.action === "cancel") {
+      const { runtimeEventBus } = await import("@/modules/event-runtime");
+      const wsTenant = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });
+      await runtimeEventBus.publish({
+        type: "subscription.cancelled",
+        tenantId: wsTenant?.tenantId ?? "system",
+        entityId: sub.id,
+        payload: { workspaceId, planCode: plan.code, providerReference },
+        occurredAt: new Date().toISOString(),
+      }).catch(() => {});
     }
 
     const tenant = await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } });

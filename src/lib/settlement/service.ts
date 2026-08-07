@@ -67,7 +67,7 @@ export class SettlementService {
   async createSettlement(params: CreateSettlementParams): Promise<{ settlement: SettlementRow | null; error?: string }> {
     try {
       const result = await prisma.$transaction(async (tx) => {
-        let entries: Array<{ id: string; amount: number }> = [];
+        let entries: Array<{ id: string; partnerShare: number }> = [];
 
         if (params.commissionEntryIds?.length) {
           const existing = await tx.settlementItem.findMany({
@@ -79,8 +79,8 @@ export class SettlementService {
           if (available.length === 0) return { settlement: null, error: "All selected commission entries are already reserved in another settlement." };
 
           const commissionEntries = await tx.commissionEntry.findMany({
-            where: { id: { in: available }, status: "cleared" },
-            select: { id: true, amount: true },
+            where: { id: { in: available }, status: "pending" },
+            select: { id: true, partnerShare: true },
           });
           entries = commissionEntries;
         } else {
@@ -89,16 +89,16 @@ export class SettlementService {
           });
           const reservedIds = new Set(reservedEntries.map((r) => r.commissionEntryId));
 
-          const cleared = await tx.commissionEntry.findMany({
-            where: { partnerId: params.partnerId, status: "cleared", id: { notIn: Array.from(reservedIds) } },
-            select: { id: true, amount: true },
+          const pending = await tx.commissionEntry.findMany({
+            where: { partnerId: params.partnerId, status: "pending", id: { notIn: Array.from(reservedIds) } },
+            select: { id: true, partnerShare: true },
           });
-          entries = cleared;
+          entries = pending;
         }
 
         if (entries.length === 0) return { settlement: null, error: "No available commission entries to settle." };
 
-        const totalAmount = entries.reduce((sum, e) => sum + (e.amount as unknown as { partnerShare: number }).partnerShare, 0);
+        const totalAmount = entries.reduce((sum, e) => sum + e.partnerShare, 0);
         const settlementRef = `STL-${Date.now().toString(36).toUpperCase()}-${params.partnerId.slice(0, 8)}`;
 
         const settlement = await tx.settlement.create({
@@ -117,7 +117,7 @@ export class SettlementService {
             items: {
               create: entries.map((e) => ({
                 commissionEntryId: e.id,
-                amount: (e.amount as unknown as { partnerShare: number }).partnerShare,
+                amount: e.partnerShare,
                 status: "pending",
               })),
             },
@@ -133,7 +133,7 @@ export class SettlementService {
         partnerLedgerService.addEntry({
           partnerId: params.partnerId,
           type: "SETTLEMENT_CREATED",
-          amount: 0,
+          amount: result.settlement.netAmount,
           reference: result.settlement.id,
           referenceType: "settlement",
           description: `Settlement ${result.settlement.settlementRef} created (${result.settlement.entryCount} entries, ₹${result.settlement.netAmount})`,
@@ -181,14 +181,14 @@ export class SettlementService {
         const existingDesc = await prisma.commissionEntry.findUnique({ where: { id: item.commissionEntryId }, select: { description: true } });
         await prisma.commissionEntry.update({
           where: { id: item.commissionEntryId },
-          data: { status: "cleared", description: `${existingDesc?.description ?? ""} | settled:${settlement.settlementRef}` },
+          data: { status: "cleared", clearedAt: new Date(), description: `${existingDesc?.description ?? ""} | settled:${settlement.settlementRef}` },
         });
       }
       logger.info("Settlement paid", "settlement", { operation: "updateStatus", metadata: { settlementId: id, partnerId: settlement.partnerId, amount: settlement.totalAmount, transferRef: metadata?.transferRef } as Record<string, unknown> });
       partnerLedgerService.addEntry({
         partnerId: settlement.partnerId,
         type: "SETTLEMENT_PAID",
-        amount: 0,
+        amount: settlement.netAmount,
         reference: settlement.id,
         referenceType: "settlement",
         description: `Settlement ${settlement.settlementRef} paid via ${metadata?.transferRef || "manual transfer"}`,
@@ -200,7 +200,7 @@ export class SettlementService {
       partnerLedgerService.addEntry({
         partnerId: settlement.partnerId,
         type: "SETTLEMENT_CANCELLED",
-        amount: 0,
+        amount: -Math.abs(settlement.netAmount),
         reference: settlement.id,
         description: `Settlement ${settlement.settlementRef} cancelled`,
         settlementId: settlement.id,

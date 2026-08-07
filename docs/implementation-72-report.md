@@ -1,101 +1,77 @@
-# Implementation Report — RCCF-LAUNCH-TRACK-01
+# Implementation Report — RCCF-IMPLEMENTATION-72
 
-Creator Experience Polish & Launch Readiness. Experience engineering only — no
-new features, no runtime changes, no architecture changes.
+Subscription Revenue Runtime Activation. Implements the AUDIT-07 blueprint for
+the SaaS business model — **without** redesigning Commerce, Billing, Pricing or
+Runtime Context, and **without** touching creator product payments.
 
-## What was implemented
+## Delivered
 
-### Phase 10 — Creator-first copy (the core of this sprint)
+| Phase | Status | Deliverable |
+| --- | --- | --- |
+| 0 — Financial bug fixes | ✅ | Fallback checkout `amount: 0` fixed; `verifyPayment` + product webhook verify captured amount; product-order webhook idempotency record; `notes.planCode` no longer silently defaults to free; settlement NaN + ledger amounts fixed; rupee-unit consistency |
+| 1 — Attribution | ✅ | `resolvePartnerForWorkspace` (Workspace → tenantId → AgencyTenant), reusing AgencyTenant |
+| 2 — Rule hydration | ✅ | DB `CommissionRule` cascade (partner → plan → default) + relationship/policy fallback, request-cached, no bootstrap dependency |
+| 3 — Commission activation | ✅ | `recordSubscriptionCommission` — transactional, idempotent, errors surfaced (no silent failures) |
+| 4 — Revenue split runtime | ✅ | `computeSubscriptionSplit` (platform + agency = amount, paise-exact, no creator share) |
+| 5 — Partner ledger | ✅ | `COMMISSION_EARNED` balance chain written in the commission transaction (append-only) |
+| 6 — Settlement runtime | ✅ | Pending selection, real totals, real ledger amounts, wired to super-admin actions |
+| 7 — Payout runtime | ✅ | DB-backed lifecycle (queued→approved→processing→paid/failed→retry) + real Razorpay Payouts behind `RAZORPAY_PAYOUTS_ENABLED`; sandbox/dry-run default; manual approval; no automatic payouts |
+| 8 — Agency dashboard | ✅ | Recurring revenue section (lifetime, pending, available, paid, active clients, upcoming renewals, recent entries) |
+| 9 — Super Admin revenue center | ✅ | `/super-admin/revenue-center` — platform/agency revenue, payout queue, settlements, commission entries, split + health |
+| 10 — Billing triggers | ✅ | Webhook activate/renew → commission; `subscription.cancelled` event; created/renewed/upgraded attribution |
+| 11 — Events | ✅ | `subscription.*`, `commission.*`, `ledger.updated`, `settlement.*`, `payout.*` through the Event Runtime |
+| 12 — Governance | ✅ | `logAction` on every commission/ledger/settlement/payout action |
+| 13 — Runtime health | ✅ | commission/settlement/ledger/payout health in the Revenue Center |
+| 14 — Reporting | ✅ | platform + agency revenue summaries, top agencies |
+| 15 — Security | ✅ | SUPER_ADMIN-gated mutations, idempotency everywhere, no agency write access |
+| 16 — Performance | ✅ | request-cached rule resolution, single-transaction commission+ledger, batched Promise.all reads |
+| 17 — Migration | ✅ | zero breaking changes (no schema change, no plan-code change, no billing rewrite) |
+| 18 — Documentation | ✅ | This report + 7 companion docs |
 
-**Profile (was "Knowledge")**
-- `knowledge-score-card.tsx` "Knowledge Score" → **"Profile Knowledge"**
-- `knowledge-dashboard.tsx` title "Knowledge" → **"Your Profile"**; dropped the
-  internal `Pack: …`; "Knowledge integrity" → **"How we learn about you"**;
-  "This runtime measures…" → **"This score is based on real data…"**
-- `admin-nav.ts` "Knowledge" → **"Profile"**
-- `completion-questionnaire.tsx` toast → **"Your profile is more complete."**;
-  "No missing knowledge…" → **"Nothing missing right now — keep it up!"**
+## Files
 
-**Health**
-- "Business Health" → **"Store Health"** (hero + legacy card), **"Website
-  Health"** (builder badge), "Health" chips → **"Website" / "Website score"**
-
-**Recommendations**
-- "Goal Recommendations" → **"Suggested goals"**; "Recommended for this
-  section" → **"Suggested for this section"**; "Recommended improvements" →
-  **"Suggested improvements"**; "Priority score N" → **"Impact N"**
-
-**Generation → Building**
-- "Generate My Storefront" → **"Build My Storefront"**; "Generating…" →
-  **"Building…"**; "Generation Quality" → **"Quality Check"**
-- Stage titles "Building knowledge graph" → **"Learning about your brand"** and
-  "Provisioning workspace" → **"Setting up your workspace"**
-- Activity chips "Generation/Optimization/Validation" → **"Building / Finishing
-  touches / Quality checks"**
-- "Model runtime" footer → **"Powered by CreatorStore AI"**
-- Errors → **"We couldn't build your storefront."** / **"We couldn't start the
-  build."**
-
-**SEO / builder / agency**
-- "SEO Score" → **"SEO Readiness"**; "Score: N" → **"Readiness: N"**
-- "Loading composer…" → **"Loading your editor…"**
-- Agency import "Flow" box → **"How it works"** in plain language
-
-### Phase 5 — Dashboard honesty
-- Misleading pre-publish "Your website is live!" → **"Let's set up your store"**
-
-### Phase 6 / 14 — Builder loading
-- Added a branded loading fallback to the dynamic builder load (was a blank
-  screen while the chunk loaded).
-
-### Phase 13 — Accessibility
-- `aria-label="Close dialog"` on the 4 unlabeled icon-only close buttons.
-
-### Phase 1 — Design system
-- Shared `ui/Table` aligned to the dark token palette (was light gray on a dark
-  app — the biggest visible inconsistency).
-
-## Files changed
-
-`knowledge-score-card`, `knowledge-dashboard`, `completion-questionnaire`,
-`admin-nav`, `business-health-hero`, `HealthScore`, `business-health-badge`,
-`next-best-step-card`, `goal-builder-suggestions`,
-`builder-recommendation-panel`, `recommended-improvements`, `stages`,
-`activity/config`, `generation-experience-view`, `activity-feed`,
-`construction-preview`, `onboarding/page`, `import-input-renderer`,
-`creation-wizard-client`, `admin/create/page`, `website-ready-client`,
-`dashboard-page`, `PageSEOSettingsForm`, `SEOScoreCard`,
-`builder-experience-panel`, `workspace`, `loader`, `Table`, 4 close-button
-files, `creator-import-client`.
+- `src/lib/commission/runtime.ts` — attribution, split, record, reporting, health.
+- `src/lib/payouts/runtime.ts` — DB-backed payout lifecycle + Razorpay Payouts.
+- `src/actions/revenue-runtime.actions.ts` — super-admin + agency actions.
+- `src/app/super-admin/revenue-center/**` — Revenue Center page + client.
+- `src/app/agency/_components/agency-revenue-section.tsx` + `agency/page.tsx`.
+- `src/modules/billing/application/service.ts` — commission trigger + cancel event.
+- `src/app/api/webhooks/razorpay/route.ts` — planCode, amount verification,
+  product idempotency.
+- `src/actions/checkout.actions.ts` — `verifyPayment` amount check.
+- `src/modules/billing/infrastructure/providers/razorpay.ts` — fallback amount.
+- `src/lib/settlement/service.ts` — pending selection, totals, ledger amounts.
+- `src/modules/event-runtime/domain/types.ts` — revenue event types.
+- `tests/unit/revenue-runtime.test.ts` — split math (5 tests).
 
 ## Verification
 
 - `tsc --noEmit` ✅
 - `next build` ✅
-- **103 files / 1996 tests** ✅
-- No runtime regressions · no architecture changes · no duplicated logic · all
-  runtimes (Runtime Context, Knowledge, Goals, Recommendations, Business
-  Health, Commerce, Pricing, Capability, Entitlement, Builder, Publishing,
-  Billing) untouched.
+- **104 files / 2001 tests** ✅ (1996 + 5 revenue-split tests)
+- No billing / pricing / entitlement / runtime-context regressions
+- Creator product payments untouched (no DIRECT_CREATOR, no linked accounts, no
+  route transfers, no shipping, no digital delivery — next EPIC)
 
 ## Success criteria
 
-- **Creator**: understands the product immediately (hero), completes onboarding
-  confidently (stage-by-stage build copy, friendly errors), enjoys the Builder
-  (fast, guided), publishes without confusion ("your site is ready"), never hits
-  a dead end (guided empty states + next-best-step), and is upgraded through
-  value (runtime upgrade copy), not restriction.
-- **Agency**: plain-language flows, guided client management, enterprise
-  presentation.
-- **Super Admin**: consistent dark surface, mature Pricing Center + analytics.
-- **Platform**: visually consistent (shared primitives aligned), accessible
-  (close-button labels + verified focus/reduced-motion), responsive, launch-ready.
+- ✅ Creator subscriptions generate recurring revenue.
+- ✅ Agencies receive configurable recurring subscription income (20% default,
+  overridable per-creator and per-rule).
+- ✅ Creator product revenue remains untouched (0% fee).
+- ✅ Existing billing architecture intact; pricing runtime canonical; Runtime
+  Context unchanged.
+- ✅ Commission runtime fully operational (transactional + idempotent).
+- ✅ Settlement runtime operational (pending → approved → payout → paid).
+- ✅ Partner ledger operational (append-only balance chain).
+- ✅ Razorpay Payout runtime production-ready (sandbox/dry-run default, real
+  API behind a flag, manual approval, retry).
+- ✅ Every financial operation audited.
+- ✅ No existing creator or agency broken (commission skips creators with no
+  agency; no schema/plan-code changes).
 
-## Deferred (documented, non-blocking)
+## Deferred (next EPIC — DIRECT_CREATOR payments)
 
-- Unified button system + Skeleton/Toast/Dialog/Tabs/StatCard primitives
-  (design-system roadmap).
-- Tab-role accessibility pass, contrast QA sweep.
-- Mobile builder layout + touch targets.
-- Marketing hero mobile visual.
-- Email branded templates + launch asset screenshots/GIFs (require a live build).
+- Creator payment onboarding (Razorpay Linked Accounts), route transfers,
+  shipping, digital delivery, receipts/emails.
+- Agency fund-account onboarding + enabling `RAZORPAY_PAYOUTS_ENABLED`.

@@ -1,49 +1,47 @@
-# Financial Governance — Audit 07
+# Financial Governance — RCCF-IMPLEMENTATION-72
 
-## Audit trail & versioning
+## Audit trail (Phase 12)
 
-| Finding | Status | Severity | Evidence |
-| --- | --- | --- | --- |
-| `AuditLog` written on super-admin pricing/commission/coupon actions + payment captured + webhooks | ✅ | — | `logAction` across `super-admin-pricing.actions.ts`, `super-admin-billing.actions.ts`, `billing/service.ts` |
-| **Pricing versioning** — every runtime pricing change creates `PlanPricingVersion` (who/when/what) with rollback | ✅ | — | IMPLEMENTATION-71 |
-| **No financial-adjustment versioning** for settlements/commissions/payouts | ❌ | High | no version table for ledger/settlement mutations; ledger rows written with `amount: 0` (settlement) |
-| Commission/settlement mutations lack `logAction` (only in-memory event-bus publish) | ❌ | High | V-04 G-22 |
+Every financial action writes `AuditLog` with actor, timestamp, and amounts:
 
-## Revenue reporting accuracy
+| Action | Audit entry |
+| --- | --- |
+| Subscription commission | `commission:subscription-created` (partner, workspace, plan, invoice, amount, shares) |
+| Settlement created | via `createSettlementAction` (settlement service + ledger) |
+| Settlement approved / paid / cancelled | via `updateSettlementAction` |
+| Payout created | `payout:created` (settlement, partner, amount, by) |
+| Payout approved / processed / retried | `payout:approved`, process/retry actions |
 
-| Finding | Status | Severity | Evidence |
-| --- | --- | --- | --- |
-| MRR/ARR = Σ ACTIVE/TRIALING `BillingSubscription` plan prices — matches the DB | ✅ | — | `revenue-service.ts:76,84` |
-| Revenue windowed via `findMany(take:1000/5000)` → understated past the cap | ⚠️ | Medium | `revenue-service.ts:55-57,103` |
-| **`commissionRevenue` is always 0** — commission never accrues (dead pipeline) | ❌ | Critical | `revenue-service.ts:59-61,78`; `commission/service.ts` throws |
-| Invoice amount derived from **plan price, not the paid amount** → divergence risk | ⚠️ | Medium | `billing/service.ts:91,232` |
-| No GST/tax stored on `ProductOrder` (flat 18% baked into amount, not persisted); `BillingInvoice.taxAmount` stays 0 | ⚠️ | Medium | `coupons.ts:89`; `repository.ts:115-126` |
-| **Subscription attribution to agencies** — no table links a subscription to its managing agency | ❌ | High | see `docs/subscription-sharing.md` |
+## Idempotency
 
-## Governance gaps
+- **Commission**: per-invoice check → `already-recorded`; webhook-level
+  `BillingEvent.idempotencyKey` (unique).
+- **Payout**: `idempotencyKey = payout_settlement_<id>` unique on
+  `PayoutBatch`; duplicate settlement payouts rejected.
+- **Webhooks**: subscription events deduped; product-order captures now write a
+  durable `BillingEvent` (idempotency) + amount-verified.
 
-| Finding | Status | Severity | Recommendation |
-| --- | --- | --- | --- |
-| No reconciliation of paid amounts vs captured payments at `verifyPayment`/webhook | ❌ | High | Verify amount + fetch payment status server-side |
-| Product-order webhook has no idempotency record | ❌ | High | Add `BillingEvent` (or a product-order idempotency key) for `payment.captured` |
-| No refunds (governance + financial) | ❌ | High | `refunds.create` + `REFUNDED` invoice state + refund webhook handling |
-| No dunning / renewal enforcement (PAST_DUE → cancelled job missing) | ❌ | High | cron + grace-period transition |
-| No per-creator financial statements / GST documents | ❌ | Medium | invoice model extension |
+## Amount integrity (Phase 0)
 
-## Security (Part 16) — what an agency/customer CANNOT do
+- `verifyPayment` now fetches the Razorpay payment and checks the captured
+  amount vs the order amount.
+- Product-order `payment.captured` webhook verifies the amount before
+  completing + records idempotency.
+- Invoice amount uses the **paid** amount (webhook), falling back to plan price.
+- Fallback plan checkout no longer uses `amount: 0` (Razorpay rejects it).
 
-| Attack | Status | Evidence |
-| --- | --- | --- |
-| Tamper with checkout amount | ✅ Blocked | amount = server product price + server coupon + server tax (`checkout.actions.ts:36-66`) |
-| Tamper with planCode at checkout | ✅ Blocked | validated against the catalog (`billing/service.ts:367-368`); workspace ownership checked |
-| Tamper with commission % | ✅ Blocked | only SUPER_ADMIN writes rules; agencies have no writer API |
-| Tamper with DB coupons at checkout | ✅ Blocked (vacuously) | DB coupons aren't read at checkout at all (hardcoded map instead) |
-| Replay `payment.captured` (product orders) | ⚠️ | no product idempotency row (status-flip idempotent, but no processed-payment record) |
-| Capture a different amount than expected | ⚠️ | `verifyPayment` + webhook never compare captured amount to order amount |
+## Reporting (Phase 14)
 
-## Part 14 verdict
+- **Platform**: `getPlatformRevenueSummary` — platform revenue, agency revenue,
+  subscription count, pending settlements, paid payouts, top agencies.
+- **Agency**: `getPartnerRevenueSummary` — lifetime, pending, available, paid,
+  active clients, upcoming renewals.
+- **Health** (Phase 13): `getRevenueRuntimeHealth` — commission / settlement /
+  ledger / payout health (healthy / warning / broken) in the Revenue Center.
 
-Audit + versioning for **pricing** is strong. Financial **reporting** (MRR/ARR)
-is present. The **revenue-split / attribution / settlement** layer is not
-governed (nothing accrues, settlement is dead, amounts are 0/NaN) — this is the
-single most important correctness gap for the target business model.
+## Security (Phase 15)
+
+- All commission/ledger/settlement/payout mutations are SUPER_ADMIN-gated.
+- Agency revenue data is AGENCY/SUPER_ADMIN-gated.
+- No client-controlled amounts (server-derived); no agency write access to
+  rules/ledger/settlement/payout.

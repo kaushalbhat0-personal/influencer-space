@@ -6,7 +6,7 @@
  */
 
 import type { BillingProvider, CheckoutParams, CheckoutResult } from "../../domain/types";
-import { razorpayPlanIdFor, isManualPlan } from "@/config/commerce/plans";
+import { razorpayPlanIdFor, isManualPlan, getCommercePlan } from "@/config/commerce/plans";
 import crypto from "crypto";
 
 export class RazorpayProvider implements BillingProvider {
@@ -54,8 +54,12 @@ export class RazorpayProvider implements BillingProvider {
       }
 
       // Fallback: one-time order (free/manual-adjacent flows).
+      // RCCF-IMPLEMENTATION-72: the amount was hardcoded to 0 (Razorpay rejects
+      // ₹0 orders). Use the canonical runtime plan price so a plan without a
+      // Razorpay subscription id still produces a valid payable order.
+      const price = getCommercePlan(params.planCode)?.price ?? 0;
       const order = await razorpay.orders.create({
-        amount: 0,
+        amount: Math.round((price ?? 0) * 100),
         currency: params.currency ?? "INR",
         receipt: `rcpt_${Date.now()}`,
         notes: {

@@ -21,7 +21,19 @@ export type IntelligenceEventType =
   | "onboarding.completed"
   | "business-health.updated"
   | "business-health.milestone"
-  | "business-health.grade.changed";
+  | "business-health.grade.changed"
+  // RCCF-IMPLEMENTATION-72 — subscription revenue runtime events.
+  | "subscription.created"
+  | "subscription.renewed"
+  | "subscription.upgraded"
+  | "subscription.cancelled"
+  | "commission.created"
+  | "commission.failed"
+  | "ledger.updated"
+  | "settlement.created"
+  | "settlement.completed"
+  | "payout.created"
+  | "payout.completed";
 
 export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "knowledge.completed",
@@ -41,6 +53,17 @@ export const INTELLIGENCE_EVENT_TYPES: IntelligenceEventType[] = [
   "business-health.updated",
   "business-health.milestone",
   "business-health.grade.changed",
+  "subscription.created",
+  "subscription.renewed",
+  "subscription.upgraded",
+  "subscription.cancelled",
+  "commission.created",
+  "commission.failed",
+  "ledger.updated",
+  "settlement.created",
+  "settlement.completed",
+  "payout.created",
+  "payout.completed",
 ];
 
 export interface RuntimeEvent {

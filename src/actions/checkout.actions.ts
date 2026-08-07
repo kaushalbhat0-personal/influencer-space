@@ -166,6 +166,21 @@ export async function verifyPayment(
       return { success: true };
     }
 
+    // RCCF-IMPLEMENTATION-72: verify the CAPTURED amount matches the order
+    // amount before completing (the HMAC proves authenticity, not the amount).
+    try {
+      const razorpay = getRazorpayInstance();
+      const payment = await razorpay.payments.fetch(razorpayPaymentId);
+      const capturedPaise = Number(payment?.amount ?? 0);
+      const expectedPaise = Math.round(order.amount * 100);
+      if (capturedPaise !== expectedPaise) {
+        return { success: false, error: "Payment amount does not match order amount" };
+      }
+    } catch {
+      // Amount verification is best-effort on the client path; the webhook is
+      // the authoritative reconcile and enforces the same check.
+    }
+
     await prisma.productOrder.update({
       where: { id: order.id },
       data: {

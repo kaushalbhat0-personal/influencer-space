@@ -226,6 +226,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "revenue-center", title: "Revenue Center", group: "commerce",
+    href: "/super-admin/revenue-center", icon: IndianRupee, permission: "super_admin",
+    searchable: true, keywords: ["revenue", "commission", "settlement", "payout", "ledger", "agency share", "subscription revenue"],
+    auditCategory: "revenue", analyticsKey: "revenue-center:viewed",
+    productionReady: true,
+  },
+  {
     id: "invoices", title: "Invoices", group: "commerce",
     href: "/super-admin/invoices", icon: FileText, permission: "super_admin",
     searchable: false, keywords: ["receipts", "bills", "statements"],

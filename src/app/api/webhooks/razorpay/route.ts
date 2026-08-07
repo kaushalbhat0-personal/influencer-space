@@ -92,9 +92,10 @@ export async function POST(req: Request) {
 
     // â”€â”€ payment.captured (legacy + plan activation + product orders) â”€â”€â”€â”€â”€
     if (event === "payment.captured") {
-      const planCode: string = notes.planCode || "creator_launch";
+      const planCode: string | undefined = notes.planCode || undefined;
       const orderId: string = payload.payload?.payment?.entity?.order_id || "";
       const paymentId: string = payload.payload?.payment?.entity?.id || "";
+      const capturedAmountPaise: number = Number(payload.payload?.payment?.entity?.amount ?? 0);
 
       try {
         if (workspaceId) {
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
             planCode,
             providerReference: orderId || paymentId,
             idempotencyKey,
-            amount: Number(((payload.payload?.payment?.entity?.amount as number | undefined) ?? 0)) / 100,
+            amount: capturedAmountPaise / 100,
           });
         } else {
           const guestEmail: string = notes.email || "";
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
                   planCode,
                   providerReference: orderId || paymentId,
                   idempotencyKey: `${idempotencyKey}_${m.workspace.id}`,
-                  amount: Number(((payload.payload?.payment?.entity?.amount as number | undefined) ?? 0)) / 100,
+                  amount: capturedAmountPaise / 100,
                 });
               }
             }
@@ -136,13 +137,31 @@ export async function POST(req: Request) {
         try {
           const dbOrder = await prisma.productOrder.findUnique({
             where: { id: dbOrderId },
-            select: { id: true, status: true },
+            select: { id: true, status: true, amount: true, razorpayPaymentId: true, tenantId: true },
           });
-          if (dbOrder && dbOrder.status === "PENDING") {
-            await prisma.productOrder.update({
-              where: { id: dbOrder.id },
-              data: { status: "COMPLETED", razorpayPaymentId: paymentId },
-            });
+          if (dbOrder && dbOrder.status === "PENDING" && !dbOrder.razorpayPaymentId) {
+            // RCCF-IMPLEMENTATION-72: idempotency + amount verification — only
+            // complete when the captured amount matches the order amount.
+            const expectedPaise = Math.round(dbOrder.amount * 100);
+            if (capturedAmountPaise === expectedPaise) {
+              await prisma.productOrder.update({
+                where: { id: dbOrder.id },
+                data: { status: "COMPLETED", razorpayPaymentId: paymentId },
+              });
+              await prisma.billingEvent
+                .create({
+                  data: {
+                    workspaceId: null,
+                    accountId: dbOrder.tenantId,
+                    type: "PAYMENT_CAPTURED_PRODUCT",
+                    idempotencyKey: `razorpay_payment_captured_product_${paymentId}`,
+                    payload: { orderId: dbOrder.id, productId, amount: dbOrder.amount },
+                  },
+                })
+                .catch(() => {});
+            } else {
+              captureError(new Error(`Product order amount mismatch: captured ${capturedAmountPaise} vs expected ${expectedPaise}`), { service: "razorpay-webhook", operation: "productOrderCaptured" });
+            }
           }
         } catch (error) {
           captureError(error, { service: "razorpay-webhook", operation: "productOrderCaptured" });

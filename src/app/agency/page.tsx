@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Building, Globe, Users, Activity, TrendingUp, AlertTriangle, Clock, Shield } from "lucide-react";
 import { clientService } from "@/lib/client/service";
 import { AgencyClientsTable } from "./_components/agency-clients-table";
+import { AgencyRevenueSection } from "./_components/agency-revenue-section";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,9 @@ export default async function AgencyDashboard() {
         <MetricCard label="Need Attention" value={summary.needingAttention} icon={AlertTriangle} />
         <MetricCard label="Unpublished" value={summary.unpublished} icon={Clock} />
       </div>
+
+      {/* RCCF-IMPLEMENTATION-72: recurring subscription revenue */}
+      <AgencyRevenueSection agencyId={agencyId} />
 
       {/* Attention Widget */}
       {summary.needingAttention > 0 && (
