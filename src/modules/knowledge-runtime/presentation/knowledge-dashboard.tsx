@@ -12,6 +12,7 @@ import { getKnowledgeRuntime } from "@/actions/knowledge.actions";
 
 interface Props {
   initial: KnowledgeRuntimeResponse;
+  goalAlignment?: { label: string; percent: number } | null;
 }
 
 function groupByCategory(missing: KnowledgeRuntimeResponse["score"]["missingFields"]) {
@@ -24,7 +25,7 @@ function groupByCategory(missing: KnowledgeRuntimeResponse["score"]["missingFiel
   return Array.from(groups.entries());
 }
 
-export function KnowledgeDashboard({ initial }: Props) {
+export function KnowledgeDashboard({ initial, goalAlignment }: Props) {
   const [runtime, setRuntime] = useState<KnowledgeRuntimeResponse>(initial);
   const [reloading, setReloading] = useState(false);
 
@@ -90,7 +91,7 @@ export function KnowledgeDashboard({ initial }: Props) {
         </div>
 
         <div className="space-y-6 lg:col-span-2">
-          <StorefrontScoreCard storefrontScore={runtime.storefrontScore} />
+          <StorefrontScoreCard storefrontScore={runtime.storefrontScore} extra={goalAlignment} />
 
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Builder hints</p>

@@ -16,6 +16,7 @@ import { themeRegistry } from "@/lib/theme/registry-new";
 import { experienceRegistry, ExperienceSection } from "@/modules/theme/runtime/experience";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { PublishedSnapshot } from "@/types/snapshot";
+import { applyGoalSectionOrder, applyGoalNavigation, goalProfileService } from "@/modules/goals-runtime";
 
 // IMPLEMENTATION-16: no ISR/content cache on the storefront. Content is ALWAYS
 // live (websiteAggregate.build on every request); a cached page would show
@@ -121,7 +122,15 @@ export default async function PublicPage({
   const resolveStart = performance.now();
   const doc = layoutEngine.resolve(snap);
   const resolveMs = performance.now() - resolveStart;
-  const { theme, navigation, jsonLd, pages } = doc;
+  const { theme, jsonLd } = doc;
+
+  // RCCF-EPIC-05: goals compose with the storefront. When the creator has set
+  // a weighted goal profile, navigation and homepage sections are RE-ORDERED
+  // to lead with what the creator wants to achieve. With no profile this is a
+  // no-op, so existing storefronts behave exactly as before.
+  const goalProfile = await goalProfileService.getProfile(data.tenantId);
+  const navigation = applyGoalNavigation(doc.navigation, goalProfile);
+  const pages = applyGoalSectionOrder(doc.pages, goalProfile);
 
   const runtimeSignature = traceRuntime({
     runtimeType: isPreview ? "preview" : process.env.NODE_ENV === "production" ? "production" : "storefront",

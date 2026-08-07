@@ -242,7 +242,8 @@ export type StorefrontDimensionId =
   | "brand"
   | "seo"
   | "trust"
-  | "accessibility";
+  | "accessibility"
+  | "goal-alignment";
 
 export interface StorefrontDimension {
   id: StorefrontDimensionId;

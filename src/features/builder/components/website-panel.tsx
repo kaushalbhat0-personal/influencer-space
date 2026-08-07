@@ -4,6 +4,7 @@ import { PanelRightClose } from "lucide-react";
 import { ThemeCard } from "./theme-card";
 import { CompletionBadge } from "./completion-badge";
 import { BuilderCompletionHints } from "@/modules/knowledge-runtime/presentation/builder-hints";
+import { GoalBuilderSuggestions } from "@/modules/goals-runtime/presentation/goal-builder-suggestions";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -85,6 +86,9 @@ export function WebsitePanel({
 
         {/* Completion hints */}
         <BuilderCompletionHints />
+
+        {/* Goal recommendations */}
+        <GoalBuilderSuggestions />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import {
   Layout, Palette, Search, Globe, CreditCard,
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
   User, Menu, Sparkles, Gamepad as GamepadIcon, FolderOpen,
-  Paintbrush, LayoutTemplate, Wand2, Brain,
+  Paintbrush, LayoutTemplate, Wand2, Brain, Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -73,6 +73,7 @@ export const ADMIN_NAV: NavConfig = {
       label: "Profile", collapsible: true,
       items: [
         { href: "/admin/knowledge", label: "Knowledge", icon: Brain },
+        { href: "/admin/goals", label: "Goals", icon: Target },
         { href: "/admin/profile", label: "Profile", icon: User },
         { href: "/admin/seo", label: "SEO", icon: Search },
       ],

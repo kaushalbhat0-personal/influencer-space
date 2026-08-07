@@ -1,6 +1,23 @@
 # Changelog
 
-## Latest — RCCF-EPIC-04: Knowledge Completion Runtime
+## Latest — RCCF-EPIC-05: Creator Goals Runtime
+- Creator Goals Runtime module (`src/modules/goals-runtime/`) — DDD domain/application/infrastructure/presentation
+- Goals compose with the Knowledge Runtime (never replace it): Knowledge = "who are you?", Goals = "what are you trying to achieve?"
+- Weighted goal profile (primary = highest weight) — creators evolve by changing weights, not the model
+- Phase 1: Goal Registry — 14 canonical goals (id, label, category, supported sections, nav priority, commerce priority, supporting knowledge, milestones, suggestions)
+- Phase 3: deterministic Goal Recommendation Engine (entity pack priors + live knowledge signals, normalized to 100)
+- Phase 4/5: goal-driven homepage section + navigation ordering (hero/footer pinned; no-op without a profile)
+- Phase 6: dashboard Business Goal card (primary goal, progress, missing items, CTA)
+- Phase 7: Builder goal recommendations panel (contextual, only missing knowledge)
+- Phase 8: commerce ordering (products/bookings/courses/services priority)
+- Phase 9: goal-aware milestones (first booking, 10 orders, …)
+- Phase 10: Goal Alignment — 8th Storefront Quality dimension (knowledge-runtime default unchanged)
+- Phase 12: `/admin/goals` weighted profile editor + dashboard card + builder panel + knowledge dashboard alignment + nav item
+- Server actions: `getGoalsRuntime`, `saveGoalProfile`, `applyRecommendedGoals`, `clearGoalProfile`, `getGoalBuilderSuggestions`
+- Docs: `docs/goals-runtime.md`, `docs/goal-registry.md`, `docs/goal-composition.md`, `docs/goal-alignment.md`, `docs/implementation-66-report.md`
+- Verification: tsc clean, next build green, 96 files / 1929 unit tests passing
+
+## RCCF-EPIC-04: Knowledge Completion Runtime
 - Knowledge Completion Runtime module (`src/modules/knowledge-runtime/`) — DDD domain/application/infrastructure/presentation
 - Phase 1: canonical Knowledge Score engine (overall, 10 per-category %, confidence, missing fields)
 - Phase 2: registry-driven missing-field detection — never re-asks known data

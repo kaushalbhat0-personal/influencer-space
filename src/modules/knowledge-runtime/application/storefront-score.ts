@@ -9,9 +9,15 @@ import { computeKnowledgeScore } from "./score-engine";
 /** Returns `weight` when the condition holds, else 0. Weights sum to 100. */
 const pct = (complete: boolean, weight: number): number => (complete ? weight : 0);
 
+/**
+ * Storefront Quality Score. When `goalAlignment` is provided, a Goal Alignment
+ * dimension (RCCF-EPIC-05) is appended — otherwise the score is unchanged, so
+ * the knowledge runtime's default behaviour is preserved exactly.
+ */
 export function computeStorefrontScore(
   snapshot: KnowledgeSnapshot,
   knowledgeOverall = computeKnowledgeScore(snapshot).overall,
+  goalAlignment?: { percent: number; label?: string },
 ): StorefrontScore {
   const commerceTotal = snapshot.commerce.productCount + snapshot.commerce.serviceCount + snapshot.commerce.courseCount;
   const galleryTotal = snapshot.content.galleryCount;
@@ -86,6 +92,14 @@ export function computeStorefrontScore(
       ),
     },
   ];
+
+  if (goalAlignment !== undefined) {
+    dimensions.push({
+      id: "goal-alignment",
+      label: goalAlignment.label ?? "Goal Alignment",
+      score: Math.round(Math.min(100, Math.max(0, goalAlignment.percent))),
+    });
+  }
 
   const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length);
   return { dimensions, overall };

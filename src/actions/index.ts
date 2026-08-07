@@ -87,6 +87,12 @@ export {
 export type { KnowledgeRuntimeResponse } from "./knowledge.actions";
 
 export {
+  getGoalsRuntime, saveGoalProfile, applyRecommendedGoals,
+  clearGoalProfile, getGoalBuilderSuggestions,
+} from "./goals.actions";
+export type { GoalsRuntimePayload } from "./goals.actions";
+
+export {
   getOperationsDashboard, getEvents, getEventTypes,
   rehydrateEngine, retryFailedPayouts, expireStaleInvites,
   runJob, getJobStatus, exportDiagnostics,

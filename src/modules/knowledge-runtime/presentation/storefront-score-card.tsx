@@ -16,13 +16,23 @@ function scoreColor(percent: number): string {
   return "text-rose-400";
 }
 
-export function StorefrontScoreCard({ storefrontScore }: { storefrontScore: StorefrontScore }) {
+export function StorefrontScoreCard({
+  storefrontScore,
+  extra,
+}: {
+  storefrontScore: StorefrontScore;
+  extra?: { label: string; percent: number } | null;
+}) {
+  const dimensions = [...storefrontScore.dimensions];
+  if (extra) dimensions.push({ id: "goal-alignment" as StorefrontScore["dimensions"][number]["id"], label: extra.label, score: extra.percent });
+  const overall = Math.round(dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length);
+
   return (
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Storefront Quality</p>
-        <span className={`text-2xl font-bold font-display ${scoreColor(storefrontScore.overall)}`}>
-          {storefrontScore.overall}%
+        <span className={`text-2xl font-bold font-display ${scoreColor(overall)}`}>
+          {overall}%
         </span>
       </div>
       <p className="mt-0.5 text-[11px] text-zinc-600">
@@ -30,7 +40,7 @@ export function StorefrontScoreCard({ storefrontScore }: { storefrontScore: Stor
       </p>
 
       <div className="mt-4 space-y-3">
-        {storefrontScore.dimensions.map((dimension) => (
+        {dimensions.map((dimension) => (
           <div key={dimension.id}>
             <div className="flex items-center justify-between">
               <span className="text-xs text-zinc-400">{dimension.label}</span>
