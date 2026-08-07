@@ -11,6 +11,7 @@ import { PaymentMethodManager } from "./PaymentMethodManager";
 import { UsageDashboard } from "./UsageDashboard";
 import { changePlanAction, cancelSubscriptionAction, resumeSubscriptionAction, retryPaymentAction, getBillingDashboard } from "@/actions/billing.actions";
 import type { BillingDashboard as BillingDashboardData, BillingPlan } from "@/lib/billing";
+import { PaymentStrategyCard } from "./PaymentStrategyCard";
 
 interface BillingPageClientProps {
   billingData: BillingDashboardData;
@@ -204,6 +205,8 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
           {error}
         </div>
       )}
+      {/* RCCF-IMPLEMENTATION-73: read-only payment strategy */}
+      <PaymentStrategyCard />
       <nav className="mb-6 flex gap-1 border-b border-white/10 overflow-x-auto" aria-label="Billing sections" role="tablist">
         {TABS.map((tab, index) => (
           <button

@@ -13,6 +13,7 @@ import type { Recommendation } from "@/modules/recommendation-runtime";
 import type { CreatorSuccessData } from "@/lib/creator-success/runtime";
 import type { HealthReport } from "@/lib/platform/health/engine";
 import type { DashboardMetrics } from "@/features/dashboard/types";
+import type { ResolvedCommerceStrategy } from "@/modules/commerce-strategy";
 
 export interface RuntimeContext {
   tenantId: string;
@@ -38,4 +39,6 @@ export interface RuntimeContext {
     published: boolean;
     analyticsActive: boolean;
   };
+  /** RCCF-IMPLEMENTATION-73: how money flows for this tenant's commerce. */
+  commerceStrategy: ResolvedCommerceStrategy;
 }

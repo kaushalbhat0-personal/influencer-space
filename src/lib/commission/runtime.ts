@@ -300,12 +300,18 @@ export async function getPlatformRevenueSummary(): Promise<{
 
 /** Phase 13 — revenue runtime health. */
 export async function getRevenueRuntimeHealth(): Promise<Array<{ id: string; label: string; status: "healthy" | "warning" | "broken"; detail: string }>> {
-  const [commissionCount, lastCommission, settlementActive, payoutFailed, ledgerCount] = await Promise.all([
+  const [commissionCount, lastCommission, settlementActive, payoutFailed, ledgerCount, strategyDistribution] = await Promise.all([
     prisma.commissionEntry.count(),
     prisma.commissionEntry.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.settlement.count({ where: { status: { in: ["PENDING", "READY", "APPROVED", "PROCESSING"] } } }),
     prisma.payoutBatch.count({ where: { status: "failed" } }),
     prisma.partnerLedger.count(),
+    // RCCF-IMPLEMENTATION-73: commerce strategy readiness (platform-wide).
+    (async () => {
+      const { getStrategyDistribution } = await import("@/modules/commerce-strategy");
+      const dist = await getStrategyDistribution();
+      return dist.reduce((s, d) => s + d.count, 0);
+    })(),
   ]);
   return [
     {
@@ -331,6 +337,12 @@ export async function getRevenueRuntimeHealth(): Promise<Array<{ id: string; lab
       label: "Payout Runtime",
       status: payoutFailed > 0 ? "warning" : "healthy",
       detail: `${payoutFailed} failed payouts`,
+    },
+    {
+      id: "commerce-strategy",
+      label: "Commerce Strategy",
+      status: strategyDistribution > 0 ? "healthy" : "warning",
+      detail: `${strategyDistribution} tenants resolved`,
     },
   ];
 }

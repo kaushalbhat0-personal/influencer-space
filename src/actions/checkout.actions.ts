@@ -33,6 +33,12 @@ export async function createCheckout(
 
     const tenantId = product.tenantId;
 
+    // RCCF-IMPLEMENTATION-73: every commerce flow asks the canonical runtime —
+    // "which commerce strategy does this tenant use?" No behavior change today
+    // (PLATFORM_COLLECT is the only active strategy).
+    const { resolveCommerceStrategy } = await import("@/modules/commerce-strategy");
+    const commerceStrategy = await resolveCommerceStrategy(tenantId);
+
     let amount = product.price;
     let discountAmount = 0;
     let couponApplied = false;
@@ -102,6 +108,7 @@ export async function createCheckout(
         productId: product.id,
         orderId: dbOrder.id,
         fanEmail,
+        commerceStrategy: commerceStrategy.id,
         ...(couponApplied && { couponCode, discountAmount: String(discountAmount) }),
       },
     });

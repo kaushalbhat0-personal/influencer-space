@@ -3,7 +3,7 @@ import {
   Headphones, BarChart3, CreditCard, ScrollText, Settings,
   UserCog, UserPlus, Sparkles, CheckCircle2, Bot, Globe,
   ToggleRight, Timer, FileText, IndianRupee, TrendingUp, Monitor, Clock,
-  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target, HeartPulse, Tag,
+  Lightbulb, Percent, RefreshCw, Bell, BookOpen, Target, HeartPulse, Tag, Landmark,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -230,6 +230,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     href: "/super-admin/revenue-center", icon: IndianRupee, permission: "super_admin",
     searchable: true, keywords: ["revenue", "commission", "settlement", "payout", "ledger", "agency share", "subscription revenue"],
     auditCategory: "revenue", analyticsKey: "revenue-center:viewed",
+    productionReady: true,
+  },
+  {
+    id: "commerce-center", title: "Commerce Center", group: "commerce",
+    href: "/super-admin/commerce-center", icon: Landmark, permission: "super_admin",
+    searchable: true, keywords: ["commerce strategy", "payment strategy", "merchant of record", "direct creator", "platform collect"],
+    auditCategory: "commerce", analyticsKey: "commerce-center:viewed",
     productionReady: true,
   },
   {

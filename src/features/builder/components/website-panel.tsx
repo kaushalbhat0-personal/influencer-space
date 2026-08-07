@@ -9,6 +9,7 @@ import { BuilderRecommendationPanel } from "@/modules/recommendation-runtime/pre
 import { BusinessHealthBadge } from "@/modules/business-health/presentation/business-health-badge";
 import { BuilderExperiencePanel } from "@/modules/experience-intelligence/presentation/builder-experience-panel";
 import { BuilderEvolutionPanel } from "@/modules/website-evolution/presentation/builder-evolution-panel";
+import { BuilderStrategyBadge } from "./builder-strategy-badge";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -99,6 +100,9 @@ export function WebsitePanel({
 
         {/* Business Health + section contribution */}
         <BusinessHealthBadge />
+
+        {/* RCCF-IMPLEMENTATION-73: read-only payment strategy */}
+        <BuilderStrategyBadge />
 
         {/* Experience Intelligence + conversion impact */}
         <BuilderExperiencePanel />

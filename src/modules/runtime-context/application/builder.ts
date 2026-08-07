@@ -22,6 +22,7 @@ import {
 import { getCreatorSuccess } from "@/lib/creator-success/runtime";
 import { websiteHealthEngine } from "@/lib/platform/health/engine";
 import { dashboardService } from "@/features/dashboard/service";
+import { resolveCommerceStrategy } from "@/modules/commerce-strategy";
 import type { RuntimeContext } from "../domain/types";
 
 // React.cache() provides request-scoped memoization in Next.js server contexts.
@@ -56,6 +57,10 @@ const buildCached = requestCache(async (tenantId: string, markShown = true): Pro
     label: "Goal Alignment",
   });
 
+  // RCCF-IMPLEMENTATION-73: canonical payment strategy (request-cached; no extra
+  // DB query — the commerce strategy runtime memoizes its resolution).
+  const commerceStrategy = await resolveCommerceStrategy(tenantId);
+
   return {
     tenantId,
     snapshot,
@@ -71,6 +76,7 @@ const buildCached = requestCache(async (tenantId: string, markShown = true): Pro
       published: recommendationContext.metrics.published,
       analyticsActive: recommendationContext.metrics.analyticsActive,
     },
+    commerceStrategy,
   };
 });
 
