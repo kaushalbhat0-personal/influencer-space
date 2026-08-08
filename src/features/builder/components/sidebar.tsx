@@ -3,13 +3,17 @@
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { memo } from "react";
 import { SectionManager } from "./section-manager";
+import type { WebsiteAggregate } from "@/types/snapshot";
 
 export const BuilderSidebar = memo(function BuilderSidebar({
   collapsed,
   onToggle,
+  aggregate,
 }: {
   collapsed: boolean;
   onToggle: () => void;
+  /** Website Aggregate shared with the canvas — canonical source for counts. */
+  aggregate?: WebsiteAggregate | null;
 }) {
   if (collapsed) {
     return (
@@ -30,7 +34,7 @@ export const BuilderSidebar = memo(function BuilderSidebar({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <SectionManager />
+        <SectionManager aggregate={aggregate} />
       </div>
     </div>
   );

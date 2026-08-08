@@ -10,6 +10,7 @@ import { builderStore } from "@/lib/builder/store";
 import { builderEvents } from "@/lib/builder/events";
 import { builderPersistence } from "./persistence";
 import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
+import type { PublishedSnapshot } from "@/types/snapshot";
 import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 import { applyThemePackage } from "@/actions/theme.actions";
@@ -46,6 +47,10 @@ export function BuilderWorkspace() {
   const [creatorName, setCreatorName] = useState("");
   const [completionPct, setCompletionPct] = useState(0);
   const [overviewData, setOverviewData] = useState<BuilderOverviewData | null>(null);
+  // RCCF-IMPLEMENTATION-74: the Website Aggregate fetched by the canvas
+  // (getLivePreviewData) is shared here so the sidebar renders canonical item
+  // counts from the SAME payload — zero extra queries, always in sync.
+  const [liveContent, setLiveContent] = useState<PublishedSnapshot["content"] | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
   const [publishing, setPublishing] = useState(false);
@@ -258,12 +263,12 @@ export function BuilderWorkspace() {
 
       <div className="flex flex-1 overflow-hidden">
         <ResizablePanel side="left" collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} defaultWidth={280}>
-          <BuilderSidebar collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} />
+          <BuilderSidebar collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} aggregate={liveContent} />
         </ResizablePanel>
 
           <div className="flex flex-1 flex-col overflow-hidden min-w-0">
             <div className="flex-1 overflow-auto">
-              <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} />
+              <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} onLiveContentChange={setLiveContent} />
             </div>
           </div>
 

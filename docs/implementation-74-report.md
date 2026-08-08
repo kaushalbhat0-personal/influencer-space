@@ -1,69 +1,57 @@
 # Implementation Report — RCCF-IMPLEMENTATION-74
 
-Payment Account Runtime & Direct Commerce — the launch EPIC that lets creators
-receive payments directly into their own account, with CreatorStore never in the
-money flow for creator commerce.
+**Canonical Builder Sidebar Counts**
 
-## Delivered
+## What was delivered
 
-| Phase | Status | Deliverable |
+| Phase | Deliverable | Where |
 | --- | --- | --- |
-| 1 — Payment Account runtime | ✅ | `src/modules/payment-account/` (DDD) — one canonical account per tenant, sensitive fields encrypted |
-| 2 — Provider registry + adapter interface | ✅ | `PaymentProviderAdapter` (createCheckout / verifyPayment / refundPayment / getAccountStatus); Razorpay active, Stripe/PhonePe/Cashfree/PayU/Manual reserved |
-| 3 — Payment readiness runtime | ✅ | `computePaymentReadiness` → ready/warning/blocked + missing; shared by builder, dashboard, checkout, storefront |
-| 4 — Creator Payments dashboard | ✅ | `/admin/payments` — provider, status, verification, capabilities, missing fields, edit/verify/disconnect, friendly onboarding |
-| 5 — Builder integration | ✅ | Read-only payment + readiness badge in the builder commerce panel |
-| 6 — Checkout runtime | ✅ | `resolveCommerceStrategy` → DIRECT_CREATOR → readiness → provider adapter → hosted checkout URL → redirect; PLATFORM_COLLECT unchanged; subscriptions unchanged |
-| 7 — Product types | ✅ | `src/modules/product-types` — digital/physical/course/service/booking/affiliate/donation with declarative requirements; type persisted on Product |
-| 8 — Order runtime | ✅ | `ProductOrder` records strategy, provider, providerReference, providerMetadata — no settlement logic |
-| 9 — Super Admin view | ✅ | Commerce Center adds payment health (connected/pending/unverified/disconnected, provider distribution) |
-| 10 — Manual agency payouts | ✅ | Revenue Center "Mark paid (manual)" — reference + notes + audit; no payout automation |
-| 11 — Events | ✅ | `payment.account.created/updated/verified/disconnected`, `payment.readiness.changed` through the Event Runtime |
-| 12 — Health | ✅ | `getPaymentHealth` surfaced in the Commerce Center |
-| 13 — Security | ✅ | tenant-scoped; only creator/SUPER_ADMIN modify; agencies cannot edit; encryption; audit on every change |
-| 14 — Documentation | ✅ | This report + 5 companion docs |
+| 1 | `SectionCountResolver` (consumes Website Aggregate only, never slots) | `src/lib/builder/section-counts.ts` |
+| 2 | Canonical collection mapping (products/gallery/timeline/testimonials/faq/services/courses/games/contentFeed/links; milestones → timeline) | `section-counts.ts` |
+| 3 | Static sections (`hero/about/navigation/nav/footer/contact`) show no count | `STATIC_SECTION_BASES` |
+| 4 | Sidebar consumes the resolver; `slotCount` removed; sidebar is presentation-only | `section-manager.tsx` |
+| 5 | Live updates: aggregate shared from canvas → workspace → sidebar (`onLiveContentChange`), refetches on focus; no manual refresh | `interactive-canvas.tsx`, `workspace.tsx`, `sidebar.tsx` |
+| 6 | Preview + sidebar read the SAME aggregate payload → never diverge | — |
+| 7 | Runtimes, publishing, aggregate, store untouched | — |
+| 8 | 0 extra queries (reuses the canvas's `getLivePreviewData` payload) | — |
+| 9 | Count badge only when count > 0 (no `(0)`) | `section-manager.tsx` |
+| Extra | Status badges: no badge for permanent sections; count badge (repeatable, >0); draft dot for sections with presentation overrides | `section-manager.tsx` |
+| 10 | Docs | `docs/builder-sidebar-counts.md` + this report |
 
-## Files
+## Files changed
 
-- `prisma/schema.prisma` + `migrations/20260807000003_payment_account` — `PaymentAccount`,
-  `Product.type`, `ProductOrder` strategy/provider metadata.
-- `src/modules/payment-account/**` — domain, providers (meta/types/registry/razorpay), runtime, index.
-- `src/modules/product-types/**` — canonical product type registry.
-- `src/actions/payment-account.actions.ts` — creator + super-admin + direct-checkout actions.
-- `src/actions/checkout.actions.ts` — DIRECT_CREATOR branch + `checkoutUrl`.
-- `src/app/admin/payments/**` — creator Payments dashboard.
-- `src/features/builder/components/builder-strategy-badge.tsx` — builder readiness.
-- `src/app/super-admin/commerce-center/**` — payment health.
-- `src/app/super-admin/revenue-center/**` — manual agency payout button.
-- `src/config/admin-nav.ts` — Payments nav entry.
-- `src/modules/event-runtime/domain/types.ts` — payment events.
-- `src/features/products/{service,types}.ts` — persisted product type.
-- `tests/unit/payment-account.test.ts` — registry/product-type/adapter tests (6).
+- `src/lib/builder/section-counts.ts` — new `SectionCountResolver`.
+- `src/features/builder/components/section-manager.tsx` — `itemCount`/`hasDraft`
+  from resolver; badge rendered only when `count > 0`; draft dot; `slotCount` removed.
+- `src/features/builder/components/sidebar.tsx` — passes `aggregate` through.
+- `src/features/builder/components/workspace.tsx` — holds the shared aggregate
+  (`liveContent`) and passes it to the sidebar.
+- `src/features/builder/canvas/interactive-canvas.tsx` — `onLiveContentChange`
+  callback shares the fetched aggregate (no extra fetch).
+- Tests: `src/lib/builder/__tests__/section-counts.test.ts` (7 tests).
+
+## Design notes
+
+- **Counts come from the aggregate, not from count queries.** The canvas already
+  builds the aggregate for the preview; the sidebar consumes the identical
+  payload. This is exactly the "0 extra queries" target from the audit.
+- **Draft dot interpretation:** the dot indicates a section whose draft carries
+  presentation overrides (`config.presentation`) — the available per-section
+  "unpublished change" signal without adding publish-diff infrastructure.
+  Documented as a customization indicator.
+- **Missing collections** (`bookings`, `downloads`, `resources`, `community`,
+  `newsletter`) are not in the aggregate and correctly show **no** badge.
 
 ## Verification
 
-- `tsc --noEmit` ✅
-- `next build` ✅
-- **106 files / 2012 tests** ✅ (2006 + 6 payment-account tests)
-- No billing / subscription / runtime-context / pricing / revenue regressions
-- PLATFORM_COLLECT creators keep working until they migrate
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — no new issues (pre-existing warnings only).
+- `npm run build` — succeeds.
+- `npx vitest run` — **2094/2094** pass (7 new resolver tests).
 
-## Success criteria
+## Regression safety
 
-- ✅ Every creator can configure a payment account.
-- ✅ Checkout validates payment readiness.
-- ✅ Creator product revenue bypasses CreatorStore (hosted checkout on the
-  creator's own account; CreatorStore not in the money flow).
-- ✅ CreatorStore earns only subscriptions and add-ons; agency subscription
-  sharing unchanged (IMPLEMENTATION-72).
-- ✅ Agency payouts remain manual but fully auditable.
-- ✅ Commerce Strategy Runtime executes DIRECT_CREATOR cleanly.
-- ✅ Existing PLATFORM_COLLECT creators keep working.
-- ✅ Launch-ready without marketplace complexity.
-
-## Constraints honored
-
-No Route · no Linked Accounts · no Marketplace · no split transfers · no
-automated payouts · no creator wallets · no balances · no settlement engine ·
-no changes to Pricing/Revenue/Commerce-Strategy/Billing/Runtime-Context/Agency
-Revenue runtimes. Every provider interaction goes through the adapter interface.
+- Only the Builder sidebar data flow changed; the Website Aggregate, Layout
+  Engine, store, and all runtimes are untouched.
+- Counts degrade gracefully: no aggregate yet → no badge; empty collection →
+  no badge; module failure → `[]` → no badge.

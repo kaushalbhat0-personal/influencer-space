@@ -6,6 +6,8 @@ import { builderStore } from "@/lib/builder/store";
 import { builderEditor } from "@/lib/builder/commands/editor";
 import { builderEvents } from "@/lib/builder/events";
 import { componentRegistry } from "@/lib/registry/components";
+import { sectionCountResolver } from "@/lib/builder/section-counts";
+import type { WebsiteAggregate } from "@/types/snapshot";
 import type { ComponentCategory } from "@/lib/registry/components/types";
 import { cn } from "@/lib/utils";
 import {
@@ -77,7 +79,10 @@ interface SectionData {
   id: string;
   name: string;
   visible: boolean;
-  slotCount: number;
+  /** Canonical CMS item count from the Website Aggregate (null = static/unknown). */
+  itemCount: number | null;
+  /** True when the section has unpublished presentation overrides (draft dot). */
+  hasDraft: boolean;
   moduleIds: string[];
 }
 
@@ -122,10 +127,23 @@ function SectionCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] font-medium truncate">{section.name}</span>
-          {section.slotCount > 0 && (
+          {/* RCCF-IMPLEMENTATION-74: canonical item count (aggregate-driven).
+              Only repeatable sections with count > 0 show a badge — never "(0)",
+              never a static section, never block/slot count. */}
+          {section.itemCount != null && section.itemCount > 0 && (
             <span className="text-[9px] text-zinc-600 shrink-0">
-              {section.slotCount} {contentLabel.toLowerCase()}
+              {section.itemCount} {contentLabel.toLowerCase()}
             </span>
+          )}
+          {/* Draft dot: the section has presentation overrides in the draft
+              (custom title/description/visibility/hide-when-empty) that are not
+              yet published. Subtle, derived from existing builder data. */}
+          {section.hasDraft && (
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/80"
+              title="Has unpublished presentation changes"
+              aria-label="Has unpublished presentation changes"
+            />
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
@@ -178,27 +196,45 @@ function SectionCard({
   );
 }
 
-export function SectionManager({ className }: { className?: string }) {
+export function SectionManager({
+  className,
+  aggregate,
+}: {
+  className?: string;
+  /** RCCF-IMPLEMENTATION-74: the Website Aggregate already loaded by the Builder
+   * canvas (getLivePreviewData). Zero extra queries — counts derive from it. */
+  aggregate?: WebsiteAggregate | null;
+}) {
   const [sections, setSections] = useState<SectionData[]>([]);
 
   const refresh = useCallback(() => {
     const canvas = builderStore.canvas;
     const page = canvas.pages.find((p) => p.id === canvas.activePageId);
     setSections(
-      page?.sections?.map((s) => ({
-        id: s.id,
-        name: s.name,
-        visible: s.visible,
-        slotCount: s.slots.length,
-        moduleIds: s.slots.map((sl) => sl.moduleId),
-      })) ?? []
+      page?.sections?.map((s) => {
+        const moduleIds = s.slots.map((sl) => sl.moduleId);
+        const hasDraft = s.slots.some((sl) => {
+          const presentation = (sl.config as Record<string, unknown>)?.presentation as Record<string, unknown> | undefined;
+          return !!presentation && Object.keys(presentation).length > 0;
+        });
+        return {
+          id: s.id,
+          name: s.name,
+          visible: s.visible,
+          itemCount: sectionCountResolver.countForModule(moduleIds[0] ?? "", aggregate),
+          moduleIds,
+          hasDraft,
+        };
+      }) ?? []
     );
-  }, []);
+  }, [aggregate]);
 
   useEffect(() => {
     refresh();
     // Reactive, not polled: every store mutation re-syncs the sidebar. The
-    // canvas and sidebar read the same store, so they can never diverge.
+    // canvas and sidebar read the same store, so they can never diverge. When
+    // the shared aggregate updates (focus refetch), `refresh` re-runs and the
+    // canonical counts update automatically.
     return builderEvents.subscribe("store:changed", () => refresh());
   }, [refresh]);
 

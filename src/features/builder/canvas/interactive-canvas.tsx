@@ -28,10 +28,15 @@ export function InteractiveCanvas({
   device,
   zoom,
   themePackageId: themeOverride,
+  onLiveContentChange,
 }: {
   device: string;
   zoom: number;
   themePackageId?: string | null;
+  /** RCCF-IMPLEMENTATION-74: share the fetched Website Aggregate with the
+   * workspace so the sidebar renders canonical counts from the SAME payload —
+   * zero extra queries, always in sync with the preview. */
+  onLiveContentChange?: (content: PublishedSnapshot["content"] | null) => void;
 }) {
   const [liveContent, setLiveContent] = useState<PublishedSnapshot["content"] | null>(null);
   const [fetchedThemePackageId, setFetchedThemePackageId] = useState<string | null>(null);
@@ -53,14 +58,16 @@ export function InteractiveCanvas({
   const loadLiveContent = useCallback(async () => {
     const res = await getLivePreviewData();
     if (res.success && res.content) {
-      setLiveContent(res.content as PublishedSnapshot["content"]);
+      const content = res.content as PublishedSnapshot["content"];
+      setLiveContent(content);
       setFetchedThemePackageId(res.themePackageId ?? null);
       setThemeColors(res.themeColors ?? {});
       setThemeFonts(res.themeFonts ?? {});
       setDiagnostics(res.diagnostics ?? { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] });
+      onLiveContentChange?.(content);
     }
     setDataReady(true);
-  }, []);
+  }, [onLiveContentChange]);
 
   useEffect(() => {
     loadLiveContent();
