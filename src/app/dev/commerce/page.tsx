@@ -4,6 +4,7 @@ import { COMMERCE_PLANS, COMMERCE_CAPABILITY_TO_FEATURE, LEGACY_TO_CANONICAL, is
 import type { CommerceCapability } from "@/config/commerce/plans";
 import { getAllPlans, getPlan, getPlansByFamily } from "@/lib/capabilities";
 import { LEGACY_READER_MIGRATION_STATUS } from "@/lib/capabilities/plan-resolution";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +92,7 @@ export default async function DevCommercePage() {
                       <tr key={p.code} className="border-t border-white/5 text-zinc-300" data-plan={p.code}>
                         <td className="py-1 pr-2 font-mono">{p.code}</td>
                         <td className="py-1 pr-2">{p.name}</td>
-                        <td className="py-1 pr-2">{p.price === null ? "Contact Sales" : `₹${p.price}/mo`}</td>
+                        <td className="py-1 pr-2">{p.price === null ? "Contact Sales" : `${formatCurrency(p.price)}/mo`}</td>
                         <td className="py-1 pr-2">{p.ctaLabel}</td>
                         <td className="py-1 pr-2">{icon(p.manual)}</td>
                         <td className="py-1 font-mono text-zinc-500">{p.razorpayPlanId ?? "—"}</td>
@@ -120,7 +121,7 @@ export default async function DevCommercePage() {
                       <tr key={p.code} className="border-t border-white/5 text-zinc-300" data-plan={p.code}>
                         <td className="py-1 pr-2 font-mono">{p.code}</td>
                         <td className="py-1 pr-2">{p.name}</td>
-                        <td className="py-1 pr-2">{p.price === null ? "Contact Sales" : `₹${p.price}/mo`}</td>
+                        <td className="py-1 pr-2">{p.price === null ? "Contact Sales" : `${formatCurrency(p.price)}/mo`}</td>
                         <td className="py-1 pr-2">{p.ctaLabel}</td>
                         <td className="py-1 pr-2">{icon(p.manual)}</td>
                         <td className="py-1 font-mono text-zinc-500">{p.razorpayPlanId ?? "—"}</td>
@@ -217,7 +218,7 @@ export default async function DevCommercePage() {
               <div key={p.code} className="rounded border border-white/10 bg-zinc-900/50 px-3 py-2" data-plan={p.code}>
                 <p className="font-mono text-zinc-200">{p.code}</p>
                 <p className="text-zinc-400">{p.name}</p>
-                <p className="text-zinc-500">{p.price === 0 ? "Free" : p.price === -1 || p.price > 9999 ? "Contact" : `₹${p.price}`} &middot; {p.family}</p>
+                <p className="text-zinc-500">{p.price === 0 ? "Free" : p.price === -1 || p.price > 9999 ? "Contact" : formatCurrency(p.price)} &middot; {p.family}</p>
                 <p className="text-[10px] text-zinc-600 mt-0.5">sort: {p.sortOrder}</p>
               </div>
             ))}

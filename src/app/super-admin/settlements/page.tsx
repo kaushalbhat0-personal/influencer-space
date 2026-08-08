@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { settlementService, type SettlementStatus } from "@/lib/settlement";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +37,8 @@ export default async function SettlementsPage({ searchParams }: { searchParams: 
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Outstanding Liability</p><p className="mt-1 text-xl font-bold text-amber-400">₹{pendingTotal.toLocaleString("en-IN")}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Paid This Month</p><p className="mt-1 text-xl font-bold text-emerald-400">₹{paidThisMonth.toLocaleString("en-IN")}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Outstanding Liability</p><p className="mt-1 text-xl font-bold text-amber-400">{formatCurrency(pendingTotal)}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Paid This Month</p><p className="mt-1 text-xl font-bold text-emerald-400">{formatCurrency(paidThisMonth)}</p></div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Total Settlements</p><p className="mt-1 text-xl font-bold text-white">{total}</p></div>
         </div>
 
@@ -63,7 +64,7 @@ export default async function SettlementsPage({ searchParams }: { searchParams: 
                 <tr key={s.id} className="border-b border-white/5 text-zinc-300 hover:bg-white/[0.02]">
                   <td className="px-4 py-3 font-mono text-zinc-500"><Link href={`/super-admin/settlements/${s.id}`} className="text-s8ul-cyan hover:underline">{s.settlementRef}</Link></td>
                   <td className="px-4 py-3">{s.partnerName || s.partnerId.slice(0, 8)}</td>
-                  <td className="px-4 py-3">₹{s.netAmount.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3">{formatCurrency(s.netAmount)}</td>
                   <td className="px-4 py-3">{s.entryCount}</td>
                   <td className="px-4 py-3"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[s.status] ?? ""}`}>{s.status}</span></td>
                   <td className="px-4 py-3 font-mono text-xs text-zinc-500">{s.transferRef ?? "—"}</td>

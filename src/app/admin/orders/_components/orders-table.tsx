@@ -4,9 +4,10 @@ import { DataTable } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import type { Column } from "@/components/data/DataTable";
 import type { OrderRow } from "@/actions/order.types";
+import { formatCurrency } from "@/lib/utils";
 
 function formatINR(amount: number) {
-  return `₹${amount.toLocaleString("en-IN")}`;
+  return formatCurrency(amount);
 }
 
 function formatDate(date: string) {

@@ -3,6 +3,7 @@
 import { COMMERCE_STRATEGY_REGISTRY } from "@/modules/commerce-strategy/application/registry";
 import { CommerceStrategyBadge } from "@/modules/commerce-strategy/presentation/strategy-badge";
 import type { CommerceStrategyId } from "@/modules/commerce-strategy/domain/types";
+import { formatCurrency } from "@/lib/utils";
 
 interface Props {
   distribution: Array<{ strategy: CommerceStrategyId; count: number }>;
@@ -55,7 +56,7 @@ export function CommerceStrategyCenter({ distribution, migration, paymentHealth,
       {fulfillmentHealth && (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
           <HealthCard label="Total orders" value={String(fulfillmentHealth.totalOrders)} />
-          <HealthCard label="Order volume" value={`₹${fulfillmentHealth.volume.toLocaleString("en-IN")}`} />
+          <HealthCard label="Order volume" value={formatCurrency(fulfillmentHealth.volume)} />
           <HealthCard label="Awaiting fulfillment" value={String(fulfillmentHealth.pending)} accent="text-amber-400" />
           <HealthCard label="Shipped" value={String(fulfillmentHealth.shipped)} />
           <HealthCard label="Delivered" value={String(fulfillmentHealth.delivered)} accent="text-emerald-400" />

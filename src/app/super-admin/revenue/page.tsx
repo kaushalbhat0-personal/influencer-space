@@ -4,6 +4,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { RevenueTable } from "./_components/revenue-table";
 import { Building, CreditCard, IndianRupee, TrendingUp, Users, Wallet, CircleDollarSign } from "lucide-react";
 import { revenueService } from "@/modules/billing/application/revenue-service";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +43,10 @@ export default async function RevenuePage() {
 
       <PageSection>
         <MetricGrid>
-          <MetricCard label="Monthly Revenue (MRR)" value={`₹${revenue.mrr.toLocaleString("en-IN")}`} icon={IndianRupee} />
-          <MetricCard label="Annual (ARR)" value={`₹${revenue.arr.toLocaleString("en-IN")}`} icon={Wallet} />
+          <MetricCard label="Monthly Revenue (MRR)" value={formatCurrency(revenue.mrr)} icon={IndianRupee} />
+          <MetricCard label="Annual (ARR)" value={formatCurrency(revenue.arr)} icon={Wallet} />
           <MetricCard label="Active Subscribers" value={revenue.activeSubscribers} icon={Users} />
-          <MetricCard label="Revenue / Creator" value={`₹${revenue.averageRevenuePerCreator}`} icon={CircleDollarSign} />
+          <MetricCard label="Revenue / Creator" value={formatCurrency(revenue.averageRevenuePerCreator)} icon={CircleDollarSign} />
         </MetricGrid>
       </PageSection>
 
@@ -75,12 +76,12 @@ export default async function RevenuePage() {
             <h3 className="text-sm font-medium text-zinc-400 mb-4">Revenue Metrics</h3>
             <div className="space-y-3">
               {[
-                { label: "Monthly Revenue", value: `₹${revenue.monthlyRevenue.toLocaleString("en-IN")}` },
-                { label: "Total Invoiced", value: `₹${revenue.totalInvoiced.toLocaleString("en-IN")}` },
+                { label: "Monthly Revenue", value: formatCurrency(revenue.monthlyRevenue) },
+                { label: "Total Invoiced", value: formatCurrency(revenue.totalInvoiced) },
                 { label: "Paid Invoices", value: `${revenue.totalPaidInvoices}` },
-                { label: "Pending Amount", value: `₹${revenue.invoicePendingAmount.toLocaleString("en-IN")}` },
+                { label: "Pending Amount", value: formatCurrency(revenue.invoicePendingAmount) },
                 { label: "Growth (MoM)", value: `${revenue.growth.growthPercent >= 0 ? "+" : ""}${revenue.growth.growthPercent}%` },
-                { label: "Commission Revenue", value: `₹${revenue.commissionRevenue.toLocaleString("en-IN")}` },
+                { label: "Commission Revenue", value: formatCurrency(revenue.commissionRevenue) },
                 { label: "Take Rate", value: `${revenue.platformTakeRate}%` },
                 { label: "Total Tenants", value: `${tenantCount}` },
                 { label: "Agencies", value: `${agencyCount}` },

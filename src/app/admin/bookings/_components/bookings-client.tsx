@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createBooking, approveBooking, cancelBooking, getBookingSlots } from "@/actions/booking.actions";
+import { formatCurrency } from "@/lib/utils";
 
 interface Booking {
   id: string;
@@ -70,7 +71,7 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Confirmed</p><p className="text-xl font-bold text-emerald-400">{confirmed}</p></div>
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Pending</p><p className="text-xl font-bold text-amber-400">{pending}</p></div>
-        <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Revenue</p><p className="text-xl font-bold text-white">₹{revenue.toLocaleString("en-IN")}</p></div>
+        <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Revenue</p><p className="text-xl font-bold text-white">{formatCurrency(revenue)}</p></div>
       </div>
 
       {showForm && (
@@ -104,7 +105,7 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
                   <td className="px-4 py-3">{b.slotStart} - {b.slotEnd}</td>
                   <td className="px-4 py-3 font-medium">{b.title}</td>
                   <td className="px-4 py-3">{b.customerName || "—"}{b.customerEmail ? ` · ${b.customerEmail}` : ""}</td>
-                  <td className="px-4 py-3">₹{b.price.toLocaleString("en-IN")}</td>
+                  <td className="px-4 py-3">{formatCurrency(b.price)}</td>
                   <td className="px-4 py-3"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[b.status] ?? ""}`}>{b.status}</span></td>
                   <td className="px-4 py-3">
                     {b.status === "pending" && <button onClick={() => handleApprove(b.id)} className="text-emerald-400 hover:underline text-xs mr-2">Approve</button>}

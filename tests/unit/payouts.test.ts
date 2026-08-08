@@ -40,6 +40,6 @@ describe("Payouts — Service", () => {
 
 describe("Payouts — Formatting", () => {
   it("should format payout status", () => { expect(formatPayoutStatus("pending")).toBe("Pending"); });
-  it("should format money", () => { expect(formatMoney(10000)).toBe("₹100.00"); });
+  it("should format money", () => { expect(formatMoney(10000)).toBe("₹100"); });
   it("should aggregate by status", () => { payoutService.createPayout({ partnerId: "p1", provider: "manual", currency: "INR", total: 100000, fee: 0, entryIds: ["ce_1"], idempotencyKey: "agg_test_1", initiatedBy: "admin" }); const a = aggregateByStatus(payoutService.getAllBatches()); expect(a).toHaveProperty("pending"); });
 });

@@ -6,6 +6,7 @@ import { FulfillmentSection } from "./_components/fulfillment-section";
 import { fetchOrders } from "@/actions/order.actions";
 import { Package, IndianRupee, CheckCircle2, Clock } from "lucide-react";
 import { MetricCard } from "@/components/data/MetricCard";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function OrdersPage({
       <div className="mb-6">
         <MetricGrid>
           <MetricCard label="Total Orders" value={orders.length} icon={Package} />
-          <MetricCard label="Revenue" value={`₹${totalRevenue.toLocaleString("en-IN")}`} icon={IndianRupee} />
+          <MetricCard label="Revenue" value={formatCurrency(totalRevenue)} icon={IndianRupee} />
           <MetricCard label="Completed" value={paidOrders.length} icon={CheckCircle2} />
           <MetricCard label="Pending" value={pendingOrders.length} icon={Clock} />
         </MetricGrid>

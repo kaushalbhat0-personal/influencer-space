@@ -1,6 +1,7 @@
 import { platformEventBus } from "@/lib/events";
 import type { PlatformEvent, EventType, PlatformEventPayloads } from "@/lib/events";
 import type { Notification } from "@/components/layout/NotificationCenter";
+import { formatCurrency } from "@/lib/utils";
 
 type EventMapper = (event: PlatformEvent) => Omit<Notification, "id" | "read" | "createdAt"> | null;
 
@@ -9,7 +10,7 @@ const EVENT_NOTIFICATION_MAP: Partial<Record<EventType, EventMapper>> = {
     const p = e.payload as PlatformEventPayloads["PaymentCaptured"];
     return {
       title: "Payment Received",
-      description: `Payment of ₹${(p.amount / 100).toFixed(2)} captured for ${p.planCode}.`,
+      description: `Payment of ${formatCurrency(p.amount / 100)} captured for ${p.planCode}.`,
       action: { label: "View Billing", href: "/admin/billing" },
     };
   },
@@ -56,7 +57,7 @@ const EVENT_NOTIFICATION_MAP: Partial<Record<EventType, EventMapper>> = {
     const p = e.payload as PlatformEventPayloads["CommissionCreated"];
     return {
       title: "Commission Earned",
-      description: `Commission of ₹${(p.partnerShare / 100).toFixed(2)} earned.`,
+      description: `Commission of ${formatCurrency(p.partnerShare / 100)} earned.`,
       action: { label: "View Commission", href: "/agency/analytics" },
     };
   },
@@ -64,7 +65,7 @@ const EVENT_NOTIFICATION_MAP: Partial<Record<EventType, EventMapper>> = {
     const p = e.payload as PlatformEventPayloads["PayoutCreated"];
     return {
       title: "Payout Initiated",
-      description: `Payout of ₹${(p.amount / 100).toFixed(2)} is being processed.`,
+      description: `Payout of ${formatCurrency(p.amount / 100)} is being processed.`,
       action: { label: "View Payouts", href: "/agency/analytics" },
     };
   },
@@ -72,7 +73,7 @@ const EVENT_NOTIFICATION_MAP: Partial<Record<EventType, EventMapper>> = {
     const p = e.payload as PlatformEventPayloads["PayoutCompleted"];
     return {
       title: "Payout Completed",
-      description: `Payout of ₹${(p.amount / 100).toFixed(2)} completed.`,
+      description: `Payout of ${formatCurrency(p.amount / 100)} completed.`,
       action: { label: "View Payouts", href: "/agency/analytics" },
     };
   },

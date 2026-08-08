@@ -20,6 +20,7 @@ import { SuccessJourneyCard } from "@/modules/customer-success/presentation/succ
 import { EvolutionFeedCard } from "@/modules/website-evolution/presentation/evolution-feed-card";
 import { SuccessMilestonesCard } from "@/components/dashboard/SuccessMilestonesCard";
 import type { DashboardData } from "../actions";
+import { formatCurrency } from "@/lib/utils";
 
 interface DashboardPageProps {
   initialData: DashboardData;
@@ -87,7 +88,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
   const checklistComplete = checklistSteps.every((s) => s.done);
 
   const avgOrder = metrics.orderCount > 0
-    ? `₹${Math.round(metrics.revenue / metrics.orderCount).toLocaleString("en-IN")}`
+    ? formatCurrency(Math.round(metrics.revenue / metrics.orderCount))
     : "—";
 
   return (
@@ -156,7 +157,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         <MetricGrid>
           <MetricCard label="Products" value={metrics.productCount} sub={`${metrics.activeProductCount} active`} />
           <MetricCard label="Services" value={metrics.offeringCount} sub={`${metrics.totalOrders} orders`} />
-          <MetricCard label="Orders" value={metrics.orderCount} sub={`₹${metrics.revenue.toLocaleString("en-IN")} revenue`} />
+          <MetricCard label="Orders" value={metrics.orderCount} sub={`${formatCurrency(metrics.revenue)} revenue`} />
           <MetricCard label="Bookings" value={metrics.bookingCount} sub={metrics.bookingCount > 0 ? "appointments" : "No bookings yet"} />
           <MetricCard label="Gallery" value={metrics.galleryCount} />
           <MetricCard label="Avg Order" value={avgOrder} sub={metrics.orderCount > 0 ? "per order" : "No orders yet"} subColor={metrics.orderCount > 0 ? "text-zinc-500" : "text-zinc-600"} />

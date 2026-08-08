@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createActivityEntry, activityFromAuditAction, formatAuditAction } from "@/lib/dashboard/activity";
 import type { ActivityEntry } from "@/lib/dashboard/types";
+import { formatCurrency } from "@/lib/utils";
 
 export async function getDashboardActivity(tenantId: string): Promise<ActivityEntry[]> {
   const [products, orders, milestones, galleryCount, auditLogs] = await Promise.all([
@@ -17,7 +18,7 @@ export async function getDashboardActivity(tenantId: string): Promise<ActivityEn
     activities.push(createActivityEntry(`p-${p.createdAt.getTime()}`, "product", `Added product "${p.name}"`, p.createdAt.getTime()));
   }
   for (const o of orders) {
-    activities.push(createActivityEntry(`o-${o.createdAt.getTime()}`, "order", `Order received — ₹${o.amount.toLocaleString("en-IN")}`, o.createdAt.getTime()));
+    activities.push(createActivityEntry(`o-${o.createdAt.getTime()}`, "order", `Order received — ${formatCurrency(o.amount)}`, o.createdAt.getTime()));
   }
   for (const m of milestones) {
     activities.push(createActivityEntry(`m-${m.createdAt.getTime()}`, "milestone", `Added milestone "${m.title}"`, m.createdAt.getTime()));

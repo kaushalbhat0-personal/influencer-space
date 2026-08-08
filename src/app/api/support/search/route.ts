@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
 
   for (const o of orders) {
     results.push({
-      type: "order", id: o.id, label: `Order ${o.id.slice(0, 12)}...`, sublabel: `₹${o.amount} · ${o.status}`,
+      type: "order", id: o.id, label: `Order ${o.id.slice(0, 12)}...`, sublabel: `${formatCurrency(o.amount)} · ${o.status}`,
       href: `/super-admin/payments`,
     });
   }

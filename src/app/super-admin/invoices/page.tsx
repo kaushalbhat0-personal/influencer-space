@@ -3,6 +3,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { FileText, IndianRupee, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { revenueService } from "@/modules/billing/application/revenue-service";
 import { InvoicesClient } from "./_components/invoices-client";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function InvoicesPage() {
 
       <PageSection>
         <MetricGrid>
-          <MetricCard label="Paid (this page)" value={`₹${paidAmount.toLocaleString("en-IN")}`} icon={IndianRupee} />
+          <MetricCard label="Paid (this page)" value={formatCurrency(paidAmount)} icon={IndianRupee} />
           <MetricCard label="Paid" value={paid} icon={CheckCircle2} />
           <MetricCard label="Pending" value={pending} icon={Clock} />
           <MetricCard label="Failed" value={failed} icon={AlertTriangle} />

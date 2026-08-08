@@ -1,5 +1,6 @@
 import { healthService, type ServiceHealth } from "@/lib/observability/health-service";
 import { getOperationsSnapshotAction } from "@/actions/operations.actions";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export default async function HealthPage() {
   // IMPLEMENTATION-40: real runtime-derived operations health (no fake checks).
   const runtime: Array<{ label: string; state: string; detail: string }> = snapshot
     ? [
-        { label: "Billing", state: snapshot.billing.failedPayments > 0 ? "warning" : "healthy", detail: `${snapshot.billing.activeSubscribers} active · MRR ₹${snapshot.billing.mrr.toLocaleString("en-IN")}` },
+        { label: "Billing", state: snapshot.billing.failedPayments > 0 ? "warning" : "healthy", detail: `${snapshot.billing.activeSubscribers} active · MRR ${formatCurrency(snapshot.billing.mrr)}` },
         { label: "Publishing", state: "healthy", detail: `${snapshot.publishing.snapshots} snapshots · ${snapshot.publishing.published24h} published (24h)` },
         { label: "Provisioning", state: snapshot.provisioning.failed > 0 ? "warning" : "healthy", detail: `${snapshot.provisioning.succeeded} succeeded · ${snapshot.provisioning.failed} failed` },
         { label: "Generation", state: snapshot.generation.failed > 0 ? "warning" : "healthy", detail: `${snapshot.generation.succeeded} completed · ${snapshot.generation.failed} failed` },

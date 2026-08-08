@@ -3,6 +3,7 @@ import { ShippingForm } from "../_components/shipping-form";
 import { DownloadCard } from "../_components/download-card";
 import { statusLabel } from "@/modules/fulfillment";
 import { Package, Truck, Receipt, Mail } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-white"><Package className="h-3.5 w-3.5 text-cyan-400" /> Item</p>
             <p className="mt-1 text-sm text-zinc-300">{order.productName}</p>
-            <p className="mt-0.5 text-xs text-zinc-500">₹{order.amount.toLocaleString("en-IN")} · {order.status}</p>
+            <p className="mt-0.5 text-xs text-zinc-500">{formatCurrency(order.amount)} · {order.status}</p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-white"><Truck className="h-3.5 w-3.5 text-emerald-400" /> Fulfillment</p>
@@ -67,8 +68,8 @@ export default async function OrderDetailPage({ params, searchParams }: { params
         <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-white"><Receipt className="h-3.5 w-3.5 text-violet-400" /> Receipt</p>
           <div className="mt-2 space-y-1 text-xs text-zinc-400">
-            <div className="flex justify-between"><span>{order.productName}</span><span>₹{order.amount.toLocaleString("en-IN")}</span></div>
-            <div className="flex justify-between border-t border-white/5 pt-1"><span className="font-semibold text-zinc-300">Total paid</span><span className="font-semibold text-white">₹{order.amount.toLocaleString("en-IN")}</span></div>
+            <div className="flex justify-between"><span>{order.productName}</span><span>{formatCurrency(order.amount)}</span></div>
+            <div className="flex justify-between border-t border-white/5 pt-1"><span className="font-semibold text-zinc-300">Total paid</span><span className="font-semibold text-white">{formatCurrency(order.amount)}</span></div>
           </div>
         </div>
 

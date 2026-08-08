@@ -1,3 +1,5 @@
+import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
+
 export type DatePreset =
   | "today" | "yesterday" | "last_7_days" | "last_30_days" | "last_90_days"
   | "this_month" | "last_month" | "this_year" | "all";
@@ -126,8 +128,9 @@ export function getWeekStart(date: Date, weekStartDay = 1): Date {
   return d;
 }
 
+// RCCF-LAUNCH-POLISH-06: delegate to the canonical formatter (one helper).
 export function formatCurrency(amount: number, currency = "INR", locale = "en-IN"): string {
-  return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+  return formatCurrencyUtil(amount, currency, locale);
 }
 
 export function formatCompact(amount: number, currency = "₹"): string {

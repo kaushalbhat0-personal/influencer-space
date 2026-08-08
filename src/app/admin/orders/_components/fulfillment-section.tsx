@@ -5,6 +5,7 @@ import { getFulfillmentQueue, updateFulfillmentStatus, generateDownloadLink } fr
 import { statusLabel } from "@/modules/fulfillment/application/strategies";
 import type { FulfillmentStatus } from "@/modules/fulfillment/domain/types";
 import { Package, Truck, Download, RefreshCw } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface Item {
   id: string;
@@ -136,7 +137,7 @@ function Row({ item, children }: { item: Item; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-zinc-900/50 px-3 py-2 text-xs">
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 truncate text-zinc-200">{item.type === "physical" ? <Truck className="h-3.5 w-3.5 text-cyan-400" /> : <Package className="h-3.5 w-3.5 text-indigo-400" />} {item.productName} <span className="text-zinc-600">· ₹{item.amount}</span></p>
+        <p className="flex items-center gap-1.5 truncate text-zinc-200">{item.type === "physical" ? <Truck className="h-3.5 w-3.5 text-cyan-400" /> : <Package className="h-3.5 w-3.5 text-indigo-400" />} {item.productName} <span className="text-zinc-600">· {formatCurrency(item.amount)}</span></p>
         <p className="text-[10px] text-zinc-500">
           <span className="capitalize">{statusLabel(item.status)}</span>
           {item.trackingNumber && <> · {item.courier} {item.trackingNumber}</>}

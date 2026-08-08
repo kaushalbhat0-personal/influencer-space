@@ -4,6 +4,7 @@ import { useState } from "react";
 import { savePlanConfig, rollbackPlanVersion, upsertCoupon, upsertLaunchProgram, resyncBillingCatalog } from "@/actions/super-admin-pricing.actions";
 import type { PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
 import type { TypedCapability } from "@/lib/entitlements/runtime";
+import { formatCurrency } from "@/lib/utils";
 
 export interface CenterPlan {
   code: string;
@@ -321,7 +322,7 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
             </div>
             {form.targetAudience && <p className="mt-0.5 text-[10px] font-medium text-indigo-400">{form.targetAudience}</p>}
             <div className="mt-3 text-2xl font-bold text-white">
-              {num(form.monthlyPrice) === 0 ? (num(form.trialDays) ? `${form.trialDays}-Day Free Trial` : "Free") : num(form.monthlyPrice) ? `₹${Number(form.monthlyPrice).toLocaleString("en-IN")}/mo` : "Custom"}
+              {num(form.monthlyPrice) === 0 ? (num(form.trialDays) ? `${form.trialDays}-Day Free Trial` : "Free") : num(form.monthlyPrice) ? `${formatCurrency(Number(form.monthlyPrice))}/mo` : "Custom"}
             </div>
             <ul className="mt-3 space-y-1">
               {form.highlightsText.split("\n").filter(Boolean).slice(0, 5).map((h) => (
@@ -443,8 +444,8 @@ function Analytics({ analytics }: { analytics: CenterAnalytics }) {
   return (
     <div className="mt-6">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <Card label="MRR" value={`₹${analytics.mrr.toLocaleString("en-IN")}`} />
-        <Card label="ARR" value={`₹${analytics.arr.toLocaleString("en-IN")}`} />
+        <Card label="MRR" value={formatCurrency(analytics.mrr)} />
+        <Card label="ARR" value={formatCurrency(analytics.arr)} />
         <Card label="Trial active" value={String(analytics.trialActive)} />
         <Card label="Trial → paid" value={String(analytics.trialConverted)} />
         <Card label="Cancelled" value={String(analytics.churnCount)} />

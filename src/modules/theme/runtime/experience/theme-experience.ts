@@ -5,6 +5,8 @@
  * SectionVariant resolves different decoration, divider, lighting and surface
  * treatments — pages never hardcode decorations.
  */
+// RCCF-LAUNCH-POLISH-06: capability-driven availability (single authority).
+import { experienceAvailableForPlan } from "./capabilities";
 
 export type SectionVariant = "hero" | "commerce" | "gallery" | "timeline" | "social" | "cta" | "footer" | "default";
 
@@ -320,9 +322,10 @@ export const THEME_TO_EXPERIENCE: Record<string, string> = {
 export { BASE as EXPERIENCE_PACKS };
 
 /**
- * Experience → Plan eligibility (IMPLEMENTATION-48.3).
- * Maps each premium experience to the minimum plan code required.
- * Minimal is always available (free tier). Classic is available to Launch.
+ * RCCF-LAUNCH-POLISH-06: Experience → plan availability now flows through the
+ * Capability Runtime (requiredCapabilitiesForExperience + capabilityService) —
+ * the raw plan-tier comparison below is removed. EXPERIENCE_MIN_PLAN remains
+ * only as an informational label for tooling.
  */
 export const EXPERIENCE_MIN_PLAN: Record<string, string> = {
   minimal: "creator_launch",
@@ -341,23 +344,13 @@ export const EXPERIENCE_MIN_PLAN: Record<string, string> = {
   arena: "creator_scale",
 };
 
-/** Creator plan tier order (higher index = higher tier). */
-const PLAN_TIER_ORDER: Record<string, number> = {
-  creator_launch: 0,
-  creator_grow: 1,
-  creator_scale: 2,
-  creator_enterprise: 3,
-};
-
 /**
  * Checks if an experience is available for a given plan.
- * Resolves through legacy mapping, so both "creator_pro" and "creator_grow" work.
+ * Delegates to the canonical capability engine (one source of truth).
  */
 export function isExperienceAvailableForPlan(experienceId: string, planCode: string | null): boolean {
   if (!planCode) return false;
-  const required = EXPERIENCE_MIN_PLAN[experienceId];
-  if (!required) return true; // unknown → available
-  const requiredTier = PLAN_TIER_ORDER[required] ?? 0;
-  const actualTier = PLAN_TIER_ORDER[planCode] ?? 0;
-  return actualTier >= requiredTier;
+  const experience = THEME_EXPERIENCES[experienceId];
+  if (!experience) return false;
+  return experienceAvailableForPlan(experience, planCode);
 }

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { INDUSTRIES, type DemoIndustry } from "@/lib/demo/industries";
 import { generateDemoWebsite } from "@/actions/demo.actions";
 import { Sparkles, CheckCircle2, ArrowLeft, Play } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 type Step = "industry" | "brand" | "generate" | "done";
 const PROGRESS_STEPS: Step[] = ["industry", "brand", "generate"];
@@ -125,7 +126,7 @@ export default function DemoStudioPage() {
                 {selected.products.map((p) => (
                   <div key={p.name} className="flex justify-between items-center rounded-lg border border-white/[0.06] bg-[var(--surface-root)] px-3 py-2 text-sm">
                     <span className="text-zinc-300">{p.name}</span>
-                    <span className="text-white font-medium">₹{p.price}</span>
+                    <span className="text-white font-medium">{formatCurrency(p.price)}</span>
                   </div>
                 ))}
               </div>

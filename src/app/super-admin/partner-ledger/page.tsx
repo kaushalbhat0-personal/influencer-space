@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -60,8 +61,8 @@ export default async function PartnerLedgerPage() {
                     <td className="px-4 py-3 text-zinc-500 whitespace-nowrap">{e.createdAt.toLocaleDateString()}</td>
                     <td className="px-4 py-3 font-mono text-xs text-zinc-500">{e.partnerId.slice(0, 8)}</td>
                     <td className={`px-4 py-3 font-semibold ${TYPE_COLORS[e.type] ?? "text-zinc-400"}`}>{e.type}</td>
-                    <td className={`px-4 py-3 font-mono ${e.amount >= 0 ? "text-emerald-400" : "text-red-400"}`}>{e.amount >= 0 ? "+" : ""}₹{Math.abs(e.amount).toLocaleString("en-IN")}</td>
-                    <td className="px-4 py-3 font-mono text-zinc-300">₹{e.balanceAfter.toLocaleString("en-IN")}</td>
+                    <td className={`px-4 py-3 font-mono ${e.amount >= 0 ? "text-emerald-400" : "text-red-400"}`}>{e.amount >= 0 ? "+" : ""}{formatCurrency(Math.abs(e.amount))}</td>
+                    <td className="px-4 py-3 font-mono text-zinc-300">{formatCurrency(e.balanceAfter)}</td>
                     <td className="px-4 py-3 font-mono text-xs text-zinc-500">{e.reference?.slice(0, 24) ?? "—"}</td>
                     <td className="px-4 py-3 text-zinc-500 truncate max-w-[200px]">{e.description}</td>
                   </tr>

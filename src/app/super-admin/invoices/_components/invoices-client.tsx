@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { adminGetInvoices } from "@/actions/super-admin-billing.actions";
+import { formatCurrency } from "@/lib/utils";
 
 const STATUSES = ["ALL", "PAID", "PENDING", "FAILED", "REFUNDED"];
 
@@ -68,7 +69,7 @@ export function InvoicesClient({ initial }: { initial: InvoicesData }) {
               <tr key={inv.id} className="border-b border-white/5" data-invoice={inv.id}>
                 <td className="px-3 py-2 text-zinc-300">{inv.tenantName} <span className="text-zinc-600">({inv.subdomain})</span></td>
                 <td className="px-3 py-2 text-zinc-400">{inv.planCode}</td>
-                <td className="px-3 py-2 text-white">₹{inv.amount.toLocaleString("en-IN")}</td>
+                <td className="px-3 py-2 text-white">{formatCurrency(inv.amount)}</td>
                 <td className="px-3 py-2">
                   <span className={`rounded-full px-2 py-0.5 text-[10px] ${inv.status === "PAID" ? "bg-emerald-500/10 text-emerald-400" : inv.status === "FAILED" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}>
                     {inv.status}

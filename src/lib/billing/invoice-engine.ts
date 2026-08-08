@@ -1,5 +1,6 @@
 import type { BillingInvoice, BillingLineItem } from "./types";
-import { CURRENCY_SYMBOLS, DEFAULT_CURRENCY } from "./constants";
+import { DEFAULT_CURRENCY } from "./constants";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/utils";
 
 export function mapInvoice(inv: Record<string, unknown>): BillingInvoice {
   return {
@@ -41,8 +42,7 @@ function parseLineItems(lineItems: unknown): BillingLineItem[] {
 }
 
 export function formatCurrency(amount: number, currency = DEFAULT_CURRENCY): string {
-  const symbol = CURRENCY_SYMBOLS[currency] ?? currency;
-  return `${symbol}${amount.toLocaleString("en-IN")}`;
+  return formatCurrencyUtil(amount, currency);
 }
 
 export function formatDate(dateStr: string | null): string {

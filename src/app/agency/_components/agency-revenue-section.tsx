@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { getAgencyRevenueData } from "@/actions/revenue-runtime.actions";
 import { IndianRupee, TrendingUp, Clock, CheckCircle2, Users, RefreshCw } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
-const inr = (n: number) => `₹${(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+const inr = (n: number) => formatCurrency(n ?? 0);
 
 export function AgencyRevenueSection({ agencyId }: { agencyId: string }) {
   const [data, setData] = useState<Awaited<ReturnType<typeof getAgencyRevenueData>> | null>(null);

@@ -14,6 +14,7 @@ import type { HeroMediaKind } from "@/lib/media/hero-media";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
 import { Star } from "lucide-react";
 import { shouldRenderSection } from "@/modules/section-presentation";
+import { formatCurrency } from "@/lib/utils";
 
 
 interface RendererProps {
@@ -305,7 +306,10 @@ export function ProductsRenderer({ props }: RendererProps) {
                 )}
               </div>
               <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(prod.name || "")}</p>
-              <p className="text-xs text-[var(--text-muted,#71717A)]">{prod.price ? `â‚¹${Number(prod.price).toLocaleString()}` : ""}</p>
+              {prod.description ? (
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--text-muted,#71717A)]">{String(prod.description)}</p>
+              ) : null}
+              <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{typeof prod.price === "number" && prod.price ? formatCurrency(prod.price) : ""}</p>
               {prod.id ? (
                 <BuyNowButton
                   productId={String(prod.id)}
@@ -620,7 +624,7 @@ export function PricingRenderer({ props }: RendererProps) {
               <div key={i} className={`relative rounded-lg border ${isPopular ? "border-s8ul-cyan/30 bg-s8ul-cyan/5" : "border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60"} p-6 text-center`}>
                 {isPopular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-s8ul-cyan px-3 py-0.5 text-[10px] font-semibold text-black">Popular</span>}
                 <p className="text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">{String(plan.name || "")}</p>
-                <p className="mt-2 text-3xl font-bold text-[var(--text-primary,#FAFAFA)]">{typeof plan.price === "number" ? `â‚¹${plan.price.toLocaleString()}` : String(plan.price || "")}</p>
+                <p className="mt-2 text-3xl font-bold text-[var(--text-primary,#FAFAFA)]">{typeof plan.price === "number" ? formatCurrency(plan.price) : String(plan.price || "")}</p>
                 <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(plan.description || plan.desc || "")}</p>
                 {!!plan.cta && (
                   <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-s8ul-cyan text-black" : "border border-[var(--border,rgba(255,255,255,0.08))] text-[var(--text-primary,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
@@ -673,7 +677,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
                 <p className="text-xs font-semibold text-s8ul-cyan">{(String(course.category || "")).toUpperCase() || "COURSE"}</p>
                 <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(course.title || "")}</p>
                 {!!course.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(course.description)}</p>}
-                {!!course.price && <p className="mt-2 text-sm font-semibold text-zinc-200">{typeof course.price === "number" ? `â‚¹${course.price.toLocaleString()}` : String(course.price)}</p>}
+                {!!course.price && <p className="mt-2 text-sm font-semibold text-zinc-200">{typeof course.price === "number" ? formatCurrency(course.price) : String(course.price)}</p>}
               </div>
             </div>
           ))}
@@ -724,7 +728,7 @@ export function ServicesRenderer({ props }: RendererProps) {
                 <p className="mt-1 text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(service.title || "")}</p>
                 {!!service.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(service.description)}</p>}
                 <p className="mt-3 text-lg font-bold text-zinc-100">
-                  {typeof service.price === "number" ? `â‚¹${service.price.toLocaleString()}` : String(service.price || "")}
+                  {typeof service.price === "number" ? formatCurrency(service.price) : String(service.price || "")}
                 </p>
                 {!!service.duration && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(service.duration)}</p>}
               </div>

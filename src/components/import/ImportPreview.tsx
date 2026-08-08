@@ -5,6 +5,7 @@ import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import type { AcquisitionResult } from "@/lib/acquisition/types";
 import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export function ImportPreview({
   analysis,
@@ -88,7 +89,7 @@ export function ImportPreview({
           {profile.offers.map((o) => (
             <div key={o.id} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
               <span className="flex-1 text-sm text-white truncate">{o.name}</span>
-              <span className="text-xs text-zinc-500">₹{o.price}</span>
+              <span className="text-xs text-zinc-500">{formatCurrency(o.price)}</span>
               <button onClick={() => removeOffer(o.id)} className="text-zinc-600 hover:text-red-400 transition-colors">
                 <Trash2 className="h-3 w-3" />
               </button>

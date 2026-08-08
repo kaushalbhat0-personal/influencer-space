@@ -3,6 +3,7 @@ import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { Prisma } from "@/generated/prisma/client";
 import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
+import { formatCurrency } from "@/lib/utils";
 
 export type SettlementStatus =
   | "PENDING" | "READY" | "APPROVED" | "REJECTED"
@@ -136,7 +137,7 @@ export class SettlementService {
           amount: result.settlement.netAmount,
           reference: result.settlement.id,
           referenceType: "settlement",
-          description: `Settlement ${result.settlement.settlementRef} created (${result.settlement.entryCount} entries, ₹${result.settlement.netAmount})`,
+          description: `Settlement ${result.settlement.settlementRef} created (${result.settlement.entryCount} entries, ${formatCurrency(result.settlement.netAmount)})`,
           settlementId: result.settlement.id,
         }).catch((err) => captureError(err, { service: "settlement", operation: "ledger-create" }));
       }

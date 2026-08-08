@@ -4,11 +4,12 @@ import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/compone
 import { MetricCard } from "@/components/data/MetricCard";
 import { getAgencyRevenue, getAgencyPayouts, getAgencyPartnerStats } from "@/actions/agency.actions";
 import { TrendingUp, Wallet, Timer, CheckCircle2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 function formatRupees(amount: number): string {
-  return `₹${(amount / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(amount / 100);
 }
 
 export default async function AgencyAnalytics() {

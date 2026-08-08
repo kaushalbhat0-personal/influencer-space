@@ -7,6 +7,7 @@ import { getDisplayPrice, getAnnualSavings, getTrialFraming, PARTNER_VALUE_POINT
 import { ComparisonMatrix } from "./comparison";
 import { PricingFAQ } from "./faq";
 import { Sparkles, BadgePercent } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 const TABS: { id: PlanFamily; label: string }[] = [
   { id: "creator", label: "For Creators" },
@@ -102,7 +103,7 @@ export function Pricing({ data }: PricingProps) {
                   const share = Math.round(grow.price * 0.2 * 10);
                   return (
                     <li className="pt-2 text-emerald-300">
-                      Example: 10 clients on Creator Growth (₹{grow.price}/mo) → roughly <span className="font-semibold">₹{share.toLocaleString("en-IN")}/month</span> recurring for you.
+                      Example: 10 clients on Creator Growth ({formatCurrency(grow.price)}/mo) → roughly <span className="font-semibold">{formatCurrency(share)}/month</span> recurring for you.
                     </li>
                   );
                 }
@@ -155,7 +156,7 @@ export function Pricing({ data }: PricingProps) {
                         <span className="text-4xl font-bold text-white">Free</span>
                       ) : (
                         <div>
-                          <span className="text-4xl font-bold text-white">₹{price.toLocaleString("en-IN")}</span>
+                          <span className="text-4xl font-bold text-white">{formatCurrency(price)}</span>
                           <span className="text-zinc-500">/{cycle === "yearly" ? "mo billed yearly" : "month"}</span>
                           {savings && cycle === "yearly" && (
                             <span className="ml-2 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">

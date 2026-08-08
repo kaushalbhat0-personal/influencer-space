@@ -15,7 +15,8 @@ import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { StorefrontNav } from "@/components/storefront/StorefrontNav";
 import { TrustIndicators } from "@/components/storefront/TrustIndicators";
 import { themeRegistry } from "@/lib/theme/registry-new";
-import { experienceRegistry, ExperienceSection } from "@/modules/theme/runtime/experience";
+import { experienceRegistry, ExperienceSection, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { applyGoalSectionOrder, applyGoalNavigation, goalProfileService } from "@/modules/goals-runtime";
@@ -183,12 +184,22 @@ export default async function PublicPage({
 
   // IMPLEMENTATION-45: resolve the theme's Experience (configuration-driven —
   // sections never hardcode backgrounds/decorations).
+  // RCCF-LAUNCH-POLISH-06 (Phase 5/10): the storefront resolves the experience
+  // through the Capability Runtime. Unsupported premium layers fall back to the
+  // free tier (solid background, no effects) — free creators are never served a
+  // premium visual, paid creators are never degraded. Plan resolution failure
+  // degrades gracefully to the free tier.
   const themeDef = snap.theme?.packageId ? themeRegistry.getById(snap.theme.packageId) : undefined;
-  const experience = experienceRegistry.resolve({
-    id: snap.theme?.packageId ?? null,
-    category: themeDef?.category ?? null,
-    premium: themeDef?.premium ?? null,
-  });
+  const experience = resolveExperienceForCapabilities(
+    experienceRegistry.resolve({
+      id: snap.theme?.packageId ?? null,
+      category: themeDef?.category ?? null,
+      premium: themeDef?.premium ?? null,
+    }),
+    await resolveActivePlan(undefined, data.tenantId)
+      .then((p) => p.code)
+      .catch(() => null),
+  );
 
   return (
     <>

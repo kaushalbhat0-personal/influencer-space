@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createSettlementAction, updateSettlementAction, createPayoutAction, approvePayoutAction, processPayoutAction, retryPayoutAction } from "@/actions/revenue-runtime.actions";
+import { formatCurrency } from "@/lib/utils";
 
 export interface PlatformSummary {
   platformRevenue: number; agencyRevenue: number; totalSubscriptions: number;
@@ -23,7 +24,7 @@ interface Props {
   commissionEntries: CommissionRow[];
 }
 
-const inr = (n: number) => `₹${(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+const inr = (n: number) => formatCurrency(n ?? 0);
 
 export function RevenueCenterClient({ platform, health, payouts, payoutSummary, settlements, commissionEntries }: Props) {
   const [busy, setBusy] = useState<string | null>(null);

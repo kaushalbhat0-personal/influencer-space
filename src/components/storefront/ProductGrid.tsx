@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/lib/utils";
 interface Product {
   id: string;
   name: string;
@@ -32,7 +33,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
               <h3 className="text-sm font-semibold text-white">{p.name}</h3>
               {p.description && <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{p.description}</p>}
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm font-bold text-white">₹{p.price.toLocaleString("en-IN")}</span>
+                <span className="text-sm font-bold text-white">{formatCurrency(p.price)}</span>
                 <a
                   href={`/checkout?product=${p.id}`}
                   className="rounded-lg bg-indigo-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400 transition-colors"

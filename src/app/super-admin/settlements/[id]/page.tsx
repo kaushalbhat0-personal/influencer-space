@@ -5,6 +5,7 @@ import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
 import { commissionService } from "@/lib/commission";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +45,9 @@ export default async function SettlementDetailPage({ params }: { params: { id: s
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Total Amount</p><p className="mt-1 text-lg font-bold text-white">₹{settlement.totalAmount.toLocaleString("en-IN")}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Fee</p><p className="mt-1 text-lg font-bold text-white">₹{settlement.feeAmount.toLocaleString("en-IN")}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Net Amount</p><p className="mt-1 text-lg font-bold text-emerald-400">₹{settlement.netAmount.toLocaleString("en-IN")}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Total Amount</p><p className="mt-1 text-lg font-bold text-white">{formatCurrency(settlement.totalAmount)}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Fee</p><p className="mt-1 text-lg font-bold text-white">{formatCurrency(settlement.feeAmount)}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Net Amount</p><p className="mt-1 text-lg font-bold text-emerald-400">{formatCurrency(settlement.netAmount)}</p></div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Entries</p><p className="mt-1 text-lg font-bold text-white">{settlement.entryCount}</p></div>
         </div>
 
@@ -67,7 +68,7 @@ export default async function SettlementDetailPage({ params }: { params: { id: s
                 <div>
                   <p className="text-zinc-300">{item.planCode || "—"} {item.invoiceId ? `· ${item.invoiceId}` : ""}</p>
                 </div>
-                <span className="font-mono text-emerald-400">₹{item.amount.toLocaleString("en-IN")}</span>
+                <span className="font-mono text-emerald-400">{formatCurrency(item.amount)}</span>
               </div>
             ))}
           </div>
@@ -80,7 +81,7 @@ export default async function SettlementDetailPage({ params }: { params: { id: s
               {settlementLedger.map((e) => (
                 <div key={e.id} className="flex items-center justify-between text-xs text-zinc-400">
                   <span>{e.type}</span>
-                  <span className="font-mono">₹{e.amount.toLocaleString("en-IN")}</span>
+                  <span className="font-mono">{formatCurrency(e.amount)}</span>
                   <span className="text-zinc-600">{e.createdAt.toLocaleDateString()}</span>
                 </div>
               ))}

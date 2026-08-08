@@ -5,6 +5,7 @@ import { fetchCustomers } from "@/actions/order.actions";
 import { MetricCard } from "@/components/data/MetricCard";
 import { CustomersTable } from "./_components/customers-table";
 import { Users, IndianRupee, ShoppingBag } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,9 @@ export default async function CustomersPage() {
       <div className="mb-6">
         <MetricGrid>
           <MetricCard label="Total Customers" value={customers.length} icon={Users} />
-          <MetricCard label="Total Spent" value={`₹${totalSpent.toLocaleString("en-IN")}`} icon={IndianRupee} />
+          <MetricCard label="Total Spent" value={formatCurrency(totalSpent)} icon={IndianRupee} />
           <MetricCard label="Total Orders" value={totalOrders} icon={ShoppingBag} />
-          <MetricCard label="Avg. Order Value" value={customers.length > 0 ? `₹${Math.round(totalSpent / totalOrders).toLocaleString("en-IN")}` : "—"} />
+          <MetricCard label="Avg. Order Value" value={customers.length > 0 ? formatCurrency(Math.round(totalSpent / totalOrders)) : "—"} />
         </MetricGrid>
       </div>
 

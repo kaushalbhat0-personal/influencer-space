@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { publishingService } from "@/lib/publishing/service";
+import { publishingService, type CapabilityIssue } from "@/lib/publishing/service";
 import type { PublishStatus } from "@/lib/publishing/service";
 import { emitEvent } from "@/modules/event-runtime";
 
@@ -12,6 +12,7 @@ export type PublishActionResult = {
   status?: PublishStatus;
   version?: number;
   issues?: string[];
+  capabilityIssues?: CapabilityIssue[];
 };
 
 async function requireTenant(): Promise<string> {
@@ -28,7 +29,7 @@ export async function publishWebsite(): Promise<PublishActionResult> {
 
     await emitEvent("storefront.published", tenantId, undefined, { version: result.version });
     const status = await publishingService.getStatus(tenantId);
-    return { success: true, status: status.data, version: result.version };
+    return { success: true, status: status.data, version: result.version, capabilityIssues: result.capabilityIssues };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Publish failed" };
   }

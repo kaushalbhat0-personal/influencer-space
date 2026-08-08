@@ -5,6 +5,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { getOperationsDashboard, getJobStatus, exportDiagnostics, getOperationsSnapshotAction } from "@/actions/operations.actions";
 import { OperationsClient } from "./_components/operations-client";
 import { Activity, Timer, Users, Building2, CreditCard, TrendingUp, Database, Package, Globe, Rocket, Sparkles, Store, HardDrive, Cpu, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export default async function OperationsPage() {
             ["Themes", `${snapshot.marketplace.themes}`],
             ["Blueprints", `${snapshot.marketplace.blueprintCount}`],
             ["Theme Usage", `${snapshot.marketplace.themeUsage}`],
-            ["Commission Rev", `₹${snapshot.marketplace.commissionRevenue.toLocaleString("en-IN")}`],
+            ["Commission Rev", formatCurrency(snapshot.marketplace.commissionRevenue)],
           ],
         },
         {
@@ -173,9 +174,9 @@ export default async function OperationsPage() {
           <MetricCard label="Total Tenants" value={metrics?.totalTenants ?? 0} icon={Building2} />
           <MetricCard label="Total Users" value={metrics?.totalUsers ?? 0} icon={Users} />
           <MetricCard label="Active Subscriptions" value={metrics?.activeSubscriptions ?? 0} icon={CreditCard} />
-          <MetricCard label="MRR" value={`₹${((metrics?.mrr ?? 0)).toLocaleString("en-IN")}`} icon={TrendingUp} />
-          <MetricCard label="ARR" value={`₹${((metrics?.arr ?? 0)).toLocaleString("en-IN")}`} icon={TrendingUp} />
-          <MetricCard label="Total Revenue" value={`₹${((metrics?.totalRevenue ?? 0)).toLocaleString("en-IN")}`} icon={Package} />
+          <MetricCard label="MRR" value={formatCurrency(((metrics?.mrr ?? 0)))} icon={TrendingUp} />
+          <MetricCard label="ARR" value={formatCurrency(((metrics?.arr ?? 0)))} icon={TrendingUp} />
+          <MetricCard label="Total Revenue" value={formatCurrency(((metrics?.totalRevenue ?? 0)))} icon={Package} />
         </MetricGrid>
       </PageSection>
 

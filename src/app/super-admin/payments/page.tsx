@@ -3,6 +3,7 @@ import { MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
 import { PaymentsTable } from "./_components/payments-table";
 import { IndianRupee, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function PaymentsPage() {
       <div className="mb-8"><h1 className="text-2xl font-bold text-white">Payments</h1><p className="mt-1 text-sm text-zinc-400">All payment transactions across the platform.</p></div>
       <PageSection>
         <MetricGrid>
-          <MetricCard label="Total Revenue" value={`₹${totalAmount.toLocaleString("en-IN")}`} icon={IndianRupee} />
+          <MetricCard label="Total Revenue" value={formatCurrency(totalAmount)} icon={IndianRupee} />
           <MetricCard label="Succeeded" value={succeeded} icon={CheckCircle2} />
           <MetricCard label="Pending" value={pending} icon={Clock} />
           <MetricCard label="Failed" value={failed} icon={AlertTriangle} />

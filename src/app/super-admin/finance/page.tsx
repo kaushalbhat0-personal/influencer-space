@@ -5,6 +5,7 @@ import { settlementService } from "@/lib/settlement";
 import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
 import { revenueService } from "@/modules/billing/application/revenue-service";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +53,12 @@ export default async function FinanceDashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Outstanding Liability</p><p className="mt-1 text-xl font-bold text-amber-400">₹{totalPartnerLiability.toLocaleString("en-IN")}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Outstanding Liability</p><p className="mt-1 text-xl font-bold text-amber-400">{formatCurrency(totalPartnerLiability)}</p></div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Pending Settlements</p><p className="mt-1 text-xl font-bold text-blue-400">{pendingSettlements}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Approved · Awaiting Transfer</p><p className="mt-1 text-xl font-bold text-amber-400">{approvedAwaiting} · ₹{processingTotal.toLocaleString("en-IN")}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Paid This Month</p><p className="mt-1 text-xl font-bold text-emerald-400">₹{paidThisMonth.toLocaleString("en-IN")}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Avg Settlement</p><p className="mt-1 text-xl font-bold text-white">₹{Math.round(avgSettlement).toLocaleString("en-IN")}</p></div>
-          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Largest Partner</p><p className="mt-1 text-xl font-bold text-white">{largestPartner ? `₹${Math.round(largestPartner.available).toLocaleString("en-IN")}` : "—"}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Approved · Awaiting Transfer</p><p className="mt-1 text-xl font-bold text-amber-400">{approvedAwaiting} · {formatCurrency(processingTotal)}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Paid This Month</p><p className="mt-1 text-xl font-bold text-emerald-400">{formatCurrency(paidThisMonth)}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Avg Settlement</p><p className="mt-1 text-xl font-bold text-white">{formatCurrency(Math.round(avgSettlement))}</p></div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Largest Partner</p><p className="mt-1 text-xl font-bold text-white">{largestPartner ? formatCurrency(Math.round(largestPartner.available)) : "—"}</p></div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Success Rate</p><p className="mt-1 text-xl font-bold text-emerald-400">{Math.round(settlementSuccessRate)}%</p></div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Failed Settlements</p><p className={`mt-1 text-xl font-bold ${failedCount > 0 ? "text-red-400" : "text-zinc-400"}`}>{failedCount}</p></div>
         </div>
@@ -66,10 +67,10 @@ export default async function FinanceDashboardPage() {
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
             <h2 className="mb-3 text-sm font-semibold text-white">Platform Revenue</h2>
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div><p className="text-zinc-500">MRR</p><p className="font-bold text-emerald-400">₹{revenue?.mrr?.toLocaleString("en-IN") ?? "0"}</p></div>
-              <div><p className="text-zinc-500">ARR</p><p className="font-bold text-emerald-400">₹{revenue?.arr?.toLocaleString("en-IN") ?? "0"}</p></div>
+              <div><p className="text-zinc-500">MRR</p><p className="font-bold text-emerald-400">{formatCurrency(revenue?.mrr ?? 0)}</p></div>
+              <div><p className="text-zinc-500">ARR</p><p className="font-bold text-emerald-400">{formatCurrency(revenue?.arr ?? 0)}</p></div>
               <div><p className="text-zinc-500">Active Subs</p><p className="font-bold text-white">{revenue?.activeSubscribers ?? 0}</p></div>
-              <div><p className="text-zinc-500">ARPC</p><p className="font-bold text-white">₹{revenue?.averageRevenuePerCreator?.toLocaleString("en-IN") ?? "0"}</p></div>
+              <div><p className="text-zinc-500">ARPC</p><p className="font-bold text-white">{formatCurrency(revenue?.averageRevenuePerCreator ?? 0)}</p></div>
             </div>
           </div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
@@ -78,7 +79,7 @@ export default async function FinanceDashboardPage() {
               <div><p className="text-zinc-500">Commission Entries</p><p className="font-bold text-white">{commissionCount}</p></div>
               <div><p className="text-zinc-500">Ledger Entries</p><p className="font-bold text-white">{ledgerCount}</p></div>
               <div><p className="text-zinc-500">Settlements</p><p className="font-bold text-white">{allSettlements.total}</p></div>
-              <div><p className="text-zinc-500">Pending Liability</p><p className="font-bold text-amber-400">₹{pendingTotal.toLocaleString("en-IN")}</p></div>
+              <div><p className="text-zinc-500">Pending Liability</p><p className="font-bold text-amber-400">{formatCurrency(pendingTotal)}</p></div>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { revenueService } from "@/modules/billing/application/revenue-service";
 import { IndianRupee, TrendingUp, Users, CreditCard, Clock, AlertTriangle, Activity, Percent } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +33,13 @@ export default async function RevenueManagementPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mb-8">
-        <MetricCard label="MRR" value={`₹${data.mrr.toLocaleString("en-IN")}`} accent="bg-emerald-500/10 text-emerald-400" icon={<TrendingUp className="h-4 w-4" />} />
-        <MetricCard label="ARR" value={`₹${data.arr.toLocaleString("en-IN")}`} accent="bg-emerald-500/10 text-emerald-400" icon={<IndianRupee className="h-4 w-4" />} />
+        <MetricCard label="MRR" value={formatCurrency(data.mrr)} accent="bg-emerald-500/10 text-emerald-400" icon={<TrendingUp className="h-4 w-4" />} />
+        <MetricCard label="ARR" value={formatCurrency(data.arr)} accent="bg-emerald-500/10 text-emerald-400" icon={<IndianRupee className="h-4 w-4" />} />
         <MetricCard label="Creator Subs" value={data.activeCreatorSubs} accent="bg-s8ul-cyan/10 text-s8ul-cyan" icon={<Users className="h-4 w-4" />} />
         <MetricCard label="Agency Subs" value={data.activeAgencySubs} accent="bg-purple-500/10 text-purple-400" icon={<Users className="h-4 w-4" />} />
         <MetricCard label="Trial Users" value={data.trialUsers} accent="bg-amber-500/10 text-amber-400" icon={<Clock className="h-4 w-4" />} />
-        <MetricCard label="Monthly Revenue" value={`₹${data.monthlyRevenue.toLocaleString("en-IN")}`} accent="bg-emerald-500/10 text-emerald-400" icon={<IndianRupee className="h-4 w-4" />} />
-        <MetricCard label="Commission" value={`₹${data.commissionRevenue.toLocaleString("en-IN")}`} accent="bg-violet-500/10 text-violet-400" icon={<Percent className="h-4 w-4" />} />
+        <MetricCard label="Monthly Revenue" value={formatCurrency(data.monthlyRevenue)} accent="bg-emerald-500/10 text-emerald-400" icon={<IndianRupee className="h-4 w-4" />} />
+        <MetricCard label="Commission" value={formatCurrency(data.commissionRevenue)} accent="bg-violet-500/10 text-violet-400" icon={<Percent className="h-4 w-4" />} />
         <MetricCard label="Platform Take" value={`${data.platformTakeRate}%`} accent="bg-blue-500/10 text-blue-400" icon={<Activity className="h-4 w-4" />} />
       </div>
 
@@ -48,10 +49,10 @@ export default async function RevenueManagementPage() {
           <h3 className="text-sm font-semibold text-white mb-4">Revenue Breakdown</h3>
           <div className="space-y-3">
             {[
-              { label: "Total Invoiced", value: `₹${data.totalInvoiced.toLocaleString("en-IN")}`, color: "text-emerald-400" },
+              { label: "Total Invoiced", value: formatCurrency(data.totalInvoiced), color: "text-emerald-400" },
               { label: "Pending Invoices", value: data.pendingInvoices, color: "text-amber-400" },
               { label: "Failed Payments (30d)", value: data.failedPayments, color: "text-red-400" },
-              { label: "Commission Revenue", value: `₹${data.commissionRevenue.toLocaleString("en-IN")}`, color: "text-violet-400" },
+              { label: "Commission Revenue", value: formatCurrency(data.commissionRevenue), color: "text-violet-400" },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between py-1.5">
                 <span className="text-sm text-zinc-400">{item.label}</span>

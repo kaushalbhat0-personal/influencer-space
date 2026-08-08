@@ -12,6 +12,7 @@ import { MediaField } from "@/components/shared/MediaField";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { CourseData, CourseFormInput } from "@/features/courses/types";
 import { createCourse, updateCourse, deleteCourse } from "@/features/courses/actions";
+import { formatCurrency } from "@/lib/utils";
 
 interface CoursesManagerProps {
   initialData: CourseData[];
@@ -94,7 +95,7 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
     {
       key: "price",
       header: "Price",
-      render: (r: Record<string, unknown>) => `₹${(r as unknown as CourseData).price.toLocaleString("en-IN")}`,
+      render: (r: Record<string, unknown>) => formatCurrency((r as unknown as CourseData).price),
       sortable: true,
     },
     {

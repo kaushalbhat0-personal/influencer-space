@@ -12,6 +12,7 @@ import { ImageManager } from "@/components/products/ImageManager";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { ProductData, ProductFormInput } from "../types";
 import { createProduct, updateProduct, deleteProduct } from "../actions";
+import { formatCurrency } from "@/lib/utils";
 
 interface ProductsPageProps {
   initialData: ProductData[];
@@ -94,7 +95,7 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
       header: "Price",
       render: (p: Record<string, unknown>) => {
         const d = p as unknown as ProductData;
-        return `₹${d.price.toLocaleString("en-IN")}`;
+        return formatCurrency(d.price);
       },
       sortable: true,
     },

@@ -8,6 +8,7 @@ import { getPlansByFamily } from "@/lib/capabilities";
 import type { SignupState, Persona } from "./types";
 import { STEP_ORDER } from "./types";
 import { User, Building2, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 const DEFAULT_STATE: SignupState = {
   step: "welcome",
@@ -206,7 +207,7 @@ export function SignupForm() {
                   <span className={cn("text-sm font-semibold",
                     state.selectedPlan === plan.code ? "text-indigo-400" : "text-zinc-300"
                   )}>
-                    {plan.ctaType === "contact" ? "Contact Sales" : (plan.price === 0 ? "Free" : `₹${plan.price}/mo`)}
+                    {plan.ctaType === "contact" ? "Contact Sales" : (plan.price === 0 ? "Free" : `${formatCurrency(plan.price)}/mo`)}
                   </span>
                 </button>
               ));})()}

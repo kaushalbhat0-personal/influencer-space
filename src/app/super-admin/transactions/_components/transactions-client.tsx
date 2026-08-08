@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { adminGetTransactions } from "@/actions/super-admin-billing.actions";
+import { formatCurrency } from "@/lib/utils";
 
 const KINDS = ["ALL", "event", "invoice", "payment"];
 
@@ -77,7 +78,7 @@ export function TransactionsClient({ initial }: { initial: TxData }) {
                 <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-[10px] ${kindColor[t.kind] ?? "bg-white/5 text-zinc-400"}`}>{t.kind}</span></td>
                 <td className="px-3 py-2 text-zinc-300">{t.type}</td>
                 <td className="px-3 py-2 text-zinc-400">{t.tenantName}</td>
-                <td className="px-3 py-2 text-white">{t.amount != null ? `₹${t.amount.toLocaleString("en-IN")}` : "—"}</td>
+                <td className="px-3 py-2 text-white">{t.amount != null ? formatCurrency(t.amount) : "—"}</td>
                 <td className="px-3 py-2 text-zinc-400">{t.status}</td>
                 <td className="px-3 py-2 text-zinc-600 text-xs">{t.ref ? t.ref.slice(0, 18) : "—"}</td>
               </tr>

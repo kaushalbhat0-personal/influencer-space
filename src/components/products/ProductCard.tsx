@@ -5,6 +5,7 @@ import { Eye, EyeOff, Copy, Archive, Trash2, Edit3, GripVertical, Check } from "
 import type { ProductData } from "@/lib/products/types";
 import { StatusChip } from "@/components/shared/StatusChip";
 import type { ProductStatus } from "@/lib/products/constants";
+import { formatCurrency } from "@/lib/utils";
 
 interface ProductCardProps {
   product: ProductData;
@@ -110,7 +111,7 @@ export function ProductCard({
             )}
           </div>
           <span className="shrink-0 font-display text-sm font-bold text-s8ul-cyan tabular-nums">
-            ₹{product.price.toLocaleString("en-IN")}
+            {formatCurrency(product.price)}
           </span>
         </div>
 

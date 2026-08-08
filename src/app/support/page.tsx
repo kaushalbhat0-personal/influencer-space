@@ -7,6 +7,7 @@ import { getOperationsSnapshotAction } from "@/actions/operations.actions";
 import { revenueService } from "@/modules/billing/application/revenue-service";
 import { SupportSearch } from "./_components/support-search";
 import { Users, Globe, CreditCard, Activity, Building2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function SupportPage() {
         <MetricCard label="Agencies / Partners" value={agencyCount} icon={Building2} />
         <MetricCard label="Published Sites" value={snapshot?.publishing.websites ?? 0} icon={Globe} />
         <MetricCard label="Active Subs" value={revenue?.activeSubscribers ?? 0} icon={CreditCard} />
-        <MetricCard label="MRR" value={revenue ? `₹${revenue.mrr.toLocaleString("en-IN")}` : "—"} icon={CreditCard} />
+        <MetricCard label="MRR" value={revenue ? formatCurrency(revenue.mrr) : "—"} icon={CreditCard} />
       </MetricGrid>
 
       <div className="mt-6" data-testid="support-console">

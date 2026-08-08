@@ -30,7 +30,19 @@ export type CommerceCapability =
   | "storage"
   | "ai_credits" // future add-on
   | "storage_pack" // future add-on
-  | "theme_packs"; // future add-on
+  | "theme_packs" // future add-on
+  // RCCF-LAUNCH-POLISH-06: granular theme capabilities (single authority —
+  // the storefront resolves every visual layer through these, never raw plans).
+  | "theme_background_solid"
+  | "theme_background_gradient"
+  | "theme_background_image"
+  | "theme_background_video"
+  | "theme_background_animation"
+  | "theme_effects_particles"
+  | "theme_effects_glow"
+  | "theme_effects_noise"
+  | "theme_effects_blur"
+  | "theme_effects_custom";
 
 export interface CommercePlanConfig {
   code: string;
@@ -100,6 +112,16 @@ export const CAPABILITY_LABELS: Record<CommerceCapability, string> = {
   ai_credits: "AI Credits",
   storage_pack: "Storage Pack",
   theme_packs: "Theme Packs",
+  theme_background_solid: "Solid Backgrounds",
+  theme_background_gradient: "Gradient Backgrounds",
+  theme_background_image: "Background Images",
+  theme_background_video: "Video Backgrounds",
+  theme_background_animation: "Animated Backgrounds",
+  theme_effects_particles: "Decorative Particles",
+  theme_effects_glow: "Glow Effects",
+  theme_effects_noise: "Texture Effects",
+  theme_effects_blur: "Surface Effects",
+  theme_effects_custom: "Advanced Effects",
 };
 
 export const COMMERCE_PLANS: CommercePlanConfig[] = [
@@ -113,7 +135,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     cycle: "monthly",
     razorpayPlanId: null,
     manual: false,
-    capabilities: ["basic_builder", "basic_themes", "creator_subdomain"],
+    capabilities: ["basic_builder", "basic_themes", "creator_subdomain", "theme_background_solid"],
     ctaType: "signup",
     ctaLabel: "Start Free Trial",
     trialDays: 15,
@@ -173,6 +195,14 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "ai_generation",
       "social_integrations",
       "priority_support",
+      "theme_background_solid",
+      "theme_background_gradient",
+      "theme_background_image",
+      "theme_background_animation",
+      "theme_effects_particles",
+      "theme_effects_glow",
+      "theme_effects_noise",
+      "theme_effects_blur",
     ],
     ctaType: "checkout",
     ctaLabel: "Upgrade to Growth",
@@ -233,6 +263,16 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "brand_removal",
       "advanced_analytics",
       "priority_support",
+      "theme_background_solid",
+      "theme_background_gradient",
+      "theme_background_image",
+      "theme_background_video",
+      "theme_background_animation",
+      "theme_effects_particles",
+      "theme_effects_glow",
+      "theme_effects_noise",
+      "theme_effects_blur",
+      "theme_effects_custom",
     ],
     ctaType: "checkout",
     ctaLabel: "Upgrade to Scale",
@@ -602,6 +642,18 @@ export const COMMERCE_CAPABILITY_TO_FEATURE: Record<
   ai_credits: { feature: "ai_automation", value: true },
   storage_pack: { feature: "storage_gb", value: -1 },
   theme_packs: { feature: "premium_themes", value: true },
+  // RCCF-LAUNCH-POLISH-06: granular theme capabilities → boolean features so
+  // capabilityService.can(plan, "theme_background_gradient") is authoritative.
+  theme_background_solid: { feature: "theme_background_solid", value: true },
+  theme_background_gradient: { feature: "theme_background_gradient", value: true },
+  theme_background_image: { feature: "theme_background_image", value: true },
+  theme_background_video: { feature: "theme_background_video", value: true },
+  theme_background_animation: { feature: "theme_background_animation", value: true },
+  theme_effects_particles: { feature: "theme_effects_particles", value: true },
+  theme_effects_glow: { feature: "theme_effects_glow", value: true },
+  theme_effects_noise: { feature: "theme_effects_noise", value: true },
+  theme_effects_blur: { feature: "theme_effects_blur", value: true },
+  theme_effects_custom: { feature: "theme_effects_custom", value: true },
 };
 
 export function getCommercePlan(code: string): CommercePlanConfig | undefined {

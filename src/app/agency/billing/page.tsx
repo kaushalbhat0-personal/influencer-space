@@ -8,11 +8,12 @@ import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { capabilityService } from "@/lib/capabilities";
 import { partnerService } from "@/modules/partner/application/partner";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 function formatRupees(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(amount);
 }
 
 export default async function AgencyBilling() {

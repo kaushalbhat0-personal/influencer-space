@@ -31,6 +31,24 @@ import { runWorkflow } from "@/lib/observability/workflow-diagnostics";
 import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import { traceRuntime } from "@/lib/observability/runtime-trace";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { themeRegistry } from "@/lib/theme/registry-new";
+import { experienceRegistry, requiredCapabilitiesForExperience } from "@/modules/theme/runtime/experience";
+import { capabilityEngine } from "@/lib/capabilities";
+
+/**
+ * RCCF-LAUNCH-POLISH-06 (Phase 9): a canonical, machine-readable capability
+ * validation result. Publishing VALIDATES theme capabilities against the
+ * tenant's plan and surfaces these issues — the storefront enforces the actual
+ * fallback. Non-blocking so existing free creators (who already have premium
+ * themes applied) can still publish; the builder prevents new premium selections.
+ */
+export interface CapabilityIssue {
+  code: string; // canonical capability id, e.g. "theme_background_gradient"
+  label: string;
+  plan: string | null;
+  severity: "warning";
+}
 
 export type PublishState = "draft" | "preview" | "live" | "archived";
 
@@ -80,7 +98,7 @@ export class PublishingService {
   async publish(
     tenantId: string,
     correlation?: CorrelationContext,
-  ): Promise<{ success: boolean; version?: number; error?: string }> {
+  ): Promise<{ success: boolean; version?: number; error?: string; capabilityIssues?: CapabilityIssue[] }> {
     const startTime = Date.now();
     logger.info("Publishing started", "publishing", { correlation, metadata: { tenantId } });
     try {
@@ -135,6 +153,11 @@ export class PublishingService {
       if (blocking.length > 0) {
         return { success: false, error: blocking.join("; ") };
       }
+
+      // RCCF-LAUNCH-POLISH-06 (Phase 9): validate the theme's visual capabilities
+      // against the tenant's plan. Canonical, non-blocking issues (existing free
+      // creators keep publishing; the storefront enforces the fallback).
+      const capabilityIssues = await this.validateThemeCapabilities(tenantId, websiteFull?.themePackageId ?? null);
 
       const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
       const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
@@ -198,10 +221,10 @@ export class PublishingService {
         // cache invalidation is fire-and-forget; already committed
       }
 
-      logger.info("Publishing completed", "publishing", { correlation, duration: Date.now() - startTime, metadata: { tenantId, version: result.version } });
+      logger.info("Publishing completed", "publishing", { correlation, duration: Date.now() - startTime, metadata: { tenantId, version: result.version, capabilityIssues } });
       metricsService.recordDuration("publish", Date.now() - startTime, { status: "success", tenantId });
       metricsService.recordOutcome("publish", true, { tenantId });
-      return { success: true, version: result.version };
+      return { success: true, version: result.version, capabilityIssues };
     } catch (error) {
       captureError(error, { service: "publishing", operation: "publish", correlation, tenantId });
       return { success: false, error: error instanceof Error ? error.message : "Publish failed" };
@@ -293,7 +316,7 @@ export class PublishingService {
 
       const website = await prisma.website.findUnique({
         where: { tenantId },
-        select: { id: true },
+        select: { id: true, themePackageId: true },
       });
       if (website) {
         const builderService = await import("@/lib/builder/builder-service").then(
@@ -303,6 +326,12 @@ export class PublishingService {
         const blocking = await this.collectBlockingIssues(pages);
         if (blocking.length > 0) issues.push(...blocking);
         if (pages.length === 0) issues.push("No pages. The builder is empty.");
+
+        // RCCF-LAUNCH-POLISH-06 (Phase 9): surface theme-capability warnings.
+        const capabilityIssues = await this.validateThemeCapabilities(tenantId, website.themePackageId);
+        for (const cap of capabilityIssues) {
+          issues.push(`Premium visual "${cap.label}" requires an upgrade (upgrade to Creator Growth). It will render as a solid background on your current plan.`);
+        }
       }
 
       return { success: true, issues };
@@ -360,6 +389,44 @@ export class PublishingService {
       (m) => new m.BuilderService(),
     );
     return builderService.load(websiteId);
+  }
+
+  /**
+   * RCCF-LAUNCH-POLISH-06 (Phase 9): canonical theme-capability validation.
+   * Returns the capabilities the tenant's plan lacks for the current theme.
+   * Always additive/non-blocking — the storefront is the hard enforcement.
+   */
+  private async validateThemeCapabilities(
+    tenantId: string,
+    themePackageId: string | null,
+  ): Promise<CapabilityIssue[]> {
+    try {
+      const active = await resolveActivePlan(undefined, tenantId);
+      const planCode = active?.code ?? null;
+
+      const themeDef = themePackageId ? themeRegistry.getById(themePackageId) : undefined;
+      const experience = experienceRegistry.resolve({
+        id: themePackageId,
+        category: themeDef?.category ?? null,
+        premium: themeDef?.premium ?? null,
+      });
+
+      const issues: CapabilityIssue[] = [];
+      for (const cap of requiredCapabilitiesForExperience(experience)) {
+        const check = capabilityEngine.can(planCode ?? "", cap);
+        if (!check.allowed) {
+          issues.push({
+            code: cap,
+            label: cap.replace(/_/g, " "),
+            plan: planCode,
+            severity: "warning",
+          });
+        }
+      }
+      return issues;
+    } catch {
+      return [];
+    }
   }
 }
 

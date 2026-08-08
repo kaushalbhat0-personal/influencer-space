@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { BusinessProfile, BusinessOffer } from "@/lib/acquisition/business-types";
 import type { AcquisitionResult } from "@/lib/acquisition/types";
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 export function AcquisitionPreview({
   result,
@@ -77,7 +78,7 @@ export function AcquisitionPreview({
             {profile.offers.map((o) => (
               <div key={o.id} className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
                 <span className="flex-1 text-sm text-zinc-300 truncate">{o.name}</span>
-                <span className="text-sm text-zinc-400">₹{o.price}</span>
+                <span className="text-sm text-zinc-400">{formatCurrency(o.price)}</span>
                 <button onClick={() => removeOffer(o.id)} className="text-zinc-600 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}

@@ -12,6 +12,7 @@ import { MediaField } from "@/components/shared/MediaField";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { ServiceData, ServiceFormInput } from "@/features/services/types";
 import { createService, updateService, deleteService } from "@/features/services/actions";
+import { formatCurrency } from "@/lib/utils";
 
 interface ServicesManagerProps {
   initialData: ServiceData[];
@@ -95,7 +96,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
     {
       key: "price",
       header: "Price",
-      render: (r: Record<string, unknown>) => `₹${(r as unknown as ServiceData).price.toLocaleString("en-IN")}`,
+      render: (r: Record<string, unknown>) => formatCurrency((r as unknown as ServiceData).price),
       sortable: true,
     },
     {

@@ -337,7 +337,8 @@ describe("Capabilities — Engine.planSummary", () => {
     expect(summary).not.toBeNull();
     expect(summary!.code).toBe("creator_launch");
     expect(summary!.name).toBe("Creator Launch");
-    expect(summary!.featureCount).toBe(45);
+    // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
+    expect(summary!.featureCount).toBe(46);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
   });
 
@@ -500,7 +501,8 @@ describe("Capabilities — Mapper", () => {
     const plan = getPlan("creator_free")!;
     const summary = toPlanSummary(plan);
     expect(summary.code).toBe("creator_launch");
-    expect(summary.featureCount).toBe(45);
+    // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
+    expect(summary.featureCount).toBe(46);
   });
 
   it("should format feature comparison", () => {

@@ -2,6 +2,7 @@
 
 import { DataTable } from "@/components/data/DataTable";
 import type { Column } from "@/components/data/DataTable";
+import { formatCurrency } from "@/lib/utils";
 
 interface CustomerRow {
   email: string;
@@ -12,7 +13,7 @@ interface CustomerRow {
 
 const columns: Column<CustomerRow>[] = [
   { key: "email", header: "Email", sortable: true, cell: (r) => <span className="text-white text-sm">{r.email}</span> },
-  { key: "totalSpent", header: "Total Spent", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">₹{r.totalSpent.toLocaleString("en-IN")}</span> },
+  { key: "totalSpent", header: "Total Spent", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">{formatCurrency(r.totalSpent)}</span> },
   { key: "orderCount", header: "Orders", sortable: true, cell: (r) => <span className="text-zinc-400">{r.orderCount}</span> },
   {
     key: "lastOrder", header: "Last Order", sortable: true, cell: (r) => (

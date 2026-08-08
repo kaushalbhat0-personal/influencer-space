@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function ReconciliationPage() {
               <p className="text-xs text-emerald-400">✅ No orphans found</p>
             ) : (
               <div className="space-y-1 max-h-60 overflow-y-auto">
-                {orphanCommissions.map((e) => <div key={e.id} className="flex justify-between text-xs text-red-400"><span className="font-mono">{e.id.slice(0, 12)}</span><span>₹{e.amount}</span></div>)}
+                {orphanCommissions.map((e) => <div key={e.id} className="flex justify-between text-xs text-red-400"><span className="font-mono">{e.id.slice(0, 12)}</span><span>{formatCurrency(e.amount)}</span></div>)}
               </div>
             )}
           </div>
@@ -73,7 +74,7 @@ export default async function ReconciliationPage() {
               <p className="text-xs text-emerald-400">✅ No negative balances</p>
             ) : (
               <div className="space-y-1 max-h-60 overflow-y-auto">
-                {negativeBalances.map((e) => <div key={e.id} className="flex justify-between text-xs text-red-400"><span className="font-mono">{e.partnerId.slice(0, 8)}</span><span>₹{e.balanceAfter.toLocaleString("en-IN")}</span></div>)}
+                {negativeBalances.map((e) => <div key={e.id} className="flex justify-between text-xs text-red-400"><span className="font-mono">{e.partnerId.slice(0, 8)}</span><span>{formatCurrency(e.balanceAfter)}</span></div>)}
               </div>
             )}
           </div>
@@ -97,7 +98,7 @@ export default async function ReconciliationPage() {
               <p className="text-xs text-emerald-400">✅ All ledgers balanced</p>
             ) : (
               <div className="space-y-1 max-h-60 overflow-y-auto">
-                {ledgerImbalances.map((lb) => <div key={lb.partnerId} className="flex justify-between text-xs text-red-400"><span className="font-mono">{lb.partnerId.slice(0, 8)}</span><span>last: ₹{lb.balance} ≠ computed: ₹{lb.expectedBalance}</span></div>)}
+                {ledgerImbalances.map((lb) => <div key={lb.partnerId} className="flex justify-between text-xs text-red-400"><span className="font-mono">{lb.partnerId.slice(0, 8)}</span><span>last: {formatCurrency(lb.balance)} ≠ computed: {formatCurrency(lb.expectedBalance)}</span></div>)}
               </div>
             )}
           </div>

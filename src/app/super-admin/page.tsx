@@ -5,6 +5,7 @@ import { dashboardMetricsService } from "@/lib/observability/dashboard-metrics";
 import { alertEvaluator } from "@/lib/observability/alert-evaluator";
 import { Building2, Package, Image, IndianRupee, CreditCard, Users, Activity, ScrollText, CheckCircle, AlertTriangle, AlertCircle, Info, Bell, BookOpen, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ export default async function SuperAdminPage() {
         <StatCard label="Products" value={stats.totalProducts} accent="bg-emerald-500/20 text-emerald-400" icon={<Package className="h-5 w-5" />} />
         <StatCard label="Gallery Items" value={stats.totalGallery} accent="bg-pink-500/20 text-pink-400" icon={<Image className="h-5 w-5" />} />
         <StatCard label="Orders" value={stats.totalOrders} accent="bg-amber-500/20 text-amber-400" icon={<IndianRupee className="h-5 w-5" />} />
-        <StatCard label="Revenue" value={`₹${(stats.totalRevenue).toLocaleString("en-IN")}`} accent="bg-yellow-500/20 text-yellow-400" icon={<IndianRupee className="h-5 w-5" />} />
+        <StatCard label="Revenue" value={formatCurrency((stats.totalRevenue))} accent="bg-yellow-500/20 text-yellow-400" icon={<IndianRupee className="h-5 w-5" />} />
         <StatCard label="Paid Subscriptions" value={stats.activeProSubscriptions} accent="bg-rose-500/20 text-rose-400" icon={<CreditCard className="h-5 w-5" />} />
         <StatCard label="Publishes" value={stats.publishCount} accent="bg-indigo-500/20 text-indigo-400" icon={<Activity className="h-5 w-5" />} />
         <StatCard label="Audit (24h)" value={stats.auditEntries24h} accent="bg-zinc-500/20 text-zinc-400" icon={<ScrollText className="h-5 w-5" />} />
@@ -74,8 +75,8 @@ export default async function SuperAdminPage() {
 
       {/* Operational Metrics */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="MRR" value={`₹${opMetrics.mrr.toLocaleString("en-IN")}`} accent="bg-emerald-500/20 text-emerald-400" icon={<IndianRupee className="h-5 w-5" />} />
-        <StatCard label="ARR" value={`₹${opMetrics.arr.toLocaleString("en-IN")}`} accent="bg-emerald-500/20 text-emerald-400" icon={<TrendingUp className="h-5 w-5" />} />
+        <StatCard label="MRR" value={formatCurrency(opMetrics.mrr)} accent="bg-emerald-500/20 text-emerald-400" icon={<IndianRupee className="h-5 w-5" />} />
+        <StatCard label="ARR" value={formatCurrency(opMetrics.arr)} accent="bg-emerald-500/20 text-emerald-400" icon={<TrendingUp className="h-5 w-5" />} />
         <StatCard label="Gen Success" value={`${opMetrics.generationSuccessRate}%`} accent="bg-blue-500/20 text-blue-400" icon={<Activity className="h-5 w-5" />} />
         <StatCard label="Failed Publishes" value={opMetrics.failedPublishes} accent={opMetrics.failedPublishes > 0 ? "bg-red-500/20 text-red-400" : "bg-zinc-500/20 text-zinc-400"} icon={<AlertTriangle className="h-5 w-5" />} />
       </div>

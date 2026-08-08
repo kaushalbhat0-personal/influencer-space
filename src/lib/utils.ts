@@ -5,11 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * RCCF-LAUNCH-POLISH-06 (Phase 1): canonical currency formatter.
+ * The ONLY formatting helper every surface uses — prices are stored as numbers
+ * + a currency code and formatted at render time via Intl.NumberFormat.
+ * `narrowSymbol` renders ₹ for INR (never a raw "₹"/"Rs." concatenation, which
+ * produced the mojibake "â‚¹"). 0–2 fraction digits: ₹1,999 / ₹1,999.50.
+ */
 export function formatCurrency(amount: number, currency = "INR", locale = "en-IN"): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
+    currencyDisplay: "narrowSymbol",
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(amount);
 }
