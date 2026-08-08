@@ -47,6 +47,8 @@ export const HISTORY_EVENT_TYPES = [
   "warning_added",
   "retry_initiated",
   "workflow_linked",
+  // RCCF-LAUNCH-TRACK-03: live micro-activity messages (real pipeline milestones).
+  "activity",
 ] as const;
 
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];

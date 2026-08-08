@@ -312,6 +312,19 @@ export async function runCreatorGeneration(
       await sessionService.updateStage(generationSessionId, "persona_detection", "completed");
       const { emitGenerationEvent } = await import("@/modules/generation-progress");
       await emitGenerationEvent(generationSessionId!, "generation.profile.imported", { creatorName }).catch(() => {});
+
+      // RCCF-LAUNCH-TRACK-03: live micro-activity — real milestones the user
+      // sees tick in below the stages (no invented progress).
+      const acq = profileResult.acquisition as { capabilities?: string[]; populatedFields?: string[] } | undefined;
+      if (acq?.populatedFields?.length) {
+        await sessionService.recordActivity(generationSessionId, `Extracted your profile (${acq.populatedFields.length} fields)`);
+      }
+      if (profileResult.personaMatch?.persona?.name) {
+        await sessionService.recordActivity(generationSessionId, `Detected "${profileResult.personaMatch.persona.name}" persona`);
+      }
+      if (profileResult.experienceProfile?.confidence != null) {
+        await sessionService.recordActivity(generationSessionId, "Analyzed your content and audience");
+      }
     }
 
     let goldenValidationResult = null;
@@ -398,6 +411,7 @@ export async function runCreatorGeneration(
         currentStage: "publishing",
         storefrontUrl: provisioned.storefrontUrl,
       });
+      await sessionService.recordActivity(generationSessionId, "Created your workspace");
     }
 
     const ws = await workspaceRepository.findByTenantId(provisioned.tenantId);
@@ -483,6 +497,7 @@ export async function runCreatorGeneration(
     markStage("publishing", "completed");
     if (generationSessionId) {
       await sessionService.updateStage(generationSessionId, "publishing", "completed");
+      await sessionService.recordActivity(generationSessionId, "Published your website");
     }
 
     try {
@@ -599,6 +614,7 @@ type SessionProgressSuccess = {
   estimatedRemainingMs: number | null;
   error: string | null;
   stages: Array<{ type: string; status: string; label: string; error: string | null; duration: number | null }>;
+  activity: string[];
   storefrontUrl: string | null;
   evaluationScore: number | null;
   goldenValidationScore: number | null;
@@ -623,6 +639,12 @@ export async function getGenerationSessionProgress(sessionId: string): Promise<S
       duration: s.duration,
     }));
 
+    // RCCF-LAUNCH-TRACK-03: live micro-activity (real pipeline milestones).
+    const activity = (gs.history ?? [])
+      .filter((h) => h.type === "activity" && h.data?.message)
+      .map((h) => String(h.data!.message))
+      .slice(-20);
+
     const elapsedMs = Date.now() - gs.startedAt.getTime();
     const progress = gs.progressPercent;
     const estimatedRemainingMs = progress > 0 && progress < 100
@@ -639,6 +661,7 @@ export async function getGenerationSessionProgress(sessionId: string): Promise<S
         estimatedRemainingMs,
         error: gs.error,
         stages,
+        activity,
         storefrontUrl: gs.storefrontUrl,
         evaluationScore: gs.evaluationScore,
         goldenValidationScore: gs.goldenValidationScore,

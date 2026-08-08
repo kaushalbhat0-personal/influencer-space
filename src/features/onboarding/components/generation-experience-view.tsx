@@ -7,7 +7,7 @@
  * useGenerationExperience output through the Generation Animation Runtime
  * primitives. It owns NO state, NO progress, NO timing — it only visualizes.
  */
-import { CheckCircle2, AlertTriangle, Clock } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Clock, Activity as ActivityIcon, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   FadeIn,
@@ -107,12 +107,41 @@ export function GenerationExperienceView({ experience }: { experience: Generatio
         </span>
       </div>
 
+      {/* RCCF-LAUNCH-TRACK-03: live micro-activity feed — real pipeline milestones. */}
+      {experience.activity && experience.activity.length > 0 && (
+        <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
+          <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-zinc-600">
+            <ActivityIcon className="h-3 w-3" /> What&apos;s happening
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {experience.activity.slice(-8).map((item, i) => (
+              <li key={`${item}-${i}`} className="flex items-start gap-2 text-xs text-zinc-400">
+                <span className="mt-0.5 text-emerald-400 flex-shrink-0"><CheckCircle2 className="h-3.5 w-3.5" /></span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {experience.hasFailure && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4">
           <p className="text-sm font-medium text-red-400">Some steps had issues</p>
           <p className="mt-1 text-xs text-zinc-400">
             We&apos;ll proceed with what we have. You can fix things later in the builder.
           </p>
+        </div>
+      )}
+
+      {/* RCCF-LAUNCH-TRACK-03: completion — a brief success message before the
+          dashboard opens (register success, then navigate). */}
+      {experience.isComplete && (
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
+          <SuccessIcon>
+            <Sparkles className="mx-auto h-6 w-6 text-emerald-400" />
+          </SuccessIcon>
+          <p className="mt-1 text-sm font-semibold text-white">Your website is ready!</p>
+          <p className="text-xs text-zinc-400">Opening your dashboard…</p>
         </div>
       )}
     </div>

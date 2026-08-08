@@ -17,6 +17,8 @@ export interface GenerationExperienceInput {
   elapsedMs: number;
   estimatedRemainingMs: number | null;
   hasStarted: boolean;
+  /** RCCF-LAUNCH-TRACK-03: live micro-activity (real pipeline milestones). */
+  activity?: string[];
 }
 
 export interface GenerationExperience {
@@ -37,6 +39,8 @@ export interface GenerationExperience {
   hasStarted: boolean;
   hasFailure: boolean;
   isComplete: boolean;
+  /** RCCF-LAUNCH-TRACK-03: live micro-activity feed (real milestones). */
+  activity?: string[];
 }
 
 export function formatDuration(ms: number): string {
@@ -88,6 +92,7 @@ export function useGenerationExperience(input: GenerationExperienceInput): Gener
       hasStarted: input.hasStarted,
       hasFailure,
       isComplete: progress >= 100 && completedCount === stages.length,
+      activity: input.activity ?? [],
     };
-  }, [input.events, input.runtimeProgress, input.elapsedMs, input.estimatedRemainingMs, input.hasStarted]);
+  }, [input.events, input.runtimeProgress, input.elapsedMs, input.estimatedRemainingMs, input.hasStarted, input.activity]);
 }

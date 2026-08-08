@@ -125,6 +125,12 @@ export const sessionService = {
     });
   },
 
+  // RCCF-LAUNCH-TRACK-03: record a live micro-activity message (real pipeline
+  // milestone) so the onboarding feed shows the system actively working.
+  async recordActivity(id: string, message: string): Promise<void> {
+    await sessionHistory.record(id, "activity", { message }).catch(() => {});
+  },
+
   async complete(
     id: string,
     result?: {

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -134,6 +134,8 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [sessionStages, setSessionStages] = useState<SessionStage[]>([]);
+  const [activity, setActivity] = useState<string[]>([]);
+  
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -154,7 +156,7 @@ export default function OnboardingPage() {
     return () => clearPolling();
   }, [clearPolling]);
 
-  // RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery — resume the latest in-flight
+  // RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery â€” resume the latest in-flight
   // session so progress continues after a refresh (never restarts from stage 1).
   useEffect(() => {
     let cancelled = false;
@@ -172,10 +174,12 @@ export default function OnboardingPage() {
         const result = await getGenerationSessionProgress(active.sessionId!);
         if (!result.success) return;
         setSessionStages(result.data.stages);
+        setActivity((prev) => [...prev, ...(result.data.activity ?? []).filter((m) => !prev.includes(m))].slice(-20));
         if (result.data.progressPercent > 0) setProgressPercent((p) => Math.max(p, result.data.progressPercent));
         if (result.data.status === "completed") {
           clearPolling();
-          router.replace("/admin/dashboard");
+          
+          setTimeout(() => router.replace("/admin/dashboard"), 400);
         }
         if (result.data.status === "failed") {
           clearPolling();
@@ -213,7 +217,7 @@ export default function OnboardingPage() {
       setCategoryOverride(res.category || "general");
       setWorkspaceName(res.creatorName || "My Storefront");
 
-      // RCCF-INTEGRATION-01 Phase 2: intelligence-first onboarding — compute the
+      // RCCF-INTEGRATION-01 Phase 2: intelligence-first onboarding â€” compute the
       // knowledge score, recommended goal profile and top recommendations from
       // the imported profile before generation.
       const previewResult = await getOnboardingPreview({
@@ -263,6 +267,11 @@ export default function OnboardingPage() {
         if (!result.success) return;
 
         setSessionStages(result.data.stages);
+        setActivity((prev) => {
+          const next = result.data.activity ?? [];
+          if (result.data.status === "completed") next.push("Your website is ready!");
+          return [...prev, ...next.filter((m) => !prev.includes(m))].slice(-20);
+        });
         if (result.data.progressPercent > 0) {
           setProgressPercent((prev) => Math.max(prev, result.data.progressPercent));
         } else {
@@ -272,8 +281,17 @@ export default function OnboardingPage() {
           setEstimatedRemainingMs(result.data.estimatedRemainingMs);
         }
 
-        if (result.data.status === "completed" || result.data.status === "failed") {
+        if (result.data.status === "completed") {
           clearPolling();
+          
+          // RCCF-LAUNCH-TRACK-03: a brief success message so the user registers
+          // completion before the page changes (~400ms, not an artificial delay).
+          setTimeout(() => router.replace("/admin/dashboard"), 400);
+        }
+        if (result.data.status === "failed") {
+          clearPolling();
+          setStep("error");
+          setError("We couldn't finish building your storefront. Please try again.");
         }
       }, 1500);
 
@@ -293,11 +311,13 @@ export default function OnboardingPage() {
           setGoldenScore(res.goldenValidation.overallScore);
         }
         setProgressPercent(100);
+        setActivity((prev) => [...prev, "Your website is ready!"].slice(-20));
+        
 
         await markOnboardingComplete(res.result.tenantId);
 
         // RCCF-INTEGRATION-01 Phase 2: seed the accepted goal profile + quick
-        // answers once the tenant exists (best-effort — never blocks generation).
+        // answers once the tenant exists (best-effort â€” never blocks generation).
         try {
           if (useGoals && preview) {
             const answers = Object.entries(questionAnswers)
@@ -318,10 +338,8 @@ export default function OnboardingPage() {
           // session refresh is best-effort; redirect will re-validate
         }
 
-        // RCCF-LAUNCH-TRACK-03 Phase 7: redirect immediately on completion —
-        // no artificial 2s wait. The dashboard is ready as soon as the backend
-        // reports generation.completed.
-        router.replace("/admin/dashboard");
+        // RCCF-LAUNCH-TRACK-03: brief success message before navigating.
+        setTimeout(() => router.replace("/admin/dashboard"), 400);
       } else if (res.retryable && res.tenantId) {
         clearPolling();
         setRetryInfo({ tenantId: res.tenantId });
@@ -389,6 +407,7 @@ export default function OnboardingPage() {
     elapsedMs,
     estimatedRemainingMs,
     hasStarted: step === "generating",
+    activity,
   });
 
   const PlatformIcon = detectedPlatform && PLATFORM_ICONS[detectedPlatform]
@@ -409,7 +428,7 @@ export default function OnboardingPage() {
             <div>
               <h1 className="text-xl font-semibold text-white">Build your CreatorStore</h1>
               <p className="mt-1 text-sm text-zinc-400">
-                Choose how you&apos;d like to start. Nothing is permanent — you can always import more later.
+                Choose how you&apos;d like to start. Nothing is permanent â€” you can always import more later.
               </p>
             </div>
 
@@ -508,9 +527,9 @@ export default function OnboardingPage() {
                 data-testid="acquisition-status"
                 aria-label={`Profile acquisition: ${profileData.acquisition.platform} via ${profileData.acquisition.adapter}`}
               >
-                {profileData.acquisition.platform} · adapter: {profileData.acquisition.adapter}
+                {profileData.acquisition.platform} Â· adapter: {profileData.acquisition.adapter}
                 {profileData.acquisition.populatedFields.length > 0 && (
-                  <> · data: {profileData.acquisition.populatedFields.join(", ")}</>
+                  <> Â· data: {profileData.acquisition.populatedFields.join(", ")}</>
                 )}
               </p>
             )}
@@ -530,7 +549,7 @@ export default function OnboardingPage() {
                     <span className="text-xs text-zinc-500 capitalize">{profileData.platform}</span>
                     {profileData.followers !== undefined && profileData.followers > 0 && (
                       <>
-                        <span className="text-zinc-700">·</span>
+                        <span className="text-zinc-700">Â·</span>
                         <span className="text-xs text-zinc-500">
                           {profileData.followers.toLocaleString()} followers
                         </span>
@@ -555,7 +574,7 @@ export default function OnboardingPage() {
                   {profileData.categoryRequiresReview && (
                     <p className="mt-1.5 flex items-center gap-1 text-[10px] text-amber-400">
                       <AlertTriangle className="h-3 w-3 shrink-0" />
-                      Detection confidence was low — review the category above.
+                      Detection confidence was low â€” review the category above.
                     </p>
                   )}
                 </div>
@@ -609,7 +628,7 @@ export default function OnboardingPage() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building your storefront…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Building your storefrontâ€¦
                 </span>
               ) : (
                 "Build My Storefront"

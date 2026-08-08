@@ -34,6 +34,32 @@ On mount, `getActiveGenerationSession()` finds the latest in-flight session and
 restores the generating step + current stage — **progress never restarts, never
 returns to stage 1**.
 
+## Live activity feed (premium polish)
+
+Beneath the stage list, a **live activity feed** ("What's happening") streams
+real pipeline milestones — no invented items:
+
+```
+✓ Extracted your profile (24 fields)
+✓ Detected "Fitness Creator" persona
+✓ Analyzed your content and audience
+✓ Created your workspace
+✓ Published your website
+```
+
+The messages are recorded by `sessionService.recordActivity` at the actual
+pipeline steps (from acquisition diagnostics, persona detection, provisioning,
+publishing) and surfaced through `getGenerationSessionProgress().activity` —
+they make the system feel like it's actively working rather than waiting for the
+next stage.
+
+## Completion
+
+When the backend reports completion, the view shows **"Your website is ready! —
+Opening your dashboard…"** for ~400ms before navigating — just enough for the
+user to register the success (not an artificial delay). The dashboard opens
+immediately after.
+
 ## Failure experience
 
 Only the failed stage is highlighted. Copy is creator-friendly ("We couldn't

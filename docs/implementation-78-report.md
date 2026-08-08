@@ -21,6 +21,18 @@ progress is now event-driven and reflects actual backend milestones.
 | 11 — Super Admin visibility | ✅ | `/super-admin/generation-monitor` — current stage, duration, failed stage, recent generations, average duration |
 | 12 — Documentation | ✅ | This report + 4 companion docs |
 
+## Post-sprint polish (pre-launch)
+
+- **Live activity feed** — `sessionService.recordActivity` records real pipeline
+  milestones ("Extracted your profile (24 fields)", "Detected \"Fitness Creator\"
+  persona", "Analyzed your content and audience", "Created your workspace",
+  "Published your website") from the actual acquisition diagnostics, persona
+  detection, provisioning and publishing steps; `getGenerationSessionProgress`
+  returns them and the view renders a "What's happening" feed beneath the stages.
+- **Completion message** — on `generation.completed`, the view shows
+  **"Your website is ready! — Opening your dashboard…"** for ~400ms before
+  navigating (enough to register success, not an artificial delay).
+
 ## Files
 
 - `src/modules/generation-progress/**` — runtime, friendly stages, index.
