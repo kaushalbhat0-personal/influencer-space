@@ -1,3 +1,7 @@
+/** RCCF-LAUNCH-POLISH-05: the ONLY public contact address. Every marketing
+ * surface (footer, contact page, legal pages, schema, metadata) uses this. */
+export const CONTACT_EMAIL = "info.micronest@gmail.com";
+
 export const BRAND = {
   name: "CreatorStore",
   tagline: "Turn your content into a business.",
@@ -7,7 +11,7 @@ export const BRAND = {
     "CreatorStore is an AI-powered creator business platform. Paste your social profile — YouTube, Instagram, TikTok — and our AI generates a complete business website with storefront, products, checkout, analytics, SEO, and a visual drag-and-drop builder. No coding. No templates. Just your content, transformed.",
   foundingYear: 2024,
   location: "Pune, Maharashtra, India",
-  email: "support@influencerspace.in",
+  email: CONTACT_EMAIL,
   appUrl: undefined as string | undefined,
 } as const;
 

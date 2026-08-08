@@ -1,7 +1,21 @@
+import type { Metadata } from "next";
+import { MarketingNav } from "@/components/marketing/MarketingNav";
+import { Footer } from "@/components/marketing/Footer";
+import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
+
+// RCCF-LAUNCH-POLISH-05: canonical contact on legal pages + consistent nav/footer.
+export const metadata: Metadata = {
+  title: "Terms and Conditions",
+  description: `CreatorStore terms and conditions. Contact: ${CONTACT_EMAIL}.`,
+  alternates: { canonical: "/terms" },
+};
+
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-black px-4 py-16 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
+      <MarketingNav />
+      <div className="px-4 py-16 pt-28 sm:px-8">
+        <div className="mx-auto max-w-3xl">
         <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">
           Terms and Conditions
         </h1>
@@ -132,14 +146,16 @@ export default function TermsPage() {
             <h2 className="mb-2 text-lg font-semibold text-white">11. Contact</h2>
             <p>
               For questions about these Terms, contact us at{" "}
-              <a href="mailto:support@influencerspace.in" className="text-s8ul-cyan hover:underline">
-                support@influencerspace.in
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-s8ul-cyan hover:underline">
+                {CONTACT_EMAIL}
               </a>
               .
             </p>
           </section>
         </div>
+        </div>
       </div>
+      <Footer />
     </main>
   );
 }

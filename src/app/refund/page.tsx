@@ -1,7 +1,21 @@
+import type { Metadata } from "next";
+import { MarketingNav } from "@/components/marketing/MarketingNav";
+import { Footer } from "@/components/marketing/Footer";
+import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
+
+// RCCF-LAUNCH-POLISH-05: canonical contact on legal pages + consistent nav/footer.
+export const metadata: Metadata = {
+  title: "Cancellation & Refund Policy",
+  description: `CreatorStore cancellation and refund policy. Contact: ${CONTACT_EMAIL}.`,
+  alternates: { canonical: "/refund" },
+};
+
 export default function RefundPage() {
   return (
-    <main className="min-h-screen bg-black px-4 py-16 sm:px-8">
-      <div className="mx-auto max-w-3xl">
+    <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
+      <MarketingNav />
+      <div className="px-4 py-16 pt-28 sm:px-8">
+        <div className="mx-auto max-w-3xl">
         <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">
           Cancellation &amp; Refund Policy
         </h1>
@@ -19,8 +33,8 @@ export default function RefundPage() {
             </p>
             <p className="mt-2">
               To cancel, go to your Billing settings or contact us at{" "}
-              <a href="mailto:support@influencerspace.in" className="text-s8ul-cyan hover:underline">
-                support@influencerspace.in
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-s8ul-cyan hover:underline">
+                {CONTACT_EMAIL}
               </a>.
             </p>
           </section>
@@ -32,8 +46,8 @@ export default function RefundPage() {
               within 2 hours of placing the order, provided the order has not yet been
               processed or shipped by the creator. To request cancellation, contact the
               creator directly or reach out to us at{" "}
-              <a href="mailto:support@influencerspace.in" className="text-s8ul-cyan hover:underline">
-                support@influencerspace.in
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-s8ul-cyan hover:underline">
+                {CONTACT_EMAIL}
               </a>{" "}
               with your order ID.
             </p>
@@ -82,16 +96,18 @@ export default function RefundPage() {
             <p>
               If a refund request is declined or unresolved by the creator, you may
               escalate the matter to Influencer Space at{" "}
-              <a href="mailto:support@influencerspace.in" className="text-s8ul-cyan hover:underline">
-                support@influencerspace.in
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-s8ul-cyan hover:underline">
+                {CONTACT_EMAIL}
               </a>{" "}
               for mediation. We review disputes within 14 business days and our decision
               is final. For payment-specific disputes, Razorpay&apos;s own dispute resolution
               mechanism may also be available.
-            </p>
-          </section>
+              </p>
+            </section>
+          </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

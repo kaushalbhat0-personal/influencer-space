@@ -26,6 +26,7 @@ import { getPlatformConfig } from "@/lib/config/platform";
 import { getPublicPricingData } from "@/modules/pricing/application/runtime";
 import { ExperienceSection } from "@/modules/theme/runtime/experience";
 import { THEME_EXPERIENCES } from "@/modules/theme/runtime/experience";
+import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 // RCCF-IMPLEMENTATION-71: the homepage embeds runtime pricing — render live so
 // Super Admin pricing changes reflect immediately (falls back to defaults if
@@ -50,6 +51,7 @@ function OrganizationSchema() {
     "@type": "Organization",
     name: "CreatorStore",
     url: getPlatformConfig().appUrl,
+    email: CONTACT_EMAIL,
     description: "Creator platform that builds storefronts from social profiles.",
   };
   return (

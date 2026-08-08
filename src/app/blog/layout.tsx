@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Footer } from "@/components/marketing/Footer";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -27,6 +28,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       <main className="mx-auto max-w-3xl px-4 py-8">
         {children}
       </main>
+      <Footer />
     </div>
   );
 }

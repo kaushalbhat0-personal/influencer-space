@@ -8,8 +8,9 @@
 - **"Join thousands of creators"** (About CTA) → honest copy.
 - **Empty testimonials/metrics/case-studies** removed from the home page (they
   rendered nothing but carried "Trusted by creators like you" intent).
-- **Placeholder WhatsApp number** (`+91-98765-43210`) left in place — flagged
-  as Critical; requires a real contact before launch.
+- **Placeholder WhatsApp number** (`+91-98765-43210`) — RESOLVED in
+  RCCF-LAUNCH-POLISH-05: removed from the contact page. The only public contact
+  is now `info.micronest@gmail.com` (see `docs/marketing-contact-polish.md`).
 - **Legal identity inconsistency** ("Influencer Space" vs "CreatorStore") left
   in place — flagged; must be unified to one canonical legal name.
 - **Unused fabricated testimonials** in `content.ts` (merch-sales-3x claims) —
@@ -27,7 +28,7 @@ Product truth, which the platform can back:
 
 ## Still to fix before launch
 
-1. Real WhatsApp/contact (Critical).
+1. ~~Real WhatsApp/contact~~ — resolved: canonical email `info.micronest@gmail.com` (RCCF-LAUNCH-POLISH-05).
 2. One canonical legal entity name across `/contact`, `/terms`, `/privacy`.
 3. Delete the unused fabricated testimonials.
 4. Either ship real early-user proof or keep the empty trust layer removed.

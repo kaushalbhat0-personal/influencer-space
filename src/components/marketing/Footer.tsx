@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 const FOOTER_LINKS = [
   { href: "/terms", label: "Terms" },
@@ -20,10 +21,10 @@ export function Footer() {
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-zinc-500">
           <a
-            href="mailto:support@influencerspace.in"
+            href={`mailto:${CONTACT_EMAIL}`}
             className="transition-colors hover:text-indigo-400"
           >
-            support@influencerspace.in
+            {CONTACT_EMAIL}
           </a>
           <span className="hidden sm:inline">·</span>
           <span>Pune, Maharashtra, India</span>

@@ -6,7 +6,7 @@ If you discover a security vulnerability in CreatorStore, please report it priva
 
 **Do not report security vulnerabilities through public GitHub issues.**
 
-Instead, send a description of the issue to **support@influencerspace.in**.
+Instead, send a description of the issue to **info.micronest@gmail.com**.
 
 Please include:
 

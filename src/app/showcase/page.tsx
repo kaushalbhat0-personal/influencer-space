@@ -1,8 +1,19 @@
-﻿import Link from "next/link";
+﻿import type { Metadata } from "next";
+import Link from "next/link";
 import { showcaseService, type ShowcaseSite } from "@/modules/tenant/application/showcase.service";
 import { Search, ExternalLink, ArrowRight } from "lucide-react";
+import { MarketingNav } from "@/components/marketing/MarketingNav";
+import { Footer } from "@/components/marketing/Footer";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+// RCCF-LAUNCH-POLISH-05: consistent marketing chrome (nav/footer + metadata).
+export const metadata: Metadata = {
+  title: "Showcase",
+  description: "Explore real creator storefronts built with CreatorStore.",
+  alternates: { canonical: "/showcase" },
+};
 
 export default async function ShowcasePage({ searchParams }: { searchParams: { category?: string; q?: string } }) {
   const category = searchParams.category || undefined;
@@ -17,7 +28,8 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-root)]">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-8 sm:py-24">
+      <MarketingNav />
+      <div className="mx-auto max-w-7xl px-4 py-16 pt-28 sm:px-8 sm:py-24">
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-white">Creator Showcase</h1>
           <p className="mt-3 text-zinc-500">Explore websites built with CreatorStore. Every site is a real, published creator storefront.</p>
@@ -74,6 +86,7 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
           </Link>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }
@@ -101,7 +114,7 @@ function ShowcaseCard({ site }: { site: ShowcaseSite }) {
         {site.products && site.products.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {site.products.map((p) => (
-              <span key={p.name} className="rounded-md bg-white/[0.03] border border-white/[0.04] px-2 py-0.5 text-[10px] text-zinc-500">{p.name} Â· â‚¹{p.price}</span>
+              <span key={p.name} className="rounded-md bg-white/[0.03] border border-white/[0.04] px-2 py-0.5 text-[10px] text-zinc-500">{p.name} · {typeof p.price === "number" ? formatCurrency(p.price) : ""}</span>
             ))}
           </div>
         )}

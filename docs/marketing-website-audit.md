@@ -46,7 +46,8 @@ uncommunicated, while two claims are overstated relative to the codebase.
   emptied) — the homepage's "Trusted by creators like you" heading is dead copy.
 - **The About page hardcodes "10,000+ Storefronts / 5,000+ Creators"** —
   unverified numbers, contradicting the honesty policy that emptied the seeds.
-- Contact WhatsApp "+91-98765-43210" is an obvious placeholder.
+- Contact WhatsApp "+91-98765-43210" is an obvious placeholder — **RESOLVED in
+  RCCF-LAUNCH-POLISH-05** (canonical contact is now `info.micronest@gmail.com`).
 - Legal entity naming inconsistent (CreatorStore vs "Influencer Space").
 - `IntegrationLogos` lists Vercel/Next.js (the platform's own stack) as partner
   "platforms" — misleading.

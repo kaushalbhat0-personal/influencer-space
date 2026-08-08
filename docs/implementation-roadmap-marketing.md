@@ -37,7 +37,7 @@ Prioritized fixes before launch. Ordered by impact. Effort/risk/ROI estimated.
 | M5 | Remove **own-stack logos (Vercel/Next.js)** from "Works with your platforms" | Low | Low | Low |
 | M6 | Sitemap: add `/purchase`, `/claim-invite`, legal pages; robots: disallow `/onboarding`, `/purchase`, `/dev/` | Low | Low | Low |
 | M7 | Remove the **fabricated demo data** ("182 videos", unused testimonials with "3x" claims) or make them clearly illustrative | Low | Low | Medium |
-| M8 | **Contact: real WhatsApp/number**, canonical legal entity name across pages | Low | Low | Low |
+| M8 | ~~Contact: real WhatsApp/number~~ (done — canonical email `info.micronest@gmail.com`, RCCF-LAUNCH-POLISH-05); canonical legal entity name across pages | Low | Low | Low |
 
 ## Low
 
