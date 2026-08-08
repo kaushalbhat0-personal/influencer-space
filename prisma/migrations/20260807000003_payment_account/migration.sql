@@ -1,5 +1,8 @@
 -- RCCF-IMPLEMENTATION-74 — Payment Account Runtime & Direct Commerce.
 -- Additive, nullable — zero downtime.
+--
+-- NOTE (RCCF-LAUNCH-POLISH-05 DB sync): "tenantId" must be UUID — it references
+-- Tenant."id" which is @db.Uuid. The earlier TEXT version could not be applied.
 
 ALTER TABLE "Product" ADD COLUMN "type" TEXT NOT NULL DEFAULT 'digital';
 
@@ -10,8 +13,8 @@ ALTER TABLE "ProductOrder"
   ADD COLUMN "providerMetadata" JSONB;
 
 CREATE TABLE "PaymentAccount" (
-  "id" TEXT NOT NULL,
-  "tenantId" TEXT NOT NULL,
+  "id" UUID NOT NULL,
+  "tenantId" UUID NOT NULL,
   "provider" TEXT NOT NULL DEFAULT 'razorpay',
   "displayName" TEXT,
   "accountHolderName" TEXT,

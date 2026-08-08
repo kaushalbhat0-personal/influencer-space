@@ -1,5 +1,9 @@
 -- RCCF-IMPLEMENTATION-71 — BillingPlan becomes the runtime pricing source.
 -- Additive, nullable — zero downtime.
+--
+-- NOTE (RCCF-LAUNCH-POLISH-05 DB sync): "id"/"planId" are UUID — the schema
+-- declares @db.Uuid and planId references BillingPlan."id" (uuid). The earlier
+-- TEXT version could not be applied.
 
 ALTER TABLE "BillingPlan"
   ADD COLUMN "runtimeConfig" JSONB,
@@ -7,9 +11,9 @@ ALTER TABLE "BillingPlan"
   ADD COLUMN "effectiveAt" TIMESTAMP(3);
 
 CREATE TABLE "PlanPricingVersion" (
-  "id" TEXT NOT NULL,
+  "id" UUID NOT NULL,
   "planCode" TEXT NOT NULL,
-  "planId" TEXT,
+  "planId" UUID,
   "payload" JSONB NOT NULL,
   "author" TEXT,
   "changeNote" TEXT,
@@ -22,7 +26,7 @@ CREATE INDEX "PlanPricingVersion_planCode_createdAt_idx" ON "PlanPricingVersion"
 ALTER TABLE "PlanPricingVersion" ADD CONSTRAINT "PlanPricingVersion_planId_fkey" FOREIGN KEY ("planId") REFERENCES "BillingPlan"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 CREATE TABLE "Coupon" (
-  "id" TEXT NOT NULL,
+  "id" UUID NOT NULL,
   "code" TEXT NOT NULL,
   "label" TEXT NOT NULL,
   "description" TEXT,
@@ -41,7 +45,7 @@ CREATE TABLE "Coupon" (
 CREATE UNIQUE INDEX "Coupon_code_key" ON "Coupon"("code");
 
 CREATE TABLE "LaunchProgram" (
-  "id" TEXT NOT NULL,
+  "id" UUID NOT NULL,
   "code" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "description" TEXT,

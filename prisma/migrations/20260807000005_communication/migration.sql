@@ -1,8 +1,11 @@
 -- RCCF-TRACK-02 — Communication Runtime & Notification Center.
 -- Additive, nullable — zero downtime.
+--
+-- NOTE (RCCF-LAUNCH-POLISH-05 DB sync): "id" columns are UUID — all these
+-- models declare @db.Uuid in the schema.
 
 CREATE TABLE "Notification" (
-  "id" TEXT NOT NULL,
+  "id" UUID NOT NULL,
   "audience" TEXT NOT NULL,
   "recipientId" TEXT NOT NULL,
   "category" TEXT NOT NULL,
@@ -22,7 +25,7 @@ CREATE INDEX "Notification_audience_recipientId_readAt_idx" ON "Notification"("a
 CREATE INDEX "Notification_category_idx" ON "Notification"("category");
 
 CREATE TABLE "NotificationPreference" (
-  "id" TEXT NOT NULL,
+  "id" UUID NOT NULL,
   "audience" TEXT NOT NULL,
   "recipientId" TEXT NOT NULL,
   "category" TEXT NOT NULL,
@@ -34,7 +37,7 @@ CREATE TABLE "NotificationPreference" (
 CREATE UNIQUE INDEX "NotificationPreference_audience_recipientId_category_key" ON "NotificationPreference"("audience", "recipientId", "category");
 
 CREATE TABLE "CommunicationLog" (
-  "id" TEXT NOT NULL,
+  "id" UUID NOT NULL,
   "templateId" TEXT NOT NULL,
   "recipient" TEXT NOT NULL,
   "channel" TEXT NOT NULL,
