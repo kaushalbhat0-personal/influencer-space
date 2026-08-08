@@ -204,10 +204,22 @@ export interface ThemeSnapshot {
     background: string;
     foreground: string;
     muted: string;
+    // RCCF-LAUNCH-TRACK-05: full token set (additive — old snapshots resolve to
+    // derived/global fallbacks).
+    success?: string;
+    warning?: string;
+    danger?: string;
+    surface?: string;
+    surfaceSecondary?: string;
+    border?: string;
+    focus?: string;
+    textSecondary?: string;
   };
   typography: {
     heading: string;
     body: string;
+    mono?: string;
+    display?: string;
   };
 }
 

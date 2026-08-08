@@ -23,7 +23,7 @@ export interface TenantWithDetails {
   customDomain: string | null;
   createdAt: Date;
   users: { id: string; email: string; name: string | null }[];
-  subscription: { plan: string; status: string } | null;
+  subscription: { plan: string; planCode: string | null; status: string } | null;
   _count: { users: number; products: number };
 }
 
@@ -84,7 +84,7 @@ export async function getAllTenants(): Promise<TenantWithDetails[]> {
     const plan = planByTenant.get(tenant.id);
     return {
       ...tenant,
-      subscription: plan?.planCode ? { plan: plan.planDisplay, status: plan.status ?? "ACTIVE" } : null,
+      subscription: plan?.planCode ? { plan: plan.planDisplay, planCode: plan.planCode, status: plan.status ?? "ACTIVE" } : null,
     };
   });
 }

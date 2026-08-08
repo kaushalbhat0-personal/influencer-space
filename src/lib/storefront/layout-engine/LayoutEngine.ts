@@ -38,6 +38,7 @@ export class LayoutEngine {
 
   private buildTheme(snapshot: PublishedSnapshot): Record<string, string> {
     const c = snapshot.theme.colors;
+    const t = snapshot.theme.typography;
     return {
       "--brand-primary": c.primary,
       "--brand-secondary": c.secondary,
@@ -46,13 +47,24 @@ export class LayoutEngine {
       "--surface-base": c.foreground,
       "--surface-card": deriveSurface(c.background, c.foreground),
       "--surface-card-hover": deriveSurface(c.background, c.foreground, 1.4),
-      "--border": deriveBorder(c.background),
+      "--border": c.border ?? deriveBorder(c.background),
       "--text-primary": c.foreground,
-      "--text-secondary": c.muted,
+      "--text-secondary": c.textSecondary ?? c.muted,
       "--text-muted": c.muted,
       "--on-primary": deriveOnColor(c.primary),
       "--primary-hover": deriveShade(c.primary, 0.82),
       "--live": "#ef4444",
+      // RCCF-LAUNCH-TRACK-05: emit the complete theme token set so status
+      // colors, surfaces, focus and fonts are theme-driven (with safe fallbacks).
+      "--color-success": c.success ?? "#10B981",
+      "--color-warning": c.warning ?? "#F59E0B",
+      "--color-danger": c.danger ?? "#EF4444",
+      "--surface-secondary": c.surfaceSecondary ?? deriveSurface(c.background, c.foreground, 1.4),
+      "--color-focus": c.focus ?? c.primary,
+      "--brand-font-heading": t.heading,
+      "--brand-font-body": t.body,
+      "--brand-font-mono": t.mono ?? "ui-monospace, monospace",
+      "--brand-font-display": t.display ?? t.heading,
     };
   }
 

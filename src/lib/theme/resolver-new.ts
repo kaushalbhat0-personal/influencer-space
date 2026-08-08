@@ -1,4 +1,5 @@
 import { themeRegistry } from "./registry-new";
+import { DEFAULT_DARK_TOKENS, DEFAULT_LIGHT_TOKENS } from "./tokens-new";
 
 export interface ResolvedSnapshotTheme {
   packageId: string;
@@ -9,10 +10,22 @@ export interface ResolvedSnapshotTheme {
     background: string;
     foreground: string;
     muted: string;
+    // RCCF-LAUNCH-TRACK-05: complete token set so the Theme Runtime is the
+    // single authority (status colors, surfaces, border, focus, secondary text).
+    success?: string;
+    warning?: string;
+    danger?: string;
+    surface?: string;
+    surfaceSecondary?: string;
+    border?: string;
+    focus?: string;
+    textSecondary?: string;
   };
   typography: {
     heading: string;
     body: string;
+    mono?: string;
+    display?: string;
   };
 }
 
@@ -73,10 +86,20 @@ export class ThemeResolver {
         background: overrides.colors?.background ?? base.colors.background,
         foreground: overrides.colors?.foreground ?? base.colors.foreground,
         muted: overrides.colors?.muted ?? base.colors.muted,
+        ...(overrides.colors?.success ?? base.colors.success !== undefined ? { success: overrides.colors?.success ?? base.colors.success } : {}),
+        ...(overrides.colors?.warning ?? base.colors.warning !== undefined ? { warning: overrides.colors?.warning ?? base.colors.warning } : {}),
+        ...(overrides.colors?.danger ?? base.colors.danger !== undefined ? { danger: overrides.colors?.danger ?? base.colors.danger } : {}),
+        ...(overrides.colors?.surface ?? base.colors.surface !== undefined ? { surface: overrides.colors?.surface ?? base.colors.surface } : {}),
+        ...(overrides.colors?.surfaceSecondary ?? base.colors.surfaceSecondary !== undefined ? { surfaceSecondary: overrides.colors?.surfaceSecondary ?? base.colors.surfaceSecondary } : {}),
+        ...(overrides.colors?.border ?? base.colors.border !== undefined ? { border: overrides.colors?.border ?? base.colors.border } : {}),
+        ...(overrides.colors?.focus ?? base.colors.focus !== undefined ? { focus: overrides.colors?.focus ?? base.colors.focus } : {}),
+        ...(overrides.colors?.textSecondary ?? base.colors.textSecondary !== undefined ? { textSecondary: overrides.colors?.textSecondary ?? base.colors.textSecondary } : {}),
       },
       typography: {
         heading: overrides.typography?.heading ?? base.typography.heading,
         body: overrides.typography?.body ?? base.typography.body,
+        ...(overrides.typography?.mono ?? base.typography.mono !== undefined ? { mono: overrides.typography?.mono ?? base.typography.mono } : {}),
+        ...(overrides.typography?.display ?? base.typography.display !== undefined ? { display: overrides.typography?.display ?? base.typography.display } : {}),
       },
     };
   }
@@ -86,39 +109,50 @@ export class ThemeResolver {
     mode: ThemeResolutionMode,
   ): ResolvedSnapshotTheme {
     const variant = theme.variants.find((v) => v.mode === mode) ?? theme.variants[0];
+    const defaultTokens = mode === "light" ? DEFAULT_LIGHT_TOKENS : DEFAULT_DARK_TOKENS;
 
     if (!variant) {
       // Fallback: return theme identity with defaults
+      const d = defaultTokens.colors;
+      const t = defaultTokens.typography;
       return {
         packageId: theme.id,
         colors: {
-          primary: "#6366F1",
-          secondary: "#818CF8",
-          accent: "#A5B4FC",
-          background: "#09090b",
-          foreground: "#fafafa",
-          muted: "#a1a1aa",
+          primary: d.primary, secondary: d.secondary, accent: d.accent,
+          background: d.background, foreground: d.textPrimary, muted: d.textMuted,
+          success: d.success, warning: d.warning, danger: d.danger,
+          surface: d.surface, surfaceSecondary: d.surfaceSecondary,
+          border: d.border, focus: d.focus, textSecondary: d.textSecondary,
         },
-        typography: {
-          heading: "Inter, system-ui, sans-serif",
-          body: "Inter, system-ui, sans-serif",
-        },
+        typography: { heading: t.headingFont, body: t.bodyFont, mono: t.monoFont, display: t.displayFont },
       };
     }
 
+    const c = variant.tokens.colors;
+    const t = variant.tokens.typography;
     return {
       packageId: theme.id,
       colors: {
-        primary: variant.tokens.colors.primary,
-        secondary: variant.tokens.colors.secondary,
-        accent: variant.tokens.colors.accent,
-        background: variant.tokens.colors.background,
-        foreground: variant.tokens.colors.textPrimary,
-        muted: variant.tokens.colors.textMuted,
+        primary: c.primary,
+        secondary: c.secondary,
+        accent: c.accent,
+        background: c.background,
+        foreground: c.textPrimary,
+        muted: c.textMuted,
+        success: c.success ?? defaultTokens.colors.success,
+        warning: c.warning ?? defaultTokens.colors.warning,
+        danger: c.danger ?? defaultTokens.colors.danger,
+        surface: c.surface ?? defaultTokens.colors.surface,
+        surfaceSecondary: c.surfaceSecondary ?? defaultTokens.colors.surfaceSecondary,
+        border: c.border ?? defaultTokens.colors.border,
+        focus: c.focus ?? defaultTokens.colors.focus,
+        textSecondary: c.textSecondary ?? defaultTokens.colors.textSecondary,
       },
       typography: {
-        heading: variant.tokens.typography.headingFont,
-        body: variant.tokens.typography.bodyFont,
+        heading: t.headingFont,
+        body: t.bodyFont,
+        mono: t.monoFont,
+        display: t.displayFont,
       },
     };
   }

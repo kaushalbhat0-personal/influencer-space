@@ -8,8 +8,15 @@ import { builderStore } from "@/lib/builder/store";
 import { builderPagesToLayoutSnapshot, slotIdFromSectionId } from "@/lib/builder/layout";
 import { layoutEngine } from "@/lib/storefront/layout-engine";
 import { themeResolver } from "@/lib/theme/resolver-new";
+import { themeRegistry } from "@/lib/theme/registry-new";
 import { getLivePreviewData } from "@/actions/builder-preview.actions";
 import { shouldRenderSection } from "@/modules/section-presentation";
+import {
+  experienceRegistry,
+  ExperienceSection,
+  resolveExperienceForCapabilities,
+  THEME_EXPERIENCES,
+} from "@/modules/theme/runtime/experience";
 import type { PublishedSnapshot, LayoutSnapshot, ThemeSnapshot } from "@/types/snapshot";
 import { traceRuntime, computeRuntimeSignature, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
@@ -46,6 +53,7 @@ export function InteractiveCanvas({
     invalidAssetIds: [], skippedAssets: 0, moduleFailures: [],
   });
   const [dataReady, setDataReady] = useState(false);
+  const [previewPlanCode, setPreviewPlanCode] = useState<string | null>(null);
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
 
   // Theme source: the workspace owns the authoritative theme state (current +
@@ -64,6 +72,7 @@ export function InteractiveCanvas({
       setThemeColors(res.themeColors ?? {});
       setThemeFonts(res.themeFonts ?? {});
       setDiagnostics(res.diagnostics ?? { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] });
+      setPreviewPlanCode(res.planCode ?? null);
       onLiveContentChange?.(content);
     }
     setDataReady(true);
@@ -150,10 +159,20 @@ export function InteractiveCanvas({
         background: resolvedTheme?.colors.background ?? "#09090b",
         foreground: resolvedTheme?.colors.foreground ?? "#fafafa",
         muted: resolvedTheme?.colors.muted ?? "#a1a1aa",
+        success: resolvedTheme?.colors.success,
+        warning: resolvedTheme?.colors.warning,
+        danger: resolvedTheme?.colors.danger,
+        surface: resolvedTheme?.colors.surface,
+        surfaceSecondary: resolvedTheme?.colors.surfaceSecondary,
+        border: resolvedTheme?.colors.border,
+        focus: resolvedTheme?.colors.focus,
+        textSecondary: resolvedTheme?.colors.textSecondary,
       },
       typography: {
         heading: resolvedTheme?.typography.heading ?? "Inter",
         body: resolvedTheme?.typography.body ?? "Inter",
+        mono: resolvedTheme?.typography.mono,
+        display: resolvedTheme?.typography.display,
       },
     };
     const layout = builderPagesToLayoutSnapshot(serializedPages);
@@ -174,6 +193,20 @@ export function InteractiveCanvas({
       renderingHints: {},
     };
     const doc = layoutEngine.resolve(snapshot);
+
+    // RCCF-LAUNCH-TRACK-05: resolve the theme experience (backgrounds/effects)
+    // exactly like the storefront, capability-filtered by the tenant's plan, so
+    // the Builder preview and the live storefront render identically.
+    const themeDef = themePackageId ? themeRegistry.getById(themePackageId) : undefined;
+    const experience = resolveExperienceForCapabilities(
+      experienceRegistry.resolve({
+        id: themePackageId ?? null,
+        category: themeDef?.category ?? null,
+        premium: themeDef?.premium ?? null,
+      }),
+      previewPlanCode,
+    );
+
     return {
       sections: doc.pages
         .flatMap((p) => p.sections)
@@ -184,12 +217,14 @@ export function InteractiveCanvas({
       theme,
       themeVars: doc.theme,
       layout,
+      experience,
     };
     // serializedPages is derived 1:1 from layoutSignature — never memoize store state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, themeFonts]);
+  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, themeFonts, previewPlanCode]);
 
   const sections = resolved?.sections ?? [];
+  const experience = resolved?.experience ?? THEME_EXPERIENCES.minimal;
 
   // Emit the SAME runtime trace + Runtime Signature as storefront/publish, so
   // the builder preview can be compared bit-for-bit against production.
@@ -254,24 +289,35 @@ export function InteractiveCanvas({
               </div>
             )}
 
-            {sections.map((section) => {
+            {sections.map((section, i) => {
               const slotId = slotIdFromSectionId(section.id);
+              const isFirst = i === 0;
+              const isLast = i === sections.length - 1;
+              const sectionVariant: "hero" | "footer" | "default" = isFirst ? "hero" : isLast ? "footer" : "default";
               return (
-                <div
+                // RCCF-LAUNCH-TRACK-05: the Builder preview now renders the SAME
+                // ExperienceSection (backgrounds/effects/dividers) as the live
+                // storefront, so previews accurately represent the theme.
+                <ExperienceSection
                   key={section.id}
-                  data-element-id={slotId}
-                  data-module={section.moduleId}
-                  className="relative mb-2"
+                  id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+                  experience={experience}
+                  index={i}
+                  variant={sectionVariant}
+                  divider="bottom"
+                  data-testid={`builder-experience-${i}`}
                 >
-                  <ComponentErrorBoundary componentId={section.moduleId}>
-                    <ComponentRenderer
-                      componentId={section.moduleId}
-                      props={section.config}
-                      elementId={slotId}
-                      viewport={builderStore.canvas.device}
-                    />
-                  </ComponentErrorBoundary>
-                </div>
+                  <div data-element-id={slotId} data-module={section.moduleId} className="relative">
+                    <ComponentErrorBoundary componentId={section.moduleId}>
+                      <ComponentRenderer
+                        componentId={section.moduleId}
+                        props={section.config}
+                        elementId={slotId}
+                        viewport={builderStore.canvas.device}
+                      />
+                    </ComponentErrorBoundary>
+                  </div>
+                </ExperienceSection>
               );
             })}
           </div>

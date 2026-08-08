@@ -32,7 +32,7 @@ describe("SectionCountResolver", () => {
     const agg = aggregate({
       products: [{ id: "1", name: "n", description: null, price: 1, imageUrl: null, images: [], slug: "", isFeatured: false, isActive: true }] as WebsiteAggregate["products"],
       gallery: [{ id: "2", title: "", description: null, imageUrl: "u", mediaType: "image", videoUrl: null, altText: null, isFeatured: false }] as WebsiteAggregate["gallery"],
-      timeline: [{ id: "3", year: 2020, title: "t", description: null, imageUrl: null, stats: {} }] as WebsiteAggregate["timeline"],
+      timeline: [{ id: "3", year: "2020", title: "t", description: "", imageUrl: null, stats: null }] as WebsiteAggregate["timeline"],
       testimonials: [{ id: "4", author: "a", role: null, content: "c", avatarUrl: null, rating: 5, featured: false, category: "g" }] as WebsiteAggregate["testimonials"],
       faq: [{ id: "5", question: "q", answer: "a", category: "g" }] as WebsiteAggregate["faq"],
       games: [{ id: "6", name: "g", logoUrl: null, description: null, genre: null }] as WebsiteAggregate["games"],
@@ -55,7 +55,7 @@ describe("SectionCountResolver", () => {
   });
 
   it("milestones map to the timeline collection (admin route /admin/milestones)", () => {
-    const agg = aggregate({ timeline: [{ id: "1", year: 2020, title: "t", description: null, imageUrl: null, stats: {} }] as WebsiteAggregate["timeline"] });
+    const agg = aggregate({ timeline: [{ id: "1", year: "2020", title: "t", description: "", imageUrl: null, stats: null }] as WebsiteAggregate["timeline"] });
     expect(sectionCountResolver.countForBase("milestones", agg)).toBe(1);
   });
 
@@ -72,7 +72,7 @@ describe("SectionCountResolver", () => {
 
 describe("static + uncountable sections (Phase 3)", () => {
   it("hero/about/navigation/footer/contact are static and show no count", () => {
-    for (const base of STATIC_SECTION_BASES) {
+    for (const base of Array.from(STATIC_SECTION_BASES)) {
       expect(sectionCountResolver.isStatic(`${base}.default`)).toBe(true);
       expect(sectionCountResolver.hasCount(`${base}.default`)).toBe(false);
     }

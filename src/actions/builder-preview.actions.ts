@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 
 /**
  * Live content for the builder preview. The builder canvas renders the exact
@@ -18,6 +19,9 @@ export async function getLivePreviewData(): Promise<{
   themePackageId?: string | null;
   themeColors?: Record<string, string>;
   themeFonts?: Record<string, string>;
+  /** RCCF-LAUNCH-TRACK-05: the tenant's plan so the preview resolves theme
+   * experience capabilities identically to the storefront. */
+  planCode?: string | null;
   diagnostics?: { invalidAssetIds: Array<{ id: string; module: string; field?: string }>; skippedAssets: number; moduleFailures: string[] };
   error?: string;
 }> {
@@ -26,12 +30,13 @@ export async function getLivePreviewData(): Promise<{
     const tenantId = session?.user?.tenantId;
     if (!tenantId) return { success: false, error: "Unauthorized" };
 
-    const [aggResult, website] = await Promise.all([
+    const [aggResult, website, plan] = await Promise.all([
       websiteAggregateService.buildWithDiagnostics(tenantId),
       prisma.website.findUnique({
         where: { tenantId },
         select: { themePackageId: true, themeColors: true, themeFonts: true },
       }),
+      resolveActivePlan(undefined, tenantId).catch(() => ({ code: null })),
     ]);
 
     return {
@@ -40,6 +45,7 @@ export async function getLivePreviewData(): Promise<{
       themePackageId: website?.themePackageId ?? null,
       themeColors: (website?.themeColors ?? {}) as Record<string, string>,
       themeFonts: (website?.themeFonts ?? {}) as Record<string, string>,
+      planCode: plan?.code ?? null,
       diagnostics: {
         invalidAssetIds: aggResult.invalidAssetIds,
         skippedAssets: aggResult.skippedAssets,

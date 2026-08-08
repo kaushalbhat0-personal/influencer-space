@@ -257,19 +257,42 @@ body {
     @apply admin-badge bg-indigo-500/20 text-indigo-400;
   }
 
-  /* Buttons */
+  /* Buttons — RCCF-LAUNCH-TRACK-05 (Button Runtime): every button consumes the
+     resolved theme tokens (--brand-primary / --brand-secondary / --text-* /
+     --border / --on-primary). Fallbacks preserve the previous indigo/white look
+     so an unthemed surface still renders correctly. No hardcoded indigo. */
   .btn-primary {
-    /* RCCF-IMPLEMENTATION-73: white on violet-500 (~3.7:1) failed AA — the
-       gradient now ends at indigo-600 (~5:1) so button text passes. */
-    @apply inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_30px_rgba(99,102,241,0.25)] disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50;
+    background-color: var(--brand-primary, #6366f1);
+    color: var(--on-primary, #ffffff);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover, #4f46e5);
+    box-shadow: 0 0 30px var(--color-focus, rgba(99, 102, 241, 0.25));
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:border-indigo-400/40 hover:bg-white/5;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200;
+    background: transparent;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+    color: var(--text-primary, #ffffff);
+  }
+
+  .btn-secondary:hover {
+    background: var(--surface-base, rgba(255, 255, 255, 0.05));
+    border-color: var(--brand-primary, #818cf8);
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 transition-all duration-200 hover:bg-white/5 hover:text-white;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200;
+    background: transparent;
+    color: var(--text-secondary, #a1a1aa);
+  }
+
+  .btn-ghost:hover {
+    background: var(--surface-base, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #ffffff);
   }
 
   .btn-danger {
@@ -297,9 +320,20 @@ body {
     @apply inline-flex items-center justify-center rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-400 transition-all duration-200 hover:bg-amber-500/30 disabled:opacity-50;
   }
 
-  /* Inputs */
+  /* Inputs — theme-token focus (no hardcoded indigo) */
   .admin-input {
-    @apply block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30;
+    @apply block w-full rounded-lg bg-white/5 px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #ffffff);
+  }
+
+  .admin-input::placeholder {
+    color: var(--text-muted, #71717a);
+  }
+
+  .admin-input:focus {
+    border-color: var(--brand-primary, #6366f1);
+    box-shadow: 0 0 0 2px var(--color-focus, rgba(99, 102, 241, 0.3));
   }
 
   .admin-select {

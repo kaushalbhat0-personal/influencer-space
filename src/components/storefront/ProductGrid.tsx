@@ -21,7 +21,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
             className="group rounded-xl border border-white/[0.06] bg-[var(--surface-base)]/30 overflow-hidden hover:border-white/20 transition-all"
           >
             {/* Image or placeholder */}
-            <div className="aspect-[4/3] bg-gradient-to-br from-indigo-500/10 to-violet-500/5 flex items-center justify-center overflow-hidden">
+            <div className="aspect-[4/3] bg-[var(--brand-primary,#6366F1)]/10 flex items-center justify-center overflow-hidden">
               {p.imageUrl ? (
                 <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" loading="lazy" />
               ) : (
@@ -36,7 +36,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
                 <span className="text-sm font-bold text-white">{formatCurrency(p.price)}</span>
                 <a
                   href={`/checkout?product=${p.id}`}
-                  className="rounded-lg bg-indigo-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400 transition-colors"
+                  className="rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-4 py-1.5 text-xs font-semibold text-black transition-colors hover:opacity-90"
                 >
                   Buy Now
                 </a>

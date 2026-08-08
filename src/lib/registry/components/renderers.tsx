@@ -190,11 +190,11 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
             )}
             {ctaSecondaryText && (
               ctaSecondaryLink ? (
-                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-white/40 hover:text-white">
+                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-[var(--border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary,#D4D4D8)] transition-colors hover:border-[var(--text-secondary,#FAFAFA)] hover:text-[var(--text-primary,#FAFAFA)]">
                   {ctaSecondaryText}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-semibold text-zinc-300">
+                <span className="inline-flex items-center gap-2 rounded-lg border border-[var(--border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary,#D4D4D8)]">
                   {ctaSecondaryText}
                 </span>
               )
@@ -357,7 +357,7 @@ export function TimelineRenderer({ props }: RendererProps) {
                   />
                 </div>
               )}
-              <p className="text-xs font-semibold text-s8ul-cyan">{m.year}</p>
+              <p className="text-xs font-semibold text-[var(--brand-secondary,#00f5ff)]">{m.year}</p>
               <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{m.title || m.name}</p>
               <p className="text-xs text-[var(--text-muted,#71717A)]">{m.description || ""}</p>
             </div>
@@ -621,13 +621,13 @@ export function PricingRenderer({ props }: RendererProps) {
           {plans.map((plan: Record<string, unknown>, i: number) => {
             const isPopular = Boolean(plan.isPopular);
             return (
-              <div key={i} className={`relative rounded-lg border ${isPopular ? "border-s8ul-cyan/30 bg-s8ul-cyan/5" : "border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60"} p-6 text-center`}>
-                {isPopular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-s8ul-cyan px-3 py-0.5 text-[10px] font-semibold text-black">Popular</span>}
+              <div key={i} className={`relative rounded-lg border ${isPopular ? "border-[var(--brand-secondary,#00f5ff)]/30 bg-[var(--brand-secondary,#00f5ff)]/5" : "border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60"} p-6 text-center`}>
+                {isPopular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[var(--brand-secondary,#00f5ff)] px-3 py-0.5 text-[10px] font-semibold text-black">Popular</span>}
                 <p className="text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">{String(plan.name || "")}</p>
                 <p className="mt-2 text-3xl font-bold text-[var(--text-primary,#FAFAFA)]">{typeof plan.price === "number" ? formatCurrency(plan.price) : String(plan.price || "")}</p>
                 <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(plan.description || plan.desc || "")}</p>
                 {!!plan.cta && (
-                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-s8ul-cyan text-black" : "border border-[var(--border,rgba(255,255,255,0.08))] text-[var(--text-primary,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
+                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-[var(--brand-secondary,#00f5ff)] text-black" : "border border-[var(--border,rgba(255,255,255,0.08))] text-[var(--text-primary,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
                     {String(plan.cta)}
                   </button>
                 )}
@@ -674,7 +674,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
                 )}
               </div>
               <div className="p-4">
-                <p className="text-xs font-semibold text-s8ul-cyan">{(String(course.category || "")).toUpperCase() || "COURSE"}</p>
+                <p className="text-xs font-semibold text-[var(--brand-secondary,#00f5ff)]">{(String(course.category || "")).toUpperCase() || "COURSE"}</p>
                 <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(course.title || "")}</p>
                 {!!course.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(course.description)}</p>}
                 {!!course.price && <p className="mt-2 text-sm font-semibold text-zinc-200">{typeof course.price === "number" ? formatCurrency(course.price) : String(course.price)}</p>}
@@ -723,7 +723,7 @@ export function ServicesRenderer({ props }: RendererProps) {
               </div>
               <div className="p-6">
                 {!!service.category && (
-                  <p className="text-xs font-semibold text-s8ul-cyan">{String(service.category).toUpperCase()}</p>
+                  <p className="text-xs font-semibold text-[var(--brand-secondary,#00f5ff)]">{String(service.category).toUpperCase()}</p>
                 )}
                 <p className="mt-1 text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(service.title || "")}</p>
                 {!!service.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(service.description)}</p>}
@@ -816,7 +816,7 @@ export function DiscordRenderer({ props }: RendererProps) {
     const inviteUrl = p.inviteUrl || `https://discord.gg/${serverId}`;
     return (
       <div className="mx-auto max-w-md px-4 py-12 text-center">
-        <div className="rounded-lg bg-indigo-900/20 p-6">
+        <div className="rounded-lg bg-[var(--brand-primary,#6366F1)]/20 p-6">
           <p className="text-3xl">ðŸ’¬</p>
           <p className="mt-2 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">Discord Community</p>
           <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">Join the conversation</p>
@@ -824,7 +824,7 @@ export function DiscordRenderer({ props }: RendererProps) {
             href={inviteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] transition-colors hover:bg-indigo-500"
+            className="mt-4 inline-block rounded-lg bg-[var(--brand-primary,#6366F1)] px-4 py-2 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] transition-colors hover:opacity-90"
           >
             {label}
           </a>

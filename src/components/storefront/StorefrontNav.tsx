@@ -67,7 +67,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
   return (
     <>
       {/* Desktop sticky nav */}
-      <nav className="sticky top-0 z-40 hidden md:block border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-xl">
+      <nav className="sticky top-0 z-40 hidden md:block border-b border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-center gap-1 px-4 py-2">
           {visibleSections.map((s) => {
             const isExternal = s.type === "external";
@@ -82,7 +82,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
                   if (!isExternal) { e.preventDefault(); handleClick(s); }
                 }}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  !isExternal && activeSection === anchorId ? "text-white bg-white/10" : "text-zinc-500 hover:text-zinc-300"
+                  !isExternal && activeSection === anchorId ? "bg-[var(--brand-primary,#6366F1)]/10 text-[var(--text-primary,#FAFAFA)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"
                 }`}
               >
                 {NAV_ICON[s.id] || null}
@@ -95,7 +95,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
       </nav>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-white/[0.06] bg-zinc-950/90 backdrop-blur-xl">
+      <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/90 backdrop-blur-xl">
         <div className="flex items-center justify-around py-2 px-2">
           {visibleSections.slice(0, 5).map((s) => {
             const isExternal = s.type === "external";
@@ -121,3 +121,4 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
     </>
   );
 }
+

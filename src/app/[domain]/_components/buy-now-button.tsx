@@ -154,7 +154,7 @@ export function BuyNowButton({
       <button
         onClick={handleBuy}
         disabled={loading}
-        className="mt-1.5 w-full rounded-lg bg-white/10 py-2 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-1.5 w-full rounded-lg bg-[var(--brand-secondary,#00f5ff)] py-2 text-xs font-semibold text-black transition-all hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? (
           <span className="inline-flex items-center gap-2">

@@ -138,7 +138,10 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
     }
   }
 
-  async function handlePlanUpdate(plan: "STARTER" | "PRO", status: "FREE" | "ACTIVE") {
+  // RCCF-LAUNCH-TRACK-05 (Phase 8/9): the ledger uses the BillingPlan Runtime —
+  // canonical plan codes (creator_launch/grow/scale). updateSubscriptionPlan
+  // already resolves canonical codes and writes Billing v2.
+  async function handlePlanUpdate(plan: string, status: "FREE" | "ACTIVE") {
     if (!planModal) return;
     setLoading(planModal.tenantId);
     const result = await updateSubscriptionPlan(planModal.tenantId, plan, status);
@@ -153,7 +156,7 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
   }
 
   const openMenuTenant = filtered.find((t) => t.id === openMenuId);
-  const plan = openMenuTenant?.subscription?.plan || "STARTER";
+  const plan = openMenuTenant?.subscription?.plan || "Creator Launch";
 
   return (
     <div className="space-y-4">
@@ -186,7 +189,8 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
             {filtered.map((t) => {
               const adminEmail = t.users.find((u) => u.email)?.email || "\u2014";
               const domain = t.customDomain ? `https://${t.customDomain}` : buildStorefrontUrl(t.subdomain);
-              const planLabel = t.subscription?.plan || "STARTER";
+              const planLabel = t.subscription?.plan || "Creator Launch";
+              const isPaid = !!t.subscription?.planCode && t.subscription.planCode !== "creator_launch";
 
               return (
                 <tr key={t.id}>
@@ -203,7 +207,7 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
                   </td>
                   <td>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      planLabel === "PRO" ? "bg-purple-500/20 text-purple-400" : "bg-s8ul-cyan/10 text-s8ul-cyan"
+                      isPaid ? "bg-[var(--brand-primary,#6366F1)]/20 text-[var(--brand-primary,#818CF8)]" : "bg-s8ul-cyan/10 text-s8ul-cyan"
                     }`}>
                       {planLabel}
                     </span>
@@ -283,11 +287,14 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
             <h3 className="text-lg font-semibold text-white">Manage Plan — {planModal.name}</h3>
             <p className="text-xs text-zinc-500">Current: {planModal.currentPlan}</p>
             <div className="mt-5 space-y-2">
-              <button onClick={() => handlePlanUpdate("STARTER", "FREE")} className="w-full rounded-lg border border-white/10 px-4 py-3 text-sm text-zinc-300 hover:bg-white/5">
-                Set to STARTER (Free)
+              <button onClick={() => handlePlanUpdate("creator_launch", "FREE")} className="w-full rounded-lg border border-white/10 px-4 py-3 text-sm text-zinc-300 hover:bg-white/5">
+                Set to Creator Launch (Free)
               </button>
-              <button onClick={() => handlePlanUpdate("PRO", "ACTIVE")} className="w-full rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-3 text-sm text-purple-400 hover:bg-purple-500/20">
-                Set to PRO (Active)
+              <button onClick={() => handlePlanUpdate("creator_grow", "ACTIVE")} className="w-full rounded-lg border border-[var(--brand-primary,#6366F1)]/30 bg-[var(--brand-primary,#6366F1)]/10 px-4 py-3 text-sm text-[var(--brand-primary,#818CF8)] hover:bg-[var(--brand-primary,#6366F1)]/20">
+                Set to Creator Growth (Active)
+              </button>
+              <button onClick={() => handlePlanUpdate("creator_scale", "ACTIVE")} className="w-full rounded-lg border border-[var(--brand-primary,#6366F1)]/30 bg-[var(--brand-primary,#6366F1)]/10 px-4 py-3 text-sm text-[var(--brand-primary,#818CF8)] hover:bg-[var(--brand-primary,#6366F1)]/20">
+                Set to Creator Scale (Active)
               </button>
             </div>
           </div>
