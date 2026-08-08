@@ -20,6 +20,7 @@ import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observabilit
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { applyGoalSectionOrder, applyGoalNavigation, goalProfileService } from "@/modules/goals-runtime";
 import { contentFromAggregate, resolveAdaptiveVisibility, baseOf } from "@/modules/experience-intelligence";
+import { shouldRenderSection } from "@/modules/section-presentation";
 import { isFlagEnabled } from "@/lib/platform/platform-config";
 import Link from "next/link";
 
@@ -174,7 +175,11 @@ export default async function PublicPage({
   const allSections = pages
     .flatMap((p) => p.sections)
     .filter((s) => s.visible !== false)
-    .filter((s) => !hiddenBases.has(baseOf(s.moduleId) as never));
+    .filter((s) => !hiddenBases.has(baseOf(s.moduleId) as never))
+    // RCCF-LAUNCH-TRACK-04B (Phase 5/10): drop empty/auto-hidden and explicitly
+    // hidden sections BEFORE rendering so they are removed from the DOM entirely
+    // (no empty landmarks, no placeholder wrappers, no stray dividers).
+    .filter((s) => shouldRenderSection(s.config as Record<string, unknown>));
 
   // IMPLEMENTATION-45: resolve the theme's Experience (configuration-driven —
   // sections never hardcode backgrounds/decorations).

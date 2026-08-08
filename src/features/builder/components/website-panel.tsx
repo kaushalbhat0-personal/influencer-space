@@ -10,6 +10,7 @@ import { BusinessHealthBadge } from "@/modules/business-health/presentation/busi
 import { BuilderExperiencePanel } from "@/modules/experience-intelligence/presentation/builder-experience-panel";
 import { BuilderEvolutionPanel } from "@/modules/website-evolution/presentation/builder-evolution-panel";
 import { BuilderStrategyBadge } from "./builder-strategy-badge";
+import { SectionPresentationPanel } from "./section-presentation-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -25,8 +26,15 @@ interface Props {
 }
 
 export function WebsitePanel({
-  collapsed, onToggle, currentThemeId, planCode, completionPct,
-  onThemePreview, previewThemeId, onApplyTheme, overview,
+  collapsed,
+  onToggle,
+  currentThemeId,
+  planCode,
+  completionPct,
+  onThemePreview,
+  previewThemeId,
+  onApplyTheme,
+  overview,
 }: Props) {
   if (collapsed) {
     return (
@@ -62,6 +70,9 @@ export function WebsitePanel({
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 p-2">
+        {/* Section Presentation (selected section) */}
+        <SectionPresentationPanel />
+
         {/* Theme */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="px-2.5 py-1.5 border-b border-white/5">

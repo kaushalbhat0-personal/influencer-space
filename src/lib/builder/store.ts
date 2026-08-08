@@ -126,6 +126,15 @@ export class BuilderStore {
   getSection(pageId: PageId, sectionId: SectionId): BuilderSection | null { return this.getPage(pageId)?.sections.find((s) => s.id === sectionId) ?? null; }
   getSlot(pageId: PageId, sectionId: SectionId, slotId: ElementId): BuilderSlot | null { return this.getSection(pageId, sectionId)?.slots.find((s) => s.id === slotId) ?? null; }
 
+  // RCCF-LAUNCH-TRACK-04: the first selected slot (for the presentation panel).
+  getSelectedSlot(): BuilderSlot | null {
+    for (const id of this.getSelectedIds()) {
+      const slot = this.findSlotById(id);
+      if (slot) return slot;
+    }
+    return null;
+  }
+
   getSelectedIds(): ElementId[] { return Array.from(this.state.selection.selectedIds); }
   isSelected(id: ElementId): boolean { return this.state.selection.selectedIds.has(id); }
 
@@ -235,6 +244,52 @@ export class BuilderStore {
     const sections = [...page.sections]; sections[sIdx] = updatedSection;
     this.updatePageSections(page.id, sections);
     builderQuery.invalidate();
+  }
+
+  // RCCF-LAUNCH-TRACK-04: update a slot's presentation metadata (title override,
+  // description, hideTitle, visible, hideWhenEmpty). Presentation is metadata
+  // only — canonical ids and business logic are untouched.
+  updateSlotPresentation(slotId: ElementId, presentation: Record<string, unknown>): void {
+    const slot = this.findSlotById(slotId); if (!slot) return;
+    const section = this.findSectionForSlot(slotId); if (!section) return;
+    const page = this.findPageForSlot(slotId); if (!page) return;
+    this.pushHistory("presentation");
+    const sIdx = page.sections.findIndex((s) => s.id === section.id); if (sIdx < 0) return;
+    const slots = page.sections[sIdx]!.slots.map((sl) =>
+      sl.id === slotId ? { ...sl, config: { ...sl.config, presentation: { ...((sl.config.presentation as Record<string, unknown>) ?? {}), ...presentation } } } : sl,
+    );
+    const updatedSection = { ...page.sections[sIdx]!, slots };
+    const sections = [...page.sections]; sections[sIdx] = updatedSection;
+    this.updatePageSections(page.id, sections);
+    builderQuery.invalidate();
+    this.emitStoreChanged();
+  }
+
+  // RCCF-LAUNCH-TRACK-04B (Phase 8): reset a presentation property (or all of
+  // them when `property` is omitted) back to the canonical default. No data
+  // loss — only the metadata override is removed; canonical ids are untouched.
+  resetSlotPresentation(slotId: ElementId, property?: string): void {
+    const slot = this.findSlotById(slotId); if (!slot) return;
+    const section = this.findSectionForSlot(slotId); if (!section) return;
+    const page = this.findPageForSlot(slotId); if (!page) return;
+    this.pushHistory("presentation-reset");
+    const sIdx = page.sections.findIndex((s) => s.id === section.id); if (sIdx < 0) return;
+    const slots = page.sections[sIdx]!.slots.map((sl) => {
+      if (sl.id !== slotId || !sl.config.presentation) return sl;
+      const current = sl.config.presentation as Record<string, unknown>;
+      if (property) {
+        const next = { ...current };
+        delete next[property];
+        return { ...sl, config: { ...sl.config, presentation: Object.keys(next).length > 0 ? next : undefined } };
+      }
+      const { presentation: _dropped, ...rest } = sl.config;
+      return { ...sl, config: rest };
+    });
+    const updatedSection = { ...page.sections[sIdx]!, slots };
+    const sections = [...page.sections]; sections[sIdx] = updatedSection;
+    this.updatePageSections(page.id, sections);
+    builderQuery.invalidate();
+    this.emitStoreChanged();
   }
 
   startDrag(sourceId: ElementId, sourceType: "slot" | "section"): void {

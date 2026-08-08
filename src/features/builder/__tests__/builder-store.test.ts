@@ -179,4 +179,58 @@ describe("BuilderStore", () => {
       expect(store.activePage!.sections.length).toBe(afterOne);
     });
   });
+
+  describe("section presentation (RCCF-LAUNCH-TRACK-04/04B)", () => {
+    function slotIdOf(moduleId: string): string {
+      const page = store.activePage!;
+      for (const s of page.sections) {
+        const slot = s.slots.find((sl) => sl.moduleId === moduleId);
+        if (slot) return slot.id;
+      }
+      throw new Error(`no slot for ${moduleId}`);
+    }
+
+    it("updateSlotPresentation merges presentation metadata onto the slot", () => {
+      store.addSlot("products.grid", store.activePage!.sections[0]!.id);
+      const slotId = slotIdOf("products.grid");
+      store.updateSlotPresentation(slotId, { titleOverride: "Menu" });
+      const found = store.activePage!.sections.flatMap((s) => s.slots).find((s) => s.id === slotId)!;
+      expect((found.config.presentation as Record<string, unknown>).titleOverride).toBe("Menu");
+    });
+
+    it("resetSlotPresentation removes a single property", () => {
+      store.addSlot("products.grid", store.activePage!.sections[0]!.id);
+      const slotId = slotIdOf("products.grid");
+      store.updateSlotPresentation(slotId, { titleOverride: "Menu", descriptionOverride: "Fresh." });
+      store.resetSlotPresentation(slotId, "titleOverride");
+      const found = store.activePage!.sections.flatMap((s) => s.slots).find((s) => s.id === slotId)!;
+      expect((found.config.presentation as Record<string, unknown>).titleOverride).toBeUndefined();
+      expect((found.config.presentation as Record<string, unknown>).descriptionOverride).toBe("Fresh.");
+    });
+
+    it("resetSlotPresentation without a property clears all presentation (no data loss, canonical ids intact)", () => {
+      store.addSlot("gallery.grid", store.activePage!.sections[0]!.id);
+      const slotId = slotIdOf("gallery.grid");
+      store.updateSlotPresentation(slotId, { titleOverride: "Portfolio", hideTitle: true });
+      store.resetSlotPresentation(slotId);
+      const found = store.activePage!.sections.flatMap((s) => s.slots).find((s) => s.id === slotId)!;
+      expect(found.config.presentation).toBeUndefined();
+      expect(found.moduleId).toBe("gallery.grid");
+    });
+
+    it("reset on a slot without presentation is a no-op", () => {
+      store.addSlot("products.grid", store.activePage!.sections[0]!.id);
+      const slotId = slotIdOf("products.grid");
+      store.resetSlotPresentation(slotId);
+      const found = store.activePage!.sections.flatMap((s) => s.slots).find((s) => s.id === slotId)!;
+      expect(found.config.presentation).toBeUndefined();
+    });
+
+    it("getSelectedSlot returns the first selected slot", () => {
+      store.addSlot("products.grid", store.activePage!.sections[0]!.id);
+      const slotId = slotIdOf("products.grid");
+      store.select(slotId);
+      expect(store.getSelectedSlot()?.id).toBe(slotId);
+    });
+  });
 });

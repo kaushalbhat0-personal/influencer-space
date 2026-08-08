@@ -444,6 +444,22 @@ export async function runCreatorGeneration(
     markStage("builder_init", "running");
     let builderData = buildBuilderArtifactData(pipelineResult);
 
+    // RCCF-LAUNCH-TRACK-04 (Section Presets): seed industry-appropriate section
+    // presentation by the creator's category/niche (e.g. photographer →
+    // Gallery→"Portfolio", Timeline→"My Journey"). Canonical ids unchanged;
+    // presentation is metadata the creator can edit later.
+    try {
+      const { applySectionPresets } = await import("@/modules/section-presentation");
+      const category = categoryOverride || profileResult.knowledgeGraph.creator.niche || "default";
+      const sections = (builderData?.sections as Array<{ type: string; props: Record<string, unknown> }> | undefined) ?? [];
+      for (const section of sections) {
+        if (!section.props) section.props = {};
+      }
+      applySectionPresets(category, sections.map((s) => ({ baseId: s.type, config: s.props })));
+    } catch {
+      // presets are best-effort — never block generation
+    }
+
     // RCCF-INTEGRATION-01 Phase 3: generation consumes the accepted goal
     // profile â€” goal-preferred sections are ordered earlier in the generated
     // builder artifact (hero first, footer last). Additive; no-op without goals.

@@ -6,6 +6,12 @@
 import type { PublishedSnapshot, WebsiteAggregate } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
 import { resolveModuleId, isDeprecatedSection } from "@/lib/registry/resolve-module";
+import {
+  resolveSectionPresentation,
+  sectionHasContent,
+  baseOf,
+  type SectionPresentation,
+} from "@/modules/section-presentation";
 
 // VALIDATION-05: per-section composition logs ran on every request in
 // production (~11 calls/section). Gate them to non-production.
@@ -322,6 +328,40 @@ export class LayoutEngine {
       }));
       config.resolvedTitle = "Services";
       debugLog(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+    }
+
+    // RCCF-LAUNCH-TRACK-04: apply the creator's presentation overrides on top of
+    // the canonical defaults (single resolution point). Presentation is metadata
+    // only — canonical ids and business logic are untouched.
+    const presentation = (layoutConfig as Record<string, unknown>)?.["presentation"] as SectionPresentation | undefined;
+    if (presentation) {
+      const resolved = resolveSectionPresentation(presentation, (config.resolvedTitle ?? config.title) as string | null, moduleId);
+      if (resolved.title) {
+        config.resolvedTitle = resolved.title;
+        config.title = resolved.title;
+      }
+      if (resolved.description) config.description = resolved.description;
+      if (resolved.hideTitle) config.hideTitle = true;
+      config.visibilityMode = resolved.visibilityMode;
+    } else {
+      // Phase 8 smart defaults: optional sections hide when empty (auto), the
+      // rest render always. No placeholder boxes on live storefronts.
+      const defaults = resolveSectionPresentation(undefined, (config.resolvedTitle ?? config.title) as string | null, moduleId);
+      config.visibilityMode = defaults.visibilityMode;
+    }
+
+    // RCCF-LAUNCH-TRACK-04B (Phase 5): canonical has-content, computed ONCE here
+    // via sectionHasContent so every renderer reads config.hasContent instead of
+    // duplicating per-renderer content checks. Embed/Social presence comes from
+    // config (url/serverId/username), not the aggregate.
+    if (moduleId.startsWith("embed.")) {
+      config.hasContent = Boolean(config.url);
+    } else if (moduleId.startsWith("social.")) {
+      config.hasContent = Boolean(config.serverId || config.username);
+    } else if (Array.isArray(config.resolvedData)) {
+      config.hasContent = (config.resolvedData as unknown[]).length > 0;
+    } else {
+      config.hasContent = sectionHasContent(baseOf(moduleId), content as unknown as Record<string, unknown>);
     }
 
     return config;

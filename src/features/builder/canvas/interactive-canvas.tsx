@@ -9,6 +9,7 @@ import { builderPagesToLayoutSnapshot, slotIdFromSectionId } from "@/lib/builder
 import { layoutEngine } from "@/lib/storefront/layout-engine";
 import { themeResolver } from "@/lib/theme/resolver-new";
 import { getLivePreviewData } from "@/actions/builder-preview.actions";
+import { shouldRenderSection } from "@/modules/section-presentation";
 import type { PublishedSnapshot, LayoutSnapshot, ThemeSnapshot } from "@/types/snapshot";
 import { traceRuntime, computeRuntimeSignature, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
@@ -167,7 +168,12 @@ export function InteractiveCanvas({
     };
     const doc = layoutEngine.resolve(snapshot);
     return {
-      sections: doc.pages.flatMap((p) => p.sections).filter((s) => s.visible !== false),
+      sections: doc.pages
+        .flatMap((p) => p.sections)
+        .filter((s) => s.visible !== false)
+        // RCCF-LAUNCH-TRACK-04B: preview == storefront — empty/hidden sections
+        // are removed from the canvas exactly like the live site.
+        .filter((s) => shouldRenderSection(s.config as Record<string, unknown>)),
       theme,
       themeVars: doc.theme,
       layout,
