@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Footer } from "@/components/marketing/Footer";
@@ -9,14 +9,14 @@ export const metadata: Metadata = {
   title: "Features",
   description: `Everything you need to run your creator business: AI storefront generation, visual builder, commerce, analytics, SEO, and agency tools. ${BRAND.shortDescription}`,
   openGraph: {
-    title: "Features — CreatorStore",
-    description: "AI-powered storefront generation, visual drag-and-drop builder, native UPI commerce, analytics, SEO, and agency platform — all in one.",
+    title: "Features â€” CreatorStore",
+    description: "AI-powered storefront generation, visual drag-and-drop builder, native UPI commerce, analytics, SEO, and agency platform â€” all in one.",
   },
 };
 
 export default function FeaturesPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
       <MarketingNav />
 
       <Section
@@ -32,7 +32,7 @@ export default function FeaturesPage() {
         </h1>
         <p className="mt-4 text-lg text-zinc-400">
           {BRAND.shortDescription} Storefront, products, payments, analytics,
-          builder, and agency tools — all in one platform.
+          builder, and agency tools â€” all in one platform.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link href="/signup" className="btn-primary text-sm">
@@ -119,7 +119,7 @@ export default function FeaturesPage() {
               href="/signup"
               className="btn-primary text-sm"
             >
-              Generate My Storefront — Free
+              Generate My Storefront â€” Free
             </Link>
             <Link
               href="/pricing"

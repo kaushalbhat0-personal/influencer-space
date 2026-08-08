@@ -93,7 +93,7 @@ export function HeroInput({ onSubmit }: HeroInputProps) {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white transition-all hover:from-indigo-400 hover:to-violet-400 disabled:opacity-50 sm:w-auto"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-          {submitting ? "Generating..." : "Start"}
+          {submitting ? "Building your storefront…" : "Build My Storefront — Free"}
         </button>
       </div>
 

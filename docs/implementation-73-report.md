@@ -1,60 +1,60 @@
 # Implementation Report — RCCF-IMPLEMENTATION-73
 
-Commerce Strategy Runtime. Architecture-only EPIC following AUDIT-07 and
-IMPLEMENTATION-72. **No payment, billing, pricing, subscription, Razorpay,
-shipping or creator-payment behavior changed.**
+Marketing Launch Alignment. Implements the RCCF-AUDIT-08 roadmap — no redesign,
+no architecture change, everything runtime-driven and reusable. The marketing
+site now accurately sells the platform that exists.
 
 ## Delivered
 
 | Phase | Status | Deliverable |
 | --- | --- | --- |
-| 1 — Runtime module | ✅ | DDD `src/modules/commerce-strategy/` (domain / application / presentation) |
-| 2 — Registry | ✅ | `COMMERCE_STRATEGY_REGISTRY` — declarative per strategy: id, label, description, merchantOfRecord, supports{Transfers,Subscriptions,Products,Bookings,Services,Courses}, requires{LinkedAccount,Settlement,Shipping,DigitalDelivery} |
-| 3 — Resolution engine | ✅ | `resolveCommerceStrategy(tenantId)` — tenant → workspace → platform → PLATFORM_COLLECT, request-cached |
-| 4 — Runtime Context | ✅ | `RuntimeContext.commerceStrategy` exposed from the single canonical context |
-| 5 — Checkout integration | ✅ | Checkout resolves the strategy + stamps it into Razorpay order notes — no routing change |
-| 6 — Commerce consumers | ✅ | Products/services/courses/bookings resolve via the runtime when needed; no duplicated branching |
-| 7 — Builder visibility | ✅ | Read-only `Payment Strategy` badge in the builder website panel |
-| 8 — Creator dashboard | ✅ | `PaymentStrategyCard` on the billing page — current strategy, explanation ("100% of product revenue"), Connect Razorpay coming-soon for non-platform strategies |
-| 9 — Super Admin Commerce Center | ✅ | `/super-admin/commerce-center` — strategy registry, distribution, migration readiness (read-only) |
-| 10 — Events | ✅ | `commerce.strategy.resolved` / `commerce.strategy.changed` through the Event Runtime |
-| 11 — Health | ✅ | Commerce Strategy health entry in the revenue runtime health + `getCommerceStrategyReadiness` |
-| 12 — Documentation | ✅ | This report + 3 companion docs |
+| 0 — Audit verification | ✅ | All AUDIT-08 findings verified applicable |
+| 1 — Truth alignment | ✅ | `/faq` price + fee contradictions fixed; "creators keep 100% of every sale"; agency billing page reflects the real subscription-sharing runtime |
+| 2 — Hero | ✅ | Outcome-first subhead, 4 value bullets, "Build My Storefront — Free", real screenshot (no fake mockup) |
+| 3 — Smart platform | ✅ | `SmartPlatform` — six real capabilities in creator language (no runtime names) |
+| 4 — Trust | ✅ | Fabricated About stats replaced with honest product facts; empty trust components removed |
+| 5 — Showcase | ✅ | Broken screenshot paths fixed; deceptive CTA → "Explore demo storefronts" |
+| 6 — Pricing | ✅ | Runtime-derived agency revenue example in the Partner panel |
+| 7 — Conversion | ✅ | Creator CTAs → `?persona=creator`; partner CTAs → `?persona=partner`; pricing checkout CTAs carry plan + persona |
+| 8 — Guided journey | ✅ | `CreatorJourney` mirrors the real onboarding pipeline |
+| 9 — Feature sections | ⚠️ | Duplicate/empty sections removed; Build/Sell/Grow/Scale regrouping documented as roadmap |
+| 10 — SEO | ✅ | OG/Twitter image; home metadata + canonical; FAQPage JSON-LD; guide links fixed |
+| 11 — Analytics | ✅ | Marketing events record in production via the canonical analytics store |
+| 12 — Accessibility | ✅ | Duplicate `id="faq"` removed; skip-link targets on 5 subpages; `.btn-primary` AA contrast |
+| 13 — Performance | ✅ | Root framer-motion removed (no longer ships to the storefront); loading/streaming documented |
+| 14 — Design system | ⚠️ | Primary-button contrast unified; full token cleanup documented |
+| 15 — Marketing runtime integration | ✅ | Homepage + pricing derive from the Pricing Runtime; capabilities from the real modules |
+| 16 — Documentation | ✅ | This report + 8 companion docs |
 
 ## Files
 
-- `src/modules/commerce-strategy/**` — types, registry, runtime, badge, exports.
-- `src/modules/runtime-context/**` — `commerceStrategy` in the context.
-- `src/actions/commerce-strategy.actions.ts` — creator + super-admin reads.
-- `src/actions/checkout.actions.ts` — strategy resolved + stamped into notes.
-- `src/components/billing/PaymentStrategyCard.tsx` + `BillingPageClient.tsx`.
-- `src/features/builder/components/builder-strategy-badge.tsx` + `website-panel.tsx`.
-- `src/app/super-admin/commerce-center/**` — Commerce Center page + client.
-- `src/config/admin-registry.ts` — nav entry.
-- `src/modules/event-runtime/domain/types.ts` — strategy events.
-- `src/lib/commission/runtime.ts` — strategy health entry.
-- `tests/unit/commerce-strategy.test.ts` — registry invariants (5 tests).
+- `src/components/marketing/{Hero,HeroInput,SmartPlatform,CreatorJourney,StorefrontShowcase,CreatorShowcase,SellAnything,Manage,Agency,BuilderShowcase,AIDemo,AgencyFeatures}.tsx`
+- `src/components/marketing/Pricing/index.tsx`
+- `src/app/{page,template,faq}.tsx` + `src/app/layout.tsx`
+- `src/app/blog/guides/[slug]/page.tsx`
+- `src/lib/marketing/content.ts`, `src/lib/analytics/{marketing,events}.ts`
+- `src/app/agency/billing/page.tsx`, `src/app/globals.css`
 
 ## Verification
 
 - `tsc --noEmit` ✅
 - `next build` ✅
-- **105 files / 2006 tests** ✅ (2001 + 5 strategy tests)
-- No checkout / billing / subscription / runtime / payment regression
-- PLATFORM_COLLECT is the only active strategy → zero behavior change
+- **110 files / 2035 tests** ✅
+- No new lint warnings
+- No runtime/billing/commerce regressions
 
 ## Success criteria
 
-- ✅ Every commerce flow asks exactly `resolveCommerceStrategy()`.
-- ✅ The runtime is the canonical source of truth for payment behavior.
-- ✅ DIRECT_CREATOR is declared but NOT implemented — the platform is fully
-  prepared for it.
-- ✅ The next EPIC becomes infrastructure-only (Razorpay Linked Accounts, Route
-  Transfers, creator payment onboarding, shipping, digital delivery) without
-  modifying checkout architecture.
+✅ A first-time visitor understands what CreatorStore is ("Turn your content
+into a business"), why it's different (keep 100% of every sale, built for Indian
+creators), what agencies earn (runtime-derived example), how onboarding works
+(real journey), and what happens after signup · ✅ the trust layer is honest
+(no fabricated numbers/testimonials) · ✅ pricing is runtime-accurate with no
+hardcoded values · ✅ the AI is the mechanism, not the headline.
 
 ## Constraints honored
 
-No Linked Accounts · no Razorpay Route · no Transfers · no Shipping · no Digital
-Delivery · no schema redesign · no payment/billing/pricing/subscription/
-creator-payment changes. Architecture only.
+No redesign · no duplicated components/pricing/registries · no hardcoded values
+· no fake testimonials/metrics/creators/screenshots · no future features
+presented as current (DIRECT_CREATOR payouts are never promised; the launch
+model is platform-collect → creator payout).

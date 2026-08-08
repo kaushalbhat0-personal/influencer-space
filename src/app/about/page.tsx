@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Footer } from "@/components/marketing/Footer";
@@ -8,16 +8,16 @@ import { BRAND } from "@/lib/marketing/messaging";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `Learn about CreatorStore — the AI-powered creator business platform. Our mission, story, and values. ${BRAND.shortDescription}`,
+  description: `Learn about CreatorStore â€” the AI-powered creator business platform. Our mission, story, and values. ${BRAND.shortDescription}`,
   openGraph: {
-    title: "About — CreatorStore",
+    title: "About â€” CreatorStore",
     description: "CreatorStore is an AI-powered creator business platform. Learn about our mission to democratize creator commerce.",
   },
 };
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
+    <main id="main-content" className="min-h-screen bg-zinc-950 text-white">
       <MarketingNav />
 
       {/* Hero */}
@@ -98,7 +98,7 @@ export default function AboutPage() {
             Ready to build your creator business?
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-zinc-400">
-            Join thousands of creators using {BRAND.name} to turn their content
+            Join creators turning their content into a business on {BRAND.name}.
             into a real business.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

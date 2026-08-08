@@ -48,7 +48,7 @@ export function Manage() {
         </div>
 
         <div className="mt-10 text-center">
-          <a href="/signup" className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+          <a href="/signup?persona=creator" className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
             Start building — Free →</a>
         </div>
       </div>

@@ -1,19 +1,8 @@
-"use client";
-
-import { motion } from "framer-motion";
-
+// RCCF-IMPLEMENTATION-73 Phase 13: the root template previously wrapped every
+// route (including the public storefront) in a framer-motion client animation,
+// shipping ~40KB+ of framer-motion to every page and ignoring
+// prefers-reduced-motion. A static wrapper keeps markup identical with zero
+// client animation cost on the storefront and all marketing pages.
 export default function Template({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{
-        duration: 0.35,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-    >
-      {children}
-    </motion.div>
-  );
+  return <>{children}</>;
 }

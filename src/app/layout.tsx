@@ -28,25 +28,27 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
     default:
-      "CreatorStore | AI-Powered Creator Business Platform",
+      "CreatorStore | Turn your content into a business",
     template: "%s — CreatorStore",
   },
   description:
-    "CreatorStore is an AI-powered creator business platform. Paste your social profile and AI generates a complete storefront with products, checkout, analytics, SEO, and visual builder. Native UPI payments. Custom domains.",
+    "Turn your content into a business you own. CreatorStore builds your storefront, products and checkout from your social profile — and you keep 100% of every sale. Built for Indian creators with UPI.",
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     siteName: "CreatorStore",
     url: APP_URL,
-    title: "CreatorStore | AI-Powered Creator Business Platform",
+    title: "CreatorStore | Turn your content into a business",
     description:
-      "AI builds your entire creator business from your social profile. Storefront, products, payments, analytics, and visual builder — all in one.",
+      "Paste your social profile and launch a storefront you fully own. Keep 100% of every sale. Built for Indian creators.",
+    images: [{ url: `${APP_URL}/marketing-assets/storefront/01-desktop.png`, width: 1440, height: 900, alt: "A CreatorStore storefront built from a creator's profile" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CreatorStore | AI-Powered Creator Business Platform",
+    title: "CreatorStore | Turn your content into a business",
     description:
-      "AI builds your entire creator business from your social profile.",
+      "Launch a storefront you fully own from your social profile. Keep 100% of every sale.",
+    images: [`${APP_URL}/marketing-assets/storefront/01-desktop.png`],
   },
 };
 

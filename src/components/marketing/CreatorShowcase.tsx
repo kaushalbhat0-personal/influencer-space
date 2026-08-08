@@ -57,10 +57,10 @@ export function CreatorShowcase() {
               <p className="text-xs text-zinc-600 mb-3">Selling: <span className="text-zinc-400">{creator.products}</span></p>
 
               <a
-                href="/signup"
+                href="/showcase"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
               >
-                View storefront <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                Explore demo storefronts <ExternalLink className="h-3 w-3" aria-hidden="true" />
               </a>
             </div>
           ))}

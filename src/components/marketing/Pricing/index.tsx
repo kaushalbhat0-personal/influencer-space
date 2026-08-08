@@ -95,6 +95,19 @@ export function Pricing({ data }: PricingProps) {
                 <li key={point}>• {point}</li>
               ))}
               <li className="pt-1 text-zinc-600">Your clients pay CreatorStore directly for their own Creator plan (Creator Growth minimum for partner-onboarded creators).</li>
+              {/* RCCF-IMPLEMENTATION-73: a concrete, runtime-derived revenue example. */}
+              {(() => {
+                const grow = data.creator.find((p) => p.code === "creator_grow");
+                if (grow?.price) {
+                  const share = Math.round(grow.price * 0.2 * 10);
+                  return (
+                    <li className="pt-2 text-emerald-300">
+                      Example: 10 clients on Creator Growth (₹{grow.price}/mo) → roughly <span className="font-semibold">₹{share.toLocaleString("en-IN")}/month</span> recurring for you.
+                    </li>
+                  );
+                }
+                return null;
+              })()}
             </ul>
           </div>
         )}
@@ -166,7 +179,7 @@ export function Pricing({ data }: PricingProps) {
                       {plan.ctaType === "contact" ? (
                         <Link href="/contact" className="btn-secondary w-full">{plan.ctaLabel ?? "Contact Sales"}</Link>
                       ) : plan.ctaType === "checkout" ? (
-                        <Link href="/signup" className="btn-primary w-full">{plan.ctaLabel ?? "Get Started"}</Link>
+                        <Link href={`/signup?plan=${plan.code}&persona=creator`} className="btn-primary w-full">{plan.ctaLabel ?? "Get Started"}</Link>
                       ) : (
                         <Link href={`/signup?plan=${plan.code}`} className={cn(
                           "flex w-full items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all",

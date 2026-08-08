@@ -85,24 +85,24 @@ export const TESTIMONIALS: Testimonial[] = [
 
 export const CREATOR_STATS: CreatorStat[] = [
   {
-    label: "Storefronts Generated",
-    value: "10,000+",
-    description: "AI-powered storefronts built from creator content",
+    label: "Revenue you keep",
+    value: "100%",
+    description: "of every sale stays with you — no transaction fees",
   },
   {
-    label: "Creators Onboarded",
-    value: "5,000+",
-    description: "Active creators using CreatorStore daily",
+    label: "Free trial",
+    value: "15 days",
+    description: "no credit card required to launch your storefront",
   },
   {
-    label: "Platforms Supported",
+    label: "Platforms you can import from",
     value: "8",
     description: "YouTube, Instagram, TikTok, X, LinkedIn, Twitch, and more",
   },
   {
-    label: "Setup Time",
+    label: "Setup time",
     value: "<2 min",
-    description: "From profile URL to live storefront",
+    description: "from profile URL to a live, guided storefront build",
   },
 ];
 
@@ -205,8 +205,8 @@ export const FAQ_CATEGORIES = [
         a: "CreatorStore uses Razorpay for payment processing. Your customers can pay via UPI (BHIM, Google Pay, PhonePe, Paytm), credit/debit cards, net banking, and wallets. Payouts go directly to your linked account.",
       },
       {
-        q: "What are the transaction fees?",
-        a: "CreatorStore platform fees vary by plan. The Creator Launch plan is free with standard transaction fees. Creator Grow at ₹699/month and Creator Scale at ₹1,995/month offer reduced fees and more features. There are no setup fees or hidden charges.",
+        q: "What does it cost to sell?",
+        a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan (Creator Growth ₹699/month, Creator Scale ₹1,999/month), and every rupee your customers spend goes to you.",
       },
       {
         q: "Can I offer subscriptions or memberships?",
@@ -245,8 +245,8 @@ export const FAQ_CATEGORIES = [
         a: "You do. Your content, products, customer data, and storefront are yours. You can export your data and cancel anytime. We never claim ownership of your content.",
       },
       {
-        q: "Is there a free plan?",
-        a: "Yes. The Creator Launch plan is free and includes AI storefront generation, digital products, and basic analytics. Upgrade to Creator Grow or Creator Scale when you need more features.",
+        q: "Is there a free trial?",
+        a: "Yes. Creator Launch is a 15-day free trial — no credit card required. Launch your website today and upgrade anytime. After the trial, your site stays live; editing and publishing follow your plan.",
       },
       {
         q: "How do refunds work?",

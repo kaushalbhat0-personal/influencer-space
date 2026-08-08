@@ -40,7 +40,7 @@ export function Agency() {
         </div>
 
         <div className="mt-10 text-center">
-          <a href="/signup" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors">
+          <a href="/signup?persona=partner" className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors">
             Start your partner journey — Free →</a>
         </div>
       </div>

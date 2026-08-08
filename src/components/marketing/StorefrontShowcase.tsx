@@ -22,7 +22,7 @@ export function StorefrontShowcase() {
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="group rounded-xl border border-white/[0.06] bg-[var(--surface-base)]/30 overflow-hidden">
             <img
-              src="/marketing-assets/screenshots/storefront/01-desktop.png"
+              src="/marketing-assets/storefront/01-desktop.png"
               alt="CreatorStore storefront — desktop view"
               className="w-full h-auto"
               loading="lazy"
@@ -34,7 +34,7 @@ export function StorefrontShowcase() {
           </div>
           <div className="group rounded-xl border border-white/[0.06] bg-[var(--surface-base)]/30 overflow-hidden">
             <img
-              src="/marketing-assets/screenshots/storefront/02-mobile.png"
+              src="/marketing-assets/storefront/02-mobile.png"
               alt="CreatorStore storefront — mobile view"
               className="w-full h-auto"
               loading="lazy"

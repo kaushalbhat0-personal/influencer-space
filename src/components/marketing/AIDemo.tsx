@@ -163,7 +163,7 @@ export function AIDemo({ onComplete, onCtaClick }: AIDemoProps) {
             {(state === "running" || isComplete) && (
               <Link
                 ref={isComplete ? ctaRef : undefined}
-                href="/signup"
+                href="/signup?persona=creator"
                 onClick={onCtaClick}
                 tabIndex={0}
                 className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2 whitespace-normal break-words"

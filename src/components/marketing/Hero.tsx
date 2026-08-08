@@ -1,5 +1,4 @@
 import { HeroInput } from "./HeroInput";
-import { HERO_OUTPUT_LINES } from "@/lib/marketing/messaging";
 
 export function Hero() {
   return (
@@ -20,38 +19,28 @@ export function Hero() {
               .
             </h1>
             <p className="mt-4 max-w-lg text-base text-zinc-400 sm:text-lg leading-relaxed">
-              Paste your YouTube, Instagram, TikTok, or creator profile. Our AI
-              builds your entire business — storefront, products, checkout,
-              analytics, SEO, and a visual builder — ready in under two minutes.
+              Paste your YouTube, Instagram, or TikTok profile and launch a
+              storefront you fully own — products, checkout, and everything in
+              between.
             </p>
+
+            {/* The strongest creator value — the outcome, not the mechanism. */}
+            <ul className="mt-5 grid max-w-lg gap-2 sm:grid-cols-2" role="list">
+              {[
+                "Keep 100% of every sale",
+                "Launch in minutes",
+                "Sell products, services, courses & bookings",
+                "Built for Indian creators",
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-2 text-sm text-zinc-300">
+                  <span className="mt-0.5 text-emerald-400 flex-shrink-0">✓</span>
+                  {point}
+                </li>
+              ))}
+            </ul>
 
             <div className="mt-6">
               <HeroInput />
-            </div>
-
-            {/* Output preview */}
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
-              {HERO_OUTPUT_LINES.map((line) => (
-                <span
-                  key={line}
-                  className="flex items-center gap-1.5 text-xs text-zinc-400"
-                >
-                  <svg
-                    className="h-3 w-3 text-emerald-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  {line}
-                </span>
-              ))}
             </div>
 
             {/* Trust line */}
@@ -62,12 +51,12 @@ export function Hero() {
               </span>
               <span className="flex items-center gap-1.5">
                 <svg className="h-3.5 w-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                2-minute setup
+                15-day free trial
               </span>
             </div>
           </div>
 
-          {/* Right — Storefront Preview */}
+          {/* Right — Real storefront preview */}
           <div className="hidden lg:block">
             <div className="relative rounded-2xl border border-white/[0.08] bg-[var(--surface-base)] p-4 shadow-2xl">
               <div className="mb-3 flex items-center gap-1.5 border-b border-white/[0.06] pb-3">
@@ -75,23 +64,17 @@ export function Hero() {
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
                 <span className="ml-3 text-[10px] font-medium text-zinc-600">
-                  creatorstore.app/your-store
+                  Your storefront, live
                 </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex h-20 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/20 via-violet-500/10 to-transparent">
-                  <span className="text-sm font-medium text-indigo-400">
-                    Your Storefront
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="h-16 rounded-lg bg-white/[0.04]" />
-                  <div className="h-16 rounded-lg bg-white/[0.04]" />
-                  <div className="h-16 rounded-lg bg-white/[0.04]" />
-                </div>
-                <div className="h-3 w-3/4 rounded bg-white/[0.04]" />
-                <div className="h-3 w-1/2 rounded bg-white/[0.04]" />
-              </div>
+              {/* Real storefront screenshot (exists in public/marketing-assets/storefront/). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/marketing-assets/storefront/01-desktop.png"
+                alt="A real CreatorStore storefront generated from a creator's profile"
+                className="w-full rounded-lg"
+                loading="eager"
+              />
             </div>
           </div>
         </div>

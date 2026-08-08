@@ -44,6 +44,23 @@ export function track(event: string, properties?: Record<string, unknown>): void
   logger.info(event, "analytics", { metadata: (properties ?? {}) as Record<string, unknown> });
 }
 
+// RCCF-IMPLEMENTATION-73 Phase 11: canonical in-memory analytics store for
+// marketing + funnel events (production-wired; a future Analytics Center reads
+// it). No console-only logging.
+export interface AnalyticsEventRecord {
+  type: string;
+  properties: Record<string, unknown>;
+  timestamp: string;
+}
+const analyticsEvents: AnalyticsEventRecord[] = [];
+export function recordAnalyticsEvent(type: string, properties: Record<string, unknown> = {}): void {
+  analyticsEvents.push({ type, properties, timestamp: new Date().toISOString() });
+  if (analyticsEvents.length > 500) analyticsEvents.shift();
+}
+export function getAllAnalyticsEvents(): AnalyticsEventRecord[] {
+  return [...analyticsEvents];
+}
+
 export function getFunnelCounts(): Record<EventStage, number> {
   const counts: Record<string, number> = {};
   for (const stage of ACTIVATION_FUNNEL) {

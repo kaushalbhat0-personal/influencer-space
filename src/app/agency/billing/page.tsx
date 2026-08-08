@@ -102,9 +102,11 @@ export default async function AgencyBilling() {
       )}
 
       <PageSection>
-        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Partner Rewards</h2>
-        <div className="admin-card p-5 text-sm text-zinc-500" data-testid="partner-rewards-coming-soon">
-          Coming soon — recurring partner rewards are being designed. No rewards or commissions are active today, and nothing is automatic.
+        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Recurring Revenue</h2>
+        <div className="admin-card p-5 text-sm text-zinc-500" data-testid="partner-rewards">
+          You earn a recurring share of every creator subscription you onboard. Your clients pay CreatorStore directly for
+          their own Creator plan; the platform shares a percentage of that subscription with you — no transaction fees, no
+          manual invoicing. See your earnings on the Agency Dashboard.
         </div>
       </PageSection>
     </ContentContainer>

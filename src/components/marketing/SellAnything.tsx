@@ -50,7 +50,7 @@ export function SellAnything() {
         </div>
 
         <div className="mt-10 text-center">
-          <a href="/signup" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+          <a href="/signup?persona=creator" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
             Start selling — Free →</a>
         </div>
       </div>

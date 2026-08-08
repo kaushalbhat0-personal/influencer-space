@@ -83,7 +83,7 @@ export function AgencyFeatures() {
 
         {/* CTA */}
         <div className="mt-14 text-center">
-          <Link href="/signup" className="btn-primary px-10 py-3.5 text-sm">
+          <Link href="/signup?persona=partner" className="btn-primary px-10 py-3.5 text-sm">
             Start Managing Creators
           </Link>
         </div>

@@ -77,7 +77,7 @@ export function BuilderShowcase() {
         {/* CTA */}
         <div className="mt-12 text-center">
           <Link
-            href="/signup"
+            href="/signup?persona=creator"
             className="btn-primary inline-flex text-sm"
           >
             Try the Builder Free

@@ -1,4 +1,4 @@
-import { logger } from "@/lib/observability/logger";
+import { recordAnalyticsEvent } from "./events";
 
 export interface MarketingEvent {
   name: string;
@@ -6,11 +6,12 @@ export interface MarketingEvent {
   timestamp: string;
 }
 
+// RCCF-IMPLEMENTATION-73 Phase 11: production analytics — marketing events are
+// recorded through the canonical analytics store in every environment (no
+// dev-only console logging).
 export function trackMarketingEvent(name: string, properties: Record<string, unknown> = {}): void {
   try {
-    if (process.env.NODE_ENV === "development") {
-      logger.info(name, "marketing", { metadata: properties as Record<string, unknown> });
-    }
+    recordAnalyticsEvent(name, properties);
   } catch {}
 }
 
