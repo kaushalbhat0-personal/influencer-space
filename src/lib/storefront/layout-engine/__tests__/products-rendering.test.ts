@@ -40,7 +40,7 @@ function snapshot(content: Pick<WebsiteAggregate, "products">): PublishedSnapsho
   return {
     _schema: "creatorstore.snapshot",
     _version: 1,
-    metadata: { version: 1, publishedAt: new Date().toISOString(), previousVersion: null, correlationId: "test", generatedBy: "test" },
+    metadata: { version: 1, publishedAt: new Date().toISOString(), previousVersion: null, correlationId: "test", generatedBy: "dashboard" },
     content: aggregate,
     theme: {
       packageId: "com.creatos.neon-dark",
