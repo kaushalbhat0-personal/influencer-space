@@ -314,6 +314,7 @@ export function InteractiveCanvas({
                         props={section.config}
                         elementId={slotId}
                         viewport={builderStore.canvas.device}
+                        previewMode
                       />
                     </ComponentErrorBoundary>
                   </div>

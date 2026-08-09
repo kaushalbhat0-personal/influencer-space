@@ -9,11 +9,14 @@ export function ComponentRenderer({
   props = {},
   elementId,
   viewport = "desktop",
+  previewMode = false,
 }: {
   componentId: string;
   props?: Record<string, unknown>;
   elementId?: string;
   viewport?: "desktop" | "tablet" | "mobile";
+  /** RCCF-LAUNCH-TRACK-06: signals Builder preview so commerce renderers stay inert. */
+  previewMode?: boolean;
 }) {
   const def = componentRegistry.get(componentId);
   if (!def) {
@@ -38,7 +41,7 @@ export function ComponentRenderer({
   // Resolve responsive values for the active viewport
   const resolvedProps = responsiveResolver.resolve(props, viewport);
 
-  return <Renderer props={resolvedProps} elementId={elementId} definition={def} />;
+  return <Renderer props={resolvedProps} elementId={elementId} definition={def} previewMode={previewMode} />;
 }
 
 /** Renders a list of component instances — used by template rendering and page preview. */

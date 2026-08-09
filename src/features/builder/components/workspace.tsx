@@ -82,7 +82,10 @@ export function BuilderWorkspace() {
         setThemeName(d.website.themePackageId);
         setCurrentThemeId(normalizeThemeId(d.website.themePackageId));
         setBlueprintName(d.blueprint?.name ?? null);
-        setPlanCode(d.subscription?.plan ?? null);
+        // RCCF-LAUNCH-TRACK-06: the CANONICAL plan code drives theme
+        // entitlement — the display name previously resolved to "free" and
+        // locked every premium theme in the picker for Grow/Scale users.
+        setPlanCode(d.subscription?.code ?? null);
         setCreatorName(d.tenant.name);
         setOverviewData(d);
         import("@/actions/health.actions").then((mod) =>
@@ -92,6 +95,16 @@ export function BuilderWorkspace() {
         ).catch(() => {});
       }
     }).catch(() => {});
+
+    // RCCF-LAUNCH-TRACK-06 (Phase 1): "Open in Builder" from the Marketplace
+    // arrives as ?theme=<id> — open the builder with that theme PREVIEWED
+    // (never applied). The creator applies + publishes from the builder.
+    try {
+      const themeParam = new URLSearchParams(window.location.search).get("theme");
+      if (themeParam) setPreviewThemeId(normalizeThemeId(themeParam));
+    } catch {
+      // ignore — preview is best-effort
+    }
   }, []);
 
   // Re-render whenever the store's dirty flag changes so the autosave effect
@@ -218,6 +231,22 @@ export function BuilderWorkspace() {
     setPreviewThemeId(themeId);
   }, []);
 
+  // RCCF-LAUNCH-TRACK-06 (Phase 3/10): applying a theme is an UNPUBLISHED draft
+  // change — after apply, refresh the publish status so the toolbar shows
+  // "Publish required" instead of a stale "Published".
+  const refreshPublishStatus = useCallback(() => {
+    import("@/actions/publish.actions").then((mod) =>
+      mod.getPublishStatus().then((r) => {
+        if (r.success && r.status) {
+          if (r.status.state === "live") setPublishStatus("published");
+          else if (r.status.state === "preview") setPublishStatus("preview");
+          else setPublishStatus("draft");
+          if (r.status.storefrontUrl) setStorefrontUrl(r.status.storefrontUrl);
+        }
+      })
+    ).catch(() => {});
+  }, []);
+
   const handleApplyTheme = useCallback(
     async (themeId: string) => {
       // Apply persists the theme + saves the draft (no publish).
@@ -230,9 +259,21 @@ export function BuilderWorkspace() {
         setCurrentThemeId(themeId);
         setThemeName(themeId);
         builderStore.markClean();
+        refreshPublishStatus();
+        // RCCF-LAUNCH-TRACK-07 (P6): strip the ?theme= param after applying so
+        // a refresh cannot resurrect a stale preview over the applied theme.
+        try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.has("theme")) {
+            url.searchParams.delete("theme");
+            window.history.replaceState({}, "", url.toString());
+          }
+        } catch {
+          // best-effort — URL cleanup must never block an apply
+        }
       }
     },
-    [performSave, currentThemeId, overviewData],
+    [performSave, currentThemeId, overviewData, refreshPublishStatus],
   );
 
   if (loading) {

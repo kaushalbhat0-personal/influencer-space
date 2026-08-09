@@ -27,11 +27,29 @@ export const BACKGROUND_ASSETS: Record<string, PatternAsset> = {
   },
 };
 
-/** Decoration element renderers (SVG shapes, 2–6% opacity via parent). */
+/**
+ * Decoration element renderers (SVG shapes, 2–6% opacity via parent).
+ *
+ * RCCF-LAUNCH-TRACK-07 (RC1/RC2): each element is self-contained so its <defs>
+ * and id references always resolve — the previous shared <defs> id
+ * (`xp-orb-${uid}`) never matched the element reference (`xp-orb-${uid}-${i}`),
+ * which made every orb render with `fill:none` (invisible). `wave`, `grid` and
+ * `diagonal` kinds previously had no case and rendered empty. Both are fixed
+ * here so the aurora/blobs, luxury/glow, finance/grid and music/waves packs
+ * actually paint.
+ */
 export function renderDecorationElement(kind: string, size: number, key: string): string {
   switch (kind) {
-    case "orb":
-      return `<circle key="${key}" cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="url(#xp-orb-${key})"/>`;
+    case "orb": {
+      const half = size / 2;
+      return [
+        `<defs><radialGradient id="xp-orb-${key}">`,
+        `<stop offset="0%" stopColor="currentColor" stopOpacity="0.5" />`,
+        `<stop offset="100%" stopColor="currentColor" stopOpacity="0" />`,
+        `</radialGradient></defs>`,
+        `<circle cx="${half}" cy="${half}" r="${half}" fill="url(#xp-orb-${key})"/>`,
+      ].join("");
+    }
     case "ring":
       return `<circle key="${key}" cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="none" stroke="currentColor" stroke-width="1"/>`;
     case "star":
@@ -44,6 +62,21 @@ export function renderDecorationElement(kind: string, size: number, key: string)
       return `<circle key="${key}" cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="3 5"/>`;
     case "sparkle":
       return `<path key="${key}" d="M${size / 2} ${size * 0.1}l${size * 0.18} ${size * 0.34} ${size * 0.34} ${size * 0.06} -${size * 0.26} ${size * 0.22} ${size * 0.08} ${size * 0.34} -${size * 0.28} -${size * 0.2} -${size * 0.28} ${size * 0.2} ${size * 0.08} -${size * 0.34} -${size * 0.26} -${size * 0.22} ${size * 0.34} -${size * 0.06}Z" fill="currentColor"/>`;
+    case "wave":
+      return `<path key="${key}" d="M0 ${size * 0.5} C ${size * 0.15} ${size * 0.25}, ${size * 0.35} ${size * 0.75}, ${size * 0.5} ${size * 0.5} S ${size * 0.85} ${size * 0.25}, ${size} ${size * 0.5}" fill="none" stroke="currentColor" stroke-width="1.2"/>`;
+    case "grid": {
+      const step = 44;
+      let d = "";
+      for (let gx = 0; gx <= size; gx += step) d += `M${gx} 0 V${size} `;
+      for (let gy = 0; gy <= size; gy += step) d += `M0 ${gy} H${size} `;
+      return `<path key="${key}" d="${d}" fill="none" stroke="currentColor" stroke-width="0.6"/>`;
+    }
+    case "diagonal": {
+      const step = 48;
+      let d = "";
+      for (let gx = -size; gx <= size; gx += step) d += `M${gx} ${size} L${gx + size} 0 `;
+      return `<path key="${key}" d="${d}" fill="none" stroke="currentColor" stroke-width="0.6"/>`;
+    }
     default:
       return "";
   }

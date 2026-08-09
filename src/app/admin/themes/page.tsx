@@ -1,7 +1,6 @@
 import { themeRegistry } from "@/lib/theme/registry-new";
 import { getThemeTier, themeUnlockedForPlan } from "@/lib/theme/tiers";
 import { planTier } from "@/lib/theme/access";
-import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/auth/require-tenant";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { ThemeMarketplaceClient } from "./_components/theme-marketplace-client";
@@ -16,17 +15,10 @@ export default async function ThemesPage() {
   const enriched = themes.map((t) => ({ ...t, tier: getThemeTier(t) }));
 
   let plan: string | null = null;
-  let currentThemeId: string | null = null;
-  let tenantId = "";
   try {
     const { tenantId: tid } = await requireTenant();
-    tenantId = tid;
-    const [resolved, website] = await Promise.all([
-      resolveActivePlan(undefined, tid),
-      prisma.website.findUnique({ where: { tenantId: tid }, select: { themePackageId: true } }),
-    ]);
+    const resolved = await resolveActivePlan(undefined, tid);
     plan = resolved.code ?? null;
-    currentThemeId = website?.themePackageId ?? null;
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("authenticated") || message.includes("tenant") || message.includes("session")) {
@@ -44,7 +36,7 @@ export default async function ThemesPage() {
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Theme Marketplace</h1>
         <p className="mt-1 text-sm text-gray-400">
-          {themes.length} professionally designed themes, organized by category and gated by your subscription plan.
+          Browse professionally designed themes and open them in the Builder. The Builder is the only place themes are applied and published.
         </p>
       </div>
       <ThemeMarketplaceClient
@@ -52,8 +44,6 @@ export default async function ThemesPage() {
         categories={categories}
         plan={plan}
         planTierName={planTierName}
-        currentThemeId={currentThemeId}
-        tenantId={tenantId}
         unlockedCount={unlockedCount}
       />
     </div>

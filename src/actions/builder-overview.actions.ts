@@ -22,6 +22,9 @@ export interface BuilderOverviewData {
   };
   subscription: {
     plan: string | null;
+    /** RCCF-LAUNCH-TRACK-06: canonical plan CODE (not display name) so the
+     * builder theme picker can resolve entitlement via the Capability Runtime. */
+    code: string | null;
     status: string | null;
   } | null;
   brand: {
@@ -203,7 +206,7 @@ export async function getBuilderOverview(): Promise<{
           customDomain: tenant.customDomain,
         },
         subscription: planResolved.code
-          ? { plan: planDisplay, status: planResolved.status ?? "ACTIVE" }
+          ? { plan: planDisplay, code: planResolved.code, status: planResolved.status ?? "ACTIVE" }
           : null,
         brand: brand ? { name: brand.name, tagline: brand.tagline, avatarUrl: brand.avatarUrl } : null,
         publishStatus: publishStatus

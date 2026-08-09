@@ -3,6 +3,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { CreditCard, Crown } from "lucide-react";
 import { listAllSubscriptions } from "@/modules/billing/application/plan-source";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
+import { getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
 import { SubscriptionsClient } from "./_components/subscriptions-client";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,9 @@ const PAID_TIERS = new Set(["pro", "business", "enterprise"]);
 
 export default async function SubscriptionsPage() {
   const rows = await listAllSubscriptions().catch(() => []);
+  // RCCF-LAUNCH-TRACK-06 (Phase 11): the plan selector loads from the BillingPlan
+  // Runtime — no hardcoded plan lists.
+  const runtimePlans = await getRuntimePlansByFamily("creator").catch(() => []);
   let proCount = 0;
   let freeCount = 0;
 
@@ -40,7 +44,10 @@ export default async function SubscriptionsPage() {
         </MetricGrid>
       </PageSection>
 
-      <SubscriptionsClient initial={subs} />
+      <SubscriptionsClient
+        initial={subs}
+        plans={runtimePlans.map((p) => ({ code: p.code, name: p.name }))}
+      />
     </div>
   );
 }

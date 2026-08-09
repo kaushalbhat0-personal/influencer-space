@@ -48,11 +48,15 @@ export function BuyNowButton({
   productName,
   imageUrl,
   themeColor = "#00f5ff",
+  previewMode = false,
 }: {
   productId: string;
   productName: string;
   imageUrl?: string | null;
   themeColor?: string;
+  /** RCCF-LAUNCH-TRACK-06 (Phase 9): in the Builder preview this button is
+   * inert — it never calls createCheckout (no Prisma rows, no Razorpay). */
+  previewMode?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -63,6 +67,7 @@ export function BuyNowButton({
   }, []);
 
   async function handleBuy() {
+    if (previewMode) return; // never initiate production checkout in preview
     setLoading(true);
     setToast(null);
 
@@ -153,10 +158,13 @@ export function BuyNowButton({
 
       <button
         onClick={handleBuy}
-        disabled={loading}
-        className="mt-1.5 w-full rounded-lg bg-[var(--brand-secondary,#00f5ff)] py-2 text-xs font-semibold text-black transition-all hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={loading || previewMode}
+        title={previewMode ? "Checkout available on your live website" : undefined}
+        className="mt-1.5 w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-all hover:bg-[var(--button-primary-hover,#00d9f2)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? (
+        {previewMode ? (
+          "Checkout available on your live website"
+        ) : loading ? (
           <span className="inline-flex items-center gap-2">
             <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

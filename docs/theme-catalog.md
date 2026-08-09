@@ -1,34 +1,39 @@
-# Theme Catalog — IMPLEMENTATION-25
+# Theme Catalog
 
-## Count & tier distribution
+**Track:** RCCF-LAUNCH-TRACK-06 (Phase 7)
+**Status:** Audited — recommendations documented, no destructive merge applied
 
-**50 professionally designed themes** · 5 free · 10 starter (15 total) · 15 pro
-(30 total) · 20 business (50 total) · enterprise reserved for future releases.
+## Audit result
 
-## Free (5)
-Creator Studio · Neon Dark · Creator Dark · Business Minimal · Education Academy
+The catalog (`src/lib/theme/themes/*`) contains ~50 themes. The 20 themes built
+by the `catalog.ts` `makeTheme` helper are **pure palette swaps** over one shared
+layout: identical surfaces (`#FAFAFA`/`#A1A1AA`/`#71717A`), identical typography,
+identical border — only the 3–4 color values differ.
 
-## Starter (10)
-Creator Light · Creator Bold · Gaming Neon · Streaming Purple · Photography Light · Music Festival · Corporate Blue · Coach · Podcast Studio · Professional
+## Candidate palette groups (same layout, palette-only differences)
 
-## Pro (15)
-Creator Gold · Creator Neon · Creator Midnight · Creator Glass · Creator Pro · Stream Vibe · Gaming Cyber · Gaming Matrix · Streaming Green · Corporate Modern · Corporate Black · Music Stage · Fitness Energy · Luxury Champagne · Executive
+| Cluster | Themes (ids) |
+| --- | --- |
+| Gaming dark accents | `gaming-neon`, `gaming-cyber`, `gaming-matrix`, `streaming-purple`, `streaming-green`, `cyber-arena`, `game-stream`, `stream-vibe`, `creator-neon` |
+| Luxury gold/black | `luxury-champagne`, `luxury-gold`, `royal-plum`, `luxury-ivory`, `fashion`, `executive`, `creator-gold` |
+| Corporate blue | `corporate-blue`, `corporate-modern`, `corporate-black`, `professional` |
+| Creator dark accent | `creator-dark`, `creator-gold`, `creator-neon`, `creator-midnight`, `creator-glass` |
+| Portfolio/photography | `photography-light`, `photographer`, `minimal-portfolio`, `midnight-ocean`, `designer` |
+| Education | `education-academy`, `academy`, `coach`, `mentor` |
+| Restaurant | `forest-canopy`, `modern-restaurant`, `fine-dining`, `bistro` |
 
-## Business (20)
-Startup · Midnight Ocean · Minimal Portfolio · Designer · Photographer · Cyber Arena · Esports · Game Stream · Royal Plum · Luxury Gold · Luxury Ivory · Fashion · Forest Canopy · Modern Restaurant · Fine Dining · Bistro · Academy · Mentor · Audio Creator · Voice
+**Duplicate display names** (different ids):
+- "Luxury Gold" — `com.creatos.luxury-champagne` (catalog) and
+  `com.creatos.luxury-gold` (luxury.ts).
+- "Corporate Blue" — `com.creatos.corporate-blue` (business.ts) and
+  `com.creatos.corporate-modern` (catalog).
 
-## Design identity
+## Recommendation (NOT applied — migration risk)
 
-Each theme carries a unique curated palette (primary/secondary/accent +
-background/surface/surfaceSecondary + text hierarchy + border) plus distinct
-fonts where relevant. Examples:
-- **Creator Gold** — deep black + champagne gold (premium creator).
-- **Gaming Matrix** — pure black + matrix green (retro-digital).
-- **Fitness Energy** — orange + black (performance).
-- **Luxury Champagne** — obsidian + champagne gold (high-end).
-- **Music Festival** — multicolor gradient energy.
-- **Business Minimal** — white + typographic (consulting).
-- **Photography Light** — gallery-white + editorial serif.
-
-All palettes are defined once in `themes/catalog.ts` (or the existing theme
-files) and flow through the single token/theme runtime.
+Collapse each cluster into a single theme definition whose `variants` become
+palette modes (the registry already models light/dark variants). **Preserve all
+existing IDs** so applied `website.themePackageId` values keep resolving
+(registry fallback already tolerates legacy slugs). This is a catalog refactor,
+not a launch blocker — deferred to avoid touching every storefront's applied
+theme. The `ThemeExperience` packs already differentiate the visual layers, so
+the palette-only themes remain visually distinct on the experience layer.

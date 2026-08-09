@@ -54,6 +54,20 @@ export class LayoutEngine {
       "--on-primary": deriveOnColor(c.primary),
       "--primary-hover": deriveShade(c.primary, 0.82),
       "--live": "#ef4444",
+      // RCCF-LAUNCH-TRACK-07 (RC5): canonical button tokens. The theme owns the
+      // visual language (primary/secondary/ghost/outline/destructive); components
+      // own the semantic variant. Derived from the resolved theme palette.
+      "--button-primary-bg": c.secondary,
+      "--button-primary-fg": deriveOnColor(c.secondary),
+      "--button-primary-hover": deriveShade(c.secondary, 0.82),
+      "--button-secondary-bg": "transparent",
+      "--button-secondary-fg": c.textSecondary ?? c.muted,
+      "--button-secondary-border": c.border ?? deriveBorder(c.background),
+      "--button-secondary-hover-fg": c.foreground,
+      "--button-ghost-bg": "transparent",
+      "--button-ghost-fg": c.foreground,
+      "--button-danger-bg": c.danger ?? "#EF4444",
+      "--button-danger-fg": deriveOnColor(c.danger ?? "#EF4444"),
       // RCCF-LAUNCH-TRACK-05: emit the complete theme token set so status
       // colors, surfaces, focus and fonts are theme-driven (with safe fallbacks).
       "--color-success": c.success ?? "#10B981",

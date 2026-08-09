@@ -21,6 +21,9 @@ interface RendererProps {
   props: Record<string, unknown>;
   elementId?: string;
   definition?: ComponentDefinition;
+  /** RCCF-LAUNCH-TRACK-06: true when rendered inside the Builder preview —
+   * renderers must never initiate production commerce in preview mode. */
+  previewMode?: boolean;
 }
 
 // RCCF-LAUNCH-TRACK-04B (Phase 5): the single visibility decision. Reads the
@@ -179,22 +182,22 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {cta && (
               ctaLink ? (
-                <a href={ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">
+                <a href={ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">
                   {cta}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-black">
+                <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)]">
                   {cta}
                 </span>
               )
             )}
             {ctaSecondaryText && (
               ctaSecondaryLink ? (
-                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-[var(--border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary,#D4D4D8)] transition-colors hover:border-[var(--text-secondary,#FAFAFA)] hover:text-[var(--text-primary,#FAFAFA)]">
+                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)] transition-colors hover:border-[var(--button-secondary-hover-fg,#FAFAFA)] hover:text-[var(--button-secondary-hover-fg,#FAFAFA)]">
                   {ctaSecondaryText}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-lg border border-[var(--border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--text-secondary,#D4D4D8)]">
+                <span className="inline-flex items-center gap-2 rounded-lg border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)]">
                   {ctaSecondaryText}
                 </span>
               )
@@ -272,7 +275,7 @@ export function GalleryRenderer({ props }: RendererProps) {
 
 /* â”€â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-export function ProductsRenderer({ props }: RendererProps) {
+export function ProductsRenderer({ props, previewMode }: RendererProps) {
   const p = props as Record<string, unknown>;
   const products = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || String(p.title || "Products");
@@ -315,6 +318,7 @@ export function ProductsRenderer({ props }: RendererProps) {
                   productId={String(prod.id)}
                   productName={String(prod.name || "")}
                   imageUrl={prod.imageUrl ? String(prod.imageUrl) : undefined}
+                  previewMode={previewMode}
                 />
               ) : (
                 <p className="mt-1.5 w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
@@ -560,7 +564,7 @@ export function ContactRenderer({ props }: RendererProps) {
           {state.fieldErrors?.message && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.message[0]}</p>}
         </div>
         {state.error && <p className="text-xs text-red-400">{state.error}</p>}
-        <button type="submit" className="w-full rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">Send Message</button>
+        <button type="submit" className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">Send Message</button>
       </form>
     </div>
   );
@@ -597,7 +601,7 @@ export function NewsletterRenderer({ props }: RendererProps) {
       }} className="flex gap-2">
         <input type="hidden" name="tenantId" value={tenantId} />
         <input name="email" type="email" required className="flex-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
-        <button type="submit" className="rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90">{p.buttonText || "Subscribe"}</button>
+        <button type="submit" className="rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">{p.buttonText || "Subscribe"}</button>
       </form>
       {state.error && <p className="mt-2 text-xs text-red-400">{state.error}</p>}
       {state.fieldErrors?.email && <p className="mt-2 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
@@ -627,7 +631,7 @@ export function PricingRenderer({ props }: RendererProps) {
                 <p className="mt-2 text-3xl font-bold text-[var(--text-primary,#FAFAFA)]">{typeof plan.price === "number" ? formatCurrency(plan.price) : String(plan.price || "")}</p>
                 <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(plan.description || plan.desc || "")}</p>
                 {!!plan.cta && (
-                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-[var(--brand-secondary,#00f5ff)] text-black" : "border border-[var(--border,rgba(255,255,255,0.08))] text-[var(--text-primary,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
+                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-[var(--button-primary-bg,#00f5ff)] text-[var(--button-primary-fg,#09090b)] hover:bg-[var(--button-primary-hover,#00d9f2)]" : "border border-[var(--button-secondary-border,rgba(255,255,255,0.08))] text-[var(--button-secondary-fg,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
                     {String(plan.cta)}
                   </button>
                 )}
@@ -824,7 +828,7 @@ export function DiscordRenderer({ props }: RendererProps) {
             href={inviteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-lg bg-[var(--brand-primary,#6366F1)] px-4 py-2 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] transition-colors hover:opacity-90"
+            className="mt-4 inline-block rounded-lg bg-[var(--button-primary-bg,#6366F1)] px-4 py-2 text-xs font-semibold text-[var(--button-primary-fg,#FAFAFA)] transition-colors hover:bg-[var(--button-primary-hover,#4F46E5)]"
           >
             {label}
           </a>

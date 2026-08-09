@@ -5,11 +5,11 @@ import type { ThemeDefinition, ThemeTier } from "@/lib/theme/types-new";
 import { CATEGORY_LABELS, TIER_LABELS } from "@/lib/theme/types-new";
 import { isThemeUnlocked } from "@/lib/theme/access";
 import { THEME_TIERS } from "@/lib/theme/types-new";
-import { applyThemePackage } from "@/actions/theme.actions";
 import { experienceRegistry } from "@/modules/theme/runtime/experience";
 import { EXPERIENCE_PACKS } from "@/modules/theme/runtime/experience";
 import { isExperienceAvailableForPlan } from "@/modules/theme/runtime/experience";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const TIER_COLORS: Record<string, string> = {
   free: "bg-emerald-900/60 text-emerald-300",
@@ -35,16 +35,12 @@ export function ThemeMarketplaceClient({
   categories,
   plan,
   planTierName,
-  currentThemeId,
-  tenantId,
   unlockedCount,
 }: {
   themes: ThemeDefinition[];
   categories: string[];
   plan: string | null;
   planTierName: string;
-  currentThemeId: string | null;
-  tenantId: string;
   unlockedCount: number;
 }) {
   const [search, setSearch] = useState("");
@@ -60,9 +56,7 @@ export function ThemeMarketplaceClient({
   const [recent, setRecent] = useState<string[]>([]);
   const [favLoaded, setFavLoaded] = useState(false);
   const [recentLoaded, setRecentLoaded] = useState(false);
-  const [applying, setApplying] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
-  const [current, setCurrent] = useState<string | null>(currentThemeId);
+  const router = useRouter();
 
   useEffect(() => {
     setFavorites(loadJson(FAV_KEY, []));
@@ -110,19 +104,12 @@ export function ThemeMarketplaceClient({
     return result;
   }, [themes, search, categoryFilter, tierFilter, onlyUnlocked, onlyFavorites, sort, recent, unlocked, favorites]);
 
-  async function handleApply(theme: ThemeDefinition) {
-    if (!tenantId || !unlocked(theme)) return;
-    setApplying(theme.id);
-    setNotice(null);
-    const res = await applyThemePackage(tenantId, theme.id);
-    setApplying(null);
-    if (res.success) {
-      setNotice({ kind: "ok", text: `Applied ${theme.name}. Publish to go live.` });
-      setCurrent(res.themeId ?? theme.id);
-      setRecent((prev) => [theme.id, ...prev.filter((id) => id !== theme.id)].slice(0, 12));
-    } else {
-      setNotice({ kind: "err", text: res.error ?? "Apply failed" });
-    }
+  // RCCF-LAUNCH-TRACK-06 (Phase 1): the Marketplace is BROWSE-ONLY. It never
+  // mutates a website — "Open in Builder" routes to the Builder with the theme
+  // previewed; the Builder is the only place themes are applied and published.
+  function openInBuilder(themeId: string) {
+    setRecent((prev) => [themeId, ...prev.filter((id) => id !== themeId)].slice(0, 12));
+    router.push(`/builder?theme=${encodeURIComponent(themeId)}`);
   }
 
   function toggleFavorite(id: string) {
@@ -143,12 +130,6 @@ export function ThemeMarketplaceClient({
         </div>
         <Link href="/admin/billing" className="text-xs text-s8ul-cyan hover:underline">Upgrade plan →</Link>
       </div>
-
-      {notice && (
-        <div className={`rounded-lg border px-3 py-2 text-xs ${notice.kind === "ok" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-red-500/30 bg-red-500/10 text-red-300"}`}>
-          {notice.text}
-        </div>
-      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
@@ -200,7 +181,6 @@ export function ThemeMarketplaceClient({
         {filtered.map((theme) => {
           const isUnlocked = unlocked(theme);
           const tier = (theme.tier as ThemeTier | undefined) ?? "free";
-          const isCurrent = current === theme.id;
           const isFav = favorites.includes(theme.id);
           const cv = theme.variants[0]?.tokens.colors;
           const exp = experienceRegistry.resolve({ id: theme.id, category: theme.category, premium: theme.premium });
@@ -209,13 +189,12 @@ export function ThemeMarketplaceClient({
             <div
               key={theme.id}
               onClick={() => setSelectedTheme(theme)}
-              className={`group relative cursor-pointer overflow-hidden rounded-xl border text-left transition-all ${isCurrent ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50" : "border-white/10 hover:border-white/30"}`}
+              className={`group relative cursor-pointer overflow-hidden rounded-xl border text-left transition-all border-white/10 hover:border-white/30`}
               data-testid={`theme-card-${theme.slug}`}
             >
               <div className="h-32 w-full" style={{ background: `linear-gradient(135deg, ${cv?.primary} 0%, ${cv?.secondary} 50%, ${cv?.accent} 100%)` }}>
                 <div className="absolute left-2 top-2 z-10 flex gap-1">
                   {theme.featured && <span className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-bold text-black">Featured</span>}
-                  {isCurrent && <span className="rounded bg-s8ul-cyan px-1.5 py-0.5 text-[9px] font-bold text-black">Current</span>}
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(theme.id); }}
@@ -253,14 +232,13 @@ export function ThemeMarketplaceClient({
                     <span key={v.mode} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">{v.mode}</span>
                   ))}
                 </div>
-                {isUnlocked && !isCurrent && (
+                {isUnlocked && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleApply(theme); }}
-                    disabled={applying === theme.id}
-                    data-testid={`apply-theme-${theme.slug}`}
-                    className="mt-1 w-full rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90 disabled:opacity-50"
+                    onClick={(e) => { e.stopPropagation(); openInBuilder(theme.id); }}
+                    data-testid={`open-in-builder-${theme.slug}`}
+                    className="mt-1 w-full rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
                   >
-                    {applying === theme.id ? "Applying…" : "Apply Theme"}
+                    Open in Builder
                   </button>
                 )}
                 {!isUnlocked && (
@@ -297,8 +275,7 @@ export function ThemeMarketplaceClient({
           theme={selectedTheme}
           unlocked={unlocked(selectedTheme)}
           planTierName={planTierName}
-          onApply={() => handleApply(selectedTheme)}
-          applying={applying === selectedTheme.id}
+          onOpenInBuilder={() => openInBuilder(selectedTheme.id)}
           onClose={() => setSelectedTheme(null)}
         />
       )}
@@ -306,12 +283,11 @@ export function ThemeMarketplaceClient({
   );
 }
 
-function ThemeDetailPanel({ theme, unlocked, planTierName, onApply, applying, onClose }: {
+function ThemeDetailPanel({ theme, unlocked, planTierName, onOpenInBuilder, onClose }: {
   theme: ThemeDefinition;
   unlocked: boolean;
   planTierName: string;
-  onApply: () => void;
-  applying: boolean;
+  onOpenInBuilder: () => void;
   onClose: () => void;
 }) {
   const cv = theme.variants[0]?.tokens.colors;
@@ -374,12 +350,11 @@ function ThemeDetailPanel({ theme, unlocked, planTierName, onApply, applying, on
           <button onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/5">Cancel</button>
           {unlocked ? (
             <button
-              onClick={onApply}
-              disabled={applying}
-              data-testid="theme-detail-apply"
-              className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50"
+              onClick={onOpenInBuilder}
+              data-testid="theme-detail-open-builder"
+              className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90"
             >
-              {applying ? "Applying…" : "Apply Theme"}
+              Open in Builder
             </button>
           ) : (
             <Link href="/admin/billing" className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:opacity-90">

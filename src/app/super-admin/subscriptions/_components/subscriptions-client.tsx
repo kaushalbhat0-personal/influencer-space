@@ -4,12 +4,18 @@ import { useState } from "react";
 import { adminSetSubscription } from "@/actions/super-admin-billing.actions";
 import { useRouter } from "next/navigation";
 
-const PLANS = ["creator_launch", "creator_grow", "creator_scale", "creator_enterprise"];
 const fmtDate = (v: string | Date) => new Date(v).toISOString().replace("T", " ").slice(0, 10);
 
 type SubRow = { tenantId: string; tenantName: string; planCode: string; plan: string; status: string; currentPeriodEnd: string | null };
 
-export function SubscriptionsClient({ initial }: { initial: SubRow[] }) {
+export function SubscriptionsClient({
+  initial,
+  plans,
+}: {
+  initial: SubRow[];
+  /** RCCF-LAUNCH-TRACK-06 (Phase 11): plan options come from the BillingPlan Runtime. */
+  plans: { code: string; name: string }[];
+}) {
   const router = useRouter();
   const [rows, setRows] = useState<SubRow[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
@@ -65,7 +71,7 @@ export function SubscriptionsClient({ initial }: { initial: SubRow[] }) {
                       aria-label={`Set plan for ${r.tenantName}`}
                       className="rounded border border-white/10 bg-zinc-900 px-1.5 py-1 text-[10px] text-zinc-300 disabled:opacity-50"
                     >
-                      {PLANS.map((p) => <option key={p} value={p}>{p.replace("creator_", "")}</option>)}
+                      {plans.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
                     </select>
                     {r.status === "CANCELLED" ? (
                       <button onClick={() => run(r.tenantId, "resume")} disabled={busy !== null} className="rounded bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50" data-testid="subs-resume">

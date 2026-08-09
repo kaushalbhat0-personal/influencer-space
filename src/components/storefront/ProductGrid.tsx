@@ -36,7 +36,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
                 <span className="text-sm font-bold text-white">{formatCurrency(p.price)}</span>
                 <a
                   href={`/checkout?product=${p.id}`}
-                  className="rounded-lg bg-[var(--brand-secondary,#00f5ff)] px-4 py-1.5 text-xs font-semibold text-black transition-colors hover:opacity-90"
+                  className="rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-1.5 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
                 >
                   Buy Now
                 </a>
