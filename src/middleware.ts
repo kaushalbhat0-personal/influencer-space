@@ -4,6 +4,7 @@ import { getToken } from "next-auth/jwt";
 import { LifecycleService } from "@/lib/lifecycle/token-resolver";
 import { classifyRoute, requiresAuthentication } from "@/lib/platform/routes";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { getPlatformDomains } from "@/lib/platform/domains";
 
 const lifecycleService = new LifecycleService();
 
@@ -22,33 +23,6 @@ if (!secret && process.env.NODE_ENV === "production") {
  * tenant host, which produces a 404 on every storefront URL while
  * /admin and /builder keep working.
  */
-function getPlatformDomains(): string[] {
-  const domains = new Set<string>(["localhost:3000", "influencer-space-alpha.vercel.app"]);
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (appUrl) {
-    try {
-      const u = new URL(appUrl);
-      if (u.host) domains.add(u.host);
-      if (u.hostname && u.hostname !== u.host) domains.add(u.hostname);
-    } catch {
-      // Ignore malformed app URL.
-    }
-  }
-
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) domains.add(vercelUrl);
-
-  const extra = process.env.PLATFORM_DOMAINS;
-  if (extra) {
-    for (const d of extra.split(",")) {
-      const trimmed = d.trim();
-      if (trimmed) domains.add(trimmed);
-    }
-  }
-
-  return Array.from(domains);
-}
 
 const platformDomains = getPlatformDomains();
 

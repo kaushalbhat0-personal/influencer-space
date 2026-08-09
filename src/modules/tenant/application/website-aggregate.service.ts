@@ -19,9 +19,56 @@ export interface AggregateDiagnostics {
   moduleFailures: string[];
 }
 
+/**
+ * RCCF-IMPLEMENTATION-09B (Phase 3) — aggregate build options.
+ *
+ * `homepage` mode curates repeatable collections for the homepage:
+ *   - featured items first (with a fallback to ALL items when none are
+ *     featured, so an un-curated storefront never shows an empty section)
+ *   - capped at `homepageLimit` so a 500-product catalog never floods the
+ *     homepage (JSON-LD, DOM, aggregate size).
+ * Full collection pages ([domain]/[slug]) build WITHOUT homepage mode and
+ * receive the complete collections (Phase 6 adds pagination there).
+ */
+export interface AggregateBuildOptions {
+  homepage?: boolean;
+  /** Per-collection homepage caps (defaults apply when omitted). */
+  homepageLimit?: {
+    products?: number;
+    gallery?: number;
+    courses?: number;
+    services?: number;
+    testimonials?: number;
+    games?: number;
+    timeline?: number;
+    links?: number;
+    contentFeed?: number;
+  };
+}
+
+export const DEFAULT_HOMEPAGE_LIMITS = {
+  products: 12,
+  gallery: 12,
+  courses: 12,
+  services: 12,
+  testimonials: 6,
+  games: 12,
+  timeline: 12,
+  links: 12,
+  contentFeed: 12,
+} as const;
+
+/** Featured-first pick with a zero-featured fallback to all items. */
+export function featuredPick<T>(items: T[], limit: number): T[] {
+  if (items.length === 0) return items;
+  const featured = items.filter((i) => Boolean((i as { isFeatured?: boolean; featured?: boolean }).isFeatured ?? (i as { featured?: boolean }).featured));
+  const base = featured.length > 0 ? featured : items;
+  return base.slice(0, limit);
+}
+
 export class WebsiteAggregateService {
-  async build(tenantId: string): Promise<WebsiteAggregate> {
-    return (await this.buildWithCollector(tenantId, null)).aggregate;
+  async build(tenantId: string, options?: AggregateBuildOptions): Promise<WebsiteAggregate> {
+    return (await this.buildWithCollector(tenantId, null, options)).aggregate;
   }
 
   /**
@@ -30,14 +77,14 @@ export class WebsiteAggregateService {
    * in `moduleFailures`, so the Builder/Storefront/Publish keep working and the
    * trace reports exactly what went wrong.
    */
-  async buildWithDiagnostics(tenantId: string): Promise<{
+  async buildWithDiagnostics(tenantId: string, options?: AggregateBuildOptions): Promise<{
     aggregate: WebsiteAggregate;
     invalidAssetIds: AggregateDiagnostics["invalidAssetIds"];
     skippedAssets: number;
     moduleFailures: string[];
   }> {
     const diagnostics: AggregateDiagnostics = { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] };
-    const { aggregate } = await this.buildWithCollector(tenantId, diagnostics);
+    const { aggregate } = await this.buildWithCollector(tenantId, diagnostics, options);
     return {
       aggregate,
       invalidAssetIds: diagnostics.invalidAssetIds,
@@ -49,6 +96,7 @@ export class WebsiteAggregateService {
   private async buildWithCollector(
     tenantId: string,
     diagnostics: AggregateDiagnostics | null,
+    options?: AggregateBuildOptions,
   ): Promise<{ aggregate: WebsiteAggregate }> {
     const safe = async <T>(name: string, fn: () => Promise<T>): Promise<T | null> => {
       try {
@@ -65,22 +113,33 @@ export class WebsiteAggregateService {
       if (diagnostics) diagnostics.invalidAssetIds.push({ id, module, field });
     };
 
+    // RCCF-IMPLEMENTATION-09B (Phase 3/6): homepage curation. When homepage mode
+    // is on, repeatable collections show featured items first (capped), with a
+    // fallback to all items when none are featured. Limits are pushed down to
+    // the query layer so the DB never returns the full catalog.
+    const homepage = options?.homepage ?? false;
+    const limit = (key: keyof typeof DEFAULT_HOMEPAGE_LIMITS): number =>
+      options?.homepageLimit?.[key] ?? DEFAULT_HOMEPAGE_LIMITS[key];
+    const curated = <T>(items: T[], key: keyof typeof DEFAULT_HOMEPAGE_LIMITS): T[] =>
+      homepage ? featuredPick(items, limit(key)) : items;
+
     const [
       brand, heroData, products, gallery, links, seoData, website, timelineEvents,
       gameList, feedItems, testimonialsData, faqData, offerings, knowledgeCompletion,
     ] = await Promise.all([
       safe("brand", () => brandRepository.findByTenantId(tenantId)),
       safe("hero", () => SettingsService.getHeroData(tenantId)),
-      safe("products", () => productRepository.findPublished(tenantId)),
-      safe("gallery", () => galleryRepository.findPublished(tenantId)),
+      safe("products", () => this.loadProducts(tenantId, homepage, options)),
+      safe("gallery", () => this.loadGallery(tenantId, homepage, options)),
       safe("links", () => linkRepository.findPublished(tenantId)),
       safe("seo", () => SettingsService.getSeo(tenantId)),
       safe("website", () => websiteRepository.findByTenantId(tenantId)),
-      safe("timeline", () => prisma.timelineEvent.findMany({ where: { tenantId }, orderBy: { year: "desc" } })),
-      safe("games", () => prisma.game.findMany({ where: { tenantId }, orderBy: { order: "asc" } })),
+      safe("timeline", () => prisma.timelineEvent.findMany({ where: { tenantId }, orderBy: { year: "desc" }, ...(homepage ? { take: this.limit("timeline") } : {}) })),
+      safe("games", () => prisma.game.findMany({ where: { tenantId }, orderBy: { order: "asc" }, ...(homepage ? { take: this.limit("games") } : {}) })),
       safe("contentFeed", () => prisma.contentFeedItem.findMany({
         where: { tenantId, hidden: false },
         orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+        ...(homepage ? { take: this.limit("contentFeed") } : {}),
       })),
       safe("testimonials", () => SettingsService.getSettingByKey(tenantId, "testimonials")),
       safe("faq", () => SettingsService.getSettingByKey(tenantId, "faq")),
@@ -88,6 +147,7 @@ export class WebsiteAggregateService {
         where: { tenantId, status: "published" },
         orderBy: { createdAt: "desc" },
         select: { id: true, type: true, title: true, description: true, price: true, metadata: true },
+        ...(homepage ? { take: this.limit("courses") + this.limit("services") } : {}),
       })),
       safe("knowledgeCompletion", () => SettingsService.getSettingByKey(tenantId, "knowledge_completion")),
     ]);
@@ -155,7 +215,7 @@ export class WebsiteAggregateService {
         imageDesktopAlignment: (heroData as Record<string, unknown>)?.imageDesktopAlignment as "top" | "center" | "bottom" ?? "center",
         imageMobileAlignment: (heroData as Record<string, unknown>)?.imageMobileAlignment as "top" | "center" | "bottom" ?? "center",
       },
-      products: (products ?? []).map((p) => ({
+      products: curated((products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -165,8 +225,8 @@ export class WebsiteAggregateService {
         slug: p.slug ?? "",
         isFeatured: p.isFeatured,
         isActive: p.isActive,
-      })),
-      gallery: (gallery ?? []).map((g) => ({
+      })), "products"),
+      gallery: curated((gallery ?? []).map((g) => ({
         id: g.id,
         title: g.title,
         description: g.description,
@@ -175,18 +235,18 @@ export class WebsiteAggregateService {
         videoUrl: g.videoUrl,
         altText: g.altText,
         isFeatured: g.isFeatured,
-      })),
-      links: (links ?? []).map((l) => ({
+      })), "gallery"),
+      links: curated((links ?? []).map((l) => ({
         id: l.id,
         title: l.title,
         url: l.url,
         imageUrl: l.imageUrl,
-      })),
+      })), "links"),
       seo: {
         title: ((seoData as { title?: string } | null)?.title) ?? "",
         description: ((seoData as { description?: string } | null)?.description) ?? "",
       },
-      testimonials: rawTestimonials.map((item) => ({
+      testimonials: curated(rawTestimonials.map((item) => ({
         id: (item.id as string) ?? "",
         author: item.author as string,
         role: (item.role as string) ?? null,
@@ -195,29 +255,29 @@ export class WebsiteAggregateService {
         rating: (item.rating as number) ?? 5,
         featured: (item.featured as boolean) ?? false,
         category: (item.category as string) ?? "general",
-      })),
+      })), "testimonials"),
       faq: rawFaq.map((item) => ({
         id: (item.id as string) ?? "",
         question: item.question as string,
         answer: item.answer as string,
         category: (item.category as string) ?? "general",
       })),
-      timeline: (timelineEvents ?? []).map((e) => ({
+      timeline: curated((timelineEvents ?? []).map((e) => ({
         id: e.id,
         year: e.year,
         title: e.title,
         description: e.description,
         imageUrl: e.imageUrl,
         stats: e.stats,
-      })),
-      games: (gameList ?? []).map((g) => ({
+      })), "timeline"),
+      games: curated((gameList ?? []).map((g) => ({
         id: g.id,
         name: g.name,
         logoUrl: g.logoUrl,
         description: g.description,
         genre: g.genre,
-      })),
-      contentFeed: (feedItems ?? []).map((item) => ({
+      })), "games"),
+      contentFeed: curated((feedItems ?? []).map((item) => ({
         id: item.id,
         platform: item.platform,
         mediaType: item.mediaType,
@@ -225,8 +285,8 @@ export class WebsiteAggregateService {
         thumbnailUrl: item.thumbnailUrl,
         caption: item.caption,
         permalink: item.permalink,
-      })),
-      courses: (offerings ?? [])
+      })), "contentFeed"),
+      courses: curated((offerings ?? [])
         .filter((o) => o.type === "course")
         .map((o) => {
           const meta = o.metadata as Record<string, unknown> | null;
@@ -239,8 +299,8 @@ export class WebsiteAggregateService {
             category: (meta?.category as string | undefined) ?? null,
             featured: (meta?.featured as boolean | undefined) ?? false,
           };
-        }),
-      services: (offerings ?? [])
+        }), "courses"),
+      services: curated((offerings ?? [])
         .filter((o) => o.type === "coaching")
         .map((o) => {
           const meta = o.metadata as Record<string, unknown> | null;
@@ -254,7 +314,7 @@ export class WebsiteAggregateService {
             category: (meta?.category as string | undefined) ?? null,
             featured: (meta?.featured as boolean | undefined) ?? false,
           };
-        }),
+        }), "services"),
     };
 
     if (brand?.avatarAssetId || brand?.bannerAssetId) {
@@ -369,6 +429,37 @@ export class WebsiteAggregateService {
       });
     }
     return agg;
+  }
+
+  /** Resolve the homepage curation limit for a collection key. */
+  private limit(key: keyof typeof DEFAULT_HOMEPAGE_LIMITS, options?: AggregateBuildOptions): number {
+    return options?.homepageLimit?.[key] ?? DEFAULT_HOMEPAGE_LIMITS[key];
+  }
+
+  /**
+   * RCCF-IMPLEMENTATION-09B (Phase 6): bounded product load. Homepage mode
+   * fetches featured products (capped) plus a non-featured top-up so the query
+   * never returns the full catalog; non-homepage loads everything.
+   */
+  private async loadProducts(tenantId: string, homepage: boolean, options?: AggregateBuildOptions): Promise<Awaited<ReturnType<typeof productRepository.findPublished>>> {
+    if (!homepage) return productRepository.findPublished(tenantId);
+    const limit = this.limit("products", options);
+    const featured = await productRepository.findFeatured(tenantId, { limit });
+    const remaining = Math.max(0, limit - featured.length);
+    if (remaining === 0) return featured;
+    const topUp = await productRepository.findNonFeatured(tenantId, { limit: remaining });
+    return [...featured, ...topUp];
+  }
+
+  /** Bounded gallery load — featured-first with a non-featured top-up. */
+  private async loadGallery(tenantId: string, homepage: boolean, options?: AggregateBuildOptions): Promise<Awaited<ReturnType<typeof galleryRepository.findPublished>>> {
+    if (!homepage) return galleryRepository.findPublished(tenantId);
+    const limit = this.limit("gallery", options);
+    const featured = await galleryRepository.findFeatured(tenantId, { limit });
+    const remaining = Math.max(0, limit - featured.length);
+    if (remaining === 0) return featured;
+    const topUp = await galleryRepository.findNonFeatured(tenantId, { limit: remaining });
+    return [...featured, ...topUp];
   }
 }
 

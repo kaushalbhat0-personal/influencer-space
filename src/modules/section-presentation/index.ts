@@ -9,6 +9,9 @@ export {
   sectionPresentationResolver,
   SectionPresentationResolver,
 } from "./application/runtime";
+export { validateSectionPresentation } from "./application/validate";
+export { ALLOWED_PRESENTATION_KEYS } from "./application/validate";
+export type { SectionPresentationValidation } from "./application/validate";
 export type { ResolvedPresentation, VisibilityMode } from "./application/runtime";
 export { SECTION_PRESETS, presetFor, presetsFor, packIdFor } from "./application/presets";
 export {

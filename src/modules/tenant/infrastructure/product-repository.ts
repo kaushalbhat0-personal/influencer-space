@@ -79,17 +79,30 @@ export class ProductRepository {
     return r.count;
   }
 
-  async findPublished(tenantId: string, tx?: Prisma.TransactionClient): Promise<Product[]> {
+  async findPublished(tenantId: string, params?: { limit?: number }, tx?: Prisma.TransactionClient): Promise<Product[]> {
     return this.client(tx).product.findMany({
       where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null },
       orderBy: { order: "asc" },
+      take: params?.limit,
     });
   }
 
-  async findFeatured(tenantId: string, tx?: Prisma.TransactionClient): Promise<Product[]> {
+  async findFeatured(tenantId: string, params?: { limit?: number }, tx?: Prisma.TransactionClient): Promise<Product[]> {
     return this.client(tx).product.findMany({
       where: { tenantId, isFeatured: true, status: "PUBLISHED", isActive: true, archivedAt: null },
       orderBy: { order: "asc" },
+      take: params?.limit,
+    });
+  }
+
+  /** RCCF-IMPLEMENTATION-09B (Phase 6): non-featured published products, used
+   *  to top up the homepage to the curation limit when fewer than the cap are
+   *  featured (keeps the query bounded — never fetches the full catalog). */
+  async findNonFeatured(tenantId: string, params?: { limit?: number }, tx?: Prisma.TransactionClient): Promise<Product[]> {
+    return this.client(tx).product.findMany({
+      where: { tenantId, isFeatured: false, status: "PUBLISHED", isActive: true, archivedAt: null },
+      orderBy: { order: "asc" },
+      take: params?.limit,
     });
   }
 }

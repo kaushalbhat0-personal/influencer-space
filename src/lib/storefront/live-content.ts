@@ -12,24 +12,26 @@
  */
 
 import type { PublishedSnapshot } from "@/types/snapshot";
-import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
+import { websiteAggregateService, type AggregateBuildOptions } from "@/modules/tenant/application/website-aggregate.service";
 import { logger } from "@/lib/observability/logger";
 import type { AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 
 export async function mergeLiveContent(
   snapshot: PublishedSnapshot,
   tenantId: string,
+  options?: AggregateBuildOptions,
 ): Promise<PublishedSnapshot> {
-  return (await mergeLiveContentWithDiagnostics(snapshot, tenantId)).snapshot;
+  return (await mergeLiveContentWithDiagnostics(snapshot, tenantId, options)).snapshot;
 }
 
 export async function mergeLiveContentWithDiagnostics(
   snapshot: PublishedSnapshot,
   tenantId: string,
+  options?: AggregateBuildOptions,
 ): Promise<{ snapshot: PublishedSnapshot; diagnostics: AggregateTraceDiagnostics }> {
   try {
     const { aggregate, invalidAssetIds, skippedAssets, moduleFailures } =
-      await websiteAggregateService.buildWithDiagnostics(tenantId);
+      await websiteAggregateService.buildWithDiagnostics(tenantId, options);
     return {
       snapshot: { ...snapshot, content: aggregate },
       diagnostics: { invalidAssetIds, skippedAssets, moduleFailures },

@@ -11,7 +11,18 @@ const TYPE_LABELS: Record<NavItemType, string> = {
   external: "External Link",
 };
 
-export function NavigationManager({ initialItems }: { initialItems: NavigationItem[] }) {
+export interface NavPageOption {
+  slug: string;
+  name: string;
+}
+
+export function NavigationManager({
+  initialItems,
+  availablePages = [],
+}: {
+  initialItems: NavigationItem[];
+  availablePages?: NavPageOption[];
+}) {
   const [items, setItems] = useState<NavigationItem[]>(initialItems);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -51,7 +62,7 @@ export function NavigationManager({ initialItems }: { initialItems: NavigationIt
   }
 
   function removeItem(index: number) {
-    if (items[index].type !== "external") return;
+    if (items[index].type === "anchor") return;
     const updated = items.filter((_, i) => i !== index);
     updated.forEach((item, i) => { item.order = i; });
     setItems(updated);
@@ -67,6 +78,22 @@ export function NavigationManager({ initialItems }: { initialItems: NavigationIt
       order: items.length,
       visible: true,
       target: "_blank",
+    };
+    const updated = [...items, newItem];
+    setItems(updated);
+    persist(updated);
+  }
+
+  function addPageLink(slug: string, name: string) {
+    const already = items.some((i) => i.type === "page" && i.href === slug);
+    if (already) return;
+    const newItem: NavigationItem = {
+      id: `nav_page_${Date.now()}`,
+      label: name || slug,
+      href: slug,
+      type: "page",
+      order: items.length,
+      visible: true,
     };
     const updated = [...items, newItem];
     setItems(updated);
@@ -96,6 +123,22 @@ export function NavigationManager({ initialItems }: { initialItems: NavigationIt
             <RotateCcw className="h-3 w-3" />
             Reset to Defaults
           </button>
+          {availablePages.length > 0 && (
+            <select
+              value=""
+              onChange={(e) => {
+                const slug = e.target.value;
+                const page = availablePages.find((p) => p.slug === slug);
+                if (slug && page) addPageLink(slug, page.name);
+              }}
+              className="rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300"
+            >
+              <option value="">Add Page…</option>
+              {availablePages.map((p) => (
+                <option key={p.slug} value={p.slug}>{p.name}</option>
+              ))}
+            </select>
+          )}
           <button
             onClick={addExternalLink}
             className="flex items-center gap-1.5 rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90 transition-opacity"
@@ -152,6 +195,11 @@ export function NavigationManager({ initialItems }: { initialItems: NavigationIt
                 {item.href}
               </span>
             )}
+            {item.type === "page" && (
+              <span className="flex items-center gap-1 text-xs text-zinc-600">
+                /{item.href.replace(/^\/+/, "")}
+              </span>
+            )}
 
             <button
               onClick={() => toggleVisibility(index)}
@@ -161,7 +209,7 @@ export function NavigationManager({ initialItems }: { initialItems: NavigationIt
               {item.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
             </button>
 
-            {item.type === "external" && (
+            {item.type !== "anchor" && (
               <button
                 onClick={() => removeItem(index)}
                 className="text-zinc-600 hover:text-red-400 transition-colors"

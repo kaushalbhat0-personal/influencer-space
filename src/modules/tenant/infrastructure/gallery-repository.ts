@@ -89,10 +89,31 @@ export class GalleryRepository {
     return result._max.order ?? 0;
   }
 
-  async findPublished(tenantId: string, tx?: Prisma.TransactionClient): Promise<GalleryImage[]> {
+  async findPublished(tenantId: string, params?: { limit?: number }, tx?: Prisma.TransactionClient): Promise<GalleryImage[]> {
     return this.client(tx).galleryImage.findMany({
       where: { tenantId, status: "PUBLISHED", isActive: true, archivedAt: null },
       orderBy: { order: "asc" },
+      take: params?.limit,
+    });
+  }
+
+  /** RCCF-IMPLEMENTATION-09B (Phase 6): featured published images (capped) —
+   *  homepage curation source. */
+  async findFeatured(tenantId: string, params?: { limit?: number }, tx?: Prisma.TransactionClient): Promise<GalleryImage[]> {
+    return this.client(tx).galleryImage.findMany({
+      where: { tenantId, isFeatured: true, status: "PUBLISHED", isActive: true, archivedAt: null },
+      orderBy: { order: "asc" },
+      take: params?.limit,
+    });
+  }
+
+  /** RCCF-IMPLEMENTATION-09B (Phase 6): non-featured published images (capped) —
+   *  tops up the homepage curation when fewer than the cap are featured. */
+  async findNonFeatured(tenantId: string, params?: { limit?: number }, tx?: Prisma.TransactionClient): Promise<GalleryImage[]> {
+    return this.client(tx).galleryImage.findMany({
+      where: { tenantId, isFeatured: false, status: "PUBLISHED", isActive: true, archivedAt: null },
+      orderBy: { order: "asc" },
+      take: params?.limit,
     });
   }
 }

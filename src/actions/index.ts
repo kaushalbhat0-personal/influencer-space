@@ -156,4 +156,8 @@ export type {
 
 export { updateTheme } from "./theme.actions";
 
+export {
+  updateSectionPresentation, resetSectionPresentation,
+} from "./section-presentation.actions";
+
 export { switchWorkspace, listWorkspaces } from "./workspace.actions";

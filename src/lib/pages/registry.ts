@@ -124,6 +124,14 @@ export function getRegisteredPage(id: string): RegisteredPage | undefined {
   return pageById.get(id);
 }
 
+/** RCCF-IMPLEMENTATION-09B (Phase 5): look up a registered page by normalized
+ *  slug ("products" or "/products") so per-page SEO defaults resolve from the
+ *  public URL, not an internal id. */
+export function getRegisteredPageBySlug(slug: string): RegisteredPage | undefined {
+  const normalized = slug.replace(/^\/+/, "").toLowerCase();
+  return PAGE_REGISTRY.find((p) => p.slug.replace(/^\/+/, "").toLowerCase() === normalized);
+}
+
 export function getFoundationPages(): RegisteredPage[] {
   return PAGE_REGISTRY.filter((p) => p.type === "foundation");
 }

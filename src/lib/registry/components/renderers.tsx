@@ -15,6 +15,7 @@ import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
 import { Star } from "lucide-react";
 import { shouldRenderSection } from "@/modules/section-presentation";
 import { formatCurrency } from "@/lib/utils";
+import { ViewAllLink } from "@/components/storefront/ViewAllLink";
 
 
 interface RendererProps {
@@ -266,6 +267,7 @@ export function GalleryRenderer({ props }: RendererProps) {
             </div>
           ))}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }
@@ -328,6 +330,7 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
             </div>
           ))}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }
@@ -479,6 +482,7 @@ export function TestimonialsRenderer({ props }: RendererProps) {
             </div>
           ))}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }
@@ -686,6 +690,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
             </div>
           ))}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }
@@ -739,6 +744,7 @@ export function ServicesRenderer({ props }: RendererProps) {
             </div>
           ))}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }
@@ -908,6 +914,7 @@ export function GamesRenderer({ props }: RendererProps) {
             </div>
           ))}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }

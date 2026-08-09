@@ -5,6 +5,7 @@ import {
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
   User, Menu, Sparkles, Gamepad as GamepadIcon, FolderOpen,
   Paintbrush, LayoutTemplate, Wand2, Brain, Target, Landmark, Bell,
+  Heading as HeadingIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -65,6 +66,7 @@ export const ADMIN_NAV: NavConfig = {
         { href: "/admin/blueprints", label: "Website Templates", icon: LayoutTemplate },
         { href: "/admin/appearance", label: "Theme Settings", icon: Palette },
         { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
+        { href: "/admin/website/sections", label: "Section Headings", icon: HeadingIcon },
         { href: "/builder", label: "Layout Builder", icon: Layout },
       ],
     },

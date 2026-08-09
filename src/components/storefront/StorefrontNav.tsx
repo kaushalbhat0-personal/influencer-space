@@ -63,7 +63,6 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
       if (el) el.scrollIntoView({ behavior: "smooth" });
     }
   }
-
   return (
     <>
       {/* Desktop sticky nav */}
@@ -71,18 +70,19 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
         <div className="mx-auto flex max-w-2xl items-center justify-center gap-1 px-4 py-2">
           {visibleSections.map((s) => {
             const isExternal = s.type === "external";
-            const anchorId = s.type === "anchor" ? s.href.replace("#", "") : "";
+            const isAnchor = s.type === "anchor";
+            const anchorId = isAnchor ? s.href.replace("#", "") : "";
             return (
               <a
                 key={s.id}
-                href={isExternal ? s.href : undefined}
+                href={isAnchor ? undefined : s.href}
                 target={isExternal ? s.target || "_blank" : undefined}
                 rel={isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {
-                  if (!isExternal) { e.preventDefault(); handleClick(s); }
+                  if (isAnchor) { e.preventDefault(); handleClick(s); }
                 }}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  !isExternal && activeSection === anchorId ? "bg-[var(--brand-primary,#6366F1)]/10 text-[var(--text-primary,#FAFAFA)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"
+                  !isAnchor && activeSection === anchorId ? "bg-[var(--brand-primary,#6366F1)]/10 text-[var(--text-primary,#FAFAFA)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"
                 }`}
               >
                 {NAV_ICON[s.id] || null}
@@ -99,14 +99,15 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
         <div className="flex items-center justify-around py-2 px-2">
           {visibleSections.slice(0, 5).map((s) => {
             const isExternal = s.type === "external";
+            const isAnchor = s.type === "anchor";
             return (
               <a
                 key={s.id}
-                href={isExternal ? s.href : undefined}
+                href={isAnchor ? undefined : s.href}
                 target={isExternal ? s.target || "_blank" : undefined}
                 rel={isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {
-                  if (!isExternal) { e.preventDefault(); handleClick(s); }
+                  if (isAnchor) { e.preventDefault(); handleClick(s); }
                 }}
                 className="flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 min-w-[48px] min-h-[44px] justify-center transition-colors"
                 aria-label={s.label}
