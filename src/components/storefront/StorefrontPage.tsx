@@ -104,8 +104,10 @@ export async function StorefrontPage({
   // RCCF-IMPLEMENTATION-09B (Phase 3): "View all → /{collection}" CTA. When a
   // section's base matches an independent non-home page in the document, the
   // renderer receives viewAllHref so it can link to the full collection
-  // instead of the curated homepage slice.
-  const sections = withViewAllHref(filteredSections, doc.pages, (pageSlug) => getPageHref(domain, pageSlug));
+  // instead of the curated homepage slice. RCCF-VALIDATION-09B: the CTA never
+  // self-links — a section on its own full page (e.g. products on /products)
+  // gets no view-all href.
+  const sections = withViewAllHref(filteredSections, doc.pages, (pageSlug) => getPageHref(domain, pageSlug), target.slug);
 
   // RCCF-LAUNCH-POLISH-06 (Phase 5/10): resolve the experience through the
   // Capability Runtime so unsupported premium layers fall back to the free tier.

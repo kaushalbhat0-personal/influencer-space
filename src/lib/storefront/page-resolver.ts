@@ -40,16 +40,28 @@ export interface ViewAllPage {
  * on the homepage gets viewAllHref → "/products"). `hrefFor` resolves the
  * storefront root so the link is correct on subdomains and platform slugs.
  * Pure — the caller supplies the URL builder.
+ *
+ * RCCF-VALIDATION-09B: `currentPageSlug` is the page currently being rendered
+ * (the homepage passes null/undefined). A section never gets a self-referential
+ * "View all" CTA — on the full collection page itself the CTA would link back
+ * to the very page the visitor is already on.
  */
 export function withViewAllHref<T extends ViewAllSection>(
   sections: T[],
   pages: ViewAllPage[],
   hrefFor: (pageSlug: string) => string,
+  currentPageSlug?: string | null,
 ): T[] {
+  const current = currentPageSlug ? normalizePageSlug(currentPageSlug) : null;
   return sections.map((s) => {
     const base = baseOfModule(s.moduleId);
     if (base === "") return s;
-    const fullPage = pages.find((p) => !p.isHome && normalizePageSlug(p.slug) === base);
+    const fullPage = pages.find(
+      (p) =>
+        !p.isHome &&
+        normalizePageSlug(p.slug) === base &&
+        normalizePageSlug(p.slug) !== current,
+    );
     if (!fullPage) return s;
     return {
       ...s,

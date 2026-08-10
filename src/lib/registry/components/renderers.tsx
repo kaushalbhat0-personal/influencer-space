@@ -240,7 +240,7 @@ export function GalleryRenderer({ props }: RendererProps) {
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
         <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
-          {images.slice(0, 12).map((img: Record<string, unknown>, i: number) => (
+          {images.map((img: Record<string, unknown>, i: number) => (
             <div key={i} className="aspect-square overflow-hidden rounded-lg bg-[var(--surface-card-hover,#27272A)]">
               {img.isVideo && img.videoUrl ? (
                 <video

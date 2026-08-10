@@ -75,6 +75,15 @@ describe("withViewAllHref (Phase 3 view-all CTA)", () => {
     const out = withViewAllHref(sections, onlyHome, hrefFor);
     for (const s of out) expect(s.config.viewAllHref).toBeUndefined();
   });
+
+  it("RCCF-VALIDATION-09B: never self-links on the full collection page", () => {
+    const hrefFor = (slug: string) => `/${slug.replace(/^\//, "")}`;
+    // On the /products page itself the products section must NOT get a
+    // view-all CTA back to /products; other sections still may.
+    const out = withViewAllHref(sections, docPages, hrefFor, "/products");
+    expect(out[0].config.viewAllHref).toBeUndefined();
+    expect(out[1].config.viewAllHref).toBe("/gallery");
+  });
 });
 
 describe("resolveNavHrefs (Phase 4 page-type navigation)", () => {
