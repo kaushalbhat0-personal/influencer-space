@@ -3,7 +3,7 @@
 // resolve a target page from the storefront document by slug.
 
 import { describe, it, expect } from "vitest";
-import { normalizePageSlug, resolvePageBySlug, withViewAllHref, resolveNavHrefs, buildPageSeoDefaults } from "@/lib/storefront/page-resolver";
+import { normalizePageSlug, resolvePageBySlug, withViewAllHref, resolveNavHrefs, resolveStorefrontNavigation, buildPageSeoDefaults } from "@/lib/storefront/page-resolver";
 import { getRegisteredPageBySlug } from "@/lib/pages/registry";
 
 const pages = [
@@ -110,6 +110,80 @@ describe("resolveNavHrefs (Phase 4 page-type navigation)", () => {
 
   it("handles an empty nav", () => {
     expect(resolveNavHrefs([], hrefFor)).toEqual([]);
+  });
+});
+
+describe("resolveStorefrontNavigation — RCCF-AUDIT-10B navigation order parity", () => {
+  const hrefFor = (slug: string) => `/domain/${slug.replace(/^\//, "")}`;
+
+  // A full nav in the persisted Admin/Builder order (the shape generateDefaults
+  // produces when every collection has content).
+  const fullNav = [
+    { id: "hero", label: "Home", href: "#hero", type: "anchor", order: 0, visible: true },
+    { id: "products", label: "Products", href: "products", type: "page", order: 1, visible: true },
+    { id: "gallery", label: "Gallery", href: "#gallery", type: "anchor", order: 2, visible: true },
+    { id: "contact", label: "Contact", href: "#contact", type: "anchor", order: 3, visible: true },
+  ];
+
+  // test-creator-1's real weighted profile — with applyGoalNavigation this
+  // WOULD re-order the nav (products 2→6, links 8→2 on the full set).
+  const goalProfile = {
+    weights: [
+      { goalId: "MONETIZE_CONTENT", weight: 39 },
+      { goalId: "GROW_YOUTUBE", weight: 22 },
+      { goalId: "SHOW_PORTFOLIO", weight: 22 },
+      { goalId: "BUILD_EMAIL_LIST", weight: 17 },
+    ],
+  };
+
+  it("preserves the persisted order exactly even with a goal profile present", () => {
+    const out = resolveStorefrontNavigation(fullNav, hrefFor, goalProfile);
+    expect(out.map((n) => n.id)).toEqual(["hero", "products", "gallery", "contact"]);
+    expect(out.map((n) => n.href)).toEqual(["#hero", "/domain/products", "#gallery", "#contact"]);
+  });
+
+  it("preserves the persisted order without a goal profile", () => {
+    const out = resolveStorefrontNavigation(fullNav, hrefFor, null);
+    expect(out.map((n) => n.id)).toEqual(["hero", "products", "gallery", "contact"]);
+  });
+
+  it("resolves page-type hrefs to real routes without reordering", () => {
+    const nav = [
+      { id: "hero", label: "Home", href: "#hero", type: "anchor", order: 0, visible: true },
+      { id: "products", label: "Products", href: "products", type: "page", order: 1, visible: true },
+      { id: "gallery", label: "Gallery", href: "gallery", type: "page", order: 2, visible: true },
+      { id: "games", label: "Games", href: "games", type: "page", order: 3, visible: true },
+      { id: "custom", label: "Custom", href: "custom-page", type: "page", order: 4, visible: true },
+    ];
+    const out = resolveStorefrontNavigation(nav, hrefFor, goalProfile);
+    expect(out.map((n) => n.href)).toEqual([
+      "#hero",
+      "/domain/products",
+      "/domain/gallery",
+      "/domain/games",
+      "/domain/custom-page",
+    ]);
+    expect(out.map((n) => n.id)).toEqual(["hero", "products", "gallery", "games", "custom"]);
+  });
+
+  it("leaves anchor and external items untouched", () => {
+    const nav = [
+      { id: "hero", label: "Home", href: "#hero", type: "anchor", order: 0, visible: true },
+      { id: "twitter", label: "Twitter", href: "https://x.com", type: "external", order: 1, visible: true, target: "_blank" },
+      { id: "faq", label: "FAQ", href: "#faq", type: "anchor", order: 2, visible: true },
+    ];
+    const out = resolveStorefrontNavigation(nav, hrefFor, goalProfile);
+    expect(out.map((n) => n.href)).toEqual(["#hero", "https://x.com", "#faq"]);
+    expect(out[1].target).toBe("_blank");
+  });
+
+  it("works identically for independent-page roots (/, /products, /gallery, /custom-page)", () => {
+    for (const root of ["/", "/products", "/gallery", "/custom-page"]) {
+      const href = (slug: string) => `${root}${slug === "" ? "" : "/" + slug.replace(/^\//, "")}`;
+      const out = resolveStorefrontNavigation(fullNav, href, goalProfile);
+      expect(out.map((n) => n.id)).toEqual(["hero", "products", "gallery", "contact"]);
+      expect(out[1].href).toBe(`${root}/products`);
+    }
   });
 });
 

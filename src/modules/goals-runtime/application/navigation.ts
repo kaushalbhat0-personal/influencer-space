@@ -1,7 +1,11 @@
 // ── Navigation Runtime (Phase 5) ────────────────────────────
-// Navigation adapts to goals: the goal's primary surface appears earlier,
-// supporting sections move up. With no goal profile the navigation is
-// returned unchanged (existing storefront nav behaves identically).
+// Goal-aware navigation composition. RCCF-AUDIT-10B: this is GENERATION /
+// PREVIEW tooling only — it is NOT applied by the live storefront render path.
+// The storefront renders the persisted/published navigation order exactly
+// (`resolveStorefrontNavigation` resolves hrefs but never reorders), so
+// Admin/Builder order == persisted == published snapshot == live DOM. Wiring
+// this function into live rendering would silently re-order persisted nav by
+// the goal profile — the navigation equivalent of the RCCF-AUDIT-10 section bug.
 
 import type { GoalProfile } from "../domain/types";
 import { getGoal } from "../domain/registry";

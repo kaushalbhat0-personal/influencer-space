@@ -9,11 +9,10 @@ import { themeRegistry } from "@/lib/theme/registry-new";
 import { experienceRegistry, ExperienceSection, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
-import { applyGoalSectionOrder, applyGoalNavigation, goalProfileService } from "@/modules/goals-runtime";
-import { contentFromAggregate, resolveAdaptiveVisibility, baseOf } from "@/modules/experience-intelligence";
-import { shouldRenderSection } from "@/modules/section-presentation";
+import { goalProfileService } from "@/modules/goals-runtime";
 import { isFlagEnabled } from "@/lib/platform/platform-config";
-import { resolvePageBySlug, withViewAllHref, resolveNavHrefs } from "@/lib/storefront/page-resolver";
+import { resolvePageBySlug, withViewAllHref, resolveStorefrontNavigation } from "@/lib/storefront/page-resolver";
+import { resolveRenderableSections } from "@/lib/storefront/section-pipeline";
 import { getPageHref } from "@/lib/storefront/storefront-root";
 
 /**
@@ -60,24 +59,28 @@ export async function StorefrontPage({
   const resolveMs = performance.now() - resolveStart;
   const { theme, jsonLd } = doc;
 
-  // RCCF-EPIC-05: goals compose with the storefront (navigation + section order).
+  // RCCF-EPIC-05: the goal profile is used for adaptive section visibility only.
+  // Section ORDER and NAVIGATION ORDER are NOT goal-composed — the storefront
+  // renders the persisted order so Builder/Admin == published snapshot == live
+  // DOM (RCCF-AUDIT-10 + RCCF-AUDIT-10B parity contracts).
   const goalProfile = await goalProfileService.getProfile(data.tenantId);
-  const rawNavigation = applyGoalNavigation(doc.navigation, goalProfile);
 
-  // RCCF-IMPLEMENTATION-09B (Phase 4): page-type nav items carry a page slug;
-  // resolve them to real storefront routes so navigation links actually work.
-  const navigation = resolveNavHrefs(rawNavigation, (pageSlug) => getPageHref(domain, pageSlug));
+  // RCCF-IMPLEMENTATION-09B (Phase 4) + RCCF-AUDIT-10B: resolve page-type nav
+  // items to real storefront routes and PRESERVE the persisted navigation order.
+  // Goal-aware nav reordering (applyGoalNavigation) is never applied at live
+  // render — the persisted/published order is canonical.
+  const navigation = resolveStorefrontNavigation(doc.navigation, (pageSlug) => getPageHref(domain, pageSlug), goalProfile);
 
-  // Resolve the target page from the document (full page type) — homepage →
-  // the page marked isHome (fallback first page); slug route → the page whose
-  // slug matches. Slugs are normalized so "/products" and "products" resolve
-  // identically. Goal section order is then applied to this page's sections
-  // (it only re-orders within a page, never pages themselves).
+  // RCCF-AUDIT-10 (Section Order Parity): resolve the target page from the
+  // document (full page type) — homepage → the page marked isHome (fallback
+  // first page); slug route → the page whose slug matches. Slugs are normalized
+  // so "/products" and "products" resolve identically. The page's sections are
+  // rendered in their PERSISTED order — the same order the Builder shows and
+  // the published snapshot stores. The goal profile may hide empty conditional
+  // sections (adaptive visibility) but NEVER reorders them; render-time section
+  // reordering is intentionally removed so Builder == snapshot == live DOM.
   const target = resolvePageBySlug(doc.pages, pageSlug);
   if (!target) notFound();
-
-  const [orderedTarget] = applyGoalSectionOrder([target], goalProfile);
-  const orderedSections = orderedTarget?.sections ?? target.sections;
 
   const runtimeSignature = traceRuntime({
     runtimeType: isPreview ? "preview" : process.env.NODE_ENV === "production" ? "production" : "storefront",
@@ -91,15 +94,13 @@ export async function StorefrontPage({
     diagnostics: data.diagnostics,
   });
 
-  // RCCF-EPIC-08 Phase 3: adaptive visibility — conditional sections with empty
-  // content are hidden when a goal profile is set.
-  const hiddenBases = new Set(resolveAdaptiveVisibility(contentFromAggregate(snap.content), !!goalProfile));
-  const filteredSections = orderedSections
-    .filter((s) => s.visible !== false)
-    .filter((s) => !hiddenBases.has(baseOf(s.moduleId) as never))
-    // RCCF-LAUNCH-TRACK-04B (Phase 5/10): drop empty/auto-hidden sections so
-    // they are removed from the DOM entirely.
-    .filter((s) => shouldRenderSection(s.config as Record<string, unknown>));
+  // RCCF-EPIC-08 Phase 3 + RCCF-LAUNCH-TRACK-04B: adaptive visibility + section
+  // presentation. Sections are filtered (hidden/empty), never reordered — the
+  // relative order of the remaining sections is preserved exactly.
+  const filteredSections = resolveRenderableSections(target.sections, {
+    goalProfile,
+    aggregate: snap.content,
+  });
 
   // RCCF-IMPLEMENTATION-09B (Phase 3): "View all → /{collection}" CTA. When a
   // section's base matches an independent non-home page in the document, the

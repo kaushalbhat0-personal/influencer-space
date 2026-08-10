@@ -101,6 +101,32 @@ export function resolveNavHrefs<T extends ResolvableNavItem>(
   });
 }
 
+export interface StorefrontNavGoalProfileLike {
+  weights: Array<{ goalId: string; weight: number }>;
+}
+
+/**
+ * RCCF-AUDIT-10B — live storefront navigation resolution. Resolves page-type
+ * hrefs (via `resolveNavHrefs`) AND preserves the persisted/published
+ * navigation order exactly. `goalProfile` is accepted for signature symmetry
+ * with the section pipeline (`resolveRenderableSections`) but is intentionally
+ * NOT applied to ordering — the live nav order is canonical:
+ *
+ *   Admin/Builder nav order == persisted == published snapshot == live DOM
+ *
+ * Goal-aware navigation composition (`applyGoalNavigation`) is generation /
+ * preview tooling only. Wiring it into this function (live rendering) is the
+ * guarded regression — it silently re-ordered persisted nav by the goal
+ * profile, the navigation equivalent of RCCF-AUDIT-10.
+ */
+export function resolveStorefrontNavigation<T extends ResolvableNavItem>(
+  navigation: T[],
+  hrefFor: (pageSlug: string) => string,
+  _goalProfile: StorefrontNavGoalProfileLike | null,
+): T[] {
+  return resolveNavHrefs(navigation, hrefFor);
+}
+
 /** SEO defaults for an independent storefront page. */
 export interface PageSeoDefaults {
   /** Absolute-title string with {creatorName} already substituted. */

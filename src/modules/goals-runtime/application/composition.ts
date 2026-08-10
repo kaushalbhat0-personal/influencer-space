@@ -15,6 +15,13 @@ export interface GoalSectionLike {
 const baseOf = (moduleId: string): string => (moduleId ?? "").split(".")[0];
 
 /**
+ * RCCF-AUDIT-10 (Section Order Parity): DO NOT apply this in the live storefront
+ * render path. The storefront renders a page's sections in their PERSISTED order
+ * (Builder order == published snapshot order == live DOM) — `resolveRenderableSections`
+ * filters (hidden/empty) but never reorders. This function remains available as a
+ * pure utility for generation/preview tooling; wiring it into live rendering was
+ * the root cause of the Builder ↔ Storefront ordering mismatch.
+ *
  * Lower score = earlier. Sections mentioned in a goal's sectionOrderHint are
  * boosted by that goal's weight; sections in no hint sink below hinted ones
  * while preserving their original relative order.
@@ -33,6 +40,18 @@ export function goalSectionScore(moduleId: string, profile: GoalProfile | null):
   return score;
 }
 
+/**
+ * RCCF-AUDIT-10 (Section Order Parity): NOT applied by the storefront render
+ * path (see `goalSectionScore` above). Live storefronts render the persisted
+ * Builder/snapshot order so Builder == published == live DOM. Kept as a pure
+ * utility for tests and any goal-aware preview/generation tooling; re-introducing
+ * this into StorefrontPage is the regression the audit's tests guard against.
+ *
+ * Re-order a generated builder-artifact section list by the creator's weighted
+ * goal profile (hero first, footer last, goal-preferred sections earlier).
+ * Applies to the pre-provisioning artifact so generated websites lead with what
+ * the creator wants to achieve. Pure and additive — no-op without a profile.
+ */
 export function applyGoalSectionOrder<T extends GoalSectionLike>(
   pages: Array<{ sections: T[] }>,
   profile: GoalProfile | null,
