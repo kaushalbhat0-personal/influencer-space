@@ -7,6 +7,20 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
+    // RCCF-RESPONSIVE-01: every source directory that renders Tailwind classes
+    // must be scanned. Previously src/features, src/modules, src/actions,
+    // src/config, src/hooks, src/services and src/types were omitted, so any
+    // class used ONLY inside them (e.g. lg:col-span-3 used by /admin/goals and
+    // the knowledge dashboard) was silently dropped from the compiled CSS and
+    // the affected layouts collapsed on desktop. src/generated is intentionally
+    // excluded (Prisma client — no UI classes).
+    "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/modules/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/actions/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/config/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/hooks/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/services/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/types/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {

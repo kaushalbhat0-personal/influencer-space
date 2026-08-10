@@ -93,46 +93,48 @@ export function CrudTable<T extends Record<string, unknown>>({
       {sorted.length === 0 ? (
         <p className="py-8 text-center text-sm text-zinc-500">{emptyMessage}</p>
       ) : (
-        <Table>
-          <TableHead>
-            <TableRow>
-              {columns.map((col) => (
-                <TableHeaderCell key={col.key}>
-                  {col.sortable ? (
-                    <button
-                      onClick={() => toggleSort(col.key)}
-                      className="flex items-center gap-1 hover:text-white transition-colors"
-                    >
-                      {col.header}
-                      {sortKey === col.key ? (
-                        sortDir === "asc" ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )
-                      ) : null}
-                    </button>
-                  ) : (
-                    col.header
-                  )}
-                </TableHeaderCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {sorted.map((item) => (
-              <TableRow
-                key={keyExtractor(item)}
-                onClick={onRowClick ? () => onRowClick(item) : undefined}
-                className={onRowClick ? "cursor-pointer hover:bg-white/5" : ""}
-              >
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHead>
+              <TableRow>
                 {columns.map((col) => (
-                  <TableCell key={col.key}>{col.render(item)}</TableCell>
+                  <TableHeaderCell key={col.key}>
+                    {col.sortable ? (
+                      <button
+                        onClick={() => toggleSort(col.key)}
+                        className="flex items-center gap-1 hover:text-white transition-colors"
+                      >
+                        {col.header}
+                        {sortKey === col.key ? (
+                          sortDir === "asc" ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          )
+                        ) : null}
+                      </button>
+                    ) : (
+                      col.header
+                    )}
+                  </TableHeaderCell>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {sorted.map((item) => (
+                <TableRow
+                  key={keyExtractor(item)}
+                  onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  className={onRowClick ? "cursor-pointer hover:bg-white/5" : ""}
+                >
+                  {columns.map((col) => (
+                    <TableCell key={col.key}>{col.render(item)}</TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </GlassCard>
   );

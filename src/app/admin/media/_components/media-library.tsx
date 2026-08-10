@@ -218,7 +218,7 @@ export function MediaLibrary() {
   return (
     <div className="flex gap-6">
       <div className="min-w-0 flex-1">
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
           <input
             type="text"
             placeholder="Search assets..."

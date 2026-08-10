@@ -27,7 +27,7 @@ export function GoalsSettingsPage({ initial }: Props) {
       title="Business Goals"
       description="Goals answer what you're trying to achieve. They guide your website order, navigation, Builder recommendations and dashboard — and compose with what we already know about you."
     >
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <GoalProfileEditor initial={payload} onSaved={refresh} />
         </div>

@@ -73,8 +73,8 @@ export function MetricCard({
 
   return (
     <div className={cn("admin-card p-5 transition-colors hover:bg-white/[0.02]", className)}>
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-sm font-medium text-zinc-400">{label}</p>
           <p className="mt-1 text-2xl font-bold text-white tabular-nums font-display">{value}</p>
           {trend && (

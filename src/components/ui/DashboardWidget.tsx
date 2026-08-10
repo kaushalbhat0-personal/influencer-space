@@ -56,7 +56,7 @@ export function DashboardWidget({
   return (
     <div className={cn("admin-card", variant === "compact" ? "p-4" : "p-5", className)}>
       {(title || actions) && (
-        <div className={cn("flex items-center justify-between", description ? "mb-2" : "mb-4")}>
+        <div className={cn("flex flex-wrap items-center justify-between gap-3", description ? "mb-2" : "mb-4")}>
           <div className="flex items-center gap-2">
             {Icon && (
               <div className="rounded-lg bg-s8ul-cyan/10 p-1.5">

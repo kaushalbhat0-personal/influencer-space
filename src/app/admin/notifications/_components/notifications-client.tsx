@@ -31,7 +31,7 @@ export function NotificationsClient() {
   return (
     <div className="mt-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600" placeholder="Search…" value={search} onChange={(e) => { setSearch(e.target.value); load(category, e.target.value); }} />
           <select className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white" value={category} onChange={(e) => { setCategory(e.target.value); load(e.target.value, search); }}>
             <option value="">All categories</option>
@@ -54,7 +54,7 @@ export function NotificationsClient() {
           {items.map((n) => (
             <div key={n.id} className={`flex items-start justify-between gap-3 rounded-xl border border-white/[0.04] px-4 py-3 ${n.read ? "bg-white/[0.01]" : "bg-s8ul-cyan/5"}`}>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-s8ul-cyan" />}
                   <p className="text-sm font-medium text-white">{n.title}</p>
                 </div>

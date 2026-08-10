@@ -37,7 +37,7 @@ export function KnowledgeScoreCard({
 
   return (
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Profile Knowledge</span>
