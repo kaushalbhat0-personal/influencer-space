@@ -111,7 +111,12 @@ export function ConstructionPreview({
               </div>
             )}
 
-            <main className="space-y-2">
+            {/* RCCF-RESPONSIVE-03: named container boundary for the rendered
+                storefront sections — mirrors live <main>. Container variants
+                (@sm/main:/@lg/main:) resolve against this width, so desktop
+                ConstructionPreview keeps desktop layouts (the hero was already
+                container-query based since RCCF-02 and needs this ancestor). */}
+            <main className="@container/main space-y-2">
               {construction.steps
                 .filter((s) => s.reveals.length > 0)
                 .map((step) => {

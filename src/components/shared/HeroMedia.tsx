@@ -15,9 +15,12 @@ const mobileObjectClasses: Record<string, string> = {
 };
 
 const desktopObjectClasses: Record<string, string> = {
-  top: "sm:object-top",
-  center: "sm:object-center",
-  bottom: "sm:object-bottom",
+  // RCCF-RESPONSIVE-03: named container variant — the media responds to the
+  // `@container/main` boundary (live <main> / Builder frame) instead of the
+  // outer browser viewport, so Builder mobile == live mobile.
+  top: "@sm/main:object-top",
+  center: "@sm/main:object-center",
+  bottom: "@sm/main:object-bottom",
 };
 
 export function heroAlignmentClass(align?: string): AlignmentClass {

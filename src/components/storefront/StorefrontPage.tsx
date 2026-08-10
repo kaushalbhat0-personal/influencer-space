@@ -136,11 +136,12 @@ export async function StorefrontPage({
           Preview Mode — changes are not public
         </div>
       )}
-      {/* RCCF-RESPONSIVE-02: `<main>` is the @container ancestor for container-query
-          breakpoint variants (@sm/@lg) used by renderers — on live the container
-          width equals the viewport, so @sm:/@lg: behave exactly like sm:/lg:. The
-          Builder canvas uses the same mechanism with its device frame as container. */}
-      <main id="main-content" className="@container min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
+      {/* RCCF-RESPONSIVE-02/03: `<main>` is the named `@container/main` boundary
+          for container-query breakpoint variants (@sm/main:@lg/main:) used by
+          renderers — on live the container width equals the viewport, so they
+          behave exactly like sm:/lg:. The Builder canvas uses the same named
+          container with its device frame. */}
+      <main id="main-content" className="@container/main min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
         ))}

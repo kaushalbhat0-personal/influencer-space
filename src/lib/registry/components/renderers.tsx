@@ -114,7 +114,7 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           overlap (avatar 112px + 8px pt - 20px bridge) so the avatar bridges
           the hero media bottom across the whole 320-480px range; the old
           percentage overlap (-mt-[35%]) only bridged below ~343px. */}
-      <div className="relative aspect-[16/9] w-full @sm:aspect-[16/8]">
+      <div className="relative aspect-[16/9] w-full @sm/main:aspect-[16/8]">
         {showVideo && mediaUrl ? (
           <HeroMedia
             type="video"
@@ -158,10 +158,10 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
       </div>
 
       {/* â”€â”€ Overlapping profile picture + identity (never above the media) â”€â”€ */}
-      <div className="-mt-[100px] @sm:-mt-[24%] relative z-10">
-        <div className="mx-auto max-w-2xl px-4 pb-12 pt-2 text-center @sm:pb-20">
+      <div className="-mt-[100px] @sm/main:-mt-[24%] relative z-10">
+        <div className="mx-auto max-w-2xl px-4 pb-12 pt-2 text-center @sm/main:pb-20">
           {profilePictureUrl && (
-            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm:h-36 @sm:w-36">
+            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm/main:h-36 @sm/main:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
             </div>
           )}
@@ -177,11 +177,11 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           )}
 
           {name || title ? (
-            <h1 className="text-3xl font-bold tracking-tight text-white @sm:text-4xl @lg:text-5xl">{name || title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-white @sm/main:text-4xl @lg/main:text-5xl">{name || title}</h1>
           ) : null}
 
           {title && title !== name && (
-            <h2 className="mt-2 text-xl font-semibold text-white @sm:text-2xl">{title}</h2>
+            <h2 className="mt-2 text-xl font-semibold text-white @sm/main:text-2xl">{title}</h2>
           )}
           {tagline && <p className="mt-3 text-base text-zinc-400">{tagline}</p>}
           {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">{bio}</p>}
@@ -632,7 +632,7 @@ export function PricingRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {plans.map((plan: Record<string, unknown>, i: number) => {
             const isPopular = Boolean(plan.isPopular);
             return (
@@ -668,7 +668,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {courses.map((course: Record<string, unknown>, i: number) => (
             <div key={i} className="group overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
@@ -717,7 +717,7 @@ export function ServicesRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {services.map((service: Record<string, unknown>, i: number) => (
             <div key={i} className="group overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 text-center transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
@@ -903,7 +903,7 @@ export function GamesRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {games.map((game: Record<string, string>, i: number) => (
             <div key={i} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 text-center">
               {game.logoUrl ? (
@@ -941,7 +941,7 @@ export function ContentFeedRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 @sm/main:grid-cols-3 @lg/main:grid-cols-4">
           {items.map((item: Record<string, string>, i: number) => {
             const isVideo = item.mediaType === "video";
             return (
