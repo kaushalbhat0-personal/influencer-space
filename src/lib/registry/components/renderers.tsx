@@ -107,7 +107,14 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
       {/* â”€â”€ Hero media â€” ALWAYS renders first; avatar never replaces it â”€â”€ */}
-      <div className="relative aspect-[16/10] w-full sm:aspect-[16/8]">
+      {/* RCCF-RESPONSIVE-02: breakpoints are CONTAINER-query variants (@sm/@lg)
+          so the Builder device frame (a 375px-scaled div inside a wide window)
+          renders the same base classes as the live storefront at 375px. The
+          base (mobile) contract uses aspect-[16/9] + a fixed -mt-[100px]
+          overlap (avatar 112px + 8px pt - 20px bridge) so the avatar bridges
+          the hero media bottom across the whole 320-480px range; the old
+          percentage overlap (-mt-[35%]) only bridged below ~343px. */}
+      <div className="relative aspect-[16/9] w-full @sm:aspect-[16/8]">
         {showVideo && mediaUrl ? (
           <HeroMedia
             type="video"
@@ -151,10 +158,10 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
       </div>
 
       {/* â”€â”€ Overlapping profile picture + identity (never above the media) â”€â”€ */}
-      <div className="-mt-[35%] sm:-mt-[24%] relative z-10">
-        <div className="mx-auto max-w-2xl px-4 pb-16 pt-2 text-center sm:pb-20">
+      <div className="-mt-[100px] @sm:-mt-[24%] relative z-10">
+        <div className="mx-auto max-w-2xl px-4 pb-12 pt-2 text-center @sm:pb-20">
           {profilePictureUrl && (
-            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 sm:h-36 sm:w-36">
+            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm:h-36 @sm:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
             </div>
           )}
@@ -170,11 +177,11 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           )}
 
           {name || title ? (
-            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">{name || title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-white @sm:text-4xl @lg:text-5xl">{name || title}</h1>
           ) : null}
 
           {title && title !== name && (
-            <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">{title}</h2>
+            <h2 className="mt-2 text-xl font-semibold text-white @sm:text-2xl">{title}</h2>
           )}
           {tagline && <p className="mt-3 text-base text-zinc-400">{tagline}</p>}
           {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">{bio}</p>}

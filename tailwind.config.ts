@@ -24,6 +24,19 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // RCCF-RESPONSIVE-02: container-query breakpoints mirror the screen
+      // breakpoints so `@sm:`/`@lg:` behave identically to `sm:`/`lg:` on the
+      // live storefront (container == viewport), while the Builder device frame
+      // (a scaled div) responds to its own 375/768/1200px width. The plugin's
+      // DEFAULTS (@sm=24rem/384px, @lg=32rem/512px) would break phones — 390px
+      // would wrongly match @sm — so they are pinned to the screen scale.
+      containers: {
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
+        "2xl": "1536px",
+      },
       colors: {
         brand: {
           primary: "var(--brand-primary, #6366F1)",
@@ -94,7 +107,12 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // RCCF-RESPONSIVE-02: provides the `@container` class + `@sm:`/`@lg:`
+    // container-query variants used by the hero renderer (Tailwind v3 core does
+    // not include container queries — this is the official Tailwind Labs plugin).
+    require("@tailwindcss/container-queries"),
+  ],
 };
 
 export default config;

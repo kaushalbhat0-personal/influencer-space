@@ -251,7 +251,14 @@ export function InteractiveCanvas({
     <div className="relative flex-1 overflow-auto bg-[var(--surface-root,#0A0A0B)]" data-testid="builder-canvas" data-runtime-signature={signature}>
       <div className="flex min-h-full items-start justify-center p-8">
         <div
-          className="relative overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-root,#0A0A0B)] shadow-2xl shadow-black/50 transition-all"
+          // RCCF-RESPONSIVE-02: the device frame is the @container ancestor so
+          // container-query breakpoint variants (@sm/@lg) in renderers respond
+          // to the FRAME width (375/768/1200) instead of the outer browser
+          // window — the mobile frame now renders the same base classes as the
+          // live storefront at 375px. shrink-0 keeps the desktop frame at its
+          // full 1200px (a shrinking flex item would otherwise drop below the
+          // @lg threshold and lose its desktop styling).
+          className="@container relative shrink-0 overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-root,#0A0A0B)] shadow-2xl shadow-black/50 transition-all"
           style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center", ...(resolved?.themeVars as React.CSSProperties | undefined) }}
         >
           <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">
