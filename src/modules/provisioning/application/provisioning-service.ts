@@ -51,6 +51,18 @@ interface ProvisioningInputBase {
     layoutDensity?: string;
     darkMode?: boolean;
   };
+  /**
+   * RCCF-01: the generated WebsiteBlueprint sections + navigation. When present,
+   * provisioning persists these as canonical Page/Section/Block rows (via the
+   * existing builder persistence) instead of the generic template, and skips
+   * placeholder starter content.
+   */
+  generatedWebsite?: {
+    sections: Array<{ id?: string; type: string; props: Record<string, unknown> }>;
+    navigation?: Record<string, unknown>;
+    theme?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  };
 }
 
 export type ProvisioningInput =
@@ -227,7 +239,7 @@ export class ProvisioningService {
           role: "OWNER",
         }, tx as Prisma.TransactionClient);
 
-        if (template) {
+        if (template && !input.generatedWebsite?.sections?.length) {
           await seedStarterData(
             template,
             tenant.id,
@@ -242,28 +254,49 @@ export class ProvisioningService {
 
       logger.info("Tenant, workspace, and website created", "provisioning", { correlation, metadata: { tenantId, websiteId: website?.id, runId } });
 
-      if (template && website) {
-        await templateService.apply({
-          websiteId: website.id,
-          templateId: template.id,
-          generatedContent: input.generatedContent,
-        });
+      const hasGeneratedWebsite = !!input.generatedWebsite?.sections?.length;
+
+      if (website) {
+        if (hasGeneratedWebsite) {
+          // RCCF-01: the generated WebsiteBlueprint becomes the initial website
+          // structure — persisted through the existing builder persistence
+          // (storefrontToBuilderPages → BuilderService.save). No generic template.
+          const { storefrontToBuilderPages } = await import("@/lib/builder/artifact-loader");
+          const { BuilderService } = await import("@/lib/builder/builder-service");
+          const builderPages = storefrontToBuilderPages({
+            sections: input.generatedWebsite!.sections as Array<{ id: string; type: string; props: Record<string, unknown> }>,
+            navigation: input.generatedWebsite!.navigation,
+          });
+          if (builderPages.length > 0) {
+            await new BuilderService().save(website.id, builderPages);
+          }
+        } else if (template) {
+          await templateService.apply({
+            websiteId: website.id,
+            templateId: template.id,
+            generatedContent: input.generatedContent,
+          });
+        }
       }
 
       if (website) {
-        const { themeService } = await import("@/lib/theme");
-        await themeService.apply(website.id, { packageId: personalization.themePackageId }).catch((err) => { captureError(err, { service: "provisioning", operation: `themeApply:${website.id}` }); });
+        // RCCF-01: theme application uses the CANONICAL ThemeRegistry. The
+        // legacy `themeService.apply` (prefixed-less presets registry) is retired
+        // from provisioning — it silently failed on `com.creatos.*` ids.
+        const { normalizeThemeId } = await import("@/lib/theme");
+        const canonicalThemeId = normalizeThemeId(personalization.themePackageId ?? "com.creatos.neon-dark");
+        await websiteRepository.update(website.id, { themePackageId: canonicalThemeId });
 
         if (input.generatedTheme?.colors) {
           const colors = input.generatedTheme.colors;
-          await websiteRepository.updateThemeColors(website.id, {
-            "--brand-primary": colors.primary ?? "#6366F1",
-            "--brand-secondary": colors.secondary ?? "#8B5CF6",
-            "--brand-accent": colors.accent ?? "#10B981",
-            "--surface-root": "#09090b",
-            "--surface-base": "#18181b",
-            "--text-primary": "#fafafa",
-            "--text-secondary": "#a1a1aa",
+          // Canonical themeColors shape: the snapshot resolver reads plain keys
+          // (primary/secondary/accent), not CSS-var names.
+          await websiteRepository.updateTheme(website.id, {
+            themeColors: {
+              primary: colors.primary ?? "#6366F1",
+              secondary: colors.secondary ?? "#8B5CF6",
+              accent: colors.accent ?? "#10B981",
+            },
           }).catch((err) => { captureError(err, { service: "provisioning", operation: `themeColors:${website.id}` }); });
         }
       }

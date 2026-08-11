@@ -95,3 +95,50 @@ describe("Publish copies presentation only (Phase H) — content never baked", (
     expect(snapshot.theme.packageId).toBe("com.creatos.neon-dark");
   });
 });
+
+describe("RCCF-02 — snapshot-only storefront baked gates", () => {
+  it("bakes homepageContent, goalProfilePresent, maintenanceMode and experience", () => {
+    const aggregate = {
+      ...EMPTY_AGGREGATE,
+      products: [{ id: "p1", name: "Poster", description: null, price: 999, imageUrl: null, images: [], slug: "poster", isFeatured: true, isActive: true }],
+      hero: { title: "Hello", subtitle: "", description: "" },
+    };
+    const snapshot = buildRuntimeSnapshot({
+      websiteId: "w1",
+      correlationId: "c1",
+      builderPages: [{ id: "p", name: "Home", slug: "/", order: 0, isHome: true, sections: [], theme: "default", metadata: {} }],
+      aggregate,
+      navItems: [],
+      themePackageId: "com.creatos.neon-dark",
+      themeColors: {},
+      themeFonts: {},
+      homepageAggregate: { ...EMPTY_AGGREGATE, products: [] },
+      goalProfilePresent: true,
+      maintenanceMode: false,
+      experience: { id: "minimal", premium: false },
+    });
+
+    expect(snapshot.homepageContent).toBeDefined();
+    expect(snapshot.homepageContent!.products).toEqual([]);
+    expect(snapshot.metadata.goalProfilePresent).toBe(true);
+    expect(snapshot.metadata.maintenanceMode).toBe(false);
+    expect(snapshot.renderingHints.experience).toEqual({ id: "minimal", premium: false });
+  });
+
+  it("defaults baked gates to false when not provided (old snapshots)", () => {
+    const snapshot = buildRuntimeSnapshot({
+      websiteId: "w1",
+      correlationId: "c1",
+      builderPages: [{ id: "p", name: "Home", slug: "/", order: 0, isHome: true, sections: [], theme: "default", metadata: {} }],
+      aggregate: EMPTY_AGGREGATE,
+      navItems: [],
+      themePackageId: "com.creatos.neon-dark",
+      themeColors: {},
+      themeFonts: {},
+    });
+    expect(snapshot.metadata.goalProfilePresent).toBe(false);
+    expect(snapshot.metadata.maintenanceMode).toBe(false);
+    expect(snapshot.homepageContent).toBeUndefined();
+    expect(snapshot.renderingHints.experience).toBeUndefined();
+  });
+});

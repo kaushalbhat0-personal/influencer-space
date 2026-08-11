@@ -16,6 +16,7 @@ export function serializeSnapshot(
     _version: snapshot._version,
     metadata: snapshot.metadata,
     content: snapshot.content,
+    homepageContent: snapshot.homepageContent,
     layout: snapshot.layout,
     theme: snapshot.theme,
     navigation: snapshot.navigation,
@@ -28,7 +29,7 @@ export function deserializeSnapshot(
 ): PublishedSnapshot | null {
   if (!data || typeof data !== "object") return null;
 
-  const { _schema, _version, metadata, content, layout, theme, navigation, renderingHints } = data;
+  const { _schema, _version, metadata, content, homepageContent, layout, theme, navigation, renderingHints } = data;
 
   if (!metadata || !content || !layout) return null;
 
@@ -37,6 +38,7 @@ export function deserializeSnapshot(
     _version: (_version as number) ?? CURRENT_SNAPSHOT_VERSION,
     metadata: metadata as PublishedSnapshot["metadata"],
     content: content as PublishedSnapshot["content"],
+    homepageContent: homepageContent as PublishedSnapshot["homepageContent"] | undefined,
     layout: layout as PublishedSnapshot["layout"],
     theme: (theme as PublishedSnapshot["theme"]) ?? {
       packageId: "neon-dark",

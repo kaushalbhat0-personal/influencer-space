@@ -26,6 +26,16 @@ export interface RuntimeSnapshotInput {
   themePackageId: string | null;
   themeColors: Record<string, string>;
   themeFonts: Record<string, string>;
+  /**
+   * RCCF-02: homepage-curated aggregate (featured-first, capped). Baked at
+   * publish so the published homepage reads no live business tables.
+   */
+  homepageAggregate?: WebsiteAggregate;
+  /** RCCF-02: baked storefront gates (optional, old snapshots default off). */
+  goalProfilePresent?: boolean;
+  maintenanceMode?: boolean;
+  /** RCCF-02: capability-resolved ThemeExperience (optional). */
+  experience?: unknown;
 }
 
 /** An empty aggregate — publish never bakes content into the snapshot. */
@@ -77,8 +87,11 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
       previousVersion: null,
       correlationId: input.correlationId,
       generatedBy: "dashboard",
+      goalProfilePresent: input.goalProfilePresent ?? false,
+      maintenanceMode: input.maintenanceMode ?? false,
     },
     content: input.aggregate,
+    ...(input.homepageAggregate ? { homepageContent: input.homepageAggregate } : {}),
     layout: builderPagesToLayoutSnapshot(input.builderPages),
     theme: {
       packageId: resolvedTheme?.packageId ?? input.themePackageId ?? FALLBACK_THEME_ID,
@@ -105,6 +118,6 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
       ...(n.target ? { target: n.target } : {}),
       ...(n.icon ? { icon: n.icon } : {}),
     })),
-    renderingHints: {},
+    renderingHints: input.experience ? { experience: input.experience } : {},
   };
 }

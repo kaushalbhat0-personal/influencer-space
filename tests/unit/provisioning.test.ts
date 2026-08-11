@@ -127,6 +127,17 @@ vi.mock("@/modules/tenant/application/seeder", () => ({
 
 vi.mock("@/lib/theme", () => ({
   themeService: { apply: mockThemeApply },
+  normalizeThemeId: (id: string | null | undefined) => id ?? "com.creatos.neon-dark",
+}));
+
+vi.mock("@/lib/builder/builder-service", () => ({
+  BuilderService: class { async save(..._args: unknown[]) { return Promise.resolve(); } },
+}));
+
+vi.mock("@/lib/builder/artifact-loader", () => ({
+  storefrontToBuilderPages: () => [
+    { id: "page_home", name: "Home", slug: "/", order: 1, isHome: true, theme: "", metadata: {}, sections: [] },
+  ],
 }));
 
 vi.mock("@/modules/workspace/infrastructure/repository", () => ({
@@ -280,5 +291,29 @@ describe("provisioningService.provision", () => {
     mockWorkspaceCreate.mockRejectedValueOnce(new Error("workspace create failed"));
 
     await expect(provisioningService.provision(baseInput)).rejects.toThrow("workspace create failed");
+  });
+
+  it("RCCF-01: skips placeholder seeding when generated website data is present", async () => {
+    mockGetTemplate.mockReturnValue({ id: "tpl", pages: [] });
+    const result = await provisioningService.provision({
+      ...baseInput,
+      generatedWebsite: { sections: [{ id: "s1", type: "hero", props: { title: "Hero" } }] },
+    });
+    expect(result.success).toBe(true);
+    expect(mockSeedStarterData).not.toHaveBeenCalled();
+  });
+
+  it("RCCF-01: still seeds placeholders for blank/manual provisioning", async () => {
+    mockGetTemplate.mockReturnValue({ id: "tpl", pages: [] });
+    await provisioningService.provision(baseInput);
+    expect(mockSeedStarterData).toHaveBeenCalled();
+  });
+
+  it("RCCF-01: applies canonical theme id via websiteRepository.update", async () => {
+    await provisioningService.provision({ ...baseInput, generatedTheme: { colors: { primary: "#111" } } });
+    const updateCalls = mockWebsiteUpdate.mock.calls as Array<[Record<string, unknown>]>;
+    expect(updateCalls.some(([call]) => (call?.data as Record<string, unknown> | undefined)?.themePackageId)).toBe(true);
+    // Legacy themeService.apply is no longer the provisioning theme path.
+    expect(mockThemeApply).not.toHaveBeenCalled();
   });
 });

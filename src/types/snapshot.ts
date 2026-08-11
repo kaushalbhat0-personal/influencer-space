@@ -8,6 +8,13 @@ export interface PublishedSnapshot {
   _version: number;
   metadata: SnapshotMetadata;
   content: WebsiteAggregate;
+  /**
+   * RCCF-02: homepage-curated aggregate (featured-first, capped per
+   * DEFAULT_HOMEPAGE_LIMITS). The homepage renders this; independent collection
+   * pages ([domain]/[slug]) render `content` (full collections). Optional — old
+   * snapshots fall back to `content` on the homepage.
+   */
+  homepageContent?: WebsiteAggregate;
   layout: LayoutSnapshot;
   theme: ThemeSnapshot;
   navigation: NavigationItem[];
@@ -22,6 +29,12 @@ export interface SnapshotMetadata {
   previousVersion: number | null;
   correlationId: string;
   generatedBy: "dashboard" | "onboarding";
+  /**
+   * RCCF-02: baked storefront gates so the published storefront reads NO live
+   * business tables. Optional — old snapshots default to false.
+   */
+  goalProfilePresent?: boolean;
+  maintenanceMode?: boolean;
 }
 
 // ── Content (from WebsiteAggregateService) ─────────────────
@@ -245,6 +258,12 @@ export interface RenderingHints {
   responsive?: Record<string, { mobile?: boolean; tablet?: boolean; desktop?: boolean }>;
   animations?: Record<string, { id: string; duration?: number }>;
   customCss?: string;
+  /**
+   * RCCF-02: the capability-resolved ThemeExperience baked at publish time so
+   * the published storefront applies NO plan/billing reads at render time.
+   * Optional — old snapshots fall back to the free-tier experience.
+   */
+  experience?: unknown;
 }
 
 // ── Current schema version ────────────────────────────────

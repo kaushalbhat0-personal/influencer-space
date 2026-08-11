@@ -440,3 +440,48 @@ describe("StorefrontDocument contract", () => {
     expect(doc.navigation[0]).toHaveProperty("enabled");
   });
 });
+
+// ── RCCF-02 Snapshot-Only Storefront: baked gates ─────────
+
+describe("RCCF-02 snapshot-only storefront", () => {
+  it("serializer round-trips homepageContent, metadata gates and experience", () => {
+    const snap: PublishedSnapshot = {
+      ...createMinimalSnapshot(),
+      homepageContent: {
+        ...createMinimalSnapshot().content,
+        products: [
+          { id: "p1", name: "Featured", description: null, price: 10, imageUrl: null, images: [], slug: "p", isFeatured: true, isActive: true },
+        ],
+      },
+      metadata: {
+        ...createMinimalSnapshot().metadata,
+        goalProfilePresent: true,
+        maintenanceMode: false,
+      },
+      renderingHints: { experience: { id: "minimal", premium: false } },
+    };
+
+    const serialized = serializeSnapshot(snap);
+    const roundTripped = deserializeSnapshot(serialized);
+
+    expect(roundTripped).not.toBeNull();
+    expect(roundTripped!.homepageContent?.products?.[0]?.name).toBe("Featured");
+    expect(roundTripped!.metadata?.goalProfilePresent).toBe(true);
+    expect(roundTripped!.metadata?.maintenanceMode).toBe(false);
+    expect(roundTripped!.renderingHints?.experience).toEqual({ id: "minimal", premium: false });
+  });
+
+  it("old snapshots without baked fields deserialize with safe defaults", () => {
+    const snap = createMinimalSnapshot();
+    const roundTripped = deserializeSnapshot(serializeSnapshot(snap));
+    expect(roundTripped!.metadata?.goalProfilePresent).toBeUndefined();
+    expect(roundTripped!.metadata?.maintenanceMode).toBeUndefined();
+    expect(roundTripped!.homepageContent).toBeUndefined();
+    expect(roundTripped!.renderingHints?.experience).toBeUndefined();
+  });
+
+  it("homepageContent is optional in the root snapshot shape", () => {
+    const keys = Object.keys(createMinimalSnapshot());
+    expect(keys).not.toContain("homepageContent");
+  });
+});

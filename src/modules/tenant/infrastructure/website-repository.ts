@@ -15,7 +15,7 @@ export class WebsiteRepository {
     return this.client(tx).website.create({
       data: {
         tenantId: data.tenantId,
-        themePackageId: data.themePackageId ?? "neon-dark",
+        themePackageId: data.themePackageId ?? "com.creatos.neon-dark",
       },
     });
   }

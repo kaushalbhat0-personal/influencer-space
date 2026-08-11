@@ -24,7 +24,7 @@ import { navigationService } from "@/lib/navigation/service";
 import { resolveModuleId } from "@/lib/registry/resolve-module";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import type { PublishedSnapshot } from "@/types/snapshot";
-import { buildRuntimeSnapshot, EMPTY_AGGREGATE } from "@/lib/storefront/build-snapshot";
+import { buildRuntimeSnapshot } from "@/lib/storefront/build-snapshot";
 import { publishRepository } from "@/modules/tenant/infrastructure/publishing-repository";
 import { logger } from "@/lib/observability/logger";
 import { runWorkflow } from "@/lib/observability/workflow-diagnostics";
@@ -149,6 +149,16 @@ export class PublishingService {
       const aggregate = aggResult.aggregate;
       const { invalidAssetIds, skippedAssets, moduleFailures } = aggResult;
 
+      // RCCF-02: bake the homepage-curated aggregate (featured-first, capped)
+      // so the published homepage renders snapshot-only. Built once at publish
+      // with the same curation the live path used; no render-time aggregation.
+      let resolvedHomepage: Awaited<ReturnType<typeof websiteAggregateService.build>> | null = null;
+      try {
+        resolvedHomepage = await websiteAggregateService.build(tenantId, { homepage: true });
+      } catch (err) {
+        captureError(err, { service: "publishing", operation: "publish-homepage-aggregate", tenantId });
+      }
+
       const blocking = await this.collectBlockingIssues(builderPages);
       if (blocking.length > 0) {
         return { success: false, error: blocking.join("; ") };
@@ -158,6 +168,31 @@ export class PublishingService {
       // against the tenant's plan. Canonical, non-blocking issues (existing free
       // creators keep publishing; the storefront enforces the fallback).
       const capabilityIssues = await this.validateThemeCapabilities(tenantId, websiteFull?.themePackageId ?? null);
+
+      // RCCF-02: bake the capability-resolved experience + storefront gates so
+      // the published storefront reads NO live business tables (no plan lookups,
+      // no goal-profile reads, no platform-flag reads) at render time.
+      const [goalProfilePresent, maintenanceMode, resolvedExperience] = await Promise.all([
+        (async () => {
+          const { goalProfileService } = await import("@/modules/goals-runtime");
+          return !!(await goalProfileService.getProfile(tenantId));
+        })(),
+        (async () => {
+          const { isFlagEnabled } = await import("@/lib/platform/platform-config");
+          return isFlagEnabled("maintenanceMode");
+        })(),
+        (async () => {
+          const themeDef = websiteFull?.themePackageId ? themeRegistry.getById(websiteFull.themePackageId) : undefined;
+          const experience = experienceRegistry.resolve({
+            id: websiteFull?.themePackageId ?? null,
+            category: themeDef?.category ?? null,
+            premium: themeDef?.premium ?? null,
+          });
+          const { resolveExperienceForCapabilities } = await import("@/modules/theme/runtime/experience");
+          const active = await resolveActivePlan(undefined, tenantId);
+          return resolveExperienceForCapabilities(experience, active?.code ?? null);
+        })(),
+      ]);
 
       const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
       const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
@@ -171,6 +206,10 @@ export class PublishingService {
         themePackageId: websiteFull?.themePackageId ?? null,
         themeColors: websiteColors,
         themeFonts: websiteFonts,
+        homepageAggregate: resolvedHomepage ?? undefined,
+        goalProfilePresent,
+        maintenanceMode,
+        experience: resolvedExperience,
       });
       const buildMs = Date.now() - buildStart;
 
@@ -188,12 +227,13 @@ export class PublishingService {
         diagnostics: { invalidAssetIds, skippedAssets, moduleFailures },
       });
 
-      // Publish copies ONLY the presentation blueprint: layout + theme +
-      // navigation. Content is never baked into the snapshot — the storefront
-      // always reads it live from the CMS (websiteAggregateService.build).
+      // RCCF-01: publish bakes the CANONICAL aggregate (WebsiteAggregateService
+      // output) into the PublishedSnapshot so the snapshot is self-contained.
+      // RCCF-02: the published storefront reads ONLY this snapshot — no live
+      // business-table reads, no content reconstruction, no plan/billing lookups.
       const canonicalSnapshot: PublishedSnapshot = {
         ...runtimeSnapshot,
-        content: EMPTY_AGGREGATE,
+        content: aggregate,
       };
 
       const result = await publishRepository.createPublish(websiteId, canonicalSnapshot);

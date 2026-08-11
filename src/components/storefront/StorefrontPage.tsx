@@ -9,11 +9,20 @@ import { themeRegistry } from "@/lib/theme/registry-new";
 import { experienceRegistry, ExperienceSection, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
-import { goalProfileService } from "@/modules/goals-runtime";
 import { isFlagEnabled } from "@/lib/platform/platform-config";
 import { resolvePageBySlug, withViewAllHref, resolveStorefrontNavigation } from "@/lib/storefront/page-resolver";
 import { resolveRenderableSections } from "@/lib/storefront/section-pipeline";
 import { getPageHref } from "@/lib/storefront/storefront-root";
+import type { GoalProfile } from "@/modules/goals-runtime";
+import type { ThemeExperience } from "@/modules/theme/runtime/experience";
+
+/**
+ * RCCF-02: the published storefront reads gates ONLY from the baked snapshot.
+ * The section pipeline only checks `!!goalProfile` (adaptive visibility), so a
+ * minimal truthy profile is enough when the snapshot says a profile exists.
+ * `null` = no goal profile → adaptive visibility off.
+ */
+const GOAL_PROFILE_PRESENT: GoalProfile = { weights: [], updatedAt: "", source: "manual", entityType: "" };
 
 /**
  * RCCF-IMPLEMENTATION-09B (Phase 2) — shared storefront page renderer.
@@ -39,8 +48,14 @@ export async function StorefrontPage({
 }) {
   if (!data.snapshot) notFound();
 
-  // VALIDATION-04: honor the `maintenanceMode` platform flag.
-  if (!isPreview && (await isFlagEnabled("maintenanceMode"))) {
+  const snap = data.snapshot as unknown as PublishedSnapshot;
+
+  // RCCF-02: the published storefront reads the maintenance gate from the baked
+  // snapshot (set at publish). Preview reads the live platform flag (draft).
+  const maintenanceMode = isPreview
+    ? await isFlagEnabled("maintenanceMode")
+    : (snap.metadata?.maintenanceMode ?? false);
+  if (!isPreview && maintenanceMode) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6">
         <div className="max-w-md text-center">
@@ -53,17 +68,29 @@ export async function StorefrontPage({
     );
   }
 
-  const snap = data.snapshot as unknown as PublishedSnapshot;
+  // RCCF-02: the published homepage renders the curated aggregate baked into the
+  // snapshot (homepageContent); collection pages render the full aggregate
+  // (content). Preview builds draft layout + live content, so it uses `content`.
+  const renderAggregate = isPreview
+    ? snap.content
+    : pageSlug === null
+      ? (snap.homepageContent ?? snap.content)
+      : snap.content;
+
   const resolveStart = performance.now();
-  const doc = layoutEngine.resolve(snap);
+  const doc = layoutEngine.resolve({ ...snap, content: renderAggregate });
   const resolveMs = performance.now() - resolveStart;
   const { theme, jsonLd } = doc;
 
-  // RCCF-EPIC-05: the goal profile is used for adaptive section visibility only.
-  // Section ORDER and NAVIGATION ORDER are NOT goal-composed — the storefront
-  // renders the persisted order so Builder/Admin == published snapshot == live
-  // DOM (RCCF-AUDIT-10 + RCCF-AUDIT-10B parity contracts).
-  const goalProfile = await goalProfileService.getProfile(data.tenantId);
+  // RCCF-02: the published storefront derives goal-profile PRESENCE from the
+  // baked snapshot flag — no live goal-profile Setting read. The section
+  // pipeline only uses `!!goalProfile` for adaptive visibility. Preview (draft)
+  // reads the live goal profile as before.
+  const goalProfile: GoalProfile | null = isPreview
+    ? await (await import("@/modules/goals-runtime")).goalProfileService.getProfile(data.tenantId)
+    : (snap.metadata?.goalProfilePresent ?? false)
+      ? GOAL_PROFILE_PRESENT
+      : null;
 
   // RCCF-IMPLEMENTATION-09B (Phase 4) + RCCF-AUDIT-10B: resolve page-type nav
   // items to real storefront routes and PRESERVE the persisted navigation order.
@@ -96,10 +123,12 @@ export async function StorefrontPage({
 
   // RCCF-EPIC-08 Phase 3 + RCCF-LAUNCH-TRACK-04B: adaptive visibility + section
   // presentation. Sections are filtered (hidden/empty), never reordered — the
-  // relative order of the remaining sections is preserved exactly.
+  // relative order of the remaining sections is preserved exactly. Uses the same
+  // aggregate that LayoutEngine resolved (curated homepage on the homepage) so
+  // adaptive visibility and rendering agree.
   const filteredSections = resolveRenderableSections(target.sections, {
     goalProfile,
-    aggregate: snap.content,
+    aggregate: renderAggregate,
   });
 
   // RCCF-IMPLEMENTATION-09B (Phase 3): "View all → /{collection}" CTA. When a
@@ -110,19 +139,26 @@ export async function StorefrontPage({
   // gets no view-all href.
   const sections = withViewAllHref(filteredSections, doc.pages, (pageSlug) => getPageHref(domain, pageSlug), target.slug);
 
-  // RCCF-LAUNCH-POLISH-06 (Phase 5/10): resolve the experience through the
-  // Capability Runtime so unsupported premium layers fall back to the free tier.
+  // RCCF-02: the published storefront uses the capability-resolved experience
+  // baked into the snapshot — NO plan/billing reads at render time. Old
+  // snapshots without a baked experience fall back to resolving against the
+  // free tier (null plan), which is always the safe minimal fallback. Preview
+  // (draft) resolves against the live plan as before.
   const themeDef = snap.theme?.packageId ? themeRegistry.getById(snap.theme.packageId) : undefined;
-  const experience = resolveExperienceForCapabilities(
-    experienceRegistry.resolve({
-      id: snap.theme?.packageId ?? null,
-      category: themeDef?.category ?? null,
-      premium: themeDef?.premium ?? null,
-    }),
-    await resolveActivePlan(undefined, data.tenantId)
-      .then((p) => p.code)
-      .catch(() => null),
-  );
+  const baseExperience = experienceRegistry.resolve({
+    id: snap.theme?.packageId ?? null,
+    category: themeDef?.category ?? null,
+    premium: themeDef?.premium ?? null,
+  });
+  const experience = isPreview
+    ? resolveExperienceForCapabilities(
+        baseExperience,
+        await resolveActivePlan(undefined, data.tenantId)
+          .then((p) => p.code)
+          .catch(() => null),
+      )
+    : (snap.renderingHints?.experience as ThemeExperience | undefined)
+      ?? resolveExperienceForCapabilities(baseExperience, null);
 
   return (
     <>
