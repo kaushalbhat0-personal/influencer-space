@@ -54,7 +54,7 @@ export async function seedDatabase() {
   await prisma.subscription.upsert({ where: { tenantId: tcId }, update: {}, create: { tenantId: tcId, plan: "PRO", status: "ACTIVE" } });
   const tcWorkspace = await prisma.workspace.findUnique({ where: { tenantId: tcId } });
   if (tcWorkspace) {
-    const proPlan = await prisma.billingPlan.findFirst({ where: { code: "creator_pro" } });
+    const proPlan = await prisma.billingPlan.findFirst({ where: { code: "creator_grow" } });
     if (proPlan) {
       await prisma.billingSubscription.upsert({
         where: { workspaceId: tcWorkspace.id },

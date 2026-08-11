@@ -15,6 +15,7 @@ export interface PlanDefinition {
   ctaLabel?: string;
   ctaType?: "signup" | "checkout" | "contact";
   legacyAliases?: string[];
+  hidden?: boolean;
   sortOrder?: number;
 }
 

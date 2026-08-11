@@ -354,11 +354,11 @@ export async function getPricingCenterData(): Promise<{
   if (!actor) return { plans: [], versions: [], coupons: [], programs: [] };
 
   const rows = await prisma.billingPlan.findMany({
-    select: { code: true, name: true, family: true, price: true, gracePeriodDays: true, runtimeConfig: true },
+    select: { code: true, name: true, family: true, price: true, status: true, gracePeriodDays: true, runtimeConfig: true },
   });
   const rowByCode = new Map(rows.map((r) => [r.code, r]));
 
-  const { COMMERCE_PLANS } = await import("@/config/commerce/plans");
+  const { COMMERCE_PLANS, LEGACY_TO_CANONICAL } = await import("@/config/commerce/plans");
   const plans = COMMERCE_PLANS.map((cfg) => {
     const row = rowByCode.get(cfg.code);
     return {
@@ -371,18 +371,23 @@ export async function getPricingCenterData(): Promise<{
       hasRow: !!row,
     };
   });
+  // Only unregistered rows that a Super Admin deliberately configured through
+  // the editor (runtimeConfig set, ACTIVE) appear here — legacy seed rows never
+  // surface in the Pricing Center dropdown.
   for (const row of rows) {
-    if (!plans.some((p) => p.code === row.code)) {
-      plans.push({
-        code: row.code,
-        name: row.name,
-        family: row.family as "creator" | "partner",
-        price: row.price,
-        runtimeConfig: (row.runtimeConfig as PlanRuntimeConfig | null) ?? null,
-        gracePeriodDays: row.gracePeriodDays ?? 0,
-        hasRow: true,
-      });
-    }
+    if (plans.some((p) => p.code === row.code)) continue;
+    if (row.status !== "ACTIVE") continue;
+    if (Object.prototype.hasOwnProperty.call(LEGACY_TO_CANONICAL, row.code)) continue;
+    if (!row.runtimeConfig) continue;
+    plans.push({
+      code: row.code,
+      name: row.name,
+      family: row.family === "agency" ? "partner" : "creator",
+      price: row.price,
+      runtimeConfig: (row.runtimeConfig as PlanRuntimeConfig | null) ?? null,
+      gracePeriodDays: row.gracePeriodDays ?? 0,
+      hasRow: true,
+    });
   }
 
   const [versions, coupons, programs] = await Promise.all([

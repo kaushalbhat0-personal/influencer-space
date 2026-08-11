@@ -29,7 +29,7 @@ export class RegistrationPage {
   async registerCreator(name: string, email: string, password: string) {
     await this.goto();
     await this.selectPersona("creator");
-    await this.selectPlan("creator_free");
+    await this.selectPlan("creator_launch");
     await this.fillAccountDetails(name, email, password);
     await this.submit();
   }
@@ -37,7 +37,7 @@ export class RegistrationPage {
   async registerAgency(name: string, email: string, password: string) {
     await this.goto();
     await this.selectPersona("agency");
-    await this.selectPlan("agency_free");
+    await this.selectPlan("partner_free");
     await this.fillAccountDetails(name, email, password);
     await this.submit();
   }

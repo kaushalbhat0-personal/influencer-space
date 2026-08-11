@@ -140,12 +140,13 @@ const loadCached = requestCache(async (): Promise<Map<string, ResolvedPlan>> => 
     return out;
   };
 
-  let rows: Array<{ code: string; name: string; price: number; currency: string; status: string; gracePeriodDays: number | null; runtimeConfig: unknown }>;
+  let rows: Array<{ code: string; name: string; family: string; price: number; currency: string; status: string; gracePeriodDays: number | null; runtimeConfig: unknown }>;
   try {
     rows = await prisma.billingPlan.findMany({
       select: {
         code: true,
         name: true,
+        family: true,
         price: true,
         currency: true,
         status: true,
@@ -178,11 +179,17 @@ const loadCached = requestCache(async (): Promise<Map<string, ResolvedPlan>> => 
     out.set(defaults.code, plan);
   }
 
-  // Brand-new plans created at runtime (not in the static registry).
+  // Brand-new plans created at runtime (not in the static registry). Only
+  // surfaced when a Super Admin explicitly configured the row through the
+  // Pricing Center (runtimeConfig set). Historical/legacy codes (in
+  // LEGACY_TO_CANONICAL) and non-ACTIVE rows never leak into runtime surfaces.
   for (const row of rows) {
     if (out.has(row.code)) continue;
+    if (row.status !== "ACTIVE") continue;
+    if (Object.prototype.hasOwnProperty.call(LEGACY_TO_CANONICAL, row.code)) continue;
     const rc = row.runtimeConfig as PlanRuntimeConfig | null;
-    const family = rc?.family ?? "creator";
+    if (!rc) continue;
+    const family = rc.family ?? (row.family === "agency" ? "partner" : "creator");
     out.set(row.code, {
       code: row.code,
       name: row.name,

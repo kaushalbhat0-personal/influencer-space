@@ -161,7 +161,7 @@ export const UPGRADE_PATHS: Record<string, string[]> = {
 };
 
 export const DEFAULT_CREATOR_PLAN = "creator_launch";
-export const DEFAULT_AGENCY_PLAN = "agency_free";
+export const DEFAULT_AGENCY_PLAN = "partner_free";
 export const DEFAULT_PLAN_CODE = DEFAULT_CREATOR_PLAN;
 export const DEFAULT_CURRENCY = "INR";
 export const DEFAULT_BILLING_INTERVAL = "monthly";

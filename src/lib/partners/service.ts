@@ -164,7 +164,7 @@ export class PartnerService {
     const stats = await partnerEngine.getStatistics(partnerId);
     if (!stats) return null;
     const activity = partnerEngine.getActivity(partnerId);
-    const planCodeResolved = planCode ?? "agency_free";
+    const planCodeResolved = planCode ?? "partner_free";
     const plan = getPlan(planCodeResolved);
     return toDashboardSummary(partner, stats, activity, planCodeResolved, plan?.name ?? planCodeResolved);
   }

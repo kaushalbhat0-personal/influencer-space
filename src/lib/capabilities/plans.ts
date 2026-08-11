@@ -56,6 +56,7 @@ const plans: PlanDefinition[] = COMMERCE_PLANS.map((config, i) => ({
   features: { ...BASE_FEATURES, ...featuresForPlan(config.code), ...(config.featureOverrides ?? {}) },
   recommended: config.recommended ?? false,
   badge: config.badge ?? "",
+  hidden: config.hidden ?? false,
   legacyAliases: [],
   sortOrder: i + 1,
 }));

@@ -185,13 +185,16 @@ export function SignupForm() {
             </div>
             <div className="space-y-2">
               {(() => {
-                const plans = getPlansByFamily(state.persona === "agency" ? "agency" : "creator");
+                const plans = getPlansByFamily(state.persona === "agency" ? "agency" : "creator").filter(
+                  (p) => !p.hidden || p.ctaType === "contact",
+                );
                 const nonEnterprise = plans.filter((p) => p.ctaType !== "contact").sort((a, b) => a.price - b.price);
                 const enterprise = plans.filter((p) => p.ctaType === "contact");
                 const sorted = [...nonEnterprise, ...enterprise];
                 return sorted.map((plan) => (
                 <button
                   key={plan.code}
+                  data-plan={plan.code}
                   onClick={() => update({ selectedPlan: plan.code })}
                   className={cn(
                     "w-full flex items-center justify-between rounded-xl border p-4 text-left transition-all",
