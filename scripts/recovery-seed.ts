@@ -213,6 +213,21 @@ async function main() {
     console.log("  Commission policy already exists.");
   }
 
+  // RCCF-IMPLEMENTATION-75: loyalty tiers (30/40/50 by active-client count).
+  const existingLoyaltyTiers = await prisma.loyaltyTier.count({ where: { status: "ACTIVE" } });
+  if (existingLoyaltyTiers === 0) {
+    await prisma.loyaltyTier.createMany({
+      data: [
+        { name: "Starter", minActiveClients: 0, maxActiveClients: 9, commissionPercent: 30, priority: 10 },
+        { name: "Growth", minActiveClients: 10, maxActiveClients: 24, commissionPercent: 40, priority: 20 },
+        { name: "Scale", minActiveClients: 25, maxActiveClients: null, commissionPercent: 50, priority: 30 },
+      ],
+    });
+    console.log("  Created loyalty tiers.");
+  } else {
+    console.log("  Loyalty tiers already exist.");
+  }
+
   console.log("  STATUS: OK");
 
   await prisma.$disconnect();

@@ -1,5 +1,30 @@
-import { describe, it, expect } from "vitest";
-import { computeSubscriptionSplit, type RevenueSplit } from "@/lib/commission/runtime";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { computeSubscriptionSplit, resolveSplitSource, type RevenueSplit } from "@/lib/commission/runtime";
+
+const { mockRules, mockLoyaltyTiers, mockClientCount, mockRevShare, mockPolicy } = vi.hoisted(() => ({
+  mockRules: vi.fn(),
+  mockLoyaltyTiers: vi.fn(),
+  mockClientCount: vi.fn(),
+  mockRevShare: vi.fn(),
+  mockPolicy: vi.fn(),
+}));
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    commissionRule: { findMany: mockRules },
+    loyaltyTier: { findMany: mockLoyaltyTiers },
+    agencyTenant: { count: mockClientCount, findUnique: mockRevShare },
+    commissionPolicy: { findFirst: mockPolicy },
+  },
+}));
+
+beforeEach(() => {
+  mockRules.mockReset();
+  mockLoyaltyTiers.mockReset();
+  mockClientCount.mockReset();
+  mockRevShare.mockReset();
+  mockPolicy.mockReset();
+});
 
 describe("RCCF-IMPLEMENTATION-72 — subscription revenue split", () => {
   it("computes an 80/20 platform/agency split that sums to the amount", () => {
@@ -42,5 +67,63 @@ describe("RCCF-IMPLEMENTATION-72 — subscription revenue split", () => {
     expect(split.partnerShare).toBe(599.7);
     expect(split.platformShare).toBe(1399.3);
     expect(split.platformShare + split.partnerShare).toBe(1999);
+  });
+});
+
+describe("RCCF-IMPLEMENTATION-75 — resolveSplitSource loyalty ordering", () => {
+  // react `cache` memoizes by args — every case uses a unique partnerId.
+  it("applies the loyalty tier when no explicit partner rule exists", async () => {
+    mockRules.mockResolvedValue([]);
+    mockClientCount.mockResolvedValue(12); // Growth tier → 40%
+    mockLoyaltyTiers.mockResolvedValue([
+      { id: "t1", name: "Starter", minActiveClients: 0, maxActiveClients: 9, commissionPercent: 30 },
+      { id: "t2", name: "Growth", minActiveClients: 10, maxActiveClients: 24, commissionPercent: 40 },
+    ]);
+    const src = await resolveSplitSource("agency_loy1", "creator_scale", "tenant_loy1");
+    expect(src.source).toBe("loyalty");
+    expect(src.partnerPercent).toBe(40);
+    expect(src.platformPercent).toBe(60);
+  });
+
+  it("explicit partner rule beats the loyalty tier", async () => {
+    mockRules.mockResolvedValue([
+      { id: "rule_override", type: "partner_override", partnerId: "agency_loy2", platformSharePercent: 60, partnerSharePercent: 40, metadata: {}, effectiveFrom: new Date(2020, 0, 1), effectiveTo: null, priority: 10 },
+    ]);
+    const src = await resolveSplitSource("agency_loy2", "creator_scale", "tenant_loy2");
+    expect(src.source).toBe("rule");
+    expect(src.partnerPercent).toBe(40);
+    expect(src.ruleId).toBe("rule_override");
+  });
+
+  it("loyalty tier beats the AgencyTenant relationship share", async () => {
+    mockRules.mockResolvedValue([]);
+    mockRevShare.mockResolvedValue({ revSharePercent: 20 });
+    mockClientCount.mockResolvedValue(30); // Scale tier → 50%
+    mockLoyaltyTiers.mockResolvedValue([
+      { id: "t1", name: "Starter", minActiveClients: 0, maxActiveClients: 9, commissionPercent: 30 },
+      { id: "t2", name: "Growth", minActiveClients: 10, maxActiveClients: 24, commissionPercent: 40 },
+      { id: "t3", name: "Scale", minActiveClients: 25, maxActiveClients: null, commissionPercent: 50 },
+    ]);
+    const src = await resolveSplitSource("agency_loy3", "creator_grow", "tenant_loy3");
+    expect(src.source).toBe("loyalty");
+    expect(src.partnerPercent).toBe(50);
+  });
+
+  it("falls back to relationship → policy → default when no loyalty tier is configured", async () => {
+    mockRules.mockResolvedValue([]);
+    mockLoyaltyTiers.mockResolvedValue([]);
+    mockClientCount.mockResolvedValue(5);
+
+    mockRevShare.mockResolvedValue({ revSharePercent: 20 });
+    mockPolicy.mockResolvedValue(null);
+    expect((await resolveSplitSource("agency_fb1", "creator_grow", "tenant_fb1")).source).toBe("relationship");
+
+    mockRevShare.mockResolvedValue(null);
+    mockPolicy.mockResolvedValue({ agencyDefaultShare: 30 });
+    expect((await resolveSplitSource("agency_fb2", "creator_grow", "tenant_fb2")).source).toBe("policy");
+
+    mockRevShare.mockResolvedValue(null);
+    mockPolicy.mockResolvedValue(null);
+    expect((await resolveSplitSource("agency_fb3", "creator_grow", null)).source).toBe("default");
   });
 });

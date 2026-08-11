@@ -5,14 +5,16 @@
 //
 // Attribution: BillingSubscription.workspaceId → Workspace.tenantId →
 // AgencyTenant.agencyId (reuses AgencyTenant — no duplicated relationship).
-// Splits: CommissionRule (partner → plan → default) → AgencyTenant.revSharePercent
-// → CommissionPolicy.agencyDefaultShare → 20% default.
+// Splits: explicit partner CommissionRule → LoyaltyTier (RCCF-IMPLEMENTATION-75)
+// → plan/default rule → AgencyTenant.revSharePercent → CommissionPolicy
+// .agencyDefaultShare → 20% default.
 
 import { prisma } from "@/lib/prisma";
 import { cache as reactCache } from "react";
 import { logAction } from "@/lib/audit";
 import { runtimeEventBus } from "@/modules/event-runtime";
 import { captureError } from "@/lib/observability/error-tracker";
+import { resolveLoyaltyTier, getActiveClientCount } from "./loyalty";
 import type { RuntimeEvent } from "@/modules/event-runtime/domain/types";
 
 const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
@@ -24,7 +26,7 @@ export interface RevenueSplit {
   platformPercent: number;
   partnerPercent: number;
   ruleId: string | null;
-  source: "rule" | "relationship" | "policy" | "default";
+  source: "rule" | "loyalty" | "relationship" | "policy" | "default";
 }
 
 export interface CommissionRecordResult {
@@ -59,7 +61,8 @@ interface SplitSource {
   source: RevenueSplit["source"];
 }
 
-const resolveSplitSource = requestCache(async (partnerId: string, planCode: string, tenantId: string | null): Promise<SplitSource> => {
+/** Export for tests: resolve the platform/agency split for a subscription. */
+export const resolveSplitSource = requestCache(async (partnerId: string, planCode: string, tenantId: string | null): Promise<SplitSource> => {
   // 1. DB-backed CommissionRule cascade (partner → plan → default).
   const rules = await prisma.commissionRule.findMany({
     where: { status: "active" },
@@ -75,12 +78,22 @@ const resolveSplitSource = requestCache(async (partnerId: string, planCode: stri
   );
   const partnerRule = active.find((r) => r.partnerId === partnerId);
   if (partnerRule) return { platformPercent: partnerRule.platformSharePercent, partnerPercent: partnerRule.partnerSharePercent, ruleId: partnerRule.id, source: "rule" };
+
+  // 2. RCCF-IMPLEMENTATION-75: loyalty tier by active-client count. Automatic
+  // (not negotiated) — beats the relationship/policy/default shares, while an
+  // explicit partner rule above still wins for special deals.
+  const loyaltyTier = await resolveLoyaltyTier(partnerId);
+  if (loyaltyTier) {
+    const partnerPercent = Math.min(100, Math.max(0, Math.round(loyaltyTier.commissionPercent)));
+    return { platformPercent: 100 - partnerPercent, partnerPercent, ruleId: null, source: "loyalty" };
+  }
+
   const planRule = active.find((r) => (r.metadata as Record<string, unknown> | null)?.["planCode"] === planCode);
   if (planRule) return { platformPercent: planRule.platformSharePercent, partnerPercent: planRule.partnerSharePercent, ruleId: planRule.id, source: "rule" };
   const defaultRule = active.find((r) => r.type === "default");
   if (defaultRule) return { platformPercent: defaultRule.platformSharePercent, partnerPercent: defaultRule.partnerSharePercent, ruleId: defaultRule.id, source: "rule" };
 
-  // 2. Per-creator agency relationship share.
+  // 3. Per-creator agency relationship share.
   if (tenantId) {
     const link = await prisma.agencyTenant.findUnique({
       where: { tenantId },
@@ -92,7 +105,7 @@ const resolveSplitSource = requestCache(async (partnerId: string, planCode: stri
     }
   }
 
-  // 3. Platform policy.
+  // 4. Platform policy.
   const policy = await prisma.commissionPolicy.findFirst({
     select: { agencyDefaultShare: true },
   });
@@ -101,7 +114,7 @@ const resolveSplitSource = requestCache(async (partnerId: string, planCode: stri
     return { platformPercent: 100 - partnerPercent, partnerPercent, ruleId: null, source: "policy" };
   }
 
-  // 4. Default 80/20.
+  // 5. Default 80/20.
   return { platformPercent: 80, partnerPercent: 20, ruleId: null, source: "default" };
 });
 
@@ -242,7 +255,7 @@ export async function getPartnerRevenueSummary(partnerId: string): Promise<{
     prisma.commissionEntry.aggregate({ where: { partnerId }, _sum: { partnerShare: true } }),
     prisma.partnerLedger.aggregate({ where: { partnerId, type: "SETTLEMENT_PAID" }, _sum: { amount: true } }),
     prisma.commissionEntry.count({ where: { partnerId } }),
-    prisma.agencyTenant.count({ where: { agencyId: partnerId } }),
+    getActiveClientCount(partnerId),
     prisma.billingSubscription.count({
       where: { workspace: { tenant: { agencyTenant: { agencyId: partnerId } } }, status: { in: ["ACTIVE", "TRIALING"] } },
     }),

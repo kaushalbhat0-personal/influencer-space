@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAgencyRevenueData } from "@/actions/revenue-runtime.actions";
-import { IndianRupee, TrendingUp, Clock, CheckCircle2, Users, RefreshCw } from "lucide-react";
+import { IndianRupee, TrendingUp, Clock, CheckCircle2, Users, RefreshCw, TrendingDown } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 const inr = (n: number) => formatCurrency(n ?? 0);
@@ -20,6 +20,9 @@ export function AgencyRevenueSection({ agencyId }: { agencyId: string }) {
   if (!data?.ok || !data.summary || !data.payoutSummary) return null;
   const s = data.summary;
   const p = data.payoutSummary;
+  const l = data.loyalty;
+  const tierPercent = l?.tier?.commissionPercent ?? null;
+  const clientsToNext = l?.nextTier ? Math.max(0, l.nextTier.minActiveClients - (l?.activeClients ?? 0)) : 0;
 
   return (
     <div className="mt-6">
@@ -32,6 +35,33 @@ export function AgencyRevenueSection({ agencyId }: { agencyId: string }) {
           <RefreshCw className="h-3 w-3" /> Refresh
         </button>
       </div>
+
+      {l && (
+        <div className="mb-3 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl font-bold text-white">{tierPercent != null ? `${tierPercent}%` : "—"}</span>
+              <div>
+                <p className="text-xs font-semibold text-emerald-400">{l.tier?.name ?? "No tier"}</p>
+                <p className="text-[11px] text-zinc-500">
+                  {l.activeClients} active client{l.activeClients === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+            {l.nextTier && (
+              <div className="flex items-center gap-2 text-xs text-zinc-400">
+                <TrendingDown className="h-3.5 w-3.5 text-emerald-400" />
+                <span>
+                  {clientsToNext} more to unlock {l.nextTier.commissionPercent}% ({l.nextTier.name})
+                </span>
+              </div>
+            )}
+            {!l.nextTier && tierPercent != null && (
+              <span className="text-xs text-emerald-400">Top loyalty tier reached</span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <RevenueCard label="Lifetime earned" value={inr(s.lifetime)} icon={TrendingUp} />

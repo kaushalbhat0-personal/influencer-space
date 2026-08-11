@@ -9,6 +9,7 @@ import {
   getRevenueRuntimeHealth,
   getPartnerRevenueSummary,
 } from "@/lib/commission/runtime";
+import { getLoyaltyProgress } from "@/lib/commission/loyalty";
 import {
   createPayoutForSettlement,
   approvePayout,
@@ -124,6 +125,7 @@ export async function getAgencyRevenueData(agencyId: string): Promise<{
   summary?: Awaited<ReturnType<typeof getPartnerRevenueSummary>>;
   payoutSummary?: Awaited<ReturnType<typeof getPayoutSummary>>;
   entries?: Array<{ id: string; planCode: string; amount: number; partnerShare: number; status: string; createdAt: string }>;
+  loyalty?: Awaited<ReturnType<typeof getLoyaltyProgress>>;
   error?: string;
 }> {
   const session = await getServerSession(authOptions);
@@ -132,16 +134,18 @@ export async function getAgencyRevenueData(agencyId: string): Promise<{
     return { ok: false, error: "Unauthorized" };
   }
 
-  const [summary, payoutSummary, entries] = await Promise.all([
+  const [summary, payoutSummary, entries, loyalty] = await Promise.all([
     getPartnerRevenueSummary(agencyId),
     getPayoutSummary(agencyId),
     prisma.commissionEntry.findMany({ where: { partnerId: agencyId }, orderBy: { createdAt: "desc" }, take: 25, select: { id: true, planCode: true, amount: true, partnerShare: true, status: true, createdAt: true } }),
+    getLoyaltyProgress(agencyId),
   ]);
 
   return {
     ok: true,
     summary,
     payoutSummary,
+    loyalty,
     entries: entries.map((e) => ({ ...e, createdAt: e.createdAt.toISOString() })),
   };
 }

@@ -1179,6 +1179,27 @@ model CommissionPolicy {
   updatedAt           DateTime  @updatedAt
 }
 
+/// Loyalty commission tiers — RCCF-IMPLEMENTATION-75. Agencies earn an
+/// automatic recurring share of creator subscriptions that scales with the
+/// number of ACTIVE clients (live BillingSubscription). Config data: the
+/// runtime resolves the tier by active-client count, so rate/threshold
+/// changes are a data change, not a redeploy.
+model LoyaltyTier {
+  id                String    @id @default(uuid()) @db.Uuid
+  status            String    @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  name              String
+  minActiveClients  Int
+  maxActiveClients  Int?
+  commissionPercent Int       // partner share % (30 | 40 | 50)
+  effectiveFrom     DateTime  @default(now())
+  effectiveTo       DateTime?
+  priority          Int       @default(100)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status, effectiveFrom, effectiveTo])
+}
+
 /// Global billing defaults and operational settings.
 model BillingConfiguration {
   id                 String    @id @default(uuid()) @db.Uuid

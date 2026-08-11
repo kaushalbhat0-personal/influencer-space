@@ -21,3 +21,9 @@ export {
   formatCommissionSummary, formatMoney, formatPercent,
   balanceToSummary, ruleToLabel, defaultRule,
 } from "./mapper";
+
+export {
+  getActiveClientCount, getLoyaltyTiers, tierForCount,
+  resolveLoyaltyTier, getLoyaltyProgress,
+} from "./loyalty";
+export type { LoyaltyTierRow, LoyaltyProgress } from "./loyalty";
