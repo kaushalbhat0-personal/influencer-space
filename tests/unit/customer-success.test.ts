@@ -85,6 +85,18 @@ describe("RCCF-EPIC-09 — opportunity engine", () => {
     expect(r.opportunities.some((o) => o.type === "upgrade_growth")).toBe(true);
   });
 
+  it("shows the growth upgrade for a workspace with no plan (free tier)", () => {
+    const r = computeFromSignals(signals({ published: true, hasProducts: true, productCount: 2, planCode: null }));
+    expect(r.opportunities.some((o) => o.type === "upgrade_growth")).toBe(true);
+  });
+
+  it("hides the growth upgrade for paid creator plans", () => {
+    for (const planCode of ["creator_grow", "creator_scale", "creator_enterprise"]) {
+      const r = computeFromSignals(signals({ published: true, hasProducts: true, productCount: 2, planCode }));
+      expect(r.opportunities.some((o) => o.type === "upgrade_growth")).toBe(false);
+    }
+  });
+
   it("detects scale for revenue and SEO when missing", () => {
     const r = computeFromSignals(signals({ published: true, hasProducts: true, productCount: 5, hasOrders: true, orderCount: 12 }));
     expect(r.opportunities.some((o) => o.type === "upgrade_scale")).toBe(true);

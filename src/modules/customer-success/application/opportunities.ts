@@ -1,14 +1,17 @@
 // ── Customer Success — Opportunity Engine ───────────────────
 // RCCF-EPIC-09 Phase 4. Deterministic opportunity detection.
 
+import { entitlementService } from "@/lib/capabilities";
 import type { SuccessOpportunity, SuccessSignals } from "../domain/types";
 
 export function detectOpportunities(s: SuccessSignals): SuccessOpportunity[] {
   const opportunities: SuccessOpportunity[] = [];
 
   // Ready to upgrade to a paid plan (published + has products).
-  if (s.published && s.hasProducts && (s.planCode === "creator_launch" || !s.planCode)) {
-    opportunities.push({ type: "upgrade_growth", label: "Upgrade to Creator Growth", description: "Unlimited products, custom domain and premium themes.", value: 70, href: "/admin/billing" });
+  // Free/entry tier = the plan does not grant paid-tier features (premium themes).
+  const onFreeTier = !entitlementService.has(s.planCode, "premium_themes");
+  if (s.published && s.hasProducts && onFreeTier) {
+    opportunities.push({ type: "upgrade_growth", label: "Upgrade to Creator Growth", description: "Unlimited products, premium themes and a full visual builder.", value: 70, href: "/admin/billing" });
   }
 
   // Ready for Scale (real revenue).
