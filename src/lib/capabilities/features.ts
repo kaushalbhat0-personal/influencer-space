@@ -36,6 +36,7 @@ const CATEGORY: Record<string, FeatureCategory> = {
   [FEATURE_IDS.MULTIPLE_USERS]: "team",
   [FEATURE_IDS.API_ACCESS]: "api",
   [FEATURE_IDS.WEBHOOKS]: "api",
+  [FEATURE_IDS.LIVE_SOCIAL_SYNC]: "api",
   [FEATURE_IDS.WHITE_LABEL]: "branding",
 };
 
@@ -138,6 +139,10 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
   },
   [FEATURE_IDS.WEBHOOKS]: {
     id: FEATURE_IDS.WEBHOOKS, label: "Webhooks", description: "Webhook integrations",
+    category: "api", valueType: "boolean",
+  },
+  [FEATURE_IDS.LIVE_SOCIAL_SYNC]: {
+    id: FEATURE_IDS.LIVE_SOCIAL_SYNC, label: "Live Social Sync", description: "Real-time sync to social platforms",
     category: "api", valueType: "boolean",
   },
   [FEATURE_IDS.WHITE_LABEL]: {
@@ -295,6 +300,7 @@ export const FEATURE_GROUP: Record<string, CapabilityGroup> = {
   multiple_users: "automation",
   api_access: "api",
   webhooks: "api",
+  live_social_sync: "api",
   white_label: "brand",
   ai_credits: "ai",
   max_services: "commerce",

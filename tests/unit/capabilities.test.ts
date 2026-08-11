@@ -55,7 +55,7 @@ describe("Capabilities — Constants", () => {
 
   it("should define all feature IDs", () => {
     const ids = Object.values(FEATURE_IDS);
-    expect(ids.length).toBe(46);
+    expect(ids.length).toBe(47);
     expect(ids).toContain("max_products");
     expect(ids).toContain("custom_domain");
     expect(ids).toContain("seo");
@@ -184,7 +184,7 @@ describe("Capabilities — Features", () => {
 
   it("should list all feature IDs", () => {
     const ids = getAllFeatureIds();
-    expect(ids.length).toBe(45);
+    expect(ids.length).toBe(46);
   });
 
   it("should filter features by category", () => {
@@ -197,7 +197,7 @@ describe("Capabilities — Features", () => {
   });
 
   it("should have complete FEATURE_CATALOG", () => {
-    expect(Object.keys(FEATURE_CATALOG).length).toBe(45);
+    expect(Object.keys(FEATURE_CATALOG).length).toBe(46);
   });
 });
 
@@ -213,7 +213,7 @@ describe("Capabilities — Engine.can / cannot", () => {
   });
 
   it("should allow Creator Grow boolean features", () => {
-    expect(capabilityEngine.can("creator_pro", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(true);
+    expect(capabilityEngine.can("creator_pro", FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(false);
     expect(capabilityEngine.can("creator_pro", FEATURE_IDS.PREMIUM_THEMES).allowed).toBe(true);
     expect(capabilityEngine.can("creator_pro", FEATURE_IDS.AI_TOOLS).allowed).toBe(true);
   });
@@ -223,6 +223,21 @@ describe("Capabilities — Engine.can / cannot", () => {
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.PREMIUM_THEMES).allowed).toBe(true);
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.REMOVE_BRANDING).allowed).toBe(true);
     expect(capabilityEngine.can("creator_elite", FEATURE_IDS.API_ACCESS).allowed).toBe(true);
+  });
+
+  it("should gate custom domain, API access, webhooks and live social sync to Creator Scale only", () => {
+    for (const plan of ["creator_free", "creator_pro", "creator_grow"]) {
+      expect(capabilityEngine.can(plan, FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(false);
+      expect(capabilityEngine.can(plan, FEATURE_IDS.API_ACCESS).allowed).toBe(false);
+      expect(capabilityEngine.can(plan, FEATURE_IDS.WEBHOOKS).allowed).toBe(false);
+      expect(capabilityEngine.can(plan, FEATURE_IDS.LIVE_SOCIAL_SYNC).allowed).toBe(false);
+    }
+    for (const plan of ["creator_elite", "creator_scale"]) {
+      expect(capabilityEngine.can(plan, FEATURE_IDS.CUSTOM_DOMAIN).allowed).toBe(true);
+      expect(capabilityEngine.can(plan, FEATURE_IDS.API_ACCESS).allowed).toBe(true);
+      expect(capabilityEngine.can(plan, FEATURE_IDS.WEBHOOKS).allowed).toBe(true);
+      expect(capabilityEngine.can(plan, FEATURE_IDS.LIVE_SOCIAL_SYNC).allowed).toBe(true);
+    }
   });
 
   it("should handle numeric limits from feature overrides", () => {
@@ -241,7 +256,8 @@ describe("Capabilities — Engine.can / cannot", () => {
 
   it("cannot should invert can", () => {
     expect(capabilityEngine.cannot("creator_free", FEATURE_IDS.CUSTOM_DOMAIN)).toBe(true);
-    expect(capabilityEngine.cannot("creator_pro", FEATURE_IDS.CUSTOM_DOMAIN)).toBe(false);
+    expect(capabilityEngine.cannot("creator_pro", FEATURE_IDS.CUSTOM_DOMAIN)).toBe(true);
+    expect(capabilityEngine.cannot("creator_elite", FEATURE_IDS.CUSTOM_DOMAIN)).toBe(false);
   });
 });
 
@@ -315,13 +331,13 @@ describe("Capabilities — Engine.missingFeatures", () => {
   it("should suggest upgrades for missing features", () => {
     const missing = capabilityEngine.missingFeatures("creator_free");
     const customDomain = missing.find((m) => m.label === "Custom Domain");
-    expect(customDomain?.upgradeTo).toBe("creator_grow");
+    expect(customDomain?.upgradeTo).toBe("creator_scale");
   });
 
   it("should return fewer missing for Creator Grow", () => {
     const missing = capabilityEngine.missingFeatures("creator_pro");
     const labels = missing.map((m) => m.label);
-    expect(labels).not.toContain("Custom Domain");
+    expect(labels).toContain("Custom Domain");
     expect(labels).not.toContain("Premium Themes");
   });
 
@@ -338,7 +354,7 @@ describe("Capabilities — Engine.planSummary", () => {
     expect(summary!.code).toBe("creator_launch");
     expect(summary!.name).toBe("Creator Launch");
     // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
-    expect(summary!.featureCount).toBe(46);
+    expect(summary!.featureCount).toBe(47);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
   });
 
@@ -353,7 +369,7 @@ describe("Capabilities — Engine.comparePlans", () => {
     expect(cmp).not.toBeNull();
     expect(cmp!.addedFeatures.length).toBeGreaterThan(0);
     const addedLabels = cmp!.addedFeatures.map((f) => f.label);
-    expect(addedLabels).toContain("Custom Domain");
+    expect(addedLabels).not.toContain("Custom Domain");
     expect(addedLabels).toContain("Premium Themes");
     expect(cmp!.priceDifference).toBe(699);
     expect(cmp!.recommendation).toBeTruthy();
@@ -362,8 +378,12 @@ describe("Capabilities — Engine.comparePlans", () => {
   it("should compare Creator Grow to Creator Scale", () => {
     const cmp = capabilityEngine.comparePlans("creator_pro", "creator_elite");
     expect(cmp).not.toBeNull();
-    expect(cmp!.addedFeatures.map((f) => f.label)).toContain("Remove Branding");
-    expect(cmp!.addedFeatures.map((f) => f.label)).toContain("API Access");
+    const addedLabels = cmp!.addedFeatures.map((f) => f.label);
+    expect(addedLabels).toContain("Remove Branding");
+    expect(addedLabels).toContain("API Access");
+    expect(addedLabels).toContain("Custom Domain");
+    expect(addedLabels).toContain("Webhooks");
+    expect(addedLabels).toContain("Live Social Sync");
     expect(cmp!.priceDifference).toBe(1300);
   });
 
@@ -502,7 +522,7 @@ describe("Capabilities — Mapper", () => {
     const summary = toPlanSummary(plan);
     expect(summary.code).toBe("creator_launch");
     // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
-    expect(summary.featureCount).toBe(46);
+    expect(summary.featureCount).toBe(47);
   });
 
   it("should format feature comparison", () => {
@@ -542,7 +562,10 @@ describe("Capabilities — Service Delegation", () => {
   it("should delegate can/cannot", () => {
     expect(capabilityService.can("creator_free", "custom_domain").allowed).toBe(false);
     expect(capabilityService.cannot("creator_free", "custom_domain")).toBe(true);
-    expect(capabilityService.can("creator_pro", "custom_domain").allowed).toBe(true);
+    expect(capabilityService.can("creator_pro", "custom_domain").allowed).toBe(false);
+    expect(capabilityService.can("creator_elite", "custom_domain").allowed).toBe(true);
+    expect(capabilityService.can("creator_elite", "webhooks").allowed).toBe(true);
+    expect(capabilityService.can("creator_elite", "live_social_sync").allowed).toBe(true);
   });
 
   it("should delegate limit/remaining/used", () => {
@@ -561,7 +584,7 @@ describe("Capabilities — Service Delegation", () => {
 
   it("should delegate feature accessors", () => {
     expect(capabilityService.getFeatureInfo("max_products").label).toBe("Products");
-    expect(capabilityService.getAllFeatureIds().length).toBe(45);
+    expect(capabilityService.getAllFeatureIds().length).toBe(46);
   });
 
   it("should delegate limit functions", () => {

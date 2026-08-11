@@ -8,7 +8,10 @@ import { getPlan } from "@/lib/capabilities";
 describe("EntitlementService", () => {
   it("should check boolean features with has()", () => {
     expect(entitlement.has("creator_free", "custom_domain")).toBe(false);
-    expect(entitlement.has("creator_pro", "custom_domain")).toBe(true);
+    expect(entitlement.has("creator_pro", "custom_domain")).toBe(false);
+    expect(entitlement.has("creator_elite", "custom_domain")).toBe(true);
+    expect(entitlement.has("creator_elite", "webhooks")).toBe(true);
+    expect(entitlement.has("creator_elite", "live_social_sync")).toBe(true);
   });
 
   it("should get numeric limits with limit()", () => {

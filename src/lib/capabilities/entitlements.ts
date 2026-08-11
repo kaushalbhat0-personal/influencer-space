@@ -9,6 +9,9 @@ export type EntitlementCapabilityId =
   | "analytics_advanced"
   | "media_storage"
   | "api_integrations"
+  | "api_access"
+  | "webhooks"
+  | "live_social_sync"
   | "automation"
   | "team_members"
   | "multiple_brands"
@@ -31,6 +34,9 @@ const CAPABILITY_TO_FEATURE: Record<string, string> = {
   analytics_advanced: "analytics_advanced",
   media_storage: "media_storage",
   api_integrations: "api_integrations",
+  api_access: "api_access",
+  webhooks: "webhooks",
+  live_social_sync: "live_social_sync",
   automation: "automation",
   team_members: "max_team_members",
   multiple_brands: "multiple_brands",

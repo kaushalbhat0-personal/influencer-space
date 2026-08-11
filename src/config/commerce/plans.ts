@@ -23,6 +23,8 @@ export type CommerceCapability =
   | "social_integrations"
   | "api_access"
   | "api_integrations"
+  | "webhooks"
+  | "live_social_sync"
   | "white_label"
   | "brand_removal"
   | "advanced_analytics"
@@ -104,6 +106,8 @@ export const CAPABILITY_LABELS: Record<CommerceCapability, string> = {
   social_integrations: "Social Integrations",
   api_access: "API Access",
   api_integrations: "API Integrations",
+  webhooks: "Webhooks",
+  live_social_sync: "Live Social Sync",
   white_label: "White Label",
   brand_removal: "Brand Removal",
   advanced_analytics: "Advanced Analytics",
@@ -177,7 +181,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_grow",
     name: "Creator Growth",
-    description: "Unlimited products, a custom domain and premium themes — the most popular plan for growing creators.",
+    description: "Unlimited products, premium themes and a full visual builder — the most popular plan for growing creators.",
     family: "creator",
     price: 699,
     currency: "INR",
@@ -190,7 +194,6 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     annualPrice: 6990,
     capabilities: [
       "premium_themes",
-      "custom_domain",
       "advanced_builder",
       "ai_generation",
       "social_integrations",
@@ -221,7 +224,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       ai_credits: 500,
       storage_gb: 10,
     },
-    marketingDescription: "Unlimited products and gallery, your own domain, premium themes and AI credits.",
+    marketingDescription: "Unlimited products and gallery, premium themes, a full visual builder and AI credits.",
     targetAudience: "Most creators",
     marketingHighlights: [
       "Unlimited products",
@@ -230,7 +233,6 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "Premium themes",
       "Full visual builder",
       "Advanced experience backgrounds",
-      "Custom domain",
       "AI credits",
       "Analytics",
       "SEO optimization",
@@ -259,6 +261,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "advanced_ai",
       "api_access",
       "api_integrations",
+      "webhooks",
+      "live_social_sync",
       "white_label",
       "brand_removal",
       "advanced_analytics",
@@ -293,12 +297,14 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       max_team_members: 10,
       max_api_calls: 10000,
     },
-    marketingDescription: "Everything in Growth, plus API access, webhooks, automation, team members and advanced analytics.",
+    marketingDescription: "Everything in Growth, plus your own custom domain, API access, webhooks, live social sync, automation, team members and advanced analytics.",
     targetAudience: "Professional creators",
     marketingHighlights: [
       "Everything in Growth",
+      "Custom domain",
       "API access",
       "Webhooks",
+      "Live social sync",
       "Automation",
       "Team members",
       "Advanced analytics",
@@ -634,6 +640,8 @@ export const COMMERCE_CAPABILITY_TO_FEATURE: Record<
   social_integrations: { feature: "api_integrations", value: true },
   api_access: { feature: "api_access", value: true },
   api_integrations: { feature: "api_integrations", value: true },
+  webhooks: { feature: "webhooks", value: true },
+  live_social_sync: { feature: "live_social_sync", value: true },
   white_label: { feature: "white_label", value: true },
   brand_removal: { feature: "remove_branding", value: true },
   advanced_analytics: { feature: "analytics_advanced", value: true },

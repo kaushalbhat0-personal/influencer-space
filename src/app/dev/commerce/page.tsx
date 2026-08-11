@@ -17,6 +17,8 @@ const FEATURE_GROUP_LABELS: Record<string, string> = {
   social_integrations: "Social Integrations",
   api_access: "API Access",
   api_integrations: "API Integrations",
+  webhooks: "Webhooks",
+  live_social_sync: "Live Social Sync",
   white_label: "White Label",
   brand_removal: "Brand Removal",
   advanced_analytics: "Advanced Analytics",
@@ -36,7 +38,7 @@ const FEATURE_GROUPS: Record<string, CommerceCapability[]> = {
   "AI": ["ai_generation", "advanced_ai"],
   "Branding": ["brand_removal", "white_label"],
   "Analytics": ["advanced_analytics"],
-  "Integrations": ["social_integrations", "api_integrations", "api_access"],
+  "Integrations": ["social_integrations", "api_integrations", "api_access", "webhooks", "live_social_sync"],
   "Support": ["priority_support"],
   "Storage": ["storage", "storage_pack", "ai_credits", "theme_packs"],
 };

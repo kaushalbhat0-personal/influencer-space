@@ -65,7 +65,7 @@ describe("RCCF-IMPLEMENTATION-70 — canonical commerce registry", () => {
       "team", "credits", "storage", "generation", "commerce", "CRM", "dashboard",
       "client", "workspace", "commission", "white label", "priority", "growth",
       "everything in", "custom domain", "premium", "basic", "advanced",
-      "integration", "SLA", "SSO", "audit", "unlimited", "sales", "bulk",
+      "integration", "SLA", "SSO", "audit", "unlimited", "sales", "bulk", "sync",
     ];
     for (const plan of COMMERCE_PLANS) {
       if (!plan.marketingHighlights) continue;

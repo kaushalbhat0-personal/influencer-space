@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { ContentContainer } from "@/components/layout";
 import { VercelService } from "@/services/vercel.service";
 import { DomainSettings } from "@/features/domains/components/domain-settings";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { entitlementService } from "@/lib/capabilities";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,20 @@ export default async function DomainPage() {
       <ContentContainer>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
         <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
+      </ContentContainer>
+    );
+  }
+
+  const resolved = await resolveActivePlan(null, tenantId);
+  const canCustomDomain = entitlementService.has(resolved.code, "custom_domain");
+  if (!canCustomDomain) {
+    return (
+      <ContentContainer>
+        <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
+        <div className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
+          <p className="text-sm text-amber-400">Custom domains require a <span className="font-semibold">Creator Scale</span> subscription or higher.</p>
+          <Link href="/admin/billing" className="mt-4 inline-block admin-btn-cyan px-6 py-2.5 text-sm">Upgrade Plan</Link>
+        </div>
       </ContentContainer>
     );
   }

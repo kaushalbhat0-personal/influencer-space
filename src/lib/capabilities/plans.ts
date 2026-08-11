@@ -25,6 +25,7 @@ const BASE_FEATURES: Record<string, number | boolean | string> = {
   multiple_users: false,
   api_access: false,
   webhooks: false,
+  live_social_sync: false,
   white_label: false,
   basic_builder: true,
   advanced_builder: false,
