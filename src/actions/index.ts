@@ -131,7 +131,7 @@ export type { PublishActionResult } from "./publish.actions";
 
 export {
   updateHeroData, updateHeroPartial, updateHeroSocialLinks, updateSocialChannels,
-  updateApiKeys, updateThemeConfig,
+  updateApiKeys, updateThemeConfig, clearIntegration,
 } from "./settings.actions";
 export type { ThemeConfigInput } from "./settings.actions";
 export type { SettingsActionState } from "./settings.types";

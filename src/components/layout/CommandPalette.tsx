@@ -29,7 +29,6 @@ const DEFAULT_ITEMS: CommandItem[] = [
   { id: "settings", label: "Settings", category: "page", href: "/admin/settings", keywords: ["config", "preferences"] },
   { id: "builder", label: "Builder", category: "page", href: "/builder", keywords: ["edit", "design", "page"] },
   { id: "analytics", label: "Analytics", category: "page", href: "/admin/analytics", keywords: ["stats", "data"] },
-  { id: "ai", label: "AI Assistant", category: "page", href: "/admin/ai-assistant", keywords: ["chat", "help"] },
   { id: "billing", label: "Billing", category: "page", href: "/admin/billing", keywords: ["plan", "payment"] },
 ];
 

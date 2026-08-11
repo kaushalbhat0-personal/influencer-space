@@ -1,8 +1,16 @@
+export type IntegrationStatus =
+  | "connected"
+  | "configured"
+  | "incomplete"
+  | "not_connected"
+  | "coming_soon";
+
 export interface IntegrationData {
   platform: string;
   name: string;
   description: string;
   connected: boolean;
+  status: IntegrationStatus;
   icon: string;
   config: Record<string, string | boolean>;
   scopes: string[];

@@ -206,12 +206,19 @@ export async function updateSocialChannels(
   _prevState: SettingsActionState,
   formData: FormData,
 ): Promise<SettingsActionState> {
-  const rawData = {
-    youtubeChannelId: (formData.get("youtubeChannelId") as string) || "",
-    twitchChannelId: (formData.get("twitchChannelId") as string) || "",
-  };
+  // Only include fields that were actually submitted so saving one channel
+  // never wipes an unrelated channel (e.g. saving YouTube must not clear Twitch).
+  const updates: { youtubeChannelId?: string; twitchChannelId?: string } = {};
+  const youtubeChannelId = (formData.get("youtubeChannelId") as string) ?? "";
+  const twitchChannelId = (formData.get("twitchChannelId") as string) ?? "";
+  if (formData.has("youtubeChannelId")) updates.youtubeChannelId = youtubeChannelId.trim();
+  if (formData.has("twitchChannelId")) updates.twitchChannelId = twitchChannelId.trim();
 
-  const parsed = socialChannelSchema.safeParse(rawData);
+  if (Object.keys(updates).length === 0) {
+    return { success: true };
+  }
+
+  const parsed = socialChannelSchema.safeParse(updates);
   if (!parsed.success) {
     return { success: false, error: "Invalid channel ID" };
   }
@@ -221,6 +228,7 @@ export async function updateSocialChannels(
     await SettingsService.updateTenantChannels(tenantId, parsed.data);
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    revalidatePath("/admin/integrations");
     await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
@@ -262,12 +270,43 @@ export async function updateApiKeys(
     }
 
     revalidatePath("/admin/settings");
+    revalidatePath("/admin/integrations");
     return { success: true };
   } catch (error) {
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
       return { success: false, error: error.message };
     }
     captureError(error, { service: "settings-actions", operation: "updateApiKeys" });
+    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
+  }
+}
+
+const integrationPlatformSchema = z.enum(["youtube", "instagram"]);
+
+/**
+ * Clear a single integration's tenant-scoped configuration. Only YouTube and
+ * Instagram are supported today; other platforms return an error. This never
+ * touches hero/social-link data or unrelated Tenant fields.
+ */
+export async function clearIntegration(
+  tenantId: string,
+  platform: string,
+): Promise<SettingsActionState> {
+  const parsed = integrationPlatformSchema.safeParse(platform);
+  if (!parsed.success) {
+    return { success: false, error: "Unsupported integration" };
+  }
+
+  try {
+    await requireAuth(tenantId);
+    await SettingsService.clearTenantIntegration(tenantId, parsed.data);
+    revalidatePath("/admin/integrations");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      return { success: false, error: error.message };
+    }
+    captureError(error, { service: "settings-actions", operation: "clearIntegration" });
     return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 }

@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, type NavGroup } from "@/config/admin-nav";
-import { ChevronDown, ExternalLink, Layout, LogOut, X } from "lucide-react";
+import { ChevronDown, ExternalLink, LogOut, X } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
 interface AdminSidebarProps {
@@ -153,13 +153,6 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
         <div className="border-t border-white/10 px-3 py-3 space-y-1">
           <div className="flex items-center justify-between px-4 py-2">
             <PublishStatusBadge status={publishStatus} size="sm" />
-            <Link
-              href="/builder"
-              className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-            >
-              <Layout className="h-3.5 w-3.5" />
-              Builder
-            </Link>
           </div>
           <a
             href={siteUrl}

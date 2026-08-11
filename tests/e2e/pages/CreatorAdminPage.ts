@@ -38,7 +38,7 @@ export class CreatorAdminPage {
   }
 
   async gotoSEO(): Promise<void> {
-    await this.goto("/admin/website/seo");
+    await this.goto("/admin/seo");
   }
 
   async isPageLoaded(): Promise<boolean> {

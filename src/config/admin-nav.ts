@@ -3,9 +3,9 @@ import {
   Trophy, Rss, Link2, BarChart3, MessageSquare,
   Layout, Palette, Search, Globe, CreditCard,
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
-  User, Menu, Sparkles, Gamepad as GamepadIcon, FolderOpen,
-  Paintbrush, LayoutTemplate, Wand2, Brain, Target, Landmark, Bell,
-  Heading as HeadingIcon,
+  User, Menu, Sparkles, Gamepad as GamepadIcon,
+  Paintbrush, LayoutTemplate, Wand2, Brain, Target, Landmark, Bell, Briefcase,
+  CalendarDays, Heading as HeadingIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -35,67 +35,61 @@ export const ADMIN_NAV: NavConfig = {
     ]},
 
     {
-      label: "Store", collapsible: true,
+      label: "Content", collapsible: true,
       items: [
-        { href: "/admin/products", label: "Products", icon: ShoppingBag },
-        { href: "/admin/services", label: "Services", icon: UserCheck },
-        { href: "/admin/courses", label: "Courses", icon: BookOpen },
-        { href: "/admin/orders", label: "Orders", icon: Package },
-        { href: "/admin/customers", label: "Customers", icon: Users },
+        { href: "/admin/settings", label: "Hero", icon: Sparkles },
+        { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
+        { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
+        { href: "/admin/milestones", label: "Timeline", icon: Trophy },
+        { href: "/admin/testimonials", label: "Testimonials", icon: UserCheck },
+        { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
+        { href: "/admin/links", label: "Links", icon: Link2 },
+        { href: "/admin/games", label: "Games", icon: GamepadIcon },
       ],
     },
 
     {
-      label: "Content", collapsible: true,
+      label: "Sell", collapsible: true,
       items: [
-        { href: "/admin/media", label: "Media Library", icon: FolderOpen },
-        { href: "/admin/settings", label: "Hero", icon: Sparkles },
-        { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
-        { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
-        { href: "/admin/testimonials", label: "Testimonials", icon: UserCheck },
-        { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
-        { href: "/admin/milestones", label: "Timeline", icon: Trophy },
-        { href: "/admin/games", label: "Games", icon: GamepadIcon },
+        { href: "/admin/products", label: "Products", icon: ShoppingBag },
+        { href: "/admin/services", label: "Services", icon: Briefcase },
+        { href: "/admin/courses", label: "Courses", icon: BookOpen },
+        { href: "/admin/orders", label: "Orders", icon: Package },
+        { href: "/admin/customers", label: "Customers", icon: Users },
+        { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
+        { href: "/admin/payments", label: "Payments", icon: Landmark, badge: "soon" },
       ],
     },
 
     {
       label: "Design", collapsible: true,
       items: [
-        { href: "/admin/themes", label: "Theme Marketplace", icon: Paintbrush },
-        { href: "/admin/blueprints", label: "Website Templates", icon: LayoutTemplate },
-        { href: "/admin/appearance", label: "Theme Settings", icon: Palette },
+        { href: "/builder", label: "Builder", icon: Layout },
+        { href: "/admin/themes", label: "Themes", icon: Paintbrush },
+        { href: "/admin/blueprints", label: "Templates", icon: LayoutTemplate },
+        { href: "/admin/appearance", label: "Appearance", icon: Palette },
         { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
-        { href: "/admin/website/sections", label: "Section Headings", icon: HeadingIcon },
-        { href: "/builder", label: "Layout Builder", icon: Layout },
+        { href: "/admin/website/sections", label: "Sections", icon: HeadingIcon },
       ],
     },
 
     {
-      label: "Profile", collapsible: true,
+      label: "Grow", collapsible: true,
       items: [
-        { href: "/admin/knowledge", label: "Profile", icon: Brain },
-        { href: "/admin/goals", label: "Goals", icon: Target },
-        { href: "/admin/profile", label: "Profile", icon: User },
-        { href: "/admin/seo", label: "SEO", icon: Search },
-      ],
-    },
-
-    {
-      label: "Marketing", collapsible: true,
-      items: [
-        { href: "/admin/links", label: "Links", icon: Link2 },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
         { href: "/admin/messages", label: "Messages", icon: MessageSquare },
+        { href: "/admin/knowledge", label: "Brand", icon: Brain },
+        { href: "/admin/goals", label: "Goals", icon: Target },
       ],
     },
 
     {
-      label: "Account", collapsible: true,
+      label: "Settings", collapsible: true,
       items: [
+        { href: "/admin/profile", label: "Account", icon: User },
+        { href: "/admin/seo", label: "SEO", icon: Search },
         { href: "/admin/settings/domain", label: "Domain", icon: Globe },
         { href: "/admin/billing", label: "Billing", icon: CreditCard },
-        { href: "/admin/payments", label: "Payments", icon: Landmark },
         { href: "/admin/notifications", label: "Notifications", icon: Bell },
         { href: "/admin/integrations", label: "Integrations", icon: Puzzle },
       ],

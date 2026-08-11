@@ -160,6 +160,26 @@ export const SettingsService = {
     });
   },
 
+  /**
+   * Clear a single integration's configuration on the Tenant.
+   * Platform-scoped — never touches unrelated Tenant fields (hero, social
+   * links, OAuth tokens for other providers, etc.).
+   */
+  async clearTenantIntegration(
+    tenantId: string,
+    platform: "youtube" | "instagram",
+  ): Promise<void> {
+    const data =
+      platform === "youtube"
+        ? { youtubeApiKey: null, youtubeChannelId: null }
+        : { instagramApiKey: null };
+
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data,
+    });
+  },
+
   async getWorkspaceSettings(tenantId: string): Promise<{
     workspaceName: string;
     locale: string;

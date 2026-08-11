@@ -5,10 +5,9 @@ import { useState, useRef } from "react";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
 import { MediaField, type MediaValue } from "@/components/shared/MediaField";
-import { updateHeroData, updateHeroPartial, updateApiKeys } from "@/actions/settings.actions";
+import { updateHeroData, updateHeroPartial } from "@/actions/settings.actions";
 import { SettingsLivePreview } from "./settings-live-preview";
-import { SocialLinksEditor } from "@/features/links/components/social-links-editor";
-import type { HeroDataType, HeroSocialLink } from "@/config/hero";
+import type { HeroDataType } from "@/config/hero";
 import type { SettingsActionState } from "@/actions/settings.types";
 
 type SaveState = { pending: boolean; state: SettingsActionState };
@@ -19,13 +18,9 @@ function emptyState(): SaveState {
 
 export function SettingsForm({
   heroData,
-  youtubeKeyConfigured,
-  instagramKeyConfigured,
   tenantId,
 }: {
   heroData: HeroDataType;
-  youtubeKeyConfigured: boolean;
-  instagramKeyConfigured: boolean;
   tenantId: string;
 }) {
   const router = useRouter();
@@ -35,7 +30,6 @@ export function SettingsForm({
   const [identitySave, setIdentitySave] = useState<SaveState>(emptyState);
   const [buttonsSave, setButtonsSave] = useState<SaveState>(emptyState);
   const [liveBadgeSave, setLiveBadgeSave] = useState<SaveState>(emptyState);
-  const [apiKeysSave, setApiKeysSave] = useState<SaveState>(emptyState);
 
   const [videoUrl, setVideoUrl] = useState<string>(heroData.videoUrl || "");
   const [posterUrl, setPosterUrl] = useState<string>(heroData.posterUrl || "");
@@ -72,13 +66,6 @@ export function SettingsForm({
 
   const [liveBadgeText, setLiveBadgeText] = useState(heroData.liveBadgeText || "");
   const [liveShowBadge, setLiveShowBadge] = useState<boolean>(!!heroData.showLiveBadge);
-
-  const [socialLinks, setSocialLinks] = useState<HeroSocialLink[]>(
-    Array.isArray(heroData.socialLinks) ? heroData.socialLinks : [],
-  );
-
-  const [youtubeApiKey, setYoutubeApiKey] = useState("");
-  const [instagramApiKey, setInstagramApiKey] = useState("");
 
   function alignmentButtons(
     desktopAlign: string,
@@ -193,16 +180,6 @@ export function SettingsForm({
     });
     setLiveBadgeSave({ pending: false, state: result });
     if (result.success) flash(true);
-  }
-
-  async function handleSaveApiKeys(formData: FormData) {
-    formData.set("youtubeApiKey", youtubeApiKey);
-    formData.set("instagramApiKey", instagramApiKey);
-    setApiKeysSave({ pending: true, state: { success: false } });
-
-    const result = await updateApiKeys(tenantId, { success: false }, formData);
-    setApiKeysSave({ pending: false, state: result });
-    if (result.success) router.refresh();
   }
 
   function mediaField(field: string, onChange: (v: MediaValue | null) => void) {
@@ -419,62 +396,6 @@ export function SettingsForm({
                 {liveBadgeSave.pending ? "Saving..." : "Save Live Badge"}
               </button>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* ─── Social Links ─── */}
-        <Card>
-          <CardContent>
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Social Links</h3>
-              <p className="text-sm text-gray-500">
-                Your social, streaming and contact links — stored once in Hero and rendered on the
-                Hero, the Links section and the Footer.
-              </p>
-              <SocialLinksEditor tenantId={tenantId} initialLinks={socialLinks} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ─── Developer APIs ─── */}
-        <Card>
-          <CardContent>
-            <form action={handleSaveApiKeys} className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Developer APIs</h3>
-                <p className="text-sm text-gray-400">
-                  Provide your own API keys to automatically display your latest videos and posts on your live website.
-                  These are stored securely and never exposed to the client.
-                </p>
-                <Input
-                  id="youtubeApiKey" name="youtubeApiKey" label="YouTube Data API Key" type="password"
-                  value={youtubeApiKey} onChange={(e) => setYoutubeApiKey(e.target.value)}
-                  placeholder={youtubeKeyConfigured ? "Configured — type to replace" : "Enter YouTube API Key"}
-                  autoComplete="off"
-                />
-                <Input
-                  id="instagramApiKey" name="instagramApiKey" label="Instagram Graph API Token" type="password"
-                  value={instagramApiKey} onChange={(e) => setInstagramApiKey(e.target.value)}
-                  placeholder={instagramKeyConfigured ? "Configured — type to replace" : "Enter Instagram Graph Token"}
-                  autoComplete="off"
-                />
-              </div>
-
-              {apiKeysSave.state.success && (
-                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                  API keys saved successfully!
-                </div>
-              )}
-              {apiKeysSave.state.error && (
-                <p className="text-sm text-red-400">{apiKeysSave.state.error}</p>
-              )}
-
-              <div className="pt-2">
-                <button type="submit" disabled={apiKeysSave.pending} className="admin-btn-cyan">
-                  {apiKeysSave.pending ? "Saving..." : "Save API Keys"}
-                </button>
-              </div>
-            </form>
           </CardContent>
         </Card>
       </div>
