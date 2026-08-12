@@ -97,15 +97,10 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-    // VALIDATION-01 V-005: surface unsupported social platforms with a clear
-    // error instead of silently producing an empty "manual" profile.
-    const detected = detectPlatform(sourceUrl);
-    if (["instagram", "tiktok", "linkedin", "twitter"].includes(detected)) {
-      return {
-        success: false,
-        error: `${detected.charAt(0).toUpperCase() + detected.slice(1)} import isn't supported yet. Paste a YouTube channel, a website URL, or a Google Business listing instead.`,
-      };
-    }
+    // RCCF-04: all supported platforms (YouTube, Instagram, TikTok, LinkedIn,
+    // X/Twitter, website/manual) flow through the dedicated platform adapter.
+    // Unsupported-looking inputs degrade to a manual source + diagnostics
+    // instead of being hard-blocked.
 
     const creatorName = session.user.name || "Creator";
     const result = await onboardingService.importProfile(sourceUrl, session.user.id, creatorName);
@@ -250,7 +245,8 @@ export async function runCreatorGeneration(
           creatorId: userId,
           creatorName,
           sourceUrl,
-          platform: "youtube",
+          // RCCF-05A (LOW-6): use the detected platform, not a hardcoded label.
+          platform: detectPlatform(sourceUrl),
           correlationId: ctx.correlationId,
         });
         generationSessionId = gs.id;
@@ -268,7 +264,7 @@ export async function runCreatorGeneration(
         workspaceId: generationSessionId,
         creatorName,
         sourceUrl,
-        sourcePlatform: "youtube",
+        sourcePlatform: detectPlatform(sourceUrl),
         correlationId: ctx.correlationId,
       }, "platform", ctx.correlationId);
       // RCCF-LAUNCH-TRACK-03: canonical generation progress event.
@@ -384,6 +380,7 @@ export async function runCreatorGeneration(
       creatorName,
       sourceUrl,
       sourcePlatform,
+      avatarUrl: profileResult.channelMeta?.thumbnailUrl,
       planCode: "creator_launch",
       pipelineResult,
       category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
@@ -608,7 +605,7 @@ export async function createGenerationSession(
       creatorId: session.user.id,
       creatorName: session.user.name || "Creator",
       sourceUrl,
-      platform: "youtube",
+      platform: detectPlatform(sourceUrl),
       correlationId: ctx.correlationId,
     });
 

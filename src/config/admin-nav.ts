@@ -5,7 +5,7 @@ import {
   ExternalLink, LogOut, UserCheck, BookOpen, HelpCircle, Puzzle,
   User, Menu, Sparkles, Gamepad as GamepadIcon,
   Paintbrush, LayoutTemplate, Wand2, Brain, Target, Landmark, Bell, Briefcase,
-  CalendarDays, Heading as HeadingIcon,
+  CalendarDays,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -69,7 +69,6 @@ export const ADMIN_NAV: NavConfig = {
         { href: "/admin/blueprints", label: "Templates", icon: LayoutTemplate },
         { href: "/admin/appearance", label: "Appearance", icon: Palette },
         { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
-        { href: "/admin/website/sections", label: "Sections", icon: HeadingIcon },
       ],
     },
 

@@ -3,13 +3,6 @@
 import { PanelRightClose } from "lucide-react";
 import { ThemeCard } from "./theme-card";
 import { CompletionBadge } from "./completion-badge";
-import { BuilderCompletionHints } from "@/modules/knowledge-runtime/presentation/builder-hints";
-import { GoalBuilderSuggestions } from "@/modules/goals-runtime/presentation/goal-builder-suggestions";
-import { BuilderRecommendationPanel } from "@/modules/recommendation-runtime/presentation/builder-recommendation-panel";
-import { BusinessHealthBadge } from "@/modules/business-health/presentation/business-health-badge";
-import { BuilderExperiencePanel } from "@/modules/experience-intelligence/presentation/builder-experience-panel";
-import { BuilderEvolutionPanel } from "@/modules/website-evolution/presentation/builder-evolution-panel";
-import { BuilderStrategyBadge } from "./builder-strategy-badge";
 import { SectionPresentationPanel } from "./section-presentation-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
@@ -70,10 +63,10 @@ export function WebsitePanel({
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 p-2">
-        {/* Section Presentation (selected section) */}
+        {/* Section Presentation (selected section) — RCCF-03: Builder owns layout/presentation. */}
         <SectionPresentationPanel />
 
-        {/* Theme */}
+        {/* Theme — RCCF-03: Builder owns theme preview/application. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="px-2.5 py-1.5 border-b border-white/5">
             <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Theme</p>
@@ -89,7 +82,9 @@ export function WebsitePanel({
           </div>
         </div>
 
-        {/* Progress */}
+        {/* Progress — RCCF-03: canonical WebsiteHealthEngine score surfaced as a
+            thin progress indicator that deep-links to the Dashboard. The Builder
+            does not compute, score, recommend or persist health/business data. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/5">
             <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Progress</p>
@@ -99,27 +94,6 @@ export function WebsitePanel({
             <p>Template: {overview?.blueprint?.name ?? "Creator"}</p>
           </div>
         </div>
-
-        {/* Completion hints */}
-        <BuilderCompletionHints />
-
-        {/* Goal recommendations */}
-        <GoalBuilderSuggestions />
-
-        {/* Section recommendations */}
-        <BuilderRecommendationPanel />
-
-        {/* Business Health + section contribution */}
-        <BusinessHealthBadge />
-
-        {/* RCCF-IMPLEMENTATION-73: read-only payment strategy */}
-        <BuilderStrategyBadge />
-
-        {/* Experience Intelligence + conversion impact */}
-        <BuilderExperiencePanel />
-
-        {/* Website Evolution opportunities */}
-        <BuilderEvolutionPanel />
       </div>
     </div>
   );

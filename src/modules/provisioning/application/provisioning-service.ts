@@ -30,6 +30,12 @@ interface ProvisioningInputBase {
   templateId?: string;
   strategyId?: string;
   sections?: string[];
+  /** RCCF-05A: basic profile acquisition �?" legitimately acquired identity that
+   * provisioning persists to the brand + hero so the site renders real data. */
+  name?: string;
+  bio?: string;
+  avatarUrl?: string;
+  socialLinks?: Array<{ platform: string; url: string; label?: string }>;
   /** Classified / user-overridden business category (e.g. "film", "food"). */
   category?: string;
   /** Industry label (e.g. "Film Producer", "Restaurant"). */
@@ -171,20 +177,43 @@ export class ProvisioningService {
 
     try {
       const adminEmail = buildAdminEmail(slug);
-      const socialLinks = input.sourceUrl ? [{ platform: input.sourcePlatform || "youtube", url: input.sourceUrl }] : [];
+      // RCCF-05A: merge the acquired basic-profile social links with the source
+      // URL fallback, deduping by platform+url so the hero never shows the
+      // controlling platform twice.
+      const sourcePlatformLabel = input.sourcePlatform || "youtube";
+      const sourceLink = input.sourceUrl ? [{ platform: sourcePlatformLabel, url: input.sourceUrl }] : [];
+      const acquiredLinks = input.socialLinks?.length ? input.socialLinks : [];
+      const socialLinks = [...sourceLink, ...acquiredLinks].filter(
+        (link, index, all) => index === all.findIndex((other) => other.platform === link.platform && other.url === link.url),
+      );
+      const displayName = input.name?.trim() || creatorName;
+      const profileBio = input.bio?.trim() || input.generatedContent?.aboutSection || "";
 
       const brandConfig = {
-        name: creatorName,
+        name: displayName,
         tagline: input.generatedContent?.tagline || "",
-        bio: input.generatedContent?.aboutSection || "",
-        heroTitle: input.generatedContent?.heroTitle || creatorName,
-        aboutText: input.generatedContent?.aboutSection || "",
+        bio: profileBio,
+        avatarUrl: input.avatarUrl || null,
+        socialLinks,
+        heroTitle: input.generatedContent?.heroTitle || displayName,
+        aboutText: profileBio,
         category: input.category || input.industry || "",
         industry: input.industry || "",
       };
       const seoConfig = { title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription };
-      const influencerData = { name: creatorName, source: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: input.generatedContent?.aboutSection || personalization.bio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: null, niche: input.category || personalization.niche || input.sourcePlatform || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
-      const heroData = { title: input.generatedContent?.heroTitle || personalization.heroTitle, subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle, tagline: input.generatedContent?.tagline || personalization.tagline, videoUrl: "" };
+      const influencerData = { name: displayName, source: sourcePlatformLabel, sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: profileBio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: input.avatarUrl || null, niche: input.category || personalization.niche || sourcePlatformLabel || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
+      // RCCF-05A: hero_data carries the acquired profile identity so the
+      // storefront hero resolves the creator's real name/bio/avatar/social links.
+      const heroData = {
+        title: input.generatedContent?.heroTitle || personalization.heroTitle,
+        subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle,
+        tagline: input.generatedContent?.tagline || personalization.tagline,
+        videoUrl: "",
+        name: displayName,
+        bio: profileBio,
+        profilePictureUrl: input.avatarUrl || "",
+        socialLinks,
+      };
       const metaData = { templateId: input.templateId || null, strategyId: input.strategyId || null, sourcePlatform: input.sourcePlatform || "manual", sourceUrl: input.sourceUrl || "", provisionedAt: new Date().toISOString() };
 
       const templateId = input.templateId || personalization.templateId;
@@ -197,9 +226,10 @@ export class ProvisioningService {
 
         await brandRepository.create({
           websiteId: website.id,
-          name: creatorName,
+          name: displayName,
           tagline: input.generatedContent?.tagline || personalization.tagline,
-          bio: input.generatedContent?.aboutSection || personalization.bio,
+          bio: profileBio,
+          avatarUrl: input.avatarUrl || undefined,
           socialLinks,
         }, tx as Prisma.TransactionClient);
 

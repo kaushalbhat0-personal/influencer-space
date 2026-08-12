@@ -68,13 +68,24 @@ export function buildProvisioningInput(params: {
   pipelineResult: PipelineResult;
   category?: string;
   industry?: string;
+  avatarUrl?: string;
 }) {
   const { themeData, seoData, heroSection } = extractArtifactData(params.pipelineResult);
   const bp = params.pipelineResult.blueprint;
   const builderData = buildBuilderArtifactData(params.pipelineResult);
 
+  // RCCF-05A: basic profile data flows into provisioning �?" the legitimately
+  // acquired identity (name/bio/avatar/social links) reaches the brand + hero.
+  const kg = params.pipelineResult.knowledgeGraph;
+
   const base = {
     creatorName: params.creatorName,
+    name: kg?.creator?.name ?? params.creatorName,
+    bio: kg?.creator?.bio ?? "",
+    avatarUrl: params.avatarUrl ?? "",
+    socialLinks: (kg?.socialLinks ?? [])
+      .filter((l) => l.url)
+      .map((l) => ({ platform: l.platform, url: l.url, label: l.handle || undefined })),
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,
     category: params.category,

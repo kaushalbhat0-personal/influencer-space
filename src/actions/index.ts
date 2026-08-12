@@ -11,8 +11,8 @@ export {
 export { fetchAnalytics } from "./analytics.actions";
 export type { AnalyticsResponse } from "./analytics.actions";
 
-export { getBuilderOverview, getBuilderHealth } from "./builder-overview.actions";
-export type { BuilderOverviewData, HealthCategory } from "./builder-overview.actions";
+export { getBuilderOverview } from "./builder-overview.actions";
+export type { BuilderOverviewData } from "./builder-overview.actions";
 
 export {
   loadBuilderPages, saveBuilderPages,
@@ -155,9 +155,5 @@ export type {
 } from "./super-admin.actions";
 
 export { updateTheme } from "./theme.actions";
-
-export {
-  updateSectionPresentation, resetSectionPresentation,
-} from "./section-presentation.actions";
 
 export { switchWorkspace, listWorkspaces } from "./workspace.actions";

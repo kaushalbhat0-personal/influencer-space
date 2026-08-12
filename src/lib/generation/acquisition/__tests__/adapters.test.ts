@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { profileAcquisitionEngine, listCapabilities } from "@/lib/generation/acquisition/engine";
 import { getAdapterForUrl } from "@/lib/generation/acquisition/adapters";
-import { buildContentSourceFromYouTube, buildContentSource } from "@/lib/generation/integration/provision-pipeline";
+import { buildContentSourceFromYouTube } from "@/lib/generation/integration/provision-pipeline";
 
 const h = vi.hoisted(() => ({
   fetchWithResult: vi.fn(),
@@ -35,7 +35,7 @@ describe("capability model", () => {
   });
 
   it("reports no rich capabilities for the manual fallback", () => {
-    const { adapter } = getAdapterForUrl("https://instagram.com/cristiano");
+    const { adapter } = getAdapterForUrl("https://random-site.example/profile");
     expect(adapter.name).toBe("manual");
     expect(adapter.capabilities.supportsFollowers).toBe(false);
     expect(adapter.capabilities.supportsBio).toBe(false);
@@ -85,31 +85,81 @@ describe("YouTube adapter — regression: identical base ContentSource", () => {
 });
 
 describe("Manual fallback — no fabrication", () => {
-  it("normalizes an Instagram URL without inventing data", async () => {
-    const result = await profileAcquisitionEngine.acquire("https://instagram.com/cristiano", "Cristiano");
-    expect(result.diagnostics.platform).toBe("instagram");
+  it("normalizes an unknown URL without inventing data", async () => {
+    const result = await profileAcquisitionEngine.acquire("https://unknown/creator", "Creator");
+    expect(result.diagnostics.platform).toBe("manual");
     expect(result.diagnostics.adapter).toBe("manual");
-    expect(result.source.platform).toBe("instagram");
-    expect(result.source.username).toBe("cristiano");
+    expect(result.source.platform).toBe("manual");
     expect(result.source.bio).toBe("");
     expect(result.source.followers).toBe(0);
     expect(result.source.content).toEqual([]);
     expect(result.source.categories).toEqual([]);
-    expect(result.source.links).toEqual(["https://instagram.com/cristiano"]);
+    expect(result.source.links).toEqual(["https://unknown/creator"]);
   });
 
   it("leaves capability-supported but unavailable fields in missingFields", async () => {
-    const result = await profileAcquisitionEngine.acquire("https://instagram.com/cristiano", "Cristiano");
+    const result = await profileAcquisitionEngine.acquire("https://unknown/creator", "Creator");
     expect(result.diagnostics.missingFields).toContain("website");
     expect(result.diagnostics.missingFields).toContain("languages");
     expect(result.diagnostics.populatedFields).toContain("links");
     expect(result.diagnostics.populatedFields).not.toContain("bio");
   });
+});
 
-  it("reports the platform as the detected one (not 'manual')", async () => {
-    const result = await profileAcquisitionEngine.acquire("https://tiktok.com/@someone", "Someone");
+describe("RCCF-04 — dedicated social adapters (no fabrication)", () => {
+  it("routes Instagram to the instagram adapter and normalizes the handle", async () => {
+    const { adapter } = getAdapterForUrl("https://www.instagram.com/cristiano");
+    expect(adapter.name).toBe("instagram-profile");
+    expect(adapter.platform).toBe("instagram");
+    expect(adapter.extractHandle("https://www.instagram.com/cristiano")).toBe("cristiano");
+
+    const result = await profileAcquisitionEngine.acquire("https://www.instagram.com/cristiano", "Cristiano");
+    expect(result.source.platform).toBe("instagram");
+    expect(result.source.username).toBe("cristiano");
+    expect(result.source.displayName).toBe("Cristiano");
+    expect(result.source.links).toEqual(["https://www.instagram.com/cristiano"]);
+    expect(result.source.bio).toBe("");
+    expect(result.source.followers).toBe(0);
+  });
+
+  it("routes TikTok to the tiktok adapter and normalizes the handle", async () => {
+    const { adapter } = getAdapterForUrl("https://www.tiktok.com/@someone");
+    expect(adapter.name).toBe("tiktok-profile");
+    expect(adapter.extractHandle("https://www.tiktok.com/@someone")).toBe("someone");
+
+    const result = await profileAcquisitionEngine.acquire("https://www.tiktok.com/@someone", "Someone");
     expect(result.source.platform).toBe("tiktok");
-    expect(result.diagnostics.platform).toBe("tiktok");
+    expect(result.source.username).toBe("someone");
+    expect(result.source.displayName).toBe("Someone");
+  });
+
+  it("routes LinkedIn to the linkedin adapter and normalizes the slug", async () => {
+    const { adapter } = getAdapterForUrl("https://www.linkedin.com/in/steve-jobs");
+    expect(adapter.name).toBe("linkedin-profile");
+    expect(adapter.extractHandle("https://www.linkedin.com/in/steve-jobs")).toBe("steve-jobs");
+
+    const result = await profileAcquisitionEngine.acquire("https://www.linkedin.com/in/steve-jobs", "Steve");
+    expect(result.source.platform).toBe("linkedin");
+    expect(result.source.username).toBe("steve-jobs");
+  });
+
+  it("routes X/Twitter to the twitter adapter and normalizes the handle", async () => {
+    const { adapter } = getAdapterForUrl("https://x.com/elonmusk");
+    expect(adapter.name).toBe("x-profile");
+    expect(adapter.extractHandle("https://x.com/elonmusk")).toBe("elonmusk");
+
+    const result = await profileAcquisitionEngine.acquire("https://x.com/elonmusk", "Elon");
+    expect(result.source.platform).toBe("twitter");
+    expect(result.source.username).toBe("elonmusk");
+    expect(result.source.links).toEqual(["https://x.com/elonmusk"]);
+  });
+
+  it("rejects non-profile Instagram routes by degrading to a manual source with a warning", async () => {
+    const result = await profileAcquisitionEngine.acquire("https://www.instagram.com/p/ABC123/", "Creator");
+    // A post URL is not a profile — the adapter still returns a source but flags
+    // it as a degradation (never throws, never fabricates).
+    expect(result.diagnostics.platform).toBe("instagram");
+    expect(result.diagnostics.warnings.length).toBeGreaterThan(0);
   });
 });
 

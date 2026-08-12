@@ -115,6 +115,52 @@ describe("RCCF-01 — buildProvisioningInput carries the generated website", () 
   });
 });
 
+describe("RCCF-05A — buildProvisioningInput threads basic profile data", () => {
+  it("carries avatarUrl, name, bio and social links into the provisioning input", () => {
+    const profileGraph = {
+      ...knowledgeGraph,
+      creator: {
+        name: "Real Creator",
+        bio: "A real gaming creator bio",
+        niche: "gaming",
+      },
+      socialLinks: [
+        { platform: "instagram", url: "https://instagram.com/real", handle: "real", followers: 0, primary: false },
+        { platform: "youtube", url: "https://youtube.com/@creator", handle: "creator", followers: 0, primary: true },
+      ],
+    } as never;
+
+    const pipelineResult: PipelineResult = {
+      generationResult: undefined as never,
+      knowledgeGraph: profileGraph,
+      blueprint: websiteBlueprint,
+      artifacts,
+      provisioned: true,
+      snapshotId: null,
+      storefrontUrl: null,
+      version: 1,
+    };
+
+    const input = buildProvisioningInput({
+      runId: "run2",
+      creatorName: "Creator",
+      sourceUrl: "https://youtube.com/@creator",
+      sourcePlatform: "youtube",
+      avatarUrl: "https://yt3.example.com/avatar.jpg",
+      planCode: "creator_launch",
+      pipelineResult,
+    });
+
+    expect(input.avatarUrl).toBe("https://yt3.example.com/avatar.jpg");
+    expect(input.name).toBe("Real Creator");
+    expect(input.bio).toBe("A real gaming creator bio");
+    expect(input.socialLinks).toEqual([
+      { platform: "instagram", url: "https://instagram.com/real", label: "real" },
+      { platform: "youtube", url: "https://youtube.com/@creator", label: "creator" },
+    ]);
+  });
+});
+
 describe("RCCF-01 — platform detection + content source", () => {
   it("detects youtube", () => {
     expect(detectPlatform("https://youtube.com/@x")).toBe("youtube");
