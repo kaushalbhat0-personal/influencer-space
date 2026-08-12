@@ -10,6 +10,7 @@ import { themeRegistry } from "@/lib/theme/registry-new";
 import { getThemeTier } from "@/lib/theme/tiers";
 import { themeEntitlementDecision } from "@/lib/theme/entitlement";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { entitlementService } from "@/lib/capabilities";
 
 const FONT_MAP: Record<string, { heading: string; body: string }> = {
   geist: { heading: "Geist, system-ui, sans-serif", body: "Geist, system-ui, sans-serif" },
@@ -33,6 +34,14 @@ export async function updateTheme(
     const session = await getServerSession(authOptions);
     if (!session?.user?.tenantId || session.user.tenantId !== tenantId) {
       return { success: false, error: "Unauthorized" };
+    }
+
+    // RCCF-11: the Appearance surface is premium (Growth+). The page gate is
+    // cosmetic — enforce the canonical premium_themes entitlement here so a
+    // Launch user cannot invoke the mutation directly.
+    const resolved = await resolveActivePlan(undefined, tenantId);
+    if (!entitlementService.has(resolved.code, "premium_themes")) {
+      return { success: false, error: "Custom appearance requires a Creator Grow subscription or higher." };
     }
 
     const existing = await websiteRepository.findTheme(tenantId);

@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockFindSub, mockWorkspace, mockLegacy, mockV2Many, mockLegacyMany } = vi.hoisted(() => ({
+const { mockFindSub, mockWorkspace, mockLegacy, mockV2Many, mockLegacyMany, mockWorkspaceMany, mockAgencyTenant } = vi.hoisted(() => ({
   mockFindSub: vi.fn(),
   mockWorkspace: vi.fn(),
   mockLegacy: vi.fn(),
   mockV2Many: vi.fn(),
   mockLegacyMany: vi.fn(),
+  mockWorkspaceMany: vi.fn(),
+  mockAgencyTenant: vi.fn(),
 }));
 
 vi.mock("@/modules/billing/infrastructure/repository", () => ({
@@ -14,24 +16,29 @@ vi.mock("@/modules/billing/infrastructure/repository", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    workspace: { findFirst: mockWorkspace },
+    workspace: { findFirst: mockWorkspace, findMany: mockWorkspaceMany },
     subscription: {
       findUnique: mockLegacy,
       findMany: mockLegacyMany,
     },
     billingSubscription: { findMany: mockV2Many },
+    agencyTenant: { findMany: mockAgencyTenant },
   },
 }));
 
-import { resolveActivePlan, listAllSubscriptions } from "@/modules/billing/application/plan-source";
+import { resolveActivePlan, listAllSubscriptions, resolvePlansForTenantIds } from "@/modules/billing/application/plan-source";
+import { resetPlanRestrictionCache } from "@/modules/billing/application/plan-restriction";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetPlanRestrictionCache();
   mockFindSub.mockResolvedValue(null);
   mockWorkspace.mockResolvedValue(null);
   mockLegacy.mockResolvedValue(null);
   mockV2Many.mockResolvedValue([]);
   mockLegacyMany.mockResolvedValue([]);
+  mockWorkspaceMany.mockResolvedValue([]);
+  mockAgencyTenant.mockResolvedValue([]);
 });
 
 describe("resolveActivePlan — Billing v2 first, legacy fallback", () => {
@@ -88,5 +95,44 @@ describe("listAllSubscriptions — v2 + legacy union without duplication", () =>
     expect(t3?.origin).toBe("legacy");
     expect(t3?.planCode).toBe("STARTER");
     expect(t3?.planDisplay).toBe("Creator Launch");
+  });
+});
+
+describe("resolvePlansForTenantIds — batched resolution applies the agency clamp", () => {
+  it("returns v2 codes unchanged for non-managed tenants", async () => {
+    mockWorkspaceMany.mockResolvedValue([{ id: "ws-1", tenantId: "t1" }]);
+    mockV2Many.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_launch", name: "Creator Launch" }, status: "ACTIVE" }]);
+
+    const rows = await resolvePlansForTenantIds(["t1"]);
+
+    expect(rows[0]).toMatchObject({ tenantId: "t1", planCode: "creator_launch", origin: "v2", status: "ACTIVE" });
+  });
+
+  it("clamps agency-managed v2 tenants from Launch to Grow", async () => {
+    mockWorkspaceMany.mockResolvedValue([{ id: "ws-1", tenantId: "t1" }]);
+    mockV2Many.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_launch", name: "Creator Launch" }, status: "ACTIVE" }]);
+    mockAgencyTenant.mockResolvedValue([{ tenantId: "t1" }]);
+
+    const rows = await resolvePlansForTenantIds(["t1"]);
+
+    expect(rows[0]).toMatchObject({ tenantId: "t1", planCode: "creator_grow", planDisplay: "Creator Growth", origin: "v2" });
+  });
+
+  it("clamps legacy agency-managed tenants via canonical resolution", async () => {
+    mockLegacyMany.mockResolvedValue([{ tenantId: "t2", plan: "creator_free", status: "ACTIVE" }]);
+    mockAgencyTenant.mockResolvedValue([{ tenantId: "t2" }]);
+
+    const rows = await resolvePlansForTenantIds(["t2"]);
+
+    expect(rows[0]).toMatchObject({ tenantId: "t2", planCode: "creator_grow", planDisplay: "Creator Growth", origin: "legacy" });
+  });
+
+  it("returns Free/None for tenants without a subscription", async () => {
+    const rows = await resolvePlansForTenantIds(["t3"]);
+    expect(rows[0]).toMatchObject({ tenantId: "t3", planCode: null, planDisplay: "Free", origin: "none" });
+  });
+
+  it("returns an empty array for an empty input", async () => {
+    await expect(resolvePlansForTenantIds([])).resolves.toEqual([]);
   });
 });

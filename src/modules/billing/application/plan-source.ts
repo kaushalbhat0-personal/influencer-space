@@ -153,7 +153,7 @@ export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<Ten
   const legacyByTenant = new Map<string, { plan: string; status: string }>();
   for (const l of legacy) legacyByTenant.set(l.tenantId, { plan: l.plan, status: l.status ?? "" });
 
-  return tenantIds.map((tenantId) => {
+  const rows = tenantIds.map((tenantId) => {
     const workspaceId = workspaceByTenant.get(tenantId);
     const v2 = workspaceId ? subByWorkspace.get(workspaceId) : undefined;
     if (v2) {
@@ -165,6 +165,18 @@ export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<Ten
     }
     return { tenantId, planCode: null, planDisplay: "Free", origin: "none" as const, status: null };
   });
+
+  // RCCF-11: apply the same agency-managed restriction the single-tenant path
+  // applies (Launch → Grow) so batched resolution never disagrees with
+  // resolveActivePlan. isTenantAgencyManaged is 30s-cached — no N+1.
+  return Promise.all(
+    rows.map(async (row) => {
+      if (!row.planCode) return row;
+      const code = await resolveRestrictedPlanCode({ tenantId: row.tenantId, code: row.planCode });
+      if (code === row.planCode) return row;
+      return { ...row, planCode: code, planDisplay: resolvePlan(code ?? "").displayName };
+    }),
+  );
 }
 
 export type { BillingSubscription } from "@/generated/prisma/client";

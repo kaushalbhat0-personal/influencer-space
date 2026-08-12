@@ -6,6 +6,8 @@ import { findGalleryItems, findGalleryItemById } from "./queries";
 import { requireAuth, requireFound } from "@/modules/workspace/application/workspace-permissions";
 import { galleryCreateSchema } from "./validation";
 import { getFirstValidationError } from "./validation";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 export class GalleryService {
   static async fetch(params: FetchGalleryParams) {
@@ -18,6 +20,9 @@ export class GalleryService {
 
     const parsed = galleryCreateSchema.safeParse(data);
     if (!parsed.success) return { success: false as const, error: getFirstValidationError(parsed.error) };
+
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.GALLERY });
+    if (!limit.ok) return { success: false as const, error: limit.reason };
 
     const maxOrder = await prisma.galleryImage.aggregate({ where: { tenantId }, _max: { order: true } });
 

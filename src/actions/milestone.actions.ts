@@ -8,6 +8,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
 import { afterContentChange } from "@/lib/publishing/content-change";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 const createMilestoneSchema = z.object({
   year: z.string().min(1, "Year is required").max(10),
@@ -66,6 +68,9 @@ export async function createMilestone(
         fields.year?.[0] || fields.title?.[0] || fields.description?.[0] || "Invalid input";
       return { success: false, error: first };
     }
+
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.TIMELINE });
+    if (!limit.ok) return { success: false, error: limit.reason };
 
     const maxOrder = await prisma.timelineEvent.aggregate({
       where: { tenantId },

@@ -9,6 +9,7 @@ import { templateService } from "@/lib/template";
 import { websitePersonalizer } from "@/lib/personalization";
 import { seedStarterData } from "@/modules/tenant/application/seeder";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { tenantRepository } from "@/modules/tenant/infrastructure/tenant-repository";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { brandRepository } from "@/modules/tenant/infrastructure/brand-repository";
@@ -268,6 +269,15 @@ export class ProvisioningService {
           userId: user.id,
           role: "OWNER",
         }, tx as Prisma.TransactionClient);
+
+        // RCCF-07: link the registration-created creator subscription (created
+        // with only accountId) to the canonical workspace so plan readers
+        // (resolveActivePlan → findSubscriptionWithPlan) resolve by workspaceId.
+        // No-op when the self-serve account/subscription does not exist.
+        await billingRepository.linkSubscriptionToWorkspace(
+          { workspaceId: ws.id, accountType: "creator", accountId: user.id },
+          tx as Prisma.TransactionClient,
+        );
 
         if (template && !input.generatedWebsite?.sections?.length) {
           await seedStarterData(

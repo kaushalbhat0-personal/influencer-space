@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { prisma } from "@/lib/prisma";
 import { entitlementService } from "@/lib/capabilities";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { AppearanceManager } from "./_components/appearance-manager";
 import Link from "next/link";
 
@@ -28,22 +28,17 @@ export default async function AppearancePage() {
     );
   }
 
-  const workspace = await workspaceRepository.findByTenantId(tenantId);
-  let planTier: string | null = null;
-  if (workspace) {
-    const sub = await prisma.billingSubscription.findUnique({ where: { workspaceId: workspace.id } });
-    if (sub) {
-      const plan = await prisma.billingPlan.findUnique({ where: { id: sub.planId } });
-      if (plan) planTier = plan.code;
-    }
-  }
-  const canCustomBranding = entitlementService.has(planTier, "custom_branding");
-  if (!canCustomBranding) {
+  const resolved = await resolveActivePlan(null, tenantId);
+  // RCCF-11: the page manages premium appearance/theme customization. Gate on
+  // the canonical premium_themes capability (previously gated on custom_branding,
+  // which no plan grants — locking the page for every plan).
+  const canAppearance = entitlementService.has(resolved.code, "premium_themes");
+  if (!canAppearance) {
     return (
       <div>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance</h1>
         <div className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
-          <p className="text-sm text-amber-400">Custom branding and themes require a <span className="font-semibold">Creator Grow</span> subscription or higher.</p>
+          <p className="text-sm text-amber-400">Premium appearance and themes require a <span className="font-semibold">Creator Grow</span> subscription or higher.</p>
           <Link href="/admin/billing" className="mt-4 inline-block admin-btn-cyan px-6 py-2.5 text-sm">Upgrade Plan</Link>
         </div>
       </div>

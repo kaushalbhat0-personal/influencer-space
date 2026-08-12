@@ -5,6 +5,7 @@ import { mediaValidator, type FileInfo } from "./validator";
 import { platformEventBus } from "@/lib/events";
 import { imageProcessor } from "./processing/image-processor";
 import { filterValidAssetIds, normalizeAssetId, requireAssetId } from "./resolve";
+import { enforceStorageLimit } from "@/modules/billing/application/storage.enforcement";
 
 export interface UploadOptions {
   tenantId: string;
@@ -58,6 +59,9 @@ export class MediaService {
 
       return { assetId: existing.id, url: existing.publicUrl ?? "", deduplicated: true };
     }
+
+    // RCCF-09: enforce the tenant's declared storage quota before adding bytes.
+    await this.assertStorageQuota(options.tenantId, options.file.size);
 
     const ext = options.file.filename.split(".").pop() || "bin";
     const storageKey = `${options.tenantId}/${folder}/${randomUUID()}.${ext}`;
@@ -152,6 +156,10 @@ export class MediaService {
       return { deduplicated: true, assetId: existing.id, url: existing.publicUrl ?? "" };
     }
 
+    // RCCF-09: enforce the declared storage quota before issuing a signed URL
+    // so an over-quota tenant never lands bytes in storage.
+    await this.assertStorageQuota(options.tenantId, options.size);
+
     const ext = options.filename.split(".").pop() || "bin";
     const storageKey = `${options.tenantId}/${folder}/${randomUUID()}.${ext}`;
     const provider = storageProviderFactory.getProvider();
@@ -191,6 +199,10 @@ export class MediaService {
     // Verify the object actually landed in storage before registering it.
     const exists = await provider.exists(options.storageKey).catch(() => false);
     if (!exists) throw new Error("Uploaded file not found in storage; upload did not complete");
+
+    // RCCF-09: re-enforce the quota at the authoritative commit (the client
+    // controls the reported size, so the register step is the final gate).
+    await this.assertStorageQuota(options.tenantId, options.size);
 
     const asset = await assetRepository.create({
       tenantId: options.tenantId,
@@ -449,6 +461,18 @@ export class MediaService {
   }
 
   /**
+   * RCCF-09: reject uploads that would exceed the tenant's declared storage
+   * quota. Placed AFTER the dedupe check so a duplicate upload (which consumes
+   * no new bytes) is never blocked for an over-quota tenant.
+   */
+  private async assertStorageQuota(tenantId: string, incomingBytes: number): Promise<void> {
+    const decision = await enforceStorageLimit({ tenantId, incomingBytes });
+    if (!decision.ok) {
+      throw new MediaValidationError(decision.reason ?? "Storage limit reached");
+    }
+  }
+
+  /**
    * Synchronous, best-effort asset processing run at upload/replace time.
    * Extracts image dimensions/color from the in-memory buffer so the asset is
    * immediately READY with metadata. Videos are marked READY directly (the
@@ -458,7 +482,6 @@ export class MediaService {
     const safeId = requireAssetId(assetId, { module: "media-service", field: "processAssetNow" });
     const mimeType = file.mimeType || "";
     const isImage = mimeType.startsWith("image/");
-    const isVideo = mimeType.startsWith("video/");
 
     let width: number | undefined;
     let height: number | undefined;

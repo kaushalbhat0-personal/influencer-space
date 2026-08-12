@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 import { GAMES_ROUTE } from "@/lib/constants";
 import { logAction } from "@/lib/audit";
 import { afterContentChange } from "@/lib/publishing/content-change";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 const gameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -44,6 +46,9 @@ export async function createGame(
 
   try {
     const tenantId = await requireAuth();
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.GAMES });
+    if (!limit.ok) return { success: false, error: limit.reason };
+
     const maxSort = await prisma.game.aggregate({
       where: { tenantId },
       _max: { order: true },

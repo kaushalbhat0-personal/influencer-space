@@ -2,6 +2,7 @@ import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
 import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
 import { assertEligiblePlan } from "./plan-restriction";
+import { countStorageUsage, storageBytesToGb } from "./storage.enforcement";
 import { validateTransition } from "../domain/lifecycle";
 import { mappingForRazorpayEvent, statusForWebhookEvent } from "../domain/webhook";
 import { capabilityService } from "@/lib/capabilities";
@@ -467,6 +468,8 @@ export class BillingService {
     const products = await prisma.product.count({ where: { tenantId } });
     const gallery = await prisma.galleryImage.count({ where: { tenantId } });
     const orders = await prisma.productOrder.count({ where: { tenantId } });
+    // RCCF-11: surface real storage usage (was hardcoded 0). GB with one decimal.
+    const storageGb = storageBytesToGb(await countStorageUsage(tenantId));
 
     return {
       planCode,
@@ -498,7 +501,7 @@ export class BillingService {
       ],
       activeProducts: products,
       activeGallery: gallery,
-      storageUsed: 0,
+      storageUsed: storageGb,
       ordersProcessed: orders,
       messagesSent: 0,
       history: {

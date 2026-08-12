@@ -21,6 +21,35 @@ export class BillingRepository {
     return sub as BillingSubscription & { plan: { code: string } };
   }
 
+  /**
+   * RCCF-07: link the registration-created creator subscription to the
+   * workspace created later during provisioning. The self-serve flow creates
+   * BillingSubscription with only accountId (no workspaceId); plan readers
+   * resolve by workspaceId, so this backfills the link so the plan is
+   * canonical once provisioning completes. No-op when the account or an
+   * unlinked subscription does not exist.
+   */
+  async linkSubscriptionToWorkspace(
+    input: { workspaceId: string; accountType: string; accountId: string },
+    tx?: Prisma.TransactionClient,
+  ): Promise<BillingSubscription | null> {
+    const client = this.client(tx);
+    const account = await client.billingAccount.findUnique({
+      where: { accountType_accountId: { accountType: input.accountType, accountId: input.accountId } },
+      select: { id: true },
+    });
+    if (!account) return null;
+    const subscription = await client.billingSubscription.findFirst({
+      where: { accountId: account.id, workspaceId: null },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!subscription) return null;
+    return client.billingSubscription.update({
+      where: { id: subscription.id },
+      data: { workspaceId: input.workspaceId },
+    });
+  }
+
   async findSubscriptionsByWorkspaceIds(workspaceIds: string[]) {
     if (workspaceIds.length === 0) return [];
     return prisma.billingSubscription.findMany({

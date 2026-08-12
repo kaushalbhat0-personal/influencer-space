@@ -8,9 +8,9 @@ import { authOptions } from "@/lib/auth";
 import { SettingsService } from "@/services/settings.service";
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
-import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { afterContentChange } from "@/lib/publishing/content-change";
+import { assertAnyCapability } from "@/modules/billing/application/capability-gates";
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -225,6 +225,10 @@ export async function updateSocialChannels(
 
   try {
     await requireAuth(tenantId);
+    await assertAnyCapability({
+      tenantId,
+      capabilities: ["api_access", "webhooks", "live_social_sync"],
+    });
     await SettingsService.updateTenantChannels(tenantId, parsed.data);
     revalidatePath("/");
     revalidatePath("/admin/settings");
@@ -260,6 +264,11 @@ export async function updateApiKeys(
 
   try {
     await requireAuth(tenantId);
+
+    await assertAnyCapability({
+      tenantId,
+      capabilities: ["api_access", "webhooks", "live_social_sync"],
+    });
 
     const updates: { youtubeApiKey?: string; instagramApiKey?: string } = {};
     if (parsed.data.youtubeApiKey) updates.youtubeApiKey = parsed.data.youtubeApiKey;
@@ -299,6 +308,10 @@ export async function clearIntegration(
 
   try {
     await requireAuth(tenantId);
+    await assertAnyCapability({
+      tenantId,
+      capabilities: ["api_access", "webhooks", "live_social_sync"],
+    });
     await SettingsService.clearTenantIntegration(tenantId, parsed.data);
     revalidatePath("/admin/integrations");
     return { success: true };

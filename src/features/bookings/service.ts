@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { entitlementRuntime } from "@/lib/entitlements/runtime";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 export interface BookingSlot {
   id: string;
@@ -27,6 +28,8 @@ export interface CreateBookingInput {
 
 export const bookingService = {
   async create(input: CreateBookingInput) {
+    const limit = await enforceContentLimit({ tenantId: input.tenantId, featureKey: FEATURE_IDS.BOOKINGS });
+    if (!limit.ok) throw new Error(limit.reason);
     return prisma.booking.create({
       data: {
         tenantId: input.tenantId,

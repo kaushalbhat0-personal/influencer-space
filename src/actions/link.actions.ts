@@ -8,6 +8,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAction } from "@/lib/audit";
 import { afterContentChange } from "@/lib/publishing/content-change";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 const createLinkSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -61,6 +63,9 @@ export async function createLink(
         error: first.title?.[0] || first.url?.[0] || "Invalid input",
       };
     }
+
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.LINKS });
+    if (!limit.ok) return { success: false, error: limit.reason };
 
     const link = await prisma.$transaction(async (tx) => {
       const l = await tx.affiliateLink.create({

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockGetServerSession, mockSettingsService, mockRevalidatePath } = vi.hoisted(() => ({
+const { mockGetServerSession, mockSettingsService, mockRevalidatePath, mockResolveActivePlan } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockSettingsService: { updateTenantChannels: vi.fn(), updateTenantApiKeys: vi.fn(), clearTenantIntegration: vi.fn() },
   mockRevalidatePath: vi.fn(),
+  mockResolveActivePlan: vi.fn(),
 }));
 
 vi.mock("next-auth", () => ({
@@ -17,6 +18,10 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/services/settings.service", () => ({
   SettingsService: mockSettingsService,
+}));
+
+vi.mock("@/modules/billing/application/plan-source", () => ({
+  resolveActivePlan: mockResolveActivePlan,
 }));
 
 vi.mock("@/lib/audit", () => ({ logAction: vi.fn() }));
@@ -45,6 +50,8 @@ beforeEach(() => {
   mockSettingsService.updateTenantChannels.mockReset();
   mockSettingsService.updateTenantApiKeys.mockReset();
   mockSettingsService.clearTenantIntegration.mockReset();
+  mockResolveActivePlan.mockReset();
+  mockResolveActivePlan.mockResolvedValue({ code: "creator_scale", origin: "v2", status: "active" });
 });
 
 describe("updateSocialChannels", () => {
@@ -84,6 +91,32 @@ describe("updateSocialChannels", () => {
     expect(result.error).toBe("Forbidden");
     expect(mockSettingsService.updateTenantChannels).not.toHaveBeenCalled();
   });
+
+  it("rejects writes on a plan without integrations capability", async () => {
+    mockGetServerSession.mockResolvedValue(session({}));
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "active" });
+    const formData = new FormData();
+    formData.set("youtubeChannelId", "UC-1");
+
+    const result = await updateSocialChannels("tenant-1", { success: false }, formData);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Forbidden");
+    expect(mockSettingsService.updateTenantChannels).not.toHaveBeenCalled();
+  });
+
+  it("rejects writes when the tenant has no subscription", async () => {
+    mockGetServerSession.mockResolvedValue(session({}));
+    mockResolveActivePlan.mockResolvedValue({ code: null, origin: "none", status: null });
+    const formData = new FormData();
+    formData.set("youtubeChannelId", "UC-1");
+
+    const result = await updateSocialChannels("tenant-1", { success: false }, formData);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Forbidden");
+    expect(mockSettingsService.updateTenantChannels).not.toHaveBeenCalled();
+  });
 });
 
 describe("updateApiKeys", () => {
@@ -105,6 +138,19 @@ describe("updateApiKeys", () => {
     mockGetServerSession.mockResolvedValue(session({ tenantId: "tenant-2" }));
     const formData = new FormData();
     formData.set("instagramApiKey", "ig-key");
+
+    const result = await updateApiKeys("tenant-1", { success: false }, formData);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Forbidden");
+    expect(mockSettingsService.updateTenantApiKeys).not.toHaveBeenCalled();
+  });
+
+  it("rejects writes on a plan without integrations capability", async () => {
+    mockGetServerSession.mockResolvedValue(session({}));
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "active" });
+    const formData = new FormData();
+    formData.set("youtubeApiKey", "key-123");
 
     const result = await updateApiKeys("tenant-1", { success: false }, formData);
 
@@ -143,6 +189,16 @@ describe("clearIntegration", () => {
 
   it("rejects cross-tenant clear", async () => {
     mockGetServerSession.mockResolvedValue(session({ tenantId: "tenant-2" }));
+    const result = await clearIntegration("tenant-1", "youtube");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Forbidden");
+    expect(mockSettingsService.clearTenantIntegration).not.toHaveBeenCalled();
+  });
+
+  it("rejects clears on a plan without integrations capability", async () => {
+    mockGetServerSession.mockResolvedValue(session({}));
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "active" });
     const result = await clearIntegration("tenant-1", "youtube");
 
     expect(result.success).toBe(false);

@@ -3,6 +3,7 @@ import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer } from "@/components/layout";
 import { BillingPageClient } from "@/components/billing/BillingPageClient";
 import { billingService } from "@/modules/billing/application/service";
+import { countStorageUsage, storageBytesToGb } from "@/modules/billing/application/storage.enforcement";
 import type { BillingDashboard, BillingPlan } from "@/lib/billing/types";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
@@ -32,13 +33,14 @@ export default async function BillingPage() {
   }
 
   const productCount = await prisma.product.count({ where: { tenantId: tenant.id } }).catch(() => 0);
+  const storageGb = storageBytesToGb(await countStorageUsage(tenant.id).catch(() => 0));
   const plans = billingService.getPlans() as BillingPlan[];
 
   const billingData: BillingDashboard = {
     plan: { code: "creator_launch", family: "creator", name: "Creator Launch", description: "Get your storefront online and start selling — free.", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
     subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_launch", status: "ACTIVE", trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
     invoices: [], paymentMethods: [], usage: [],
-    activeProducts: productCount, activeGallery: 0, storageUsed: 0, ordersProcessed: 0, messagesSent: 0,
+    activeProducts: productCount, activeGallery: 0, storageUsed: storageGb, ordersProcessed: 0, messagesSent: 0,
   };
 
   return <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={tenant.id} tenantId={tenant.id} />;

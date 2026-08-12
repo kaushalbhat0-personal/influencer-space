@@ -7,6 +7,8 @@ import { testimonialService } from "./service";
 import { testimonialFormSchema } from "./validators";
 import type { TestimonialFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 export async function listTestimonials() {
   const session = await getServerSession(authOptions);
@@ -21,6 +23,8 @@ export async function createTestimonial(input: TestimonialFormInput) {
   if (!tenantId) throw new Error("Unauthorized");
 
   const parsed = testimonialFormSchema.parse(input);
+  const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.TESTIMONIALS });
+  if (!limit.ok) throw new Error(limit.reason);
   const result = await testimonialService.create(tenantId, parsed as TestimonialFormInput);
   revalidatePath("/admin/testimonials");
   await afterContentChange(tenantId);

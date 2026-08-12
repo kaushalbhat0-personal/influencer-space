@@ -5,6 +5,10 @@ import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { afterContentChange } from "@/lib/publishing/content-change";
 import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { resolvePlansForTenantIds } from "@/modules/billing/application/plan-source";
+import { entitlementService } from "@/lib/capabilities";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 const BATCH_SIZE = 5;
 const MEDIA_LIMIT = 10;
@@ -298,33 +302,50 @@ async function syncContentItems(
   tenantId: string,
   items: ContentItem[],
 ): Promise<number> {
+  const decision = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.FEED });
+  const maxNew = decision.ok ? decision.limit - decision.used : 0;
   let count = 0;
+  let created = 0;
   for (const item of items) {
     try {
-      await prisma.contentFeedItem.upsert({
+      const existing = await prisma.contentFeedItem.findUnique({
         where: {
           tenantId_externalId: { tenantId, externalId: item.externalId },
         },
-        update: {
-          platform: item.platform,
-          mediaType: item.mediaType,
-          url: item.url,
-          thumbnailUrl: item.thumbnailUrl,
-          caption: item.caption,
-          permalink: item.permalink,
-          syncedAt: new Date(),
-        },
-        create: {
-          tenantId,
-          platform: item.platform,
-          mediaType: item.mediaType,
-          url: item.url,
-          thumbnailUrl: item.thumbnailUrl,
-          caption: item.caption,
-          permalink: item.permalink,
-          externalId: item.externalId,
-        },
+        select: { id: true },
       });
+
+      if (existing) {
+        await prisma.contentFeedItem.update({
+          where: { id: existing.id },
+          data: {
+            platform: item.platform,
+            mediaType: item.mediaType,
+            url: item.url,
+            thumbnailUrl: item.thumbnailUrl,
+            caption: item.caption,
+            permalink: item.permalink,
+            syncedAt: new Date(),
+          },
+        });
+      } else {
+        // RCCF-08: max_feed cap — skip new items beyond the plan limit;
+        // updates to existing items always proceed.
+        if (created >= maxNew) continue;
+        await prisma.contentFeedItem.create({
+          data: {
+            tenantId,
+            platform: item.platform,
+            mediaType: item.mediaType,
+            url: item.url,
+            thumbnailUrl: item.thumbnailUrl,
+            caption: item.caption,
+            permalink: item.permalink,
+            externalId: item.externalId,
+          },
+        });
+        created++;
+      }
       count++;
     } catch {
       /* skip individual item failures */
@@ -358,85 +379,99 @@ export async function GET(request: NextRequest) {
 
     const results: { tenantId: string; synced: string[] }[] = [];
 
+    // RCCF-09: live social sync is Scale-only. Resolve plans for the batch and
+    // skip tenants without the entitlement so downgraded/free tenants no longer
+    // get their social accounts synced by the cron.
+    const plans = await resolvePlansForTenantIds(tenants.map((t) => t.id));
+    const entitledTenants = new Set(
+      plans.filter((p) => entitlementService.has(p.planCode, "live_social_sync")).map((p) => p.tenantId),
+    );
+
     for (const tenant of tenants) {
       const synced: string[] = [];
 
-      /* YouTube (API key — no OAuth needed) */
-      if (tenant.youtubeApiKey && tenant.youtubeChannelId) {
-        const stats = await fetchYouTubeStats(
-          tenant.youtubeApiKey,
-          tenant.youtubeChannelId,
-        );
-        if (stats) {
-          await upsertStats(tenant.id, stats);
-          synced.push("youtube");
+      if (!entitledTenants.has(tenant.id)) {
+        logger.info(`skipped tenant ${tenant.id}: live_social_sync not entitled`, "sync-socials");
+        // Fall through to the cursor bump so unentitled tenants are not
+        // re-selected on every cron run.
+      } else {
+        /* YouTube (API key — no OAuth needed) */
+        if (tenant.youtubeApiKey && tenant.youtubeChannelId) {
+          const stats = await fetchYouTubeStats(
+            tenant.youtubeApiKey,
+            tenant.youtubeChannelId,
+          );
+          if (stats) {
+            await upsertStats(tenant.id, stats);
+            synced.push("youtube");
+          }
+
+          const ytItems = await fetchYouTubeContent(
+            tenant.youtubeApiKey,
+            tenant.youtubeChannelId,
+          );
+          if (ytItems.length > 0) {
+            const n = await syncContentItems(tenant.id, ytItems);
+            logger.info(`synced ${n} YouTube content items`, "sync-socials");
+          }
         }
 
-        const ytItems = await fetchYouTubeContent(
-          tenant.youtubeApiKey,
-          tenant.youtubeChannelId,
-        );
-        if (ytItems.length > 0) {
-          const n = await syncContentItems(tenant.id, ytItems);
-          logger.info(`synced ${n} YouTube content items`, "sync-socials");
-        }
-      }
+        /* Instagram (prefer encrypted OAuth token, fallback to plaintext key) */
+        let instaToken: string | null = null;
 
-      /* Instagram (prefer encrypted OAuth token, fallback to plaintext key) */
-      let instaToken: string | null = null;
-
-      try {
-        instaToken = await getDecryptedToken(tenant.id, "instagram");
-      } catch {
-        /* ignore decrypt errors */
-      }
-
-      if (!instaToken && tenant.instagramApiKey) {
-        instaToken = tenant.instagramApiKey;
-      }
-
-      if (instaToken) {
-        const stats = await fetchInstagramStats(instaToken);
-        if (stats) {
-          await upsertStats(tenant.id, stats);
-          synced.push("instagram");
-        }
-
-        const igItems = await fetchInstagramContent(instaToken);
-        if (igItems.length > 0) {
-          const n = await syncContentItems(tenant.id, igItems);
-          logger.info(`synced ${n} Instagram content items`, "sync-socials");
-        }
-      }
-
-      /* Twitch (prefer encrypted OAuth token) */
-      let twitchToken: string | null = null;
-
-      try {
-        twitchToken = await getDecryptedToken(tenant.id, "twitch");
-      } catch {
-        /* ignore decrypt errors */
-      }
-
-      if (!twitchToken && tenant.twitchChannelId) {
         try {
-          twitchToken = await refreshToken(tenant.id, "twitch");
+          instaToken = await getDecryptedToken(tenant.id, "instagram");
         } catch {
-          /* if refresh also fails, skip Twitch for this cycle */
-        }
-      }
-
-      if (twitchToken && tenant.twitchChannelId) {
-        const stats = await fetchTwitchStats(twitchToken, tenant.twitchChannelId);
-        if (stats) {
-          await upsertStats(tenant.id, stats);
-          synced.push("twitch");
+          /* ignore decrypt errors */
         }
 
-        const twItems = await fetchTwitchContent(twitchToken, tenant.twitchChannelId);
-        if (twItems.length > 0) {
-          const n = await syncContentItems(tenant.id, twItems);
-          logger.info(`synced ${n} Twitch content items`, "sync-socials");
+        if (!instaToken && tenant.instagramApiKey) {
+          instaToken = tenant.instagramApiKey;
+        }
+
+        if (instaToken) {
+          const stats = await fetchInstagramStats(instaToken);
+          if (stats) {
+            await upsertStats(tenant.id, stats);
+            synced.push("instagram");
+          }
+
+          const igItems = await fetchInstagramContent(instaToken);
+          if (igItems.length > 0) {
+            const n = await syncContentItems(tenant.id, igItems);
+            logger.info(`synced ${n} Instagram content items`, "sync-socials");
+          }
+        }
+
+        /* Twitch (prefer encrypted OAuth token) */
+        let twitchToken: string | null = null;
+
+        try {
+          twitchToken = await getDecryptedToken(tenant.id, "twitch");
+        } catch {
+          /* ignore decrypt errors */
+        }
+
+        if (!twitchToken && tenant.twitchChannelId) {
+          try {
+            twitchToken = await refreshToken(tenant.id, "twitch");
+          } catch {
+            /* if refresh also fails, skip Twitch for this cycle */
+          }
+        }
+
+        if (twitchToken && tenant.twitchChannelId) {
+          const stats = await fetchTwitchStats(twitchToken, tenant.twitchChannelId);
+          if (stats) {
+            await upsertStats(tenant.id, stats);
+            synced.push("twitch");
+          }
+
+          const twItems = await fetchTwitchContent(twitchToken, tenant.twitchChannelId);
+          if (twItems.length > 0) {
+            const n = await syncContentItems(tenant.id, twItems);
+            logger.info(`synced ${n} Twitch content items`, "sync-socials");
+          }
         }
       }
 

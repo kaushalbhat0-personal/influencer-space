@@ -19,6 +19,7 @@ const {
   mockThemeApply,
   mockSlugGenerate,
   mockBcryptHash,
+  mockLinkSubscription,
 } = vi.hoisted(() => ({
   mockCreateRun: vi.fn(),
   mockTransaction: vi.fn(),
@@ -38,6 +39,7 @@ const {
   mockThemeApply: vi.fn(),
   mockSlugGenerate: vi.fn(),
   mockBcryptHash: vi.fn(),
+  mockLinkSubscription: vi.fn(),
 }));
 
 // ── Transaction mock helpers ─────────────────────────────────────────────────
@@ -144,6 +146,10 @@ vi.mock("@/modules/workspace/infrastructure/repository", () => ({
   workspaceRepository: { create: mockWorkspaceCreate, addMember: mockWorkspaceAddMember, findByTenantId: mockWorkspaceFindByTenantId },
 }));
 
+vi.mock("@/modules/billing/infrastructure/repository", () => ({
+  billingRepository: { linkSubscriptionToWorkspace: mockLinkSubscription },
+}));
+
 vi.mock("bcryptjs", () => ({
   default: { hash: mockBcryptHash },
 }));
@@ -190,6 +196,7 @@ beforeEach(() => {
   mockThemeApply.mockResolvedValue(undefined);
   mockGetTemplate.mockReturnValue(null);
   mockWebsiteUpdate.mockResolvedValue({});
+  mockLinkSubscription.mockResolvedValue({ id: "sub-1", workspaceId: "ws-uuid-1" });
 });
 
 // ─── Tests ──────────────────────────────────────────────────────────────────
@@ -267,6 +274,14 @@ describe("provisioningService.provision", () => {
     );
     expect(mockWorkspaceAddMember).toHaveBeenCalledWith(
       expect.objectContaining({ role: "OWNER" }),
+      expect.anything(), // tx
+    );
+  });
+
+  it("RCCF-07: links the creator subscription to the new workspace inside the transaction", async () => {
+    await provisioningService.provision(baseInput);
+    expect(mockLinkSubscription).toHaveBeenCalledWith(
+      { workspaceId: "ws-uuid-1", accountType: "creator", accountId: "user-uuid-1" },
       expect.anything(), // tx
     );
   });
