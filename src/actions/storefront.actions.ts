@@ -1,7 +1,40 @@
 "use server";
 
 import { z } from "zod";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+
+/**
+ * RCCF-19 P1-C: server-authoritative tenant verification for public
+ * Contact/Newsletter submissions. The tenantId is injected into the section
+ * config by the storefront renderer from the resolved tenant — a tampered
+ * form must not be able to target another tenant. When the request carries
+ * the storefront tenant host (set by middleware), the submitted tenantId must
+ * match the tenant served at that host; in all cases the tenantId must resolve
+ * to a real tenant with a storefront.
+ */
+async function verifyTenantContext(submittedTenantId: string): Promise<boolean> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: submittedTenantId },
+    select: { subdomain: true, customDomain: true },
+  });
+  if (!tenant || (!tenant.subdomain && !tenant.customDomain)) return false;
+
+  try {
+    const hostSlug = headers().get("x-tenant-host");
+    if (hostSlug) {
+      const hosted = await prisma.tenant.findFirst({
+        where: { OR: [{ subdomain: hostSlug }, { customDomain: hostSlug }] },
+        select: { id: true },
+      });
+      if (hosted && hosted.id !== submittedTenantId) return false;
+    }
+  } catch {
+    // header unavailable — the existence check above is the fallback
+  }
+
+  return true;
+}
 
 const contactSchema = z.object({
   tenantId: z.string().uuid(),
@@ -40,6 +73,10 @@ export async function submitStorefrontContact(
     };
   }
 
+  if (!(await verifyTenantContext(parsed.data.tenantId))) {
+    return { success: false, error: "Invalid tenant" };
+  }
+
   try {
     await prisma.contactSubmission.create({
       data: {
@@ -70,6 +107,10 @@ export async function subscribeNewsletter(
       success: false,
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
+  }
+
+  if (!(await verifyTenantContext(parsed.data.tenantId))) {
+    return { success: false, error: "Invalid tenant" };
   }
 
   try {

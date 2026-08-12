@@ -1,4 +1,4 @@
-import { writeFile, unlink, mkdir, readdir } from "fs/promises";
+import { writeFile, unlink, mkdir, readdir, stat } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import type { StorageProvider, UploadInput, UploadResult } from "./interface";
@@ -48,5 +48,14 @@ export class LocalStorageProvider implements StorageProvider {
 
   async exists(storageKey: string): Promise<boolean> {
     return existsSync(path.join(UPLOAD_DIR, storageKey));
+  }
+
+  async getObjectMetadata(storageKey: string): Promise<{ size: number; mimeType?: string }> {
+    try {
+      const info = await stat(path.join(UPLOAD_DIR, storageKey));
+      return { size: info.size };
+    } catch {
+      throw new Error(`Local object metadata failed: ${storageKey}`);
+    }
   }
 }

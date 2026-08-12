@@ -201,14 +201,21 @@ export class ProvisioningService {
         category: input.category || input.industry || "",
         industry: input.industry || "",
       };
-      const seoConfig = { title: input.generatedContent?.seoTitle || personalization.seoTitle, description: input.generatedContent?.seoDescription || personalization.seoDescription };
-      const influencerData = { name: displayName, source: sourcePlatformLabel, sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || personalization.tagline, bio: profileBio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: input.avatarUrl || null, niche: input.category || personalization.niche || sourcePlatformLabel || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
+      // RCCF-18: for manual provisioning (no verified profile source) the SEO
+      // title/description must not assert a niche/profession the platform does
+      // not know. Use the creator name (truthful) and an empty description;
+      // the generated path supplies its own generatedContent.seo* values.
+      const seoConfig = { title: input.generatedContent?.seoTitle || displayName, description: input.generatedContent?.seoDescription || "" };
+      const influencerData = { name: displayName, source: sourcePlatformLabel, sourceUrl: input.sourceUrl || "", tagline: input.generatedContent?.tagline || "", bio: profileBio, social: { instagram: "", youtube: "", twitter: "", tiktok: "" }, profileImage: input.avatarUrl || null, niche: input.category || personalization.niche || sourcePlatformLabel || "general", colors: { primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5" } };
       // RCCF-05A: hero_data carries the acquired profile identity so the
       // storefront hero resolves the creator's real name/bio/avatar/social links.
       const heroData = {
-        title: input.generatedContent?.heroTitle || personalization.heroTitle,
-        subtitle: input.generatedContent?.heroSubtitle || personalization.heroSubtitle,
-        tagline: input.generatedContent?.tagline || personalization.tagline,
+        // RCCF-18: manual hero copy must not assert a niche/profession. Title =
+        // the creator name (truthful); subtitle/tagline stay empty for manual
+        // provisioning. Generated provisioning supplies its own values.
+        title: input.generatedContent?.heroTitle || displayName,
+        subtitle: input.generatedContent?.heroSubtitle || "",
+        tagline: input.generatedContent?.tagline || "",
         videoUrl: "",
         name: displayName,
         bio: profileBio,
@@ -228,7 +235,7 @@ export class ProvisioningService {
         await brandRepository.create({
           websiteId: website.id,
           name: displayName,
-          tagline: input.generatedContent?.tagline || personalization.tagline,
+          tagline: input.generatedContent?.tagline || "",
           bio: profileBio,
           avatarUrl: input.avatarUrl || undefined,
           socialLinks,

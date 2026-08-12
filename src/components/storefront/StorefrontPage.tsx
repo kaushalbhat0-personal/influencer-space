@@ -185,6 +185,15 @@ export async function StorefrontPage({
           const isFirst = i === 0;
           const isLast = i === sections.length - 1;
           const sectionVariant = isFirst ? "hero" as const : isLast ? "footer" as const : "default" as const;
+          // RCCF-19 P1-C: the public Contact/Newsletter forms submit to server
+          // actions that require a tenantId. Inject the TRUSTED resolved tenant
+          // id at the render boundary (never persisted into Block.config, never
+          // user-editable) so submissions succeed and stay tenant-scoped.
+          const isInteractionSection =
+            section.moduleId.startsWith("contact.") || section.moduleId.startsWith("newsletter.");
+          const config = isInteractionSection
+            ? { ...(section.config ?? {}), tenantId: data.tenantId }
+            : section.config;
           return (
             <ExperienceSection
               key={`${section.id}-${i}`}
@@ -196,7 +205,7 @@ export async function StorefrontPage({
               data-testid={`experience-section-${i}`}
             >
               <ComponentErrorBoundary componentId={section.moduleId}>
-                <DataBoundRenderer slot={{ moduleId: section.moduleId, config: section.config }} />
+                <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} />
               </ComponentErrorBoundary>
             </ExperienceSection>
           );

@@ -23,6 +23,60 @@ import {
 } from "@/lib/generation/integration/provision-pipeline";
 import { nicheDetector } from "@/lib/generation/intelligence/niche-detector";
 import type { ImportProfileResult } from "@/lib/onboarding/service";
+import { applyBlueprintToWebsite } from "@/actions/create.actions";
+
+/**
+ * RCCF-19 P1-M: "Build Manually" — provision a truthful blank manual website
+ * for the current creator (reusing the canonical ProvisioningService, neutral
+ * RCCF-18 defaults, no fabricated content), apply the default creator blueprint
+ * with real sections, and publish. Non-destructive: an existing layout is never
+ * overwritten. The client refreshes the session afterwards so /admin becomes
+ * reachable.
+ */
+export async function createManualWebsite(): Promise<{
+  success: boolean;
+  tenantId?: string;
+  websiteId?: string;
+  error?: string;
+}> {
+  try {
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+    if (!userId) return { success: false, error: "Unauthorized" };
+
+    let tenantId: string | null = session?.user?.tenantId ?? null;
+    let websiteId: string | null = null;
+
+    if (!tenantId) {
+      const creatorName = session?.user?.name || session?.user?.email?.split("@")[0] || "Creator";
+      const runId = await provisioningService.createRun({ creatorName });
+      const result = await provisioningService.provision({
+        runId,
+        mode: "attach_existing_user",
+        authenticatedUserId: userId,
+        creatorName,
+        name: creatorName,
+      });
+      tenantId = result.tenantId;
+      websiteId = result.websiteId;
+    } else {
+      const website = await prisma.website.findUnique({ where: { tenantId }, select: { id: true } });
+      websiteId = website?.id ?? null;
+    }
+
+    if (!tenantId || !websiteId) return { success: false, error: "Website not found" };
+
+    // RCCF-21: applyBlueprintToWebsite derives ownership from the authenticated
+    // session + DB user tenant, not a client-supplied tenantId. The fresh
+    // provision above already attached the caller to the new tenant.
+    const applied = await applyBlueprintToWebsite(websiteId, "com.creatos.creator", "com.creatos.neon-dark");
+    if (!applied.success) return applied;
+
+    return { success: true, tenantId, websiteId };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create website" };
+  }
+}
 
 export async function importCreatorProfile(sourceUrl: string): Promise<{
   success: boolean;

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn, slugify } from "@/lib/utils";
-import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, getActiveGenerationSession, markOnboardingComplete, retryPublish } from "@/actions/onboarding.actions";
+import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, getActiveGenerationSession, markOnboardingComplete, retryPublish, createManualWebsite } from "@/actions/onboarding.actions";
 import { getOnboardingPreview, seedOnboardingIntelligence } from "@/actions/onboarding-intelligence.actions";
 import type { OnboardingPreview } from "@/modules/runtime-context";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
@@ -367,6 +367,30 @@ export default function OnboardingPage() {
     setElapsedMs(0);
   }, [clearPolling]);
 
+  // RCCF-19 P1-M: "Build Manually" provisions a truthful blank manual website
+  // (via createManualWebsite → canonical ProvisioningService + blueprint),
+  // refreshes the session so /admin becomes reachable, then lands on the
+  // dashboard. Previously it pushed /admin/dashboard, which the lifecycle
+  // bounced back to /onboarding (a dead-end).
+  const handleBuildManually = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await createManualWebsite();
+      if (res.success) {
+        try {
+          await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
+        } catch { }
+        router.replace("/admin/dashboard");
+      } else {
+        setError(res.error || "We couldn't create your website. Please try again.");
+      }
+    } catch {
+      setError("We couldn't create your website. Please try again.");
+    }
+    setLoading(false);
+  }, [router]);
+
   const handleRetryPublish = useCallback(async () => {
     if (!retryInfo) return;
     setRetryPublishing(true);
@@ -443,7 +467,7 @@ export default function OnboardingPage() {
                       key={p.id}
                       onClick={() => {
                         setSelectedProvider(p);
-                        if (p.inputType === "none") { router.push("/admin/dashboard"); }
+                        if (p.inputType === "none") { void handleBuildManually(); }
                       }}
                       className={cn(
                         "flex items-start gap-3 rounded-lg border p-3 text-left w-full transition-all",

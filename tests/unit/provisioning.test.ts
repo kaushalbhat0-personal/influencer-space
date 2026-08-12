@@ -85,7 +85,7 @@ mockFindFirstRun.mockResolvedValue({
   startedAt: new Date(),
 });
 
-mockTransaction.mockImplementation(async (cb: Function) => cb(createMockTx()));
+mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb(createMockTx()));
 mockTxTenantCreate.mockResolvedValue({ id: "tenant-uuid-1", name: "Test Creator", subdomain: "test-creator" });
 mockTxWebsiteCreate.mockResolvedValue({ id: "website-uuid-1", tenantId: "tenant-uuid-1", themePackageId: "neon-dark" });
 mockTxBrandCreate.mockResolvedValue({ id: "brand-uuid-1" });
@@ -174,7 +174,7 @@ const baseInput = {
 beforeEach(() => {
   vi.clearAllMocks();
   // Re-apply default mock implementations after clearAllMocks
-  mockTransaction.mockImplementation(async (cb: Function) => cb(createMockTx()));
+  mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb(createMockTx()));
   mockFindUniqueRun.mockResolvedValue({
     id: "run-1", creatorName: "Test Creator", status: "PENDING", currentStep: "IMPORT_REQUESTED",
     startedAt: new Date(), completedAt: null, error: null, durationMs: null,
@@ -330,5 +330,40 @@ describe("provisioningService.provision", () => {
     expect(updateCalls.some(([call]) => (call?.data as Record<string, unknown> | undefined)?.themePackageId)).toBe(true);
     // Legacy themeService.apply is no longer the provisioning theme path.
     expect(mockThemeApply).not.toHaveBeenCalled();
+  });
+
+  it("RCCF-18: manual provisioning persists neutral hero and SEO (no fabricated claims)", async () => {
+    mockGetTemplate.mockReturnValue({ id: "tpl", pages: [] });
+    await provisioningService.provision(baseInput);
+
+    const calls = mockTxSettingCreate.mock.calls as Array<[{ data: { key: string; value: unknown } }]>;
+    const hero = calls.find(([c]) => c.data.key === "hero_data")?.[0].data.value as Record<string, unknown>;
+    const seo = calls.find(([c]) => c.data.key === "seo")?.[0].data.value as Record<string, unknown>;
+
+    expect(hero.title).toBe("Test Creator");
+    expect(hero.subtitle).toBe("");
+    expect(hero.tagline).toBe("");
+    expect(seo.title).toBe("Test Creator");
+    expect(seo.description).toBe("");
+
+    const blob = JSON.stringify({ hero, seo });
+    expect(blob).not.toMatch(/Fitness Coach|expert workouts|Professional|professional gamer|certified/i);
+  });
+
+  it("RCCF-18: generated provisioning preserves generated hero/SEO content and skips starter seeding", async () => {
+    mockGetTemplate.mockReturnValue({ id: "tpl", pages: [] });
+    await provisioningService.provision({
+      ...baseInput,
+      generatedContent: { heroTitle: "My Hero", tagline: "My Tagline", seoTitle: "My SEO", seoDescription: "My Desc" },
+      generatedWebsite: { sections: [{ id: "s1", type: "hero", props: {} }] },
+    });
+
+    const calls = mockTxSettingCreate.mock.calls as Array<[{ data: { key: string; value: unknown } }]>;
+    const hero = calls.find(([c]) => c.data.key === "hero_data")?.[0].data.value as Record<string, unknown>;
+    const seo = calls.find(([c]) => c.data.key === "seo")?.[0].data.value as Record<string, unknown>;
+
+    expect(hero.title).toBe("My Hero");
+    expect(seo.title).toBe("My SEO");
+    expect(mockSeedStarterData).not.toHaveBeenCalled();
   });
 });

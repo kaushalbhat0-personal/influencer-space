@@ -25,6 +25,13 @@ export interface StorageProvider {
   getPublicUrl(storageKey: string): Promise<string>;
   list(prefix: string): Promise<string[]>;
   exists(storageKey: string): Promise<boolean>;
+  /**
+   * RCCF-19 P1-S: authoritative object metadata (actual stored byte size).
+   * Used at signed-upload completion so quota/limits are enforced against the
+   * provider-reported size, never the client-declared one. Throws when the
+   * object is missing or metadata cannot be retrieved (fail closed).
+   */
+  getObjectMetadata?(storageKey: string): Promise<{ size: number; mimeType?: string }>;
   /** Whether this provider supports direct (signed-URL) uploads that bypass the
    *  app server's request-body limit. Defaults to false. */
   readonly supportsSignedUpload?: boolean;

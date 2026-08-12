@@ -196,20 +196,59 @@ export class MediaService {
   }): Promise<UploadResult> {
     const provider = storageProviderFactory.getProvider();
 
-    // Verify the object actually landed in storage before registering it.
+    // RCCF-19 P1-S: verify the object actually landed in storage before
+    // registering it.
     const exists = await provider.exists(options.storageKey).catch(() => false);
     if (!exists) throw new Error("Uploaded file not found in storage; upload did not complete");
 
-    // RCCF-09: re-enforce the quota at the authoritative commit (the client
-    // controls the reported size, so the register step is the final gate).
-    await this.assertStorageQuota(options.tenantId, options.size);
+    // RCCF-19 P1-S: the client-declared `size` is never trusted for quota or
+    // limit enforcement. Obtain the authoritative stored byte size from the
+    // provider and fail closed when it cannot be verified.
+    if (!provider.getObjectMetadata) {
+      throw new Error("Storage provider does not support object verification");
+    }
+    const metadata = await provider.getObjectMetadata(options.storageKey);
+    const actualSize = metadata.size;
+    if (typeof actualSize !== "number" || actualSize <= 0) {
+      throw new Error("Uploaded file size could not be verified");
+    }
+
+    // Enforce per-category/file limits against the ACTUAL stored size.
+    const validation = mediaValidator.validateUpload(
+      { filename: options.originalFilename, mimeType: options.mimeType, size: actualSize },
+      options.folder,
+    );
+    if (!validation.valid) {
+      throw new MediaValidationError(validation.errors.join("; "), validation.errors);
+    }
+
+    // RCCF-19 P1-S: dedupe before registering so a duplicate never
+    // double-counts storage (mirrors the multipart upload path).
+    const duplicates = await assetRepository.findDuplicates(options.tenantId, options.checksum);
+    if (duplicates.length > 0) {
+      const existing = duplicates[0];
+      if (options.entityType && options.entityId) {
+        await assetRepository.createReference(
+          existing.id,
+          options.tenantId,
+          options.entityType,
+          options.entityId,
+          options.entityField,
+        );
+      }
+      this.emit("AssetUploaded", { assetId: existing.id, tenantId: options.tenantId, deduplicated: true });
+      return { assetId: existing.id, url: existing.publicUrl ?? "", deduplicated: true };
+    }
+
+    // RCCF-09/RCCF-19: enforce the tenant storage quota against the ACTUAL bytes.
+    await this.assertStorageQuota(options.tenantId, actualSize);
 
     const asset = await assetRepository.create({
       tenantId: options.tenantId,
       filename: options.storageKey.split("/").pop() ?? options.filename,
       originalFilename: options.originalFilename,
       mimeType: options.mimeType,
-      size: options.size,
+      size: actualSize,
       checksum: options.checksum,
       storageProvider: provider.name,
       storageKey: options.storageKey,

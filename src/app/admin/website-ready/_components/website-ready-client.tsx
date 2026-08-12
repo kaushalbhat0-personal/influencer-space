@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Layout, ExternalLink, Sparkles, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import type { HealthCheck } from "@/lib/platform/health/engine";
+import { publishWebsite } from "@/actions/publish.actions";
 
 interface Props {
   creatorName: string;
@@ -23,6 +25,27 @@ export function WebsiteReadyClient({
   const isLive = publishState === "live";
   const doneCount = healthChecks.filter((c) => c.done).length;
   const totalCount = healthChecks.length;
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  // RCCF-14: the "Publish Website" CTA previously navigated to the dashboard
+  // without publishing. Mirror the dashboard publish pattern so the labeled
+  // action actually publishes and refreshes into the live state.
+  const handlePublish = async () => {
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      const res = await publishWebsite();
+      if (res.success) {
+        window.location.reload();
+      } else {
+        setPublishError(res.error || "Publishing failed");
+      }
+    } catch {
+      setPublishError("Publishing failed");
+    }
+    setPublishing(false);
+  };
 
   return (
     <div className="mx-auto max-w-4xl p-6">
@@ -78,23 +101,35 @@ export function WebsiteReadyClient({
           <Layout className="h-4 w-4" />
           Open Builder
         </Link>
-        <Link
-          href={isLive ? storefrontUrl : "/admin/dashboard"}
-          className="flex items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
-        >
-          {isLive ? (
-            <>
-              <ExternalLink className="h-4 w-4" />
-              Visit Live Site
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Publish Website
-            </>
-          )}
-        </Link>
+        {isLive ? (
+          <Link
+            href={storefrontUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Visit Live Site
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={handlePublish}
+            disabled={publishing}
+            className="flex items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" />
+            {publishing ? "Publishing..." : "Publish Website"}
+          </button>
+        )}
       </div>
+
+      {publishError && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">
+          <AlertCircle className="h-4 w-4" />
+          {publishError}
+        </div>
+      )}
 
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
         <div className="mb-3 flex items-center justify-between">

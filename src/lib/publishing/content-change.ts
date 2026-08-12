@@ -2,18 +2,23 @@
  * Content Change Pipeline — single entry point for post-write cache
  * invalidation across every Creator CMS action.
  *
- * Content is LIVE: an edit is written to the database and served on the
- * next storefront request. No publish is required. This helper keeps
- * any HTTP/ISR cache in sync and is intentionally fire-and-forget.
+ * The published storefront is SNAPSHOT-DRIVEN (RCCF-01): an edit is written to
+ * the canonical content model, but the published website only changes when the
+ * creator publishes. Therefore every CMS mutation that calls this helper ALSO
+ * marks the publish state as pending (live → draft) so the dashboard signals
+ * "Changes pending" and the creator knows to publish for the change to go live.
  *
- * Deliberately does NOT call markChangesPending: the publish state tracks
- * Builder presentation sync only, and content changes never make the
- * published site stale.
+ * Content is NOT automatically live. The contract is:
+ *   CMS edit → persist → markChangesPending → publish → new PublishedSnapshot
+ *
+ * Cache invalidation is kept for backwards compatibility (it re-renders the
+ * same snapshot); the authoritative gate is the pending flag + republish.
  */
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/observability/logger";
+import { publishingService } from "./service";
 
 export interface ContentChangeOptions {
   revalidateDashboard?: boolean;
@@ -43,6 +48,13 @@ export async function afterContentChange(
     if (options?.revalidateDashboard) {
       revalidatePath("/admin/dashboard");
     }
+
+    // RCCF-15: the published storefront is snapshot-only, so a CMS edit does
+    // not reach the live site until the creator publishes. Flip the publish
+    // state to pending so the dashboard stops claiming the site is "Live".
+    // Idempotent: only transitions "live" → "draft"; repeated edits while
+    // already pending are no-ops.
+    await publishingService.markChangesPending(tenantId);
 
     logger.info("afterContentChange: storefront cache invalidated", "content", {
       metadata: { tenantId, storeRoots },

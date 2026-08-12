@@ -95,4 +95,15 @@ export class SupabaseStorageProvider implements StorageProvider {
     if (error) return false;
     return data.length > 0;
   }
+
+  async getObjectMetadata(storageKey: string): Promise<{ size: number; mimeType?: string }> {
+    const { data, error } = await this.client.storage.from(BUCKET).info(storageKey);
+    if (error || !data?.metadata?.size) {
+      throw new Error(`Supabase metadata failed: ${error?.message ?? "unknown"}`);
+    }
+    return {
+      size: Number(data.metadata.size),
+      mimeType: typeof data.metadata.mimetype === "string" ? data.metadata.mimetype : undefined,
+    };
+  }
 }
