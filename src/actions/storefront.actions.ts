@@ -5,35 +5,32 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
 /**
- * RCCF-19 P1-C: server-authoritative tenant verification for public
+ * RCCF-19 P1-C / RCCF-25: server-authoritative tenant verification for public
  * Contact/Newsletter submissions. The tenantId is injected into the section
- * config by the storefront renderer from the resolved tenant — a tampered
- * form must not be able to target another tenant. When the request carries
- * the storefront tenant host (set by middleware), the submitted tenantId must
- * match the tenant served at that host; in all cases the tenantId must resolve
- * to a real tenant with a storefront.
+ * config by the storefront renderer from the resolved tenant.
+ *
+ * The SUBMITTED tenantId must equal the tenant served at the trusted
+ * middleware-derived storefront host (`x-tenant-host`). There is no
+ * existence-only fallback: a missing header, an unresolvable host, or a
+ * mismatch is rejected (fail-closed), so a tampered form can never target a
+ * tenant other than the storefront page being viewed.
  */
 async function verifyTenantContext(submittedTenantId: string): Promise<boolean> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: submittedTenantId },
-    select: { subdomain: true, customDomain: true },
-  });
-  if (!tenant || (!tenant.subdomain && !tenant.customDomain)) return false;
-
+  let hostSlug: string | null = null;
   try {
-    const hostSlug = headers().get("x-tenant-host");
-    if (hostSlug) {
-      const hosted = await prisma.tenant.findFirst({
-        where: { OR: [{ subdomain: hostSlug }, { customDomain: hostSlug }] },
-        select: { id: true },
-      });
-      if (hosted && hosted.id !== submittedTenantId) return false;
-    }
+    hostSlug = headers().get("x-tenant-host");
   } catch {
-    // header unavailable — the existence check above is the fallback
+    return false;
   }
+  if (!hostSlug) return false;
 
-  return true;
+  const hosted = await prisma.tenant.findFirst({
+    where: { OR: [{ subdomain: hostSlug }, { customDomain: hostSlug }] },
+    select: { id: true },
+  });
+  if (!hosted) return false;
+
+  return hosted.id === submittedTenantId;
 }
 
 const contactSchema = z.object({

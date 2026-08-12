@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockTenantFindUnique, mockTenantFindFirst, mockContactCreate, mockNewsletterUpsert, mockHeaderGet } = vi.hoisted(() => ({
-  mockTenantFindUnique: vi.fn(),
+const { mockTenantFindFirst, mockContactCreate, mockNewsletterUpsert, mockHeaderGet } = vi.hoisted(() => ({
   mockTenantFindFirst: vi.fn(),
   mockContactCreate: vi.fn(),
   mockNewsletterUpsert: vi.fn(),
@@ -10,7 +9,7 @@ const { mockTenantFindUnique, mockTenantFindFirst, mockContactCreate, mockNewsle
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    tenant: { findUnique: mockTenantFindUnique, findFirst: mockTenantFindFirst },
+    tenant: { findFirst: mockTenantFindFirst },
     contactSubmission: { create: mockContactCreate },
     newsletterSubscriber: { upsert: mockNewsletterUpsert },
   },
@@ -44,21 +43,19 @@ function newsletterForm(tenantId = T1) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockTenantFindUnique.mockReset();
   mockTenantFindFirst.mockReset();
   mockHeaderGet.mockReset();
   mockContactCreate.mockReset();
   mockNewsletterUpsert.mockReset();
-  mockTenantFindUnique.mockResolvedValue({ subdomain: "owais", customDomain: null });
   mockTenantFindFirst.mockResolvedValue({ id: T1 });
   mockContactCreate.mockResolvedValue({ id: "c1" });
   mockNewsletterUpsert.mockResolvedValue({ id: "n1" });
   mockHeaderGet.mockReturnValue("owais");
 });
 
-describe("submitStorefrontContact — RCCF-19 P1-C", () => {
-  it("succeeds when the submitted tenant matches the storefront host", async () => {
-    const res = await submitStorefrontContact({ success: false }, contactForm());
+describe("submitStorefrontContact — RCCF-19/25 tenant boundary", () => {
+  it("accepts the tenant served at the storefront host (platform root /{slug})", async () => {
+    const res = await submitStorefrontContact({ success: false }, contactForm(T1));
 
     expect(res.success).toBe(true);
     expect(mockContactCreate).toHaveBeenCalledWith(
@@ -66,17 +63,24 @@ describe("submitStorefrontContact — RCCF-19 P1-C", () => {
     );
   });
 
-  it("succeeds without a storefront host header (existence-check fallback)", async () => {
-    mockHeaderGet.mockReturnValue(null);
-
-    const res = await submitStorefrontContact({ success: false }, contactForm());
+  it("accepts the tenant on a nested platform route (/{slug}/{pageSlug} with x-tenant-host set)", async () => {
+    // The nested route now carries x-tenant-host = the tenant slug (routes.ts
+    // classifies /{slug}/{pageSlug} as PublicStorefront). Same tenant => success.
+    const res = await submitStorefrontContact({ success: false }, contactForm(T1));
 
     expect(res.success).toBe(true);
+    expect(mockContactCreate).toHaveBeenCalled();
   });
 
-  it("rejects an unknown tenant", async () => {
-    mockTenantFindUnique.mockResolvedValue(null);
+  it("rejects a cross-tenant submission with zero side effects", async () => {
+    const res = await submitStorefrontContact({ success: false }, contactForm(T2));
 
+    expect(res.success).toBe(false);
+    expect(res.error).toBe("Invalid tenant");
+    expect(mockContactCreate).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unknown tenant (mismatch with the served host)", async () => {
     const res = await submitStorefrontContact({ success: false }, contactForm(UNKNOWN));
 
     expect(res.success).toBe(false);
@@ -84,8 +88,8 @@ describe("submitStorefrontContact — RCCF-19 P1-C", () => {
     expect(mockContactCreate).not.toHaveBeenCalled();
   });
 
-  it("rejects a cross-tenant submission (host resolves to a different tenant)", async () => {
-    mockTenantFindFirst.mockResolvedValue({ id: T2 });
+  it("rejects when the storefront host header is absent (no existence-only fallback)", async () => {
+    mockHeaderGet.mockReturnValue(null);
 
     const res = await submitStorefrontContact({ success: false }, contactForm(T1));
 
@@ -93,23 +97,56 @@ describe("submitStorefrontContact — RCCF-19 P1-C", () => {
     expect(res.error).toBe("Invalid tenant");
     expect(mockContactCreate).not.toHaveBeenCalled();
   });
+
+  it("rejects when the host does not resolve to a tenant", async () => {
+    mockTenantFindFirst.mockResolvedValue(null);
+
+    const res = await submitStorefrontContact({ success: false }, contactForm(T1));
+
+    expect(res.success).toBe(false);
+    expect(res.error).toBe("Invalid tenant");
+    expect(mockContactCreate).not.toHaveBeenCalled();
+  });
+
+  it("accepts a custom-domain host (x-tenant-host = custom domain)", async () => {
+    mockHeaderGet.mockReturnValue("alice.example.com");
+
+    const res = await submitStorefrontContact({ success: false }, contactForm(T1));
+
+    expect(res.success).toBe(true);
+  });
+
+  it("accepts a subdomain host (x-tenant-host = subdomain)", async () => {
+    mockHeaderGet.mockReturnValue("owais");
+
+    const res = await submitStorefrontContact({ success: false }, contactForm(T1));
+
+    expect(res.success).toBe(true);
+  });
 });
 
-describe("subscribeNewsletter — RCCF-19 P1-C", () => {
-  it("succeeds when the submitted tenant matches the storefront host", async () => {
-    const res = await subscribeNewsletter({ success: false }, newsletterForm());
+describe("subscribeNewsletter — RCCF-19/25 tenant boundary", () => {
+  it("accepts the tenant served at the storefront host", async () => {
+    const res = await subscribeNewsletter({ success: false }, newsletterForm(T1));
 
     expect(res.success).toBe(true);
     expect(mockNewsletterUpsert).toHaveBeenCalled();
   });
 
-  it("rejects a cross-tenant submission", async () => {
-    mockTenantFindFirst.mockResolvedValue({ id: T2 });
+  it("rejects a cross-tenant submission with zero side effects", async () => {
+    const res = await subscribeNewsletter({ success: false }, newsletterForm(T2));
+
+    expect(res.success).toBe(false);
+    expect(res.error).toBe("Invalid tenant");
+    expect(mockNewsletterUpsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects when the storefront host header is absent", async () => {
+    mockHeaderGet.mockReturnValue(null);
 
     const res = await subscribeNewsletter({ success: false }, newsletterForm(T1));
 
     expect(res.success).toBe(false);
-    expect(res.error).toBe("Invalid tenant");
     expect(mockNewsletterUpsert).not.toHaveBeenCalled();
   });
 });

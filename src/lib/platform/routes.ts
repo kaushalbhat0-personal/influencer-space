@@ -81,9 +81,11 @@ export function classifyRoute(pathname: string): RouteClassification {
     return { category: RouteCategory.PublicMarketing, pathname: normalized };
   }
 
-  // Everything else that isn't a reserved path is a storefront slug
-  // This handles: /owais, /any-creator-slug
-  if (segments.length === 1 && !RESERVED_PATHS.has(topLevel)) {
+  // Everything else that isn't a reserved path is a storefront slug.
+  // Handles: /owais and /owais/products (platform-domain homepage + independent
+  // pages). RCCF-25: 2-segment storefront paths MUST carry the tenant slug so
+  // the middleware sets x-tenant-host and public forms stay tenant-bound.
+  if ((segments.length === 1 || segments.length === 2) && !RESERVED_PATHS.has(topLevel)) {
     return { category: RouteCategory.PublicStorefront, pathname: normalized, slug: topLevel };
   }
 
