@@ -45,9 +45,9 @@ export function getTrialFraming(plan: ResolvedPlan): { title: string; subtitle: 
 /** Recurring-revenue framing for partner plans (Phase 13). */
 export const PARTNER_VALUE_POINTS = [
   "Earn recurring commission as your clients grow",
-  "Manage unlimited client websites from one dashboard",
+  "Manage every client website from one dashboard",
   "Your clients pay CreatorStore directly — you focus on delivery",
-  "Scale with white-label, bulk operations and API automation",
+  "Scale with white-label, API access and higher commission tiers",
 ];
 
 export function getComparisonFeatures(): Array<{ key: string; description: string; valueType: string }> {

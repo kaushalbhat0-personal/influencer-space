@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { billingRepository } from "../infrastructure/repository";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 import { resolveRestrictedPlanCode } from "./plan-restriction";
+import { loadRuntimeFeatureOverrides } from "./runtime-config-loader";
 
 export type PlanOrigin = "v2" | "legacy" | "none";
 
@@ -36,6 +37,10 @@ export async function resolveActivePlan(
   workspaceId?: string | null,
   tenantId?: string | null,
 ): Promise<ResolvedActivePlan> {
+  // RCCF-29: warm the Super Admin runtime overrides so the capability engine
+  // (getPlan overlay) honors persisted BillingPlan.runtimeConfig limits.
+  await loadRuntimeFeatureOverrides();
+
   if (workspaceId) {
     const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
     if (sub?.plan?.code) {
@@ -128,6 +133,10 @@ export interface TenantPlanRow {
  */
 export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<TenantPlanRow[]> {
   if (tenantIds.length === 0) return [];
+
+  // RCCF-29: warm runtime overrides so batched enforcement (e.g. the social
+  // sync cron entitlement filter) uses persisted configuration too.
+  await loadRuntimeFeatureOverrides();
 
   const [workspaces, legacy] = await Promise.all([
     prisma.workspace.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true } }),

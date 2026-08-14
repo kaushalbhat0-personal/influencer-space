@@ -35,9 +35,9 @@ describe("RCCF-IMPLEMENTATION-70 — canonical commerce registry", () => {
   });
 
   it("applies the canonical prices", () => {
-    expect(getMarketingPlans("creator").find((p) => p.code === "creator_grow")?.price).toBe(699);
-    expect(getMarketingPlans("creator").find((p) => p.code === "creator_scale")?.price).toBe(1999);
-    expect(getMarketingPlans("partner").find((p) => p.code === "partner_solo")?.price).toBe(2999);
+    expect(getMarketingPlans("creator").find((p) => p.code === "creator_grow")?.price).toBe(999);
+    expect(getMarketingPlans("creator").find((p) => p.code === "creator_scale")?.price).toBe(1995);
+    expect(getMarketingPlans("partner").find((p) => p.code === "partner_solo")?.price).toBe(4999);
     expect(getMarketingPlans("partner").find((p) => p.code === "partner_scale")?.price).toBe(7999);
   });
 

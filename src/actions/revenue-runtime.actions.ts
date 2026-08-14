@@ -130,8 +130,20 @@ export async function getAgencyRevenueData(agencyId: string): Promise<{
 }> {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
-  if (role !== "SUPER_ADMIN" && role !== "AGENCY_ADMIN" && role !== "AGENCY_STAFF") {
+  const agencyRole = role === "AGENCY_ADMIN" || role === "AGENCY_STAFF";
+  if (role !== "SUPER_ADMIN" && !agencyRole) {
     return { ok: false, error: "Unauthorized" };
+  }
+  if (!session?.user) return { ok: false, error: "Unauthorized" };
+  // RCCF-39: an agency actor may only read THEIR OWN agency's revenue — never a
+  // client-supplied agencyId. SUPER_ADMIN retains platform-wide read access.
+  if (agencyRole) {
+    if (!session.user.agencyId || session.user.agencyId !== agencyId) {
+      return { ok: false, error: "Forbidden" };
+    }
+    const { assertAgencyMembership } = await import("@/modules/partner/application/authorization");
+    const membership = await assertAgencyMembership(session.user.id, agencyId);
+    if (!membership.ok) return { ok: false, error: membership.error ?? "Forbidden" };
   }
 
   const [summary, payoutSummary, entries, loyalty] = await Promise.all([

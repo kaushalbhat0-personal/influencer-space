@@ -141,12 +141,13 @@ export class BillingRepository {
     });
   }
 
-  async createInvoice(data: { workspaceId: string; accountId: string; planCode: string; amount: number; currency?: string; status?: string }, tx?: Prisma.TransactionClient): Promise<BillingInvoice> {
+  async createInvoice(data: { workspaceId: string; accountId: string; planCode: string; amount: number; currency?: string; status?: string; providerReference?: string | null }, tx?: Prisma.TransactionClient): Promise<BillingInvoice> {
     const start = Date.now();
     const result = await this.client(tx).billingInvoice.create({
       data: {
         workspaceId: data.workspaceId, accountId: data.accountId, planCode: data.planCode,
         amount: data.amount, currency: data.currency ?? "INR", status: data.status ?? "PENDING",
+        providerReference: data.providerReference ?? null,
       },
     });
     logger.info("invoice created", "billing", { operation: "create_invoice", duration: Date.now() - start, metadata: { workspaceId: data.workspaceId, planCode: data.planCode, amount: data.amount } as Record<string, unknown> });

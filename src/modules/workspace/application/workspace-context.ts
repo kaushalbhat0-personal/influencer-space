@@ -19,27 +19,36 @@ export class WorkspaceContextError extends Error {
 
 export class WorkspaceContextService {
   async getActive(): Promise<WorkspaceContext | null> {
+    const session = await getServerSession(authOptions);
+
+    // RCCF-42: the __workspace cookie is a SELECTOR, never an authorization
+    // boundary. It is only honored when it is bound to the authenticated user
+    // (uid) AND that user is an ACTIVE member of the workspace. The role always
+    // comes from the live membership, never from the cookie.
     const fromCookie = workspaceService.getCurrent();
-    if (fromCookie?.id) {
-      const workspace = await workspaceRepository.findById(fromCookie.id);
-      if (workspace) {
-        return {
-          workspaceId: workspace.id,
-          type: workspace.type as "TENANT" | "AGENCY",
-          role: fromCookie.role,
-          tenantId: workspace.tenantId,
-        };
+    if (fromCookie?.id && session?.user?.id) {
+      if (fromCookie.uid === session.user.id) {
+        const workspace = await workspaceRepository.findById(fromCookie.id);
+        const member = workspace ? await workspaceRepository.findMember(workspace.id, session.user.id) : null;
+        if (workspace && member?.status === "ACTIVE") {
+          return {
+            workspaceId: workspace.id,
+            type: workspace.type as "TENANT" | "AGENCY",
+            role: member.role,
+            tenantId: workspace.tenantId,
+          };
+        }
       }
     }
 
-    const session = await getServerSession(authOptions);
     if (session?.user?.workspaceId) {
       const workspace = await workspaceRepository.findById(session.user.workspaceId);
-      if (workspace) {
+      const member = workspace ? await workspaceRepository.findMember(workspace.id, session.user.id) : null;
+      if (workspace && member?.status === "ACTIVE") {
         return {
           workspaceId: workspace.id,
           type: workspace.type as "TENANT" | "AGENCY",
-          role: session.user.workspaceRole ?? "",
+          role: member.role,
           tenantId: workspace.tenantId,
         };
       }

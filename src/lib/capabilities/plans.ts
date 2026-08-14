@@ -74,10 +74,30 @@ for (const plan of plans) {
   }
 }
 
+// RCCF-29: Super Admin runtime overrides (persisted BillingPlan.runtimeConfig),
+// applied on top of the static registry so enforcement honors persisted
+// commercial configuration. Kept prisma-free — populated by the billing
+// runtime-config loader (src/modules/billing/application/runtime-config-loader.ts).
+const runtimeFeatureOverrides = new Map<string, Record<string, number | boolean | string>>();
+
+/** Apply persisted runtime feature/limit overrides for a plan code. */
+export function applyRuntimeFeatureOverrides(code: string, overrides: Record<string, number | boolean | string>): void {
+  runtimeFeatureOverrides.set(code, overrides);
+}
+
+/** Test/refresh helper: clear all runtime overrides. */
+export function resetRuntimeFeatureOverrides(): void {
+  runtimeFeatureOverrides.clear();
+}
+
 export function getPlan(code: string): PlanDefinition | undefined {
   if (!code) return undefined;
   const canonical = LEGACY_TO_CANONICAL[code] ?? code;
-  return planMap.get(canonical);
+  const base = planMap.get(canonical);
+  if (!base) return undefined;
+  const runtime = runtimeFeatureOverrides.get(canonical);
+  if (!runtime || Object.keys(runtime).length === 0) return base;
+  return { ...base, features: { ...base.features, ...runtime } };
 }
 
 export function getAllPlans(): PlanDefinition[] {

@@ -79,29 +79,47 @@ export class PublishRepository {
   async createPublish(
     websiteId: string,
     snapshot: PublishedSnapshot,
+    tx?: Prisma.TransactionClient,
   ): Promise<PublishResult> {
-    return this.withVersionRetry(websiteId, async (tx, nextVersion) => {
-      snapshot.metadata.version = nextVersion;
+    if (tx) {
+      // RCCF-31: when an external transaction is supplied (quota reservation +
+      // snapshot in one atomic unit), run the persist on that tx. The version
+      // retry loop is skipped — a concurrent version conflict aborts the whole
+      // external transaction (quota reservation rolls back too).
+      const nextVersion = await this.nextVersion(websiteId, tx);
+      return this.persistPublish(tx, websiteId, snapshot, nextVersion);
+    }
+    return this.withVersionRetry(websiteId, async (tx, nextVersion) =>
+      this.persistPublish(tx, websiteId, snapshot, nextVersion),
+    );
+  }
 
-      // FK ordering: PublishStatus row must exist before PublishSnapshot insert.
-      await this.ensureStatusRow(tx, websiteId);
+  private async persistPublish(
+    tx: Prisma.TransactionClient,
+    websiteId: string,
+    snapshot: PublishedSnapshot,
+    nextVersion: number,
+  ): Promise<PublishResult> {
+    snapshot.metadata.version = nextVersion;
 
-      const snap = await tx.publishSnapshot.create({
-        data: {
-          websiteId,
-          version: nextVersion,
-          state: "live",
-          snapshot: JSON.parse(JSON.stringify(serializeSnapshot(snapshot))),
-        },
-      });
+    // FK ordering: PublishStatus row must exist before PublishSnapshot insert.
+    await this.ensureStatusRow(tx, websiteId);
 
-      await tx.publishStatus.update({
-        where: { websiteId },
-        data: { state: "live", liveVersion: nextVersion, publishedAt: new Date() },
-      });
-
-      return { version: snap.version, websiteId };
+    const snap = await tx.publishSnapshot.create({
+      data: {
+        websiteId,
+        version: nextVersion,
+        state: "live",
+        snapshot: JSON.parse(JSON.stringify(serializeSnapshot(snapshot))),
+      },
     });
+
+    await tx.publishStatus.update({
+      where: { websiteId },
+      data: { state: "live", liveVersion: nextVersion, publishedAt: new Date() },
+    });
+
+    return { version: snap.version, websiteId };
   }
 
   async createStatus(

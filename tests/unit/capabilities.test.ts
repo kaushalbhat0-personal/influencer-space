@@ -99,7 +99,7 @@ describe("Capabilities — Plans", () => {
     const pro = getPlan("creator_pro");
     expect(pro).toBeDefined();
     expect(pro!.name).toBe("Creator Growth");
-    expect(pro!.price).toBe(699);
+    expect(pro!.price).toBe(999);
     expect(pro!.recommended).toBe(true);
     expect(pro!.badge).toBe("Most Popular");
   });
@@ -108,7 +108,7 @@ describe("Capabilities — Plans", () => {
     const elite = getPlan("creator_elite");
     expect(elite).toBeDefined();
     expect(elite!.name).toBe("Creator Scale");
-    expect(elite!.price).toBe(1999);
+    expect(elite!.price).toBe(1995);
   });
 
   it("should return canonical Partner plans via legacy codes", () => {
@@ -371,7 +371,7 @@ describe("Capabilities — Engine.comparePlans", () => {
     const addedLabels = cmp!.addedFeatures.map((f) => f.label);
     expect(addedLabels).not.toContain("Custom Domain");
     expect(addedLabels).toContain("Premium Themes");
-    expect(cmp!.priceDifference).toBe(699);
+    expect(cmp!.priceDifference).toBe(999);
     expect(cmp!.recommendation).toBeTruthy();
   });
 
@@ -382,9 +382,9 @@ describe("Capabilities — Engine.comparePlans", () => {
     expect(addedLabels).toContain("Remove Branding");
     expect(addedLabels).toContain("API Access");
     expect(addedLabels).toContain("Custom Domain");
-    expect(addedLabels).toContain("Webhooks");
+    expect(addedLabels).toContain("Payment webhooks (platform-managed)");
     expect(addedLabels).toContain("Live Social Sync");
-    expect(cmp!.priceDifference).toBe(1300);
+    expect(cmp!.priceDifference).toBe(996);
   });
 
   it("should return null for invalid plans", () => {
@@ -578,8 +578,8 @@ describe("Capabilities — Service Delegation", () => {
     expect(capabilityService.getPlan("creator_free")?.name).toBe("Creator Launch");
     expect(capabilityService.getAllPlans().length).toBe(9);
     expect(capabilityService.getPlansByFamily("creator").length).toBe(4);
-    expect(capabilityService.getPlan("creator_grow")?.price).toBe(699);
-    expect(capabilityService.getPlan("creator_scale")?.price).toBe(1999);
+    expect(capabilityService.getPlan("creator_grow")?.price).toBe(999);
+    expect(capabilityService.getPlan("creator_scale")?.price).toBe(1995);
   });
 
   it("should delegate feature accessors", () => {

@@ -34,7 +34,7 @@ import { resolveActivePlan, resolvePlansForTenantIds } from "@/modules/billing/a
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { resetPlanRestrictionCache } from "@/modules/billing/application/plan-restriction";
 import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
-import { entitlementService } from "@/lib/capabilities";
+import { entitlementService, capabilityService } from "@/lib/capabilities";
 
 function sub(planCode: string, status = "ACTIVE") {
   return { id: "s1", accountId: "a1", workspaceId: "ws-1", plan: { code: planCode }, status };
@@ -155,11 +155,15 @@ describe("RCCF-12 — enforcement integration", () => {
     expect(has("creator_scale", "analytics_advanced")).toBe(true);
 
     expect(has("creator_enterprise", "custom_domain")).toBe(true);
-    // Config asymmetry (reported, not changed): Enterprise lacks the Scale-only
-    // webhooks/live_social_sync grants even though it is the top creator plan.
-    expect(has("creator_enterprise", "live_social_sync")).toBe(false);
-    expect(has("creator_enterprise", "webhooks")).toBe(false);
+    // RCCF-28: Creator Enterprise is a strict superset of Creator Scale — it
+    // inherits the Scale-only webhooks/live_social_sync and all granular theme
+    // capabilities (the latter resolve via capabilityService.can, not
+    // entitlementService.has).
+    expect(has("creator_enterprise", "live_social_sync")).toBe(true);
+    expect(has("creator_enterprise", "webhooks")).toBe(true);
     expect(has("creator_enterprise", "api_access")).toBe(true);
+    expect(capabilityService.can("creator_enterprise", "theme_background_gradient").allowed).toBe(true);
+    expect(capabilityService.can("creator_enterprise", "theme_effects_particles").allowed).toBe(true);
 
     expect(has("partner_free", "premium_themes")).toBe(false);
     expect(has("partner_solo", "premium_themes")).toBe(true);

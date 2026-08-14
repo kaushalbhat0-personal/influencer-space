@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { publishingService, type CapabilityIssue } from "@/lib/publishing/service";
 import type { PublishStatus } from "@/lib/publishing/service";
+import { getPublishUsage, type PublishUsage } from "@/lib/publishing/publish-usage";
 import { emitEvent } from "@/modules/event-runtime";
 
 export type PublishActionResult = {
@@ -13,7 +14,25 @@ export type PublishActionResult = {
   version?: number;
   issues?: string[];
   capabilityIssues?: CapabilityIssue[];
+  code?: string;
+  used?: number;
+  limit?: number;
+  periodStart?: string;
+  periodEnd?: string | null;
+  mode?: string;
+  suggestedUpgrade?: "growth" | "scale" | null;
 };
+
+export async function getCreatorPublishUsage(): Promise<{ success: boolean; usage?: PublishUsage; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    const tenantId = session?.user?.tenantId;
+    if (!tenantId) return { success: false, error: "Unauthorized" };
+    return { success: true, usage: await getPublishUsage(tenantId) };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to load publish usage" };
+  }
+}
 
 async function requireTenant(): Promise<string> {
   const session = await getServerSession(authOptions);
@@ -25,7 +44,19 @@ export async function publishWebsite(): Promise<PublishActionResult> {
   try {
     const tenantId = await requireTenant();
     const result = await publishingService.publish(tenantId);
-    if (!result.success) return { success: false, error: result.error };
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error,
+        code: result.code,
+        used: result.used,
+        limit: result.limit,
+        periodStart: result.periodStart,
+        periodEnd: result.periodEnd,
+        mode: result.mode,
+        suggestedUpgrade: result.suggestedUpgrade,
+      };
+    }
 
     await emitEvent("storefront.published", tenantId, undefined, { version: result.version });
     const status = await publishingService.getStatus(tenantId);

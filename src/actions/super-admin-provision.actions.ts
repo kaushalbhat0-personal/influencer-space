@@ -1,7 +1,5 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { capabilityService } from "@/lib/capabilities";
@@ -56,10 +54,13 @@ export async function analyzeUrl(sourceUrl: string): Promise<{
   error?: string;
 }> {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user.role !== "SUPER_ADMIN" && session.user.role !== "AGENCY_ADMIN")) {
-      return { success: false, error: "Unauthorized" };
-    }
+    // RCCF-39: a provisioning actor is SUPER_ADMIN, or an AGENCY_ADMIN with an
+    // active agency + active workspace membership (a suspended agency's admin
+    // must not be able to mint orphan tenants).
+    const { requireProvisioningActor } = await import("@/modules/partner/application/authorization");
+    const auth = await requireProvisioningActor();
+    if (!auth.ok || !auth.session) return { success: false, error: auth.error ?? "Unauthorized" };
+    const session = auth.session;
 
     const sourcePlatform = detectPlatform(sourceUrl);
     const slug = sourceUrl.split("/").filter(Boolean).pop()?.toLowerCase().replace(/[^a-z0-9-]/g, "-") || "creator";
@@ -122,10 +123,12 @@ export async function confirmProvision(params: {
   error?: string;
 }> {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user.role !== "SUPER_ADMIN" && session.user.role !== "AGENCY_ADMIN")) {
-      return { success: false, error: "Unauthorized" };
-    }
+    // RCCF-39: provisioning actor authorization (SUPER_ADMIN, or AGENCY_ADMIN
+    // with an active agency + active membership).
+    const { requireProvisioningActor } = await import("@/modules/partner/application/authorization");
+    const auth = await requireProvisioningActor();
+    if (!auth.ok || !auth.session) return { success: false, error: auth.error ?? "Unauthorized" };
+    const session = auth.session;
 
     const sourcePlatform = params.sourcePlatform || detectPlatform(params.sourceUrl);
 

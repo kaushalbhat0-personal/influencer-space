@@ -20,6 +20,7 @@ const {
   mockSlugGenerate,
   mockBcryptHash,
   mockLinkSubscription,
+  mockResolveActivePlan,
 } = vi.hoisted(() => ({
   mockCreateRun: vi.fn(),
   mockTransaction: vi.fn(),
@@ -40,6 +41,7 @@ const {
   mockSlugGenerate: vi.fn(),
   mockBcryptHash: vi.fn(),
   mockLinkSubscription: vi.fn(),
+  mockResolveActivePlan: vi.fn(),
 }));
 
 // ── Transaction mock helpers ─────────────────────────────────────────────────
@@ -150,6 +152,12 @@ vi.mock("@/modules/billing/infrastructure/repository", () => ({
   billingRepository: { linkSubscriptionToWorkspace: mockLinkSubscription },
 }));
 
+// RCCF-35: provisioning now gates the personalized theme against the tenant's
+// plan entitlement (premium_themes), so we control the resolved plan here.
+vi.mock("@/modules/billing/application/plan-source", () => ({
+  resolveActivePlan: mockResolveActivePlan,
+}));
+
 vi.mock("bcryptjs", () => ({
   default: { hash: mockBcryptHash },
 }));
@@ -197,6 +205,7 @@ beforeEach(() => {
   mockGetTemplate.mockReturnValue(null);
   mockWebsiteUpdate.mockResolvedValue({});
   mockLinkSubscription.mockResolvedValue({ id: "sub-1", workspaceId: "ws-uuid-1" });
+  mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "TRIALING" });
 });
 
 // ─── Tests ──────────────────────────────────────────────────────────────────
@@ -330,6 +339,29 @@ describe("provisioningService.provision", () => {
     expect(updateCalls.some(([call]) => (call?.data as Record<string, unknown> | undefined)?.themePackageId)).toBe(true);
     // Legacy themeService.apply is no longer the provisioning theme path.
     expect(mockThemeApply).not.toHaveBeenCalled();
+  });
+
+  it("RCCF-35: falls back to a FREE theme when a Launch tenant's niche maps to a premium theme", async () => {
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "TRIALING" });
+    mockGetTemplate.mockReturnValue({ id: "tpl", pages: [] });
+
+    // technology niche → personalizer picks com.creatos.midnight-ocean (business tier = premium).
+    await provisioningService.provision({ ...baseInput, category: "technology" });
+
+    const updateCalls = mockWebsiteUpdate.mock.calls as Array<[Record<string, unknown>]>;
+    const themeCall = updateCalls.find(([c]) => (c?.data as Record<string, unknown> | undefined)?.themePackageId !== undefined);
+    expect((themeCall?.[0].data as { themePackageId: string }).themePackageId).toBe("com.creatos.neon-dark");
+  });
+
+  it("RCCF-35: keeps the premium personalized theme when the tenant is entitled (Scale)", async () => {
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_scale", origin: "v2", status: "ACTIVE" });
+    mockGetTemplate.mockReturnValue({ id: "tpl", pages: [] });
+
+    await provisioningService.provision({ ...baseInput, category: "technology" });
+
+    const updateCalls = mockWebsiteUpdate.mock.calls as Array<[Record<string, unknown>]>;
+    const themeCall = updateCalls.find(([c]) => (c?.data as Record<string, unknown> | undefined)?.themePackageId !== undefined);
+    expect((themeCall?.[0].data as { themePackageId: string }).themePackageId).toBe("com.creatos.midnight-ocean");
   });
 
   it("RCCF-18: manual provisioning persists neutral hero and SEO (no fabricated claims)", async () => {

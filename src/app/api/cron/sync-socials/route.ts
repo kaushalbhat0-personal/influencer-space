@@ -7,6 +7,7 @@ import { afterContentChange } from "@/lib/publishing/content-change";
 import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
 import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
 import { resolvePlansForTenantIds } from "@/modules/billing/application/plan-source";
+import { maxNewFeedItems } from "./feed-cap";
 import { entitlementService } from "@/lib/capabilities";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
@@ -303,7 +304,7 @@ async function syncContentItems(
   items: ContentItem[],
 ): Promise<number> {
   const decision = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.FEED });
-  const maxNew = decision.ok ? decision.limit - decision.used : 0;
+  const maxNew = maxNewFeedItems(decision);
   let count = 0;
   let created = 0;
   for (const item of items) {

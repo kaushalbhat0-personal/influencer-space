@@ -4,6 +4,20 @@ type SqlExecutor = {
   $executeRawUnsafe: (query: string, ...params: unknown[]) => Promise<number>;
 };
 
+/**
+ * ARCHITECTURAL INVARIANT (RCCF-55):
+ * AuditLog has two domains — tenant-scoped (`tenantId`) and agency-scoped
+ * (`agencyId`). EXACTLY ONE scope must be populated for every new AuditLog row.
+ * The DB enforces this with a CHECK constraint (see
+ * 20260815000005_auditlog_one_scope); these writers enforce it at the boundary
+ * too so a malformed call fails loudly instead of writing an ambiguous row.
+ */
+function assertScope(scope: string, column: "tenantId" | "agencyId", action: string): void {
+  if (typeof scope !== "string" || scope.trim().length === 0) {
+    throw new Error(`Invalid audit scope for ${action}: ${column} must be a non-empty id`);
+  }
+}
+
 const SENSITIVE_PATTERNS = [
   /key/i,
   /secret/i,
@@ -53,10 +67,34 @@ export async function logAction(
   // non-null UUID, so map it to a stable sentinel instead of crashing on the
   // literal string (IMPLEMENTATION-40 fixes the latent runtime error).
   const tenantUuid = tenantId === "system" ? "00000000-0000-0000-0000-000000000000" : tenantId;
+  assertScope(tenantUuid, "tenantId", action);
   await client.$executeRawUnsafe(
     `INSERT INTO "AuditLog" ("id", "tenantId", "action", "metadata", "createdAt")
      VALUES (gen_random_uuid(), $1, $2, $3::jsonb, NOW())`,
     tenantUuid,
+    action,
+    JSON.stringify(sanitizeMetadata(metadata)),
+  );
+}
+
+/**
+ * RCCF-55 — agency-scoped audit event (Partner team lifecycle). AuditLog.tenantId
+ * is FK-bound to Tenant, so agency events persist with tenantId NULL + agencyId
+ * set, in the SAME audit table (one audit source of truth). Scope is always
+ * server-derived; callers pass the authenticated agency id.
+ */
+export async function logAgencyAction(
+  agencyId: string,
+  action: string,
+  metadata: Record<string, unknown> = {},
+  tx?: SqlExecutor,
+): Promise<void> {
+  const client = tx || prisma;
+  assertScope(agencyId, "agencyId", action);
+  await client.$executeRawUnsafe(
+    `INSERT INTO "AuditLog" ("id", "tenantId", "agencyId", "action", "metadata", "createdAt")
+     VALUES (gen_random_uuid(), NULL, $1, $2, $3::jsonb, NOW())`,
+    agencyId,
     action,
     JSON.stringify(sanitizeMetadata(metadata)),
   );

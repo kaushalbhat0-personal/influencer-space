@@ -5,6 +5,7 @@ const h = vi.hoisted(() => ({
   agencyTenantFindFirst: vi.fn(),
   agencyTenantCreate: vi.fn(),
   agencyTenantUpdate: vi.fn(),
+  agencyTenantCount: vi.fn(),
   websiteAgencyFindUnique: vi.fn(),
   workspaceMemberFindFirst: vi.fn(),
   userFindFirst: vi.fn(),
@@ -18,6 +19,8 @@ const h = vi.hoisted(() => ({
   settingUpsert: vi.fn(),
   settingUpdate: vi.fn(),
   logAction: vi.fn().mockResolvedValue(undefined),
+  transaction: vi.fn(),
+  resolveActivePlan: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -27,6 +30,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: h.agencyTenantFindFirst,
       create: h.agencyTenantCreate,
       update: h.agencyTenantUpdate,
+      count: h.agencyTenantCount,
     },
     websiteAgency: { findUnique: h.websiteAgencyFindUnique },
     workspaceMember: { findFirst: h.workspaceMemberFindFirst, upsert: vi.fn().mockResolvedValue({}) },
@@ -39,10 +43,12 @@ vi.mock("@/lib/prisma", () => ({
       upsert: h.settingUpsert,
       update: h.settingUpdate,
     },
+    $transaction: h.transaction,
   },
 }));
 
 vi.mock("@/lib/audit", () => ({ logAction: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/modules/billing/application/plan-source", () => ({ resolveActivePlan: h.resolveActivePlan }));
 
 import { AgencyTenantRelationshipService } from "@/modules/partner/application/partner-relationship";
 import { CreatorInvitationService } from "@/modules/partner/application/invitation";
@@ -58,6 +64,7 @@ beforeEach(() => {
   h.agencyTenantFindFirst.mockResolvedValue(null);
   h.agencyTenantCreate.mockResolvedValue({ id: "link1" });
   h.agencyTenantUpdate.mockResolvedValue({ id: "link1" });
+  h.agencyTenantCount.mockResolvedValue(0);
   h.websiteAgencyFindUnique.mockResolvedValue({ status: "ACTIVE" });
   h.userFindFirst.mockResolvedValue(null);
   h.workspaceFindUnique.mockResolvedValue({ id: "ws1", tenantId: "t1" });
@@ -66,6 +73,12 @@ beforeEach(() => {
   h.settingFindUnique.mockResolvedValue(null);
   h.settingUpsert.mockResolvedValue({ id: "s1" });
   h.settingUpdate.mockResolvedValue({ id: "s1" });
+  h.resolveActivePlan.mockResolvedValue({ code: "partner_free", origin: "v2", status: "TRIALING" });
+  // RCCF-40: the create path runs inside $transaction (capacity + create).
+  h.transaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb({
+    $queryRaw: vi.fn().mockResolvedValue([]),
+    agencyTenant: { count: h.agencyTenantCount, create: h.agencyTenantCreate },
+  }));
 });
 
 describe("AgencyTenantRelationshipService (Part 1)", () => {

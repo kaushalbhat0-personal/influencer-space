@@ -116,6 +116,64 @@ export async function adminUpdateCommissionConfig(input: {
   }
 }
 
+/**
+ * RCCF-56 — schedule the global CommissionRule for a date window (Super Admin
+ * only). Percentages and dates are validated server-side; the effective window
+ * is normalized to UTC; priority is optional (default 100). The client can
+ * never supply scope, authority, or a historical mutation.
+ */
+export async function adminScheduleCommissionRule(input: {
+  partnerSharePercent: number;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+  priority?: number;
+}): Promise<{ success: boolean; status?: "ACTIVE" | "SCHEDULED"; error?: string }> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return { success: false, error: auth.error };
+  try {
+    const result = await revenueService.scheduleGlobalCommissionRule(input);
+    await logAction("system", "billing:commission-rule-scheduled", {
+      partnerSharePercent: input.partnerSharePercent,
+      effectiveFrom: input.effectiveFrom,
+      effectiveTo: input.effectiveTo ?? null,
+      priority: input.priority ?? 100,
+      status: result.status,
+    }).catch(() => {});
+    return { success: true, status: result.status };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to schedule commission rule" };
+  }
+}
+
+/** RCCF-56 — read the CommissionRule lifecycle (CURRENT/SCHEDULED/EXPIRED). */
+export async function listGlobalCommissionRulesAction(): Promise<{ success: true; rules: Awaited<ReturnType<typeof revenueService.listGlobalCommissionRules>> } | { success: false; error: string }> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return { success: false, error: auth.error };
+  try {
+    const rules = await revenueService.listGlobalCommissionRules();
+    return { success: true, rules };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to load commission rules" };
+  }
+}
+
 export async function getBillingMigrationStatus() {
   return billingMigrationRegistry.getStatus();
+}
+
+/**
+ * RCCF-50 — Super Admin-triggered idempotent payment reconciliation. Repairs
+ * the missing internal invoice/commission for a provider-paid payment whose
+ * webhook financial transaction failed. Never fabricates financial data.
+ */
+export async function adminReconcilePayment(paymentId: string): Promise<{ success: boolean; repaired?: boolean; error?: string }> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return { success: false, error: auth.error };
+  if (!paymentId) return { success: false, error: "Payment id is required" };
+  try {
+    const result = await billingService.reconcileFailedPayment(paymentId);
+    return { success: result.handled, repaired: result.repaired, error: result.error };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Reconciliation failed" };
+  }
 }

@@ -5,11 +5,12 @@ import Link from "next/link";
 
 interface LogRow {
   id: string;
-  tenantId: string;
+  tenantId: string | null;
   action: string;
   metadata: unknown;
   createdAt: string;
   tenant: { name: string; subdomain: string } | null;
+  agency: { name: string } | null;
 }
 
 export function AuditStream({
@@ -73,7 +74,7 @@ export function AuditStream({
                   {new Date(log.createdAt).toLocaleString()}
                 </td>
                 <td className="text-xs text-zinc-400">
-                  {log.tenant?.name || log.tenantId.slice(0, 8)}
+                  {log.tenant?.name || log.agency?.name || (log.tenantId ? log.tenantId.slice(0, 8) : "agency")}
                 </td>
                 <td>
                   <span className="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[11px] text-s8ul-cyan">

@@ -71,13 +71,14 @@ export async function GET(request: NextRequest) {
     maxAge: 3600,
   });
 
-  // Set workspace cookie for the target user's workspace.
+  // Set workspace cookie for the target user's workspace (bound to the target
+  // user — the cookie is a selector, never an authorization boundary).
   if (targetUser.tenantId) {
     const ws = await workspaceRepository.findByTenantId(targetUser.tenantId);
     if (ws) {
       const member = await workspaceRepository.findMember(ws.id, targetUser.id);
       if (member) {
-        response.cookies.set(WorkspaceCookie.cookieName, WorkspaceCookie.encode({ wid: ws.id, role: member.role, type: ws.type }), WorkspaceCookie.cookieOptions);
+        response.cookies.set(WorkspaceCookie.cookieName, WorkspaceCookie.encode({ wid: ws.id, role: member.role, type: ws.type, uid: targetUser.id }), WorkspaceCookie.cookieOptions);
       }
     }
   } else if (targetUser.agencyId) {
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
     if (ws) {
       const member = await workspaceRepository.findMember(ws.id, targetUser.id);
       if (member) {
-        response.cookies.set(WorkspaceCookie.cookieName, WorkspaceCookie.encode({ wid: ws.id, role: member.role, type: ws.type }), WorkspaceCookie.cookieOptions);
+        response.cookies.set(WorkspaceCookie.cookieName, WorkspaceCookie.encode({ wid: ws.id, role: member.role, type: ws.type, uid: targetUser.id }), WorkspaceCookie.cookieOptions);
       }
     }
   }

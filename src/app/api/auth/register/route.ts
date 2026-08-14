@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { isFlagEnabled, getPlatformConfig } from "@/lib/platform/platform-config";
+import { getTrialEndDate } from "@/lib/billing";
 
 export async function POST(req: Request) {
   // VALIDATION-04: honor the `enableNewRegistrations` platform flag. This is a
@@ -82,11 +83,16 @@ export async function POST(req: Request) {
         });
 
         if (billingPlan) {
+          // RCCF-40: Partner Launch (partner_free, trialDays 15) is a truthful
+          // 15-day trial — TRIALING + trialEndsAt, mirroring the Creator trial
+          // lifecycle (RCCF-32/33). Post-trial Partner behavior is not yet
+          // established and is intentionally NOT invented here.
           await tx.billingSubscription.create({
             data: {
               accountId: billingAccount.id,
               planId: billingPlan.id,
-              status: billingPlan.price === 0 ? "ACTIVE" : "TRIALING",
+              status: "TRIALING",
+              trialEndsAt: getTrialEndDate(new Date(), 15),
             },
           });
         }
@@ -128,7 +134,12 @@ export async function POST(req: Request) {
           data: {
             accountId: billingAccount.id,
             planId: billingPlan.id,
-            status: billingPlan.price === 0 ? "ACTIVE" : "TRIALING",
+            // RCCF-32: the free Creator Launch plan is the 15-day trial. The
+            // subscription represents the trial truthfully (TRIALING +
+            // trialEndsAt) instead of being indefinitely ACTIVE. Post-trial
+            // transition is governed by the billing lifecycle (deferred policy).
+            status: "TRIALING",
+            trialEndsAt: getTrialEndDate(new Date(), 15),
           },
         });
       }

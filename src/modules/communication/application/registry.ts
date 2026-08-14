@@ -20,6 +20,12 @@ export const COMMUNICATION_REGISTRY: CommunicationDefinition[] = [
   { id: "success.first_sale", name: "First Sale", audience: "creator", priority: "high", channel: "in_app", category: "customer_success", retries: 2, throttle: null, requiredData: [], template: { subject: "🎉 First sale!", body: "Congratulations — your first sale! Keep it going." } },
   { id: "success.website_published", name: "Website Published", audience: "creator", priority: "medium", channel: "in_app", category: "website", retries: 2, throttle: null, requiredData: [], template: { subject: "Your website is live", body: "Your website is published and live for visitors." } },
 
+  // ── Partner team (RCCF-54) ─────────────────────────────────
+  // Capability-accurate: the role label must never overclaim permissions.
+  // The accept URL carries the opaque token — never raw IDs or authorization
+  // internals. Expiry is server-derived and rendered for the invitee.
+  { id: "team.invitation", name: "Team Invitation", audience: "agency", priority: "high", channel: "email", category: "system", retries: 3, throttle: null, requiredData: ["agencyName", "roleLabel", "acceptUrl", "expiryDate"], template: { subject: "You're invited to join {{agencyName}} on CreatorStore", body: "You're invited to join {{agencyName}} on CreatorStore.\n\nRole: {{roleLabel}}\n\nAccept invitation:\n{{acceptUrl}}\n\nThis invitation expires on {{expiryDate}}." } },
+
   // ── Admin alerts ───────────────────────────────────────────
   { id: "alert.failed_generation", name: "Failed Generation", audience: "super_admin", priority: "high", channel: "alert", category: "system", retries: 3, throttle: "1h", requiredData: ["error"], template: { subject: "Generation failed", body: "A generation failed: {{error}}." } },
   { id: "alert.webhook_failure", name: "Webhook Failure", audience: "super_admin", priority: "high", channel: "alert", category: "system", retries: 3, throttle: "1h", requiredData: ["error"], template: { subject: "Webhook failure", body: "A webhook failed: {{error}}." } },

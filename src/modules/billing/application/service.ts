@@ -5,9 +5,8 @@ import { assertEligiblePlan } from "./plan-restriction";
 import { countStorageUsage, storageBytesToGb } from "./storage.enforcement";
 import { validateTransition } from "../domain/lifecycle";
 import { mappingForRazorpayEvent, statusForWebhookEvent } from "../domain/webhook";
+import { getRuntimePlan, type PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
 import { capabilityService } from "@/lib/capabilities";
-import { commissionService } from "@/lib/commission";
-import { partnerService } from "@/lib/partners";
 import { logAction } from "@/lib/audit";
 import { platformEventBus } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
@@ -32,11 +31,17 @@ export class BillingService {
       return { success: false, error: `Unknown plan: ${planCode}` };
     }
 
+    // RCCF-36: the DB plan is the commercial authority. Its price drives
+    // one-time order amounts and its provisioned razorpayPlanId drives the
+    // recurring subscription plan (falling back to the registry mapping).
+    const rc = (dbPlan?.runtimeConfig as PlanRuntimeConfig | null) ?? null;
     const order = await razorpayProvider.createCheckout({
       planCode,
       accountId: workspaceId,
       email,
       currency: plan.currency,
+      price: plan.price,
+      razorpayPlanId: rc?.pricing?.razorpayPlanId ?? null,
     });
 
     if (!order.success) {
@@ -56,102 +61,6 @@ export class BillingService {
     logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
     metricsService.recordDuration("billing_execution", Date.now() - start);
     return order;
-  }
-
-  async handlePaymentCaptured(workspaceId: string, planCode: string, providerReference: string, idempotencyKey: string): Promise<void> {
-    const start = Date.now();
-    logger.info("handlePaymentCaptured started", "billing", { operation: "handle_payment_captured", metadata: { workspaceId, planCode } as Record<string, unknown> });
-    if (await billingRepository.isDuplicateEvent(idempotencyKey)) {
-      logger.info("handlePaymentCaptured completed", "billing", { operation: "handle_payment_captured", duration: Date.now() - start, metadata: { result: "duplicate" } as Record<string, unknown> });
-      metricsService.recordDuration("billing_execution", Date.now() - start);
-      return;
-    }
-
-    const plan = await billingRepository.findPlanByCode(planCode);
-    if (!plan) throw new Error(`Unknown plan: ${planCode}`);
-
-    const sub = await billingRepository.upsertSubscription(workspaceId, {
-      planId: plan.id,
-      status: "ACTIVE",
-    });
-
-    validateTransition(sub.status as never, "ACTIVE");
-
-    await billingRepository.createEvent({
-      workspaceId,
-      accountId: workspaceId,
-      type: "PAYMENT_SUCCEEDED",
-      idempotencyKey,
-      payload: { planCode, providerReference, previousStatus: sub.status, newStatus: "ACTIVE" },
-    });
-
-    const invoice = await billingRepository.createInvoice({
-      workspaceId,
-      accountId: workspaceId,
-      planCode,
-      amount: getPlan(planCode)?.price ?? 0,
-      status: "PAID",
-    });
-
-    // ── Capability Activation ───────────────────────────────────────────
-    capabilityService.can(planCode, "custom_domain");
-
-    // ── Partner Commission ──────────────────────────────────────────────
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { agencyId: true, tenantId: true },
-    });
-
-    if (workspace?.agencyId) {
-      const partnerRecord = await partnerService.get(workspace.agencyId);
-      if (partnerRecord) {
-        try {
-          commissionService.processCommission({
-            invoiceId: invoice.id,
-            partnerId: workspace.agencyId,
-            subscriptionId: sub.id,
-            planCode,
-            gross: getPlan(planCode)?.price ?? 0,
-            currency: "INR",
-          });
-        } catch (err) {
-          captureError(err, { service: "billing", operation: "processCommission" });
-        }
-      }
-    }
-
-    // ── Event ─────────────────────────────────────────────────────────────
-    platformEventBus.publish("PaymentCaptured", {
-      workspaceId,
-      planCode,
-      amount: getPlan(planCode)?.price ?? 0,
-      currency: "INR",
-      invoiceId: invoice.id,
-      subscriptionId: sub.id,
-    });
-
-    platformEventBus.publish("SubscriptionActivated", {
-      workspaceId,
-      planCode,
-      previousStatus: sub.status,
-    });
-
-    // ── Audit ───────────────────────────────────────────────────────────
-    const tenantId = workspace?.tenantId;
-    if (tenantId) {
-      await logAction(tenantId, "payment:captured", {
-        workspaceId,
-        planCode,
-        invoiceId: invoice.id,
-        subscriptionId: sub.id,
-        providerReference,
-      }).catch((err) => {
-        captureError(err, { service: "billing", operation: "paymentCaptured-audit" });
-      });
-    }
-
-    logger.info("handlePaymentCaptured completed", "billing", { operation: "handle_payment_captured", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
-    metricsService.recordDuration("billing_execution", Date.now() - start);
   }
 
   /**
@@ -226,38 +135,89 @@ export class BillingService {
 
     // Renewal / activation → paid invoice.
     if (mapping.action === "activate" || mapping.action === "renew") {
-      const invoice = await billingRepository.createInvoice({
-        workspaceId,
-        accountId: workspaceId,
-        planCode: plan.code,
-        amount: input.amount ?? getPlan(plan.code)?.price ?? 0,
-        status: "PAID",
-      });
-      platformEventBus.publish("PaymentCaptured", {
-        workspaceId,
-        planCode: plan.code,
-        amount: input.amount ?? getPlan(plan.code)?.price ?? 0,
-        currency: "INR",
-        invoiceId: invoice.id,
-        subscriptionId: sub.id,
-      });
+      // RCCF-41: zero-value/invalid payment guard. A webhook without a real
+      // captured amount (missing payment entity, null/zero/negative amount)
+      // NEVER mints an invoice or commission. The BillingEvent above already
+      // recorded the event; nothing financial is created.
+      const amount =
+        typeof input.amount === "number" && Number.isFinite(input.amount) && input.amount > 0
+          ? Math.round(input.amount * 100) / 100
+          : null;
+      if (amount === null) {
+        await logAction(
+          (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
+          "billing:payment-ignored",
+          { eventName, planCode: plan.code, providerReference, reason: "zero-or-missing-amount" },
+        ).catch(() => {});
+        return { handled: true, status };
+      }
 
-      // ── Partner Commission (RCCF-IMPLEMENTATION-72) ─────────────────────
-      // Recurring subscription revenue share for the agency managing the
-      // creator. Attribution runs through AgencyTenant (workspace → tenant →
-      // agency); the commission runtime is transactional + idempotent.
-      try {
-        const { recordSubscriptionCommission } = await import("@/lib/commission/runtime");
-        await recordSubscriptionCommission({
-          workspaceId,
-          planCode: plan.code,
-          subscriptionId: sub.id,
-          invoiceId: invoice.id,
-          amount: input.amount ?? getPlan(plan.code)?.price ?? 0,
-          event: mapping.action === "renew" ? "renewed" : "created",
-        });
-      } catch (err) {
-        captureError(err, { service: "billing", operation: "subscriptionWebhook-commission" });
+      // RCCF-37 (P1): a single charge can raise multiple events (subscription.charged
+      // + payment.captured) that collapse to the same payment reference at the route
+      // idempotency layer. Belt-and-suspenders: never mint a second paid invoice for
+      // the same provider payment reference.
+      const existingPaid = await prisma.billingInvoice.findFirst({
+        where: { workspaceId, providerReference },
+        select: { id: true },
+      });
+      if (!existingPaid) {
+        // RCCF-41: invoice + commission + ledger commit in ONE transaction —
+        // a mid-transaction failure rolls all three back (never an invoice
+        // without a commission, never a commission without an invoice).
+        let invoiceId: string | null = null;
+        try {
+          await prisma.$transaction(async (tx) => {
+            const invoice = await billingRepository.createInvoice({
+              workspaceId,
+              accountId: workspaceId,
+              planCode: plan.code,
+              amount,
+              status: "PAID",
+              providerReference,
+            }, tx);
+            invoiceId = invoice.id;
+
+            // ── Partner Commission (RCCF-IMPLEMENTATION-72) ─────────────────
+            // Recurring subscription revenue share for the agency managing the
+            // creator. Attribution runs through AgencyTenant (workspace → tenant
+            // → agency); the commission runtime is idempotent per invoice.
+            const { recordSubscriptionCommission } = await import("@/lib/commission/runtime");
+            await recordSubscriptionCommission({
+              workspaceId,
+              planCode: plan.code,
+              subscriptionId: sub.id,
+              invoiceId: invoice.id,
+              amount,
+              event: mapping.action === "renew" ? "renewed" : "created",
+            }, tx);
+          });
+        } catch (err) {
+          // RCCF-50 — the financial transaction rolled back (no invoice, no
+          // commission; never partially committed). The provider has captured
+          // the payment, so we record a DURABLE reconciliation-required event
+          // (unique key) that a reconciliation pass can repair idempotently —
+          // without fabricating financial data.
+          captureError(err, { service: "billing", operation: "subscriptionWebhook-invoice-commission" });
+          await billingRepository.createEvent({
+            workspaceId,
+            accountId: workspaceId,
+            type: "RECONCILIATION_REQUIRED",
+            idempotencyKey: `reconcile_required_${providerReference}`,
+            payload: { paymentId: providerReference, planCode: plan.code, amount, eventName },
+          }).catch((reconErr) => captureError(reconErr, { service: "billing", operation: "reconciliation-required-record" }));
+          return { handled: true, status };
+        }
+
+        if (invoiceId) {
+          platformEventBus.publish("PaymentCaptured", {
+            workspaceId,
+            planCode: plan.code,
+            amount,
+            currency: "INR",
+            invoiceId,
+            subscriptionId: sub.id,
+          });
+        }
       }
     }
 
@@ -303,6 +263,252 @@ export class BillingService {
       idempotencyKey: input.idempotencyKey,
       payload: { eventName: input.eventName, providerReference: input.providerReference, note },
     });
+  }
+
+  /**
+   * RCCF-41 — reverse the partner commission for a refunded payment.
+   *
+   * Append-only financial model: the original CommissionEntry is never deleted
+   * or amount-mutated. A new `refund_reversal` CommissionEntry (negative
+   * partner share, `parentEntryId` → original) + a `COMMISSION_REVERSED`
+   * PartnerLedger entry are written in ONE transaction with the idempotency
+   * BillingEvent (`razorpay_refund_<refundId>`, unique) so a duplicate refund
+   * delivery collides on the unique key and rolls back — exactly one reversal.
+   *
+   * Attribution is derived server-side from the invoice (payment → invoice →
+   * original commission → its partnerId) — never from the webhook payload.
+   *
+   * Full refund → net commission 0. Partial refund → proportional reversal is
+   * recorded; the original entry is marked settlement-ineligible (no overpay);
+   * paying the UNREFUNDED remainder at settlement is a deferred product
+   * decision (reported).
+   */
+  async handleRefund(input: { refundId: string; paymentId: string; refundAmountPaise: number }): Promise<{ handled: boolean; error?: string }> {
+    const idempotencyKey = `razorpay_refund_${input.refundId}`;
+    if (await billingRepository.isDuplicateEvent(idempotencyKey)) return { handled: false };
+
+    const refundAmount = Math.round((input.refundAmountPaise / 100) * 100) / 100;
+    if (!Number.isFinite(refundAmount) || refundAmount <= 0) {
+      return { handled: false, error: "Invalid refund amount" };
+    }
+
+    // Resolve original payment → invoice (server-side; never from the payload).
+    const invoice = await prisma.billingInvoice.findFirst({ where: { providerReference: input.paymentId } });
+    if (!invoice) {
+      // No invoice for this payment — nothing to reverse. Safe no-op.
+      return { handled: true };
+    }
+
+    // The original positive subscription commission for this invoice.
+    const commission = await prisma.commissionEntry.findFirst({
+      where: { invoiceId: invoice.id, entryType: { startsWith: "subscription_" } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, partnerId: true, partnerShare: true, subscriptionId: true, planCode: true, amount: true, status: true, clearedAt: true },
+    });
+    if (!commission) {
+      // No partner commission for this invoice — safe no-op (never fabricate a
+      // negative commission). The refund is recorded as handled.
+      return { handled: true };
+    }
+
+    const grossAmount = typeof invoice.amount === "number" && invoice.amount > 0 ? invoice.amount : commission.amount;
+    const fraction = grossAmount > 0 ? Math.min(1, Math.max(0, refundAmount / grossAmount)) : 1;
+    let reversalAmount = Math.round(commission.partnerShare * fraction * 100) / 100;
+
+    // RCCF-43 overflow protection: cumulative reversals for this commission can
+    // never exceed the original partner share, even if the provider emits
+    // overlapping/duplicate refund events.
+    const existingReversals = await prisma.commissionEntry.aggregate({
+      where: { parentEntryId: commission.id },
+      _sum: { partnerShare: true },
+    });
+    const alreadyReversed = Math.abs(existingReversals._sum.partnerShare ?? 0);
+    const maxReversal = Math.max(0, Math.round((commission.partnerShare - alreadyReversed) * 100) / 100);
+    if (reversalAmount > maxReversal) reversalAmount = maxReversal;
+    if (reversalAmount <= 0) {
+      // Already fully reversed — safe no-op (never create a negative reversal).
+      return { handled: true };
+    }
+    const isFullRefund = fraction >= 1;
+    // RCCF-50 — was this commission already SETTLED (paid) at refund time?
+    // Evaluated before any mutation so the fact is read from the persisted row.
+    const wasSettled = commission.status === "cleared" && !!commission.clearedAt;
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        const reversal = await tx.commissionEntry.create({
+          data: {
+            invoiceId: invoice.id,
+            partnerId: commission.partnerId,
+            subscriptionId: commission.subscriptionId,
+            planCode: commission.planCode,
+            amount: -Math.round(refundAmount * 100) / 100,
+            platformShare: -Math.round((refundAmount - reversalAmount) * 100) / 100,
+            partnerShare: -reversalAmount,
+            platformPercent: 0,
+            partnerPercent: 0,
+            entryType: "refund_reversal",
+            status: "reversed",
+            parentEntryId: commission.id,
+            reversedAt: new Date(),
+            description: `Commission reversal for refund ${input.refundId} (payment ${input.paymentId})`,
+            audit: { refundId: input.refundId, paymentId: input.paymentId, refundAmount, fraction },
+          },
+        });
+
+        // Settlement safety: a FULL refund makes the original ineligible; a
+        // PARTIAL refund keeps it pending so the unrefunded remainder stays
+        // settleable (settlement nets against reversal children).
+        if (isFullRefund) {
+          await tx.commissionEntry.update({
+            where: { id: commission.id },
+            data: { status: "reversed", reversedAt: new Date() },
+          });
+        }
+
+        // Append-only ledger reversal.
+        const last = await tx.partnerLedger.findFirst({
+          where: { partnerId: commission.partnerId },
+          orderBy: { createdAt: "desc" },
+          select: { balanceAfter: true },
+        });
+        const balanceBefore = last?.balanceAfter ?? 0;
+        await tx.partnerLedger.create({
+          data: {
+            partnerId: commission.partnerId,
+            type: "COMMISSION_REVERSED",
+            amount: -reversalAmount,
+            reference: reversal.id,
+            referenceType: "commission_entry",
+            description: `Commission reversal for refund ${input.refundId} (payment ${input.paymentId})`,
+            commissionId: reversal.id,
+            balanceBefore,
+            balanceAfter: Math.round((balanceBefore - reversalAmount) * 100) / 100,
+          },
+        });
+
+        // RCCF-50 — clawback: if the reversed commission was ALREADY SETTLED
+        // (paid), the reversal creates a recoverable obligation. Recorded as an
+        // explicit append-only CLAWBACK_DUE ledger entry so it offsets future
+        // settlement eligibility and is surfaced in the analytics summary.
+        // Historical SettlementItem/paid records are never mutated.
+        if (wasSettled && reversalAmount > 0) {
+          await tx.partnerLedger.create({
+            data: {
+              partnerId: commission.partnerId,
+              type: "CLAWBACK_DUE",
+              amount: -reversalAmount,
+              reference: reversal.id,
+              referenceType: "commission_entry",
+              description: `Clawback due — refund ${input.refundId} of already-settled commission (payment ${input.paymentId})`,
+              commissionId: reversal.id,
+              balanceBefore,
+              balanceAfter: Math.round((balanceBefore - reversalAmount) * 100) / 100,
+            },
+          });
+        }
+
+        // Idempotency record in the same transaction (unique key → a duplicate
+        // refund delivery P2002-collides here and the whole reversal rolls back).
+        await billingRepository.createEvent({
+          workspaceId: invoice.workspaceId ?? "",
+          accountId: invoice.accountId,
+          type: "REFUND_PROCESSED",
+          idempotencyKey,
+          payload: { refundId: input.refundId, paymentId: input.paymentId, amount: refundAmount, commissionId: commission.id, reversalAmount },
+        }, tx);
+      });
+    } catch (err) {
+      captureError(err, { service: "billing", operation: "refund-processed" });
+      throw err;
+    }
+
+    await logAction(
+      (await prisma.workspace.findUnique({ where: { id: invoice.workspaceId ?? "" }, select: { tenantId: true } }))?.tenantId ?? "system",
+      "billing:refund-processed",
+      { refundId: input.refundId, paymentId: input.paymentId, amount: refundAmount, commissionId: commission.id, reversalAmount },
+    ).catch(() => {});
+    return { handled: true };
+  }
+
+  /**
+   * RCCF-50 — idempotent failed-webhook reconciliation. When a provider payment
+   * was captured but the internal invoice+commission transaction failed, a
+   * durable RECONCILIATION_REQUIRED BillingEvent exists for the payment. This
+   * repairs ONLY the missing internal state (invoice + commission in one
+   * transaction, amount-verified against the recorded event) and never
+   * fabricates financial data. Repeated reconciliation is idempotent.
+   */
+  async reconcileFailedPayment(paymentId: string): Promise<{ handled: boolean; repaired?: boolean; error?: string }> {
+    const required = await prisma.billingEvent.findUnique({
+      where: { idempotencyKey: `reconcile_required_${paymentId}` },
+    });
+    if (!required) return { handled: false, error: "No reconciliation required for this payment" };
+
+    // Already repaired (invoice exists for the payment) → idempotent no-op.
+    const existingInvoice = await prisma.billingInvoice.findFirst({ where: { providerReference: paymentId }, select: { id: true } });
+    if (existingInvoice) {
+      await billingRepository.createEvent({
+        workspaceId: required.workspaceId ?? "",
+        accountId: required.accountId,
+        type: "RECONCILIATION_RESOLVED",
+        idempotencyKey: `reconcile_resolved_${paymentId}`,
+        payload: { paymentId, alreadyPresent: true },
+      }).catch(() => {});
+      return { handled: true, repaired: false };
+    }
+
+    const payload = (required.payload as Record<string, unknown> | null) ?? {};
+    const planCode = String(payload.planCode ?? "");
+    const amount = Number(payload.amount ?? 0);
+    const workspaceId = required.workspaceId;
+    if (!workspaceId || !planCode || !Number.isFinite(amount) || amount <= 0) {
+      return { handled: false, error: "Reconciliation exception: cannot safely reconstruct this payment" };
+    }
+
+    const sub = await billingRepository.findSubscriptionByWorkspaceId(workspaceId);
+    if (!sub) return { handled: false, error: "Reconciliation exception: subscription not found" };
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        const invoice = await billingRepository.createInvoice({
+          workspaceId,
+          accountId: workspaceId,
+          planCode,
+          amount,
+          status: "PAID",
+          providerReference: paymentId,
+        }, tx);
+
+        const { recordSubscriptionCommission } = await import("@/lib/commission/runtime");
+        await recordSubscriptionCommission({
+          workspaceId,
+          planCode,
+          subscriptionId: sub.id,
+          invoiceId: invoice.id,
+          amount,
+          event: String(payload.eventName ?? "").includes("charged") ? "renewed" : "created",
+        }, tx);
+
+        await billingRepository.createEvent({
+          workspaceId,
+          accountId: workspaceId,
+          type: "RECONCILIATION_RESOLVED",
+          idempotencyKey: `reconcile_resolved_${paymentId}`,
+          payload: { paymentId, planCode, amount },
+        }, tx);
+      });
+    } catch (err) {
+      captureError(err, { service: "billing", operation: "reconcile-failed-payment" });
+      throw err;
+    }
+
+    await logAction(
+      (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
+      "billing:reconciled-payment",
+      { paymentId, planCode, amount },
+    ).catch(() => {});
+    return { handled: true, repaired: true };
   }
 
   async cancelSubscription(workspaceId: string, reason?: string): Promise<void> {
@@ -440,10 +646,13 @@ export class BillingService {
   async getSubscriptionStatus(workspaceId: string): Promise<{ planCode: string; status: string; active: boolean } | null> {
     const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
     if (!sub) return null;
+    // RCCF-33: a TRIALING subscription is only "active" while the trial is
+    // active — a stale TRIALING (trialEndsAt passed) must not be reported active.
+    const trialActive = sub.status === "TRIALING" && (!sub.trialEndsAt || sub.trialEndsAt.getTime() > Date.now());
     return {
       planCode: sub.plan?.code ?? "creator_launch",
       status: sub.status,
-      active: sub.status === "ACTIVE" || sub.status === "TRIALING",
+      active: sub.status === "ACTIVE" || trialActive,
     };
   }
 
@@ -464,17 +673,35 @@ export class BillingService {
 
     const planCode = subscription?.plan?.code ?? "creator_launch";
     const plan = getPlan(planCode);
+    // RCCF-36: the billing page must show the current configured price, not a
+    // stale static registry value. The runtime plan is the DB-authoritative
+    // surface (registry fallback when absent).
+    const runtimePlan = await getRuntimePlan(planCode).catch(() => null);
+    const effectivePlan = plan
+      ? { ...plan, price: runtimePlan?.price !== undefined ? runtimePlan.price : plan.price }
+      : plan;
 
     const products = await prisma.product.count({ where: { tenantId } });
     const gallery = await prisma.galleryImage.count({ where: { tenantId } });
     const orders = await prisma.productOrder.count({ where: { tenantId } });
     // RCCF-11: surface real storage usage (was hardcoded 0). GB with one decimal.
     const storageGb = storageBytesToGb(await countStorageUsage(tenantId));
+    // RCCF-38: order usage reads from PlanUsage (completed orders this month),
+    // never from a client-side count.
+    const { getCurrentOrderUsage } = await import("./order-completion");
+    const orderUsage = await getCurrentOrderUsage(tenantId).catch(() => ({ used: 0, limit: capabilityService.limit(planCode, "max_orders") }));
+
+    // RCCF-33: server-derived trial-active flag so the UI never shows a stale
+    // "Trialing" state (a TRIALING subscription whose trialEndsAt has passed).
+    const isTrialActive =
+      subscription?.status === "TRIALING" &&
+      !!subscription.trialEndsAt &&
+      subscription.trialEndsAt.getTime() > Date.now();
 
     return {
       planCode,
-      plan: plan ?? { code: "creator_launch", family: "creator" as const, name: "Creator Launch", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" },
-      subscription: subscription ?? { id: "", accountId: workspaceId, workspaceId, planCode: "creator_launch", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
+      plan: effectivePlan ?? { code: "creator_launch", family: "creator" as const, name: "Creator Launch", description: "", price: 0, currency: "INR", features: {}, recommended: false, badge: "" },
+      subscription: { ...(subscription ?? { id: "", accountId: workspaceId, workspaceId, planCode: "creator_launch", status: "ACTIVE" as const, trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() }), isTrialActive },
       invoices: invoices.map((inv) => ({
         id: inv.id,
         planCode: inv.planCode,
@@ -498,6 +725,8 @@ export class BillingService {
         // registry — they were hardcoded (5 / 10) and lied on paid plans.
         { metric: "max_products", label: "Products", used: products, limit: capabilityService.limit(planCode, "max_products"), unit: "" },
         { metric: "max_gallery", label: "Gallery", used: gallery, limit: capabilityService.limit(planCode, "max_gallery"), unit: "" },
+        // RCCF-38: completed-orders allowance for the current calendar month.
+        { metric: "max_orders", label: "Orders (this month)", used: orderUsage.used, limit: orderUsage.limit, unit: "completed" },
       ],
       activeProducts: products,
       activeGallery: gallery,

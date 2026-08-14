@@ -19,13 +19,15 @@ export interface MemberResult {
   role: string;
   status: string;
   joinedAt: Date | null;
+  /** RCCF-53 — application role (User.role) for display; authority stays on User.role. */
+  applicationRole: string | null;
 }
 
 export class WorkspaceMemberService {
   async listMembers(workspaceId: string): Promise<MemberResult[]> {
     const members = await prisma.workspaceMember.findMany({
       where: { workspaceId },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { user: { select: { id: true, name: true, email: true, role: true } } },
       orderBy: { createdAt: "asc" },
     });
 
@@ -37,6 +39,7 @@ export class WorkspaceMemberService {
       role: m.role,
       status: m.status,
       joinedAt: m.joinedAt,
+      applicationRole: m.user.role,
     }));
   }
 

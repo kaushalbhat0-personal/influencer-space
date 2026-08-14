@@ -86,12 +86,15 @@ export async function createCheckout(
     });
 
     // VALIDATION-01 V-028: free products / 100%-off coupons (total ≤ 0) cannot
-    // go through Razorpay (it rejects amount 0). Complete the order immediately.
+    // go through Razorpay (it rejects amount 0). Complete the order immediately
+    // through the canonical completion boundary (RCCF-38) so a free order that
+    // completes still consumes its monthly order allowance.
     if (total <= 0) {
-      await prisma.productOrder.update({
-        where: { id: dbOrder.id },
-        data: { status: "COMPLETED" },
-      });
+      const { completeProductOrder } = await import("@/modules/billing/application/order-completion");
+      const completed = await completeProductOrder(dbOrder.id);
+      if (!completed.success) {
+        return { success: false, error: completed.error ?? "Checkout failed" };
+      }
       await logAction(tenantId, "checkout:completed", {
         orderId: dbOrder.id,
         productId,
@@ -202,13 +205,13 @@ export async function verifyPayment(
       // the authoritative reconcile and enforces the same check.
     }
 
-    await prisma.productOrder.update({
-      where: { id: order.id },
-      data: {
-        status: "COMPLETED",
-        razorpayPaymentId,
-      },
-    });
+    // RCCF-38: complete through the canonical boundary — this reserves the
+    // monthly order quota atomically and creates the fulfillment record.
+    const { completeProductOrder } = await import("@/modules/billing/application/order-completion");
+    const completed = await completeProductOrder(order.id, { paymentId: razorpayPaymentId });
+    if (!completed.success) {
+      return { success: false, error: completed.error ?? "Order completion failed" };
+    }
 
     await logAction(order.tenantId, "checkout:verified", {
       orderId: order.id,

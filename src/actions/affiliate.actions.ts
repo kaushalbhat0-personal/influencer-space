@@ -7,6 +7,8 @@ import { authOptions } from "@/lib/auth";
 import { AffiliateService } from "@/services/affiliate.service";
 import { StorageService } from "@/services/storage.service";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
+import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { FEATURE_IDS } from "@/lib/capabilities/constants";
 import { logAction } from "@/lib/audit";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
@@ -55,6 +57,11 @@ export async function createAffiliate(
 
   try {
     const tenantId = await requireAuth();
+    // RCCF-35: affiliate links live in the same affiliateLink table as links;
+    // the Link page enforces max_links, so the Affiliates page must too —
+    // otherwise a lower tier bypasses the content limit.
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.LINKS });
+    if (!limit.ok) return { success: false, error: limit.reason };
     const result = await AffiliateService.create(tenantId, {
       title: parsed.data.title,
       url: parsed.data.url,

@@ -68,7 +68,7 @@ export class SettlementService {
   async createSettlement(params: CreateSettlementParams): Promise<{ settlement: SettlementRow | null; error?: string }> {
     try {
       const result = await prisma.$transaction(async (tx) => {
-        let entries: Array<{ id: string; partnerShare: number }> = [];
+        let entries: Array<{ id: string; netShare: number }> = [];
 
         if (params.commissionEntryIds?.length) {
           const existing = await tx.settlementItem.findMany({
@@ -79,27 +79,42 @@ export class SettlementService {
           const available = params.commissionEntryIds.filter((id) => !reservedIds.has(id));
           if (available.length === 0) return { settlement: null, error: "All selected commission entries are already reserved in another settlement." };
 
-          const commissionEntries = await tx.commissionEntry.findMany({
-            where: { id: { in: available }, status: "pending" },
-            select: { id: true, partnerShare: true },
-          });
-          entries = commissionEntries;
+          // RCCF-43: settle the NET of each pending entry (original minus its
+          // append-only refund reversals); partially refunded commissions settle
+          // only their unrefunded remainder.
+          const { resolveNetPendingEntries } = await import("@/lib/commission/runtime");
+          entries = await resolveNetPendingEntries(tx, { ids: available });
         } else {
           const reservedEntries = await tx.settlementItem.findMany({
+            where: { settlement: { partnerId: params.partnerId } },
             select: { commissionEntryId: true },
           });
           const reservedIds = new Set(reservedEntries.map((r) => r.commissionEntryId));
 
-          const pending = await tx.commissionEntry.findMany({
-            where: { partnerId: params.partnerId, status: "pending", id: { notIn: Array.from(reservedIds) } },
-            select: { id: true, partnerShare: true },
+          const { resolveNetPendingEntries } = await import("@/lib/commission/runtime");
+          entries = await resolveNetPendingEntries(tx, {
+            partnerId: params.partnerId,
+            excludedIds: Array.from(reservedIds),
           });
-          entries = pending;
         }
 
         if (entries.length === 0) return { settlement: null, error: "No available commission entries to settle." };
 
-        const totalAmount = entries.reduce((sum, e) => sum + e.partnerShare, 0);
+        // RCCF-57 — clawback fail-closed guard. A partner with an outstanding
+        // CLAWBACK_DUE obligation must never receive settlement funds that are
+        // already offset by that obligation. Clawback collection mechanics are
+        // a product decision; until a deduction mechanism exists, settlement
+        // creation is blocked so the platform can never overpay a partner.
+        const clawbackAgg = await tx.partnerLedger.aggregate({
+          where: { partnerId: params.partnerId, type: "CLAWBACK_DUE" },
+          _sum: { amount: true },
+        });
+        const clawbackDue = Math.abs(clawbackAgg._sum.amount ?? 0);
+        if (clawbackDue > 0) {
+          return { settlement: null, error: `Settlement blocked: an outstanding clawback of ${formatCurrency(clawbackDue)} must be collected before new settlements are created.` };
+        }
+
+        const totalAmount = entries.reduce((sum, e) => sum + e.netShare, 0);
         const settlementRef = `STL-${Date.now().toString(36).toUpperCase()}-${params.partnerId.slice(0, 8)}`;
 
         const settlement = await tx.settlement.create({
@@ -118,7 +133,7 @@ export class SettlementService {
             items: {
               create: entries.map((e) => ({
                 commissionEntryId: e.id,
-                amount: e.partnerShare,
+                amount: e.netShare,
                 status: "pending",
               })),
             },

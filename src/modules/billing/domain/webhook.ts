@@ -40,6 +40,36 @@ export function mappingForRazorpayEvent(eventName: string): WebhookMapping | nul
   return RAZORPAY_EVENT_MAP[eventName] ?? null;
 }
 
+interface RazorpayWebhookPayload {
+  event?: string;
+  payload?: {
+    payment?: { entity?: { id?: string } };
+    subscription?: { entity?: { id?: string } };
+    refund?: { entity?: { id?: string } };
+  };
+}
+
+/**
+ * RCCF-37 (P1) — canonical idempotency key for a Razorpay webhook.
+ *
+ * A single payment can raise SEVERAL events (subscription.activated +
+ * subscription.charged + payment.captured, or order.paid + payment.captured)
+ * that all describe ONE financial occurrence. Keying on the payment id
+ * collapses them so a charge is never processed twice (double invoice / double
+ * partner commission). Events without a payment fall back to event+reference.
+ *
+ * RCCF-41 — refunds are keyed on the PROVIDER REFUND id (a refund is its own
+ * financial occurrence and there can be multiple refunds per payment).
+ */
+export function buildRazorpayIdempotencyKey(payload: RazorpayWebhookPayload, event: string, ref: string): string {
+  const refundId = payload.payload?.refund?.entity?.id;
+  if (refundId) return `razorpay_refund_${refundId}`;
+  const paymentId = payload.payload?.payment?.entity?.id;
+  if (paymentId) return `razorpay_payment_${paymentId}`;
+  if (ref) return `razorpay_${event}_${ref}`;
+  return `razorpay_${event}_${Date.now()}`;
+}
+
 export function targetStatusForAction(action: WebhookAction): SubscriptionStatus {
   switch (action) {
     case "activate":

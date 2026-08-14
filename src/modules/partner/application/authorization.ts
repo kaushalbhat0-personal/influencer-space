@@ -60,6 +60,27 @@ export async function requireAgencyMember(): Promise<AuthResult & { agencyId?: s
   return { ...base, agencyId };
 }
 
+/**
+ * RCCF-39 — authorize a tenant-provisioning actor. SUPER_ADMIN always; an
+ * AGENCY_ADMIN only when their agency is ACTIVE/TRIAL and they hold an active
+ * workspace membership. Prevents a suspended agency's admin from minting
+ * (orphan) tenants through confirmProvision/analyzeUrl.
+ */
+export async function requireProvisioningActor(): Promise<AuthResult & { role?: string; userId?: string }> {
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
+  if (!session?.user?.id) return { ok: false, error: "Unauthorized" };
+  if (role === "SUPER_ADMIN") return { ok: true, session, role, userId: session.user.id };
+  if (role === "AGENCY_ADMIN") {
+    const agencyId = session.user.agencyId as string | undefined;
+    if (!agencyId) return { ok: false, error: "No agency configured" };
+    const membership = await assertAgencyMembership(session.user.id, agencyId);
+    if (!membership.ok) return membership;
+    return { ok: true, session, role, userId: session.user.id };
+  }
+  return { ok: false, error: "Unauthorized" };
+}
+
 /** Verify the session user's agency manages the given tenant (IDOR guard). */
 export async function assertAgencyOwnsTenant(sessionUserId: string, agencyId: string, tenantId: string): Promise<AuthResult> {
   const link = await prisma.agencyTenant.findFirst({

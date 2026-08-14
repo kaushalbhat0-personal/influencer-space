@@ -4,7 +4,6 @@ import { revenueRepository } from "@/modules/billing/infrastructure/revenue-repo
 import { MS_PER_DAY } from "@/lib/constants";
 import { logger } from "@/lib/observability/logger";
 import { metricsService } from "@/lib/observability/metrics-service";
-import { captureError } from "@/lib/observability/error-tracker";
 
 export interface RevenueDashboard {
   mrr: number;
@@ -222,32 +221,216 @@ export class RevenueService {
   async updateCommissionConfig(config: { agencyClientPercent: number; platformPercent: number; referralPercent: number; creatorDefaultShare: number; agencyDefaultShare: number }): Promise<void> {
     const start = Date.now();
     logger.info("updateCommissionConfig started", "billing", { operation: "update_commission_config", metadata: { config } as Record<string, unknown> });
+
+    // RCCF-48: server-side validation — every percentage must be a finite 0..100.
+    for (const [key, value] of Object.entries(config)) {
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) {
+        throw new Error(`Invalid commission percentage for ${key}`);
+      }
+    }
+
     await revenueRepository.upsertCommissionPolicy(config);
 
-    // Sync to canonical CommissionRule engine so UI changes affect actual calculations
-    const { commissionService } = await import("@/lib/commission");
-    const { ruleEngine } = await import("@/lib/commission/rules");
-    try {
-      const existingDefault = ruleEngine.resolveRule("", "");
-      if (existingDefault && existingDefault.id) {
-        ruleEngine.removeRule(existingDefault.id);
-      }
-      commissionService.createRule({
-        // VALIDATION-04: the runtime rule is a two-way platform+partner split
-        // that must sum to 100 — the raw agencyDefaultShare (e.g. 30) alongside
-        // platformPercent (e.g. 10) failed validation, so the rule was silently
-        // never created and Commission Center edits had no runtime effect.
-        platformSharePercent: config.platformPercent,
-        partnerSharePercent: 100 - config.platformPercent,
+    // RCCF-48 — the authoritative global Partner commission rule.
+    // `agencyDefaultShare` is the existing field that already represents the
+    // default Partner share of creator subscriptions (it feeds the resolver's
+    // CommissionPolicy fallback). Save it as an explicit global CommissionRule
+    // (partnerId = null, type = "default") so an intentionally configured rate
+    // becomes authoritative over the loyalty tier for future transactions.
+    // Loyalty economics stay unchanged when no rule is saved.
+    const partnerShare = Math.round(config.agencyDefaultShare * 100) / 100;
+    const platformShare = Math.round((100 - partnerShare) * 100) / 100;
+    const now = new Date();
+    const existingGlobal = await prisma.commissionRule.findFirst({
+      where: {
         type: "default",
-        label: "Platform Default (from Commission Center)",
+        partnerId: null,
+        status: "active",
+        effectiveFrom: { lte: now },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: now } }],
+      },
+      orderBy: { priority: "asc" },
+      select: { id: true },
+    });
+    if (existingGlobal) {
+      await prisma.commissionRule.update({
+        where: { id: existingGlobal.id },
+        data: { partnerSharePercent: partnerShare, platformSharePercent: platformShare, label: "Platform Default (Commission Center)" },
       });
-    } catch (err) {
-      captureError(err instanceof Error ? err : new Error(String(err)), { service: "revenue", operation: "syncCommissionRule" });
+    } else {
+      await prisma.commissionRule.create({
+        data: {
+          type: "default",
+          status: "active",
+          partnerId: null,
+          platformSharePercent: platformShare,
+          partnerSharePercent: partnerShare,
+          effectiveFrom: now,
+          priority: 100,
+          label: "Platform Default (Commission Center)",
+          description: "Global Partner subscription commission rule (Commission Center)",
+        },
+      });
     }
 
     logger.info("updateCommissionConfig completed", "billing", { operation: "update_commission_config", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
     metricsService.recordDuration("billing_execution", Date.now() - start);
+  }
+
+  // ── RCCF-56 — Commission Rule effective-dating control ─────────────────────
+
+  /**
+   * List ALL global CommissionRules (type=default, partnerId=null) newest-first,
+   * each classified as ACTIVE / SCHEDULED / EXPIRED against the current UTC
+   * time. This is the read surface for the Commission Center rule lifecycle.
+   * Historical rules are never rewritten; classification is derived at read time.
+   */
+  async listGlobalCommissionRules(): Promise<Array<{
+    id: string;
+    partnerSharePercent: number;
+    platformSharePercent: number;
+    effectiveFrom: string;
+    effectiveTo: string | null;
+    priority: number;
+    status: "ACTIVE" | "SCHEDULED" | "EXPIRED";
+  }>> {
+    const now = new Date();
+    const rules = await prisma.commissionRule.findMany({
+      where: { type: "default", partnerId: null },
+      orderBy: { effectiveFrom: "desc" },
+      select: { id: true, partnerSharePercent: true, platformSharePercent: true, effectiveFrom: true, effectiveTo: true, priority: true },
+    });
+    return rules.map((r) => {
+      let status: "ACTIVE" | "SCHEDULED" | "EXPIRED";
+      if (r.effectiveTo && r.effectiveTo.getTime() < now.getTime()) status = "EXPIRED";
+      else if (r.effectiveFrom.getTime() > now.getTime()) status = "SCHEDULED";
+      else status = "ACTIVE";
+      return {
+        id: r.id,
+        partnerSharePercent: r.partnerSharePercent,
+        platformSharePercent: r.platformSharePercent,
+        effectiveFrom: r.effectiveFrom.toISOString(),
+        effectiveTo: r.effectiveTo?.toISOString() ?? null,
+        priority: r.priority,
+        status,
+      };
+    });
+  }
+
+  /**
+   * RCCF-56 — schedule the global CommissionRule for a date window.
+   *
+   * Semantics (verified against the runtime resolver):
+   *   active while  effectiveFrom <= now <= effectiveTo   (effectiveTo null = open)
+   *   priority asc wins; id asc is the deterministic tie-break.
+   *
+   * Future dates → Option B: close the currently-active global rule(s) at
+   * `effectiveFrom - 1ms` (never leaving two overlapping global rules) and
+   * create the new rule. Immediate dates (effectiveFrom <= now) → mutate the
+   * current active rule (Option A, RCCF-48 behavior). Historical
+   * CommissionEntry values are never recalculated.
+   *
+   * Overlapping windows for the same (global) scope are REJECTED — the control
+   * plane refuses ambiguous financial configuration.
+   */
+  async scheduleGlobalCommissionRule(input: {
+    partnerSharePercent: number;
+    effectiveFrom: string;
+    effectiveTo?: string | null;
+    priority?: number;
+  }): Promise<{ id: string; status: "ACTIVE" | "SCHEDULED" }> {
+    if (typeof input.partnerSharePercent !== "number" || !Number.isFinite(input.partnerSharePercent) || input.partnerSharePercent < 0 || input.partnerSharePercent > 100) {
+      throw new Error("Invalid commission percentage");
+    }
+    const platformSharePercent = Math.round((100 - input.partnerSharePercent) * 100) / 100;
+    const effectiveFrom = new Date(input.effectiveFrom);
+    if (Number.isNaN(effectiveFrom.getTime())) throw new Error("Invalid effectiveFrom date");
+    let effectiveTo: Date | null = null;
+    if (input.effectiveTo) {
+      effectiveTo = new Date(input.effectiveTo);
+      if (Number.isNaN(effectiveTo.getTime())) throw new Error("Invalid effectiveTo date");
+      if (effectiveTo.getTime() <= effectiveFrom.getTime()) throw new Error("effectiveTo must be after effectiveFrom");
+    }
+    const priority = input.priority === undefined ? 100 : Math.floor(input.priority);
+    if (!Number.isFinite(priority) || priority < 0) throw new Error("Invalid priority");
+
+    const now = new Date();
+    const newEnd = effectiveTo ?? new Date("2100-01-01T00:00:00Z");
+
+    if (effectiveFrom.getTime() > now.getTime()) {
+      // Future schedule — Option B: close the currently-active global rule(s),
+      // then create. The overlap check only considers FUTURE rules (those that
+      // start after now); the current rule is closed, so it must not block.
+      const overlapping = await prisma.commissionRule.findFirst({
+        where: {
+          type: "default", partnerId: null,
+          effectiveFrom: { gt: now, lt: newEnd },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gt: effectiveFrom } }],
+        },
+        select: { id: true },
+      });
+      if (overlapping) {
+        throw new Error("A CommissionRule already overlaps this date window");
+      }
+
+      await prisma.commissionRule.updateMany({
+        where: {
+          type: "default", partnerId: null, status: "active",
+          effectiveFrom: { lte: now },
+          OR: [{ effectiveTo: null }, { effectiveTo: { gte: now } }],
+        },
+        data: { effectiveTo: new Date(effectiveFrom.getTime() - 1) },
+      });
+
+      const created = await prisma.commissionRule.create({
+        data: {
+          type: "default", status: "active", partnerId: null,
+          partnerSharePercent: Math.round(input.partnerSharePercent),
+          platformSharePercent,
+          effectiveFrom,
+          effectiveTo,
+          priority,
+          label: "Platform Default (Scheduled)",
+          description: "Global Partner subscription commission rule (Commission Center scheduled)",
+        },
+      });
+      return { id: created.id, status: "SCHEDULED" };
+    }
+
+    // Immediate change — Option A: mutate the currently-active global rule.
+    const current = await prisma.commissionRule.findFirst({
+      where: {
+        type: "default", partnerId: null, status: "active",
+        effectiveFrom: { lte: now },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: now } }],
+      },
+      orderBy: [{ priority: "asc" }, { id: "asc" }],
+      select: { id: true },
+    });
+    if (current) {
+      await prisma.commissionRule.update({
+        where: { id: current.id },
+        data: {
+          partnerSharePercent: Math.round(input.partnerSharePercent),
+          platformSharePercent,
+          label: "Platform Default (Commission Center)",
+        },
+      });
+      return { id: current.id, status: "ACTIVE" };
+    }
+    const created = await prisma.commissionRule.create({
+      data: {
+        type: "default", status: "active", partnerId: null,
+        partnerSharePercent: Math.round(input.partnerSharePercent),
+        platformSharePercent,
+        effectiveFrom,
+        effectiveTo,
+        priority,
+        label: "Platform Default (Commission Center)",
+        description: "Global Partner subscription commission rule (Commission Center)",
+      },
+    });
+    return { id: created.id, status: "ACTIVE" };
   }
 
   async getBillingSettings() {

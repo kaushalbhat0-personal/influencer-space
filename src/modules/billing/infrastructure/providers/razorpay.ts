@@ -29,9 +29,11 @@ export class RazorpayProvider implements BillingProvider {
       });
 
       // IMPLEMENTATION-34: subscription checkout driven by the canonical
-      // commerce config (razorpayPlanIdFor maps internal code → Razorpay plan).
-      // Manual plans (enterprise) never create a public checkout.
-      const planId = razorpayPlanIdFor(params.planCode);
+      // commerce config. RCCF-36: the DB-authoritative razorpayPlanId (stored
+      // by the Pricing Center when the price is provisioned) wins; the registry
+      // mapping is the fallback so existing flows never break. Manual plans
+      // (enterprise) never create a public checkout.
+      const planId = params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
       if (planId && !isManualPlan(params.planCode)) {
         const subscription = await razorpay.subscriptions.create({
           plan_id: planId,
@@ -55,9 +57,10 @@ export class RazorpayProvider implements BillingProvider {
 
       // Fallback: one-time order (free/manual-adjacent flows).
       // RCCF-IMPLEMENTATION-72: the amount was hardcoded to 0 (Razorpay rejects
-      // ₹0 orders). Use the canonical runtime plan price so a plan without a
-      // Razorpay subscription id still produces a valid payable order.
-      const price = getCommercePlan(params.planCode)?.price ?? 0;
+      // ₹0 orders). RCCF-36: use the DB-authoritative price so a plan without a
+      // Razorpay subscription id still produces a valid payable order at the
+      // currently configured price.
+      const price = params.price ?? getCommercePlan(params.planCode)?.price ?? 0;
       const order = await razorpay.orders.create({
         amount: Math.round((price ?? 0) * 100),
         currency: params.currency ?? "INR",

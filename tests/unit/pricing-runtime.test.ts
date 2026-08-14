@@ -8,7 +8,7 @@ describe("RCCF-IMPLEMENTATION-71 — runtime pricing merge", () => {
   it("falls back to registry defaults when no runtime config exists", () => {
     const plan = mergeRuntimePlan(grow);
     expect(plan.name).toBe(grow.name);
-    expect(plan.price).toBe(699);
+    expect(plan.price).toBe(999);
     expect(plan.capabilities).toEqual(grow.capabilities);
     expect(plan.highlights).toEqual(grow.marketingHighlights ?? []);
   });

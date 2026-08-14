@@ -35,6 +35,10 @@ import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { themeRegistry } from "@/lib/theme/registry-new";
 import { experienceRegistry, requiredCapabilitiesForExperience } from "@/modules/theme/runtime/experience";
 import { capabilityEngine } from "@/lib/capabilities";
+import { resolvePublishPolicy, suggestedPublishUpgrade, type PublishPolicy } from "./publish-policy";
+import { computePublishPeriod } from "./publish-period";
+import { planUsageRepository, PUBLISH_FEATURE_KEY } from "@/modules/billing/infrastructure/plan-usage-repository";
+import { isTrialExpiredForTenant } from "./publish-usage";
 
 /**
  * RCCF-LAUNCH-POLISH-06 (Phase 9): a canonical, machine-readable capability
@@ -98,13 +102,25 @@ export class PublishingService {
   async publish(
     tenantId: string,
     correlation?: CorrelationContext,
-  ): Promise<{ success: boolean; version?: number; error?: string; capabilityIssues?: CapabilityIssue[] }> {
+  ): Promise<{
+    success: boolean;
+    version?: number;
+    error?: string;
+    capabilityIssues?: CapabilityIssue[];
+    code?: string;
+    used?: number;
+    limit?: number;
+    periodStart?: string;
+    periodEnd?: string | null;
+    mode?: string;
+    suggestedUpgrade?: "growth" | "scale" | null;
+  }> {
     const startTime = Date.now();
     logger.info("Publishing started", "publishing", { correlation, metadata: { tenantId } });
     try {
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { id: true, subdomain: true, customDomain: true },
+        select: { id: true, subdomain: true, customDomain: true, createdAt: true },
       });
       if (!tenant) return { success: false, error: "Tenant not found" };
 
@@ -132,6 +148,19 @@ export class PublishingService {
         select: { id: true },
       });
       if (!website) return { success: false, error: "Website not found. Complete onboarding first." };
+
+      // RCCF-34: the expired Launch trial blocks NEW publishes while preserving
+      // the existing live snapshot and drafts. Initial provisioning happens
+      // during the active trial (fresh signup → TRIALING with future
+      // trialEndsAt), so it is unaffected. Upgrade (ACTIVE) restores publishing.
+      if (await isTrialExpiredForTenant(tenantId)) {
+        return {
+          success: false,
+          code: "PUBLISH_TRIAL_EXPIRED",
+          suggestedUpgrade: "growth",
+          error: "Your Launch trial has ended. Your website remains live, but publishing new changes requires an active subscription. Upgrade to Growth to continue publishing.",
+        };
+      }
 
       const websiteId = website.id;
       const storeRoot = buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain);
@@ -236,7 +265,32 @@ export class PublishingService {
         content: aggregate,
       };
 
-      const result = await publishRepository.createPublish(websiteId, canonicalSnapshot);
+      // RCCF-31: resolve the effective publish policy (defaults + Super Admin
+      // runtimeConfig.publishing) and commit quota + snapshot atomically.
+      const publishPlanCode = (await resolveActivePlan(undefined, tenantId)).code;
+      const publishPolicy = await resolvePublishPolicy(publishPlanCode);
+      const commit = await this.commitPublishWithMetering({
+        tenantId,
+        websiteId,
+        canonicalSnapshot,
+        policy: publishPolicy,
+        tenantCreatedAt: tenant.createdAt,
+        planCode: publishPlanCode,
+      });
+      if (!commit.ok) {
+        return {
+          success: false,
+          code: "PUBLISH_QUOTA_EXCEEDED",
+          used: commit.used,
+          limit: commit.limit,
+          periodStart: commit.periodStart,
+          periodEnd: commit.periodEnd,
+          mode: commit.mode,
+          suggestedUpgrade: commit.suggestedUpgrade,
+          error: `Publish limit reached (${commit.used}/${commit.limit}). Upgrade to continue publishing.`,
+        };
+      }
+      const result = { version: commit.version };
 
       try {
         platformEventBus.publish("WebsitePublished", {
@@ -271,8 +325,71 @@ export class PublishingService {
     }
   }
 
-  async markChangesPending(tenantId: string): Promise<{ success: boolean; error?: string }> {
-    try {
+  /**
+   * RCCF-31 — atomic publish commit with quota metering.
+   *
+   * Unlimited plans: create the snapshot as today (no usage row).
+   *
+   * Lifetime/Monthly plans: reserve one quota slot and create the
+   * PublishedSnapshot + PublishStatus update in a SINGLE transaction, so a
+   * failed snapshot rolls the quota back and an exhausted quota writes nothing.
+   * The reservation uses an atomic conditional increment (`used < limit`),
+   * making concurrent final-slot publishes mutually exclusive.
+   */
+  async commitPublishWithMetering(params: {
+    tenantId: string;
+    websiteId: string;
+    canonicalSnapshot: PublishedSnapshot;
+    policy: PublishPolicy;
+    tenantCreatedAt: Date;
+    planCode?: string | null;
+  }): Promise<
+    | { ok: true; version: number }
+    | { ok: false; used: number; limit: number; periodStart: string; periodEnd: string | null; mode: string; suggestedUpgrade: "growth" | "scale" | null }
+  > {
+    const { tenantId, websiteId, canonicalSnapshot, policy, tenantCreatedAt, planCode } = params;
+
+    if (policy.mode === "unlimited") {
+      const result = await publishRepository.createPublish(websiteId, canonicalSnapshot);
+      return { ok: true, version: result.version };
+    }
+
+    const period = computePublishPeriod(policy.mode, tenantCreatedAt, new Date());
+    const txResult = await prisma.$transaction(async (tx) => {
+      const reserved = await planUsageRepository.reserveSlot(tx, {
+        tenantId,
+        featureKey: PUBLISH_FEATURE_KEY,
+        periodStart: period.periodStart,
+        periodEnd: period.periodEnd,
+        limit: policy.limit ?? 0,
+      });
+      if (!reserved) {
+        const usage = await planUsageRepository.getUsage(tx, {
+          tenantId,
+          featureKey: PUBLISH_FEATURE_KEY,
+          periodStart: period.periodStart,
+        });
+        return { quotaExceeded: true as const, used: usage?.used ?? 0 };
+      }
+      const result = await publishRepository.createPublish(websiteId, canonicalSnapshot, tx);
+      return { quotaExceeded: false as const, version: result.version };
+    });
+
+    if (txResult.quotaExceeded) {
+      return {
+        ok: false,
+        used: txResult.used,
+        limit: policy.limit ?? 0,
+        periodStart: period.periodStart.toISOString(),
+        periodEnd: period.periodEnd?.toISOString() ?? null,
+        mode: policy.mode,
+        suggestedUpgrade: suggestedPublishUpgrade(planCode),
+      };
+    }
+    return { ok: true, version: txResult.version };
+  }
+
+  async markChangesPending(tenantId: string): Promise<{ success: boolean; error?: string }> {    try {
       const website = await prisma.website.findUnique({ where: { tenantId }, select: { id: true } });
       if (!website) return { success: false, error: "Website not found" };
 

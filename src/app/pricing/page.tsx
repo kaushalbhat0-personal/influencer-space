@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pricing — CreatorStore",
-  description: "Transparent pricing for creators and partners. Creator plans from ₹699/month. Partner plans from ₹2,999/month.",
+  description: "Transparent pricing for creators and partners. Creator plans from ₹999/month. Partner plans from ₹2,999/month.",
   openGraph: {
     title: "Pricing — CreatorStore",
     description: "Simple, transparent pricing for creators and partners. Pay for your creator platform. Partners charge their own service fees.",
@@ -59,7 +59,7 @@ function FaqSchemaJsonLd() {
   const faqs = [
     { q: "Do partner plans include creator subscriptions?", a: "No. Every creator pays CreatorStore directly for their own Creator plan. Partner plans cover your agency business only." },
     { q: "Can a partner charge clients for services?", a: "Yes. You may charge clients separately for setup, migration, training, branding, consulting and maintenance." },
-    { q: "What is the minimum plan for a creator I onboard?", a: "Partner-onboarded creators use Creator Growth (₹699/month) or higher — Creator Launch is not available for agency-managed creators." },
+    { q: "What is the minimum plan for a creator I onboard?", a: "Partner-onboarded creators use Creator Growth (₹999/month) or higher — Creator Launch is not available for agency-managed creators." },
   ];
   return (
     <script

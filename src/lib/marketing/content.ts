@@ -184,7 +184,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Can I use my own domain?",
-        a: "Yes. Creator Grow, Creator Scale, and all Partner plans include custom domain support with free SSL. You can also use a CreatorStore subdomain for free.",
+        a: "Yes — on Creator Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
       },
       {
         q: "Is the storefront mobile-friendly?",
@@ -206,7 +206,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "What does it cost to sell?",
-        a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan (Creator Growth ₹699/month, Creator Scale ₹1,999/month), and every rupee your customers spend goes to you.",
+        a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan (Creator Growth ₹999/month, Creator Scale ₹1,995/month), and every rupee your customers spend goes to you.",
       },
       {
         q: "Can I offer subscriptions or memberships?",
@@ -220,15 +220,15 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: "Can agencies use CreatorStore?",
-        a: "Yes. Partner plans support multi-client workspaces, white-label branding, team collaboration, and centralized analytics. Generate storefronts for clients in minutes.",
+        a: "Yes. Partner plans support multi-client workspaces, team collaboration, and agency revenue insights. Generate storefronts for clients in minutes. On Scale and Enterprise plans you can also configure white-label branding (colors, logo, support details) shown on your branded client preview portal.",
       },
       {
         q: "Can I white-label CreatorStore?",
-        a: "Yes. Higher-tier partner plans include white-label options — remove CreatorStore branding and present a custom-branded dashboard to your clients.",
+        a: "On Scale and Enterprise plans you can configure your agency's branding — colors, logo, and support details — which is shown on your branded client preview portal. A fully client-facing custom-branded dashboard is on the roadmap but not yet available.",
       },
       {
         q: "How does client management work?",
-        a: "Each client gets their own workspace with isolated storefront, products, orders, and analytics. You control permissions, billing, and can manage everything from a single dashboard.",
+        a: "Each client gets their own workspace with an isolated storefront, products, and orders. You manage clients and track your recurring commission from a single dashboard.",
       },
     ],
   },

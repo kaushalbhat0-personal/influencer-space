@@ -3,12 +3,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ContentContainer, PageHeader, MetricGrid, PageSection } from "@/components/layout";
 import { MetricCard } from "@/components/data/MetricCard";
-import { IndianRupee, FileText, CreditCard, TrendingUp, Users } from "lucide-react";
+import { FileText, CreditCard, TrendingUp, Users } from "lucide-react";
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { capabilityService } from "@/lib/capabilities";
-import { partnerService } from "@/modules/partner/application/partner";
 import { formatCurrency } from "@/lib/utils";
+import { AgencyPlanManager } from "./_components/agency-plan-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +21,22 @@ export default async function AgencyBilling() {
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">No agency configured</p></ContentContainer>;
 
+  // RCCF-52: Billing is an ADMIN-only surface (the nav already hides it from
+  // AGENCY_STAFF). Enforce the same boundary server-side so a direct URL cannot
+  // expose Partner billing, invoices, or subscription data to staff.
+  const { canMutate } = await import("@/modules/partner/application/authorization");
+  if (!canMutate((session?.user as { role?: string })?.role)) {
+    return <ContentContainer><p className="text-red-400">Only agency admins can view billing.</p></ContentContainer>;
+  }
+
   const wsRecords = await prisma.workspace.findMany({ where: { agencyId }, select: { id: true } });
   const wsIds = wsRecords.map((w) => w.id);
 
-  const [invoiceData, subscriptionData, agencyWs, managedCreators, partner] = await Promise.all([
+  const [invoiceData, subscriptionData, agencyWs, managedCreators] = await Promise.all([
     wsIds.length > 0 ? billingRepository.findInvoicesByWorkspaceIds(wsIds, 20) : Promise.resolve([]),
     wsIds.length > 0 ? billingRepository.findSubscriptionsByWorkspaceIds(wsIds) : Promise.resolve([]),
     wsRecords[0] ? resolveActivePlan(wsRecords[0]?.id, undefined) : Promise.resolve({ code: null, origin: "none" as const, status: null }),
     prisma.agencyTenant.count({ where: { agencyId, status: "ACTIVE" } }),
-    partnerService.getById(agencyId),
   ]);
 
   const activeSubs = subscriptionData.filter((s) => s.status === "ACTIVE" || s.status === "TRIALING");
@@ -37,10 +44,25 @@ export default async function AgencyBilling() {
   const limitLabel = creatorLimit === -1 ? "Unlimited" : String(creatorLimit);
   const displayName = agencyWs.code ? capabilityService.getPlan(agencyWs.code)?.name ?? agencyWs.code : "Partner Free";
 
+  const sub = subscriptionData[0];
+  const trialActive = sub?.status === "TRIALING" && !!sub.trialEndsAt && new Date(sub.trialEndsAt).getTime() > Date.now();
+  const trialEndsAt = sub?.trialEndsAt?.toISOString() ?? null;
+
   return (
     <ContentContainer>
       <PageHeader title="Billing" description="Your partner plan and the creators you manage."
         breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Billing" }]} />
+
+      <PageSection>
+        <AgencyPlanManager
+          currentPlanCode={agencyWs.code ?? "partner_free"}
+          currentPlanName={displayName}
+          trialActive={trialActive}
+          trialEndsAt={trialEndsAt}
+          clientLimit={creatorLimit}
+          clientUsed={managedCreators}
+        />
+      </PageSection>
 
       <PageSection>
         <MetricGrid>

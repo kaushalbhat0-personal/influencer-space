@@ -34,6 +34,8 @@ export interface BillingSubscription {
   renewsAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
+  /** RCCF-33: server-derived — true only while the trial is active (status TRIALING and trialEndsAt in the future). */
+  isTrialActive?: boolean;
 }
 
 export interface BillingInvoice {

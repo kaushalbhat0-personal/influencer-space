@@ -5,9 +5,10 @@ import { CommissionClient } from "./_components/commission-client";
 export const dynamic = "force-dynamic";
 
 export default async function CommissionCenterPage() {
-  const [config, loyaltyTiers] = await Promise.all([
+  const [config, loyaltyTiers, rules] = await Promise.all([
     revenueService.getCommissionConfig(),
     getLoyaltyTiers(),
+    revenueService.listGlobalCommissionRules(),
   ]);
 
   return (
@@ -19,7 +20,7 @@ export default async function CommissionCenterPage() {
         </p>
       </div>
 
-      <CommissionClient initial={config} />
+      <CommissionClient initial={config} initialRules={rules} />
 
       {loyaltyTiers.length > 0 && (
         <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5">

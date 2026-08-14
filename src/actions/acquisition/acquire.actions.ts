@@ -22,12 +22,18 @@ function nextId(): string {
 /**
  * VALIDATION-02 C1: provisioning and acquisition must be authenticated.
  * Block anonymous callers from mass-creating tenants/sites.
+ *
+ * RCCF-36: additionally restrict TENANT PROVISIONING to administrative roles.
+ * Only SUPER_ADMIN and AGENCY_ADMIN may provision + seed a brand-new tenant
+ * (mirrors generate-website.action.ts). Arbitrary authenticated creators cannot
+ * invoke this to mint new tenants or seed products.
  */
 async function requireProvisioner(): Promise<{ userId: string; role: string }> {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   const role = session?.user?.role ?? "";
   if (!userId) throw new Error("Unauthorized");
+  if (role !== "SUPER_ADMIN" && role !== "AGENCY_ADMIN") throw new Error("Forbidden");
   return { userId, role };
 }
 
@@ -82,17 +88,18 @@ export async function acquireAndProvision(
   input: string,
   profile: BusinessProfile,
 ): Promise<AcquisitionProvisionResult> {
-  await requireProvisioner();
-  const businessName = profile.businessName || profile.ownerName || "Storefront";
   const startedAt = Date.now();
   const recordId = nextId();
   const record: AcquisitionRecord = {
-    id: recordId, strategy, input, creatorName: businessName,
+    id: recordId, strategy, input, creatorName: profile.businessName || profile.ownerName || "Storefront",
     tenantId: "", storefrontUrl: "", status: "started", confidence: 0,
     completeness: 0, warnings: [], duration: 0, errors: [], createdAt: new Date().toISOString(),
   };
 
   try {
+    await requireProvisioner();
+    const businessName = profile.businessName || profile.ownerName || "Storefront";
+
     track("provision:started", { strategy, creatorName: businessName });
 
     const runId = await provisioningService.createRun({

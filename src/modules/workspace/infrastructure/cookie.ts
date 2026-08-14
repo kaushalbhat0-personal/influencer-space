@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 const COOKIE_NAME = "__workspace";
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 const COOKIE_TTL = 7 * 24 * 60 * 60; // 7 days
 
 function getEncryptionKey(): Buffer {
@@ -11,10 +11,12 @@ function getEncryptionKey(): Buffer {
 }
 
 export interface WorkspaceCookiePayload {
-  v: 1;
+  v: 2;
   wid: string;
   role: string;
   type: string;
+  /** RCCF-42: the session user this cookie is bound to — the cookie is a SELECTOR, never an authorization boundary. */
+  uid: string;
   iat: number;
   exp: number;
 }

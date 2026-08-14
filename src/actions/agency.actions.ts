@@ -6,10 +6,9 @@
  * membership is re-validated against the agency workspace, and every read is
  * audited. No IDOR.
  */
-import { partnerService } from "@/lib/partners";
-import { commissionService } from "@/lib/commission";
 import { payoutService } from "@/lib/payouts";
 import { prisma } from "@/lib/prisma";
+import type { PartnerFinancialOverview } from "@/modules/partner/application/financial-overview";
 import { requireAgencyMember } from "@/modules/partner/application/authorization";
 import { logAction } from "@/lib/audit";
 
@@ -28,8 +27,11 @@ export async function getAgencyRevenue(_agencyId: string) {
   const agencyId = ctx.agencyId;
 
   try {
-    const balance = await commissionService.getBalance(agencyId);
-    const summary = await commissionService.getSummary(agencyId, "2024-01-01", "2027-12-31");
+    // RCCF-43: the canonical DB financial source (CommissionEntry + reversals +
+    // ledger + settlements) — never the legacy in-memory ledger.
+    const { getPartnerRevenueSummary, resolveNetPendingEntries } = await import("@/lib/commission/runtime");
+    const summary = await getPartnerRevenueSummary(agencyId);
+    const netPending = await resolveNetPendingEntries(prisma, { partnerId: agencyId });
 
     const agencyWorkspaceIds = await prisma.workspace.findMany({
       where: { agencyId },
@@ -47,10 +49,14 @@ export async function getAgencyRevenue(_agencyId: string) {
     return {
       success: true,
       data: {
-        pendingCommission: balance.pending,
-        availableCommission: balance.available,
-        paidCommission: balance.paid,
-        lifetimeCommission: balance.lifetime,
+        grossCommission: summary.grossCommission,
+        refundReversals: summary.refundReversals,
+        netCommission: summary.netCommission,
+        pendingCommission: summary.pending,
+        availableCommission: summary.available,
+        paidCommission: summary.paid,
+        lifetimeCommission: summary.netCommission,
+        pendingEntries: netPending.length,
         totalInvoiced: subscriptionData._sum.amount ?? 0,
         invoiceCount: subscriptionData._count,
         commissionEntryCount: summary.entryCount,
@@ -67,11 +73,13 @@ export async function getAgencyPayouts(_agencyId: string) {
   const agencyId = ctx.agencyId;
 
   try {
-    const balance = await commissionService.getBalance(agencyId);
+    // RCCF-43: payout eligibility derives from the canonical DB summary.
+    const { getPartnerRevenueSummary } = await import("@/lib/commission/runtime");
+    const revenueSummary = await getPartnerRevenueSummary(agencyId);
     const eligibility = await payoutService.checkEligibility({
       partnerId: agencyId,
-      availableBalance: balance.available,
-      pendingBalance: balance.pending,
+      availableBalance: revenueSummary.available,
+      pendingBalance: revenueSummary.pending,
       hasVerifiedAccount: true,
       partnerActive: true,
     });
@@ -114,9 +122,10 @@ export async function getAgencyPartnerStats(_agencyId: string) {
   const agencyId = ctx.agencyId;
 
   try {
-    const partner = await partnerService.get(agencyId);
-    const stats = await partnerService.getDashboard(agencyId);
-
+    // RCCF-57 release closure: the legacy partnerService surface is removed
+    // from authoritative agency reads. Client count + team count come from the
+    // canonical AgencyTenant / WorkspaceMember models; no legacy capacity
+    // numbers are surfaced.
     const clientCount = await prisma.agencyTenant.count({
       where: { agencyId, status: "ACTIVE" },
     });
@@ -125,17 +134,33 @@ export async function getAgencyPartnerStats(_agencyId: string) {
     return {
       success: true,
       data: {
-        exists: !!partner,
+        exists: true,
         totalClients: clientCount,
-        workspaceUsage: stats?.workspaceUsage ?? { assigned: 0, capacity: 10, remaining: 10, percentUsed: 0 },
-        clientUsage: stats?.clientUsage ?? { assigned: 0, capacity: 20, remaining: 20, percentUsed: 0 },
-        pendingInvites: stats?.pendingInvites ?? 0,
         teamMembers: await prisma.workspaceMember.count({
-          where: { workspace: { agencyId } },
+          where: { workspace: { agencyId }, status: "ACTIVE" },
         }),
       },
     };
   } catch {
     return { success: false, error: "Failed to load partner stats" };
+  }
+}
+
+/**
+ * RCCF-44 — canonical Partner financial overview (server-derived agency).
+ * Gross / refunds / net / pending / paid / available + per-client breakdown +
+ * transaction detail + settlement history, all from persisted financial records.
+ */
+export async function getAgencyFinancialOverview(_agencyId: string): Promise<{ success: boolean; data?: PartnerFinancialOverview; error?: string }> {
+  const ctx = await requireAgencyContext();
+  if (!ctx.ok) return { success: false, error: ctx.error };
+
+  try {
+    const { getAgencyFinancialOverview } = await import("@/modules/partner/application/financial-overview");
+    const overview = await getAgencyFinancialOverview(ctx.agencyId);
+    await logAction("system", "agency:financial-overview-viewed", { agencyId: ctx.agencyId }).catch(() => {});
+    return { success: true, data: overview };
+  } catch {
+    return { success: false, error: "Failed to load financial overview" };
   }
 }

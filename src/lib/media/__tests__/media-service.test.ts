@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockEnforceStorageLimit, mockProvider, mockFindDuplicates, mockCreateAsset, mockUpdateAsset, mockCreateReference } = vi.hoisted(() => ({
+const { mockEnforceStorageLimit, mockProvider, mockFindDuplicates, mockCreateAsset, mockUpdateAsset, mockCreateReference, mockFindById } = vi.hoisted(() => ({
   mockEnforceStorageLimit: vi.fn(),
   mockProvider: {
     exists: vi.fn(),
@@ -16,6 +16,7 @@ const { mockEnforceStorageLimit, mockProvider, mockFindDuplicates, mockCreateAss
   mockCreateAsset: vi.fn(),
   mockUpdateAsset: vi.fn(),
   mockCreateReference: vi.fn(),
+  mockFindById: vi.fn(),
 }));
 
 vi.mock("@/modules/billing/application/storage.enforcement", () => ({
@@ -28,6 +29,7 @@ vi.mock("../repositories/asset-repository", () => ({
     create: mockCreateAsset,
     update: mockUpdateAsset,
     createReference: mockCreateReference,
+    findById: mockFindById,
   },
 }));
 
@@ -81,6 +83,21 @@ beforeEach(() => {
   mockUpdateAsset.mockResolvedValue({});
   mockCreateReference.mockReset();
   mockCreateReference.mockResolvedValue({});
+  mockFindById.mockReset();
+  mockFindById.mockResolvedValue({
+    id: "11111111-1111-4111-8111-111111111111",
+    tenantId: "t1",
+    status: "READY",
+    mimeType: "image/jpeg",
+    storageKey: "t1/general/old.jpg",
+    publicUrl: "https://x/old.jpg",
+    size: 1000,
+    checksum: "old-c",
+  });
+  mockProvider.upload.mockReset();
+  mockProvider.upload.mockResolvedValue({ storageKey: "t1/replace/new.jpg", publicUrl: "https://x/new.jpg", size: 2048 });
+  mockProvider.delete.mockReset();
+  mockProvider.delete.mockResolvedValue({});
   mockProvider.exists.mockReset();
   mockProvider.exists.mockResolvedValue(true);
   mockProvider.getObjectMetadata.mockReset();
@@ -136,6 +153,39 @@ describe("MediaService storage quota wiring (RCCF-09)", () => {
     });
 
     await expect(mediaService.completeSignedUpload(signedPayload())).rejects.toThrow("Storage limit reached");
+  });
+});
+
+describe("MediaService replace quota (RCCF-35)", () => {
+  it("enforces the net delta when the replacement is larger than the existing asset", async () => {
+    mockEnforceStorageLimit.mockResolvedValue({
+      ok: false,
+      used: 1024,
+      limit: 1024,
+      remaining: 0,
+      limitGb: 1,
+      reason: "Storage limit reached (1.2 / 1 GB).",
+    });
+
+    // existing.size = 1000, replacement = 2048 → net delta = 1048
+    const error = await mediaService
+      .replace({ assetId: "11111111-1111-4111-8111-111111111111", file: makeFile(2048) })
+      .then(() => null)
+      .catch((e) => e);
+
+    expect(error).toBeInstanceOf(MediaValidationError);
+    expect(mockEnforceStorageLimit).toHaveBeenCalledWith({ tenantId: "t1", incomingBytes: 1048 });
+    // The original object must NOT be deleted when the replace is rejected.
+    expect(mockProvider.delete).not.toHaveBeenCalled();
+  });
+
+  it("does not consume quota when the replacement is smaller or equal", async () => {
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+
+    await mediaService.replace({ assetId: "11111111-1111-4111-8111-111111111111", file: makeFile(800) });
+
+    expect(mockEnforceStorageLimit).toHaveBeenCalledWith({ tenantId: "t1", incomingBytes: 0 });
+    expect(mockProvider.delete).toHaveBeenCalled();
   });
 });
 

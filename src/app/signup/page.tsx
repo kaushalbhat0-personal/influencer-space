@@ -2,16 +2,28 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
 
 export const metadata: Metadata = {
   title: "Sign Up Free — CreatorStore",
   description: "Create your free CreatorStore account and build your creator website in minutes.",
 };
 
-export default function SignupPage() {
+// RCCF-36: signup pricing consumes the canonical runtime (DB-authoritative)
+// source, so Pricing Center == Marketing == Signup for new purchases.
+export default async function SignupPage() {
+  const [creator, partner] = await Promise.all([
+    getRuntimePlansByFamily("creator"),
+    getRuntimePlansByFamily("partner"),
+  ]);
+  const pricing: Record<string, { price: number | null; annualPrice: number | null }> = {};
+  for (const p of [...creator, ...partner]) {
+    pricing[p.code] = { price: p.price, annualPrice: p.annualPrice };
+  }
+
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[var(--surface-root)]"><LoadingSpinner size="lg" text="Loading..." /></div>}>
-      <SignupForm />
+      <SignupForm pricing={pricing} />
     </Suspense>
   );
 }

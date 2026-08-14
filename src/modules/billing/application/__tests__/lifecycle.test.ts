@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
   logAction: vi.fn(),
   workspaceFind: vi.fn(),
   planFindUnique: vi.fn(),
+  invoiceFindFirst: vi.fn(),
 }));
 
 vi.mock("@/modules/billing/infrastructure/repository", () => ({
@@ -30,11 +31,15 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     workspace: { findUnique: h.workspaceFind },
     billingPlan: { findUnique: h.planFindUnique },
-    billingInvoice: { findMany: vi.fn().mockResolvedValue([]) },
+    billingInvoice: { findMany: vi.fn().mockResolvedValue([]), findFirst: h.invoiceFindFirst },
     billingEvent: { findMany: vi.fn().mockResolvedValue([]) },
     product: { count: vi.fn().mockResolvedValue(0) },
     galleryImage: { count: vi.fn().mockResolvedValue(0) },
     productOrder: { count: vi.fn().mockResolvedValue(0) },
+    // RCCF-41: invoice + commission are created inside one transaction.
+    $transaction: async (cb: (tx: unknown) => unknown) => cb({
+      billingInvoice: { create: h.createInvoice },
+    }),
   },
 }));
 
@@ -42,6 +47,7 @@ vi.mock("@/lib/events", () => ({ platformEventBus: { publish: h.publish } }));
 vi.mock("@/lib/audit", () => ({ logAction: h.logAction }));
 vi.mock("@/lib/commission", () => ({ commissionService: { processCommission: vi.fn() } }));
 vi.mock("@/lib/partners", () => ({ partnerService: { get: vi.fn().mockResolvedValue(null) } }));
+vi.mock("@/lib/commission/runtime", () => ({ recordSubscriptionCommission: vi.fn().mockResolvedValue({ success: true }) }));
 vi.mock("@/modules/billing/infrastructure/providers/razorpay", () => ({
   razorpayProvider: { createCheckout: vi.fn().mockResolvedValue({ success: true, subscriptionId: "sub_test" }) },
 }));
@@ -56,6 +62,7 @@ beforeEach(() => {
   h.upsertSub.mockImplementation(async (_ws: string, data: object) => ({ id: "sub-1", ...data }));
   h.createEvent.mockResolvedValue({ id: "evt-1" });
   h.createInvoice.mockResolvedValue({ id: "inv-1", amount: 0 });
+  h.invoiceFindFirst.mockResolvedValue(null);
   h.planFindUnique.mockResolvedValue({ id: "plan-1", code: "creator_grow" });
   h.workspaceFind.mockResolvedValue({ tenantId: "t-1" });
   h.logAction.mockResolvedValue(undefined);
@@ -69,9 +76,10 @@ describe("handleSubscriptionWebhook — lifecycle transitions", () => {
       eventName: "subscription.activated",
       workspaceId: "ws-1",
       planCode: "creator_grow",
-      providerReference: "sub_test",
+      providerReference: "pay_test",
       idempotencyKey: "k1",
       renewsAt: new Date(),
+      amount: 999,
     });
     expect(result.handled).toBe(true);
     expect(result.status).toBe("ACTIVE");
@@ -79,6 +87,24 @@ describe("handleSubscriptionWebhook — lifecycle transitions", () => {
     expect(h.createEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "SUBSCRIPTION_ACTIVATED", idempotencyKey: "k1" }));
     expect(h.createInvoice).toHaveBeenCalled();
     expect(h.publish).toHaveBeenCalledWith("PaymentCaptured", expect.anything());
+  });
+
+  it("RCCF-41: a webhook with no/zero amount never mints an invoice or commission", async () => {
+    h.findSubByWorkspace.mockResolvedValue(null);
+    h.findPlanByCode.mockResolvedValue({ id: "plan-1", code: "creator_grow" });
+    const result = await service.handleSubscriptionWebhook({
+      eventName: "subscription.activated",
+      workspaceId: "ws-1",
+      planCode: "creator_grow",
+      providerReference: "pay_zero",
+      idempotencyKey: "k-zero",
+      renewsAt: new Date(),
+      amount: 0, // missing/zero payment entity → amount 0
+    });
+    expect(result.handled).toBe(true);
+    expect(result.status).toBe("ACTIVE");
+    expect(h.createInvoice).not.toHaveBeenCalled();
+    expect(h.publish).not.toHaveBeenCalled();
   });
 
   it("marks payment failures as PAST_DUE", async () => {
@@ -185,5 +211,39 @@ describe("changePlan — validation + checkout", () => {
     h.findPlanByCode.mockResolvedValue({ id: "plan-grow", code: "creator_grow" });
     const result = await service.changePlan("ws-1", "creator_scale");
     expect(result.success).toBe(true);
+  });
+
+  it("RCCF-37 P1: one charge across overlapping events mints only ONE paid invoice", async () => {
+    h.findSubByWorkspace.mockResolvedValue({ id: "sub-1", planId: "plan-1", status: "ACTIVE" });
+    h.findPlanByCode.mockResolvedValue({ id: "plan-1", code: "creator_grow" });
+    h.createInvoice.mockResolvedValue({ id: "inv-1", amount: 999 });
+
+    // First event (e.g. subscription.charged) — no existing invoice → created.
+    h.invoiceFindFirst.mockResolvedValue(null);
+    await service.handleSubscriptionWebhook({
+      eventName: "subscription.charged",
+      workspaceId: "ws-1",
+      planCode: "creator_grow",
+      providerReference: "pay_1",
+      idempotencyKey: "k-charged",
+      amount: 999,
+      renewsAt: new Date(),
+    });
+    expect(h.createInvoice).toHaveBeenCalledTimes(1);
+    expect(h.createInvoice).toHaveBeenCalledWith(expect.objectContaining({ providerReference: "pay_1", amount: 999 }), expect.anything());
+
+    // Second overlapping event (payment.captured) for the SAME payment →
+    // an invoice already exists for this reference → no second invoice.
+    h.invoiceFindFirst.mockResolvedValue({ id: "inv-1" });
+    await service.handleSubscriptionWebhook({
+      eventName: "payment.captured",
+      workspaceId: "ws-1",
+      planCode: "creator_grow",
+      providerReference: "pay_1",
+      idempotencyKey: "k-captured",
+      amount: 999,
+    });
+
+    expect(h.createInvoice).toHaveBeenCalledTimes(1);
   });
 });

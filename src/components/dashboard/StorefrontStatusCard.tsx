@@ -1,15 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /** IMPLEMENTATION-44: deterministic date (no locale-dependent hydration mismatch). */
 const fmtDateTime = (v: string | Date) => new Date(v).toISOString().replace("T", " ").slice(0, 16);
+const fmtDate = (v: string | Date | null) => (v ? new Date(v).toISOString().slice(0, 10) : "");
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ExternalLink, Layout, Globe, CheckCircle2, Clock, AlertTriangle, Rocket, Loader2, History } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { publishWebsite, rollbackWebsite } from "@/actions/publish.actions";
+import { publishWebsite, rollbackWebsite, getCreatorPublishUsage, type PublishActionResult } from "@/actions/publish.actions";
+import type { PublishUsage } from "@/lib/publishing/publish-usage";
+
+function buildQuotaMessage(res: PublishActionResult): string {
+  if (res.code === "PUBLISH_TRIAL_EXPIRED") {
+    return "Your Launch trial has ended. Your website remains live, but publishing new changes requires an active subscription. Upgrade to Growth to continue publishing.";
+  }
+  const limit = res.limit ?? 0;
+  if (res.suggestedUpgrade === "growth") {
+    return `You've used all ${limit} Launch publishes. Upgrade to Growth for 10 publishes per month.`;
+  }
+  if (res.suggestedUpgrade === "scale") {
+    const reset = res.periodEnd ? ` Your allowance resets ${fmtDate(res.periodEnd)}.` : "";
+    return `You've used all ${limit} publishes for this billing period.${reset} Upgrade to Scale for unlimited publishes.`;
+  }
+  return res.error || "Publish limit reached.";
+}
 
 interface VersionEntry {
   version: number;
@@ -41,7 +58,16 @@ export function StorefrontStatusCard({
   const [publishError, setPublishError] = useState<string | null>(null);
   const [showVersions, setShowVersions] = useState(false);
   const [restoringVersion, setRestoringVersion] = useState<number | null>(null);
+  const [usage, setUsage] = useState<PublishUsage | null>(null);
   const router = useRouter();
+
+  // RCCF-32: authoritative publish-usage display (server-derived; refreshed on
+  // the full reload after a successful publish).
+  useEffect(() => {
+    getCreatorPublishUsage()
+      .then((res) => { if (res.success && res.usage) setUsage(res.usage); })
+      .catch(() => { /* non-fatal — the publish flow still works */ });
+  }, []);
 
   const hasLiveVersion = !!publishedVersion && publishedVersion > 0;
   const isLive = publishState === "live" && hasLiveVersion;
@@ -57,7 +83,7 @@ export function StorefrontStatusCard({
       if (res.success) {
         window.location.reload();
       } else {
-        setPublishError(res.error || "Publishing failed");
+        setPublishError(res.code === "PUBLISH_QUOTA_EXCEEDED" || res.code === "PUBLISH_TRIAL_EXPIRED" ? buildQuotaMessage(res) : res.error || "Publishing failed");
       }
     } catch {
       setPublishError("Publishing failed");
@@ -108,6 +134,16 @@ export function StorefrontStatusCard({
           </span>
         </div>
 
+        {usage?.trialExpired && (
+          <div className="flex items-start gap-2 rounded-lg bg-red-500/10 p-2.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-300">
+              Your Launch trial has ended. Your website remains live, but publishing new changes requires an active subscription.
+              <Link href="/billing" className="ml-1 underline text-red-200 hover:text-red-100">Upgrade to Growth</Link> to continue publishing.
+            </p>
+          </div>
+        )}
+
         {publishedVersion && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-zinc-400">Last published</span>
@@ -126,6 +162,28 @@ export function StorefrontStatusCard({
           <div className="flex items-center justify-between text-sm">
             <span className="text-zinc-400">Published at</span>
             <span className="text-zinc-400 text-xs">{fmtDateTime(publishedAt)}</span>
+          </div>
+        )}
+
+        {usage && usage.mode === "unlimited" && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-400">Publish allowance</span>
+            <span className="text-zinc-300 text-xs">Unlimited</span>
+          </div>
+        )}
+
+        {usage && usage.mode !== "unlimited" && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-400">Publish allowance</span>
+            <span className="text-zinc-300 text-xs">
+              {usage.used} of {usage.limit} used
+              {usage.mode === "monthly"
+                ? ` · resets ${fmtDate(usage.periodEnd)}`
+                : usage.mode === "lifetime"
+                  ? " · lifetime"
+                  : ""}
+              {usage.isExhausted ? " · exhausted" : ` · ${usage.remaining} remaining`}
+            </span>
           </div>
         )}
 
@@ -166,7 +224,7 @@ export function StorefrontStatusCard({
       </div>
 
       <div className="mt-4 pt-4 border-t border-white/10 space-y-1">
-        {(neverPublished || hasUnpublishedChanges) && hasProducts && (
+        {(neverPublished || hasUnpublishedChanges) && hasProducts && !usage?.trialExpired && (
           <button
             onClick={handlePublish}
             disabled={publishing}

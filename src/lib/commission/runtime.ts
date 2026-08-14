@@ -10,6 +10,7 @@
 // .agencyDefaultShare → 20% default.
 
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import { cache as reactCache } from "react";
 import { logAction } from "@/lib/audit";
 import { runtimeEventBus } from "@/modules/event-runtime";
@@ -63,10 +64,16 @@ interface SplitSource {
 
 /** Export for tests: resolve the platform/agency split for a subscription. */
 export const resolveSplitSource = requestCache(async (partnerId: string, planCode: string, tenantId: string | null): Promise<SplitSource> => {
-  // 1. DB-backed CommissionRule cascade (partner → plan → default).
+  // RCCF-48 — approved hierarchy: partner-specific rule → plan-specific rule →
+  // global CommissionRule → loyalty tier → AgencyTenant.revSharePercent →
+  // CommissionPolicy → 80/20 fallback. An explicit rule is authoritative;
+  // without a rule, the existing loyalty economics apply unchanged.
   const rules = await prisma.commissionRule.findMany({
     where: { status: "active" },
-    orderBy: { priority: "asc" },
+    // RCCF-56 — deterministic tie-break: priority asc, then id asc. Same-scope
+    // rules with equal priority now resolve deterministically instead of
+    // depending on implicit DB order.
+    orderBy: [{ priority: "asc" }, { id: "asc" }],
     select: {
       id: true, type: true, partnerId: true, platformSharePercent: true,
       partnerSharePercent: true, metadata: true, effectiveFrom: true, effectiveTo: true,
@@ -76,24 +83,27 @@ export const resolveSplitSource = requestCache(async (partnerId: string, planCod
   const active = rules.filter(
     (r) => r.effectiveFrom <= now && (!r.effectiveTo || r.effectiveTo >= now),
   );
+
+  // 1. Partner-specific rule.
   const partnerRule = active.find((r) => r.partnerId === partnerId);
   if (partnerRule) return { platformPercent: partnerRule.platformSharePercent, partnerPercent: partnerRule.partnerSharePercent, ruleId: partnerRule.id, source: "rule" };
 
-  // 2. RCCF-IMPLEMENTATION-75: loyalty tier by active-client count. Automatic
-  // (not negotiated) — beats the relationship/policy/default shares, while an
-  // explicit partner rule above still wins for special deals.
+  // 2. Plan-specific rule.
+  const planRule = active.find((r) => (r.metadata as Record<string, unknown> | null)?.["planCode"] === planCode);
+  if (planRule) return { platformPercent: planRule.platformSharePercent, partnerPercent: planRule.partnerSharePercent, ruleId: planRule.id, source: "rule" };
+
+  // 3. Global CommissionRule.
+  const defaultRule = active.find((r) => r.type === "default" && r.partnerId == null);
+  if (defaultRule) return { platformPercent: defaultRule.platformSharePercent, partnerPercent: defaultRule.partnerSharePercent, ruleId: defaultRule.id, source: "rule" };
+
+  // 4. Loyalty tier by active-client count (automatic escalation — unchanged).
   const loyaltyTier = await resolveLoyaltyTier(partnerId);
   if (loyaltyTier) {
     const partnerPercent = Math.min(100, Math.max(0, Math.round(loyaltyTier.commissionPercent)));
     return { platformPercent: 100 - partnerPercent, partnerPercent, ruleId: null, source: "loyalty" };
   }
 
-  const planRule = active.find((r) => (r.metadata as Record<string, unknown> | null)?.["planCode"] === planCode);
-  if (planRule) return { platformPercent: planRule.platformSharePercent, partnerPercent: planRule.partnerSharePercent, ruleId: planRule.id, source: "rule" };
-  const defaultRule = active.find((r) => r.type === "default");
-  if (defaultRule) return { platformPercent: defaultRule.platformSharePercent, partnerPercent: defaultRule.partnerSharePercent, ruleId: defaultRule.id, source: "rule" };
-
-  // 3. Per-creator agency relationship share.
+  // 5. Per-creator agency relationship share.
   if (tenantId) {
     const link = await prisma.agencyTenant.findUnique({
       where: { tenantId },
@@ -105,7 +115,7 @@ export const resolveSplitSource = requestCache(async (partnerId: string, planCod
     }
   }
 
-  // 4. Platform policy.
+  // 6. Platform policy.
   const policy = await prisma.commissionPolicy.findFirst({
     select: { agencyDefaultShare: true },
   });
@@ -114,7 +124,7 @@ export const resolveSplitSource = requestCache(async (partnerId: string, planCod
     return { platformPercent: 100 - partnerPercent, partnerPercent, ruleId: null, source: "policy" };
   }
 
-  // 5. Default 80/20.
+  // 7. Default 80/20.
   return { platformPercent: 80, partnerPercent: 20, ruleId: null, source: "default" };
 });
 
@@ -133,15 +143,21 @@ export function computeSubscriptionSplit(amount: number, src: SplitSource): Reve
  * workspace. Idempotent per invoice, transactional (CommissionEntry +
  * PartnerLedger), emits canonical events + audit. Returns skipped reasons
  * instead of throwing for benign cases; real failures surface to the caller.
+ *
+ * RCCF-41 — accepts an optional `tx` so the caller can commit the invoice and
+ * the commission in ONE transaction (invoice + commission + ledger are atomic).
  */
-export async function recordSubscriptionCommission(params: {
-  workspaceId: string;
-  planCode: string;
-  subscriptionId: string;
-  invoiceId: string;
-  amount: number;
-  event: "created" | "renewed" | "upgraded";
-}): Promise<CommissionRecordResult> {
+export async function recordSubscriptionCommission(
+  params: {
+    workspaceId: string;
+    planCode: string;
+    subscriptionId: string;
+    invoiceId: string;
+    amount: number;
+    event: "created" | "renewed" | "upgraded";
+  },
+  tx?: Prisma.TransactionClient,
+): Promise<CommissionRecordResult> {
   const partnerId = await resolvePartnerForWorkspace(params.workspaceId);
   if (!partnerId) return { success: false, skipped: "no-partner" };
 
@@ -156,8 +172,8 @@ export async function recordSubscriptionCommission(params: {
   const split = computeSubscriptionSplit(params.amount, src);
 
   try {
-    await prisma.$transaction(async (tx) => {
-      const entry = await tx.commissionEntry.create({
+    const commit = async (client: Prisma.TransactionClient | typeof prisma) => {
+      const entry = await client.commissionEntry.create({
         data: {
           invoiceId: params.invoiceId,
           partnerId,
@@ -177,13 +193,13 @@ export async function recordSubscriptionCommission(params: {
       });
 
       // Append-only partner ledger (balance chain) inside the same transaction.
-      const last = await tx.partnerLedger.findFirst({
+      const last = await client.partnerLedger.findFirst({
         where: { partnerId },
         orderBy: { createdAt: "desc" },
         select: { balanceAfter: true },
       });
       const balanceBefore = last?.balanceAfter ?? 0;
-      await tx.partnerLedger.create({
+      await client.partnerLedger.create({
         data: {
           partnerId,
           type: "COMMISSION_EARNED",
@@ -196,25 +212,25 @@ export async function recordSubscriptionCommission(params: {
           balanceAfter: Math.round((balanceBefore + split.partnerShare) * 100) / 100,
         },
       });
+    };
 
-      await emitEvent({
-        type: params.event === "created" ? "subscription.created" : params.event === "renewed" ? "subscription.renewed" : "subscription.upgraded",
-        tenantId: ws?.tenantId ?? "system",
-        entityId: params.subscriptionId,
-        payload: { workspaceId: params.workspaceId, planCode: params.planCode, amount: params.amount },
-      });
-      await emitEvent({
-        type: "commission.created",
-        tenantId: ws?.tenantId ?? "system",
-        entityId: entry.id,
-        payload: { partnerId, invoiceId: params.invoiceId, subscriptionId: params.subscriptionId, planCode: params.planCode, amount: params.amount, partnerShare: split.partnerShare, platformShare: split.platformShare },
-      });
-      await emitEvent({
-        type: "ledger.updated",
-        tenantId: ws?.tenantId ?? "system",
-        entityId: entry.id,
-        payload: { partnerId, type: "COMMISSION_EARNED", amount: split.partnerShare, reference: entry.id },
-      });
+    if (tx) {
+      await commit(tx);
+    } else {
+      await prisma.$transaction(async (t) => commit(t));
+    }
+
+    await emitEvent({
+      type: params.event === "created" ? "subscription.created" : params.event === "renewed" ? "subscription.renewed" : "subscription.upgraded",
+      tenantId: ws?.tenantId ?? "system",
+      entityId: params.subscriptionId,
+      payload: { workspaceId: params.workspaceId, planCode: params.planCode, amount: params.amount },
+    });
+    await emitEvent({
+      type: "commission.created",
+      tenantId: ws?.tenantId ?? "system",
+      entityId: params.invoiceId,
+      payload: { partnerId, invoiceId: params.invoiceId, subscriptionId: params.subscriptionId, planCode: params.planCode, amount: params.amount, partnerShare: split.partnerShare, platformShare: split.platformShare },
     });
 
     await logAction("system", "commission:subscription-created", {
@@ -241,8 +257,66 @@ async function emitEvent(event: Omit<RuntimeEvent, "occurredAt">): Promise<void>
 
 // ── Reporting + health (Phases 13 + 14) ──────────────────────────────────────
 
-/** Agency revenue summary from the DB runtime. */
+/**
+ * RCCF-43 — resolve PENDING commission entries to their NET settleable share.
+ * A pending original is reduced by its append-only reversal children so a
+ * partially refunded commission settles only its unrefunded remainder
+ * (e.g. original ₹300, reversal −₹120 → ₹180). Entries with net ≤ 0 are
+ * excluded. Transaction-aware (used by settlement + the revenue summary).
+ */
+export async function resolveNetPendingEntries(
+  client: Prisma.TransactionClient | typeof prisma,
+  params: { partnerId?: string; ids?: string[]; excludedIds?: string[] },
+): Promise<Array<{ id: string; netShare: number }>> {
+  const where: Prisma.CommissionEntryWhereInput = { status: "pending" };
+  if (params.partnerId) where.partnerId = params.partnerId;
+  if (params.ids) where.id = { in: params.ids };
+  if (params.excludedIds?.length) where.id = { ...((where.id as object) ?? {}), notIn: params.excludedIds };
+
+  const pending = await client.commissionEntry.findMany({
+    where,
+    select: { id: true, partnerShare: true },
+  });
+  if (pending.length === 0) return [];
+
+  const reversals = await client.commissionEntry.findMany({
+    where: { parentEntryId: { in: pending.map((p) => p.id) } },
+    select: { parentEntryId: true, partnerShare: true },
+  });
+  const byParent = new Map<string, number>();
+  for (const r of reversals) {
+    if (!r.parentEntryId) continue;
+    byParent.set(r.parentEntryId, (byParent.get(r.parentEntryId) ?? 0) + r.partnerShare);
+  }
+
+  const out: Array<{ id: string; netShare: number }> = [];
+  for (const p of pending) {
+    const net = Math.round((p.partnerShare + (byParent.get(p.id) ?? 0)) * 100) / 100;
+    if (net > 0) out.push({ id: p.id, netShare: net });
+  }
+  return out;
+}
+
+/**
+ * RCCF-43 — partner-scoped reserved-entry exclusion. Only the partner's OWN
+ * settled commission entries are excluded from their pending summary — another
+ * partner's reservations can never suppress this partner's numbers.
+ */
+async function reservedEntryIds(partnerId: string): Promise<{ id?: { notIn: string[] } }> {
+  const reserved = await prisma.settlementItem.findMany({
+    where: { settlement: { partnerId } },
+    select: { commissionEntryId: true },
+  });
+  if (reserved.length === 0) return {};
+  return { id: { notIn: reserved.map((r) => r.commissionEntryId) } };
+}
+
+/** Agency revenue summary from the DB runtime (the canonical financial source). */
 export async function getPartnerRevenueSummary(partnerId: string): Promise<{
+  grossCommission: number;
+  refundReversals: number;
+  netCommission: number;
+  clawbackDue: number;
   lifetime: number;
   pending: number;
   paid: number;
@@ -251,29 +325,58 @@ export async function getPartnerRevenueSummary(partnerId: string): Promise<{
   activeClients: number;
   upcomingRenewals: number;
 }> {
-  const [entryAgg, paidAgg, entryCount, activeClients, renewals] = await Promise.all([
-    prisma.commissionEntry.aggregate({ where: { partnerId }, _sum: { partnerShare: true } }),
-    prisma.partnerLedger.aggregate({ where: { partnerId, type: "SETTLEMENT_PAID" }, _sum: { amount: true } }),
+  const [grossAgg, reversalAgg, clawbackAgg, entryCount, activeClients, renewals] = await Promise.all([
+    prisma.commissionEntry.aggregate({
+      where: { partnerId, entryType: { startsWith: "subscription_" } },
+      _sum: { partnerShare: true },
+    }),
+    prisma.commissionEntry.aggregate({
+      where: { partnerId, entryType: "refund_reversal" },
+      _sum: { partnerShare: true },
+    }),
+    prisma.partnerLedger.aggregate({
+      where: { partnerId, type: "CLAWBACK_DUE" },
+      _sum: { amount: true },
+    }),
     prisma.commissionEntry.count({ where: { partnerId } }),
     getActiveClientCount(partnerId),
     prisma.billingSubscription.count({
       where: { workspace: { tenant: { agencyTenant: { agencyId: partnerId } } }, status: { in: ["ACTIVE", "TRIALING"] } },
     }),
   ]);
-  const lifetime = entryAgg._sum.partnerShare ?? 0;
-  const paid = paidAgg._sum.amount ?? 0;
-  const pendingAgg = await prisma.commissionEntry.aggregate({
-    where: { partnerId, status: "pending", ...(await reservedEntryIds(partnerId)) },
-    _sum: { partnerShare: true },
-  });
-  const pending = pendingAgg._sum.partnerShare ?? 0;
-  return { lifetime, pending, paid, available: Math.max(0, lifetime - paid), entryCount, activeClients, upcomingRenewals: renewals };
-}
 
-async function reservedEntryIds(partnerId: string): Promise<{ id?: { notIn: string[] } }> {
-  const reserved = await prisma.settlementItem.findMany({ select: { commissionEntryId: true } });
-  if (reserved.length === 0) return {};
-  return { id: { notIn: reserved.map((r) => r.commissionEntryId) } };
+  const grossCommission = Math.round((grossAgg._sum.partnerShare ?? 0) * 100) / 100;
+  const refundReversals = Math.round((reversalAgg._sum.partnerShare ?? 0) * 100) / 100; // negative
+  const netCommission = Math.round((grossCommission + refundReversals) * 100) / 100;
+  // RCCF-50: clawback due = settled commission that was later refunded (an
+  // outstanding obligation, negative in the ledger). Surfaced separately and
+  // subtracted from available so the partner is never shown as eligible for
+  // amounts already paid and later refunded.
+  const clawbackDue = Math.abs(Math.round((clawbackAgg._sum.amount ?? 0) * 100) / 100);
+
+  const paidAgg = await prisma.partnerLedger.aggregate({
+    where: { partnerId, type: "SETTLEMENT_PAID" },
+    _sum: { amount: true },
+  });
+  const paid = paidAgg._sum.amount ?? 0;
+
+  const excluded = (await reservedEntryIds(partnerId)).id?.notIn ?? [];
+  const netPending = await resolveNetPendingEntries(prisma, { partnerId, excludedIds: excluded });
+  const pending = Math.round(netPending.reduce((s, e) => s + e.netShare, 0) * 100) / 100;
+
+  return {
+    grossCommission,
+    refundReversals,
+    netCommission,
+    clawbackDue,
+    lifetime: netCommission,
+    pending,
+    paid,
+    available: Math.max(0, Math.round((netCommission - paid - clawbackDue) * 100) / 100),
+    entryCount,
+    activeClients,
+    upcomingRenewals: renewals,
+  };
 }
 
 /** Platform-level revenue summary (Phase 14). */

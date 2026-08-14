@@ -1,10 +1,10 @@
 import { Users, Eye, UserPlus, BarChart3, Rocket } from "lucide-react";
 
 const FEATURES = [
-  { icon: Users, title: "Multi-Client Management", body: "Switch between client workspaces without logging out. Each creator has their own storefront, products, and analytics." },
-  { icon: Eye, title: "White-Label Ready", body: "Remove CreatorStore branding. Present a fully branded experience to your clients." },
-  { icon: UserPlus, title: "Team Collaboration", body: "Invite team members, assign roles, and work together on client projects." },
-  { icon: BarChart3, title: "Centralized Analytics", body: "View performance across all clients in one dashboard. Compare, analyze, and optimize." },
+  { icon: Users, title: "Multi-Client Management", body: "Switch between client workspaces without logging out. Each creator has their own storefront, products, and billing." },
+  { icon: Eye, title: "White-Label Branding", body: "On Scale and Enterprise plans, configure colors, logo, and support details shown on your branded client preview portal." },
+  { icon: UserPlus, title: "Team Collaboration", body: "Invite team members with admin and staff roles to work on client projects." },
+  { icon: BarChart3, title: "Client & Revenue Insights", body: "Monitor client health, publishing state, and your recurring commission in one dashboard." },
   { icon: Rocket, title: "Client Onboarding", body: "Generate a complete storefront from a client's social URL in minutes. No manual setup required." },
 ];
 

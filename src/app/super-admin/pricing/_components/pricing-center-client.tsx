@@ -79,9 +79,12 @@ export function PricingCenterClient({ plans, versions, coupons, programs, analyt
       capabilities: Array.from(form.capabilities),
       featureOverrides: form.featureOverrides,
       scheduled: form.scheduled.map((s) => ({ price: num(s.price), annualPrice: num(s.annualPrice), effectiveAt: s.effectiveAt })).filter((s) => s.effectiveAt),
+      publishing: form.publishingMode
+        ? { mode: form.publishingMode as "lifetime" | "monthly" | "unlimited", limit: form.publishingMode === "unlimited" ? null : num(form.publishingLimit) }
+        : null,
       changeNote: form.changeNote || undefined,
     });
-    setMsg(r.success ? "Saved. Marketing, checkout and upgrade dialogs now reflect this plan." : r.error ?? "Save failed");
+    setMsg(r.success ? (r.warning ? r.warning : "Saved. Marketing, checkout and upgrade dialogs now reflect this plan.") : r.error ?? "Save failed");
     setSaving(false);
     if (r.success) setTimeout(() => window.location.reload(), 800);
   };
@@ -161,6 +164,8 @@ interface EditorState {
   capabilities: Set<string>;
   featureOverrides: Record<string, number | boolean | string>;
   scheduled: Array<{ price: string; annualPrice: string; effectiveAt: string }>;
+  publishingMode: string;
+  publishingLimit: string;
   changeNote: string;
 }
 
@@ -192,6 +197,8 @@ function initForm(plan: CenterPlan | undefined): EditorState {
     capabilities: new Set(rc?.capabilities ?? []),
     featureOverrides: { ...(rc?.featureOverrides ?? {}) },
     scheduled: (p?.schedule ?? []).map((s) => ({ price: s.price !== null && s.price !== undefined ? String(s.price) : "", annualPrice: s.annualPrice !== null && s.annualPrice !== undefined ? String(s.annualPrice) : "", effectiveAt: s.effectiveAt })),
+    publishingMode: rc?.publishing?.mode ?? "",
+    publishingLimit: rc?.publishing?.limit !== undefined && rc?.publishing?.limit !== null ? String(rc.publishing.limit) : "",
     changeNote: "",
   };
 }
@@ -207,6 +214,30 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600";
 const checkCls = "h-4 w-4 rounded border-white/20 bg-zinc-900";
+
+/** RCCF-49: presents client capacity as Unlimited (-1) or a finite positive integer. */
+function CapacityLimitControl({ value, onChange }: { value: number | boolean | string; onChange: (raw: string) => void }) {
+  const unlimited = Number(value) === -1;
+  return (
+    <div className="flex items-center gap-2">
+      <label className="flex items-center gap-1 text-xs text-zinc-400">
+        <input type="checkbox" className={checkCls} checked={unlimited} onChange={(e) => onChange(e.target.checked ? "-1" : "1")} />
+        Unlimited
+      </label>
+      <input
+        className={inputCls}
+        type="number"
+        min={1}
+        step={1}
+        disabled={unlimited}
+        value={unlimited ? "" : String(value)}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Clients"
+        aria-label="Client capacity"
+      />
+    </div>
+  );
+}
 
 function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatures, onReset }: {
   form: EditorState;
@@ -241,8 +272,8 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
         <Field label="Description"><textarea className={inputCls} rows={2} value={form.description} onChange={(e) => set("description", e.target.value)} /></Field>
         <Field label="Target audience"><input className={inputCls} value={form.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} /></Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Monthly price (₹)"><input className={inputCls} value={form.monthlyPrice} onChange={(e) => set("monthlyPrice", e.target.value)} placeholder="699" /></Field>
-          <Field label="Annual price (₹/yr)"><input className={inputCls} value={form.annualPrice} onChange={(e) => set("annualPrice", e.target.value)} placeholder="6990" /></Field>
+          <Field label="Monthly price (₹)"><input className={inputCls} value={form.monthlyPrice} onChange={(e) => set("monthlyPrice", e.target.value)} placeholder="999" /></Field>
+          <Field label="Annual price (₹/yr)"><input className={inputCls} value={form.annualPrice} onChange={(e) => set("annualPrice", e.target.value)} placeholder="9990" /></Field>
           <Field label="Trial days"><input className={inputCls} value={form.trialDays} onChange={(e) => set("trialDays", e.target.value)} placeholder="15" /></Field>
           <Field label="Grace period (days)"><input className={inputCls} value={form.gracePeriodDays} onChange={(e) => set("gracePeriodDays", e.target.value)} /></Field>
           <Field label="CTA label"><input className={inputCls} value={form.ctaLabel} onChange={(e) => set("ctaLabel", e.target.value)} /></Field>
@@ -291,7 +322,11 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
           <div className="grid grid-cols-3 gap-2">
             {limitFeatures.map((f) => (
               <Field key={f.id} label={f.label}>
-                <input className={inputCls} value={String(form.featureOverrides[f.id] ?? 0)} onChange={(e) => setLimit(f.id, e.target.value)} />
+                {f.id === "max_clients" ? (
+                  <CapacityLimitControl value={form.featureOverrides[f.id] ?? -1} onChange={(raw) => setLimit(f.id, raw)} />
+                ) : (
+                  <input className={inputCls} value={String(form.featureOverrides[f.id] ?? 0)} onChange={(e) => setLimit(f.id, e.target.value)} />
+                )}
               </Field>
             ))}
           </div>
@@ -311,6 +346,33 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
             ))}
           </div>
           <button onClick={() => set("scheduled", [...form.scheduled, { price: "", annualPrice: "", effectiveAt: "" }])} className="mt-2 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/5">+ Add schedule</button>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <h2 className="mb-3 text-sm font-semibold text-white">Publishing <span className="text-[10px] font-normal text-zinc-500">(RCCF-31 quota — server-authoritative)</span></h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Mode">
+              <select className={inputCls} value={form.publishingMode} onChange={(e) => set("publishingMode", e.target.value)}>
+                <option value="">Default (no override)</option>
+                <option value="lifetime">Lifetime</option>
+                <option value="monthly">Monthly</option>
+                <option value="unlimited">Unlimited</option>
+              </select>
+            </Field>
+            <Field label="Successful-publish limit">
+              <input
+                className={inputCls}
+                type="number"
+                min={0}
+                step={1}
+                value={form.publishingLimit}
+                disabled={form.publishingMode === "unlimited"}
+                onChange={(e) => set("publishingLimit", e.target.value)}
+                placeholder="0 = publishing blocked"
+              />
+            </Field>
+          </div>
+          <p className="mt-2 text-[10px] text-zinc-500">Defaults when empty: Launch 3 lifetime · Growth 10/month · Scale/Enterprise unlimited. Empty mode keeps the canonical default.</p>
         </div>
 
         <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.04] p-5">

@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can I use my own domain?",
-    a: "Yes. Creator Grow, Creator Scale, and all Partner plans include custom domain support with free SSL. You can also use a CreatorStore subdomain for free.",
+    a: "Yes — on Creator Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
   },
   {
     q: "How do payments work?",
@@ -25,7 +25,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can agencies use CreatorStore?",
-    a: "Yes. Partner plans support multi-client workspaces, white-label branding, team collaboration, and centralized analytics. Generate storefronts for clients in minutes.",
+    a: "Yes. Partner plans support multi-client workspaces, white-label branding on higher tiers, team collaboration, and agency revenue insights. Generate storefronts for clients in minutes.",
   },
   {
     q: "Can I switch plans later?",

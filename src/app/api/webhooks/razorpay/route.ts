@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { billingService } from "@/modules/billing/application/service";
+import { buildRazorpayIdempotencyKey } from "@/modules/billing/domain/webhook";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { logger } from "@/lib/observability/logger";
@@ -25,7 +26,14 @@ const SUBSCRIPTION_EVENTS = new Set([
   "order.paid",
 ]);
 
-type RazorpayPayload = { event?: string; payload?: { payment?: { entity?: Record<string, unknown> }; subscription?: { entity?: Record<string, unknown> } } };
+type RazorpayPayload = {
+  event?: string;
+  payload?: {
+    payment?: { entity?: Record<string, unknown> };
+    subscription?: { entity?: Record<string, unknown> };
+    refund?: { entity?: Record<string, unknown> };
+  };
+};
 
 function entityNotes(payload: RazorpayPayload): Record<string, string> {
   const paymentNotes = payload.payload?.payment?.entity?.notes as Record<string, string> | undefined;
@@ -63,7 +71,12 @@ export async function POST(req: Request) {
   const payload = JSON.parse(rawBody);
   const event = payload.event as string;
   const ref = providerReference(payload, event);
-  const idempotencyKey = ref ? `razorpay_${event}_${ref}` : `razorpay_${event}_${Date.now()}`;
+  // RCCF-37 (P1): a single Razorpay payment can raise SEVERAL events — e.g.
+  // subscription.activated + subscription.charged + payment.captured, or
+  // order.paid + payment.captured. They are one financial occurrence. Keying
+  // idempotency on the payment id collapses them so a charge can never be
+  // processed twice (double invoice / double partner commission).
+  const idempotencyKey = buildRazorpayIdempotencyKey(payload, event, ref);
 
   const existing = await prisma.billingEvent.findUnique({ where: { idempotencyKey } });
   if (existing) return NextResponse.json({ ok: true });
@@ -144,13 +157,16 @@ export async function POST(req: Request) {
             // complete when the captured amount matches the order amount.
             const expectedPaise = Math.round(dbOrder.amount * 100);
             if (capturedAmountPaise === expectedPaise) {
-              await prisma.productOrder.update({
-                where: { id: dbOrder.id },
-                data: { status: "COMPLETED", razorpayPaymentId: paymentId },
-              });
-              // RCCF-TRACK-01: create the post-payment fulfillment record.
-              const { ensureFulfillment } = await import("@/modules/fulfillment");
-              await ensureFulfillment(dbOrder.id).catch(() => {});
+              // RCCF-38: the canonical completion boundary — reserves the monthly
+              // order quota atomically and transitions the order to COMPLETED.
+              const { completeProductOrder } = await import("@/modules/billing/application/order-completion");
+              const completed = await completeProductOrder(dbOrder.id, { paymentId });
+              if (!completed.success) {
+                captureError(new Error(`Order not completed (${completed.reason ?? "unknown"}): order=${dbOrder.id} tenant=${dbOrder.tenantId}`), {
+                  service: "razorpay-webhook",
+                  operation: "productOrderQuota",
+                });
+              }
               await prisma.billingEvent
                 .create({
                   data: {
@@ -170,6 +186,26 @@ export async function POST(req: Request) {
           captureError(error, { service: "razorpay-webhook", operation: "productOrderCaptured" });
         }
       }
+    }
+    // ── refund.processed — reverse partner commission (RCCF-41) ─────────────
+    if (event === "refund.processed") {
+      const refundEntity = payload.payload?.refund?.entity as Record<string, unknown> | undefined;
+      const refundId = (refundEntity?.id as string | undefined) ?? "";
+      const refundPaymentId = (refundEntity?.payment_id as string | undefined) ?? "";
+      const refundAmountPaise = Number(refundEntity?.amount ?? 0);
+      if (refundId && refundPaymentId) {
+        try {
+          const { billingService } = await import("@/modules/billing/application/service");
+          await billingService.handleRefund({
+            refundId,
+            paymentId: refundPaymentId,
+            refundAmountPaise,
+          });
+        } catch (error) {
+          captureError(error, { service: "razorpay-webhook", operation: "refundProcessed" });
+        }
+      }
+      return NextResponse.json({ ok: true });
     }
   } catch (error) {
     captureError(error, { service: "razorpay-webhook", operation: event });

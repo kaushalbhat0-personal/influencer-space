@@ -49,6 +49,10 @@ export async function getBillingDashboard(workspaceId: string, tenantId: string)
     const info = await billingService.getBillingInfo(workspaceId, tenantId);
     const planCode = (info as { planCode?: string }).planCode ?? (info.subscription as { planCode?: string })?.planCode ?? "creator_launch";
     const summary = capabilityService.planSummary(planCode);
+    // RCCF-36: the billing "plans" matrix must show current configured prices
+    // (runtime/DB), not the static registry, so Pricing Center == billing UI.
+    const { getRuntimePlansByFamily } = await import("@/modules/pricing/application/runtime");
+    const runtimePlans = await getRuntimePlansByFamily("creator");
     return {
       success: true,
       data: {
@@ -59,7 +63,12 @@ export async function getBillingDashboard(workspaceId: string, tenantId: string)
         usage: info.usage,
         history: info.history,
         capabilities: summary ? enabledFeatures(summary.features) : [],
-        matrixPlans: COMMERCE_PLANS.map((p) => ({ code: p.code, name: p.name, price: p.price, manual: p.manual })),
+        matrixPlans: runtimePlans.map((p) => ({
+          code: p.code,
+          name: p.name,
+          price: p.price,
+          manual: (COMMERCE_PLANS.find((c) => c.code === p.code)?.manual ?? false) || p.ctaType === "contact",
+        })),
       },
     };
   } catch (error) {

@@ -331,7 +331,24 @@ export class ProvisioningService {
         // legacy `themeService.apply` (prefixed-less presets registry) is retired
         // from provisioning — it silently failed on `com.creatos.*` ids.
         const { normalizeThemeId } = await import("@/lib/theme");
-        const canonicalThemeId = normalizeThemeId(personalization.themePackageId ?? "com.creatos.neon-dark");
+        let canonicalThemeId = normalizeThemeId(personalization.themePackageId ?? "com.creatos.neon-dark");
+
+        // RCCF-35: provisioning must not hand a lower tier a premium theme
+        // through the personalizer's niche mapping (e.g. technology/travel →
+        // com.creatos.midnight-ocean, a "business" tier theme). Mirror the
+        // applyThemePackage/applyBlueprintToWebsite server gate: when the
+        // tenant's effective plan lacks premium_themes, fall back to a free
+        // theme instead of persisting a premium one.
+        const { getThemeTier } = await import("@/lib/theme/tiers");
+        const { themeEntitlementDecision } = await import("@/lib/theme/entitlement");
+        if (getThemeTier({ id: canonicalThemeId }) !== "free") {
+          const { resolveActivePlan } = await import("@/modules/billing/application/plan-source");
+          const resolved = await resolveActivePlan(undefined, tenantId).catch(() => ({ code: null }));
+          if (!themeEntitlementDecision(getThemeTier({ id: canonicalThemeId }), resolved.code).allowed) {
+            canonicalThemeId = "com.creatos.neon-dark";
+          }
+        }
+
         await websiteRepository.update(website.id, { themePackageId: canonicalThemeId });
 
         if (input.generatedTheme?.colors) {

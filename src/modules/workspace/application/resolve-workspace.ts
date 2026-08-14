@@ -7,6 +7,26 @@ export interface WorkspaceUser {
   role: string;
 }
 
+/**
+ * RCCF-40 — link the signup-created agency BillingSubscription (created with
+ * accountId only, workspaceId null) to the agency Workspace so effective-plan
+ * resolution (resolveActivePlan → BillingSubscription.workspaceId) resolves the
+ * real Partner plan instead of null. Idempotent: no-op once a subscription is
+ * linked to the workspace.
+ */
+async function linkAgencySubscription(workspaceId: string, agencyId: string): Promise<void> {
+  try {
+    const { billingRepository } = await import("@/modules/billing/infrastructure/repository");
+    await billingRepository.linkSubscriptionToWorkspace({
+      workspaceId,
+      accountType: "agency",
+      accountId: agencyId,
+    });
+  } catch {
+    // Non-fatal — workspace resolution must never fail because a link is missing.
+  }
+}
+
 export async function resolveWorkspace(user: WorkspaceUser) {
   if (user.role === "SUPER_ADMIN") return { workspaceId: null, workspaceType: null, workspaceRole: null };
 
@@ -30,6 +50,9 @@ export async function resolveWorkspace(user: WorkspaceUser) {
         role: user.role === "AGENCY_STAFF" ? "MEMBER" : "OWNER",
       });
     }
+    // RCCF-40: idempotently backfill the agency subscription link for existing
+    // workspaces (created before the linkage existed).
+    if (user.agencyId) await linkAgencySubscription(workspace.id, user.agencyId);
     return { workspaceId: workspace.id, workspaceType: workspace.type, workspaceRole: member.role };
   }
 
@@ -50,6 +73,10 @@ export async function resolveWorkspace(user: WorkspaceUser) {
     userId: user.id,
     role: user.role === "AGENCY_STAFF" ? "MEMBER" : "OWNER",
   });
+
+  // RCCF-40: link the signup-created agency subscription to the new workspace
+  // so the effective Partner plan resolves from the real subscription.
+  if (user.agencyId) await linkAgencySubscription(created.id, user.agencyId);
 
   return { workspaceId: created.id, workspaceType: created.type, workspaceRole: user.role === "AGENCY_STAFF" ? "MEMBER" : "OWNER" };
 }

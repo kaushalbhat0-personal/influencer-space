@@ -12,6 +12,8 @@ export interface ActiveWorkspace {
   name: string;
   role: string;
   isFreelancer: boolean;
+  /** RCCF-42: the session user the cookie is bound to (selector only). */
+  uid?: string;
 }
 
 function toActive(workspace: Workspace, member: WorkspaceMember): ActiveWorkspace {
@@ -42,6 +44,7 @@ class WorkspaceService {
         name: "",
         role: payload.role,
         isFreelancer: false,
+        uid: payload.uid,
       };
     } catch {
       return null;
@@ -73,14 +76,21 @@ class WorkspaceService {
   }
 
   /** Resolve the tenantId from the active workspace context.
-   *  Tries workspace cookie first, then falls back to session. */
+   *  Tries the workspace cookie first (VERIFIED against the session user's
+   *  membership — the cookie is a selector, never an authorization boundary),
+   *  then falls back to the session tenantId. */
   async resolveTenantId(): Promise<string | null> {
-    const ws = this.getCurrent();
-    if (ws) {
-      const workspace = await workspaceRepository.findById(ws.id);
-      if (workspace?.tenantId) return workspace.tenantId;
-    }
     const session = await getServerSession(authOptions);
+    const sessionUserId = session?.user?.id;
+
+    const ws = this.getCurrent();
+    if (ws && sessionUserId && ws.uid === sessionUserId) {
+      const workspace = await workspaceRepository.findById(ws.id);
+      if (workspace?.tenantId) {
+        const member = await workspaceRepository.findMember(workspace.id, sessionUserId);
+        if (member?.status === "ACTIVE") return workspace.tenantId;
+      }
+    }
     return session?.user?.tenantId ?? null;
   }
 }

@@ -138,7 +138,7 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
     category: "api", valueType: "boolean",
   },
   [FEATURE_IDS.WEBHOOKS]: {
-    id: FEATURE_IDS.WEBHOOKS, label: "Webhooks", description: "Webhook integrations",
+    id: FEATURE_IDS.WEBHOOKS, label: "Payment webhooks (platform-managed)", description: "Platform-managed inbound payment webhook processing; creator-configurable outbound webhooks are not implemented",
     category: "api", valueType: "boolean",
   },
   [FEATURE_IDS.LIVE_SOCIAL_SYNC]: {
@@ -234,7 +234,7 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
     category: "products", valueType: "numeric",
   },
   [FEATURE_IDS.AI_CREDITS]: {
-    id: FEATURE_IDS.AI_CREDITS, label: "AI Credits", description: "Monthly AI credits",
+    id: FEATURE_IDS.AI_CREDITS, label: "AI Credits (coming soon)", description: "Monthly AI credits — no credit ledger exists yet; AI generation is currently unlimited for all tiers",
     category: "ai", valueType: "numeric",
   },
 };

@@ -23,7 +23,10 @@ export default async function AuditLogPage({
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { tenant: { select: { name: true, subdomain: true } } },
+      include: {
+        tenant: { select: { name: true, subdomain: true } },
+        agency: { select: { name: true } },
+      },
     }),
     prisma.auditLog.count({ where }),
     prisma.tenant.findMany({ select: { id: true, name: true } }),

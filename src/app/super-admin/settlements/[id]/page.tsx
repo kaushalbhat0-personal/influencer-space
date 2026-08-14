@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { settlementService } from "@/lib/settlement";
 import { partnerLedgerService } from "@/lib/ledger/partner-ledger";
-import { commissionService } from "@/lib/commission";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
@@ -27,8 +27,16 @@ export default async function SettlementDetailPage({ params }: { params: { id: s
   const ledgerEntries = await partnerLedgerService.getEntries({ limit: 100 });
   const settlementLedger = ledgerEntries.items.filter((e) => e.settlementId === params.id);
 
+  // RCCF-57 release closure: CommissionEntry display reads the canonical DB row
+  // (never the legacy in-memory ledger, which is empty for real agencies).
+  const dbEntries = await prisma.commissionEntry.findMany({
+    where: { id: { in: settlement.items.map((i) => i.commissionEntryId) } },
+    select: { id: true, planCode: true, invoiceId: true },
+  });
+  const dbEntryById = new Map(dbEntries.map((e) => [e.id, e]));
+
   const commissionEntries = settlement.items.map((item) => {
-    const entry = commissionService.getEntry(item.commissionEntryId);
+    const entry = dbEntryById.get(item.commissionEntryId);
     return { id: item.id, commissionEntryId: item.commissionEntryId, amount: item.amount, status: item.status, planCode: entry?.planCode ?? "—", invoiceId: entry?.invoiceId ?? "—" };
   });
 

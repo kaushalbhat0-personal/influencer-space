@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockLoad, mockSave, mockPublish, mockWebsiteUpdate, mockGetServerSession, mockUserFindUnique, mockWebsiteFindUnique } = vi.hoisted(() => ({
+const { mockLoad, mockSave, mockPublish, mockWebsiteUpdate, mockGetServerSession, mockUserFindUnique, mockWebsiteFindUnique, mockResolveActivePlan } = vi.hoisted(() => ({
   mockLoad: vi.fn(),
   mockSave: vi.fn(),
   mockPublish: vi.fn(),
@@ -8,10 +8,15 @@ const { mockLoad, mockSave, mockPublish, mockWebsiteUpdate, mockGetServerSession
   mockGetServerSession: vi.fn(),
   mockUserFindUnique: vi.fn(),
   mockWebsiteFindUnique: vi.fn(),
+  mockResolveActivePlan: vi.fn(),
 }));
 
 vi.mock("next-auth", () => ({
   getServerSession: mockGetServerSession,
+}));
+
+vi.mock("@/modules/billing/application/plan-source", () => ({
+  resolveActivePlan: mockResolveActivePlan,
 }));
 
 vi.mock("@/lib/builder/builder-service", () => ({
@@ -51,10 +56,45 @@ beforeEach(() => {
   mockGetServerSession.mockResolvedValue(session());
   mockUserFindUnique.mockResolvedValue({ id: "u1", tenantId: "t1" });
   mockWebsiteFindUnique.mockResolvedValue({ id: "w1", tenantId: "t1" });
+  mockResolveActivePlan.mockReset();
   mockLoad.mockResolvedValue([]);
   mockSave.mockResolvedValue(undefined);
   mockPublish.mockResolvedValue({ success: true, version: 1 });
   mockWebsiteUpdate.mockResolvedValue({});
+});
+
+describe("applyBlueprintToWebsite — RCCF-27 premium theme gate", () => {
+  it("rejects a premium theme for a free-tier (Launch) creator with zero side effects", async () => {
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "ACTIVE" });
+
+    const res = await applyBlueprintToWebsite("w1", "com.creatos.creator", "com.creatos.creator-gold");
+
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("upgraded plan");
+    expect(mockLoad).not.toHaveBeenCalled();
+    expect(mockSave).not.toHaveBeenCalled();
+    expect(mockWebsiteUpdate).not.toHaveBeenCalled();
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it("allows a premium theme for a Growth+ creator", async () => {
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_grow", origin: "v2", status: "ACTIVE" });
+
+    const res = await applyBlueprintToWebsite("w1", "com.creatos.creator", "com.creatos.creator-gold");
+
+    expect(res.success).toBe(true);
+    expect(mockWebsiteUpdate).toHaveBeenCalledWith({ where: { id: "w1" }, data: { themePackageId: "com.creatos.creator-gold" } });
+    expect(mockPublish).toHaveBeenCalledWith("t1");
+  });
+
+  it("allows a free theme for any tier (default manual creation)", async () => {
+    mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "ACTIVE" });
+
+    const res = await applyBlueprintToWebsite("w1", "com.creatos.creator", "com.creatos.neon-dark");
+
+    expect(res.success).toBe(true);
+    expect(mockPublish).toHaveBeenCalledWith("t1");
+  });
 });
 
 describe("applyBlueprintToWebsite — RCCF-21 authorization", () => {

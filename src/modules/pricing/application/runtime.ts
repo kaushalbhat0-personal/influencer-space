@@ -30,6 +30,11 @@ export interface PlanRuntimeConfig {
   family?: "creator" | "partner";
   capabilities?: string[];
   featureOverrides?: Record<string, number | boolean | string>;
+  /** RCCF-31 — typed publish-quota policy, editable by Super Admin. */
+  publishing?: {
+    mode?: "lifetime" | "monthly" | "unlimited";
+    limit?: number | null;
+  };
   marketing?: {
     description?: string;
     targetAudience?: string;
@@ -53,6 +58,8 @@ export interface PlanRuntimeConfig {
     price?: number | null;
     annualPrice?: number | null;
     schedule?: ScheduledPrice[];
+    /** RCCF-36: DB-authoritative Razorpay plan id provisioned for this price. */
+    razorpayPlanId?: string | null;
   };
   updatedBy?: string;
   updatedAt?: string;
@@ -84,6 +91,8 @@ export interface ResolvedPlan {
   capabilities: string[];
   featureOverrides: Record<string, number | boolean | string>;
   features: Record<string, number | boolean | string>;
+  publishing?: { mode: "lifetime" | "monthly" | "unlimited"; limit: number | null };
+  razorpayPlanId?: string | null;
   highlights: string[];
   scheduled: ScheduledPrice[];
 }
@@ -119,6 +128,10 @@ export function mergeRuntimePlan(defaults: CommercePlanConfig, rc?: PlanRuntimeC
     capabilities: rc?.capabilities ?? defaults.capabilities,
     featureOverrides: rc?.featureOverrides ?? defaults.featureOverrides ?? {},
     features: {}, // filled from the capability engine in resolveRuntimePlans
+    publishing: rc?.publishing
+      ? { mode: rc.publishing.mode ?? "unlimited", limit: rc.publishing.limit ?? null }
+      : undefined,
+    razorpayPlanId: p?.razorpayPlanId ?? null,
     highlights: m?.highlights ?? defaults.marketingHighlights ?? [],
     scheduled: p?.schedule ?? [],
   };
@@ -215,6 +228,10 @@ const loadCached = requestCache(async (): Promise<Map<string, ResolvedPlan>> => 
       capabilities: rc?.capabilities ?? [],
       featureOverrides: rc?.featureOverrides ?? {},
       features: { ...(rc?.featureOverrides ?? {}) },
+      publishing: rc?.publishing
+        ? { mode: rc.publishing.mode ?? "unlimited", limit: rc.publishing.limit ?? null }
+        : undefined,
+      razorpayPlanId: rc?.pricing?.razorpayPlanId ?? null,
       highlights: rc?.marketing?.highlights ?? [],
       scheduled: rc?.pricing?.schedule ?? [],
     });

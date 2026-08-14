@@ -1,3 +1,10 @@
+// ── LEGACY / NON-AUTHORITATIVE (RCCF-57) ─────────────────────────────────────
+// The in-memory ruleEngine + commissionLedger below are legacy diagnostic
+// helpers (rehydrated by the Super Admin ops dashboard). They CANNOT influence
+// real financial decisions: the canonical commission truth is
+// src/lib/commission/runtime.ts, which records CommissionEntry + PartnerLedger
+// rows directly through Prisma. Do not use these exports for new financial
+// logic.
 export { commissionService } from "./service";
 export type { CommissionService } from "./service";
 export { ruleEngine } from "./rules";

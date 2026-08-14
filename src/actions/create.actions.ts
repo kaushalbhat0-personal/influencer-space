@@ -9,6 +9,11 @@ import { blueprintRegistry } from "@/lib/blueprint/registry";
 import { BuilderService } from "@/lib/builder/builder-service";
 import { resolveModuleId, moduleIdToDisplayName } from "@/lib/registry/resolve-module";
 import { componentRegistry } from "@/lib/registry/components";
+import { normalizeThemeId } from "@/lib/theme";
+import { themeRegistry } from "@/lib/theme/registry-new";
+import { getThemeTier } from "@/lib/theme/tiers";
+import { themeEntitlementDecision } from "@/lib/theme/entitlement";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import type { BuilderPage } from "@/lib/builder/types";
 
 const builderService = new BuilderService();
@@ -97,6 +102,21 @@ export async function applyBlueprintToWebsite(
   }
 
   const tenantId = website.tenantId;
+
+  // RCCF-27: applying a premium/paid theme through the manual-creation path
+  // must respect the same premium_themes entitlement as applyThemePackage —
+  // a free-tier creator cannot receive a premium theme via the wizard/blueprint.
+  const canonicalThemeId = normalizeThemeId(themeId);
+  const theme = themeRegistry.getById(canonicalThemeId);
+  const tier = theme ? getThemeTier(theme) : "free";
+  if (tier !== "free") {
+    const resolved = await resolveActivePlan(undefined, tenantId);
+    const decision = themeEntitlementDecision(tier, resolved.code);
+    if (!decision.allowed) {
+      return { success: false, error: "This theme requires an upgraded plan." };
+    }
+  }
+
   const pages = blueprintToBuilderPages(blueprintId);
 
   const existing = await builderService.load(websiteId);

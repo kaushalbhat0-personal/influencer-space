@@ -13,6 +13,15 @@ interface BillingDashboardProps {
 
 export function BillingDashboard({ data, loading, error }: BillingDashboardProps) {
   const statusInfo = formatSubscriptionStatus(data.subscription.status);
+  // RCCF-33: truthful trial display — a TRIALING subscription shows its end
+  // date only while the trial is actually active (server-derived), and shows
+  // "Expired trial" once trialEndsAt has passed instead of a stale "Trialing".
+  const statusLabel =
+    data.subscription.status === "TRIALING"
+      ? data.subscription.isTrialActive
+        ? `Trial · ends ${formatDate(data.subscription.trialEndsAt)}`
+        : "Expired trial"
+      : statusInfo.label;
 
   const metricCards = [
     { label: "Products", value: data.activeProducts.toLocaleString(), icon: Package },
@@ -25,7 +34,7 @@ export function BillingDashboard({ data, loading, error }: BillingDashboardProps
     <DashboardWidget
       title="Billing Overview"
       icon={CreditCard}
-      description={`${data.plan.name} \u00b7 ${statusInfo.label}`}
+      description={`${data.plan.name} \u00b7 ${statusLabel}`}
       loading={loading}
       error={error}
       actions={

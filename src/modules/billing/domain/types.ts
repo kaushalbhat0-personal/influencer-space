@@ -84,6 +84,14 @@ export interface CheckoutParams {
   currency?: string;
   successUrl?: string;
   cancelUrl?: string;
+  /**
+   * RCCF-36: DB-authoritative Razorpay plan id (provisioned from the current
+   * configured price). When absent the provider falls back to the registry
+   * mapping so existing flows never break.
+   */
+  razorpayPlanId?: string | null;
+  /** RCCF-36: DB-authoritative monthly price used for one-time order checkouts. */
+  price?: number | null;
 }
 
 export interface CheckoutResult {

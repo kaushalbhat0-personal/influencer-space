@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { entitlement, EntitlementService } from "@/modules/billing/application/entitlements";
 import { canTransition, getAllowedTransitions, LIFECYCLE_STATES } from "@/modules/billing/domain/lifecycle";
 import { statusAfterEvent } from "@/modules/billing/domain/events";
+import { buildRazorpayIdempotencyKey } from "@/modules/billing/domain/webhook";
 import { billingIdempotency } from "@/modules/billing/infrastructure/idempotency";
 import { getPlan } from "@/lib/capabilities";
 
@@ -94,5 +95,66 @@ describe("Idempotency", () => {
     billingIdempotency.markProcessed("x");
     billingIdempotency.reset();
     expect(billingIdempotency.size).toBe(0);
+  });
+});
+
+describe("RCCF-37 — canonical webhook idempotency key", () => {
+  const charged = (paymentId?: string, subId = "sub_1") => ({
+    event: "subscription.charged",
+    payload: {
+      payment: paymentId ? { entity: { id: paymentId } } : undefined,
+      subscription: { entity: { id: subId } },
+    },
+  });
+
+  it("collapses subscription.charged and payment.captured for the same payment to ONE key", () => {
+    const chargedKey = buildRazorpayIdempotencyKey(charged("pay_1") as never, "subscription.charged", "pay_1");
+    const capturedKey = buildRazorpayIdempotencyKey(
+      { event: "payment.captured", payload: { payment: { entity: { id: "pay_1" } } } } as never,
+      "payment.captured",
+      "pay_1",
+    );
+    expect(chargedKey).toBe("razorpay_payment_pay_1");
+    expect(capturedKey).toBe("razorpay_payment_pay_1");
+    expect(chargedKey).toBe(capturedKey);
+  });
+
+  it("collapses order.paid and payment.captured for the same payment", () => {
+    const orderPaid = buildRazorpayIdempotencyKey(
+      { event: "order.paid", payload: { payment: { entity: { id: "pay_2" } } } } as never,
+      "order.paid",
+      "pay_2",
+    );
+    expect(orderPaid).toBe("razorpay_payment_pay_2");
+  });
+
+  it("uses distinct keys for different payments (monthly renewals stay separate)", () => {
+    const k1 = buildRazorpayIdempotencyKey(charged("pay_1") as never, "subscription.charged", "pay_1");
+    const k2 = buildRazorpayIdempotencyKey(charged("pay_2") as never, "subscription.charged", "pay_2");
+    expect(k1).not.toBe(k2);
+  });
+
+  it("falls back to event+reference when no payment id exists (e.g. subscription.paused)", () => {
+    const paused = buildRazorpayIdempotencyKey(
+      { event: "subscription.paused", payload: { subscription: { entity: { id: "sub_1" } } } } as never,
+      "subscription.paused",
+      "sub_1",
+    );
+    expect(paused).toBe("razorpay_subscription.paused_sub_1");
+  });
+
+  it("RCCF-41: refund events key on the provider REFUND id (not the payment)", () => {
+    const refund = buildRazorpayIdempotencyKey(
+      { event: "refund.processed", payload: { refund: { entity: { id: "refund_42" } }, payment: { entity: { id: "pay_1" } } } } as never,
+      "refund.processed",
+      "pay_1",
+    );
+    expect(refund).toBe("razorpay_refund_refund_42");
+  });
+
+  it("RCCF-41: different refunds of the same payment get different keys (each is one reversal)", () => {
+    const r1 = buildRazorpayIdempotencyKey({ event: "refund.processed", payload: { refund: { entity: { id: "refund_1" } } } } as never, "refund.processed", "");
+    const r2 = buildRazorpayIdempotencyKey({ event: "refund.processed", payload: { refund: { entity: { id: "refund_2" } } } } as never, "refund.processed", "");
+    expect(r1).not.toBe(r2);
   });
 });

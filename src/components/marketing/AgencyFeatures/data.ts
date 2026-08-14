@@ -26,8 +26,8 @@ export const PILLARS: Pillar[] = [
     items: [
       { icon: Users, title: "Creator Workspaces", body: "Separate dashboards for every client. No logging in and out." },
       { icon: Globe2, title: "Client Accounts", body: "Invite creators, set permissions, manage access." },
-      { icon: Shield, title: "Permissions", body: "Control what each team member can edit per client." },
-      { icon: UserCheck, title: "Team Members", body: "Grow your agency. Add staff with seat-based billing." },
+      { icon: Shield, title: "Roles", body: "Agency admin and staff roles for your team." },
+      { icon: UserCheck, title: "Team Members", body: "Invite staff as agency team members." },
     ],
   },
   {
@@ -35,10 +35,10 @@ export const PILLARS: Pillar[] = [
     label: "Operate",
     description: "Build, customize, and publish for every client.",
     items: [
-      { icon: Pencil, title: "Builder Access", body: "Edit any client website with the visual builder." },
-      { icon: Rocket, title: "Publishing", body: "Publish updates instantly. Roll back anytime." },
-      { icon: CheckSquare, title: "Approvals", body: "Send previews. Get client sign-off before going live." },
-      { icon: Store, title: "Store Management", body: "Manage products, orders, and inventory per client." },
+      { icon: Pencil, title: "Client Overview", body: "View each client's health, products, theme, and publish state." },
+      { icon: Rocket, title: "Publish Status", body: "Track live and pending publish state across your clients." },
+      { icon: CheckSquare, title: "Client Invitations", body: "Onboard clients with passwordless invitation links." },
+      { icon: Store, title: "Client Health", body: "Risk scores and usage across your portfolio." },
     ],
   },
   {
@@ -46,10 +46,10 @@ export const PILLARS: Pillar[] = [
     label: "Grow",
     description: "Track performance across your entire portfolio.",
     items: [
-      { icon: BarChart3, title: "Cross-Client Analytics", body: "Compare revenue, traffic, and conversion across creators." },
-      { icon: IndianRupee, title: "Revenue Splitting", body: "Automated splits. Razorpay Route handles the math." },
-      { icon: TrendingUp, title: "Performance Reports", body: "Export-ready reports for client reviews." },
-      { icon: FileText, title: "White-Label", body: "Your agency brand on every dashboard and report." },
+      { icon: BarChart3, title: "Agency Insights", body: "Monitor client health, publishing state, and recurring commission." },
+      { icon: IndianRupee, title: "Revenue Splitting", body: "Automated commission splits on client subscriptions." },
+      { icon: TrendingUp, title: "Settlement & Payouts", body: "Track earnings, settlements, and payouts in one place." },
+      { icon: FileText, title: "White-Label", body: "Your agency brand on the client portal (higher tiers)." },
     ],
   },
 ];

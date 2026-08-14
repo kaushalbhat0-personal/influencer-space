@@ -1,6 +1,12 @@
 export const PARTNER_TYPES = ["freelancer", "agency", "enterprise", "marketplace", "affiliate"] as const;
 export type PartnerType = (typeof PARTNER_TYPES)[number];
 
+// LEGACY / NON-AUTHORITATIVE (RCCF-57): the constants below feed the legacy
+// in-memory PartnerEngine (Super Admin ops diagnostics only). They do NOT
+// govern real Partner behavior — the canonical capacity/entitlement source is
+// the effective BillingPlan resolved through capabilityService.limit()/
+// .can() (max_clients, max_team_members, white_label). Do not read these for
+// production decisions; values here may disagree with the canonical plan config.
 export const PARTNER_TYPES_CONFIG: Record<PartnerType, { label: string; maxWorkspaces: number; maxClients: number; maxTeamMembers: number; allowsWhiteLabel: boolean }> = {
   freelancer: { label: "Freelancer", maxWorkspaces: 5, maxClients: 5, maxTeamMembers: 1, allowsWhiteLabel: false },
   agency: { label: "Agency", maxWorkspaces: 20, maxClients: 20, maxTeamMembers: 10, allowsWhiteLabel: true },

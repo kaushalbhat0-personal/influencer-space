@@ -21,7 +21,7 @@ const DEFAULT_STATE: SignupState = {
   error: null,
 };
 
-export function SignupForm() {
+export function SignupForm({ pricing }: { pricing?: Record<string, { price: number | null; annualPrice?: number | null }> }) {
   const router = useRouter();
   const params = useSearchParams();
   const socialUrl = params.get("url") || "";
@@ -95,7 +95,13 @@ export function SignupForm() {
   }, [state.email, state.password, state.name, state.persona, state.selectedPlan, update]);
 
   const currentIdx = STEP_ORDER.indexOf(state.step) + 1;
-  const plansForPersona = getPlansByFamily(state.persona === "agency" ? "agency" : "creator");
+  // RCCF-36: display the runtime (DB-authoritative) price when the server page
+  // provides it, so Pricing Center == Marketing == Signup. The static registry
+  // remains the structural source (ctaType/hidden/enterprise) and the fallback.
+  const plansForPersona = getPlansByFamily(state.persona === "agency" ? "agency" : "creator").map((p) => ({
+    ...p,
+    price: pricing?.[p.code]?.price !== undefined ? pricing[p.code]!.price! : p.price,
+  }));
   const selectedPlanDef = plansForPersona.find((p) => p.code === state.selectedPlan);
   const isEnterprise = selectedPlanDef?.ctaType === "contact";
   const isFreePlan = !isEnterprise && (selectedPlanDef?.price ?? 0) === 0;

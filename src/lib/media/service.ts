@@ -290,6 +290,14 @@ export class MediaService {
     const ext = options.file.filename.split(".").pop() || "bin";
     const storageKey = `${existing.tenantId}/replace/${randomUUID()}.${ext}`;
 
+    // RCCF-35: replacement consumes quota for the net bytes added over the
+    // existing asset. The Asset row keeps the prior size until reprocessing,
+    // so only the delta above the replaced size needs headroom — and the check
+    // must run BEFORE the old object is deleted, so an over-quota replace
+    // leaves the original untouched.
+    const netDelta = Math.max(0, (options.file.size ?? 0) - (existing.size ?? 0));
+    await this.assertStorageQuota(existing.tenantId, netDelta);
+
     const provider = storageProviderFactory.getProvider();
     await provider.delete(existing.storageKey);
     const result = await provider.upload(storageKey, {

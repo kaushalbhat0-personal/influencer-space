@@ -157,7 +157,7 @@ export const AGENCY_NAV: DashboardNav = {
       defaultOpen: true,
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
-        { label: "Creator Import", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Creator Import", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN") },
         { label: "Templates", href: "/agency/templates", icon: Layers, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
         { label: "Analytics", href: "/agency/analytics", icon: BarChart3, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
       ],

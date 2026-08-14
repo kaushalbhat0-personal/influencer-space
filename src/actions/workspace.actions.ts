@@ -17,6 +17,7 @@ export async function switchWorkspace(workspaceId: string) {
     wid: ws.id,
     role: ws.role,
     type: ws.type,
+    uid: session.user.id,
   });
 
   const cookieStore = await cookies();
