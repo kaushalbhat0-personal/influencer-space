@@ -53,29 +53,29 @@ beforeEach(() => {
   h.mockUsePathname.mockReturnValue("/admin/dashboard");
 });
 
-// A minimal capability-filtered nav (mirrors ADMIN_NAV → filterNavForPlan output).
-import type { NavConfig } from "@/config/admin-nav";
+// A minimal wire-safe nav (mirrors ADMIN_NAV → filterNavForPlan → toNavWire output).
+import type { NavConfigWire } from "@/config/admin-nav";
 import { AdminSidebar } from "@/app/admin/_components/admin-sidebar";
 import { GamesList } from "@/app/admin/games/_components/games-list";
 import { MessagesList } from "@/app/admin/messages/_components/messages-list";
 
-const TEST_NAV: NavConfig = {
+const TEST_NAV: NavConfigWire = {
   groups: [
     { items: [
-      { href: "/admin/dashboard", label: "Dashboard", icon: (() => null) as never },
-      { href: "/admin/create", label: "Create Website", icon: (() => null) as never },
+      { href: "/admin/dashboard", label: "Dashboard", iconKey: "LayoutDashboard" },
+      { href: "/admin/create", label: "Create Website", iconKey: "Wand2" },
     ]},
     {
       label: "Content", collapsible: true,
       items: [
-        { href: "/admin/gallery", label: "Gallery", icon: (() => null) as never, requiredCapability: "max_gallery" },
-        { href: "/admin/links", label: "Links", icon: (() => null) as never, requiredCapability: "max_links" },
+        { href: "/admin/gallery", label: "Gallery", iconKey: "Image" },
+        { href: "/admin/links", label: "Links", iconKey: "Link2" },
       ],
     },
   ],
   footer: [
-    { href: "", label: "View Website", icon: (() => null) as never },
-    { href: "", label: "Sign Out", icon: (() => null) as never },
+    { href: "", label: "View Website", iconKey: "ExternalLink" },
+    { href: "", label: "Sign Out", iconKey: "LogOut" },
   ],
 };
 

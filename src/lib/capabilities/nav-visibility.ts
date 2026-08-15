@@ -1,5 +1,14 @@
 import { capabilityService } from "./service";
-import { ADMIN_NAV, type NavConfig, type NavItem } from "@/config/admin-nav";
+import {
+  ADMIN_NAV,
+  isAdminNavIconKey,
+  type AdminNavIconKey,
+  type NavConfig,
+  type NavConfigWire,
+  type NavItem,
+  type NavItemWire,
+} from "@/config/admin-nav";
+import type { LucideIcon } from "lucide-react";
 
 /**
  * RCCF-67.4 — capability-aware navigation visibility.
@@ -33,6 +42,41 @@ export function filterNavForPlan(config: NavConfig, planCode: string): NavConfig
       }))
       .filter((group) => group.items.length > 0),
     footer: config.footer,
+  };
+}
+
+// RCCF-70.6.2 — deterministically derive a wire-safe icon key from the Lucide
+// component's `displayName` (Lucide sets displayName = PascalCase(iconName)).
+// Unknown/unnamed icons fall back to "Menu" so a misconfigured item can never
+// reintroduce a non-serializable value into the Server → Client payload.
+const FALLBACK_ICON_KEY: AdminNavIconKey = "Menu";
+
+function iconKeyOf(icon: LucideIcon): AdminNavIconKey {
+  const name = icon.displayName;
+  if (typeof name === "string" && isAdminNavIconKey(name)) return name;
+  return FALLBACK_ICON_KEY;
+}
+
+/**
+ * Project a filtered `NavConfig` into the wire-safe `NavConfigWire` consumed by
+ * the client shell. Capability metadata (`requiredCapability`/limits) and React
+ * icon components are intentionally NOT serialized — the client only receives
+ * `iconKey` strings and resolves presentation via its own icon registry.
+ */
+export function toNavWire(config: NavConfig): NavConfigWire {
+  const toItem = (item: NavItem): NavItemWire => ({
+    href: item.href,
+    label: item.label,
+    iconKey: iconKeyOf(item.icon),
+    badge: item.badge,
+  });
+
+  return {
+    groups: config.groups.map((group) => ({
+      ...group,
+      items: group.items.map(toItem),
+    })),
+    footer: config.footer.map(toItem),
   };
 }
 

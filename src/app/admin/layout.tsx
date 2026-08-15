@@ -5,7 +5,7 @@ import { buildSiteUrlForAdmin } from "@/lib/config/platform";
 import { AdminLayoutClient } from "./_components/admin-layout-client";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
-import { filterNavForPlan, ADMIN_NAV } from "@/lib/capabilities/nav-visibility";
+import { filterNavForPlan, toNavWire, ADMIN_NAV } from "@/lib/capabilities/nav-visibility";
 import { DEFAULT_PLAN_CODE } from "@/lib/capabilities/constants";
 
 export default async function AdminLayout({
@@ -27,7 +27,13 @@ export default async function AdminLayout({
         .then((p) => p.code ?? DEFAULT_PLAN_CODE)
         .catch(() => DEFAULT_PLAN_CODE)
     : DEFAULT_PLAN_CODE;
-  const visibleNav = filterNavForPlan(ADMIN_NAV, planCode);
+  // RCCF-70.6.2 — the nav crossed the Server → Client boundary with Lucide
+  // `forwardRef` icon components (`{$$typeof, render, displayName}`), which
+  // Next.js cannot serialize in an RSC payload and caused every /admin/* route
+  // to fail with "Unsupported Server Component type: forwardRef". Capability
+  // filtering stays server-side; `toNavWire` projects only serializable
+  // iconKey strings, and the client resolves icons via its own registry.
+  const visibleNav = toNavWire(filterNavForPlan(ADMIN_NAV, planCode));
 
   if (tenantId) {
     const [tenant, website] = await Promise.all([

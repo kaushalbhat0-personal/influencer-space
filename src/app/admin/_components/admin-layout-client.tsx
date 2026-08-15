@@ -10,7 +10,7 @@ import { CommandPalette } from "@/components/layout/CommandPalette";
 import { RuntimeNotificationBell } from "@/components/layout/RuntimeNotificationBell";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import type { NavConfig } from "@/config/admin-nav";
+import type { NavConfigWire } from "@/config/admin-nav";
 
 export function AdminLayoutClient({
   children,
@@ -21,7 +21,7 @@ export function AdminLayoutClient({
   children: React.ReactNode;
   siteUrl: string;
   publishStatus?: PublishStatusValue;
-  nav: NavConfig;
+  nav: NavConfigWire;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();

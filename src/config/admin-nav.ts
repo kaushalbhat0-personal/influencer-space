@@ -35,6 +35,54 @@ export interface NavConfig {
   footer: NavItem[];
 }
 
+/**
+ * RCCF-70.6.2 — canonical icon keys emitted across the Server → Client boundary.
+ *
+ * A nav item's Lucide component (`icon: LucideIcon`) is a `forwardRef` object
+ * (`{ $$typeof, render, displayName }`) that Next.js cannot serialize in an RSC
+ * payload. The server therefore projects only the icon's Lucide `displayName`
+ * (`iconKey`) and the client resolves presentation via `adminNavIconRegistry`.
+ * This list must stay in sync with that registry; `toNavWire` falls back to
+ * "Menu" rather than risk a second production 500.
+ */
+export const ADMIN_NAV_ICON_KEYS = [
+  "LayoutDashboard", "Wand2", "Sparkles", "Image", "Rss", "Trophy", "UserCheck",
+  "HelpCircle", "Link2", "Gamepad", "ShoppingBag", "Briefcase", "BookOpen",
+  "Package", "Users", "CalendarDays", "Landmark", "Layout", "Paintbrush",
+  "LayoutTemplate", "Palette", "Menu", "BarChart3", "MessageSquare", "Brain",
+  "Target", "User", "Search", "Globe", "CreditCard", "Bell", "Puzzle",
+  "ExternalLink", "LogOut",
+] as const;
+
+export type AdminNavIconKey = (typeof ADMIN_NAV_ICON_KEYS)[number];
+
+export function isAdminNavIconKey(value: string): value is AdminNavIconKey {
+  return (ADMIN_NAV_ICON_KEYS as readonly string[]).includes(value);
+}
+
+/**
+ * Wire-safe projection of the navigation contract. Contains only plain
+ * serializable values — no React components, functions, or capability metadata.
+ * Capability filtering stays server-side; clients never see `requiredCapability`.
+ */
+export interface NavItemWire {
+  href: string;
+  label: string;
+  iconKey: AdminNavIconKey;
+  badge?: NavItem["badge"];
+}
+
+export interface NavGroupWire {
+  label?: string;
+  items: NavItemWire[];
+  collapsible?: boolean;
+}
+
+export interface NavConfigWire {
+  groups: NavGroupWire[];
+  footer: NavItemWire[];
+}
+
 export const ADMIN_NAV: NavConfig = {
   groups: [
     { items: [

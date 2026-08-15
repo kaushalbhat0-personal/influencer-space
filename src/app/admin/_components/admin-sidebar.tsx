@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { type NavConfig, type NavGroup } from "@/config/admin-nav";
+import { type NavConfigWire, type NavGroupWire } from "@/config/admin-nav";
+import { resolveAdminNavIcon } from "@/config/admin-nav-icons";
 import { ChevronDown, ExternalLink, LogOut, X } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
@@ -14,7 +15,7 @@ interface AdminSidebarProps {
   onClose: () => void;
   siteUrl?: string;
   publishStatus?: PublishStatusValue;
-  nav: NavConfig;
+  nav: NavConfigWire;
 }
 
 export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "draft", nav }: AdminSidebarProps) {
@@ -36,10 +37,10 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
     return pathname.startsWith(href);
   };
 
-  const isGroupActive = (group: NavGroup) =>
+  const isGroupActive = (group: NavGroupWire) =>
     group.items.some((item) => isActive(item.href));
 
-  const isGroupCollapsed = (group: NavGroup) => {
+  const isGroupCollapsed = (group: NavGroupWire) => {
     if (!group.collapsible) return false;
     if (isGroupActive(group)) return false;
     return collapsed.has(group.label ?? "");
@@ -166,7 +167,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
               <div className={cn("space-y-0.5", isGroupCollapsed(group) ? "hidden" : "")}>
                 {group.items.map((item) => {
                   const active = isActive(item.href);
-                  const Icon = item.icon;
+                  const Icon = resolveAdminNavIcon(item.iconKey);
                   return (
                     <Link
                       key={item.href}
