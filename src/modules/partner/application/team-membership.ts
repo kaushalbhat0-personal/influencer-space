@@ -267,7 +267,7 @@ export class PartnerTeamService {
     return prisma.$transaction(async (tx) => {
       // Row-level lock on the workspace serializes concurrent accepts so two
       // final-slot accepts cannot both pass the ACTIVE count.
-      await tx.$queryRaw`SELECT id FROM "workspace" WHERE id = ${invite.workspaceId} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "Workspace" WHERE id = ${invite.workspaceId} FOR UPDATE`;
 
       const user = await tx.user.findUnique({
         where: { email: invite.email },

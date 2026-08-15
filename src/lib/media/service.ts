@@ -676,7 +676,7 @@ export class MediaService {
    */
   private async commitAssetQuota<T>(tenantId: string, incomingBytes: number, work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "tenant" WHERE id = ${tenantId} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`;
       const planCode = await this.resolvePlanCode(tenantId);
       const limit = resolveStorageLimitBytes(planCode);
       const used = await countStorageUsage(tenantId, tx);

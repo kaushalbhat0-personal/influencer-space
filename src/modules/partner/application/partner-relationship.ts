@@ -148,7 +148,7 @@ export class AgencyTenantRelationshipService {
     const createdId = await prisma.$transaction(async (tx) => {
       // Row-level lock on the agency serializes concurrent client creations for
       // the same Partner, so two final-slot creates cannot both pass.
-      await tx.$queryRaw`SELECT id FROM "website_agency" WHERE id = ${input.agencyId} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "WebsiteAgency" WHERE id = ${input.agencyId} FOR UPDATE`;
       const activeCount = await tx.agencyTenant.count({ where: { agencyId: input.agencyId, status: "ACTIVE" } });
       if (capacity.limit !== -1 && activeCount >= capacity.limit) {
         throw new ClientCapacityError(activeCount, capacity.limit, capacity.planCode);
