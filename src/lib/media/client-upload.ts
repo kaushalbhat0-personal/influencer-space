@@ -58,8 +58,9 @@ export async function uploadFileWithProgress(options: ClientUploadOptions): Prom
 
   // RCCF-59 — hero video client-side pre-checks (UX only; the server remains
   // the authority). Kept client-side because the server never sees the buffer
-  // on the signed path until registration.
-  if (options.folder === "hero") {
+  // on the signed path until registration. RCCF-70.5.3 — the hero folder also
+  // holds poster/background images, so these checks only apply to videos.
+  if (options.folder === "hero" && options.file.type.startsWith("video/")) {
     if (options.file.type !== "video/mp4" && options.file.type !== "video/quicktime") {
       return { success: false, error: "Unsupported hero video format. MP4 is required for hero videos." };
     }

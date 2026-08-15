@@ -69,8 +69,10 @@ export class MediaService {
 
     // RCCF-09: enforce the tenant's declared storage quota before adding bytes.
     await this.assertStorageQuota(options.tenantId, options.file.size);
-    // RCCF-59: hero videos have their own server-side constraints.
-    if (folder === "hero") {
+    // RCCF-59: hero videos have their own server-side constraints. RCCF-70.5.3 —
+    // the hero folder also holds poster/background images, so only video payloads
+    // are subject to the hero-video contract.
+    if (folder === "hero" && this.isVideoMime(options.file.mimeType)) {
       await this.assertHeroVideo(options.tenantId, options.file);
     }
 
@@ -183,7 +185,9 @@ export class MediaService {
 
     // RCCF-59: fast-fail hero constraints (client-declared size is a UX pre-check
     // only — the authoritative check runs at completion against actual bytes).
-    if (folder === "hero") {
+    // RCCF-70.5.3 — poster/background images in the hero folder are not subject
+    // to the hero-video pre-check.
+    if (folder === "hero" && this.isVideoMime(options.mimeType)) {
       await this.assertHeroVideoPrecheck(options.tenantId, options.mimeType, options.size);
     }
 
@@ -293,8 +297,10 @@ export class MediaService {
 
       // RCCF-59: hero videos are validated server-side — the object bytes are
       // read from the provider (never the client-declared duration) to enforce
-      // the 15-second / 12 MB hero contract.
-      if (options.folder === "hero") {
+      // the 15-second / 12 MB hero contract. RCCF-70.5.3 — the hero folder also
+      // holds poster/background images; the strict video contract only applies
+      // when the object is actually a video (any video signal fails closed).
+      if (options.folder === "hero" && await this.isVideoLike(metadata.mimeType, options.mimeType, options.originalFilename)) {
         await this.assertHeroVideoObject(options.tenantId, options.storageKey, options.originalFilename, actualSize, provider);
       }
 
@@ -368,8 +374,10 @@ export class MediaService {
       throw new MediaValidationError(validation.errors.join("; "), validation.errors);
     }
 
-    // RCCF-59: hero replacements keep the same server-side constraints.
-    if (existing.storageKey.includes("/hero/")) {
+    // RCCF-59: hero replacements keep the same server-side constraints. RCCF-70.5.3
+    // — only video payloads are subject to the hero-video contract; replacing a
+    // poster/background image must not trigger video validation.
+    if (existing.storageKey.includes("/hero/") && this.isVideoMime(options.file.mimeType)) {
       await this.assertHeroVideo(existing.tenantId, options.file);
     }
 
@@ -521,7 +529,9 @@ export class MediaService {
     const asset = await assetRepository.findById(assetId);
     if (!asset || asset.tenantId !== tenantId) throw new Error(`Asset not found: ${assetId}`);
 
-    if (newFolder === "hero") {
+    // RCCF-70.5.3 — moving an IMAGE into the hero folder is allowed; only video
+    // assets are subject to the canonical hero-video validation.
+    if (newFolder === "hero" && this.isVideoMime(asset.mimeType ?? "")) {
       await this.assertHeroVideoAsset(tenantId, assetId);
     }
 
@@ -749,6 +759,22 @@ export class MediaService {
     if (ext === "webm") return "video/webm";
     if (ext === "ogg") return "video/ogg";
     return "";
+  }
+
+  /** RCCF-70.5.3 — true when the mime declares a video payload. */
+  private isVideoMime(mimeType: string): boolean {
+    return mimeType.startsWith("video/");
+  }
+
+  /**
+   * RCCF-70.5.3 — hero-folder classification. Any video signal (authoritative
+   * provider content-type, client-declared mime, or video filename extension)
+   * fails CLOSED toward hero-video validation, so a masqueraded payload can
+   * never silently register as a poster/background image.
+   */
+  private async isVideoLike(providerMime: string | undefined, clientMime: string, filename: string): Promise<boolean> {
+    if (this.isVideoMime(providerMime ?? "") || this.isVideoMime(clientMime)) return true;
+    return this.isVideoMime(await this.probeMime(filename));
   }
 
   /**

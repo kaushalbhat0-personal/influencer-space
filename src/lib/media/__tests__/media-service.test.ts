@@ -462,6 +462,151 @@ describe("MediaService signed-upload registration integrity (RCCF-70.5.1)", () =
   });
 });
 
+// RCCF-70.5.3 — Hero Poster / Background registration. The hero folder holds
+// BOTH videos and poster/background images; hero-video validation (RCCF-59)
+// must only run for video payloads, while images register through the generic
+// media validation. Any video signal fails closed toward hero-video validation.
+describe("MediaService hero poster/background registration (RCCF-70.5.3)", () => {
+  const heroImagePayload = (overrides: Record<string, unknown> = {}) =>
+    signedPayload({
+      storageKey: "t1/hero/poster.png",
+      folder: "hero",
+      originalFilename: "poster.png",
+      mimeType: "image/png",
+      ...overrides,
+    });
+
+  it("registers a hero poster image without hero-video validation", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: true, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.getObjectMetadata.mockResolvedValue({ size: 2048, mimeType: "image/png" });
+
+    const result = await mediaService.completeSignedUpload(heroImagePayload({ size: 1 }));
+
+    expect(result.deduplicated).toBe(false);
+    expect(mockProvider.readRange).not.toHaveBeenCalled();
+    expect(mockCreateAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: "t1", mimeType: "image/png", size: 2048 }),
+      expect.anything(),
+    );
+  });
+
+  it("registers a hero background image without hero-video validation", async () => {
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.getObjectMetadata.mockResolvedValue({ size: 4096, mimeType: "image/jpeg" });
+
+    const result = await mediaService.completeSignedUpload(
+      heroImagePayload({ storageKey: "t1/hero/bg.jpg", originalFilename: "bg.jpg", mimeType: "image/jpeg", size: 1 }),
+    );
+
+    expect(result.deduplicated).toBe(false);
+    expect(mockProvider.readRange).not.toHaveBeenCalled();
+    expect(mockCreateAsset).toHaveBeenCalledWith(
+      expect.objectContaining({ mimeType: "image/jpeg", size: 4096 }),
+      expect.anything(),
+    );
+  });
+
+  it("fails closed toward hero-video validation when the provider records a video", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: true, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.getObjectMetadata.mockResolvedValue({ size: 2048, mimeType: "video/mp4" });
+    mockProvider.readRange.mockResolvedValue(heroMp4(10));
+
+    await expect(mediaService.completeSignedUpload(heroImagePayload({ size: 1 }))).rejects.toThrow(/MP4|format|hero/i);
+    expect(mockCreateAsset).not.toHaveBeenCalled();
+  });
+
+  it("rejects an oversized hero-folder image via the generic image limit", async () => {
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.getObjectMetadata.mockResolvedValue({ size: 20 * 1024 * 1024, mimeType: "image/png" });
+
+    await expect(mediaService.completeSignedUpload(heroImagePayload({ size: 1 }))).rejects.toThrow(MediaValidationError);
+    expect(mockCreateAsset).not.toHaveBeenCalled();
+  });
+
+  it("rejects a hero video when the provider read fails (fail closed + cleanup)", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: true, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.getObjectMetadata.mockResolvedValue({ size: 2048, mimeType: "video/mp4" });
+    mockProvider.readRange.mockImplementation(() => { throw new Error("provider down"); });
+
+    await expect(
+      mediaService.completeSignedUpload(
+        signedPayload({ storageKey: "t1/hero/h.mp4", folder: "hero", originalFilename: "h.mp4", mimeType: "video/mp4", size: 1 }),
+      ),
+    ).rejects.toThrow("provider down");
+    expect(mockCreateAsset).not.toHaveBeenCalled();
+    expect(mockProvider.delete).toHaveBeenCalledWith("t1/hero/h.mp4");
+  });
+
+  it("does not apply the hero-video precheck to hero-folder images at prepare", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: false, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.createSignedUploadUrl.mockResolvedValue({
+      uploadUrl: "https://up.example",
+      storageKey: "t1/hero/poster.png",
+      publicUrl: "https://p.example/poster.png",
+    });
+
+    const result = await mediaService.prepareSignedUpload({
+      tenantId: "t1",
+      filename: "poster.png",
+      mimeType: "image/png",
+      size: 2048,
+      checksum: "c1",
+      folder: "hero",
+    });
+
+    expect(result.deduplicated).toBe(false);
+    if (result.deduplicated) throw new Error("expected non-dedup result");
+    expect(result.signed).not.toBeNull();
+  });
+
+  it("uploads a hero-folder image via the multipart path without hero-video validation", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: false, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+    mockProvider.upload.mockResolvedValue({ storageKey: "t1/hero/poster.png", publicUrl: "https://x/poster.png", size: 2048 });
+
+    const file = { filename: "poster.png", mimeType: "image/png", size: 2048, buffer: Buffer.alloc(16) };
+    const result = await mediaService.upload({ tenantId: "t1", file, folder: "hero" });
+
+    expect(result.deduplicated).toBe(false);
+    expect(mockCreateAsset).toHaveBeenCalledWith(expect.objectContaining({ mimeType: "image/png" }), expect.anything());
+  });
+
+  it("allows moving an image into the hero folder (no hero-video validation)", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: false, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockFindById.mockResolvedValue({
+      id: "a1", tenantId: "t1", mimeType: "image/png", size: 2048,
+      storageKey: "t1/general/poster.png", publicUrl: "https://x/poster.png", status: "ACTIVE",
+      filename: "poster.png", originalFilename: "poster.png", checksum: "c", width: null, height: null, altText: null,
+    });
+    mockProvider.getPublicUrl.mockResolvedValue("https://x/hero/poster.png");
+    mockProvider.readRange.mockResolvedValue(Buffer.alloc(16));
+    mockProvider.upload.mockResolvedValue({ storageKey: "t1/hero/poster.png", publicUrl: "https://x/hero/poster.png", size: 16 });
+
+    await expect(mediaService.move("t1", "a1", "hero")).resolves.toBeUndefined();
+    expect(mockUpdateAsset).toHaveBeenCalledWith("a1", expect.objectContaining({ storageKey: "t1/hero/poster.png" }));
+  });
+
+  it("replaces a hero-folder poster image without hero-video validation", async () => {
+    mockResolveHeroVideoCapability.mockReturnValue({ enabled: false, maxSizeBytes: 12 * 1024 * 1024, maxDurationSec: 15 });
+    mockFindById.mockResolvedValue({
+      id: "11111111-1111-4111-8111-111111111111", tenantId: "t1", mimeType: "image/png", size: 1000,
+      storageKey: "t1/hero/poster.png", publicUrl: "https://x/poster.png", status: "READY",
+      filename: "poster.png", originalFilename: "poster.png", checksum: "c", width: null, height: null, altText: null,
+    });
+    mockEnforceStorageLimit.mockResolvedValue(OK_QUOTA);
+
+    const file = { filename: "poster.png", mimeType: "image/png", size: 2048, buffer: Buffer.alloc(16) };
+    const result = await mediaService.replace({ assetId: "11111111-1111-4111-8111-111111111111", file });
+
+    expect(result.deduplicated).toBe(false);
+    expect(mockProvider.delete).toHaveBeenCalledWith("t1/hero/poster.png");
+  });
+});
+
 // RCCF-59 — hero video enforcement at the media-service boundary.
 function heroMp4(durationSec: number): Buffer {
   const mvhd = Buffer.alloc(28);
