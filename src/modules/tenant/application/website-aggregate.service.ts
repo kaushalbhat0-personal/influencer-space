@@ -8,6 +8,8 @@ import { SettingsService } from "@/services/settings.service";
 import { mediaService } from "@/lib/media/service";
 import { normalizeAssetId } from "@/lib/media/resolve";
 import { describeHeroMedia, resolveHeroMediaForRuntime } from "@/lib/media/hero-media";
+import { normalizeCommerceMode } from "@/config/commerce/commerce-mode";
+import { resolveWhatsAppDestination } from "@/lib/commerce/whatsapp";
 import type { WebsiteAggregate } from "@/types/snapshot";
 
 export interface AggregateDiagnostics {
@@ -126,6 +128,7 @@ export class WebsiteAggregateService {
     const [
       brand, heroData, products, gallery, links, seoData, website, timelineEvents,
       gameList, feedItems, testimonialsData, faqData, offerings, knowledgeCompletion,
+      openBookings,
     ] = await Promise.all([
       safe("brand", () => brandRepository.findByTenantId(tenantId)),
       safe("hero", () => SettingsService.getHeroData(tenantId)),
@@ -146,10 +149,19 @@ export class WebsiteAggregateService {
       safe("offerings", () => prisma.offering.findMany({
         where: { tenantId, status: "published" },
         orderBy: { createdAt: "desc" },
-        select: { id: true, type: true, title: true, description: true, price: true, metadata: true },
+        select: { id: true, type: true, title: true, description: true, price: true, metadata: true, bookable: true },
         ...(homepage ? { take: this.limit("courses") + this.limit("services") } : {}),
       })),
       safe("knowledgeCompletion", () => SettingsService.getSettingByKey(tenantId, "knowledge_completion")),
+      // RCCF-67.4 — bookable slots: creator-created OPEN bookings (no customer
+      // claimed yet), not cancelled, not in the past. Only future slots are
+      // exposed so the storefront never offers an already-past appointment.
+      // RCCF-67.5 — slots now carry offeringId so service-linked availability
+      // can be grouped per Service.
+      safe("openBookings", () => prisma.booking.findMany({
+        where: { tenantId, customerEmail: null, status: { not: "cancelled" }, slotDate: { gte: new Date() } },
+        orderBy: { slotDate: "asc" },
+      })),
     ]);
 
     // RCCF-INTEGRATION-01 Phase 7: creator-verified declared facts (achievements,
@@ -175,6 +187,12 @@ export class WebsiteAggregateService {
     const heroBio = (heroRecord.bio as string) ?? "";
     const heroName = (heroRecord.name as string) ?? "";
     const heroProfilePictureUrl = (heroRecord.profilePictureUrl as string) ?? "";
+
+    // RCCF-66.2: server-authoritative WhatsApp destination from the creator's
+    // Hero social links (platform === "whatsapp"). Resolved ONCE here and baked
+    // into every product so the storefront never needs a live read and can never
+    // receive a client-supplied number.
+    const whatsappDestination = resolveWhatsAppDestination(heroSocialLinks);
 
     const result: WebsiteAggregate = {
       identity: {
@@ -225,6 +243,11 @@ export class WebsiteAggregateService {
         slug: p.slug ?? "",
         isFeatured: p.isFeatured,
         isActive: p.isActive,
+        // RCCF-66.2: carry the per-product sales mode + the creator's resolved
+        // WhatsApp destination (from hero socialLinks) so the published
+        // storefront renders the right CTA without live business reads.
+        commerceMode: normalizeCommerceMode(p.commerceMode),
+        whatsappUrl: whatsappDestination,
       })), "products"),
       gallery: curated((gallery ?? []).map((g) => ({
         id: g.id,
@@ -241,6 +264,7 @@ export class WebsiteAggregateService {
         title: l.title,
         url: l.url,
         imageUrl: l.imageUrl,
+        clicks: l.clicks ?? 0,
       })), "links"),
       seo: {
         title: ((seoData as { title?: string } | null)?.title) ?? "",
@@ -313,8 +337,39 @@ export class WebsiteAggregateService {
             imageUrl: (meta?.imageUrl as string | undefined) ?? null,
             category: (meta?.category as string | undefined) ?? null,
             featured: (meta?.featured as boolean | undefined) ?? false,
+            // RCCF-67.5 — explicit bookable state + its future open slots.
+            bookable: o.bookable ?? false,
+            bookableSlots: (openBookings ?? [])
+              .filter((b) => b.offeringId === o.id)
+              .map((b) => ({
+                id: b.id,
+                slotDate: b.slotDate.toISOString(),
+                slotStart: b.slotStart,
+                slotEnd: b.slotEnd,
+                timezone: b.timezone,
+                approvalRequired: b.approvalRequired,
+              })),
           };
         }), "services"),
+      // RCCF-67.4 — standalone bookable slots (open, future, non-cancelled, NOT
+      // tied to a Service). Service-linked availability lives in
+      // services[].bookableSlots. Only the public-facing subset is exposed:
+      // title/description/price/duration/slot/approval-required. Customer data,
+      // notes and approval internals stay out.
+      bookings: (openBookings ?? [])
+        .filter((b) => !b.offeringId)
+        .map((b) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          price: b.price,
+          duration: b.duration,
+          slotDate: b.slotDate.toISOString(),
+          slotStart: b.slotStart,
+          slotEnd: b.slotEnd,
+          timezone: b.timezone,
+          approvalRequired: b.approvalRequired,
+        })),
     };
 
     if (brand?.avatarAssetId || brand?.bannerAssetId) {

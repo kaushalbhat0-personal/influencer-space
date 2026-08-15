@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { COMMERCE_MODES } from "@/config/commerce/commerce-mode";
 
 export const productFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -9,6 +10,9 @@ export const productFormSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug").optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).optional(),
   type: z.enum(["digital", "physical", "service", "membership", "bundle"]),
+  // RCCF-66.2: exactly ONLINE | WHATSAPP | BOTH. Unknown/arbitrary strings are
+  // rejected server-side.
+  commerceMode: z.enum(COMMERCE_MODES).optional(),
   isActive: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   seoTitle: z.string().max(70).optional(),

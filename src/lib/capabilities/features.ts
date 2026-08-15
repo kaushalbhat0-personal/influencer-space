@@ -5,6 +5,10 @@ const CATEGORY: Record<string, FeatureCategory> = {
   [FEATURE_IDS.PRODUCTS]: "products",
   [FEATURE_IDS.GALLERY]: "content",
   [FEATURE_IDS.STORAGE_GB]: "storage",
+  [FEATURE_IDS.STORAGE_MB]: "storage",
+  [FEATURE_IDS.HERO_VIDEO_ENABLED]: "content",
+  [FEATURE_IDS.HERO_VIDEO_MAX_SIZE_MB]: "content",
+  [FEATURE_IDS.HERO_VIDEO_MAX_DURATION_SEC]: "content",
   [FEATURE_IDS.MESSAGES]: "content",
   [FEATURE_IDS.ORDERS]: "products",
   [FEATURE_IDS.WEBSITES]: "team",
@@ -237,6 +241,22 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
     id: FEATURE_IDS.AI_CREDITS, label: "AI Credits (coming soon)", description: "Monthly AI credits — no credit ledger exists yet; AI generation is currently unlimited for all tiers",
     category: "ai", valueType: "numeric",
   },
+  [FEATURE_IDS.STORAGE_MB]: {
+    id: FEATURE_IDS.STORAGE_MB, label: "Storage", description: "Storage limit in MB (RCCF-59 canonical Creator storage)",
+    category: "storage", valueType: "numeric",
+  },
+  [FEATURE_IDS.HERO_VIDEO_ENABLED]: {
+    id: FEATURE_IDS.HERO_VIDEO_ENABLED, label: "Hero Video", description: "Short looping video in the site hero",
+    category: "content", valueType: "boolean",
+  },
+  [FEATURE_IDS.HERO_VIDEO_MAX_SIZE_MB]: {
+    id: FEATURE_IDS.HERO_VIDEO_MAX_SIZE_MB, label: "Hero Video Size", description: "Maximum hero video file size (MB)",
+    category: "content", valueType: "numeric",
+  },
+  [FEATURE_IDS.HERO_VIDEO_MAX_DURATION_SEC]: {
+    id: FEATURE_IDS.HERO_VIDEO_MAX_DURATION_SEC, label: "Hero Video Duration", description: "Maximum hero video duration (seconds)",
+    category: "content", valueType: "numeric",
+  },
 };
 
 export function getAllFeatureIds(): string[] {
@@ -269,6 +289,10 @@ export const FEATURE_GROUP: Record<string, CapabilityGroup> = {
   max_products: "commerce",
   max_gallery: "website",
   storage_gb: "storage",
+  storage_mb: "storage",
+  hero_video_enabled: "website",
+  hero_video_max_size_mb: "website",
+  hero_video_max_duration_sec: "website",
   max_messages: "website",
   max_orders: "commerce",
   max_websites: "website",

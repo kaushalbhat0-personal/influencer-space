@@ -11,7 +11,7 @@ export const SEED_COMPARISONS: ComparisonConfig[] = [
     ],
     features: [
       {
-        feature: "AI-powered storefront generation from social profile",
+        feature: "Storefront built from your social profile",
         creatorStore: true,
         competitorA: false,
         competitorB: false,
@@ -35,7 +35,7 @@ export const SEED_COMPARISONS: ComparisonConfig[] = [
         competitorB: "Via plugins",
       },
       {
-        feature: "Courses & memberships",
+        feature: "Courses & services showcase",
         creatorStore: true,
         competitorA: false,
         competitorB: "Via plugins",
@@ -71,7 +71,7 @@ export const SEED_COMPARISONS: ComparisonConfig[] = [
         competitorB: true,
       },
       {
-        feature: "AI product descriptions & SEO",
+        feature: "Automated product & SEO content",
         creatorStore: true,
         competitorA: false,
         competitorB: false,

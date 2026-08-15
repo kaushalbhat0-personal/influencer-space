@@ -30,7 +30,7 @@ export const TESTIMONIALS: Testimonial[] = [
     role: "Fitness Creator",
     avatar: PLACEHOLDER_AVATAR,
     content:
-      "CreatorStore built my entire storefront from my Instagram in under 2 minutes. I was selling workout plans within an hour. The AI got my brand colors and style perfectly — I barely had to customize anything.",
+      "CreatorStore built my storefront from my Instagram in under 2 minutes. I was selling workout plans within an hour. My brand colors and style matched perfectly — I barely had to customize anything.",
     platform: "Instagram",
     featured: true,
   },
@@ -60,7 +60,7 @@ export const TESTIMONIALS: Testimonial[] = [
     role: "Course Creator",
     avatar: PLACEHOLDER_AVATAR,
     content:
-      "I was paying for a separate website builder, course platform, and payment processor. CreatorStore replaced all three. The AI-generated SEO was a bonus — my course pages started ranking within weeks.",
+      "I was paying for a separate website builder, course platform, and payment processor. CreatorStore replaced all three. My storefront's SEO and order tracking were a bonus — my course pages started ranking within weeks.",
     platform: "YouTube",
   },
   {
@@ -69,7 +69,7 @@ export const TESTIMONIALS: Testimonial[] = [
     role: "Lifestyle Creator",
     avatar: PLACEHOLDER_AVATAR,
     content:
-      "What surprised me most was the analytics dashboard. I can see exactly which products are selling, where my traffic comes from, and how my storefront performs. It's like having a business partner that never sleeps.",
+      "What surprised me most was the orders dashboard. I can see exactly which products are selling and how my storefront performs, all from one place.",
     platform: "Instagram",
   },
   {
@@ -109,7 +109,7 @@ export const CREATOR_STATS: CreatorStat[] = [
 export const FEATURES_HERO_DATA = {
   title: "Everything you need to run your creator business",
   subtitle:
-    "CreatorStore is more than a website. It's a complete business platform — AI-generated, fully customizable, and built to scale.",
+    "CreatorStore is more than a website. It's a complete business platform — built from your profile, fully customizable, and built to scale.",
 };
 
 export const ABOUT_HERO_DATA = {
@@ -120,7 +120,7 @@ export const ABOUT_HERO_DATA = {
     "To democratize creator commerce by making enterprise-grade business infrastructure accessible to every creator, regardless of size or technical skill.",
   story: [
     "CreatorStore started with a simple observation: creators pour their hearts into content but have no easy way to turn that into a real business. Existing tools were either too complex (build a website from scratch), too limited (link-in-bio pages), or too expensive (enterprise platforms).",
-    "We built CreatorStore to bridge that gap. Our AI analyzes your existing content — your videos, posts, style, and audience — and generates a complete business platform tailored to you. Not a template. Not a generic page. A real business, built from your content.",
+    "We built CreatorStore to bridge that gap. Our platform analyzes your existing content — your videos, posts, style, and audience — and builds a complete business platform tailored to you. Not a template. Not a generic page. A real business, built from your content.",
     "Today, thousands of creators use CreatorStore to sell products, manage orders, grow their audience, and run their entire business — all from one platform. We're proud to be the infrastructure that powers the creator economy.",
   ],
   values: [
@@ -130,9 +130,9 @@ export const ABOUT_HERO_DATA = {
         "Every decision starts with what's best for creators. We build tools we'd want to use ourselves.",
     },
     {
-      title: "AI-Powered, Human-Controlled",
+      title: "Automated, Human-Controlled",
       description:
-        "AI handles the heavy lifting, but creators always stay in control. Customize everything, or change nothing.",
+        "The platform handles the heavy lifting, but creators always stay in control. Customize everything, or change nothing.",
     },
     {
       title: "Simple by Default, Powerful When Needed",
@@ -153,8 +153,8 @@ export const FAQ_CATEGORIES = [
     label: "Getting Started",
     items: [
       {
-        q: "How does the AI build my storefront?",
-        a: "Paste your YouTube, Instagram, or creator profile URL. Our AI analyzes your content, brand colors, niche, audience, and social links — then generates a complete storefront with products, checkout, and SEO. No manual entry needed.",
+        q: "How does my storefront get built?",
+        a: "Paste your YouTube, Instagram, or creator profile URL. We analyze your content, brand colors, niche, audience, and social links — then build a complete storefront with products, checkout, and SEO. No manual entry needed.",
       },
       {
         q: "What platforms do you support?",
@@ -162,11 +162,11 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "How long does it take to get started?",
-        a: "From pasting your URL to having a live storefront, most creators are up and running in under 2 minutes. The AI generation takes about 30-60 seconds.",
+        a: "From pasting your URL to having a live storefront, most creators are up and running in under 2 minutes. The build takes about 30-60 seconds.",
       },
       {
         q: "Do I need technical skills?",
-        a: "Not at all. CreatorStore is designed for creators who want to focus on content, not code. The AI generates everything automatically, and the visual builder lets you customize without touching HTML or CSS.",
+        a: "Not at all. CreatorStore is designed for creators who want to focus on content, not code. The platform builds everything automatically, and the visual builder lets you customize without touching HTML or CSS.",
       },
     ],
   },
@@ -175,8 +175,8 @@ export const FAQ_CATEGORIES = [
     label: "Storefront & Builder",
     items: [
       {
-        q: "What does the AI generate?",
-        a: "The AI generates a complete storefront including: hero section, product pages, navigation, checkout flow, color scheme based on your brand, SEO metadata, social links, and content layout optimized for your niche.",
+        q: "What does the platform build?",
+        a: "It builds a complete storefront including: hero section, product pages, navigation, checkout flow, color scheme based on your brand, SEO metadata, social links, and content layout optimized for your niche.",
       },
       {
         q: "Can I customize the generated storefront?",
@@ -198,7 +198,7 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: "What can I sell?",
-        a: "Digital products (ebooks, templates, presets), courses, memberships, coaching sessions, physical merchandise, event tickets, donations and tips, and affiliate links.",
+        a: "Digital products (ebooks, templates, presets), physical merchandise, services and bookings, and affiliate links. Courses can be showcased on your storefront.",
       },
       {
         q: "How do payments work?",
@@ -210,7 +210,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Can I offer subscriptions or memberships?",
-        a: "Yes. CreatorStore supports recurring payments for memberships, subscriptions, and installment-based courses. Set your own pricing and billing cycles.",
+        a: "Memberships and subscriptions are on our roadmap and not yet available. You can showcase membership tiers and recurring offers on your storefront today.",
       },
     ],
   },

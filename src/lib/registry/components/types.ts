@@ -4,7 +4,7 @@ export type ComponentCategory =
   | "hero" | "gallery" | "products" | "timeline" | "footer"
   | "links" | "testimonials" | "faq" | "pricing" | "contact" | "newsletter"
   | "courses" | "services" | "music" | "video" | "social" | "embed" | "custom"
-  | "games" | "contentFeed";
+  | "games" | "contentFeed" | "bookings";
 
 export interface ComponentAnimation {
   id: string;

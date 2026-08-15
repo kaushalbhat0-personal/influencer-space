@@ -50,6 +50,7 @@ vi.mock("@/lib/commission/loyalty", async () => {
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     websiteAgency: { findUnique: async () => ({ status: "ACTIVE" }) },
+    agencyCapacityAddon: { aggregate: async () => ({ _sum: { quantity: null } }) },
     workspace: { findUnique: async ({ where }: { where: { agencyId: string } }) => ({ id: `ws-${where.agencyId.slice(0, 4)}` }) },
     workspaceMember: {
       count: async ({ where }: { where: { workspaceId: string; status: string } }) => v.members.filter((m) => m.workspaceId === where.workspaceId && m.status === where.status).length,
@@ -93,7 +94,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     settlement: { findUnique: async () => null, findMany: async () => [], update: async () => ({}), create: async () => ({}), aggregate: async () => ({ _sum: { netAmount: 0 } }) },
     settlementItem: { findMany: async () => [] },
-    billingSubscription: { count: async () => 0 },
+    billingSubscription: { count: async () => 0, findFirst: async () => ({ status: "TRIALING", trialEndsAt: new Date(Date.now() + 86400000) }) },
     auditLog: { findMany: async () => [], findFirst: async () => null },
     $transaction: async (arg: unknown) => {
       if (typeof arg === "function") {

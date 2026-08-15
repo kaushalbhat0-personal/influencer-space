@@ -57,7 +57,10 @@ export function PaymentsClient({ account, readiness, error }: Props) {
   const verify = async () => {
     setBusy("verify"); setMsg(null);
     const r = await verifyMyPaymentAccount();
-    setMsg(r.success ? "Account verified." : r.error ?? "Verification failed");
+    // RCCF-69.2 — the action only validates credential format; it does NOT claim
+    // provider-side verification. Show the truthful message (which includes any
+    // "not available" note) instead of "Account verified."
+    setMsg(r.success ? (r.error ?? "Credentials format validated.") : r.error ?? "Verification failed");
     if (r.success) setTimeout(() => window.location.reload(), 700);
     setBusy(null);
   };

@@ -43,6 +43,8 @@ async function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function BuyNowButton({
   productId,
   productName,
@@ -60,18 +62,22 @@ export function BuyNowButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  // RCCF-67.2 (P1): the buyer email is collected here, before checkout, so the
+  // stored order always carries the buyer's real email (guest lookup, customer
+  // grouping and fulfillment access depend on it).
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [awaitingEmail, setAwaitingEmail] = useState(false);
 
   const showToast = useCallback((type: "success" | "error", message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  async function handleBuy() {
-    if (previewMode) return; // never initiate production checkout in preview
+  async function runCheckout(email: string) {
     setLoading(true);
     setToast(null);
 
-    const result = await createCheckout(productId, "");
+    const result = await createCheckout(productId, email);
 
     // VALIDATION-01 V-028: free products / 100%-off coupons are fulfilled
     // without Razorpay — show success directly.
@@ -113,6 +119,7 @@ export function BuyNowButton({
       description: `Purchase from ${productName}`,
       image: imageUrl || undefined,
       order_id: result.razorpayOrderId,
+      prefill: { email },
       handler: async function (response) {
         const vr = await verifyPayment(
           response.razorpay_order_id,
@@ -140,6 +147,65 @@ export function BuyNowButton({
 
     const rzp = new window.Razorpay(options);
     rzp.open();
+  }
+
+  function handleBuy() {
+    if (previewMode) return; // never initiate production checkout in preview
+    if (!buyerEmail.trim() || !EMAIL_RE.test(buyerEmail.trim())) {
+      setAwaitingEmail(true);
+      return;
+    }
+    void runCheckout(buyerEmail.trim());
+  }
+
+  if (awaitingEmail && !previewMode) {
+    return (
+      <>
+        {toast && (
+          <div
+            className={`fixed right-4 top-4 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg transition-all ${
+              toast.type === "success"
+                ? "bg-emerald-500/90 text-black"
+                : "bg-red-500/90 text-white"
+            }`}
+          >
+            {toast.message}
+          </div>
+        )}
+        <div className="mt-1.5 w-full space-y-2">
+          <p className="text-center text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted,#71717A)]">
+            Email for your receipt &amp; download
+          </p>
+          <input
+            type="email"
+            value={buyerEmail}
+            onChange={(e) => setBuyerEmail(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && buyerEmail.trim() && EMAIL_RE.test(buyerEmail.trim())) {
+                void runCheckout(buyerEmail.trim());
+              }
+            }}
+            placeholder="you@example.com"
+            autoFocus
+            className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-center text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none"
+          />
+          <button
+            onClick={() => void runCheckout(buyerEmail.trim())}
+            disabled={loading || !buyerEmail.trim() || !EMAIL_RE.test(buyerEmail.trim())}
+            className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-all hover:bg-[var(--button-primary-hover,#00d9f2)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Processing…" : "Continue to payment"}
+          </button>
+          <button
+            onClick={() => setAwaitingEmail(false)}
+            disabled={loading}
+            className="w-full py-1 text-center text-[11px] text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#A1A1AA)]"
+          >
+            Cancel
+          </button>
+        </div>
+      </>
+    );
   }
 
   return (

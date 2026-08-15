@@ -9,7 +9,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAgencyMember, requireAuthenticated, canMutate } from "@/modules/partner/application/authorization";
+import { requireAgencyMember, requireAgencyActive, requireAuthenticated, canMutate } from "@/modules/partner/application/authorization";
 import { partnerTeamService, resolveAppBaseUrl } from "@/modules/partner/application/team-membership";
 import { listTeamAudit, DEFAULT_TEAM_AUDIT_LIMIT, type TeamAuditEventDto } from "@/modules/partner/application/team-audit";
 
@@ -21,7 +21,7 @@ export async function inviteAgencyTeamMember(input: {
   email: string;
   role: string;
 }): Promise<InviteTeamMemberResult> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.session || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session.user.role)) return { success: false, error: "Only agency admins can invite team members" };
 
@@ -67,7 +67,7 @@ export async function inviteAgencyTeamMember(input: {
 export async function resendAgencyTeamInvitation(input: {
   email: string;
 }): Promise<{ success: true; delivered: boolean; deliveryError?: string } | { success: false; error: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.session || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session.user.role)) return { success: false, error: "Only agency admins can resend team invitations" };
 
@@ -126,7 +126,7 @@ export async function acceptAgencyTeamInvitation(input: {
 export async function removeAgencyTeamMember(input: {
   userId: string;
 }): Promise<{ success: true } | { success: false; error: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.session || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session.user.role)) return { success: false, error: "Only agency admins can remove team members" };
 
@@ -147,7 +147,7 @@ export async function changeAgencyTeamRole(input: {
   userId: string;
   role: string;
 }): Promise<{ success: true } | { success: false; error: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.session || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session.user.role)) return { success: false, error: "Only agency admins can change team roles" };
 

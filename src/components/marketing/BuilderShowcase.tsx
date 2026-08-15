@@ -51,7 +51,7 @@ export function BuilderShowcase() {
             </span>
           </h2>
           <p className="mt-3 text-zinc-500 max-w-2xl mx-auto">
-            AI generates your storefront. You make it yours. Drag, drop, and
+            Your storefront is built from your profile. You make it yours. Drag, drop, and
             customize every detail with our visual builder.
           </p>
         </div>

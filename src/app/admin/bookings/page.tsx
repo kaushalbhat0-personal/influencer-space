@@ -10,6 +10,7 @@ export default async function BookingsPage() {
   const bookings = await prisma.booking.findMany({
     where: { tenantId },
     orderBy: { slotDate: "asc" },
+    include: { offering: { select: { id: true, title: true } } },
   }).catch((err) => {
     captureError(err, { service: "bookings", operation: "listBookings" });
     return [];

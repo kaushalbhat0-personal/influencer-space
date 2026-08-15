@@ -12,7 +12,7 @@ interface CustomerRow {
 }
 
 const columns: Column<CustomerRow>[] = [
-  { key: "email", header: "Email", sortable: true, cell: (r) => <span className="text-white text-sm">{r.email}</span> },
+  { key: "email", header: "Email", sortable: true, cell: (r) => <span className="break-all text-white text-sm">{r.email}</span> },
   { key: "totalSpent", header: "Total Spent", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">{formatCurrency(r.totalSpent)}</span> },
   { key: "orderCount", header: "Orders", sortable: true, cell: (r) => <span className="text-zinc-400">{r.orderCount}</span> },
   {

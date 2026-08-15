@@ -202,7 +202,7 @@ export function SettingsForm({
                 label="Hero Video"
                 value={{ url: videoUrl, assetId: videoAssetId }}
                 folder="hero"
-                accept="video/*"
+                accept="video/mp4,video/quicktime"
                 entityType="hero"
                 entityId={tenantId}
                 entityField="videoUrl"
@@ -212,6 +212,9 @@ export function SettingsForm({
                 })}
                 onUploadComplete={(v) => handleSaveMedia({ videoUrl: v.url ?? "", videoAssetId: v.assetId ?? "" })}
               />
+              <p className="mt-1 text-xs text-zinc-500">
+                MP4 only · up to 15 seconds · max 12 MB. Hero videos count toward your plan&apos;s storage quota.
+              </p>
               <div>
                 <h4 className="text-sm font-semibold text-white mb-3">Video Focal Point Alignment</h4>
                 {alignmentButtons(videoDesktopAlignment, videoMobileAlignment, setVideoDesktopAlignment, setVideoMobileAlignment)}

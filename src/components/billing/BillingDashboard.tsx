@@ -27,7 +27,7 @@ export function BillingDashboard({ data, loading, error }: BillingDashboardProps
     { label: "Products", value: data.activeProducts.toLocaleString(), icon: Package },
     { label: "Gallery", value: data.activeGallery.toLocaleString(), icon: Image },
     { label: "Orders", value: data.ordersProcessed.toLocaleString(), icon: ShoppingCart },
-    { label: "Storage", value: `${data.storageUsed ?? 0} GB`, icon: HardDrive },
+    { label: "Storage", value: `${data.storageUsed ?? 0} MB`, icon: HardDrive },
   ];
 
   return (

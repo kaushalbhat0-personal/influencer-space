@@ -100,6 +100,10 @@ export interface WebsiteAggregate {
     id: string; name: string; description: string | null;
     price: number; imageUrl: string | null; images: string[];
     slug: string; isFeatured: boolean; isActive: boolean;
+    // RCCF-66.2: per-product sales mode + resolved WhatsApp destination.
+    // Optional — old snapshots without these degrade to ONLINE (no WhatsApp CTA).
+    commerceMode?: string;
+    whatsappUrl?: string | null;
   }>;
   gallery: Array<{
     id: string; title: string; description: string | null;
@@ -107,7 +111,7 @@ export interface WebsiteAggregate {
     videoUrl: string | null; altText: string | null; isFeatured: boolean;
   }>;
   links: Array<{
-    id: string; title: string; url: string; imageUrl: string | null;
+    id: string; title: string; url: string; imageUrl: string | null; clicks: number;
   }>;
   seo: {
     title: string;
@@ -136,6 +140,33 @@ export interface WebsiteAggregate {
     imageUrl?: string | null;
     category?: string | null;
     featured?: boolean;
+    // RCCF-67.5 — explicit bookable state + future open slots. Optional so
+    // legacy snapshots without service booking render safely (display-only).
+    bookable?: boolean;
+    bookableSlots?: Array<{
+      id: string;
+      slotDate: string;
+      slotStart: string;
+      slotEnd: string;
+      timezone: string;
+      approvalRequired: boolean;
+    }>;
+  }>;
+  /** RCCF-67.4 — bookable slots exposed to the storefront. Only OPEN slots
+   * (created by the creator with no customer assigned) are included; admin-only
+   * metadata, approval internals and private notes are never exposed. Optional —
+   * legacy snapshots load safely without it. */
+  bookings?: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    price: number;
+    duration: number;
+    slotDate: string;
+    slotStart: string;
+    slotEnd: string;
+    timezone: string;
+    approvalRequired: boolean;
   }>;
 }
 

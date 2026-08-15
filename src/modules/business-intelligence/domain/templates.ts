@@ -51,7 +51,6 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { moduleId: "hero.default", pageSlug: "/", order: 0 },
       { moduleId: "services.default", pageSlug: "/", order: 1 },
       { moduleId: "testimonials.default", pageSlug: "/", order: 2 },
-      { moduleId: "pricing.default", pageSlug: "/", order: 3 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -121,9 +120,8 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     sections: [
       { moduleId: "hero.default", pageSlug: "/", order: 0 },
       { moduleId: "services.default", pageSlug: "/", order: 1 },
-      { moduleId: "pricing.default", pageSlug: "/", order: 2 },
-      { moduleId: "testimonials.default", pageSlug: "/", order: 3 },
-      { moduleId: "contact.default", pageSlug: "/", order: 4 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 2 },
+      { moduleId: "contact.default", pageSlug: "/", order: 3 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },
@@ -194,8 +192,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
     sections: [
       { moduleId: "hero.fitness", pageSlug: "/", order: 0 },
       { moduleId: "services.default", pageSlug: "/", order: 1 },
-      { moduleId: "pricing.default", pageSlug: "/", order: 2 },
-      { moduleId: "testimonials.default", pageSlug: "/", order: 3 },
+      { moduleId: "testimonials.default", pageSlug: "/", order: 2 },
     ],
     navigation: [
       { label: "Home", href: "/", order: 0 },

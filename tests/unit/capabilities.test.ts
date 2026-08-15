@@ -55,7 +55,7 @@ describe("Capabilities — Constants", () => {
 
   it("should define all feature IDs", () => {
     const ids = Object.values(FEATURE_IDS);
-    expect(ids.length).toBe(47);
+    expect(ids.length).toBe(51);
     expect(ids).toContain("max_products");
     expect(ids).toContain("custom_domain");
     expect(ids).toContain("seo");
@@ -184,7 +184,7 @@ describe("Capabilities — Features", () => {
 
   it("should list all feature IDs", () => {
     const ids = getAllFeatureIds();
-    expect(ids.length).toBe(46);
+    expect(ids.length).toBe(50);
   });
 
   it("should filter features by category", () => {
@@ -197,7 +197,7 @@ describe("Capabilities — Features", () => {
   });
 
   it("should have complete FEATURE_CATALOG", () => {
-    expect(Object.keys(FEATURE_CATALOG).length).toBe(46);
+    expect(Object.keys(FEATURE_CATALOG).length).toBe(50);
   });
 });
 
@@ -354,7 +354,7 @@ describe("Capabilities — Engine.planSummary", () => {
     expect(summary!.code).toBe("creator_launch");
     expect(summary!.name).toBe("Creator Launch");
     // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
-    expect(summary!.featureCount).toBe(47);
+    expect(summary!.featureCount).toBe(50);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
   });
 
@@ -522,7 +522,7 @@ describe("Capabilities — Mapper", () => {
     const summary = toPlanSummary(plan);
     expect(summary.code).toBe("creator_launch");
     // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
-    expect(summary.featureCount).toBe(47);
+    expect(summary.featureCount).toBe(50);
   });
 
   it("should format feature comparison", () => {
@@ -584,7 +584,7 @@ describe("Capabilities — Service Delegation", () => {
 
   it("should delegate feature accessors", () => {
     expect(capabilityService.getFeatureInfo("max_products").label).toBe("Products");
-    expect(capabilityService.getAllFeatureIds().length).toBe(46);
+    expect(capabilityService.getAllFeatureIds().length).toBe(50);
   });
 
   it("should delegate limit functions", () => {

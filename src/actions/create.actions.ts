@@ -148,10 +148,15 @@ export async function createWebsite(formData: FormData): Promise<{
     const blueprintId = formData.get("blueprintId") as string || "com.creatos.creator";
     const themeId = formData.get("themeId") as string || "com.creatos.neon-dark";
 
+    // RCCF-68.2 — truthful fallback: an unknown template id must never be
+    // executed. Only ids present in the CANONICAL blueprint registry are
+    // accepted; anything else falls back to the default creator blueprint.
+    const canonicalBlueprintId = blueprintRegistry.getById(blueprintId) ? blueprintId : "com.creatos.creator";
+
     const website = await prisma.website.findUnique({ where: { tenantId } });
     if (!website) return { success: false, error: "Website not found" };
 
-    const result = await applyBlueprintToWebsite(website.id, blueprintId, themeId);
+    const result = await applyBlueprintToWebsite(website.id, canonicalBlueprintId, themeId);
     if (!result.success) return result;
 
     revalidatePath("/");

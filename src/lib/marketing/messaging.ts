@@ -6,9 +6,9 @@ export const BRAND = {
   name: "CreatorStore",
   tagline: "Turn your content into a business.",
   shortDescription:
-    "AI builds your entire creator business from your social profile.",
+    "Turn your social profile into a creator business website.",
   description:
-    "CreatorStore is an AI-powered creator business platform. Paste your social profile — YouTube, Instagram, TikTok — and our AI generates a complete business website with storefront, products, checkout, analytics, SEO, and a visual drag-and-drop builder. No coding. No templates. Just your content, transformed.",
+    "CreatorStore turns your social profile into a complete creator business website — storefront, products, orders, analytics, SEO, and a visual drag-and-drop builder. Paste your YouTube, Instagram, or TikTok profile and get a storefront that matches your content and brand.",
   foundingYear: 2024,
   location: "Pune, Maharashtra, India",
   email: CONTACT_EMAIL,
@@ -16,7 +16,7 @@ export const BRAND = {
 } as const;
 
 export const POSITIONING = {
-  is: "An AI-powered creator business platform that builds, manages, and publishes your entire online business from your existing content.",
+  is: "A creator business platform that builds, manages, and publishes your online business from your existing content.",
   isNot: [
     "A template-based website builder",
     "Just a storefront or e-commerce tool",
@@ -29,9 +29,9 @@ export const POSITIONING = {
 
 export const VALUE_PROPOSITIONS = [
   {
-    id: "ai-understands",
-    headline: "AI understands your niche",
-    body: "Paste your social profile. Our AI analyzes your content, audience, brand, and niche — then generates a complete business platform tailored to you.",
+    id: "profile-storefront",
+    headline: "Built from your profile",
+    body: "Paste your social profile. We analyze your content, audience, brand, and niche — then build a complete business platform tailored to you.",
   },
   {
     id: "business-ready",
@@ -46,7 +46,7 @@ export const VALUE_PROPOSITIONS = [
   {
     id: "commerce-built-in",
     headline: "Commerce built in",
-    body: "Sell digital products, courses, memberships, coaching, physical merch, event tickets, and more. Native UPI and card checkout via Razorpay.",
+    body: "Sell digital products and physical merch, take service bookings, and collect affiliate commissions. UPI and card checkout via Razorpay.",
   },
   {
     id: "own-your-brand",
@@ -67,8 +67,8 @@ export const VALUE_PROPOSITIONS = [
 
 export const MESSAGING_PILLARS = [
   {
-    id: "ai-intelligence",
-    label: "AI Niche Intelligence",
+    id: "profile-intelligence",
+    label: "Profile Intelligence",
     description:
       "Your storefront is generated from your actual content — not a template.",
   },
@@ -88,7 +88,7 @@ export const MESSAGING_PILLARS = [
     id: "commerce",
     label: "Full Commerce",
     description:
-      "Digital products, physical goods, courses, memberships, bookings, and more.",
+      "Digital products, physical goods, service bookings, and more.",
   },
   {
     id: "brand",
@@ -100,7 +100,7 @@ export const MESSAGING_PILLARS = [
     id: "dashboard",
     label: "Creator Dashboard",
     description:
-      "Orders, customers, analytics, content, and AI assistant — all in one place.",
+      "Orders, customers, analytics, and content — all in one place.",
   },
   {
     id: "agency",
@@ -133,7 +133,7 @@ export const PLATFORM_CAPABILITIES = [
   {
     category: "Storefront",
     items: [
-      "AI-generated from your social profile",
+      "Generated from your social profile",
       "Custom domain with free SSL",
       "Mobile-responsive design",
       "SEO optimized structure",
@@ -145,10 +145,7 @@ export const PLATFORM_CAPABILITIES = [
     items: [
       "Digital downloads",
       "Physical merchandise",
-      "Courses and coaching",
-      "Memberships and subscriptions",
-      "Event tickets and bookings",
-      "Donations and tips",
+      "Service bookings",
       "Affiliate links",
     ],
   },
@@ -168,8 +165,7 @@ export const PLATFORM_CAPABILITIES = [
       "SEO optimization",
       "Email capture forms",
       "Social media integration",
-      "Analytics dashboard",
-      "Conversion tracking",
+      "Order analytics",
     ],
   },
   {
@@ -179,7 +175,6 @@ export const PLATFORM_CAPABILITIES = [
       "Customer management",
       "Product catalog",
       "Content management",
-      "AI assistant",
     ],
   },
   {

@@ -1,11 +1,11 @@
 import { ArrowRight } from "lucide-react";
 
 const COMPARISONS = [
-  { label: "Storefront", before: "No store", after: "AI-generated store" },
+  { label: "Storefront", before: "No store", after: "Profile-built store" },
   { label: "Products", before: "Nothing to sell", after: "Digital + physical products" },
   { label: "Checkout", before: "No payments", after: "UPI + Razorpay" },
   { label: "Brand", before: "Scattered links", after: "Unified presence" },
-  { label: "Analytics", before: "No insights", after: "Dashboard + metrics" },
+  { label: "Analytics", before: "No insights", after: "Orders + revenue metrics" },
 ];
 
 export function BeforeAfter() {

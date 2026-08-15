@@ -22,7 +22,7 @@ export function FinalCta() {
           </div>
 
           <p className="mt-4 text-xs text-zinc-600">
-            No credit card required · 2-minute setup · AI-generated storefront · Custom domain · Analytics &amp; SEO
+            No credit card required · 2-minute setup · Profile-built storefront · Custom domain · Order analytics &amp; SEO
           </p>
         </div>
       </div>

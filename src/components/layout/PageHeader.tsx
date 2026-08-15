@@ -44,13 +44,13 @@ export function PageHeader({ title, description, breadcrumbs, actions, status, t
         {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
       </div>
       {tabs && tabs.length > 0 && (
-        <nav className="mt-4 flex gap-1 border-b border-white/10" aria-label="Page tabs">
+        <nav className="mt-4 flex gap-1 overflow-x-auto border-b border-white/10" aria-label="Page tabs">
           {tabs.map((tab) => (
             <a
               key={tab.href}
               href={tab.href}
               className={cn(
-                "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
+                "whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
                 tab.active
                   ? "border-s8ul-cyan text-s8ul-cyan"
                   : "border-transparent text-zinc-500 hover:text-zinc-300"

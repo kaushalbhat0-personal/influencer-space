@@ -127,8 +127,10 @@ export const AffiliateService = {
 
   async incrementClicks(id: string, tenantId: string): Promise<void> {
     try {
+      // RCCF-65.3: the lookup is scoped to the resolved tenant AND active links
+      // only. Inactive, deleted, or cross-tenant links never increment.
       const existing = await prisma.affiliateLink.findFirst({
-        where: { id, tenantId },
+        where: { id, tenantId, isActive: true },
       });
       if (!existing) throw new Error("Affiliate not found");
       await prisma.affiliateLink.update({

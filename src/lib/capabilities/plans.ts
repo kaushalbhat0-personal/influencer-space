@@ -5,7 +5,6 @@ import { COMMERCE_PLANS, featuresForPlan, LEGACY_TO_CANONICAL } from "@/config/c
 const BASE_FEATURES: Record<string, number | boolean | string> = {
   max_products: 5,
   max_gallery: 10,
-  storage_gb: 1,
   max_messages: 100,
   max_orders: 50,
   max_websites: 1,

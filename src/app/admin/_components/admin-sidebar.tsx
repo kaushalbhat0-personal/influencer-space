@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { ADMIN_NAV, type NavGroup } from "@/config/admin-nav";
+import { type NavConfig, type NavGroup } from "@/config/admin-nav";
 import { ChevronDown, ExternalLink, LogOut, X } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 
@@ -14,11 +14,13 @@ interface AdminSidebarProps {
   onClose: () => void;
   siteUrl?: string;
   publishStatus?: PublishStatusValue;
+  nav: NavConfig;
 }
 
-export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "draft" }: AdminSidebarProps) {
+export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "draft", nav }: AdminSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const asideRef = useRef<HTMLElement>(null);
 
   const toggleGroup = useCallback((label: string) => {
     setCollapsed((prev) => {
@@ -43,6 +45,59 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
     return collapsed.has(group.label ?? "");
   };
 
+  // RCCF-68.3.4 — mobile drawer a11y: Escape closes, body scroll locked, focus
+  // moves into the drawer on open and returns to the trigger on close, and Tab
+  // is trapped inside the drawer while it is open. Desktop (lg+) is unaffected —
+  // the aside is static there and `open` only drives the mobile overlay.
+  const openRef = useRef(false);
+  useEffect(() => {
+    if (!open) return;
+    openRef.current = true;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Simple focus trap: cycle Tab within the drawer.
+      if (e.key === "Tab") {
+        const aside = asideRef.current;
+        if (!aside) return;
+        const focusables = Array.from(
+          aside.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+        ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    // Move focus into the drawer once it is visible.
+    const focusTimer = window.setTimeout(() => {
+      asideRef.current?.querySelector<HTMLElement>('a[href]')?.focus();
+    }, 50);
+
+    return () => {
+      openRef.current = false;
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      previouslyFocused?.focus?.();
+    };
+  }, [open, onClose]);
+
   return (
     <>
       {open && (
@@ -54,8 +109,10 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
       )}
 
       <aside
-        role="navigation"
+        ref={asideRef}
         aria-label="Admin navigation"
+        role={open ? "dialog" : "navigation"}
+        {...(open ? { "aria-modal": true } : {})}
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl transition-transform duration-300 lg:static lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
@@ -81,7 +138,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {ADMIN_NAV.groups.map((group, gi) => (
+          {nav.groups.map((group, gi) => (
             <div key={gi}>
               {group.label ? (
                 <button

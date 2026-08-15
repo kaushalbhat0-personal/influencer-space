@@ -23,6 +23,8 @@ export interface UpdateAssetData {
   altText?: string;
   width?: number;
   height?: number;
+  size?: number;
+  mimeType?: string;
   publicUrl?: string;
   thumbnailUrl?: string;
   mediumUrl?: string;
@@ -36,8 +38,9 @@ export interface UpdateAssetData {
 }
 
 export class AssetCommands {
-  async create(data: CreateAssetData) {
-    return prisma.asset.create({
+  async create(data: CreateAssetData, tx?: Prisma.TransactionClient) {
+    const client = tx ?? prisma;
+    return client.asset.create({
       data: {
         tenantId: data.tenantId,
         filename: data.filename,

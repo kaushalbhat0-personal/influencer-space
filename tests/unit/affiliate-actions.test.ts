@@ -13,6 +13,8 @@ vi.mock("@/services/storage.service", () => ({ StorageService: { extractPathFrom
 vi.mock("@/modules/billing/application/content-limit.enforcement", () => ({ enforceContentLimit: h.mockEnforceContentLimit }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ logAction: h.mockLogAction }));
+vi.mock("@/lib/tenant", () => ({ getTenantContext: vi.fn() }));
+vi.mock("@/lib/security/rate-limiter", () => ({ checkRateLimit: vi.fn() }));
 
 import { createAffiliate } from "@/actions/affiliate.actions";
 

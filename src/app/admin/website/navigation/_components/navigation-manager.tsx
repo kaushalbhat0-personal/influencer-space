@@ -109,13 +109,13 @@ export function NavigationManager({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="text-xs text-zinc-500">{items.length} item{items.length !== 1 ? "s" : ""}</span>
           {saving && <span className="text-xs text-zinc-500">Saving...</span>}
           {saved && <span className="text-xs text-emerald-400">Saved</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
@@ -153,26 +153,28 @@ export function NavigationManager({
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="flex items-center gap-3 rounded-lg border border-white/10 bg-zinc-900/50 px-4 py-3"
+            className="flex flex-col gap-2 rounded-lg border border-white/10 bg-zinc-900/50 px-4 py-3 sm:flex-row sm:items-center sm:gap-3"
           >
-            <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-0.5">
               <button
                 onClick={() => moveItem(index, -1)}
                 disabled={index === 0}
-                className="text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label={`Move ${item.label} up`}
+                className="rounded p-1 text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <MoveUp className="h-3 w-3" />
               </button>
               <button
                 onClick={() => moveItem(index, 1)}
                 disabled={index === items.length - 1}
-                className="text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label={`Move ${item.label} down`}
+                className="rounded p-1 text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <MoveDown className="h-3 w-3" />
               </button>
             </div>
 
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
+            <span className={`w-fit rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
               item.type === "external"
                 ? "bg-amber-900/30 text-amber-400"
                 : item.type === "anchor"
@@ -182,41 +184,48 @@ export function NavigationManager({
               {TYPE_LABELS[item.type]}
             </span>
 
-            <input
-              type="text"
-              value={item.label}
-              onChange={(e) => updateLabel(index, e.target.value)}
-              className="flex-1 bg-transparent text-sm text-white outline-none placeholder-zinc-600"
-            />
+            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <input
+                type="text"
+                value={item.label}
+                onChange={(e) => updateLabel(index, e.target.value)}
+                aria-label={`Label for ${item.label}`}
+                className="w-full min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder-zinc-600 sm:max-w-[12rem]"
+              />
 
-            {item.type === "external" && (
-              <span className="flex items-center gap-1 text-xs text-zinc-600">
-                <ExternalLink className="h-3 w-3" />
-                {item.href}
-              </span>
-            )}
-            {item.type === "page" && (
-              <span className="flex items-center gap-1 text-xs text-zinc-600">
-                /{item.href.replace(/^\/+/, "")}
-              </span>
-            )}
+              {item.type === "external" && (
+                <span className="flex min-w-0 items-center gap-1 truncate text-xs text-zinc-600" title={item.href}>
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{item.href}</span>
+                </span>
+              )}
+              {item.type === "page" && (
+                <span className="flex min-w-0 items-center gap-1 truncate text-xs text-zinc-600" title={`/${item.href.replace(/^\/+/, "")}`}>
+                  <span className="truncate">/{item.href.replace(/^\/+/, "")}</span>
+                </span>
+              )}
+            </div>
 
-            <button
-              onClick={() => toggleVisibility(index)}
-              className="text-zinc-600 hover:text-zinc-300 transition-colors"
-              title={item.visible ? "Visible" : "Hidden"}
-            >
-              {item.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            </button>
-
-            {item.type !== "anchor" && (
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => removeItem(index)}
-                className="text-zinc-600 hover:text-red-400 transition-colors"
+                onClick={() => toggleVisibility(index)}
+                aria-label={item.visible ? `Hide ${item.label}` : `Show ${item.label}`}
+                className="rounded p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
+                title={item.visible ? "Visible" : "Hidden"}
               >
-                <Trash2 className="h-4 w-4" />
+                {item.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               </button>
-            )}
+
+              {item.type !== "anchor" && (
+                <button
+                  onClick={() => removeItem(index)}
+                  aria-label={`Remove ${item.label}`}
+                  className="rounded p-1 text-zinc-600 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

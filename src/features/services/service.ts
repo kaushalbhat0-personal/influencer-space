@@ -9,6 +9,7 @@ function toServiceData(o: {
   status: string;
   createdAt: Date;
   metadata: unknown;
+  bookable?: boolean;
 }): ServiceData {
   const meta = (o.metadata as Record<string, unknown> | null) ?? {};
   return {
@@ -23,6 +24,7 @@ function toServiceData(o: {
     status: (o.status === "published" ? "PUBLISHED" : "DRAFT") as ServiceData["status"],
     isActive: o.status === "published",
     createdAt: o.createdAt,
+    bookable: o.bookable ?? false,
   };
 }
 
@@ -31,7 +33,7 @@ export const serviceService = {
     const offerings = await prisma.offering.findMany({
       where: { tenantId, type: "coaching" },
       orderBy: { createdAt: "desc" },
-      select: { id: true, title: true, description: true, price: true, status: true, createdAt: true, metadata: true },
+      select: { id: true, title: true, description: true, price: true, status: true, createdAt: true, metadata: true, bookable: true },
     });
     return offerings.map(toServiceData);
   },
@@ -48,6 +50,7 @@ export const serviceService = {
         price: input.price,
         status: input.status === "PUBLISHED" ? "published" : "draft",
         currency: "INR",
+        bookable: input.bookable ?? false,
         metadata: JSON.parse(JSON.stringify({
           duration: input.duration ?? null,
           imageUrl: input.imageUrl ?? null,
@@ -71,6 +74,7 @@ export const serviceService = {
         description: input.description ?? null,
         price: input.price,
         status: input.status === "PUBLISHED" ? "published" : input.status === "ARCHIVED" ? "archived" : "draft",
+        bookable: input.bookable ?? false,
         metadata: JSON.parse(JSON.stringify({
           ...existingMeta,
           duration: input.duration ?? null,

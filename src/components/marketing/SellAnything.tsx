@@ -9,13 +9,13 @@ interface SellItem {
 
 const ITEMS: SellItem[] = [
   { icon: ShoppingBag, title: "Digital Products", body: "Sell ebooks, templates, presets, and downloads — delivered instantly." },
-  { icon: BookOpen, title: "Courses", body: "Create and sell video courses with modules, lessons, and progress tracking." },
-  { icon: Dumbbell, title: "Coaching", body: "Offer one-on-one or group coaching sessions with scheduling and payments." },
-  { icon: Users, title: "Memberships", body: "Recurring membership tiers with exclusive content, community, and perks." },
+  { icon: BookOpen, title: "Courses", body: "Showcase your courses and services with a dedicated storefront section." },
+  { icon: Dumbbell, title: "Coaching", body: "Offer one-on-one or group coaching sessions with bookings and payments." },
+  { icon: Calendar, title: "Services & Bookings", body: "Let clients book your services directly with availability and payments." },
   { icon: Package, title: "Physical Products", body: "Sell merch, gear, and physical goods with inventory and shipping built in." },
-  { icon: Calendar, title: "Events & Bookings", body: "Sell tickets, host webinars, and let clients book your time directly." },
-  { icon: Heart, title: "Donations & Tips", body: "Accept one-time support, tips, and donations from your audience." },
-  { icon: Link2, title: "Affiliate Links", body: "Promote products you love and earn commissions on every sale." },
+  { icon: Heart, title: "Affiliate Links", body: "Promote products you love and earn commissions on every sale." },
+  { icon: Users, title: "Memberships", body: "Showcase membership tiers with exclusive content and community." },
+  { icon: Link2, title: "WhatsApp Commerce", body: "Let customers order direct via WhatsApp with one-tap checkout links." },
 ];
 
 export function SellAnything() {
@@ -26,11 +26,11 @@ export function SellAnything() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Sell{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-              anything
+              what you create
             </span>
           </h2>
           <p className="mt-3 text-zinc-500 max-w-xl mx-auto">
-            Digital products, courses, memberships, physical goods, services — whatever you create, CreatorStore helps you sell it.
+            Digital products, physical goods, services, bookings, and affiliate links — CreatorStore helps you sell and showcase it all.
           </p>
         </div>
 

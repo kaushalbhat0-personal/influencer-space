@@ -237,6 +237,11 @@ export class LayoutEngine {
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
+        // RCCF-66.2: per-product sales mode + resolved WhatsApp destination,
+        // baked into the snapshot by the aggregate. Legacy snapshots without
+        // them degrade to ONLINE (renderer normalizes).
+        commerceMode: p.commerceMode,
+        whatsappUrl: p.whatsappUrl,
       }));
       config.resolvedData = productEntries;
       config.resolvedTitle = content.identity.name
@@ -269,6 +274,20 @@ export class LayoutEngine {
       config.resolvedData = linkEntries;
       config.resolvedTitle = "Connect With Me";
       debugLog(tracePrefix, "links", { heroLinks: heroLinks.length, resolvedCount: linkEntries.length });
+    } else if (moduleId.startsWith("affiliateLinks.")) {
+      // RCCF-65.2 — a distinct Affiliate Links section. The `links` section
+      // above remains Hero social links (unchanged); this section renders the
+      // persisted AffiliateLink data (active-only, ordered) from the aggregate.
+      const linkEntries: Record<string, unknown>[] = content.links.map((l) => ({
+        id: l.id,
+        title: l.title,
+        url: l.url,
+        imageUrl: l.imageUrl,
+        clicks: l.clicks,
+      }));
+      config.resolvedData = linkEntries;
+      config.resolvedTitle = config.resolvedTitle || "Affiliate Links";
+      debugLog(tracePrefix, "affiliateLinks", { aggCount: content.links.length, resolvedCount: linkEntries.length });
     } else if (moduleId.startsWith("footer.")) {
       config.copyright = config.copyright || `© ${content.identity.name} — CreatorStore`;
       config.socialLinks = content.hero.socialLinks ?? [];
@@ -351,9 +370,28 @@ export class LayoutEngine {
         imageUrl: s.imageUrl,
         category: s.category,
         featured: s.featured,
+        // RCCF-67.5 — bookable state + future open slots (server-derived).
+        bookable: s.bookable ?? false,
+        bookableSlots: s.bookableSlots ?? [],
       }));
       config.resolvedTitle = "Services";
       debugLog(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+    } else if (moduleId.startsWith("bookings.")) {
+      // RCCF-67.4 — bookable slots from the aggregate (open, future, non-cancelled).
+      config.resolvedData = (content.bookings ?? []).map((b) => ({
+        id: b.id,
+        title: b.title,
+        description: b.description,
+        price: b.price,
+        duration: b.duration,
+        slotDate: b.slotDate,
+        slotStart: b.slotStart,
+        slotEnd: b.slotEnd,
+        timezone: b.timezone,
+        approvalRequired: b.approvalRequired,
+      }));
+      config.resolvedTitle = config.resolvedTitle || "Book a Session";
+      debugLog(tracePrefix, "bookings", { aggCount: (content.bookings ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     }
 
     // RCCF-LAUNCH-TRACK-04: apply the creator's presentation overrides on top of

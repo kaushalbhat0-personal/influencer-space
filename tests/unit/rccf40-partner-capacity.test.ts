@@ -28,6 +28,8 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     websiteAgency: { findUnique: h.mockAgencyFindUnique },
     workspace: { findUnique: h.mockWorkspaceFindUnique },
+    billingSubscription: { findFirst: async () => ({ status: "TRIALING", trialEndsAt: new Date(Date.now() + 86400000) }) },
+    agencyCapacityAddon: { aggregate: async () => ({ _sum: { quantity: null } }) },
     agencyTenant: {
       findUnique: h.mockAgencyTenantFindUnique,
       count: async ({ where }: { where: { agencyId: string; status: string } }) =>
@@ -197,6 +199,6 @@ describe("RCCF-40 — tenant isolation + fail-fast read", () => {
     await agencyTenantRelationship.linkCreator({ agencyId: AGENCY_A, tenantId: tenantId(1) });
 
     const c = await getAgencyClientCapacity(AGENCY_A);
-    expect(c).toEqual({ planCode: "partner_solo", limit: 5, used: 1 });
+    expect(c).toEqual({ planCode: "partner_solo", limit: 5, used: 1, includedLimit: 5, addonQuantity: 0, trialExpired: false });
   });
 });

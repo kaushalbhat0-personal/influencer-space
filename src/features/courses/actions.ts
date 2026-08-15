@@ -18,9 +18,12 @@ export async function listCourses() {
 }
 
 export async function getCourse(id: string) {
+  // RCCF-63.3 — tenant-authoritative read. The course id alone never selects a
+  // foreign-tenant course; ownership is derived from the authenticated session.
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  return courseService.getById(id);
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) throw new Error("Unauthorized");
+  return courseService.getById(tenantId, id);
 }
 
 export async function createCourse(input: CourseFormInput) {

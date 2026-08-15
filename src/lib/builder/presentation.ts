@@ -27,7 +27,6 @@ export const PRESENTATION_DEFAULTS: Record<string, Record<string, unknown>> = {
   "faq.default": { expandFirst: true },
   "contact.default": { showPhone: true },
   "newsletter.default": { showName: true },
-  "pricing.default": { animation: "stagger", showCta: true },
   "courses.default": { animation: "stagger" },
   "services.default": {},
   "games.default": {},

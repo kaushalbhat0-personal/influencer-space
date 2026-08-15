@@ -8,7 +8,7 @@
 import {
   LayoutDashboard, ShoppingBag, Image, Trophy, Gamepad2, Link2,
   Palette, Globe, CreditCard, Settings, Rss, MessageSquare,
-  BarChart3, Users, Package, Mail, Bot, Search, FileText,
+  BarChart3, Users, Package, Mail, Bot, Search,
   Building2, UserCheck, Globe2, Store, Gift, Key,
   Activity, Clock, Layers, Wrench, Sparkles,
 } from "lucide-react";
@@ -65,7 +65,6 @@ export const CREATOR_NAV: DashboardNav = {
         { label: "Links", href: "/admin/links", icon: Link2, roles: allRoles("ADMIN", "SUPER_ADMIN") },
         { label: "Games", href: "/admin/games", icon: Gamepad2, roles: allRoles("ADMIN", "SUPER_ADMIN") },
         { label: "Content Feed", href: "/admin/settings/content", icon: Rss, roles: allRoles("ADMIN", "SUPER_ADMIN") },
-        { label: "Blog", href: "/admin/blog", icon: FileText, roles: allRoles("ADMIN", "SUPER_ADMIN"), badge: "new" },
       ],
     },
     {
@@ -84,8 +83,8 @@ export const CREATOR_NAV: DashboardNav = {
       roles: allRoles("ADMIN", "SUPER_ADMIN"),
       items: [
         { label: "Analytics", href: "/admin/analytics", icon: BarChart3, roles: allRoles("ADMIN", "SUPER_ADMIN"), badge: "new" },
-        { label: "Email", href: "/admin/email", icon: Mail, roles: allRoles("ADMIN", "SUPER_ADMIN"), badge: "new" },
-        { label: "AI Assistant", href: "/admin/ai-assistant", icon: Bot, roles: allRoles("ADMIN", "SUPER_ADMIN"), badge: "new" },
+        { label: "Email", href: "/admin/email", icon: Mail, roles: allRoles("ADMIN", "SUPER_ADMIN"), badge: "Coming Soon" },
+        { label: "AI Assistant", href: "/admin/ai-assistant", icon: Bot, roles: allRoles("ADMIN", "SUPER_ADMIN"), badge: "Coming Soon" },
       ],
     },
     {

@@ -3,16 +3,32 @@
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { TiltCard } from "@/components/ui/TiltCard";
-import { incrementAffiliateClicks } from "@/actions/affiliate.actions";
-import type { AffiliateData } from "@/services/affiliate.service";
 
-interface AffiliateGridProps {
-  affiliates: AffiliateData[];
+// RCCF-65.2: the storefront grid renders the aggregate subset (id, title, url,
+// imageUrl, clicks). Full admin rows (AffiliateData) are assignable to it.
+export interface AffiliateGridItem {
+  id: string;
+  title: string;
+  url: string;
+  imageUrl: string | null;
+  clicks: number;
 }
 
-export function AffiliateGrid({ affiliates }: AffiliateGridProps) {
+interface AffiliateGridProps {
+  affiliates: AffiliateGridItem[];
+  /** RCCF-67.2: in preview the grid is inert — no click tracking, no window.open. */
+  previewMode?: boolean;
+}
+
+export function AffiliateGrid({ affiliates, previewMode = false }: AffiliateGridProps) {
   const handleClick = async (id: string, url: string) => {
+    // RCCF-67.2 (P1): a live preview must never initiate commerce mutations.
+    if (previewMode) return;
     try {
+      // RCCF-65.2: lazy-load the server action so importing this client
+      // component never pulls the server-side storage/supabase chain into a
+      // node test environment at module-load time.
+      const { incrementAffiliateClicks } = await import("@/actions/affiliate.actions");
       await incrementAffiliateClicks(id);
     } catch (error) {
       console.error("Failed to increment clicks:", error);

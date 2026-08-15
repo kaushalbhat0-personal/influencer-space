@@ -14,16 +14,18 @@ interface Props {
   styles: StyleDefinition[];
   blueprints: BlueprintDefinition[];
   themes: ThemeDefinition[];
+  /** RCCF-68.2 — preselected template id validated server-side (?blueprint= handoff). */
+  initialBlueprintId?: string | null;
 }
 
 type Step = "industry" | "style" | "review" | "generating" | "done";
 
-export function CreationWizardClient({ industries, styles, blueprints, themes }: Props) {
+export function CreationWizardClient({ industries, styles, blueprints, themes, initialBlueprintId }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("industry");
+  const [step, setStep] = useState<Step>(initialBlueprintId ? "review" : "industry");
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [selectedBlueprint, setSelectedBlueprint] = useState<string | null>(null);
+  const [selectedBlueprint, setSelectedBlueprint] = useState<string | null>(initialBlueprintId ?? null);
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");

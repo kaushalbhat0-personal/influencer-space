@@ -139,6 +139,9 @@ export type { SettingsActionState } from "./settings.types";
 export { submitStorefrontContact, subscribeNewsletter } from "./storefront.actions";
 export type { ContactActionResult } from "./storefront.actions";
 
+export { submitPublicBooking } from "./storefront-bookings.actions";
+export type { PublicBookingState } from "./storefront-bookings.actions";
+
 export { analyzeUrl, confirmProvision } from "./super-admin-provision.actions";
 export type { AnalyzeResult, ProvisionResult as SuperAdminProvisionResult, DuplicateInfo } from "./super-admin-provision.actions";
 

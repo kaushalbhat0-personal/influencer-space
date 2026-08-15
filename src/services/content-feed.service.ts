@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import type { PublicFeedItemData } from "@/components/public/ContentFeed";
 
 export type FeedItemRow = {
   id: string;
@@ -16,28 +15,6 @@ export type FeedItemRow = {
   syncedAt: Date;
   createdAt: Date;
 };
-
-function toPublic(item: FeedItemRow): PublicFeedItemData {
-  return {
-    id: item.id,
-    platform: item.platform,
-    mediaType: item.mediaType as "image" | "video",
-    url: item.url,
-    thumbnailUrl: item.thumbnailUrl,
-    caption: item.caption,
-    permalink: item.permalink,
-  };
-}
-
-export async function getContentFeed(
-  tenantId: string,
-): Promise<PublicFeedItemData[]> {
-  const rows = await prisma.contentFeedItem.findMany({
-    where: { tenantId, hidden: false },
-    orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-  });
-  return rows.map(toPublic);
-}
 
 export async function getAllContentFeedItems(
   tenantId: string,

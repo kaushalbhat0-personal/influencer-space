@@ -3,10 +3,12 @@
 import { Fragment } from "react";
 import { getFeatureInfo, getFeatureGroups } from "@/lib/capabilities";
 import type { ResolvedPlan } from "@/modules/pricing/application/runtime";
+import { getComparisonFeatureIds, getFeatureDisplayValue, type PlanFamily } from "./data";
 import { Check, Minus } from "lucide-react";
 
 interface ComparisonProps {
   plans: ResolvedPlan[];
+  family: PlanFamily;
 }
 
 function featureValue(features: Record<string, number | boolean | string> | undefined, key: string, valueType: string): number | boolean | string {
@@ -20,11 +22,19 @@ function featureValue(features: Record<string, number | boolean | string> | unde
  * groups, driven by the RUNTIME plans (BillingPlan + registry fallback). Values
  * come from each plan's effective feature map — Available / Limited / Unlimited
  * are derived, nothing is hand-maintained.
+ *
+ * RCCF-58: the vocabulary is family-appropriate (creator vs partner), and
+ * storage is rendered from the approved MB commercial decision via
+ * getFeatureDisplayValue.
  */
-export function ComparisonMatrix({ plans }: ComparisonProps) {
+export function ComparisonMatrix({ plans, family }: ComparisonProps) {
   if (plans.length === 0) return null;
 
-  const groups = getFeatureGroups();
+  const allowed = new Set(getComparisonFeatureIds(family));
+  const groups = getFeatureGroups().map((g) => ({
+    ...g,
+    features: g.features.filter((f) => allowed.has(f.id)),
+  })).filter((g) => g.features.length > 0);
 
   return (
     <div className="mt-20" data-testid="comparison-matrix">
@@ -58,7 +68,8 @@ export function ComparisonMatrix({ plans }: ComparisonProps) {
                     <tr key={f.id} className="border-b border-white/[0.03]">
                       <td className="sticky left-0 z-10 bg-[#0a0a0a] py-2.5 px-4 text-zinc-400">{info.label}</td>
                       {plans.map((p) => {
-                        const val = featureValue(p.features, f.id, info.valueType);
+                        const raw = featureValue(p.features, f.id, info.valueType);
+                        const val = getFeatureDisplayValue(p.code, f.id, raw, info.valueType);
                         return (
                           <td key={p.code} className="py-2.5 px-4 text-center">
                             {info.valueType === "boolean" ? (

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { savePlanConfig, rollbackPlanVersion, upsertCoupon, upsertLaunchProgram, resyncBillingCatalog } from "@/actions/super-admin-pricing.actions";
 import type { PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
-import type { TypedCapability } from "@/lib/entitlements/runtime";
+import type { CapabilityCatalogItem } from "@/lib/capabilities/catalog";
 import { formatCurrency } from "@/lib/utils";
 
 export interface CenterPlan {
@@ -26,7 +26,7 @@ interface Props {
   coupons: CenterCoupon[];
   programs: CenterProgram[];
   analytics: CenterAnalytics;
-  capabilityGroups: Array<{ category: string; items: TypedCapability[] }>;
+  capabilityGroups: Array<{ category: string; items: CapabilityCatalogItem[] }>;
   limitFeatures: Array<{ id: string; label: string }>;
 }
 
@@ -173,10 +173,18 @@ function initForm(plan: CenterPlan | undefined): EditorState {
   const rc = plan?.runtimeConfig;
   const m = rc?.marketing;
   const p = rc?.pricing;
+  const family = (plan?.family as "creator" | "partner") ?? "creator";
+  // RCCF-60.3: Partner plans have NO storage capability — strip any historical
+  // storage override so the Pricing Center never edits/persists Partner storage.
+  const featureOverrides = { ...(rc?.featureOverrides ?? {}) };
+  if (family !== "creator") {
+    delete featureOverrides["storage_mb"];
+    delete featureOverrides["storage_gb"];
+  }
   return {
     code: plan?.code ?? "",
     name: plan?.name ?? "",
-    family: (plan?.family as "creator" | "partner") ?? "creator",
+    family,
     description: m?.description ?? "",
     targetAudience: m?.targetAudience ?? "",
     monthlyPrice: p?.price !== undefined && p.price !== null ? String(p.price) : plan?.price !== null && plan?.price !== undefined ? String(plan.price) : "",
@@ -195,7 +203,7 @@ function initForm(plan: CenterPlan | undefined): EditorState {
     colorAccent: m?.colorAccent ?? "",
     highlightsText: (m?.highlights ?? []).join("\n"),
     capabilities: new Set(rc?.capabilities ?? []),
-    featureOverrides: { ...(rc?.featureOverrides ?? {}) },
+    featureOverrides,
     scheduled: (p?.schedule ?? []).map((s) => ({ price: s.price !== null && s.price !== undefined ? String(s.price) : "", annualPrice: s.annualPrice !== null && s.annualPrice !== undefined ? String(s.annualPrice) : "", effectiveAt: s.effectiveAt })),
     publishingMode: rc?.publishing?.mode ?? "",
     publishingLimit: rc?.publishing?.limit !== undefined && rc?.publishing?.limit !== null ? String(rc.publishing.limit) : "",
@@ -245,7 +253,7 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
   save: () => void;
   saving: boolean;
   msg: string | null;
-  capabilityGroups: Array<{ category: string; items: TypedCapability[] }>;
+  capabilityGroups: Array<{ category: string; items: CapabilityCatalogItem[] }>;
   limitFeatures: Array<{ id: string; label: string }>;
   onReset: () => Promise<void>;
 }) {
@@ -320,15 +328,19 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
           <h2 className="mb-3 text-sm font-semibold text-white">Limits <span className="text-[10px] font-normal text-zinc-500">(-1 = unlimited, 0 = off)</span></h2>
           <div className="grid grid-cols-3 gap-2">
-            {limitFeatures.map((f) => (
-              <Field key={f.id} label={f.label}>
-                {f.id === "max_clients" ? (
-                  <CapacityLimitControl value={form.featureOverrides[f.id] ?? -1} onChange={(raw) => setLimit(f.id, raw)} />
-                ) : (
-                  <input className={inputCls} value={String(form.featureOverrides[f.id] ?? 0)} onChange={(e) => setLimit(f.id, e.target.value)} />
-                )}
-              </Field>
-            ))}
+            {limitFeatures
+              // RCCF-60.3: Partner plans have no storage capability — storage
+              // limits are never editable for non-Creator plans.
+              .filter((f) => form.family === "creator" || (f.id !== "storage_mb" && f.id !== "storage_gb"))
+              .map((f) => (
+                <Field key={f.id} label={f.label}>
+                  {f.id === "max_clients" ? (
+                    <CapacityLimitControl value={form.featureOverrides[f.id] ?? -1} onChange={(raw) => setLimit(f.id, raw)} />
+                  ) : (
+                    <input className={inputCls} value={String(form.featureOverrides[f.id] ?? 0)} onChange={(e) => setLimit(f.id, e.target.value)} />
+                  )}
+                </Field>
+              ))}
           </div>
         </div>
 

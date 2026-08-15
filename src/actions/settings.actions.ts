@@ -11,6 +11,7 @@ import { logAction } from "@/lib/audit";
 import { captureError } from "@/lib/observability/error-tracker";
 import { afterContentChange } from "@/lib/publishing/content-change";
 import { assertAnyCapability } from "@/modules/billing/application/capability-gates";
+import { mediaService } from "@/lib/media/service";
 
 async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
@@ -18,6 +19,33 @@ async function requireAuth(tenantId: string): Promise<void> {
   if (session.user.role !== "SUPER_ADMIN" && session.user.tenantId !== tenantId) {
     throw new Error("Forbidden");
   }
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * RCCF-67.3 — the hero video must be ASSET-BACKED. A raw client-supplied URL
+ * can never become a hero-video authority: the referenced asset must exist,
+ * belong to the session tenant, be ACTIVE, and pass the canonical RCCF-59 hero
+ * validation (12 MB / 15 s / MP4-QuickTime, server-verified bytes + duration).
+ * Clearing the video (empty/null) is always allowed.
+ */
+async function assertHeroVideoWrite(tenantId: string, sparse: Record<string, unknown>): Promise<void> {
+  const videoUrl = sparse.videoUrl;
+  const videoAssetId = sparse.videoAssetId;
+
+  const settingVideoUrl = typeof videoUrl === "string" ? videoUrl : "";
+  const settingVideoAssetId = typeof videoAssetId === "string" ? videoAssetId : "";
+
+  // No video change (absent or clearing) — nothing to enforce.
+  if (!settingVideoUrl && !settingVideoAssetId) return;
+
+  // A raw URL without an owned, validated asset is rejected.
+  if (!settingVideoAssetId || !UUID_RE.test(settingVideoAssetId)) {
+    throw new Error("Hero video must reference an uploaded asset.");
+  }
+
+  await mediaService.assertHeroVideoAsset(tenantId, settingVideoAssetId);
 }
 
 const heroPartialSchema = z.object({
@@ -86,17 +114,20 @@ export async function updateHeroData(
     };
   }
 
+  const sparseData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(parsed.data)) {
+    // Empty strings become JSON null so the JSONB merge removes the key,
+    // letting creators clear hero fields that were previously sticky.
+    if (value !== undefined && value !== null) {
+      sparseData[key] = value === "" ? null : value;
+    }
+  }
+
   try {
     await requireAuth(tenantId);
 
-    const sparseData: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(parsed.data)) {
-      // Empty strings become JSON null so the JSONB merge removes the key,
-      // letting creators clear hero fields that were previously sticky.
-      if (value !== undefined && value !== null) {
-        sparseData[key] = value === "" ? null : value;
-      }
-    }
+    // RCCF-67.3: a raw client URL can never become the hero-video authority.
+    await assertHeroVideoWrite(tenantId, sparseData);
 
     await prisma.$transaction(async (tx) => {
       await SettingsService.patchHeroData(tenantId, sparseData, tx);
@@ -144,6 +175,9 @@ export async function updateHeroPartial(
 
   try {
     await requireAuth(tenantId);
+
+    // RCCF-67.3: a raw client URL can never become the hero-video authority.
+    await assertHeroVideoWrite(tenantId, sparseData);
 
     await prisma.$transaction(async (tx) => {
       await SettingsService.patchHeroData(tenantId, sparseData, tx);

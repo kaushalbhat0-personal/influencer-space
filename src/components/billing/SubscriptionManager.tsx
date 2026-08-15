@@ -38,9 +38,10 @@ const FEATURE_LABELS: Record<string, string> = {
   api_access: "API Access",
   priority_support: "Priority Support",
   ai_automation: "AI Automation",
-  storage_gb: "Storage",
+  storage_mb: "Storage",
   max_clients: "Clients",
   white_label: "White Label",
+  hero_video_enabled: "Hero Video",
 };
 
 function formatFeatureValue(val: number | boolean | string): string {
@@ -57,7 +58,7 @@ export function SubscriptionManager({
 
   const allFeatures = Array.from(
     new Set(availablePlans.flatMap((p) => Object.keys(p.features))),
-  );
+  ).filter((f) => f !== "storage_gb"); // RCCF-59: creators render storage via storage_mb
 
   return (
     <DashboardWidget
@@ -115,7 +116,11 @@ export function SubscriptionManager({
                     const isBetter = typeof val === "number" && typeof currentVal === "number" && val > currentVal && currentVal !== -1;
                     return (
                       <td key={plan.code} className={cn("text-center py-2 px-2", isBetter && "text-emerald-400")}>
-                        {typeof val === "boolean" ? <FeatureCheck included={val} /> : formatFeatureValue(val)}
+                        {typeof val === "boolean"
+                          ? <FeatureCheck included={val} />
+                          : feature === "storage_mb"
+                            ? `${val} MB`
+                            : formatFeatureValue(val)}
                       </td>
                     );
                   })}

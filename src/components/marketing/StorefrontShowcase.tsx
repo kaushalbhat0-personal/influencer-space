@@ -14,7 +14,7 @@ export function StorefrontShowcase() {
             </span>
           </h2>
           <p className="mt-3 text-zinc-500 max-w-xl mx-auto">
-            AI generates your complete storefront — products, checkout, SEO, and mobile-optimized
+            Your complete storefront is built from your profile — products, checkout, SEO, and mobile-optimized
             design. Paste your profile URL and watch it build.
           </p>
         </div>

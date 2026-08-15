@@ -24,7 +24,7 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "default
 
 const columns: Column<OrderRow>[] = [
   { key: "productName", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.productName}</span> },
-  { key: "fanEmail", header: "Customer", sortable: true, cell: (r) => <span className="text-zinc-400 text-sm">{r.fanEmail ?? "—"}</span> },
+  { key: "fanEmail", header: "Customer", sortable: true, cell: (r) => <span className="break-all text-zinc-400 text-sm">{r.fanEmail ?? "—"}</span> },
   { key: "amount", header: "Amount", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">{formatINR(r.amount)}</span> },
   {
     key: "status", header: "Status", sortable: true, cell: (r) => (

@@ -72,13 +72,13 @@ export function AppearanceManager({
   };
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
       <div className="min-w-0 flex-1 space-y-6">
         {/* ─── Color Presets ─── */}
         <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Color Presets</h2>
           <p className="mt-1 text-xs text-zinc-500">Pick a preset or customize individual colors below.</p>
-          <div className="mt-4 grid grid-cols-4 gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {COLOR_PRESETS.map((preset) => {
               const isActive = theme.accent === preset.accent;
               return (
@@ -165,7 +165,7 @@ export function AppearanceManager({
         {/* ─── Layout Density ─── */}
         <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Layout Density</h2>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {(["compact", "comfortable", "spacious"] as const).map((d) => (
               <button
                 key={d}

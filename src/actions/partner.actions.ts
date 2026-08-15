@@ -7,7 +7,7 @@
  * agency-membership guarded + audited.
  */
 import { prisma } from "@/lib/prisma";
-import { requireAgencyMember, assertAgencyOwnsTenant, canMutate } from "@/modules/partner/application/authorization";
+import { requireAgencyMember, requireAgencyActive, assertAgencyOwnsTenant, canMutate } from "@/modules/partner/application/authorization";
 import { agencyTenantRelationship } from "@/modules/partner/application/partner-relationship";
 import { creatorInvitationService } from "@/modules/partner/application/invitation";
 import { agencyBranding } from "@/lib/client/branding";
@@ -21,7 +21,7 @@ export async function importCreatorViaAgency(input: {
   sourcePlatform?: string;
   planCode: string;
 }): Promise<{ success: boolean; tenantId?: string; workspaceId?: string | null; inviteToken?: string; error?: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   // RCCF-51: client provisioning is an ADMIN mutation (confirmProvision already
   // rejects AGENCY_STAFF downstream via requireProvisioningActor). Reject staff
@@ -104,7 +104,7 @@ export async function createCreatorInvitation(input: {
   email: string;
   creatorName: string;
 }): Promise<{ success: boolean; inviteToken?: string; error?: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
 
   const owned = await assertAgencyOwnsTenant(ctx.session!.user.id, ctx.agencyId, input.tenantId);
@@ -146,7 +146,7 @@ export async function updateAgencyBranding(input: {
   supportPhone?: string;
   footerText?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (ctx.agencyId !== input.agencyId) return { success: false, error: "Agency mismatch" };
   if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Read-only role cannot update branding" };
@@ -192,7 +192,7 @@ export async function updateAgencyBranding(input: {
  * the Creator tenant, website, snapshots, billing and commissions are untouched.
  */
 export async function offboardAgencyClient(relationshipId: string): Promise<{ success: boolean; error?: string }> {
-  const ctx = await requireAgencyMember();
+  const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Only agency admins can offboard clients" };
 
@@ -233,4 +233,71 @@ export async function changeAgencyPlanAction(planCode: string): Promise<{ succes
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
     },
   };
+}
+
+/**
+ * RCCF-61 — purchase additional managed client/website capacity.
+ * Server-derived agency; quantity × canonical unit price (₹1,499). Idempotent
+ * via (agencyId, idempotencyKey): a retried request returns the existing add-on
+ * instead of creating a duplicate paid entitlement. Admin-only.
+ */
+export async function addAgencyCapacityAction(input: {
+  quantity: number;
+  idempotencyKey: string;
+}): Promise<{ success: boolean; addonId?: string; quantity?: number; unitPriceInr?: number; error?: string }> {
+  const ctx = await requireAgencyActive();
+  if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
+  if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Only agency admins can add capacity" };
+
+  const qty = Number(input.quantity);
+  if (!Number.isInteger(qty) || qty <= 0 || qty > 1000) return { success: false, error: "Quantity must be a positive integer" };
+  if (!input.idempotencyKey || input.idempotencyKey.length > 128) return { success: false, error: "A valid idempotency key is required" };
+
+  const { PARTNER_ADDON_UNIT_PRICE_INR } = await import("@/config/commerce/agency-addons");
+  try {
+    // Idempotent: the unique (agencyId, idempotencyKey) constraint makes a
+    // retried request return the already-created entitlement.
+    const addon = await prisma.agencyCapacityAddon.upsert({
+      where: { agencyId_idempotencyKey: { agencyId: ctx.agencyId, idempotencyKey: input.idempotencyKey } },
+      update: {},
+      create: {
+        agencyId: ctx.agencyId,
+        quantity: qty,
+        unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+        status: "ACTIVE",
+        idempotencyKey: input.idempotencyKey,
+      },
+      select: { id: true, quantity: true, unitPriceInr: true },
+    });
+    await logAction("system", "partner:capacity-addon-created", { agencyId: ctx.agencyId, quantity: qty, unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR }).catch(() => {});
+    revalidatePath("/agency/billing");
+    return { success: true, addonId: addon.id, quantity: addon.quantity, unitPriceInr: addon.unitPriceInr };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to add capacity" };
+  }
+}
+
+/** RCCF-61 — cancel an agency capacity add-on (non-destructive; capacity is released immediately). */
+export async function cancelAgencyCapacityAction(addonId: string): Promise<{ success: boolean; error?: string }> {
+  const ctx = await requireAgencyActive();
+  if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
+  if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Only agency admins can cancel capacity" };
+
+  try {
+    // Agency-scoped: only the owning agency can cancel its own add-on.
+    const owned = await prisma.agencyCapacityAddon.findFirst({
+      where: { id: addonId, agencyId: ctx.agencyId, status: "ACTIVE" },
+      select: { id: true, quantity: true },
+    });
+    if (!owned) return { success: false, error: "Add-on not found" };
+    await prisma.agencyCapacityAddon.update({
+      where: { id: owned.id },
+      data: { status: "CANCELLED", cancelledAt: new Date() },
+    });
+    await logAction("system", "partner:capacity-addon-cancelled", { agencyId: ctx.agencyId, addonId, quantity: owned.quantity }).catch(() => {});
+    revalidatePath("/agency/billing");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to cancel capacity" };
+  }
 }

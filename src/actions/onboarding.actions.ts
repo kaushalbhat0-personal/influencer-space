@@ -428,32 +428,85 @@ export async function runCreatorGeneration(
       await sessionService.updateStage(generationSessionId, "provisioning", "running");
     }
 
-    const provisioningInput = buildProvisioningInput({
-      runId,
-      authenticatedUserId: userId,
-      creatorName,
-      sourceUrl,
-      sourcePlatform,
-      avatarUrl: profileResult.channelMeta?.thumbnailUrl,
-      planCode: "creator_launch",
-      pipelineResult,
-      category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
-      industry: categoryOverride || profileResult.knowledgeGraph.creator.niche,
-    });
+    // RCCF-68.2 — idempotent retry. A previous attempt may have provisioned the
+    // tenant/website/workspace and then failed during builder-save or publish
+    // (post-provision failure). Detect an existing tenant+website owned by the
+    // authenticated Creator and REUSE it — never create Tenant #2 / Website #2 /
+    // Workspace #2. Non-destructive: an existing published site is preserved.
+    const existingTenantId = session?.user?.tenantId ?? null;
+    const existingWebsite = existingTenantId
+      ? await prisma.website.findUnique({ where: { tenantId: existingTenantId }, select: { id: true, tenant: { select: { subdomain: true, customDomain: true } } } })
+      : null;
 
     let provisioned;
-    try {
-      provisioned = await provisioningService.provision(provisioningInput);
-    } catch (err) {
-      markStage("provisioning", "failed", err instanceof Error ? err.message : "Provisioning failed");
+    if (existingTenantId && existingWebsite) {
+      const ws = await workspaceRepository.findByTenantId(existingTenantId);
+      const storefrontUrl = existingWebsite.tenant?.customDomain
+        ? `https://${existingWebsite.tenant.customDomain}`
+        : existingWebsite.tenant?.subdomain
+          ? `/${existingWebsite.tenant.subdomain}`
+          : `/`;
+      provisioned = {
+        success: true,
+        tenantId: existingTenantId,
+        websiteId: existingWebsite.id,
+        workspaceId: ws?.id ?? existingTenantId,
+        storefrontUrl,
+        dashboardUrl: "/admin/dashboard",
+        runId,
+      };
+      markStage("provisioning", "completed");
       if (generationSessionId) {
-        await sessionService.fail(generationSessionId, err instanceof Error ? err.message : "Provisioning failed");
-        const { emitGenerationEvent } = await import("@/modules/generation-progress");
-        await emitGenerationEvent(generationSessionId!, "generation.failed", { stage: "provisioning", error: err instanceof Error ? err.message : "Provisioning failed" }).catch(() => {});
+        await sessionService.recordActivity(generationSessionId, "Reusing your existing workspace");
       }
-      return { success: false, stages, error: err instanceof Error ? err.message : "Provisioning failed", retryable: false };
+
+      // Non-destructive builder continuation: a previous attempt may have
+      // provisioned the tenant/website but died before saving generated pages
+      // (mid-provision failure). Seed pages ONLY when the website has none —
+      // an existing published site is never overwritten.
+      const { BuilderService } = await import("@/lib/builder/builder-service");
+      const existingPages = await new BuilderService().load(existingWebsite.id);
+      if (!existingPages || existingPages.length === 0) {
+        const { storefrontToBuilderPages } = await import("@/lib/builder/artifact-loader");
+        const reuseBuilderData = buildBuilderArtifactData(pipelineResult);
+        const generatedSections = (reuseBuilderData?.sections as Array<{ id: string; type: string; props: Record<string, unknown> }> | undefined) ?? [];
+        if (generatedSections.length > 0) {
+          const builderPages = storefrontToBuilderPages({
+            sections: generatedSections,
+            navigation: reuseBuilderData?.navigation as Record<string, unknown> | undefined,
+          });
+          if (builderPages.length > 0) {
+            await new BuilderService().save(existingWebsite.id, builderPages);
+          }
+        }
+      }
+    } else {
+      const provisioningInput = buildProvisioningInput({
+        runId,
+        authenticatedUserId: userId,
+        creatorName,
+        sourceUrl,
+        sourcePlatform,
+        avatarUrl: profileResult.channelMeta?.thumbnailUrl,
+        planCode: "creator_launch",
+        pipelineResult,
+        category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
+        industry: categoryOverride || profileResult.knowledgeGraph.creator.niche,
+      });
+
+      try {
+        provisioned = await provisioningService.provision(provisioningInput);
+      } catch (err) {
+        markStage("provisioning", "failed", err instanceof Error ? err.message : "Provisioning failed");
+        if (generationSessionId) {
+          await sessionService.fail(generationSessionId, err instanceof Error ? err.message : "Provisioning failed");
+          const { emitGenerationEvent } = await import("@/modules/generation-progress");
+          await emitGenerationEvent(generationSessionId!, "generation.failed", { stage: "provisioning", error: err instanceof Error ? err.message : "Provisioning failed" }).catch(() => {});
+        }
+        return { success: false, stages, error: err instanceof Error ? err.message : "Provisioning failed", retryable: false };
+      }
+      markStage("provisioning", "completed");
     }
-    markStage("provisioning", "completed");
 
     if (generationSessionId) {
       await sessionService.updateStage(generationSessionId, "provisioning", "completed");

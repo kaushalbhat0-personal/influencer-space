@@ -32,6 +32,10 @@ export interface StorageProvider {
    * object is missing or metadata cannot be retrieved (fail closed).
    */
   getObjectMetadata?(storageKey: string): Promise<{ size: number; mimeType?: string }>;
+  /** RCCF-59 — read up to `maxBytes` of an object for server-side validation
+   *  (e.g. hero-video duration parsing). Optional; enforcement degrades to a
+   *  clear rejection when unavailable for a validation-required folder. */
+  readRange?(storageKey: string, maxBytes: number): Promise<Buffer>;
   /** Whether this provider supports direct (signed-URL) uploads that bypass the
    *  app server's request-body limit. Defaults to false. */
   readonly supportsSignedUpload?: boolean;

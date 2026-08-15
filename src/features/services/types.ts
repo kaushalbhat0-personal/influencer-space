@@ -10,6 +10,8 @@ export interface ServiceData {
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   isActive: boolean;
   createdAt: Date;
+  // RCCF-67.5 — explicit opt-in to be bookable via the Booking system.
+  bookable: boolean;
 }
 
 export interface ServiceFormInput {
@@ -21,4 +23,5 @@ export interface ServiceFormInput {
   category?: string;
   featured?: boolean;
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  bookable?: boolean;
 }

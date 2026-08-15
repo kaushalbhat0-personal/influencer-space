@@ -47,7 +47,7 @@ export function PreviewShell({
   const scale = cfg.width > availWidth ? availWidth / cfg.width : 1;
 
   return (
-    <div ref={containerRef} className="sticky top-4 w-[300px] shrink-0 lg:w-[380px]">
+    <div ref={containerRef} className="sticky top-4 w-full shrink-0 lg:w-[380px]">
       {/* ─── Device Toggle ─── */}
       <div className="mb-3 flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-900 p-1">
         {(Object.entries(deviceConfig) as [Device, typeof cfg][]).map(([key, conf]) => {

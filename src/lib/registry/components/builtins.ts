@@ -4,10 +4,10 @@ import {
   HeroRenderer, FooterRenderer,
   GalleryRenderer, ProductsRenderer, TimelineRenderer,
   LinksRenderer, TestimonialsRenderer, FaqRenderer,
-  ContactRenderer, NewsletterRenderer, PricingRenderer,
+  ContactRenderer, NewsletterRenderer,
   CoursesRenderer, ServicesRenderer, SpotifyRenderer, YouTubeRenderer,
   DiscordRenderer, InstagramRenderer,
-  GamesRenderer, ContentFeedRenderer,
+  GamesRenderer, ContentFeedRenderer, AffiliateLinksRenderer, BookingsRenderer,
 } from "./renderers";
 
 const BUILTIN_COMPONENTS: ComponentDefinition[] = [
@@ -102,6 +102,16 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     renderer: LinksRenderer,
   },
   {
+    id: "affiliateLinks.default", type: "affiliateLinks", name: "Affiliate Links", category: "links",
+    icon: "Link2", description: "Affiliate product links with click tracking",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [], responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Affiliate Links" },
+    renderer: AffiliateLinksRenderer,
+  },
+  {
     id: "footer.default", type: "footer", name: "Footer", category: "footer",
     icon: "ArrowDown", description: "Website footer with links and copyright",
     version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
@@ -153,17 +163,6 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     renderer: NewsletterRenderer,
   },
   {
-    id: "pricing.default", type: "pricing", name: "Pricing", category: "pricing",
-    icon: "CreditCard", description: "Pricing plans and packages",
-    version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: true,
-    supportsResponsive: true, supportsSEO: true,
-    animations: [{ id: "stagger", name: "Stagger" }],
-    responsive: { mobile: true, tablet: true, desktop: true },
-    validation: { schema: {} },
-    defaultProps: { title: "Plans", plans: [] },
-    renderer: PricingRenderer,
-  },
-  {
     id: "courses.default", type: "courses", name: "Courses", category: "courses",
     icon: "BookOpen", description: "Course catalog for educators",
     version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: true,
@@ -183,6 +182,16 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "Services" },
     renderer: ServicesRenderer,
+  },
+  {
+    id: "bookings.default", type: "bookings", name: "Bookings", category: "bookings",
+    icon: "CalendarDays", description: "Book a session or appointment",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: false,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [], responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Book a Session" },
+    renderer: BookingsRenderer,
   },
   {
     id: "embed.spotify", type: "embed", name: "Spotify Player", category: "embed",

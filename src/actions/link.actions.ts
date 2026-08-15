@@ -131,12 +131,18 @@ export async function updateLinkOrder(
   updates: { id: string; order: number }[],
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // RCCF-67.2: the session is authoritative — requireAuth rejects any
+    // non-super-admin whose client-supplied tenantId differs from the session,
+    // so tenantId used below is always the session tenant for creators.
     await requireAuth(tenantId);
 
+    // RCCF-67.2 (P1 IDOR): each write is scoped by tenantId so a foreign link
+    // id can never be mutated. `updateMany` with the tenant in the WHERE
+    // guarantees zero cross-tenant mutation even for a mixed A/B id list.
     await prisma.$transaction(
       updates.map((u) =>
-        prisma.affiliateLink.update({
-          where: { id: u.id },
+        prisma.affiliateLink.updateMany({
+          where: { id: u.id, tenantId },
           data: { order: u.order },
         }),
       ),

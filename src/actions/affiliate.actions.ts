@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { headers } from "next/headers";
 import { AffiliateService } from "@/services/affiliate.service";
 import { StorageService } from "@/services/storage.service";
 import { AFFILIATES_ROUTE } from "@/lib/constants";
@@ -12,6 +13,8 @@ import { FEATURE_IDS } from "@/lib/capabilities/constants";
 import { logAction } from "@/lib/audit";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
+import { getTenantContext } from "@/lib/tenant";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
 
 const affiliateSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -31,6 +34,20 @@ async function requireAuth(): Promise<string> {
   if (!session?.user?.id) throw new Error("Unauthorized");
   if (!session.user.tenantId) throw new Error("No tenant associated with account");
   return session.user.tenantId;
+}
+
+/**
+ * RCCF-65.3 — server-derived client IP for the click rate-limit bucket. Reads
+ * the proxy-provided headers only; never trusts a client-supplied value. Falls
+ * back to a shared bucket when the platform provides no IP header.
+ */
+async function clientIp(): Promise<string> {
+  try {
+    const h = headers();
+    return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 export async function createAffiliate(
@@ -158,11 +175,36 @@ export async function incrementAffiliateClicks(
   id: string,
 ): Promise<AffiliateActionState> {
   logger.info("incrementAffiliateClicks called", "affiliate-actions", { metadata: { id } as Record<string, unknown> });
+  // RCCF-65.3 — the endpoint is narrow: a single well-formed AffiliateLink id.
+  // Malformed input fails safely before any DB work.
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    logger.info("incrementAffiliateClicks rejected malformed id", "affiliate-actions");
+    return { success: false, error: "Invalid affiliate link id" };
+  }
   try {
-    const tenantId = await requireAuth();
-    await AffiliateService.incrementClicks(id, tenantId);
+    // RCCF-65.3 — public storefront click tracking. The tenant is resolved
+    // SERVER-side from the middleware-derived `x-tenant-host` header (the real
+    // HTTP Host of the storefront being viewed) — never from the browser. This
+    // reuses the same server-authoritative tenant resolution as the public
+    // storefront contact/newsletter actions (getTenantContext), so an anonymous
+    // visitor can increment the link they actually clicked while a crafted id
+    // can never cross the tenant boundary.
+    const tenant = await getTenantContext();
+    if (!tenant) return { success: false, error: "Invalid tenant context" };
+
+    // RCCF-65.3 — reuse the platform in-memory rate limiter (same mechanism as
+    // auth/login): per-IP throttling so repeated automated requests cannot
+    // drive unbounded counter growth. The storefront is never blocked — only
+    // the counter increment is.
+    const ip = await clientIp();
+    const rate = checkRateLimit(`/affiliate-clicks:${ip}`, "/affiliate-clicks");
+    if (!rate.allowed) return { success: false, error: "Too many requests" };
+
+    // incrementClicks verifies existence + active + tenant ownership in the
+    // repository lookup, then atomically increments. Inactive/deleted/cross-tenant
+    // links throw "Affiliate not found" and are never counted.
+    await AffiliateService.incrementClicks(id, tenant.id);
     logger.info("incrementAffiliateClicks success", "affiliate-actions", { metadata: { id } as Record<string, unknown> });
-    await logAction(tenantId, "incrementAffiliateClicks", { affiliateId: id });
     return { success: true };
   } catch (error) {
     captureError(error, { service: "affiliate-actions", operation: "incrementAffiliateClicks" });

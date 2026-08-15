@@ -49,7 +49,7 @@ export const PILLARS: Pillar[] = [
       { icon: BarChart3, title: "Agency Insights", body: "Monitor client health, publishing state, and recurring commission." },
       { icon: IndianRupee, title: "Revenue Splitting", body: "Automated commission splits on client subscriptions." },
       { icon: TrendingUp, title: "Settlement & Payouts", body: "Track earnings, settlements, and payouts in one place." },
-      { icon: FileText, title: "White-Label", body: "Your agency brand on the client portal (higher tiers)." },
+      { icon: FileText, title: "White-Label", body: "Your agency brand on the branded client preview portal (Scale and above)." },
     ],
   },
 ];

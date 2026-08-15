@@ -9,7 +9,6 @@ const COMPAT_MAP: Record<string, string> = {
   faq: "faq.default",
   contact: "contact.default",
   newsletter: "newsletter.default",
-  pricing: "pricing.default",
   courses: "courses.default",
   games: "games.default",
   contentfeed: "contentFeed.default",
@@ -36,8 +35,12 @@ export function moduleIdToDisplayName(moduleId: string): string {
  * IMPLEMENTATION-19: sections that have been fully removed from the product.
  * About duplicated Hero — it is no longer a registrable section. Old layouts
  * containing it migrate automatically by dropping it (never rendering).
+ *
+ * RCCF-67.3: Pricing was never wired to a data source (no aggregate/snapshot/
+ * LayoutEngine path), so it is no longer a registrable section. Old layouts
+ * containing pricing.* drop automatically, matching the About behaviour.
  */
-const DEPRECATED_SECTION_PREFIXES = ["about."];
+const DEPRECATED_SECTION_PREFIXES = ["about.", "pricing."];
 
 export function isDeprecatedSection(moduleId: string): boolean {
   return DEPRECATED_SECTION_PREFIXES.some((p) => moduleId.toLowerCase().startsWith(p));

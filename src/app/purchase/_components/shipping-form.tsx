@@ -6,7 +6,7 @@ import type { ShippingAddressInput } from "@/modules/fulfillment";
 
 const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600";
 
-export function ShippingForm({ orderId, existing }: { orderId: string; existing?: Partial<ShippingAddressInput> }) {
+export function ShippingForm({ orderId, email, existing }: { orderId: string; email: string; existing?: Partial<ShippingAddressInput> }) {
   const [form, setForm] = useState({
     name: existing?.name ?? "", phone: existing?.phone ?? "", email: existing?.email ?? "",
     line1: existing?.line1 ?? "", line2: existing?.line2 ?? "", city: existing?.city ?? "",
@@ -19,7 +19,9 @@ export function ShippingForm({ orderId, existing }: { orderId: string; existing?
 
   const submit = async () => {
     setBusy(true);
-    const r = await submitShippingAddress(orderId, { ...form, name: form.name || undefined, phone: form.phone || undefined, email: form.email || undefined, line1: form.line1 || undefined, line2: form.line2 || undefined, city: form.city || undefined, state: form.state || undefined, pin: form.pin || undefined, country: form.country || "India", instructions: form.instructions || undefined });
+    // RCCF-67.2: pass the verified buyer email (same proof used to view the
+    // order) so the server can authorize the mutation before writing.
+    const r = await submitShippingAddress(orderId, email || undefined, { ...form, name: form.name || undefined, phone: form.phone || undefined, email: form.email || undefined, line1: form.line1 || undefined, line2: form.line2 || undefined, city: form.city || undefined, state: form.state || undefined, pin: form.pin || undefined, country: form.country || "India", instructions: form.instructions || undefined });
     setSaved(r.success);
     setBusy(false);
   };

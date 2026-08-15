@@ -1,4 +1,4 @@
-import { writeFile, unlink, mkdir, readdir, stat } from "fs/promises";
+import { writeFile, unlink, mkdir, readdir, stat, open } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import type { StorageProvider, UploadInput, UploadResult } from "./interface";
@@ -56,6 +56,18 @@ export class LocalStorageProvider implements StorageProvider {
       return { size: info.size };
     } catch {
       throw new Error(`Local object metadata failed: ${storageKey}`);
+    }
+  }
+
+  async readRange(storageKey: string, maxBytes: number): Promise<Buffer> {
+    const fullPath = path.join(UPLOAD_DIR, storageKey);
+    const handle = await open(fullPath, "r");
+    try {
+      const buffer = Buffer.alloc(maxBytes);
+      const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);
+      return buffer.subarray(0, bytesRead);
+    } finally {
+      await handle.close();
     }
   }
 }

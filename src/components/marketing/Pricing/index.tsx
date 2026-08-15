@@ -96,6 +96,10 @@ export function Pricing({ data }: PricingProps) {
                 <li key={point}>• {point}</li>
               ))}
               <li className="pt-1 text-zinc-600">Your clients pay CreatorStore directly for their own Creator plan (Creator Growth minimum for partner-onboarded creators).</li>
+              {/* RCCF-61: add-on economics — a canonical commercial constant, never a hardcoded UI value. */}
+              <li className="text-zinc-600">
+                Additional client websites beyond your plan&apos;s included capacity: <span className="text-zinc-300">₹1,499/month</span> each. Every paid Partner plan includes at least 5 client websites.
+              </li>
               {/* RCCF-IMPLEMENTATION-73: a concrete, runtime-derived revenue example. */}
               {(() => {
                 const grow = data.creator.find((p) => p.code === "creator_grow");
@@ -224,7 +228,7 @@ export function Pricing({ data }: PricingProps) {
           </>
         )}
 
-        <ComparisonMatrix plans={tab === "creator" ? data.creator : data.partner} />
+        <ComparisonMatrix plans={tab === "creator" ? data.creator : data.partner} family={tab} />
         <PricingFAQ />
       </div>
     </section>

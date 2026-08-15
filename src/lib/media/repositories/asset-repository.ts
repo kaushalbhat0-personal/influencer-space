@@ -1,6 +1,7 @@
 import { assetQueries, type AssetFilters, type AssetWithReferences } from "./asset-queries";
 import { assetCommands, type CreateAssetData, type UpdateAssetData } from "./asset-commands";
 import { referenceRepository } from "./reference-repository";
+import type { Prisma } from "@/generated/prisma/client";
 
 export class AssetRepository {
   // ── Queries ───────────────────────────────────────────────
@@ -31,9 +32,9 @@ export class AssetRepository {
 
   // ── Commands ──────────────────────────────────────────────
 
-  async create(data: CreateAssetData) {
-    return assetCommands.create(data);
-  }
+async create(data: CreateAssetData, tx?: Prisma.TransactionClient) {
+  return assetCommands.create(data, tx);
+}
 
   async update(id: string, data: UpdateAssetData) {
     return assetCommands.update(id, data);

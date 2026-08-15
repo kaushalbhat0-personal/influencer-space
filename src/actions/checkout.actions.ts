@@ -4,6 +4,51 @@ import { getRazorpayInstance } from "@/lib/razorpay";
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
 import { validateCoupon, applyCoupon, calculateTax } from "@/lib/commerce/coupons";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { headers } from "next/headers";
+
+const emailSchema = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * RCCF-69.2 (P0) — canonical checkout tenant authority.
+ *
+ * A Creator must NEVER be able to create or initiate checkout against another
+ * Creator's Product. The Product lookup used to build a ProductOrder must be
+ * scoped to the tenant that owns the storefront the request came from.
+ *
+ * The client can NEVER supply the tenant — it is resolved server-side:
+ *   1. Public storefront → `getTenantContext()` (host-derived via the
+ *      middleware-set `x-tenant-host` header). This is the same authority the
+ *      public contact/newsletter/booking/affiliate actions use.
+ *   2. Authenticated admin context → the server session tenant.
+ *   3. Neither → no tenant, checkout rejected.
+ *
+ * The invariant enforced by the caller is `product.tenantId === checkoutTenantId`.
+ */
+export async function resolveCheckoutTenantId(): Promise<string | null> {
+  // Lazy import: `@/lib/tenant` (and its react `cache`) must not be pulled into
+  // modules that transitively import checkout.actions at load time (e.g. the
+  // storefront BuyNowButton) in environments where it cannot load.
+  const { getTenantContext } = await import("@/lib/tenant");
+  const storefrontTenant = await getTenantContext();
+  if (storefrontTenant?.id) return storefrontTenant.id;
+  const session = await getServerSession(authOptions);
+  return session?.user?.tenantId ?? null;
+}
+
+function resolveClientIp(): string {
+  try {
+    const headersList = headers();
+    return headersList.get("x-forwarded-for") ?? headersList.get("x-real-ip") ?? "checkout";
+  } catch {
+    // `headers()` throws outside a request scope (e.g. tests / build-time calls).
+    // The rate limiter degrades to the shared "checkout" bucket — checkout must
+    // never fail solely because the IP header is unavailable.
+    return "checkout";
+  }
+}
 
 export type CheckoutResult = {
   success: boolean;
@@ -28,8 +73,40 @@ export async function createCheckout(
   couponCode?: string
 ): Promise<CheckoutResult> {
   try {
+    // RCCF-69.2 — server-side rate limit before any expensive provider work. The
+    // limit (20/min/IP) is deliberate: a genuine buyer rarely initiates more than
+    // a handful of checkouts per minute, while this bounds automated abuse without
+    // blocking legitimate purchases. Reuses the existing in-memory limiter and the
+    // canonical client-IP resolution used by auth/affiliate/booking.
+    const ip = resolveClientIp();
+    const rate = checkRateLimit(`/checkout:${ip}`, "/api/checkout");
+    if (!rate.allowed) {
+      return { success: false, error: "Too many checkout attempts. Please try again shortly." };
+    }
+
+    // RCCF-67.2 (P1): the buyer's email is required and validated server-side.
+    // Guest order lookup, customer grouping and fulfillment access all depend on
+    // a real stored email — an empty/invalid value must never create an order.
+    const buyerEmail = (fanEmail ?? "").trim().toLowerCase();
+    if (!emailSchema.test(buyerEmail)) {
+      return { success: false, error: "A valid email is required to complete your order." };
+    }
+
+    // RCCF-69.2 (P0) — the Product lookup is scoped to the server-resolved
+    // checkout tenant. A product owned by another Creator is treated exactly like
+    // an unknown/inactive product: rejected with zero side effects (no ProductOrder,
+    // no Razorpay order, no payment record, no quota reservation).
+    const checkoutTenantId = await resolveCheckoutTenantId();
+    if (!checkoutTenantId) return { success: false, error: "Product not found" };
+
     const product = await prisma.product.findFirst({
-      where: { id: productId, isActive: true, status: "PUBLISHED", archivedAt: null },
+      where: {
+        id: productId,
+        tenantId: checkoutTenantId,
+        isActive: true,
+        status: "PUBLISHED",
+        archivedAt: null,
+      },
     });
     if (!product) return { success: false, error: "Product not found" };
 
@@ -41,12 +118,13 @@ export async function createCheckout(
     const { resolveCommerceStrategy } = await import("@/modules/commerce-strategy");
     const commerceStrategy = await resolveCommerceStrategy(tenantId);
 
-    // RCCF-IMPLEMENTATION-74 Phase 6: DIRECT_CREATOR — the customer pays the
-    // creator's OWN payment account via a hosted checkout URL. CreatorStore is
-    // not in the money flow. Platform subscriptions remain unchanged.
-    if (commerceStrategy.id === "DIRECT_CREATOR") {
+    // RCCF-69.2 — DIRECT_CREATOR is `status: "future"` in the canonical registry
+    // and cannot be reconciled by the webhook (Payment Link notes carry
+    // `referenceId`, not `productId/orderId`). It must never be invoked in the
+    // normal production path — only a strategy marked `active` may branch here.
+    if (commerceStrategy.id === "DIRECT_CREATOR" && commerceStrategy.definition.status === "active") {
       const { createDirectCheckout } = await import("@/actions/payment-account.actions");
-      const direct = await createDirectCheckout({ productId: product.id, customerEmail: fanEmail || undefined });
+      const direct = await createDirectCheckout({ productId: product.id, customerEmail: buyerEmail });
       if (direct.success && direct.checkoutUrl) {
         return { success: true, checkoutUrl: direct.checkoutUrl, orderId: undefined };
       }
@@ -73,7 +151,7 @@ export async function createCheckout(
     // Calculate tax
     const { tax, total } = calculateTax(amount);
 
-    // Create DB order
+    // Create DB order — buyer email is the captured, validated value.
     const dbOrder = await prisma.productOrder.create({
       data: {
         tenantId,
@@ -81,7 +159,7 @@ export async function createCheckout(
         amount: total,
         status: "PENDING",
         razorpayOrderId: "",
-        fanEmail,
+        fanEmail: buyerEmail,
       },
     });
 

@@ -33,6 +33,8 @@ const h = vi.hoisted(() => {
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     websiteAgency: { findUnique: h.mockAgencyFindUnique },
+    billingSubscription: { findFirst: async () => ({ status: "TRIALING", trialEndsAt: new Date(Date.now() + 86400000) }) },
+    agencyCapacityAddon: { aggregate: async () => ({ _sum: { quantity: null } }) },
     workspace: { findUnique: h.mockWorkspaceFindUnique },
     agencyTenant: {
       findUnique: h.mockAgencyTenantFindUnique,

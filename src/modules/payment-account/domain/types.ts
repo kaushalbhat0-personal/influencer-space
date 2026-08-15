@@ -4,7 +4,8 @@
 
 export type PaymentProviderId = "razorpay" | "stripe" | "phonepe" | "cashfree" | "payu" | "manual";
 export type PaymentAccountStatus = "pending" | "active" | "disconnected";
-export type VerificationStatus = "unverified" | "pending" | "verified" | "failed";
+/** RCCF-69.2 — `configured` = credentials/format validated (NOT provider-verified). */
+export type VerificationStatus = "unverified" | "pending" | "configured" | "verified" | "failed";
 export type SettlementMode = "upi" | "bank";
 
 /** The canonical, non-secret payment account view (never exposes encrypted fields). */

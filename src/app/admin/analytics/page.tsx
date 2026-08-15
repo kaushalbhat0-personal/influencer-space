@@ -47,7 +47,7 @@ async function AnalyticsShell({ tenantId }: { tenantId: string }) {
 function AnalyticsFallback() {
   return (
     <div className="space-y-6">
-      <div className="h-8 w-96 rounded bg-white/5 animate-pulse" />
+      <div className="h-8 w-full max-w-96 rounded bg-white/5 animate-pulse" />
       <DashboardGrid>
         <DashboardGridMain>
           <DashboardWidgetSkeleton rows={6} />

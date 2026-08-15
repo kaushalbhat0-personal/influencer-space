@@ -7,6 +7,7 @@
 import { prisma } from "@/lib/prisma";
 import { captureError } from "@/lib/observability/error-tracker";
 import { logger } from "@/lib/observability/logger";
+import { logAction } from "@/lib/audit";
 
 // ── Types ─────────────────────────────────────────────────────
 export interface DependencyNode {
@@ -260,5 +261,99 @@ export async function runSafeCleanup(): Promise<{ cleared: number; details: stri
     captureError(err instanceof Error ? err : new Error(String(err)), { service: "integrity", operation: "cleanupInvites" });
   }
 
+  // RCCF-62 — inactive free-trial Agency cleanup (scheduled, server-side).
+  try {
+    const agencyCleanup = await cleanupExpiredTrialAgencies();
+    if (agencyCleanup.deleted > 0 || agencyCleanup.retained > 0) {
+      cleared += agencyCleanup.deleted;
+      details.push(`Agency trial cleanup: deleted ${agencyCleanup.deleted}, retained ${agencyCleanup.retained}`);
+    }
+  } catch (err) {
+    captureError(err instanceof Error ? err : new Error(String(err)), { service: "integrity", operation: "cleanupExpiredAgencies" });
+  }
+
   return { cleared, details };
+}
+
+/**
+ * RCCF-62 — delete an inactive free-trial Agency whose trial expired >= 15 days
+ * ago, with no active clients and NO financial obligation. Runs server-side only
+ * (never from page/middleware/login/client). Idempotent: re-running after a
+ * deletion finds nothing to do.
+ *
+ * CREATOR BOUNDARY: this never deletes a Creator Tenant, Website, Asset, storage,
+ * subscription, or any Creator financial record. Only the Agency-owned shell is
+ * removed once it is provably free of obligations.
+ */
+export async function cleanupExpiredTrialAgencies(): Promise<{ deleted: number; retained: number }> {
+  const agencies = await prisma.websiteAgency.findMany({ select: { id: true } });
+  let deleted = 0;
+  let retained = 0;
+  for (const agency of agencies) {
+    try {
+      if (await isInactiveAgencyDeletionEligible(agency.id)) {
+        await deleteInactiveAgency(agency.id);
+        deleted++;
+      } else {
+        retained++;
+      }
+    } catch (err) {
+      captureError(err instanceof Error ? err : new Error(String(err)), { service: "integrity", operation: "agencyEligibility" });
+      retained++;
+    }
+  }
+  return { deleted, retained };
+}
+
+/**
+ * Safety gate — every condition must hold before an inactive Agency may be
+ * removed. Financial history is NEVER destroyed because platform access ended.
+ */
+export async function isInactiveAgencyDeletionEligible(agencyId: string): Promise<boolean> {
+  const graceMs = 15 * 24 * 60 * 60 * 1000; // 15 days after expiry
+  const workspace = await prisma.workspace.findUnique({ where: { agencyId }, select: { id: true } });
+  if (!workspace) return false;
+
+  const [subscription, activeClients, commissionCount, ledgerCount, settlementCount, payoutCount, invoiceCount] = await Promise.all([
+    prisma.billingSubscription.findFirst({ where: { workspaceId: workspace.id }, orderBy: { createdAt: "desc" }, select: { status: true, trialEndsAt: true } }),
+    prisma.agencyTenant.count({ where: { agencyId, status: "ACTIVE" } }),
+    prisma.commissionEntry.count({ where: { partnerId: agencyId } }),
+    prisma.partnerLedger.count({ where: { partnerId: agencyId } }),
+    prisma.settlement.count({ where: { partnerId: agencyId } }),
+    prisma.payoutBatch.count({ where: { partnerId: agencyId } }),
+    prisma.billingInvoice.count({ where: { accountId: workspace.id } }),
+  ]);
+
+  // No paid plan and the trial expired >= 15 days ago.
+  const isFree = subscription?.status === "TRIALING";
+  if (!isFree) return false;
+  if (!subscription?.trialEndsAt) return false;
+  if (Date.now() - subscription.trialEndsAt.getTime() < graceMs) return false;
+
+  // No active clients and no financial obligation → safe to remove.
+  if (activeClients > 0) return false;
+  if (commissionCount > 0 || ledgerCount > 0 || settlementCount > 0 || payoutCount > 0 || invoiceCount > 0) return false;
+  return true;
+}
+
+/** Delete the Agency-owned shell in a single transaction. Never touches Creator data. */
+async function deleteInactiveAgency(agencyId: string): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const workspace = await tx.workspace.findUnique({ where: { agencyId }, select: { id: true } });
+    if (workspace) {
+      await tx.workspaceMember.deleteMany({ where: { workspaceId: workspace.id } });
+      await tx.agencyTeamInvitation.deleteMany({ where: { workspaceId: workspace.id } });
+      await tx.clientAssignment.deleteMany({ where: { workspaceId: workspace.id } });
+      await tx.billingSubscription.deleteMany({ where: { workspaceId: workspace.id } });
+      await tx.billingEvent.deleteMany({ where: { workspaceId: workspace.id } });
+      await tx.workspace.delete({ where: { id: workspace.id } });
+    }
+    await tx.agencyTenant.deleteMany({ where: { agencyId } });
+    await tx.agencyCapacityAddon.deleteMany({ where: { agencyId } });
+    await tx.auditLog.deleteMany({ where: { agencyId } });
+    // Agency-owned users only (never a Creator user — those have tenantId).
+    await tx.user.deleteMany({ where: { agencyId, tenantId: null } });
+    await tx.websiteAgency.delete({ where: { id: agencyId } });
+  });
+  await logAction("system", "agency:inactive-trial-account-deleted", { agencyId }).catch(() => {});
 }

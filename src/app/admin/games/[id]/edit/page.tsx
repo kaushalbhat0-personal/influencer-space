@@ -10,12 +10,15 @@ export default async function EditGamePage({
   params: { id: string };
 }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) notFound();
+  const tenantId = session?.user?.tenantId;
+  if (!tenantId) notFound();
 
   let game;
   try {
-    game = await prisma.game.findUnique({
-      where: { id: params.id },
+    // RCCF-63.2 — load only a game owned by the authenticated tenant.
+    // A foreign tenant's game is treated as not found (no existence leak).
+    game = await prisma.game.findFirst({
+      where: { id: params.id, tenantId },
     });
   } catch {
     notFound();

@@ -104,4 +104,16 @@ describe("Fitness: Tenant Resolution Policy (ADR-007)", () => {
     }
     expect(true).toBe(true);
   });
+
+  it("RCCF-69.4: middleware must never preserve a client-supplied x-tenant-host", () => {
+    // x-tenant-host is server-authoritative: it is set only from the trusted
+    // Host/slug, and REMOVED when no tenant is derivable. This guardrail fails
+    // if a future change makes the middleware trust an inbound header.
+    const src = fs.readFileSync("src/middleware.ts", "utf-8");
+    expect(src).toContain('headers.set("x-tenant-host", extractedTenant)');
+    expect(src).toContain('headers.set("x-tenant-host", classification.slug)');
+    expect(src).toContain('headers.delete("x-tenant-host")');
+    // The header must never be copied through unchanged when no tenant derives:
+    expect(src).toContain("} else if (!extractedTenant) {");
+  });
 });

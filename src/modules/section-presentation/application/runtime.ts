@@ -62,6 +62,8 @@ export function sectionHasContent(baseId: string, content: Record<string, unknow
       return arr("services").concat(arr("offerings")).length > 0;
     case "games":
       return arr("games").length > 0;
+    case "bookings":
+      return arr("bookings").length > 0;
     case "links":
       return arr("links").length > 0;
     case "pricing":

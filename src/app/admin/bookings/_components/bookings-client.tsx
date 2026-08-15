@@ -18,6 +18,7 @@ interface Booking {
   customerPhone: string | null;
   notes: string | null;
   approvalRequired: boolean;
+  offering?: { id: string; title: string } | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -60,15 +61,15 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
 
   return (
     <div className="p-6 max-w-6xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Bookings</h1>
           <p className="mt-1 text-sm text-zinc-400">Manage your calendar-based bookings and appointments.</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600">{showForm ? "Cancel" : "New Booking"}</button>
+        <button onClick={() => setShowForm(!showForm)} className="shrink-0 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600">{showForm ? "Cancel" : "New Booking"}</button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Confirmed</p><p className="text-xl font-bold text-emerald-400">{confirmed}</p></div>
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Pending</p><p className="text-xl font-bold text-amber-400">{pending}</p></div>
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-zinc-500">Revenue</p><p className="text-xl font-bold text-white">{formatCurrency(revenue)}</p></div>
@@ -76,7 +77,7 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
 
       {showForm && (
         <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <input className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             <input className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <input type="number" className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300" placeholder="Price (₹)" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
@@ -96,27 +97,82 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
         {bookings.length === 0 ? (
           <div className="p-8 text-center text-sm text-zinc-500">No bookings yet. Create your first booking to start accepting appointments.</div>
         ) : (
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-white/5 text-zinc-500"><th className="px-4 py-3 text-left">Date</th><th className="px-4 py-3 text-left">Time</th><th className="px-4 py-3 text-left">Title</th><th className="px-4 py-3 text-left">Customer</th><th className="px-4 py-3 text-left">Price</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
-            <tbody>
+          <>
+            {/* Desktop — tabular layout preserved exactly */}
+            <table className="hidden w-full text-xs md:table">
+              <thead><tr className="border-b border-white/5 text-zinc-500"><th className="px-4 py-3 text-left">Date</th><th className="px-4 py-3 text-left">Time</th><th className="px-4 py-3 text-left">Title</th><th className="px-4 py-3 text-left">Customer</th><th className="px-4 py-3 text-left">Price</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
+              <tbody>
+                {bookings.map((b) => (
+                  <tr key={b.id} className="border-b border-white/5 text-zinc-300 hover:bg-white/[0.02]">
+                    <td className="px-4 py-3">{new Date(b.slotDate).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">{b.slotStart} - {b.slotEnd}</td>
+                    <td className="px-4 py-3 font-medium">{b.title}{b.offering ? <span className="ml-2 rounded bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-300">Service</span> : null}</td>
+                    <td className="px-4 py-3">{b.customerName || "—"}{b.customerEmail ? ` · ${b.customerEmail}` : ""}</td>
+                    <td className="px-4 py-3">{formatCurrency(b.price)}</td>
+                    <td className="px-4 py-3"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[b.status] ?? ""}`}>{b.status}</span></td>
+                    <td className="px-4 py-3">
+                      <BookingActions b={b} onApprove={handleApprove} onCancel={handleCancel} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Mobile — readable cards, every field preserved, touch actions */}
+            <div className="divide-y divide-white/5 md:hidden">
               {bookings.map((b) => (
-                <tr key={b.id} className="border-b border-white/5 text-zinc-300 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">{new Date(b.slotDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">{b.slotStart} - {b.slotEnd}</td>
-                  <td className="px-4 py-3 font-medium">{b.title}</td>
-                  <td className="px-4 py-3">{b.customerName || "—"}{b.customerEmail ? ` · ${b.customerEmail}` : ""}</td>
-                  <td className="px-4 py-3">{formatCurrency(b.price)}</td>
-                  <td className="px-4 py-3"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[b.status] ?? ""}`}>{b.status}</span></td>
-                  <td className="px-4 py-3">
-                    {b.status === "pending" && <button onClick={() => handleApprove(b.id)} className="text-emerald-400 hover:underline text-xs mr-2">Approve</button>}
-                    {(b.status === "pending" || b.status === "confirmed") && <button onClick={() => handleCancel(b.id)} className="text-red-400 hover:underline text-xs">Cancel</button>}
-                  </td>
-                </tr>
+                <div key={b.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-zinc-200">{b.title}</p>
+                        {b.offering ? <span className="rounded bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-300">Service</span> : null}
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        {new Date(b.slotDate).toLocaleDateString()} · {b.slotStart} - {b.slotEnd}
+                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        {b.customerName || "—"}{b.customerEmail ? ` · ${b.customerEmail}` : ""}
+                        {b.customerPhone ? ` · ${b.customerPhone}` : ""}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[b.status] ?? ""}`}>{b.status}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-zinc-100">{formatCurrency(b.price)}</p>
+                    <BookingActions b={b} onApprove={handleApprove} onCancel={handleCancel} />
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
+    </div>
+  );
+}
+
+function BookingActions({
+  b,
+  onApprove,
+  onCancel,
+}: {
+  b: Booking;
+  onApprove: (id: string) => void;
+  onCancel: (id: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 md:gap-2">
+      {b.status === "pending" && (
+        <button onClick={() => onApprove(b.id)} aria-label={`Approve booking ${b.title}`} className="rounded-md bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/25">
+          Approve
+        </button>
+      )}
+      {(b.status === "pending" || b.status === "confirmed") && (
+        <button onClick={() => onCancel(b.id)} aria-label={`Cancel booking ${b.title}`} className="rounded-md border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10">
+          Cancel
+        </button>
+      )}
     </div>
   );
 }

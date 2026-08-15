@@ -1,4 +1,5 @@
 import type { ProductTypeId } from "@/modules/product-types";
+import type { CommerceMode } from "@/config/commerce/commerce-mode";
 
 export interface ProductData {
   id: string;
@@ -10,6 +11,7 @@ export interface ProductData {
   slug: string | null;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   type: ProductTypeId;
+  commerceMode: CommerceMode;
   isActive: boolean;
   isFeatured: boolean;
   seoTitle: string | null;
@@ -28,6 +30,7 @@ export interface ProductFormInput {
   slug?: string;
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   type: ProductTypeId;
+  commerceMode?: CommerceMode;
   isActive?: boolean;
   isFeatured?: boolean;
   seoTitle?: string;

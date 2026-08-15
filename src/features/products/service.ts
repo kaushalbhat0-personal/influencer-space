@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_PRODUCT_TYPE } from "@/modules/product-types";
+import { DEFAULT_COMMERCE_MODE, normalizeCommerceMode } from "@/config/commerce/commerce-mode";
 import type { ProductData, ProductFormInput } from "./types";
 
 function mapProduct(row: Record<string, unknown>): ProductData {
@@ -14,6 +15,8 @@ function mapProduct(row: Record<string, unknown>): ProductData {
     status: (row.status as ProductData["status"]) ?? "DRAFT",
     // RCCF-IMPLEMENTATION-74: persist the standardized commerce type.
     type: (row.type as ProductData["type"]) ?? DEFAULT_PRODUCT_TYPE,
+    // RCCF-66.2: normalize so legacy rows without the field stay ONLINE.
+    commerceMode: normalizeCommerceMode(row.commerceMode),
     isActive: (row.isActive as boolean) ?? true,
     isFeatured: (row.isFeatured as boolean) ?? false,
     seoTitle: (row.seoTitle as string) ?? null,
@@ -51,6 +54,7 @@ export const productService = {
         slug: input.slug ?? input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
         type: input.type ?? DEFAULT_PRODUCT_TYPE,
         status: input.status ?? "PUBLISHED",
+        commerceMode: input.commerceMode ?? DEFAULT_COMMERCE_MODE,
         isActive: input.isActive ?? true,
         isFeatured: input.isFeatured ?? false,
         seoTitle: input.seoTitle ?? null,
@@ -75,6 +79,7 @@ export const productService = {
         ...(input.slug !== undefined && { slug: input.slug }),
         ...(input.type !== undefined && { type: input.type }),
         ...(input.status !== undefined && { status: input.status }),
+        ...(input.commerceMode !== undefined && { commerceMode: normalizeCommerceMode(input.commerceMode) }),
         ...(input.isActive !== undefined && { isActive: input.isActive }),
         ...(input.isFeatured !== undefined && { isFeatured: input.isFeatured }),
         ...(input.seoTitle !== undefined && { seoTitle: input.seoTitle }),

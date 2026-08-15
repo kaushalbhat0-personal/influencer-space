@@ -20,6 +20,12 @@ const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/api/media/upload-url": { windowMs: 60_000, maxRequests: 60 },
   "/api/media/upload": { windowMs: 60_000, maxRequests: 60 },
   "/api/media/register": { windowMs: 60_000, maxRequests: 120 },
+  // RCCF-65.3: public storefront affiliate click increments are throttled
+  // per-IP (same in-memory limiter as auth) so repeated automated requests
+  // cannot drive unbounded counter growth.
+  "/affiliate-clicks": { windowMs: 60_000, maxRequests: 60 },
+  // RCCF-67.4: public storefront booking submissions (per-IP, per minute).
+  "/public-bookings": { windowMs: 60_000, maxRequests: 10 },
 };
 
 export interface RateLimitResult {

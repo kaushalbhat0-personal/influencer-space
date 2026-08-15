@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, CalendarPlus } from "lucide-react";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
 import { CrudTable } from "@/features/_shared/components/crud-table";
 import { EditDrawer } from "@/features/_shared/components/edit-drawer";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { MediaField } from "@/components/shared/MediaField";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { ServiceData, ServiceFormInput } from "@/features/services/types";
-import { createService, updateService, deleteService } from "@/features/services/actions";
+import { createService, updateService, deleteService, createServiceBookingSlot } from "@/features/services/actions";
 import { formatCurrency } from "@/lib/utils";
 
 interface ServicesManagerProps {
@@ -23,11 +23,14 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceData | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<ServiceFormInput>({ title: "", price: 0, status: "PUBLISHED" });
+  const [form, setForm] = useState<ServiceFormInput>({ title: "", price: 0, status: "PUBLISHED", bookable: false });
+  const [slotForm, setSlotForm] = useState<{ serviceId: string; slotDate: string; slotStart: string; slotEnd: string; approvalRequired: boolean }>({ serviceId: "", slotDate: "", slotStart: "10:00", slotEnd: "11:00", approvalRequired: true });
+  const [slotMsg, setSlotMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [slotSaving, setSlotSaving] = useState(false);
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ title: "", price: 0, status: "PUBLISHED" });
+    setForm({ title: "", price: 0, status: "PUBLISHED", bookable: false });
     setDrawerOpen(true);
   };
 
@@ -42,6 +45,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
       category: item.category ?? undefined,
       featured: item.featured,
       status: item.status,
+      bookable: item.bookable,
     });
     setDrawerOpen(true);
   };
@@ -65,6 +69,15 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
   const handleDelete = async (id: string) => {
     await deleteService(id);
     setItems((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleCreateSlot = async () => {
+    if (!slotForm.serviceId || !slotForm.slotDate || !slotForm.slotStart || !slotForm.slotEnd) return;
+    setSlotSaving(true);
+    setSlotMsg(null);
+    const res = await createServiceBookingSlot(slotForm);
+    setSlotMsg(res.success ? { ok: true, text: "Slot created." } : { ok: false, text: res.error ?? "Failed to create slot." });
+    setSlotSaving(false);
   };
 
   const columns: Column<Record<string, unknown>>[] = [
@@ -94,6 +107,16 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
       },
     },
     {
+      key: "bookable",
+      header: "Bookable",
+      render: (r: Record<string, unknown>) => {
+        const d = r as unknown as ServiceData;
+        return d.bookable
+          ? <Badge variant="default">Bookable</Badge>
+          : <span className="text-xs text-zinc-500">Display only</span>;
+      },
+    },
+    {
       key: "price",
       header: "Price",
       render: (r: Record<string, unknown>) => formatCurrency((r as unknown as ServiceData).price),
@@ -114,6 +137,11 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
         const d = r as unknown as ServiceData;
         return (
           <div className="flex items-center gap-2">
+            {d.bookable && (
+              <button onClick={() => { setSlotForm((f) => ({ ...f, serviceId: d.id })); }} className="rounded-lg p-1.5 text-indigo-400 hover:bg-indigo-500/10" aria-label={`Add availability for ${d.title}`}>
+                <CalendarPlus className="h-4 w-4" />
+              </button>
+            )}
             <button onClick={() => openEdit(d)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-zinc-200" aria-label={`Edit ${d.title}`}>
               <Pencil className="h-4 w-4" />
             </button>
@@ -145,6 +173,28 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
         emptyMessage="No services yet. Create your first service."
       />
 
+      {slotForm.serviceId && (
+        <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
+          <p className="text-sm font-semibold text-white">Add availability for {items.find((s) => s.id === slotForm.serviceId)?.title ?? "service"}</p>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <input type="date" className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300" value={slotForm.slotDate} onChange={(e) => setSlotForm((f) => ({ ...f, slotDate: e.target.value }))} />
+            <input className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300" placeholder="Start (HH:MM)" value={slotForm.slotStart} onChange={(e) => setSlotForm((f) => ({ ...f, slotStart: e.target.value }))} />
+            <input className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300" placeholder="End (HH:MM)" value={slotForm.slotEnd} onChange={(e) => setSlotForm((f) => ({ ...f, slotEnd: e.target.value }))} />
+            <label className="flex items-center gap-2 text-sm text-zinc-300">
+              <input type="checkbox" checked={slotForm.approvalRequired} onChange={(e) => setSlotForm((f) => ({ ...f, approvalRequired: e.target.checked }))} className="rounded border-white/10" />
+              Require approval
+            </label>
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <button onClick={handleCreateSlot} disabled={slotSaving} className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-50">
+              {slotSaving ? "Creating…" : "Create Slot"}
+            </button>
+            <button onClick={() => setSlotForm((f) => ({ ...f, serviceId: "" }))} className="text-xs text-zinc-500 hover:text-zinc-300">Cancel</button>
+            {slotMsg && <span className={`text-xs ${slotMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{slotMsg.text}</span>}
+          </div>
+        </div>
+      )}
+
       <EditDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -171,6 +221,10 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={form.featured ?? false} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))} className="rounded border-white/10" />
             <span className="text-sm text-zinc-300">Featured on storefront</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={form.bookable ?? false} onChange={(e) => setForm((f) => ({ ...f, bookable: e.target.checked }))} className="rounded border-white/10" />
+            <span className="text-sm text-zinc-300">Bookable — customers can book available appointments</span>
           </label>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-zinc-400">Status</label>

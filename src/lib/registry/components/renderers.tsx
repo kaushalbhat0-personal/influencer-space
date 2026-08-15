@@ -9,6 +9,7 @@ import {
   type ContactActionResult,
 } from "@/actions/storefront.actions";
 import { CreatorImage, CreatorVideo } from "@/components/shared";
+import { AffiliateGrid, type AffiliateGridItem } from "@/components/public/AffiliateGrid";
 import { HeroMedia, responsiveAlignmentClass } from "@/components/shared/HeroMedia";
 import type { HeroMediaKind } from "@/lib/media/hero-media";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
@@ -16,6 +17,9 @@ import { Star } from "lucide-react";
 import { shouldRenderSection } from "@/modules/section-presentation";
 import { formatCurrency } from "@/lib/utils";
 import { ViewAllLink } from "@/components/storefront/ViewAllLink";
+import { safeUrl } from "./safe-url";
+import { normalizeCommerceMode } from "@/config/commerce/commerce-mode";
+import { buildWhatsAppMessage, buildWaMeLink } from "@/lib/commerce/whatsapp";
 
 
 interface RendererProps {
@@ -61,6 +65,30 @@ function SectionHeading({ p, title }: { p: Record<string, unknown>; title: strin
       {description && <p className="mx-auto mt-2 max-w-2xl text-sm text-zinc-400">{description}</p>}
     </div>
   );
+}
+
+// RCCF-68.3.2 — responsive container-aware grids. The storefront renders inside
+// the named `@container/main` boundary (defined on <main> in StorefrontPage and
+// on the Builder device frame), so `@sm/main:` / `@lg/main:` respond to the
+// CONTAINER width — not the browser viewport — making the Builder preview match
+// the published storefront exactly.
+//
+// The configured desktop column count stays authoritative. Mobile is always 1
+// column (no cramming), a small/medium container gets 2 columns, and the
+// configured density is restored at the large container breakpoint. All class
+// strings are literal so Tailwind's JIT emits every variant.
+const RESPONSIVE_GRID: Record<number, string> = {
+  1: "grid grid-cols-1 gap-4",
+  2: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2",
+  3: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3",
+  4: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-4",
+  5: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-5",
+  6: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-6",
+};
+
+function responsiveGridClass(columns: unknown): string {
+  const count = Math.min(Math.max(Number(columns) || 3, 1), 6);
+  return RESPONSIVE_GRID[count] ?? RESPONSIVE_GRID[3];
 }
 
 /* â”€â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -246,7 +274,8 @@ export function GalleryRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
+        {/* RCCF-68.3.2: container-aware grid — mobile 1 col, medium 2, desktop = configured columns. */}
+        <div className={responsiveGridClass(columns)}>
           {images.map((img: Record<string, unknown>, i: number) => (
             <div key={i} className="aspect-square overflow-hidden rounded-lg bg-[var(--surface-card-hover,#27272A)]">
               {img.isVideo && img.videoUrl ? (
@@ -284,6 +313,60 @@ export function GalleryRenderer({ props }: RendererProps) {
 
 /* â”€â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
+// RCCF-66.2 — per-product commerce-mode CTA. ONLINE → Buy Now only; WHATSAPP →
+// Order on WhatsApp only; BOTH → both. The WhatsApp destination is the
+// server-resolved value from the snapshot (hero socialLinks platform="whatsapp");
+// a missing/invalid destination degrades: WHATSAPP renders no broken link, BOTH
+// keeps Buy Now. In preview the WhatsApp CTA is inert (mirrors BuyNowButton).
+function ProductCardCtas({ prod, previewMode }: { prod: Record<string, unknown>; previewMode?: boolean }) {
+  const mode = normalizeCommerceMode(prod.commerceMode);
+  const showOnline = mode === "ONLINE" || mode === "BOTH";
+  const showWhatsApp = mode === "WHATSAPP" || mode === "BOTH";
+
+  const productName = String(prod.name || "");
+  const displayPrice = typeof prod.price === "number" && prod.price ? formatCurrency(prod.price) : "";
+  const productUrl = prod.productUrl ? String(prod.productUrl) : "";
+  const message = buildWhatsAppMessage({ productName, price: displayPrice, productUrl });
+  const waHref = buildWaMeLink(String(prod.whatsappUrl || ""), message);
+
+  return (
+    <div className="mt-1.5 space-y-2">
+      {showOnline && (
+        <BuyNowButton
+          productId={String(prod.id)}
+          productName={productName}
+          imageUrl={prod.imageUrl ? String(prod.imageUrl) : undefined}
+          previewMode={previewMode}
+        />
+      )}
+      {showWhatsApp &&
+        (previewMode ? (
+          <button
+            type="button"
+            disabled
+            title="Ordering available on your live website"
+            className="w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)] disabled:cursor-not-allowed"
+          >
+            Order on WhatsApp
+          </button>
+        ) : waHref ? (
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-secondary,#A1A1AA)] transition-colors hover:border-[var(--brand-secondary,#00f5ff)] hover:text-[var(--brand-secondary,#00f5ff)]"
+          >
+            Order on WhatsApp
+          </a>
+        ) : (
+          <p className="w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
+            Order on WhatsApp
+          </p>
+        ))}
+    </div>
+  );
+}
+
 export function ProductsRenderer({ props, previewMode }: RendererProps) {
   const p = props as Record<string, unknown>;
   const products = (p.resolvedData as Record<string, unknown>[]) || [];
@@ -295,7 +378,8 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` } as React.CSSProperties}>
+        {/* RCCF-68.3.2: container-aware grid — mobile 1 col, medium 2, desktop = configured columns. */}
+        <div className={responsiveGridClass(columns)}>
           {products.map((prod: Record<string, unknown>, idx: number) => (
             <div key={idx} className="group rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 transition-colors hover:border-[var(--brand-primary,#6366F1)] hover:bg-[var(--surface-card,#18181B)]">
               <div className="relative mb-2 overflow-hidden rounded">
@@ -323,10 +407,8 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
               ) : null}
               <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{typeof prod.price === "number" && prod.price ? formatCurrency(prod.price) : ""}</p>
               {prod.id ? (
-                <BuyNowButton
-                  productId={String(prod.id)}
-                  productName={String(prod.name || "")}
-                  imageUrl={prod.imageUrl ? String(prod.imageUrl) : undefined}
+                <ProductCardCtas
+                  prod={prod as Record<string, unknown>}
                   previewMode={previewMode}
                 />
               ) : (
@@ -410,6 +492,42 @@ export function LinksRenderer({ props }: RendererProps) {
   return <EmptyState label="Add your social links" />;
 }
 
+/* â”€â”€â”€ Affiliate Links â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+// RCCF-65.2: the Affiliate Links section renders the persisted AffiliateLink
+// aggregate (active-only, deterministic order) via the public AffiliateGrid.
+// It is DISTINCT from `links.default`, which stays Hero's social links.
+// Only http(s) URLs are ever opened (see safe-url.ts) — non-web schemes are
+// dropped at render time so the storefront never navigates to javascript:/data:.
+
+export function AffiliateLinksRenderer({ props, previewMode }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const resolved = (p.resolvedData as Record<string, unknown>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Affiliate Links");
+  if (!useVisibility(props)) return null;
+
+  const affiliates: AffiliateGridItem[] = resolved
+    .map((l) => ({
+      id: String(l.id || ""),
+      title: String(l.title || ""),
+      url: safeUrl(String(l.url || "")),
+      imageUrl: l.imageUrl ? String(l.imageUrl) : null,
+      clicks: typeof l.clicks === "number" ? l.clicks : 0,
+    }))
+    .filter((a) => a.id && a.url);
+
+  if (affiliates.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-12">
+        <SectionHeading p={p} title={title} />
+        <AffiliateGrid affiliates={affiliates} previewMode={previewMode} />
+      </div>
+    );
+  }
+
+  return <EmptyState label="Add affiliate links in Dashboard" />;
+}
+
 /* â”€â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function FooterRenderer({ props }: RendererProps) {
@@ -457,7 +575,10 @@ export function TestimonialsRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 sm:grid-cols-2" style={{ gridTemplateColumns: `repeat(${Math.min(columns, items.length)}, 1fr)` } as React.CSSProperties}>
+        {/* RCCF-68.3.2: container-aware grid. Desktop keeps the configured
+            column count (capped by item count, matching the old behavior);
+            mobile is 1 column so testimonials never cram. */}
+        <div className={responsiveGridClass(Math.min(columns, items.length))}>
           {items.map((item: Record<string, string>, i: number) => (
             <div key={i} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4">
               <div className="mb-2 flex items-center gap-2">
@@ -531,7 +652,7 @@ export function FaqRenderer({ props }: RendererProps) {
 
 const initialContactState: ContactActionResult = { success: false };
 
-export function ContactRenderer({ props }: RendererProps) {
+export function ContactRenderer({ props, previewMode }: RendererProps) {
   const p = props as Record<string, string>;
   const tenantId = String(props.tenantId || "");
   const [state, action] = useFormState(submitStorefrontContact, initialContactState);
@@ -543,6 +664,36 @@ export function ContactRenderer({ props }: RendererProps) {
         <SectionHeading p={props} title={title} />
         <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
           <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">Thanks for reaching out! I&apos;ll get back to you soon.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // RCCF-68.3.2 — preview isolation: the form stays visible but is INERT. No
+  // server action, no mutation, no network request. Server authorization is
+  // untouched (previewMode is a UX layer, not a security boundary).
+  if (previewMode) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-12">
+        <SectionHeading p={props} title={title} />
+        {!p.description && (
+          <p className="mb-6 text-center text-sm text-[var(--text-muted,#71717A)]">Have a question or want to collaborate? Reach out!</p>
+        )}
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Name</label>
+            <input disabled placeholder="Your name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Email</label>
+            <input disabled type="email" placeholder="your@email.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Message</label>
+            <textarea disabled rows={4} className="w-full resize-none rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" placeholder="Your message..." />
+          </div>
+          <button type="button" disabled className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">Send Message</button>
+          <p className="text-center text-[10px] font-medium uppercase tracking-widest text-amber-400/80">Preview — submissions disabled</p>
         </div>
       </div>
     );
@@ -585,7 +736,7 @@ export function ContactRenderer({ props }: RendererProps) {
 
 const initialNewsletterState: ContactActionResult = { success: false };
 
-export function NewsletterRenderer({ props }: RendererProps) {
+export function NewsletterRenderer({ props, previewMode }: RendererProps) {
   const p = props as Record<string, string>;
   const tenantId = String(props.tenantId || "");
   const [state, action] = useFormState(subscribeNewsletter, initialNewsletterState);
@@ -598,6 +749,21 @@ export function NewsletterRenderer({ props }: RendererProps) {
         <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
           <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">You&apos;re subscribed! Stay tuned for updates.</p>
         </div>
+      </div>
+    );
+  }
+
+  // RCCF-68.3.2 — preview isolation: subscribe UI stays visible but INERT.
+  if (previewMode) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-12 text-center">
+        <SectionHeading p={props} title={title} />
+        <p className="mb-6 text-sm text-[var(--text-muted,#71717A)]">Stay updated with the latest content and announcements.</p>
+        <div className="flex gap-2">
+          <input disabled placeholder={p.placeholder || "Your email"} className="flex-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+          <button type="button" disabled className="rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">{p.buttonText || "Subscribe"}</button>
+        </div>
+        <p className="mt-2 text-[10px] font-medium uppercase tracking-widest text-amber-400/80">Preview — subscriptions disabled</p>
       </div>
     );
   }
@@ -618,43 +784,6 @@ export function NewsletterRenderer({ props }: RendererProps) {
       {state.fieldErrors?.email && <p className="mt-2 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
     </div>
   );
-}
-
-/* â”€â”€â”€ Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-export function PricingRenderer({ props }: RendererProps) {
-  const p = props as Record<string, unknown>;
-  const plans = (p.resolvedData as Record<string, unknown>[]) || [];
-  const title = (p.resolvedTitle as string) || String(p.title || "Plans");
-  if (!useVisibility(props)) return null;
-
-  if (plans.length > 0) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
-        <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
-          {plans.map((plan: Record<string, unknown>, i: number) => {
-            const isPopular = Boolean(plan.isPopular);
-            return (
-              <div key={i} className={`relative rounded-lg border ${isPopular ? "border-[var(--brand-secondary,#00f5ff)]/30 bg-[var(--brand-secondary,#00f5ff)]/5" : "border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60"} p-6 text-center`}>
-                {isPopular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[var(--brand-secondary,#00f5ff)] px-3 py-0.5 text-[10px] font-semibold text-black">Popular</span>}
-                <p className="text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">{String(plan.name || "")}</p>
-                <p className="mt-2 text-3xl font-bold text-[var(--text-primary,#FAFAFA)]">{typeof plan.price === "number" ? formatCurrency(plan.price) : String(plan.price || "")}</p>
-                <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(plan.description || plan.desc || "")}</p>
-                {!!plan.cta && (
-                  <button className={`mt-4 w-full rounded-lg ${isPopular ? "bg-[var(--button-primary-bg,#00f5ff)] text-[var(--button-primary-fg,#09090b)] hover:bg-[var(--button-primary-hover,#00d9f2)]" : "border border-[var(--button-secondary-border,rgba(255,255,255,0.08))] text-[var(--button-secondary-fg,#FAFAFA)]"} px-4 py-2 text-sm font-semibold`}>
-                    {String(plan.cta)}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  return <EmptyState label="Add pricing plans" />;
 }
 
 /* â”€â”€â”€ Courses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -707,7 +836,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
 
 /* â”€â”€â”€ Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-export function ServicesRenderer({ props }: RendererProps) {
+export function ServicesRenderer({ props, previewMode }: RendererProps) {
   const p = props as Record<string, unknown>;
   const services = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || String(p.title || "Services");
@@ -747,6 +876,7 @@ export function ServicesRenderer({ props }: RendererProps) {
                   {typeof service.price === "number" ? formatCurrency(service.price) : String(service.price || "")}
                 </p>
                 {!!service.duration && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(service.duration)}</p>}
+                <ServiceBookingCta service={service as Record<string, unknown>} previewMode={previewMode} />
               </div>
             </div>
           ))}
@@ -757,6 +887,238 @@ export function ServicesRenderer({ props }: RendererProps) {
   }
 
   return <EmptyState label="Add your services" />;
+}
+
+/* â”€â”€â”€ Service Booking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+// RCCF-67.5 — Book Now flow for an explicitly bookable Service. The visitor
+// picks a future open slot, enters name/email/phone, and submits through the
+// canonical public booking action. Price is display-only (server-derived).
+function ServiceBookingCta({ service, previewMode }: { service: Record<string, unknown>; previewMode?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const slots = (service.bookableSlots as Array<Record<string, unknown>> | undefined) ?? [];
+  const bookable = Boolean(service.bookable);
+
+  // Truthful states — never show fake availability.
+  if (!bookable) return null;
+  if (slots.length === 0) {
+    return (
+      <p className="mt-4 rounded-lg bg-[var(--surface-card-hover,#27272A)] px-3 py-2 text-[11px] text-[var(--text-muted,#71717A)]">
+        No upcoming availability.
+      </p>
+    );
+  }
+
+  // RCCF-68.3.2 — preview isolation: service + availability stay visible but the
+  // booking controls are INERT (no slot claim, no submitPublicBooking request).
+  if (previewMode) {
+    return (
+      <div className="mt-4">
+        <button
+          type="button"
+          disabled
+          title="Booking available on your live website"
+          className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed"
+        >
+          Book Now
+        </button>
+        <div className="mt-3 space-y-2">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted,#71717A)]">Available times</p>
+          {slots.map((slot) => (
+            <div key={String(slot.id || "")} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2 text-xs text-[var(--text-muted,#71717A)]">
+              {formatSlotLabel(slot)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
+      >
+        {open ? "Hide times" : "Book Now"}
+      </button>
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted,#71717A)]">Choose a time</p>
+          {slots.map((slot) => (
+            <ServiceSlotBooker key={String(slot.id || "")} slot={slot} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatSlotLabel(slot: Record<string, unknown>): string {
+  const slotDate = new Date(String(slot.slotDate || ""));
+  const dateLabel = isNaN(slotDate.getTime()) ? String(slot.slotDate || "") : slotDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  return `${dateLabel} · ${String(slot.slotStart || "")}–${String(slot.slotEnd || "")}`;
+}
+
+function ServiceSlotBooker({ slot }: { slot: Record<string, unknown> }) {
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState<{ status: string } | null>(null);
+  const [error, setError] = useState("");
+  const slotDate = new Date(String(slot.slotDate || ""));
+  const dateLabel = isNaN(slotDate.getTime()) ? String(slot.slotDate || "") : slotDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const approvalRequired = Boolean(slot.approvalRequired);
+
+  const submit = async (fd: FormData) => {
+    setSubmitting(true);
+    setError("");
+    const { submitPublicBooking } = await import("@/actions/storefront-bookings.actions");
+    const result = await submitPublicBooking({ success: false }, fd);
+    if (result.success) {
+      setDone({ status: result.status ?? "confirmed" });
+    } else {
+      setError(result.error || result.fieldErrors?.customerEmail?.[0] || "Could not submit booking");
+    }
+    setSubmitting(false);
+  };
+
+  if (done) {
+    return (
+      <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2">
+        <p className="text-xs text-[var(--text-primary,#FAFAFA)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
+        <p className="mt-1 text-[11px] text-emerald-300">
+          {done.status === "confirmed" ? "Booking confirmed." : "Booking submitted — awaiting approval."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between text-xs text-[var(--text-primary,#FAFAFA)]">
+        <span>{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</span>
+        <span className="text-[var(--brand-secondary,#00f5ff)]">{open ? "Cancel" : "Select"}</span>
+      </button>
+
+      {open && (
+        <form action={submit} className="mt-2 space-y-1.5">
+          <input type="hidden" name="bookingId" value={String(slot.id || "")} />
+          <input name="customerName" required maxLength={200} placeholder="Your name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerEmail" type="email" required maxLength={200} placeholder="you@example.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerPhone" maxLength={30} placeholder="Phone (optional)" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          {error && <p className="text-[11px] text-red-400">{error}</p>}
+          <button type="submit" disabled={submitting} className="w-full rounded-lg bg-[var(--brand-secondary,#00f5ff)] py-1.5 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] disabled:cursor-not-allowed disabled:opacity-50">
+            {submitting ? "Booking…" : approvalRequired ? "Request Booking" : "Confirm"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+/* â”€â”€â”€ Bookings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+export function BookingsRenderer({ props, previewMode }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const slots = (p.resolvedData as Record<string, unknown>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Book a Session");
+  if (!useVisibility(props)) return null;
+
+  if (slots.length === 0) return null;
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-12">
+      <SectionHeading p={p} title={title} />
+      <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
+        {slots.map((slot, i) => (
+          <BookingCard key={i} slot={slot as Record<string, unknown>} previewMode={previewMode} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; previewMode?: boolean }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState<{ status: string } | null>(null);
+  const [error, setError] = useState("");
+  const slotDate = new Date(String(slot.slotDate || ""));
+  const dateLabel = isNaN(slotDate.getTime()) ? String(slot.slotDate || "") : slotDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const approvalRequired = Boolean(slot.approvalRequired);
+
+  const submit = async (fd: FormData) => {
+    setSubmitting(true);
+    setError("");
+    // RCCF-67.4: lazy-load the server action so importing this client component
+    // never pulls the server-side tenant/rate-limit modules into a node test
+    // environment at module-load time (same pattern as AffiliateGrid).
+    const { submitPublicBooking } = await import("@/actions/storefront-bookings.actions");
+    const result = await submitPublicBooking({ success: false }, fd);
+    if (result.success) {
+      setDone({ status: result.status ?? "confirmed" });
+    } else {
+      setError(result.error || result.fieldErrors?.customerEmail?.[0] || "Could not submit booking");
+    }
+    setSubmitting(false);
+  };
+
+  // RCCF-68.3.2 — preview isolation: the booking card stays visible (title,
+  // description, time, price) but the booking form is INERT — no slot claim,
+  // no submitPublicBooking request, no rate-limit request.
+  if (previewMode) {
+    return (
+      <div className="flex flex-col rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
+        <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(slot.title || "Booking")}</p>
+        {slot.description ? <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(slot.description)}</p> : null}
+        <p className="mt-2 text-xs text-[var(--brand-secondary,#00f5ff)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
+        <p className="mt-1 text-sm font-bold text-[var(--text-primary,#FAFAFA)]">
+          {typeof slot.price === "number" && slot.price > 0 ? formatCurrency(slot.price) : "Free"}
+        </p>
+        <p className="mt-0.5 text-[10px] text-[var(--text-muted,#71717A)]">
+          {typeof slot.duration === "number" ? `${slot.duration} min` : ""}
+          {approvalRequired ? " · requires approval" : ""}
+        </p>
+        <button type="button" disabled title="Booking available on your live website" className="mt-4 w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">
+          {approvalRequired ? "Request Booking" : "Book Now"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
+      <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(slot.title || "Booking")}</p>
+      {slot.description ? <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(slot.description)}</p> : null}
+      <p className="mt-2 text-xs text-[var(--brand-secondary,#00f5ff)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
+      <p className="mt-1 text-sm font-bold text-[var(--text-primary,#FAFAFA)]">
+        {typeof slot.price === "number" && slot.price > 0 ? formatCurrency(slot.price) : "Free"}
+      </p>
+      <p className="mt-0.5 text-[10px] text-[var(--text-muted,#71717A)]">
+        {typeof slot.duration === "number" ? `${slot.duration} min` : ""}
+        {approvalRequired ? " · requires approval" : ""}
+      </p>
+
+      {done ? (
+        <p className="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+          {done.status === "confirmed" ? "Booking confirmed!" : "Booking submitted — pending approval."}
+        </p>
+      ) : (
+        <form action={submit} className="mt-4 space-y-2">
+          <input type="hidden" name="bookingId" value={String(slot.id || "")} />
+          <input name="customerName" required maxLength={200} placeholder="Your name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerEmail" type="email" required maxLength={200} placeholder="you@example.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerPhone" maxLength={30} placeholder="Phone (optional)" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <textarea name="notes" maxLength={2000} rows={2} placeholder="Notes (optional)" className="w-full resize-none rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          {error && <p className="text-[11px] text-red-400">{error}</p>}
+          <button type="submit" disabled={submitting} className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)] disabled:cursor-not-allowed disabled:opacity-50">
+            {submitting ? "Booking…" : approvalRequired ? "Request Booking" : "Book Now"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
 }
 
 /* â”€â”€â”€ Embed: Spotify â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -858,32 +1220,35 @@ export function DiscordRenderer({ props }: RendererProps) {
 export function InstagramRenderer({ props }: RendererProps) {
   const p = props as Record<string, unknown>;
   const username = String(p.username || "");
-  const limit = Math.min(Math.max(Number(p.limit) || 6, 1), 30);
   if (!useVisibility(props)) return null;
 
+  // RCCF-67.4 — truth: real Instagram content is delivered by the Content Feed
+  // section (cron-synced from the connected account). This component must NOT
+  // fabricate a post grid. It renders a truthful profile link only; the live
+  // feed lives in contentFeed.default.
   if (username) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <p className="mb-4 text-center text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
+        <p className="text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">
+          Follow{" "}
           <a
             href={`https://instagram.com/${username}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="transition-colors hover:text-zinc-200"
+            className="font-semibold text-[var(--brand-secondary,#00f5ff)] hover:underline"
           >
             @{username}
-          </a>
+          </a>{" "}
+          on Instagram for the latest posts.
         </p>
-        <div className="grid grid-cols-3 gap-2">
-          {Array.from({ length: Math.min(limit, 6) }).map((_, i) => (
-            <div key={i} className="aspect-square rounded bg-gradient-to-br from-pink-900/30 to-purple-900/30 flex items-center justify-center text-xs text-[var(--text-muted,#71717A)]">
-              ðŸ“·
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-center text-[10px] text-[var(--text-muted,#71717A)]">
-          <a href={`https://instagram.com/${username}`} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-secondary,#A1A1AA)] transition-colors">View on Instagram</a>
-        </p>
+        <a
+          href={`https://instagram.com/${username}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-block rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
+        >
+          View on Instagram
+        </a>
       </div>
     );
   }

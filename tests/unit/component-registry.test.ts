@@ -14,9 +14,10 @@ const REGISTERED_IDS = [
   "hero.default", "hero.gaming", "hero.fitness", "hero.education",
   "gallery.grid", "products.grid", "timeline.default",
   "links.default", "footer.default", "testimonials.default", "faq.default",
-  "contact.default", "newsletter.default", "pricing.default",
+  "contact.default", "newsletter.default",
   "courses.default", "services.default", "embed.spotify", "embed.youtube",
   "social.discord", "social.instagram", "games.default", "contentFeed.default",
+  "affiliateLinks.default", "bookings.default",
 ];
 
 const isRegistered = (id: string): boolean => REGISTERED_IDS.includes(id);
@@ -58,7 +59,7 @@ describe("Component IDs — every origin emits only registered ids", () => {
   it("every resolveModuleId compat target resolves to a registered id", () => {
     const compatInputs = [
       "hero", "gallery", "products", "timeline", "links", "footer",
-      "testimonials", "faq", "contact", "newsletter", "pricing", "courses",
+      "testimonials", "faq", "contact", "newsletter", "courses",
       "games", "contentFeed", "content_feed", "services",
       "featured_products", "product_grid", "social_links", "contact_form",
     ];

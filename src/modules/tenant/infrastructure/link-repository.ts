@@ -63,7 +63,8 @@ export class LinkRepository {
   async findPublished(tenantId: string, tx?: Prisma.TransactionClient): Promise<AffiliateLink[]> {
     return this.client(tx).affiliateLink.findMany({
       where: { tenantId, isActive: true },
-      orderBy: { order: "asc" },
+      // RCCF-65.2 — deterministic ordering: active only, by order then id.
+      orderBy: [{ order: "asc" }, { id: "asc" }],
     });
   }
 }

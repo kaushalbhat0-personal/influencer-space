@@ -63,11 +63,15 @@ export class RazorpayPaymentAdapter implements PaymentProviderAdapter {
   }
 
   async getAccountStatus(input: { providerKeyId?: string | null; providerKeySecret?: string | null }): Promise<PaymentAccountStatusResult> {
-    // Key presence + format check (no side-effecting API call).
+    // RCCF-69.2 — truthful configuration validation. This checks that the stored
+    // credentials are PRESENT and well-FORMATTED. It is NOT a provider-side
+    // verification: no Razorpay API call is made, so the account must never be
+    // reported as "verified" here. DIRECT_CREATOR (the only consumer of this
+    // state) is gated off until real provider verification exists.
     const kid = input.providerKeyId ?? "";
     const ks = input.providerKeySecret ?? "";
     if (!kid || !ks) return { success: false, error: "Keys missing" };
     if (!kid.startsWith("rzp_")) return { success: false, error: "Invalid key id format" };
-    return { success: true, verified: true, status: "configured" };
+    return { success: true, verified: false, status: "configured" };
   }
 }

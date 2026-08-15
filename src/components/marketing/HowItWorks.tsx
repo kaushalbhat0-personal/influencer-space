@@ -5,7 +5,7 @@ const STEPS = [
     step: 1,
     icon: Link2,
     title: "Paste your URL",
-    body: "Drop in a YouTube channel, Instagram profile, or any creator link. Our AI analyzes your content, niche, brand colors, audience, and social presence.",
+    body: "Drop in a YouTube channel, Instagram profile, or any creator link. We analyze your content, niche, brand colors, audience, and social presence.",
     accent: "text-indigo-400",
     accentBg: "bg-indigo-500/10",
     accentBorder: "border-indigo-500/20",
@@ -13,8 +13,8 @@ const STEPS = [
   {
     step: 2,
     icon: Sparkles,
-    title: "AI understands your brand",
-    body: "Our Persona AI identifies your niche, style, and audience. The Planning Engine builds a strategy tailored to your content. Every storefront is generated from who you actually are — not a template.",
+    title: "Your brand, understood",
+    body: "We identify your niche, style, and audience, then plan a storefront tailored to your content. Every site is built from who you actually are — not a template.",
     accent: "text-amber-400",
     accentBg: "bg-amber-500/10",
     accentBorder: "border-amber-500/20",
@@ -22,8 +22,8 @@ const STEPS = [
   {
     step: 3,
     icon: Layout,
-    title: "AI generates everything",
-    body: "Hero, navigation, products, checkout, SEO, analytics, social links — AI generates your complete business platform. The Planner DAG ensures every piece fits together perfectly for your niche.",
+    title: "Everything generated",
+    body: "Hero, navigation, products, checkout, SEO, and social links are composed into a complete business platform. The Planner DAG ensures every piece fits together perfectly for your niche.",
     accent: "text-violet-400",
     accentBg: "bg-violet-500/10",
     accentBorder: "border-violet-500/20",
@@ -53,7 +53,7 @@ export function HowItWorks() {
           </h2>
           <p className="mt-3 text-zinc-500 max-w-xl mx-auto">
             From social profile to complete business platform in under two
-            minutes. AI handles the heavy lifting — you stay in control.
+            minutes. The heavy lifting is handled — you stay in control.
           </p>
         </div>
 

@@ -28,12 +28,13 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
     name: "",
     price: 0,
     type: "digital",
+    commerceMode: "ONLINE",
     status: "PUBLISHED",
   });
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", price: 0, type: "digital", status: "PUBLISHED" });
+    setForm({ name: "", price: 0, type: "digital", commerceMode: "ONLINE", status: "PUBLISHED" });
     setDrawerOpen(true);
   };
 
@@ -48,6 +49,7 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
       slug: product.slug ?? undefined,
       status: product.status,
       type: product.type,
+      commerceMode: product.commerceMode,
       isActive: product.isActive,
       isFeatured: product.isFeatured,
       seoTitle: product.seoTitle ?? undefined,
@@ -180,6 +182,18 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
                 <option value="ARCHIVED">Archived</option>
               </select>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-zinc-400">How customers buy</label>
+            <select
+              value={form.commerceMode}
+              onChange={(e) => setForm((f) => ({ ...f, commerceMode: e.target.value as ProductFormInput["commerceMode"] }))}
+              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+            >
+              <option value="ONLINE">Sell Online — customers pay through your online checkout</option>
+              <option value="WHATSAPP">Order on WhatsApp — customers contact you on WhatsApp to place the order</option>
+              <option value="BOTH">Online + WhatsApp — customers can either pay online or contact you on WhatsApp</option>
+            </select>
           </div>
           <ImageManager
             tenantId={tenantId}

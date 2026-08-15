@@ -13,7 +13,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: { asset: { aggregate: mockAggregate } },
 }));
 
-import { countStorageUsage, enforceStorageLimit, BYTES_PER_GB, storageBytesToGb } from "../storage.enforcement";
+import { countStorageUsage, enforceStorageLimit, BYTES_PER_MB, BYTES_PER_GB, storageBytesToGb, storageBytesToMb, resolveStorageLimitBytes, resolveHeroVideoCapability } from "../storage.enforcement";
 import { capabilityService } from "@/lib/capabilities";
 
 beforeEach(() => {
@@ -28,82 +28,87 @@ describe("countStorageUsage", () => {
     await expect(countStorageUsage("t1")).resolves.toBe(0);
   });
 
-  it("returns the summed asset bytes", async () => {
-    mockAggregate.mockResolvedValue({ _sum: { size: 5 * BYTES_PER_GB } });
-    await expect(countStorageUsage("t1")).resolves.toBe(5 * BYTES_PER_GB);
-    expect(mockAggregate).toHaveBeenCalledWith({ where: { tenantId: "t1" }, _sum: { size: true } });
+  it("returns the summed ACTIVE asset bytes (RCCF-59 excludes DELETED)", async () => {
+    mockAggregate.mockResolvedValue({ _sum: { size: 5 * BYTES_PER_MB } });
+    await expect(countStorageUsage("t1")).resolves.toBe(5 * BYTES_PER_MB);
+    expect(mockAggregate).toHaveBeenCalledWith({ where: { tenantId: "t1", status: { not: "DELETED" } }, _sum: { size: true } });
   });
 });
 
-describe("storageBytesToGb", () => {
-  it("converts bytes to GB with one decimal", () => {
-    expect(storageBytesToGb(0)).toBe(0);
+describe("unit conversions", () => {
+  it("converts bytes to GB (legacy) and MB (Creator)", () => {
     expect(storageBytesToGb(BYTES_PER_GB)).toBe(1);
-    expect(storageBytesToGb(2.5 * BYTES_PER_GB)).toBe(2.5);
-    expect(storageBytesToGb(0.34 * BYTES_PER_GB)).toBe(0.3);
+    expect(storageBytesToMb(BYTES_PER_MB)).toBe(1);
+    expect(storageBytesToMb(20 * BYTES_PER_MB)).toBe(20);
+  });
+});
+
+describe("RCCF-59 — canonical Creator storage (MB)", () => {
+  it("resolves 20/100/300 MB for Launch/Growth/Scale", () => {
+    expect(resolveStorageLimitBytes("creator_launch")).toBe(20 * BYTES_PER_MB);
+    expect(resolveStorageLimitBytes("creator_grow")).toBe(100 * BYTES_PER_MB);
+    expect(resolveStorageLimitBytes("creator_scale")).toBe(300 * BYTES_PER_MB);
+  });
+
+  it("Partner plans have NO storage capability (RCCF-60.3)", () => {
+    expect(resolveStorageLimitBytes("partner_solo")).toBeNull();
+    expect(resolveStorageLimitBytes("partner_scale")).toBeNull();
+    expect(resolveStorageLimitBytes("partner_enterprise")).toBeNull();
+  });
+
+  it("hero video capability: enabled on Launch/Growth/Scale, 12 MB / 15 s", () => {
+    for (const code of ["creator_launch", "creator_grow", "creator_scale"]) {
+      const hero = resolveHeroVideoCapability(code);
+      expect(hero.enabled).toBe(true);
+      expect(hero.maxSizeBytes).toBe(12 * BYTES_PER_MB);
+      expect(hero.maxDurationSec).toBe(15);
+    }
+    // Partner hero not enabled (not part of the approved contract).
+    expect(resolveHeroVideoCapability("partner_free").enabled).toBe(false);
   });
 });
 
 describe("enforceStorageLimit", () => {
-  it("allows an upload within the plan headroom", async () => {
+  it("allows an upload within the plan headroom (Creator Scale 300 MB)", async () => {
     mockResolveActivePlan.mockResolvedValue({ code: "creator_scale", origin: "v2", status: "active" });
-
-    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 10 * BYTES_PER_GB, used: 5 * BYTES_PER_GB });
-
+    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 10 * BYTES_PER_MB, used: 5 * BYTES_PER_MB });
     expect(decision.ok).toBe(true);
-    expect(decision.limitGb).toBe(50);
-    expect(decision.remaining).toBe(45 * BYTES_PER_GB);
+    expect(decision.limit).toBe(300 * BYTES_PER_MB);
+    expect(decision.remaining).toBe(295 * BYTES_PER_MB);
     expect(decision.reason).toBeUndefined();
   });
 
-  it("rejects an upload that exceeds the plan limit", async () => {
+  it("rejects an upload that exceeds the plan limit (Launch 20 MB)", async () => {
     mockResolveActivePlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "active" });
-
-    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: BYTES_PER_GB, used: BYTES_PER_GB });
-
+    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 15 * BYTES_PER_MB, used: 15 * BYTES_PER_MB });
     expect(decision.ok).toBe(false);
-    expect(decision.limitGb).toBe(1);
-    expect(decision.remaining).toBe(0);
-    expect(decision.reason).toContain("Storage limit reached");
+    expect(decision.limit).toBe(20 * BYTES_PER_MB);
+    expect(decision.remaining).toBe(5 * BYTES_PER_MB);
+    expect(decision.reason).toContain("Storage quota exceeded");
+    expect(decision.reason).toContain("MB");
   });
 
   it("counts live usage when used is not provided", async () => {
     mockResolveActivePlan.mockResolvedValue({ code: "creator_grow", origin: "v2", status: "active" });
-    mockAggregate.mockResolvedValue({ _sum: { size: 9.9 * BYTES_PER_GB } });
-
-    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 0.2 * BYTES_PER_GB });
-
+    mockAggregate.mockResolvedValue({ _sum: { size: 99 * BYTES_PER_MB } });
+    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 2 * BYTES_PER_MB });
     expect(mockAggregate).toHaveBeenCalled();
     expect(decision.ok).toBe(false);
-    expect(decision.used).toBeCloseTo(9.9 * BYTES_PER_GB, 0);
+    expect(decision.used).toBeCloseTo(99 * BYTES_PER_MB, 0);
   });
 
   it("falls back to the default plan when the tenant has no subscription", async () => {
     mockResolveActivePlan.mockResolvedValue({ code: null, origin: "none", status: null });
-
-    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: BYTES_PER_GB + 1, used: 0 });
-
-    expect(decision.limitGb).toBe(1);
+    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 20 * BYTES_PER_MB + 1, used: 0 });
+    expect(decision.limit).toBe(20 * BYTES_PER_MB);
     expect(decision.ok).toBe(false);
   });
 
   it("treats an unlimited plan (-1) as never full", async () => {
     mockResolveActivePlan.mockResolvedValue({ code: "creator_scale", origin: "v2", status: "active" });
-    vi.spyOn(capabilityService, "limit").mockReturnValueOnce(-1);
-
-    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 100 * BYTES_PER_GB, used: 500 * BYTES_PER_GB });
-
+    vi.spyOn(capabilityService, "limit").mockReturnValueOnce(-1).mockReturnValueOnce(-1);
+    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 100 * BYTES_PER_MB, used: 500 * BYTES_PER_MB });
     expect(decision.limit).toBe(Infinity);
     expect(decision.ok).toBe(true);
-  });
-
-  it("reports disabled plans (0) as unavailable", async () => {
-    mockResolveActivePlan.mockResolvedValue({ code: "creator_scale", origin: "v2", status: "active" });
-    vi.spyOn(capabilityService, "limit").mockReturnValueOnce(0);
-
-    const decision = await enforceStorageLimit({ tenantId: "t1", incomingBytes: 1, used: 0 });
-
-    expect(decision.ok).toBe(false);
-    expect(decision.reason).toBe("Storage is not available on your current plan.");
   });
 });

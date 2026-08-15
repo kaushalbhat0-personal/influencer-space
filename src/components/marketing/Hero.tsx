@@ -29,7 +29,7 @@ export function Hero() {
               {[
                 "Keep 100% of every sale",
                 "Launch in minutes",
-                "Sell products, services, courses & bookings",
+                "Sell products, services & bookings",
                 "Built for Indian creators",
               ].map((point) => (
                 <li key={point} className="flex items-start gap-2 text-sm text-zinc-300">

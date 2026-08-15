@@ -10,7 +10,7 @@ const JOURNEY = [
   { icon: LayoutGrid, title: "Your store is created", description: "A storefront with products, checkout and SEO — built for you." },
   { icon: Palette, title: "Make it yours", description: "Drag, drop and customize every section in the builder." },
   { icon: Rocket, title: "Launch", description: "Publish to your own domain with free SSL." },
-  { icon: ShoppingBag, title: "Start selling", description: "Sell products, services, courses and bookings." },
+  { icon: ShoppingBag, title: "Start selling", description: "Sell products, take bookings, and earn affiliate commissions." },
   { icon: TrendingUp, title: "Grow", description: "Get next-step guidance as your business grows." },
 ];
 

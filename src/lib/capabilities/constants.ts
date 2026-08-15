@@ -71,6 +71,11 @@ export const FEATURE_IDS = {
   GAMES: "max_games",
   BOOKINGS: "max_bookings",
   AI_CREDITS: "ai_credits",
+  // RCCF-59 — canonical Creator storage (MB) + hero video capability.
+  STORAGE_MB: "storage_mb",
+  HERO_VIDEO_ENABLED: "hero_video_enabled",
+  HERO_VIDEO_MAX_SIZE_MB: "hero_video_max_size_mb",
+  HERO_VIDEO_MAX_DURATION_SEC: "hero_video_max_duration_sec",
 } as const;
 export type FeatureId = (typeof FEATURE_IDS)[keyof typeof FEATURE_IDS];
 
@@ -94,6 +99,9 @@ export const LIMIT_FEATURES = new Set<FeatureId>([
   FEATURE_IDS.GAMES,
   FEATURE_IDS.BOOKINGS,
   FEATURE_IDS.AI_CREDITS,
+  FEATURE_IDS.STORAGE_MB,
+  FEATURE_IDS.HERO_VIDEO_MAX_SIZE_MB,
+  FEATURE_IDS.HERO_VIDEO_MAX_DURATION_SEC,
 ]);
 
 export const BOOLEAN_FEATURES = new Set<FeatureId>([
@@ -124,6 +132,7 @@ export const BOOLEAN_FEATURES = new Set<FeatureId>([
   FEATURE_IDS.BULK_PUBLISH,
   FEATURE_IDS.CUSTOM_COMPONENTS,
   FEATURE_IDS.API_INTEGRATIONS,
+  FEATURE_IDS.HERO_VIDEO_ENABLED,
 ]);
 
 export const USAGE_METRICS = [

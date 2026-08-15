@@ -100,8 +100,12 @@ export async function updateGame(
 
   try {
     const tenantId = await requireAuth();
+    // RCCF-63.2 — tenant ownership before mutation. The client-supplied game id
+    // is never trusted alone; the game must belong to the authenticated tenant.
+    const owned = await prisma.game.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!owned) throw new Error("Game not found");
     await prisma.game.update({
-      where: { id },
+      where: { id: owned.id },
       data: {
         name: parsed.data.name,
         logoUrl: parsed.data.logoUrl || null,
@@ -110,7 +114,7 @@ export async function updateGame(
       },
     });
 
-    await logAction(tenantId, "updateGame", { gameId: id });
+    await logAction(tenantId, "updateGame", { gameId: owned.id });
     revalidatePath(GAMES_ROUTE);
     await afterContentChange(tenantId);
     return { success: true };
@@ -122,8 +126,11 @@ export async function updateGame(
 export async function deleteGame(id: string): Promise<GameActionState> {
   try {
     const tenantId = await requireAuth();
-    await prisma.game.delete({ where: { id } });
-    await logAction(tenantId, "deleteGame", { gameId: id });
+    // RCCF-63.2 — tenant ownership before deletion (no cross-tenant delete).
+    const owned = await prisma.game.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!owned) throw new Error("Game not found");
+    await prisma.game.delete({ where: { id: owned.id } });
+    await logAction(tenantId, "deleteGame", { gameId: owned.id });
     revalidatePath(GAMES_ROUTE);
     await afterContentChange(tenantId);
     return { success: true };

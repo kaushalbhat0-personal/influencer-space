@@ -37,10 +37,12 @@ describe("RCCF-IMPLEMENTATION-74 — product type runtime", () => {
 describe("RCCF-IMPLEMENTATION-74 — Razorpay adapter", () => {
   const adapter = new RazorpayPaymentAdapter();
 
-  it("treats valid keys as configured (no side-effect call)", async () => {
+  it("treats valid keys as configuration-validated (no provider verification claim)", async () => {
     const r = await adapter.getAccountStatus({ providerKeyId: "rzp_live_abc", providerKeySecret: "secret" });
     expect(r.success).toBe(true);
-    expect(r.verified).toBe(true);
+    // RCCF-69.2 — truthfulness: format validation only, never "verified".
+    expect(r.verified).toBe(false);
+    expect(r.status).toBe("configured");
   });
 
   it("rejects missing or malformed keys", async () => {

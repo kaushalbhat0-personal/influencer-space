@@ -61,7 +61,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
 
         {/* Shipping (physical) */}
         {isPhysical && (
-          <ShippingForm orderId={order.id} existing={order.shipping ?? undefined} />
+          <ShippingForm orderId={order.id} email={email} existing={order.shipping ?? undefined} />
         )}
 
         {/* Receipt */}

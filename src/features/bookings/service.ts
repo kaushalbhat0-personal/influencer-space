@@ -24,6 +24,8 @@ export interface CreateBookingInput {
   customerPhone?: string;
   notes?: string;
   approvalRequired?: boolean;
+  /** RCCF-67.5 — optional Service/Offering this slot belongs to. */
+  offeringId?: string;
 }
 
 export const bookingService = {
@@ -33,6 +35,7 @@ export const bookingService = {
     return prisma.booking.create({
       data: {
         tenantId: input.tenantId,
+        offeringId: input.offeringId ?? null,
         title: input.title,
         description: input.description,
         price: input.price ?? 0,

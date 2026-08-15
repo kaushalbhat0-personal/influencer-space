@@ -43,6 +43,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     websiteAgency: { findUnique: async () => ({ name: "Acme Partner", status: "ACTIVE" }) },
     workspace: { findUnique: async ({ where }: { where: { agencyId: string } }) => h.workspaces.find((w) => w.agencyId === where.agencyId) ?? null },
+    billingSubscription: { findFirst: async () => ({ status: "TRIALING", trialEndsAt: new Date(Date.now() + 86400000) }) },
     user: {
       findUnique: async ({ where }: { where: { email: string } }) => h.users.find((u) => u.email === where.email) ?? null,
       update: async () => ({}),

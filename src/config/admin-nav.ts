@@ -14,6 +14,14 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   badge?: "unread" | "pending" | "soon";
+  /**
+   * RCCF-67.4 — optional capability gate (UX only; server gates stay
+   * authoritative). When set, the item is visible only when the tenant's
+   * resolved plan satisfies the capability.
+   */
+  requiredCapability?: string;
+  /** Numeric limit the feature must be > 0 (e.g. max_bookings). Default true. */
+  requiredLimitAbove?: boolean;
 }
 
 export interface NavGroup {
@@ -38,26 +46,26 @@ export const ADMIN_NAV: NavConfig = {
       label: "Content", collapsible: true,
       items: [
         { href: "/admin/settings", label: "Hero", icon: Sparkles },
-        { href: "/admin/gallery", label: "Gallery", icon: ImageIcon },
-        { href: "/admin/settings/content", label: "Content Feed", icon: Rss },
-        { href: "/admin/milestones", label: "Timeline", icon: Trophy },
-        { href: "/admin/testimonials", label: "Testimonials", icon: UserCheck },
-        { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
-        { href: "/admin/links", label: "Links", icon: Link2 },
-        { href: "/admin/games", label: "Games", icon: GamepadIcon },
+        { href: "/admin/gallery", label: "Gallery", icon: ImageIcon, requiredCapability: "max_gallery" },
+        { href: "/admin/settings/content", label: "Content Feed", icon: Rss, requiredCapability: "max_feed" },
+        { href: "/admin/milestones", label: "Timeline", icon: Trophy, requiredCapability: "max_timeline" },
+        { href: "/admin/testimonials", label: "Testimonials", icon: UserCheck, requiredCapability: "max_testimonials" },
+        { href: "/admin/faq", label: "FAQ", icon: HelpCircle, requiredCapability: "max_faq" },
+        { href: "/admin/links", label: "Links", icon: Link2, requiredCapability: "max_links" },
+        { href: "/admin/games", label: "Games", icon: GamepadIcon, requiredCapability: "max_games" },
       ],
     },
 
     {
       label: "Sell", collapsible: true,
       items: [
-        { href: "/admin/products", label: "Products", icon: ShoppingBag },
-        { href: "/admin/services", label: "Services", icon: Briefcase },
-        { href: "/admin/courses", label: "Courses", icon: BookOpen },
-        { href: "/admin/orders", label: "Orders", icon: Package },
-        { href: "/admin/customers", label: "Customers", icon: Users },
-        { href: "/admin/bookings", label: "Bookings", icon: CalendarDays },
-        { href: "/admin/payments", label: "Payments", icon: Landmark, badge: "soon" },
+        { href: "/admin/products", label: "Products", icon: ShoppingBag, requiredCapability: "max_products" },
+        { href: "/admin/services", label: "Services", icon: Briefcase, requiredCapability: "max_services" },
+        { href: "/admin/courses", label: "Courses", icon: BookOpen, requiredCapability: "max_courses" },
+        { href: "/admin/orders", label: "Orders", icon: Package, requiredCapability: "max_orders" },
+        { href: "/admin/customers", label: "Customers", icon: Users, requiredCapability: "max_orders" },
+        { href: "/admin/bookings", label: "Bookings", icon: CalendarDays, requiredCapability: "max_bookings" },
+        { href: "/admin/payments", label: "Payments", icon: Landmark },
       ],
     },
 
@@ -75,7 +83,7 @@ export const ADMIN_NAV: NavConfig = {
     {
       label: "Grow", collapsible: true,
       items: [
-        { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+        { href: "/admin/analytics", label: "Analytics", icon: BarChart3, requiredCapability: "analytics_basic" },
         { href: "/admin/messages", label: "Messages", icon: MessageSquare },
         { href: "/admin/knowledge", label: "Brand", icon: Brain },
         { href: "/admin/goals", label: "Goals", icon: Target },
@@ -86,11 +94,11 @@ export const ADMIN_NAV: NavConfig = {
       label: "Settings", collapsible: true,
       items: [
         { href: "/admin/profile", label: "Account", icon: User },
-        { href: "/admin/seo", label: "SEO", icon: Search },
-        { href: "/admin/settings/domain", label: "Domain", icon: Globe },
+        { href: "/admin/seo", label: "SEO", icon: Search, requiredCapability: "seo" },
+        { href: "/admin/settings/domain", label: "Domain", icon: Globe, requiredCapability: "custom_domain" },
         { href: "/admin/billing", label: "Billing", icon: CreditCard },
         { href: "/admin/notifications", label: "Notifications", icon: Bell },
-        { href: "/admin/integrations", label: "Integrations", icon: Puzzle },
+        { href: "/admin/integrations", label: "Integrations", icon: Puzzle, requiredCapability: "api_access" },
       ],
     },
   ],

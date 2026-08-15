@@ -6,7 +6,7 @@ export function SectionTracker() {
   useSectionViewed("hero", "Hero");
   useSectionViewed("transformation", "Before & After");
   useSectionViewed("how-it-works", "How It Works");
-  useSectionViewed("ai-demo", "Interactive AI Demo");
+  useSectionViewed("ai-demo", "Storefront Preview Demo");
   useSectionViewed("sell", "Sell Anything");
   useSectionViewed("grow", "Grow");
   useSectionViewed("manage", "Manage");

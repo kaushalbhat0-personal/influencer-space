@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Monitor, Tablet, Smartphone, ExternalLink, Upload, Undo, Redo } from "lucide-react";
+import { Monitor, Tablet, Smartphone, ExternalLink, Upload, Undo, Redo, Layers, Settings2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuilderCanvas } from "@/lib/builder/types";
 import { builderCommands } from "@/lib/builder/commands";
@@ -20,11 +20,16 @@ interface Props {
   onDeviceChange: (d: BuilderCanvas["device"]) => void;
   onSave: () => void;
   saving: boolean;
+  /** RCCF-68.3.3 — mobile panel state for the toolbar's panel toggles. */
+  mobilePanel?: "sections" | "properties" | null;
+  onOpenSections?: () => void;
+  onOpenProperties?: () => void;
 }
 
 export function BuilderToolbar({
   device, themeName, blueprintName, creatorName, completionPct,
   publishStatus, storefrontUrl, onDeviceChange, onSave, saving,
+  mobilePanel, onOpenSections, onOpenProperties,
 }: Props) {
   const history = builderQuery.getHistoryState();
 
@@ -36,53 +41,87 @@ export function BuilderToolbar({
 
   return (
     <div className="flex flex-col flex-shrink-0 border-b border-white/10 bg-zinc-950 z-20">
-      <div className="flex h-9 items-center justify-between px-3">
+      {/* Row 1 — brand + identity + undo/redo + mobile panel toggles */}
+      <div className="flex h-9 items-center justify-between gap-2 px-3">
         <div className="flex items-center gap-2 min-w-0">
           <Link
             href="/admin/dashboard"
-            className="shrink-0 text-sm font-bold bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent font-display hover:opacity-80 transition-opacity"
+            aria-label="Back to Dashboard"
+            className="shrink-0 rounded-lg p-1 text-zinc-500 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/admin/dashboard"
+            className="hidden sm:inline shrink-0 text-sm font-bold bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent font-display hover:opacity-80 transition-opacity"
           >
             CreatorStore
           </Link>
-          <span className="h-3 w-px bg-white/10 shrink-0" />
+          <span className="hidden md:inline h-3 w-px bg-white/10 shrink-0" />
           <span className="truncate text-xs text-zinc-300 font-medium">{creatorName}</span>
-          <span className="h-3 w-px bg-white/10 shrink-0" />
-          <span className="truncate text-[11px] text-zinc-600">{themeName ?? "No theme"}</span>
-          <span className="text-zinc-800 text-[10px]">·</span>
-          <span className="truncate text-[11px] text-zinc-600">{blueprintName ?? "—"}</span>
-          <span className="h-3 w-px bg-white/10 shrink-0" />
-          <CompletionBadge pct={completionPct} />
+          <span className="hidden lg:inline h-3 w-px bg-white/10 shrink-0" />
+          <span className="hidden lg:inline truncate text-[11px] text-zinc-600">{themeName ?? "No theme"}</span>
+          <span className="hidden xl:inline text-zinc-800 text-[10px]">·</span>
+          <span className="hidden xl:inline truncate text-[11px] text-zinc-600">{blueprintName ?? "—"}</span>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {/* Mobile-only panel access — mirrors the bottom bar without duplicating actions. */}
+          {onOpenSections && onOpenProperties && (
+            <div className="flex items-center gap-0.5 lg:hidden">
+              <button
+                onClick={onOpenSections}
+                aria-pressed={mobilePanel === "sections"}
+                aria-label="Toggle sections panel"
+                className={cn("rounded p-1 transition-colors", mobilePanel === "sections" ? "text-s8ul-cyan bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
+              >
+                <Layers className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={onOpenProperties}
+                aria-pressed={mobilePanel === "properties"}
+                aria-label="Toggle properties panel"
+                className={cn("rounded p-1 transition-colors", mobilePanel === "properties" ? "text-s8ul-cyan bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
+              >
+                <Settings2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+          <span className="hidden sm:inline h-3 w-px bg-white/10 shrink-0" />
+          <CompletionBadge pct={completionPct} />
+          <span className="h-3 w-px bg-white/10 shrink-0" />
           <button
             onClick={() => builderCommands.undo()}
             disabled={!history.canUndo}
-            className={cn("rounded p-1 transition-colors", history.canUndo ? "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" : "text-zinc-700")}
+            aria-label="Undo"
             title="Undo"
+            className={cn("rounded p-1 transition-colors", history.canUndo ? "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" : "text-zinc-700")}
           >
             <Undo className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => builderCommands.redo()}
             disabled={!history.canRedo}
-            className={cn("rounded p-1 transition-colors", history.canRedo ? "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" : "text-zinc-700")}
+            aria-label="Redo"
             title="Redo"
+            className={cn("rounded p-1 transition-colors", history.canRedo ? "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" : "text-zinc-700")}
           >
             <Redo className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="flex h-8 items-center justify-between border-t border-white/5 px-3">
+      {/* Row 2 — device switch + preview + view live + save (wraps on narrow screens) */}
+      <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/5 px-3 py-1">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-0.5 rounded-md bg-zinc-800/50 p-0.5">
             {devices.map((d) => (
               <button
                 key={d.id}
                 onClick={() => onDeviceChange(d.id)}
+                aria-pressed={device === d.id}
+                aria-label={`${d.label} preview`}
                 className={cn("rounded px-1.5 py-0.5 transition-colors", device === d.id ? "bg-zinc-700 text-zinc-200" : "text-zinc-600 hover:text-zinc-400")}
-                title={d.label}
               >
                 <d.icon className="h-3 w-3" />
               </button>
@@ -100,7 +139,8 @@ export function BuilderToolbar({
             className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
           >
             <ExternalLink className="h-3 w-3" />
-            View Live
+            <span className="hidden sm:inline">View Live</span>
+            <span className="sm:hidden">Live</span>
           </Link>
           <span className="h-3 w-px bg-white/5" />
           <button

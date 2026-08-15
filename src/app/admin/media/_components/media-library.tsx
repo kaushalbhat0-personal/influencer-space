@@ -216,7 +216,7 @@ export function MediaLibrary() {
   const images = assets.filter((a) => !a.mimeType?.startsWith("video/")).length;
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
       <div className="min-w-0 flex-1">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <input
@@ -320,7 +320,7 @@ export function MediaLibrary() {
         {assets.length === 0 && !loading ? (
           <EmptyState onUpload={() => uploadInputRef.current?.click()} />
         ) : view === "grid" ? (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
             {loading && Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-square animate-pulse rounded-lg bg-zinc-800" />
             ))}
@@ -496,8 +496,8 @@ function MediaCard({
         <UsageBadge used={asset.used} />
       </div>
 
-      {/* meta on hover */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+      {/* meta — always visible on touch/mobile, hover-revealed on desktop */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2 lg:opacity-0 lg:transition-opacity lg:group-hover:opacity-100">
         <p className="truncate text-[10px] text-white/85">{asset.originalFilename}</p>
         <p className="text-[9px] text-zinc-400">
           {formatSize(asset.size)}
@@ -580,7 +580,7 @@ function AssetDetailPanel({
   const usages = asset.usages ?? [];
 
   return (
-    <div className="w-80 flex-shrink-0 space-y-4 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
+    <div className="w-full flex-shrink-0 space-y-4 rounded-xl border border-white/10 bg-zinc-900/50 p-4 lg:w-80">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">Asset Details</h3>
         <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-sm">&times;</button>

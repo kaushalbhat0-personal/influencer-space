@@ -3,7 +3,7 @@ import { requireTenant } from "@/lib/auth/require-tenant";
 import { ContentContainer } from "@/components/layout";
 import { BillingPageClient } from "@/components/billing/BillingPageClient";
 import { billingService } from "@/modules/billing/application/service";
-import { countStorageUsage, storageBytesToGb } from "@/modules/billing/application/storage.enforcement";
+import { countStorageUsage, storageBytesToMb, resolveStorageCapability } from "@/modules/billing/application/storage.enforcement";
 import type { BillingDashboard, BillingPlan } from "@/lib/billing/types";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
@@ -33,14 +33,19 @@ export default async function BillingPage() {
   }
 
   const productCount = await prisma.product.count({ where: { tenantId: tenant.id } }).catch(() => 0);
-  const storageGb = storageBytesToGb(await countStorageUsage(tenant.id).catch(() => 0));
+  // RCCF-59: Creator storage displayed in MB from the canonical capability.
+  const storageUsedMb = storageBytesToMb(await countStorageUsage(tenant.id).catch(() => 0));
+  const storageCapability = resolveStorageCapability("creator_launch");
+  const storageLimitMb = typeof storageCapability.limitBytes === "number" && Number.isFinite(storageCapability.limitBytes) ? Math.round(storageCapability.limitBytes / 1024 / 1024) : null;
   const plans = billingService.getPlans() as BillingPlan[];
 
   const billingData: BillingDashboard = {
     plan: { code: "creator_launch", family: "creator", name: "Creator Launch", description: "Get your storefront online and start selling — free.", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
     subscription: { id: "", accountId: tenant.id, workspaceId: tenant.id, planCode: "creator_launch", status: "ACTIVE", trialEndsAt: null, renewsAt: null, cancelledAt: null, createdAt: new Date().toISOString() },
-    invoices: [], paymentMethods: [], usage: [],
-    activeProducts: productCount, activeGallery: 0, storageUsed: storageGb, ordersProcessed: 0, messagesSent: 0,
+    invoices: [], paymentMethods: [], usage: [
+      { metric: "storage", label: "Storage", used: storageUsedMb, limit: storageLimitMb ?? Infinity, unit: "MB" },
+    ],
+    activeProducts: productCount, activeGallery: 0, storageUsed: storageUsedMb, ordersProcessed: 0, messagesSent: 0,
   };
 
   return <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={tenant.id} tenantId={tenant.id} />;

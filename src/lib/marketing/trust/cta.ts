@@ -59,11 +59,11 @@ export const SEED_CTAS: TrustCTA[] = [
   },
   {
     id: "demo-watch",
-    label: "See AI Demo",
+    label: "Watch the Demo",
     href: "/#ai-demo",
     variant: "secondary",
     audience: "general",
-    description: "Watch how AI builds a complete storefront from a profile URL.",
+    description: "See how a complete storefront is built from a profile URL.",
   },
   {
     id: "general-signup",

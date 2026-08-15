@@ -7,10 +7,10 @@ import { PLATFORM_CAPABILITIES, VALUE_PROPOSITIONS, BRAND } from "@/lib/marketin
 
 export const metadata: Metadata = {
   title: "Features",
-  description: `Everything you need to run your creator business: AI storefront generation, visual builder, commerce, analytics, SEO, and agency tools. ${BRAND.shortDescription}`,
+  description: `Everything you need to run your creator business: profile-built storefronts, visual builder, commerce, order analytics, SEO, and agency tools. ${BRAND.shortDescription}`,
   openGraph: {
     title: "Features â€” CreatorStore",
-    description: "AI-powered storefront generation, visual drag-and-drop builder, native UPI commerce, analytics, SEO, and agency platform â€” all in one.",
+    description: "Profile-built storefronts, visual drag-and-drop builder, native UPI commerce, order analytics, SEO, and agency platform â€” all in one.",
   },
 };
 

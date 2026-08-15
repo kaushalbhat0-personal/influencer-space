@@ -56,6 +56,22 @@ export async function uploadFileWithProgress(options: ClientUploadOptions): Prom
   const magicError = await validateMagicBytes(options.file);
   if (magicError) return { success: false, error: magicError };
 
+  // RCCF-59 — hero video client-side pre-checks (UX only; the server remains
+  // the authority). Kept client-side because the server never sees the buffer
+  // on the signed path until registration.
+  if (options.folder === "hero") {
+    if (options.file.type !== "video/mp4" && options.file.type !== "video/quicktime") {
+      return { success: false, error: "Unsupported hero video format. MP4 is required for hero videos." };
+    }
+    if (options.file.size > 12 * 1024 * 1024) {
+      return { success: false, error: `Hero video too large: ${(options.file.size / 1024 / 1024).toFixed(1)} MB. Maximum: 12 MB.` };
+    }
+    const heroMeta = await readMediaMetadata(options.file);
+    if (heroMeta.duration && heroMeta.duration > 15) {
+      return { success: false, error: `Hero video too long: ${heroMeta.duration} seconds. Maximum: 15 seconds.` };
+    }
+  }
+
   try {
     const checksum = await computeSha256(options.file);
 

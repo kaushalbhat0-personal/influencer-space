@@ -27,7 +27,6 @@ export const SECTION_MAP: Record<string, SectionMapping> = {
   faq: { type: "faq", moduleId: "faq.default", mapping: "exact" },
   newsletter: { type: "newsletter", moduleId: "newsletter.default", mapping: "exact" },
   courses: { type: "courses", moduleId: "courses.default", mapping: "exact" },
-  pricing: { type: "pricing", moduleId: "pricing.default", mapping: "exact" },
   contact: { type: "contact", moduleId: "contact.default", mapping: "exact" },
   reservations: { type: "contact", moduleId: "contact.default", mapping: "closest" },
   booking: { type: "contact", moduleId: "contact.default", mapping: "closest" },

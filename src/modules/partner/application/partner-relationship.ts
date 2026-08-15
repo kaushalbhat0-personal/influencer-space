@@ -39,22 +39,65 @@ export interface AgencyClientCapacity {
   used: number;
 }
 
+/**
+ * RCCF-61 — effective client capacity for a Partner agency:
+ *   - partner_free (Launch) is TRIAL-ONLY: 1 client during the 15-day trial,
+ *     0 (blocked) once the trial has expired — an agency cannot stay free.
+ *   - paid plans: included max_clients + ACTIVE capacity add-ons (each add-on
+ *     adds `quantity` × ₹1,499/month capacity). Enterprise (-1) stays unlimited.
+ * The agency identity is server-derived; add-on quantity/price are never
+ * client-supplied.
+ */
+export interface PartnerEffectiveCapacity {
+  planCode: string;
+  includedLimit: number;
+  addonQuantity: number;
+  /** -1 = unlimited; otherwise included + addons. */
+  effectiveLimit: number;
+  trialActive: boolean;
+  trialExpired: boolean;
+}
+
+async function resolvePartnerEffectiveCapacity(agencyId: string): Promise<PartnerEffectiveCapacity> {
+  const workspace = await prisma.workspace.findUnique({ where: { agencyId }, select: { id: true } });
+  const subscription = workspace ? await prisma.billingSubscription.findFirst({
+    where: { workspaceId: workspace.id },
+    orderBy: { createdAt: "desc" },
+    select: { status: true, trialEndsAt: true },
+  }) : null;
+  const resolved = await resolveActivePlan(workspace?.id, undefined);
+  const planCode = resolved.code && resolved.code.startsWith("partner") ? resolved.code : PARTNER_FALLBACK_PLAN;
+
+  const now = Date.now();
+  const trialActive = subscription?.status === "TRIALING" && !!subscription.trialEndsAt && subscription.trialEndsAt.getTime() > now;
+  const trialExpired = subscription?.status === "TRIALING" && !!subscription.trialEndsAt && subscription.trialEndsAt.getTime() <= now;
+
+  if (planCode === PARTNER_FALLBACK_PLAN) {
+    // Launch is trial-only (RCCF-61): 1 client during the trial, 0 after.
+    return { planCode, includedLimit: trialActive ? 1 : 0, addonQuantity: 0, effectiveLimit: trialActive ? 1 : 0, trialActive, trialExpired };
+  }
+
+  const includedLimit = capabilityService.limit(planCode, "max_clients");
+  const addonAgg = await prisma.agencyCapacityAddon.aggregate({
+    where: { agencyId, status: "ACTIVE" },
+    _sum: { quantity: true },
+  });
+  const addonQuantity = addonAgg._sum.quantity ?? 0;
+  const effectiveLimit = includedLimit === -1 ? -1 : includedLimit + addonQuantity;
+  return { planCode, includedLimit, addonQuantity, effectiveLimit, trialActive, trialExpired };
+}
+
 /** Resolve the Partner's effective plan + max_clients from its BillingSubscription. */
 async function resolvePartnerCapacity(agencyId: string): Promise<{ planCode: string; limit: number }> {
-  const workspace = await prisma.workspace.findUnique({ where: { agencyId }, select: { id: true } });
-  const resolved = await resolveActivePlan(workspace?.id, undefined);
-  // RCCF-40: a Partner with no resolvable subscription falls back to the
-  // least-privileged Partner plan (partner_free) — never a privileged one.
-  const planCode = resolved.code && resolved.code.startsWith("partner") ? resolved.code : PARTNER_FALLBACK_PLAN;
-  const limit = capabilityService.limit(planCode, "max_clients");
-  return { planCode, limit };
+  const capacity = await resolvePartnerEffectiveCapacity(agencyId);
+  return { planCode: capacity.planCode, limit: capacity.effectiveLimit };
 }
 
 /** Read-only capacity for fail-fast checks/displays (the atomic gate is linkCreator). */
-export async function getAgencyClientCapacity(agencyId: string): Promise<AgencyClientCapacity> {
-  const { planCode, limit } = await resolvePartnerCapacity(agencyId);
+export async function getAgencyClientCapacity(agencyId: string): Promise<AgencyClientCapacity & { includedLimit: number; addonQuantity: number; trialExpired: boolean }> {
+  const capacity = await resolvePartnerEffectiveCapacity(agencyId);
   const used = await prisma.agencyTenant.count({ where: { agencyId, status: "ACTIVE" } });
-  return { planCode, limit, used };
+  return { planCode: capacity.planCode, limit: capacity.effectiveLimit, used, includedLimit: capacity.includedLimit, addonQuantity: capacity.addonQuantity, trialExpired: capacity.trialExpired };
 }
 
 export interface LinkCreatorInput {

@@ -205,7 +205,7 @@ export async function StorefrontPage({
               data-testid={`experience-section-${i}`}
             >
               <ComponentErrorBoundary componentId={section.moduleId}>
-                <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} />
+                <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} previewMode={isPreview} />
               </ComponentErrorBoundary>
             </ExperienceSection>
           );

@@ -1,11 +1,8 @@
 export { AffiliateService } from "./affiliate.service";
 export type { AffiliateData } from "./affiliate.service";
 
-export { getContentFeed, getAllContentFeedItems, togglePin, toggleHide, deleteFeedItem } from "./content-feed.service";
+export { getAllContentFeedItems, togglePin, toggleHide, deleteFeedItem } from "./content-feed.service";
 export type { FeedItemRow } from "./content-feed.service";
-
-export { getPublicPageData } from "./public.service";
-export type { PublicPageData, PublicHeroData, PublicProfile, PublicProductData, PublicLinkData, PublicGalleryData, PublicMilestoneData, PublicGameData } from "./public.service";
 
 export { getPublishedPageData } from "./published.service";
 export type { PublishedPageResult } from "./published.service";

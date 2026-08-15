@@ -97,13 +97,32 @@ export class SupabaseStorageProvider implements StorageProvider {
   }
 
   async getObjectMetadata(storageKey: string): Promise<{ size: number; mimeType?: string }> {
+    // RCCF-70.5.1 — Supabase's /object/info endpoint returns `size` and
+    // `contentType` at the TOP level of the response and `metadata` as an empty
+    // object `{}`. Reading `data.metadata.size` always threw (the regression
+    // that produced "Supabase metadata failed: unknown" for every signed
+    // upload). Only the top-level shape is authoritative here.
     const { data, error } = await this.client.storage.from(BUCKET).info(storageKey);
-    if (error || !data?.metadata?.size) {
+    if (error || !data?.size) {
       throw new Error(`Supabase metadata failed: ${error?.message ?? "unknown"}`);
     }
     return {
-      size: Number(data.metadata.size),
-      mimeType: typeof data.metadata.mimetype === "string" ? data.metadata.mimetype : undefined,
+      size: Number(data.size),
+      mimeType: typeof data.contentType === "string" ? data.contentType : undefined,
     };
+  }
+
+  async readRange(storageKey: string, maxBytes: number): Promise<Buffer> {
+    // RCCF-59 — read the object body for server-side validation (hero-video
+    // duration). Uses a signed URL + server fetch so the service role key is
+    // never exposed to the client. Bounded by maxBytes (hero videos are <=12MB).
+    const { data, error } = await this.client.storage.from(BUCKET).createSignedUrl(storageKey, 60);
+    if (error || !data?.signedUrl) {
+      throw new Error(`Supabase read-range failed: ${error?.message ?? "unknown"}`);
+    }
+    const res = await fetch(data.signedUrl);
+    if (!res.ok) throw new Error(`Supabase read-range failed: HTTP ${res.status}`);
+    const array = await res.arrayBuffer();
+    return Buffer.from(array.slice(0, maxBytes));
   }
 }

@@ -5,6 +5,7 @@ import { ResizablePanel } from "./panel";
 import { BuilderToolbar } from "./toolbar";
 import { BuilderSidebar } from "./sidebar";
 import { BuilderProperties } from "./properties";
+import { BuilderMobilePanel } from "./mobile-panel";
 import { InteractiveCanvas } from "../canvas/interactive-canvas";
 import { builderStore } from "@/lib/builder/store";
 import { builderEvents } from "@/lib/builder/events";
@@ -18,7 +19,23 @@ import { publishWebsite } from "@/actions/publish.actions";
 import { normalizeThemeId } from "@/lib/theme/resolver-new";
 import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-overview.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { Upload, ExternalLink, Rocket, Loader2 } from "lucide-react";
+import { Upload, ExternalLink, Rocket, Loader2, Layers, Settings2, MousePointer2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+/**
+ * RCCF-68.3.3 — responsive Builder shell.
+ *
+ * Desktop (lg+): the existing three-column workspace — resizable Sections rail,
+ * canvas, resizable Properties rail — is preserved (see `panel.tsx`, now Pointer
+ * Events based). The side rails are `hidden lg:block` so below `lg` they do not
+ * consume canvas width.
+ *
+ * Mobile (<lg): the canvas is the primary workspace at full width. Sections and
+ * Properties open as bottom-sheet overlays (`BuilderMobilePanel`) driven by the
+ * persistent bottom control bar. All builder state/commands/save/publish/preview
+ * semantics are untouched — this only changes the presentation shell.
+ */
+type MobilePanel = "sections" | "properties" | null;
 
 export function BuilderWorkspace() {
   useKeyboardShortcuts();
@@ -31,6 +48,7 @@ export function BuilderWorkspace() {
     (["desktop", "tablet", "mobile"] as const).includes(persisted.responsiveMode as never)
       ? persisted.responsiveMode as BuilderCanvasType["device"] : "desktop"
   );
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
@@ -288,7 +306,7 @@ export function BuilderWorkspace() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-950">
+    <div className="flex h-dvh flex-col bg-zinc-950">
       <BuilderToolbar
         device={device}
         themeName={themeName}
@@ -300,20 +318,24 @@ export function BuilderWorkspace() {
         onDeviceChange={(d) => { setDevice(d); builderStore.setDevice(d); }}
         onSave={() => { setStatusMsg("Saving..."); performSave(currentThemeId, currentThemeId); }}
         saving={saving}
+        mobilePanel={mobilePanel}
+        onOpenSections={() => setMobilePanel((p) => (p === "sections" ? null : "sections"))}
+        onOpenProperties={() => setMobilePanel((p) => (p === "properties" ? null : "properties"))}
       />
 
+      {/* Workspace row — side rails are desktop-only; canvas is always full width below lg. */}
       <div className="flex flex-1 overflow-hidden">
-        <ResizablePanel side="left" collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} defaultWidth={280}>
+        <ResizablePanel side="left" collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} defaultWidth={280} className="hidden lg:block">
           <BuilderSidebar collapsed={leftCollapsed} onToggle={() => setLeftCollapsed((v) => !v)} aggregate={liveContent} />
         </ResizablePanel>
 
-          <div className="flex flex-1 flex-col overflow-hidden min-w-0">
-            <div className="flex-1 overflow-auto">
-              <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} onLiveContentChange={setLiveContent} />
-            </div>
+        <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+          <div className="flex-1 overflow-auto">
+            <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} onLiveContentChange={setLiveContent} />
           </div>
+        </div>
 
-        <ResizablePanel side="right" collapsed={rightCollapsed} onToggle={() => setRightCollapsed((v) => !v)} defaultWidth={260}>
+        <ResizablePanel side="right" collapsed={rightCollapsed} onToggle={() => setRightCollapsed((v) => !v)} defaultWidth={260} className="hidden lg:block">
           <BuilderProperties
             collapsed={rightCollapsed}
             onToggle={() => setRightCollapsed((v) => !v)}
@@ -328,17 +350,72 @@ export function BuilderWorkspace() {
         </ResizablePanel>
       </div>
 
+      {/* Persistent mobile bottom control bar — Canvas is the default workspace. */}
+      <div className="flex h-12 shrink-0 items-center border-t border-white/10 bg-zinc-950 lg:hidden" data-testid="builder-mobile-bar">
+        <MobileBarButton
+          active={mobilePanel === "sections"}
+          onClick={() => setMobilePanel((p) => (p === "sections" ? null : "sections"))}
+          label="Sections"
+          testId="mobile-bar-sections"
+        >
+          <Layers className="h-4 w-4" />
+        </MobileBarButton>
+        <MobileBarButton
+          active={mobilePanel === null}
+          onClick={() => setMobilePanel(null)}
+          label="Canvas"
+          testId="mobile-bar-canvas"
+        >
+          <MousePointer2 className="h-4 w-4" />
+        </MobileBarButton>
+        <MobileBarButton
+          active={mobilePanel === "properties"}
+          onClick={() => setMobilePanel((p) => (p === "properties" ? null : "properties"))}
+          label="Properties"
+          testId="mobile-bar-properties"
+        >
+          <Settings2 className="h-4 w-4" />
+        </MobileBarButton>
+      </div>
+
+      {/* Mobile overlays — Sections / Properties as bottom sheets. */}
+      <BuilderMobilePanel
+        open={mobilePanel === "sections"}
+        onClose={() => setMobilePanel(null)}
+        title="Sections"
+      >
+        <BuilderSidebar collapsed={false} onToggle={() => setMobilePanel(null)} aggregate={liveContent} />
+      </BuilderMobilePanel>
+      <BuilderMobilePanel
+        open={mobilePanel === "properties"}
+        onClose={() => setMobilePanel(null)}
+        title="Properties"
+      >
+        <BuilderProperties
+          collapsed={false}
+          onToggle={() => setMobilePanel(null)}
+          currentThemeId={currentThemeId}
+          planCode={planCode}
+          completionPct={completionPct}
+          onThemePreview={handleThemePreview}
+          previewThemeId={previewThemeId}
+          onApplyTheme={handleApplyTheme}
+          overview={overviewData}
+        />
+      </BuilderMobilePanel>
+
+      {/* Status bar */}
       <div className="flex h-8 items-center justify-between border-t border-white/5 bg-zinc-950 px-3 text-[10px] text-zinc-600 shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <span className={builderStore.isDirty ? "text-amber-400" : "text-emerald-400"}>
             {builderStore.isDirty ? "Unsaved changes" : "Draft saved"}
           </span>
-          <span className="text-zinc-800">|</span>
-          {statusMsg && <span className={statusMsg === "Saved" ? "text-emerald-400" : "text-red-400"}>{statusMsg}</span>}
+          <span className="text-zinc-800 hidden sm:inline">|</span>
+          {statusMsg && <span className={cn("truncate", statusMsg === "Saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-zinc-700">v{builderStore.publish.version}</span>
-          <span className="text-zinc-800">|</span>
+          <span className="text-zinc-700 hidden md:inline">v{builderStore.publish.version}</span>
+          <span className="text-zinc-800 hidden md:inline">|</span>
           <button
             onClick={() => performSave(currentThemeId, currentThemeId)}
             disabled={saving}
@@ -347,7 +424,7 @@ export function BuilderWorkspace() {
             <Upload className="h-3 w-3" />
             Save
           </button>
-          <span className="text-zinc-800">|</span>
+          <span className="text-zinc-800 hidden md:inline">|</span>
           <button
             onClick={handlePublish}
             disabled={saving || publishing}
@@ -361,11 +438,12 @@ export function BuilderWorkspace() {
             )}
             {publishing ? "Publishing..." : "Publish"}
           </button>
-          <span className="text-zinc-800">|</span>
+          <span className="text-zinc-800 hidden md:inline">|</span>
           <a href={storefrontUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors">
             <ExternalLink className="h-3 w-3" />
-            View Live
+            <span className="hidden sm:inline">View Live</span>
+            <span className="sm:hidden">Live</span>
           </a>
         </div>
       </div>
@@ -373,4 +451,32 @@ export function BuilderWorkspace() {
   );
 }
 
-
+function MobileBarButton({
+  active,
+  onClick,
+  label,
+  testId,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  testId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={label}
+      data-testid={testId}
+      className={cn(
+        "flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[9px] font-medium transition-colors",
+        active ? "text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300",
+      )}
+    >
+      {children}
+      <span>{label}</span>
+    </button>
+  );
+}

@@ -12,13 +12,13 @@ interface DemoStage {
 }
 
 const STAGES: DemoStage[] = [
-  { id: "platform", label: "Detecting platform...", durationMs: 900 },
-  { id: "videos", label: "Found 182 videos", durationMs: 1100 },
-  { id: "niche", label: "Tech Creator detected", durationMs: 800 },
-  { id: "colors", label: "Brand colors extracted", durationMs: 1000 },
-  { id: "links", label: "Social links discovered", durationMs: 1200 },
-  { id: "products", label: "Products recommended", durationMs: 1400 },
-  { id: "seo", label: "SEO metadata generated", durationMs: 1000 },
+  { id: "platform", label: "Detecting your platform...", durationMs: 900 },
+  { id: "profile", label: "Reading your profile", durationMs: 1100 },
+  { id: "niche", label: "Identifying your niche", durationMs: 800 },
+  { id: "colors", label: "Matching your brand colors", durationMs: 1000 },
+  { id: "links", label: "Connecting your social links", durationMs: 1200 },
+  { id: "products", label: "Composing your storefront", durationMs: 1400 },
+  { id: "seo", label: "Setting up your SEO", durationMs: 1000 },
   { id: "ready", label: "Storefront ready!", durationMs: 1500 },
 ];
 
@@ -131,20 +131,20 @@ export function AIDemo({ onComplete, onCtaClick }: AIDemoProps) {
       <div className="mx-auto max-w-2xl">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            See AI build a{" "}
+            See how your{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
               storefront
             </span>{" "}
-            in real-time
+            comes together
           </h2>
           <p className="mt-3 text-zinc-500">
-            Watch how CreatorStore analyzes a creator profile and generates a complete business.
+            This is a preview of the steps CreatorStore follows to build a creator business from a social profile.
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/[0.08] bg-[var(--surface-base)]/50 p-6 sm:p-8 min-h-[320px] flex flex-col">
           {/* Stage list */}
-          <div className="flex-1 space-y-3" role="status" aria-live="polite" aria-label="AI Demo progress">
+          <div className="flex-1 space-y-3" role="status" aria-live="polite" aria-label="Storefront preview progress">
             {STAGES.map((stage, i) => (
               <div key={stage.id} className={`flex items-center gap-3 transition-opacity duration-300 ${getStageOpacity(i)}`}>
                 {getStageIcon(i)}

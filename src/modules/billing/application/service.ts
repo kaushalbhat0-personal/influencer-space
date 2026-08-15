@@ -2,7 +2,7 @@ import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
 import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
 import { assertEligiblePlan } from "./plan-restriction";
-import { countStorageUsage, storageBytesToGb } from "./storage.enforcement";
+import { countStorageUsage, resolveStorageCapability, BYTES_PER_MB } from "./storage.enforcement";
 import { validateTransition } from "../domain/lifecycle";
 import { mappingForRazorpayEvent, statusForWebhookEvent } from "../domain/webhook";
 import { getRuntimePlan, type PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
@@ -684,8 +684,12 @@ export class BillingService {
     const products = await prisma.product.count({ where: { tenantId } });
     const gallery = await prisma.galleryImage.count({ where: { tenantId } });
     const orders = await prisma.productOrder.count({ where: { tenantId } });
-    // RCCF-11: surface real storage usage (was hardcoded 0). GB with one decimal.
-    const storageGb = storageBytesToGb(await countStorageUsage(tenantId));
+    // RCCF-11/RCCF-59: surface real storage usage. Creators display MB (the
+    // canonical storage_mb capability); the limit resolves via the same path.
+    const storageUsedBytes = await countStorageUsage(tenantId);
+    const storageCapability = resolveStorageCapability(planCode);
+    const storageUsedMb = Math.round((storageUsedBytes / BYTES_PER_MB) * 10) / 10;
+    const storageLimitMb = typeof storageCapability.limitBytes === "number" && Number.isFinite(storageCapability.limitBytes) ? Math.round(storageCapability.limitBytes / BYTES_PER_MB) : null;
     // RCCF-38: order usage reads from PlanUsage (completed orders this month),
     // never from a client-side count.
     const { getCurrentOrderUsage } = await import("./order-completion");
@@ -727,10 +731,12 @@ export class BillingService {
         { metric: "max_gallery", label: "Gallery", used: gallery, limit: capabilityService.limit(planCode, "max_gallery"), unit: "" },
         // RCCF-38: completed-orders allowance for the current calendar month.
         { metric: "max_orders", label: "Orders (this month)", used: orderUsage.used, limit: orderUsage.limit, unit: "completed" },
+        // RCCF-59: canonical storage usage + limit in MB.
+        { metric: "storage", label: "Storage", used: storageUsedMb, limit: storageLimitMb ?? Infinity, unit: "MB" },
       ],
       activeProducts: products,
       activeGallery: gallery,
-      storageUsed: storageGb,
+      storageUsed: storageUsedMb,
       ordersProcessed: orders,
       messagesSent: 0,
       history: {

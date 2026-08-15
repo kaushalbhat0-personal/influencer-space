@@ -343,6 +343,26 @@ model AgencyTeamInvitation {
   @@index([email])
 }
 
+/// RCCF-61 — Agency capacity add-on (additional managed client websites).
+/// A recurring internal entitlement: quantity × PARTNER_ADDON_UNIT_PRICE_INR
+/// adds capacity beyond the plan's included max_clients. The agency identity,
+/// quantity and price are server-derived — never client-supplied. Idempotent
+/// via (agencyId, idempotencyKey); cancellation is non-destructive (ACTIVE →
+/// CANCELLED) so historical billing records are preserved.
+model AgencyCapacityAddon {
+  id             String   @id @default(uuid()) @db.Uuid
+  agencyId       String   @db.Uuid
+  quantity       Int
+  unitPriceInr   Int
+  status         String   @default("ACTIVE") // ACTIVE | CANCELLED
+  idempotencyKey String
+  createdAt      DateTime @default(now())
+  cancelledAt    DateTime?
+
+  @@unique([agencyId, idempotencyKey])
+  @@index([agencyId, status])
+}
+
 /// Client assignments link workspace members to tenants (clients).
 /// Replaces the legacy Setting JSON storage for client assignments.
 /// Created in v1.2.1 — see docs/v1.2.1-engineering-plan.md
@@ -451,6 +471,9 @@ model Product {
   // RCCF-TRACK-01: secure digital delivery — the file/download link the
   // fulfillment runtime proxies behind a signed, expiring token.
   downloadUrl    String?
+  // RCCF-66.2: per-product sales mode. ONLINE | WHATSAPP | BOTH — what CTA the
+  // storefront renders. Existing products default to ONLINE (additive).
+  commerceMode   String    @default("ONLINE")
   status         String    @default("PUBLISHED")
   seoTitle       String?
   seoDescription String?
@@ -1484,12 +1507,16 @@ model Offering {
   status      String   @default("draft") // "draft" | "published" | "archived"
   price       Float    @default(0)
   currency    String   @default("INR")
+  // RCCF-67.5 — a Service (type="coaching") is only bookable when the creator
+  // explicitly enables this flag. False (default) → display-only.
+  bookable    Boolean  @default(false)
   metadata    Json     @default("{}")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   purchases Purchase[]
+  bookings  Booking[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -1524,6 +1551,9 @@ model Purchase {
 model Booking {
   id               String    @id @default(uuid()) @db.Uuid
   tenantId         String    @db.Uuid
+  // RCCF-67.5 — optional link to the Service/Offering this slot belongs to.
+  // Null for standalone bookings created outside a Service.
+  offeringId       String?   @db.Uuid
   title            String
   description      String?
   price            Float     @default(0)
@@ -1544,10 +1574,12 @@ model Booking {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  offering Offering? @relation(fields: [offeringId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([tenantId, status])
+  @@index([offeringId])
   @@index([slotDate])
 }
 

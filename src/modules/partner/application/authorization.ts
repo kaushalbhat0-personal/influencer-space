@@ -98,6 +98,24 @@ export function canMutate(role?: string | null): boolean {
   return role === "SUPER_ADMIN" || role === "AGENCY_ADMIN" || role === "ADMIN";
 }
 
+/**
+ * RCCF-62 — mutation gate for Agency operations. Same as requireAgencyMember,
+ * plus a server-side PLATFORM_LOCK check: an expired free-trial Agency cannot
+ * operate the platform (provision/offboard clients, manage team, branding,
+ * capacity, billing). The lock is access state — financial/account identity is
+ * preserved. No client-supplied flag can bypass it.
+ */
+export async function requireAgencyActive(): Promise<AuthResult & { agencyId?: string; locked?: boolean }> {
+  const base = await requireAgencyMember();
+  if (!base.ok || !base.agencyId) return base;
+  const { resolveAgencyAccess, PLATFORM_LOCKED_MESSAGE } = await import("@/modules/partner/application/access-lock");
+  const access = await resolveAgencyAccess(base.agencyId);
+  if (access.platformLocked) {
+    return { ok: false, error: PLATFORM_LOCKED_MESSAGE, locked: true };
+  }
+  return { ...base, agencyId: base.agencyId };
+}
+
 /** View roles (SUPPORT/READ_ONLY) get read access to creators/billing/operations. */
 export function isViewRole(role?: string | null): boolean {
   return role === "SUPPORT" || role === "READ_ONLY";

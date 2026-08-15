@@ -105,14 +105,22 @@ export async function verifyPaymentAccount(tenantId: string, actor: string): Pro
   const secretKey = row.providerKeySecret ? decrypt(row.providerKeySecret) : null;
   const result = await adapter.getAccountStatus({ providerKeyId: secretId, providerKeySecret: secretKey });
 
-  if (result.success && result.verified) {
+  // RCCF-69.2 — truthfulness: the adapter reports only that credentials are
+  // present and well-formatted ("configured"). It does NOT perform a real
+  // provider API verification, so we must never write `verified`. The state is
+  // persisted as `configured` and the caller is told verification is not real.
+  if (result.success && result.status === "configured") {
     await prisma.paymentAccount.update({
       where: { tenantId },
-      data: { verificationStatus: "verified", lastVerifiedAt: new Date(), status: "active" },
+      data: { verificationStatus: "configured", status: "active" },
     });
-    await emitEvent("payment.account.verified", tenantId, row.id, { provider: row.provider });
-    await logAction(tenantId, "payment:account-verified", { accountId: row.id, by: actor }).catch(() => {});
-    return { success: true, verified: true };
+    await emitEvent("payment.account.updated", tenantId, row.id, { provider: row.provider });
+    await logAction(tenantId, "payment:account-configured", { accountId: row.id, by: actor }).catch(() => {});
+    return {
+      success: true,
+      verified: false,
+      error: "Credentials format validated. Provider-side verification is not available for Direct Creator mode yet.",
+    };
   }
   await prisma.paymentAccount.update({ where: { tenantId }, data: { verificationStatus: "failed" } });
   return { success: false, error: result.error ?? "Verification failed" };

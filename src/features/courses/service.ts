@@ -36,9 +36,12 @@ export const courseService = {
     return offerings.map(toCourseData);
   },
 
-  async getById(id: string): Promise<CourseData | null> {
-    const o = await prisma.offering.findUnique({
-      where: { id },
+  async getById(tenantId: string, id: string): Promise<CourseData | null> {
+    // RCCF-63.3 — tenant-authoritative read. A course id is only an object
+    // identifier; the authenticated tenant is required so a foreign-tenant
+    // course is never returned (no existence leak).
+    const o = await prisma.offering.findFirst({
+      where: { id, tenantId, type: "course" },
       select: { id: true, title: true, description: true, price: true, status: true, createdAt: true, metadata: true },
     });
     if (!o) return null;
@@ -91,6 +94,10 @@ export const courseService = {
   },
 
   async delete(tenantId: string, id: string): Promise<void> {
-    await prisma.offering.deleteMany({ where: { id, tenantId } });
+    // RCCF-63.3 — verify ownership before mutation and report truthfully.
+    // A foreign or nonexistent course is "not found" (no existence leak).
+    const existing = await prisma.offering.findFirst({ where: { id, tenantId } });
+    if (!existing) throw new Error("Course not found");
+    await prisma.offering.delete({ where: { id } });
   },
 };

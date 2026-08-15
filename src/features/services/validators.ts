@@ -10,6 +10,7 @@ export const serviceFormSchema = z.object({
   featured: z.boolean().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).optional(),
   isActive: z.boolean().optional(),
+  bookable: z.boolean().optional(),
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;

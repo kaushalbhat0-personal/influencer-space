@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pricing — CreatorStore",
-  description: "Transparent pricing for creators and partners. Creator plans from ₹999/month. Partner plans from ₹2,999/month.",
+  description: "Transparent pricing for creators and partners. Creator plans from Free, with paid plans from ₹999/month. Partner plans from ₹4,999/month.",
   openGraph: {
     title: "Pricing — CreatorStore",
     description: "Simple, transparent pricing for creators and partners. Pay for your creator platform. Partners charge their own service fees.",

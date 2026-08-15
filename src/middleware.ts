@@ -89,6 +89,14 @@ export async function middleware(request: NextRequest) {
     // routes are never rewritten. A DEFAULT_TENANT dev fallback is intentionally
     // NOT used here — rewriting every non-admin path (e.g. to /snax/admin/login)
     // 404s the entire dashboard and API in development.
+    // RCCF-69.4 (P1-B) — server-authoritative tenant header lifecycle.
+    //
+    // `x-tenant-host` must NEVER be an inbound client-selected authority. It is
+    // set here ONLY from trusted request properties (the real Host header via
+    // parseTenantHost, or the storefront slug resolved from the route). When no
+    // tenant can be derived, the header is REMOVED — a client-supplied value is
+    // never preserved into a server action, so getTenantContext() can never be
+    // steered to an arbitrary tenant by a crafted header.
     const extractedTenant = parseTenantHost(host);
     if (extractedTenant) {
       headers.set("x-tenant-host", extractedTenant);
@@ -102,7 +110,11 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    if (classification.slug) headers.set("x-tenant-host", classification.slug);
+    if (classification.slug) {
+      headers.set("x-tenant-host", classification.slug);
+    } else if (!extractedTenant) {
+      headers.delete("x-tenant-host");
+    }
     return NextResponse.next({ request: { headers } });
   }
 

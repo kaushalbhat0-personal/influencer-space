@@ -21,6 +21,14 @@ import type { StorefrontComposition, SectionComposition, BuilderDraft } from "./
 
 export const COMPOSITION_VERSION = 1;
 
+/**
+ * RCCF-67.3 — sections fully removed from the product (Pricing was never wired
+ * to a data source). Blueprint sections referencing them are DROPPED at
+ * composition (decision "hidden") so no unregistered moduleId is ever emitted
+ * into a generated site.
+ */
+const REMOVED_SECTIONS = new Set(["pricing"]);
+
 export interface CompositionInput {
   blueprint: WebsiteBlueprint;
   identity: {
@@ -183,6 +191,13 @@ export function composeStorefront(input: CompositionInput): StorefrontCompositio
   const compositions: SectionComposition[] = blueprint.sections.map((plan, i) => {
     if (plan.decision === "hidden") {
       return { id: plan.id, label: plan.label, decision: plan.decision, type: "", moduleId: "", order: plan.order, props: {}, mapping: "closest", reason: "hidden — not composed" };
+    }
+    // RCCF-67.3: removed sections are dropped — never mis-mapped to a live
+    // component and never emitted as an unregistered moduleId. They are NOT
+    // "unmapped" (that diagnostic is reserved for visible sections without a
+    // mapping); they are intentionally absent.
+    if (REMOVED_SECTIONS.has(plan.id)) {
+      return { id: plan.id, label: plan.label, decision: "hidden", type: "", moduleId: "", order: plan.order, props: {}, mapping: "closest", reason: "removed section — dropped" };
     }
     const mapping = SECTION_MAP[plan.id];
     if (!mapping) {

@@ -12,18 +12,18 @@ import {
 const FEATURES = [
   {
     icon: Store,
-    title: "AI Storefront",
+    title: "Profile-Built Storefront",
     body: "Your storefront is generated from your actual content — colors, style, and layout that match your brand.",
   },
   {
     icon: ShoppingBag,
     title: "Products & Commerce",
-    body: "Sell digital downloads, physical merch, courses, memberships, coaching, events, and more. UPI + card checkout.",
+    body: "Sell digital downloads and physical merch, take service bookings, and earn affiliate commissions. UPI + card checkout.",
   },
   {
     icon: BarChart3,
-    title: "Analytics",
-    body: "Track sales, traffic, customer behavior, and conversion metrics. Know what works and what doesn't.",
+    title: "Order Analytics",
+    body: "Track sales, revenue, and customer orders from a clear dashboard. Know what works and what doesn't.",
   },
   {
     icon: Search,
@@ -43,12 +43,12 @@ const FEATURES = [
   {
     icon: Users,
     title: "Creator Dashboard",
-    body: "Manage orders, products, customers, content, and AI tools from a single, powerful dashboard.",
+    body: "Manage orders, products, customers, and content from a single, powerful dashboard.",
   },
   {
     icon: Zap,
-    title: "AI Assistant",
-    body: "Generate product descriptions, SEO metadata, and content suggestions powered by AI.",
+    title: "Publish in One Click",
+    body: "Compose your storefront from your profile and publish to your domain with a single click.",
   },
 ];
 

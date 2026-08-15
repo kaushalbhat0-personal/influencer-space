@@ -98,10 +98,24 @@ export class GalleryService {
 
   static async reorder(tenantId: string, updates: { id: string; order: number }[]) {
     await requireAuth(tenantId);
-    await prisma.$transaction(updates.map((u) => prisma.galleryImage.update({ where: { id: u.id }, data: { order: u.order } })));
-    await logAction(tenantId, "reorderGallery", { count: updates.length });
+    // RCCF-69.4 (P1-A) — tenant-authoritative reorder. The client-supplied image
+    // ids are never sufficient ownership proof: every update is scoped to the
+    // authenticated tenant, so a crafted foreign id simply matches no row and is
+    // a no-op (it cannot mutate another Creator's gallery).
+    const affected = await prisma.$transaction(async (tx) => {
+      let count = 0;
+      for (const u of updates) {
+        const res = await tx.galleryImage.updateMany({
+          where: { id: u.id, tenantId },
+          data: { order: u.order },
+        });
+        count += res.count;
+      }
+      return count;
+    });
+    await logAction(tenantId, "reorderGallery", { count: updates.length, affected });
     revalidatePath("/admin/gallery");
-    return { success: true as const };
+    return { success: true as const, affected };
   }
 
   static async publish(id: string, tenantId: string) {

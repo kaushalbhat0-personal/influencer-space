@@ -65,10 +65,10 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
                   >
                     <td className="font-medium text-white">{message.name}</td>
                     <td className="hidden sm:table-cell">
-                      <span className="text-gray-400">{message.email}</span>
+                      <span className="break-all text-gray-400">{message.email}</span>
                     </td>
-                    <td>
-                      <span className="line-clamp-2 text-sm text-gray-400">{message.message}</span>
+                    <td className="max-w-[12rem] sm:max-w-none">
+                      <span className="line-clamp-2 break-words text-sm text-gray-400">{message.message}</span>
                     </td>
                     <td className="hidden sm:table-cell">
                       <span className={message.isRead ? "admin-badge-inactive" : "admin-badge-cyan"}>
@@ -79,9 +79,7 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
                       {formatDate(message.createdAt)}
                     </td>
                     <td>
-                      <div className="opacity-0 transition-opacity group-hover:opacity-100">
-                        <MessageActions messageId={message.id} isRead={message.isRead} />
-                      </div>
+                      <MessageActions messageId={message.id} isRead={message.isRead} />
                     </td>
                   </motion.tr>
                 ))

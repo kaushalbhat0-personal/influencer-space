@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockOfferingFindMany, mockOfferingFindUnique, mockOfferingCreate } = vi.hoisted(() => ({
+const { mockOfferingFindMany, mockOfferingFindFirst, mockOfferingCreate } = vi.hoisted(() => ({
   mockOfferingFindMany: vi.fn(),
-  mockOfferingFindUnique: vi.fn(),
+  mockOfferingFindFirst: vi.fn(),
   mockOfferingCreate: vi.fn(),
 }));
 
@@ -10,7 +10,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     offering: {
       findMany: mockOfferingFindMany,
-      findUnique: mockOfferingFindUnique,
+      findFirst: mockOfferingFindFirst,
       create: mockOfferingCreate,
     },
   },
@@ -31,16 +31,18 @@ describe("Course service", () => {
   });
 
   it("getById returns null for missing course", async () => {
-    mockOfferingFindUnique.mockResolvedValue(null);
-    const result = await courseService.getById("nonexistent");
+    mockOfferingFindFirst.mockResolvedValue(null);
+    const result = await courseService.getById("t1", "nonexistent");
     expect(result).toBeNull();
   });
 
   it("getById returns course when found", async () => {
-    mockOfferingFindUnique.mockResolvedValue({ id: "1", title: "Course", description: "Desc", status: "published", createdAt: new Date() });
-    const result = await courseService.getById("1");
+    mockOfferingFindFirst.mockResolvedValue({ id: "1", title: "Course", description: "Desc", status: "published", createdAt: new Date() });
+    const result = await courseService.getById("t1", "1");
     expect(result).not.toBeNull();
     expect(result!.title).toBe("Course");
+    // RCCF-63.3 — the query must be tenant-scoped.
+    expect(mockOfferingFindFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "1", tenantId: "t1", type: "course" } }));
   });
 
   it("create creates course offering", async () => {

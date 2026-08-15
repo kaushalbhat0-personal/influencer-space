@@ -61,9 +61,29 @@ export async function disconnectMyPaymentAccount(): Promise<{ success: boolean; 
  * account. The customer is a storefront guest, so the tenant comes from the
  * product row. CreatorStore is never in the money flow. */
 export async function createDirectCheckout(input: { productId: string; customerEmail?: string; customerName?: string }): Promise<{ success: boolean; checkoutUrl?: string; error?: string }> {
-  const product = await prisma.product.findFirst({ where: { id: input.productId, isActive: true, status: "PUBLISHED", archivedAt: null } });
+  // RCCF-69.2 — DIRECT_CREATOR is `status: "future"` in the canonical registry
+  // and the webhook cannot reconcile its Payment Links (notes mismatch). It must
+  // never be invoked in the normal production path — a strategy not marked
+  // `active` is refused here as defense-in-depth, even if called directly.
+  const { resolveCommerceStrategy } = await import("@/modules/commerce-strategy");
+
+  // RCCF-69.2 (P0) — the Product lookup is scoped to the server-resolved checkout
+  // tenant so a foreign product can never be used to build a DIRECT_CREATOR
+  // checkout or ProductOrder.
+  const { resolveCheckoutTenantId } = await import("@/actions/checkout.actions");
+  const checkoutTenantId = await resolveCheckoutTenantId();
+  if (!checkoutTenantId) return { success: false, error: "Product not found" };
+
+  const product = await prisma.product.findFirst({
+    where: { id: input.productId, tenantId: checkoutTenantId, isActive: true, status: "PUBLISHED", archivedAt: null },
+  });
   if (!product) return { success: false, error: "Product not found" };
   const tenantId = product.tenantId;
+
+  const strategy = await resolveCommerceStrategy(tenantId);
+  if (strategy.id !== "DIRECT_CREATOR" || strategy.definition.status !== "active") {
+    return { success: false, error: "Direct creator checkout is not available yet." };
+  }
 
   const readiness = await computePaymentReadiness(tenantId);
   if (readiness.strategy !== "DIRECT_CREATOR" || readiness.readiness !== "ready") {

@@ -36,6 +36,7 @@ vi.mock("@/lib/prisma", () => ({
       update: async () => ({}),
     },
     workspace: { findUnique: v.mockWorkspaceFindUnique },
+    billingSubscription: { findFirst: async () => ({ status: "TRIALING", trialEndsAt: new Date(Date.now() + 86400000) }) },
     agencyTeamInvitation: { findFirst: async () => null, findUnique: async () => null, create: v.mockInviteCreate },
     user: { findUnique: async () => null, update: async () => ({}) },
     $transaction: async (arg: unknown) => {

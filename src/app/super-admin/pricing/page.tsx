@@ -1,25 +1,14 @@
 import { getPricingCenterData, getPricingAnalytics } from "@/actions/super-admin-pricing.actions";
-import { CAPABILITY_CATALOG, type TypedCapability } from "@/lib/entitlements/runtime";
-import { getFeatureInfo, LIMIT_FEATURES } from "@/lib/capabilities";
+import { buildCapabilityCatalog, buildLimitFeatureList } from "@/lib/capabilities/catalog";
 import { PricingCenterClient } from "./_components/pricing-center-client";
 
 export const dynamic = "force-dynamic";
 
-/** Grouped capability list for the editor (canonical entitlements catalog). */
-const CAPABILITY_GROUPS: Array<{ category: string; items: TypedCapability[] }> = (() => {
-  const grouped = new Map<string, TypedCapability[]>();
-  for (const cap of CAPABILITY_CATALOG) {
-    const list = grouped.get(cap.category) ?? [];
-    list.push(cap);
-    grouped.set(cap.category, list);
-  }
-  return Array.from(grouped.entries()).map(([category, items]) => ({ category, items }));
-})();
-
-const LIMIT_FEATURES_LIST = Array.from(LIMIT_FEATURES).map((id) => ({
-  id,
-  label: getFeatureInfo(id).label,
-}));
+// Grouped capability list for the editor — DERIVED from the canonical
+// capabilityService/FEATURE_CATALOG (RCCF-68.2: single plan/capability
+// authority; the old duplicate entitlements matrix is retired).
+const CAPABILITY_GROUPS = buildCapabilityCatalog();
+const LIMIT_FEATURES_LIST = buildLimitFeatureList();
 
 export default async function PricingCenterPage() {
   const [data, analytics] = await Promise.all([getPricingCenterData(), getPricingAnalytics()]);

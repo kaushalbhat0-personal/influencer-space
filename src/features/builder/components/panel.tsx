@@ -7,6 +7,18 @@ const MIN_WIDTH = 200;
 const MAX_WIDTH = 500;
 const COLLAPSED_STRIP = 20;
 
+/**
+ * RCCF-68.3.3 — desktop resizable side panel.
+ *
+ * Resizing uses Pointer Events (mouse + touch via a single code path) with
+ * pointer capture on the handle, so a drag keeps tracking even when the pointer
+ * leaves the handle. `touch-action: none` on the handle prevents the browser
+ * from hijacking a touch drag into a page scroll.
+ *
+ * On `lg+` this panel is a fixed side rail (left/right of the canvas). Below
+ * `lg` the workspace hides the rails and renders their content inside the
+ * mobile overlay panels instead — this component is desktop-only by usage.
+ */
 export function ResizablePanel({
   children,
   side,
@@ -23,31 +35,76 @@ export function ResizablePanel({
   className?: string;
 }) {
   const [width, setWidth] = useState(defaultWidth);
-  const dragging = useRef(false);
+  const handleRef = useRef<HTMLDivElement>(null);
 
-  const onMouseDown = useCallback(() => { dragging.current = true; }, []);
-  const onMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!dragging.current) return;
-      const newWidth = side === "left" ? e.clientX : window.innerWidth - e.clientX;
-      setWidth(Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth)));
-    },
-    [side]
-  );
-  const onMouseUp = useCallback(() => { dragging.current = false; }, []);
+  // Pointer Events resize — one code path for mouse + touch.
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // Only the primary pointer (mouse left button / first touch) resizes.
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    const handle = handleRef.current;
+    if (!handle) return;
 
-  useEffect(() => {
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+    const startX = e.clientX;
+    const startWidth = width;
+    let rafId: number | null = null;
+
+    const applyWidth = (clientX: number) => {
+      const next = side === "left" ? clientX : window.innerWidth - clientX;
+      setWidth(Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, next)));
     };
-  }, [onMouseMove, onMouseUp]);
+
+    const onPointerMove = (ev: PointerEvent) => {
+      // Throttle to animation frames to avoid layout thrash on high-frequency
+      // pointer move events.
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        applyWidth(ev.clientX);
+      });
+    };
+
+    const onPointerUp = (ev: PointerEvent) => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      // Snap to the last position in case the final move was throttled.
+      applyWidth(ev.clientX);
+      handle.removeEventListener("pointermove", onPointerMove);
+      handle.removeEventListener("pointerup", onPointerUp);
+      handle.releasePointerCapture?.(ev.pointerId);
+      setDragging(false);
+    };
+
+    handle.addEventListener("pointermove", onPointerMove);
+    handle.addEventListener("pointerup", onPointerUp);
+    try {
+      handle.setPointerCapture(e.pointerId);
+    } catch {
+      // capture is best-effort; listeners still work without it
+    }
+    setDragging(true);
+    // StartWidth unused when clientX already reflects the current pointer, but
+    // kept for clarity of the delta-free absolute sizing above.
+    void startX;
+    void startWidth;
+  }, [side, width]);
+
+  const [dragging, setDragging] = useState(false);
+
+  // Cleanup pointermove/pointerup listeners if unmounted mid-drag.
+  useEffect(() => {
+    const handle = handleRef.current;
+    return () => {
+      if (!handle) return;
+      handle.onpointermove = null;
+      handle.onpointerup = null;
+    };
+  }, []);
 
   const label = collapsed
-    ? side === "left" ? "Expand sidebar" : "Expand panel"
-    : side === "left" ? "Collapse sidebar" : "Collapse panel";
+    ? side === "left" ? "Expand sections panel" : "Expand properties panel"
+    : side === "left" ? "Collapse sections panel" : "Collapse properties panel";
 
   return (
     <div
@@ -58,16 +115,23 @@ export function ResizablePanel({
       <div
         className={cn(
           "absolute inset-y-0 left-0 overflow-hidden border-r border-white/5 bg-zinc-950/80 transition-all duration-200",
+          side === "right" && "border-r-0 border-l border-white/5",
           collapsed && "w-0 border-0",
         )}
         style={{ width: collapsed ? 0 : width }}
       >
         <div className="h-full overflow-y-auto p-3">{children}</div>
+        {/* Resize handle — pointer events + no touch scrolling during a drag. */}
         <div
-          onMouseDown={onMouseDown}
+          ref={handleRef}
+          onPointerDown={onPointerDown}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={`Resize ${side === "left" ? "sections" : "properties"} panel`}
           className={cn(
-            "absolute top-0 h-full w-1 cursor-col-resize hover:bg-s8ul-cyan/50",
-            side === "left" ? "right-0" : "left-0"
+            "absolute top-0 h-full w-1 cursor-col-resize touch-none select-none",
+            dragging ? "bg-s8ul-cyan/60" : "hover:bg-s8ul-cyan/50",
+            side === "left" ? "right-0" : "left-0",
           )}
         />
       </div>

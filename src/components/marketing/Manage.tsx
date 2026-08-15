@@ -11,9 +11,9 @@ const ITEMS: ManageItem[] = [
   { icon: Package, title: "Orders", body: "Track, fulfill, and manage every order from one dashboard. Real-time status updates." },
   { icon: Users, title: "Customers", body: "See who's buying, what they purchase, and build relationships with your audience." },
   { icon: CreditCard, title: "Payments", body: "UPI, cards, and net banking via Razorpay. Payouts directly to your account." },
-  { icon: LayoutGrid, title: "Products", body: "Add, edit, and organize products, courses, and digital downloads in minutes." },
+  { icon: LayoutGrid, title: "Products", body: "Add, edit, and organize products, services, and digital downloads in minutes." },
   { icon: FileText, title: "Content", body: "Manage your gallery, milestones, content feed, and all your creator assets in one place." },
-  { icon: BarChart3, title: "Analytics", body: "Revenue, traffic, conversion rates — know what's working and what to improve." },
+  { icon: BarChart3, title: "Analytics", body: "Revenue, orders, and customer insights — know what's working and what to improve." },
 ];
 
 export function Manage() {

@@ -6,9 +6,11 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { FileText, CreditCard, TrendingUp, Users } from "lucide-react";
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
-import { capabilityService } from "@/lib/capabilities";
+import { getAgencyClientCapacity } from "@/modules/partner/application/partner-relationship";
+import { PARTNER_ADDON_UNIT_PRICE_INR, PARTNER_TRIAL_DAYS } from "@/config/commerce/agency-addons";
 import { formatCurrency } from "@/lib/utils";
 import { AgencyPlanManager } from "./_components/agency-plan-manager";
+import { AgencyCapacityManager } from "./_components/agency-capacity-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -32,21 +34,24 @@ export default async function AgencyBilling() {
   const wsRecords = await prisma.workspace.findMany({ where: { agencyId }, select: { id: true } });
   const wsIds = wsRecords.map((w) => w.id);
 
-  const [invoiceData, subscriptionData, agencyWs, managedCreators] = await Promise.all([
+  const [invoiceData, subscriptionData, agencyWs, managedCreators, capacity, addons] = await Promise.all([
     wsIds.length > 0 ? billingRepository.findInvoicesByWorkspaceIds(wsIds, 20) : Promise.resolve([]),
     wsIds.length > 0 ? billingRepository.findSubscriptionsByWorkspaceIds(wsIds) : Promise.resolve([]),
     wsRecords[0] ? resolveActivePlan(wsRecords[0]?.id, undefined) : Promise.resolve({ code: null, origin: "none" as const, status: null }),
     prisma.agencyTenant.count({ where: { agencyId, status: "ACTIVE" } }),
+    getAgencyClientCapacity(agencyId),
+    prisma.agencyCapacityAddon.findMany({ where: { agencyId, status: "ACTIVE" }, orderBy: { createdAt: "desc" }, select: { id: true, quantity: true, unitPriceInr: true, createdAt: true } }),
   ]);
 
   const activeSubs = subscriptionData.filter((s) => s.status === "ACTIVE" || s.status === "TRIALING");
-  const creatorLimit = agencyWs.code ? capabilityService.limit(agencyWs.code, "max_clients") : 1;
+  const creatorLimit = capacity.limit; // RCCF-61: effective (included + add-ons, trial-gated)
   const limitLabel = creatorLimit === -1 ? "Unlimited" : String(creatorLimit);
-  const displayName = agencyWs.code ? capabilityService.getPlan(agencyWs.code)?.name ?? agencyWs.code : "Partner Free";
+  const displayName = agencyWs.code ? (await import("@/lib/capabilities")).capabilityService.getPlan(agencyWs.code)?.name ?? agencyWs.code : "Partner Free";
 
   const sub = subscriptionData[0];
   const trialActive = sub?.status === "TRIALING" && !!sub.trialEndsAt && new Date(sub.trialEndsAt).getTime() > Date.now();
   const trialEndsAt = sub?.trialEndsAt?.toISOString() ?? null;
+  const trialExpired = sub?.status === "TRIALING" && !!sub.trialEndsAt && new Date(sub.trialEndsAt).getTime() <= Date.now();
 
   return (
     <ContentContainer>
@@ -61,6 +66,27 @@ export default async function AgencyBilling() {
           trialEndsAt={trialEndsAt}
           clientLimit={creatorLimit}
           clientUsed={managedCreators}
+        />
+      </PageSection>
+
+      {/* RCCF-61: trial-expired prompt + capacity add-ons */}
+      {trialExpired && (
+        <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 text-sm text-amber-300" data-testid="trial-expired">
+          Your Partner trial has ended. Choose a paid plan to continue managing client websites.
+        </div>
+      )}
+      {trialActive && (
+        <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-zinc-300" data-testid="trial-active">
+          Partner Launch trial — {PARTNER_TRIAL_DAYS}-day free trial with 1 client website. {trialEndsAt ? `Trial ends ${new Date(trialEndsAt).toLocaleDateString()}.` : ""} Choose a paid plan to continue after the trial.
+        </div>
+      )}
+
+      <PageSection>
+        <AgencyCapacityManager
+          includedLimit={capacity.includedLimit}
+          addons={addons.map((a) => ({ id: a.id, quantity: a.quantity, unitPriceInr: a.unitPriceInr, createdAt: a.createdAt.toISOString() }))}
+          used={managedCreators}
+          unitPriceInr={PARTNER_ADDON_UNIT_PRICE_INR}
         />
       </PageSection>
 
