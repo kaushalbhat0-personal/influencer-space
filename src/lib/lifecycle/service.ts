@@ -54,7 +54,17 @@ class LifecycleServiceWithDb extends BaseService {
       }),
     ]);
 
-    const hasOnboardingCompleted = !!onboardingSetting;
+    // RCCF-72.7: reconcile the DB resolver with the middleware's token resolver
+    // (token-resolver.ts resolveFromToken returns READY for any ADMIN with a
+    // tenantId). A tenant that already has a Website was de-facto onboarded, even
+    // if the historical `onboarding_completed` Setting is absent (tenants
+    // provisioned before the lifecycle gate exist — RCCF-72.6 F2 root cause).
+    // Treating `hasWebsite` as onboarding-complete prevents those tenants from
+    // being trapped in ONBOARDING (requireTenant -> redirect("/onboarding") ->
+    // middleware bounces /onboarding -> /admin/dashboard -> redirect loop).
+    // Genuinely new tenants (no Website, no Setting) remain ONBOARDING, and
+    // tenants in PROVISIONING (Setting present, Website absent) keep their state.
+    const hasOnboardingCompleted = !!onboardingSetting || !!websiteWithStatus;
     const hasWebsite = !!websiteWithStatus;
     const hasPublishedSnapshot = websiteWithStatus?.publishStatus?.state === "live";
 

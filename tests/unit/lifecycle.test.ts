@@ -164,6 +164,39 @@ describe("requireTenant", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/onboarding");
   });
 
+  it("returns TenantSession for ADMIN with tenantId + Website even when onboarding_completed Setting is missing (RCCF-72.7)", async () => {
+    mockSettingFindUnique.mockResolvedValue(null);
+    mockWebsiteFindUnique.mockResolvedValue({ id: "website-1", publishStatus: null });
+    mockGetServerSession.mockResolvedValue({
+      user: {
+        id: "user-1",
+        role: "ADMIN",
+        tenantId: "tenant-1",
+        agencyId: null,
+        workspaceId: "ws-1",
+        workspaceType: "TENANT",
+        workspaceRole: "OWNER",
+        email: "test@test.com",
+        name: "Test User",
+      },
+    });
+
+    const result = await requireTenant();
+
+    expect(result).toEqual({
+      userId: "user-1",
+      tenantId: "tenant-1",
+      role: "ADMIN",
+      agencyId: null,
+      workspaceId: "ws-1",
+      workspaceType: "TENANT",
+      workspaceRole: "OWNER",
+      email: "test@test.com",
+      name: "Test User",
+    });
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
   it("redirects AGENCY_ADMIN without tenantId to /agency", async () => {
     mockGetServerSession.mockResolvedValue({
       user: makeUser({ role: "AGENCY_ADMIN", agencyId: "agency-1" }),
