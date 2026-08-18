@@ -18,6 +18,7 @@ export type ExperienceBackgroundKind =
   | "pattern"
   | "multi-radial"
   | "aurora"
+  | "image"
   | "none";
 
 export type ExperienceDivider = "none" | "fade" | "wave" | "curve" | "diagonal" | "glow" | "brush" | "organic" | "soft";
@@ -66,6 +67,10 @@ export interface ExperienceBackground {
   glow?: "top" | "center" | "bottom" | null;
   /** SVG pattern id (from experience-assets) for pattern kind. */
   pattern?: "grid" | "dots" | "noise" | "lines";
+  /** RCCF-71.6.4: resolved image source URL for the image background kind. */
+  url?: string;
+  /** RCCF-71.6.4: image opacity 0..1 (readability — root surface shows through). */
+  opacity?: number;
 }
 
 /** Per-section experience override — allows different treatments per SectionVariant. */

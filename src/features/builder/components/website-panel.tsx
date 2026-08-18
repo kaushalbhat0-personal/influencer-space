@@ -4,6 +4,7 @@ import { PanelRightClose } from "lucide-react";
 import { ThemeCard } from "./theme-card";
 import { CompletionBadge } from "./completion-badge";
 import { SectionPresentationPanel } from "./section-presentation-panel";
+import { AppearancePanel } from "./appearance-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   previewThemeId: string | null;
   onApplyTheme: (themeId: string) => void;
   overview?: BuilderOverviewData | null;
+  /** RCCF-71.2: tenant id so the appearance panel can persist via updateTheme. */
+  tenantId?: string | null;
 }
 
 export function WebsitePanel({
@@ -28,11 +31,12 @@ export function WebsitePanel({
   previewThemeId,
   onApplyTheme,
   overview,
+  tenantId,
 }: Props) {
   if (collapsed) {
     return (
       <div className="flex h-full flex-col items-center gap-2 py-2">
-        <button onClick={onToggle} className="rounded p-1 text-zinc-600 hover:text-zinc-400" title="Expand Website panel">
+        <button onClick={onToggle} className="rounded p-1 text-zinc-600 hover:text-indigo-400 hover:bg-white/5" title="Expand Website panel" aria-label="Expand properties rail">
           <PanelRightClose className="h-4 w-4 rotate-180" />
         </button>
         {overview && (
@@ -55,9 +59,9 @@ export function WebsitePanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+      <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Website</span>
-        <button onClick={onToggle} className="rounded p-0.5 text-zinc-600 hover:text-zinc-400">
+        <button onClick={onToggle} className="rounded p-0.5 text-zinc-600 hover:text-indigo-400 hover:bg-white/5" aria-label="Collapse properties rail">
           <PanelRightClose className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -69,7 +73,7 @@ export function WebsitePanel({
         {/* Theme — RCCF-03: Builder owns theme preview/application. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="px-2.5 py-1.5 border-b border-white/5">
-            <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Theme</p>
+            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">Theme</p>
           </div>
           <div className="p-2">
             <ThemeCard
@@ -82,12 +86,40 @@ export function WebsitePanel({
           </div>
         </div>
 
+        {/* Appearance — custom controls are gated by the server-derived
+            advancedBuilder capability. premiumThemes only governs package
+            selection; no client-side capability authority. */}
+        {overview?.appearance && overview.capabilities && (
+          <div className="rounded-lg border border-white/5 bg-zinc-900/50">
+            <div className="p-2">
+              <AppearancePanel
+                tenantId={tenantId}
+                appearance={{
+                  font: overview.appearance.font,
+                  experienceBackground: overview.appearance.experienceBackground,
+                  experienceSurface: overview.appearance.experienceSurface,
+                  headingWeight: overview.appearance.headingWeight,
+                  borderRadius: overview.appearance.borderRadius,
+                  layoutDensity: overview.appearance.layoutDensity as "compact" | "comfortable" | "spacious",
+                  heroTextAlign: overview.appearance.heroTextAlign,
+                  heroContentWidth: overview.appearance.heroContentWidth,
+                  heroOverlay: overview.appearance.heroOverlay,
+                  experienceBackgroundImage: overview.appearance.experienceBackgroundImage,
+                  experienceBackgroundImageAssetId: overview.appearance.experienceBackgroundImageAssetId,
+                  experienceBackgroundImageOpacity: overview.appearance.experienceBackgroundImageOpacity,
+                }}
+                advancedBuilder={overview.capabilities.advancedBuilder}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Progress — RCCF-03: canonical WebsiteHealthEngine score surfaced as a
             thin progress indicator that deep-links to the Dashboard. The Builder
             does not compute, score, recommend or persist health/business data. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/5">
-            <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Progress</p>
+            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">Progress</p>
             <CompletionBadge pct={completionPct} large />
           </div>
           <div className="p-2.5 text-[10px] text-zinc-400 space-y-1">

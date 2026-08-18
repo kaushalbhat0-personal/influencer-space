@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
+import { entitlementService } from "@/lib/capabilities";
+import { FONT_REVERSE_MAP } from "@/lib/theme/font-options";
 
 export interface BuilderOverviewData {
   website: {
@@ -62,6 +64,42 @@ export interface BuilderOverviewData {
   heroConfigured: boolean;
   seoConfigured: boolean;
   themeConfigured: boolean;
+  /**
+   * RCCF-71.2: current creator appearance values (persisted in
+   * Website.themeFonts/themeConfig) so the Builder appearance panel renders the
+   * selected font, background, surface and heading weight. Defaults render the
+   * canonical safe values when nothing is persisted.
+   */
+  appearance: {
+    font: string;
+    experienceBackground: string;
+    experienceSurface: string;
+    headingWeight: string;
+    borderRadius: string;
+    layoutDensity: string;
+    /**
+     * RCCF-71.3: current hero presentation presets.
+     */
+    heroTextAlign: string;
+    heroContentWidth: string;
+    heroOverlay: string;
+    /**
+     * RCCF-71.6.4: current background IMAGE values (persisted in
+     * Website.themeConfig) so the appearance panel renders the selected image
+     * + opacity. Empty string = none selected.
+     */
+    experienceBackgroundImage: string;
+    experienceBackgroundImageAssetId: string;
+    experienceBackgroundImageOpacity: string;
+  };
+  /**
+   * RCCF-71.2: server-derived capability flags. The Builder panel renders LOCKED
+   * states from these (no client-side capability authority / plan comparison).
+   */
+  capabilities: {
+    premiumThemes: boolean;
+    advancedBuilder: boolean;
+  };
 }
 
 async function getTenantAndWebsite() {
@@ -87,6 +125,10 @@ async function getTenantAndWebsite() {
       themePackageId: true,
       createdAt: true,
       updatedAt: true,
+      // RCCF-71.2: current appearance values so the Builder panel can show the
+      // selected font/background/surface/heading weight without an extra call.
+      themeFonts: true,
+      themeConfig: true,
     },
   });
   if (!website) throw new Error("Website not found");
@@ -168,8 +210,39 @@ export async function getBuilderOverview(): Promise<{
       _sum: { size: true },
     }).then((r) => r._sum.size ?? 0);
 
-    const planCode = planResolved.code;
-    const planDisplay = planCode ? resolvePlan(planCode).displayName : "Free";
+const planCode = planResolved.code;
+  const planDisplay = planCode ? resolvePlan(planCode).displayName : "Free";
+
+  // RCCF-71.2: current appearance values + server-derived capability flag for
+  // the Builder appearance panel. No client-side plan comparison anywhere.
+  const dbFonts = (website.themeFonts ?? {}) as Record<string, string>;
+  const dbConfig = (website.themeConfig ?? {}) as Record<string, string>;
+  const appearance = {
+    font: FONT_REVERSE_MAP[dbFonts.heading ?? ""] ?? "geist",
+    experienceBackground: dbConfig.experienceBackground ?? "solid",
+    experienceSurface: dbConfig.experienceSurface ?? "flat",
+    headingWeight: dbConfig.headingWeight ?? "700",
+    borderRadius: dbConfig.borderRadius ?? "8",
+    layoutDensity: dbConfig.layoutDensity ?? "comfortable",
+    /**
+     * RCCF-71.3: current HERO PRESENTATION values (persisted in
+     * Website.themeConfig) so the appearance panel renders the selected hero
+     * text alignment / content width / overlay strength. Defaults render the
+     * exact current Hero look when nothing is persisted.
+     */
+    heroTextAlign: dbConfig.heroTextAlign ?? "center",
+    heroContentWidth: dbConfig.heroContentWidth ?? "medium",
+    heroOverlay: dbConfig.heroOverlay ?? "medium",
+    /**
+     * RCCF-71.6.4: background IMAGE — persisted URL/assetId/opacity (defaults:
+     * none selected, 35% opacity).
+     */
+    experienceBackgroundImage: dbConfig.experienceBackgroundImage ?? "",
+    experienceBackgroundImageAssetId: dbConfig.experienceBackgroundImageAssetId ?? "",
+    experienceBackgroundImageOpacity: dbConfig.experienceBackgroundImageOpacity ?? "35",
+  };
+  const premiumThemes = entitlementService.has(planResolved.code, "premium_themes");
+  const advancedBuilder = entitlementService.has(planResolved.code, "advanced_builder");
 
     return {
       success: true,
@@ -219,6 +292,8 @@ export async function getBuilderOverview(): Promise<{
         heroConfigured,
         seoConfigured,
         themeConfigured: !!website.themePackageId,
+        appearance,
+         capabilities: { premiumThemes, advancedBuilder },
       },
     };
   } catch (e) {

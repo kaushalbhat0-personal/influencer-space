@@ -49,6 +49,21 @@ const CAPABILITY_TO_FEATURE: Record<string, string> = {
   seo_tools: "seo",
   navigation_editor: "navigation_editor",
   custom_branding: "custom_branding",
+  // RCCF-71.6.4: theme-experience granular capabilities are feature keys on the
+  // plan (featuresForPlan in config/commerce/plans), so they map identically.
+  // Without this mapping, entitlementService.has() — the server-side gate used
+  // by theme.actions — could never resolve them and would deny Growth/Scale
+  // even though capabilityService.can() grants them.
+  theme_background_solid: "theme_background_solid",
+  theme_background_gradient: "theme_background_gradient",
+  theme_background_image: "theme_background_image",
+  theme_background_video: "theme_background_video",
+  theme_background_animation: "theme_background_animation",
+  theme_effects_particles: "theme_effects_particles",
+  theme_effects_glow: "theme_effects_glow",
+  theme_effects_noise: "theme_effects_noise",
+  theme_effects_blur: "theme_effects_blur",
+  theme_effects_custom: "theme_effects_custom",
 };
 
 export interface EntitlementResult {

@@ -4,7 +4,7 @@
 // effects; Scale = everything (incl. video + advanced effects).
 
 import { describe, it, expect } from "vitest";
-import { capabilityEngine } from "@/lib/capabilities";
+import { capabilityEngine, entitlementService } from "@/lib/capabilities";
 import {
   THEME_EXPERIENCES,
   resolveExperienceForCapabilities,
@@ -50,6 +50,17 @@ describe("theme capability matrix (Phase 5/6/7)", () => {
 
   it("no plan (null/unknown) has no theme capabilities", () => {
     expect(capabilityEngine.can("", CAP.solid).allowed).toBe(false);
+  });
+
+  it("RCCF-71.6.4 — entitlementService.has() resolves theme granular caps (server gate parity)", () => {
+    // theme.actions gates server-side via entitlementService.has(); it must
+    // resolve the theme_* feature keys exactly like capabilityService.can().
+    expect(entitlementService.has("creator_launch", CAP.image)).toBe(false);
+    expect(entitlementService.has("creator_launch", CAP.gradient)).toBe(false);
+    expect(entitlementService.has("creator_grow", CAP.image)).toBe(true);
+    expect(entitlementService.has("creator_grow", CAP.gradient)).toBe(true);
+    expect(entitlementService.has("creator_scale", CAP.image)).toBe(true);
+    expect(entitlementService.has("creator_scale", CAP.video)).toBe(true);
   });
 });
 

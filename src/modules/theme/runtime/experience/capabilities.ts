@@ -16,8 +16,6 @@
 import type {
   ThemeExperience,
   ExperienceBackgroundKind,
-  ExperienceDecorationPack,
-  ExperienceMotion,
   ExperienceSurface,
   ExperienceDivider,
   SectionExperienceOverride,
@@ -38,6 +36,9 @@ export const THEME_CAPABILITY = {
 } as const;
 export type ThemeCapability = (typeof THEME_CAPABILITY)[keyof typeof THEME_CAPABILITY];
 
+/** Existing broad Builder capability for creator-controlled appearance. */
+export const THEME_APPEARANCE_CAPABILITY = "advanced_builder";
+
 /** Background kind → required capability (gradient-family kinds map to gradient). */
 export const BACKGROUND_KIND_CAP: Record<ExperienceBackgroundKind, ThemeCapability> = {
   solid: THEME_CAPABILITY.solid,
@@ -48,10 +49,27 @@ export const BACKGROUND_KIND_CAP: Record<ExperienceBackgroundKind, ThemeCapabili
   mesh: THEME_CAPABILITY.gradient,
   aurora: THEME_CAPABILITY.gradient,
   pattern: THEME_CAPABILITY.noise, // SVG texture (noise/lines/grid)
+  image: THEME_CAPABILITY.image, // RCCF-71.6.4: creator-uploaded background image
 };
 
 const SURFACE_FREE = new Set<ExperienceSurface>(["flat", "elevated", "minimal"]);
 const DIVIDER_FREE = new Set<ExperienceDivider>(["fade", "none"]);
+
+/** Capabilities required when a persisted background preset is creator-selected. */
+export function requiredCapabilitiesForBackground(background: Pick<NonNullable<ThemeExperience["background"]>, "kind" | "glow" | "pattern">): string[] {
+  const caps = new Set<string>([THEME_APPEARANCE_CAPABILITY, THEME_CAPABILITY.solid]);
+  caps.add(BACKGROUND_KIND_CAP[background.kind] ?? THEME_CAPABILITY.solid);
+  if (background.glow) caps.add(THEME_CAPABILITY.glow);
+  if (background.pattern) caps.add(THEME_CAPABILITY.noise);
+  return Array.from(caps);
+}
+
+/** Capabilities required when a persisted surface preset is creator-selected. */
+export function requiredCapabilitiesForSurface(surface: ExperienceSurface): string[] {
+  const caps = new Set<string>([THEME_APPEARANCE_CAPABILITY]);
+  if (!SURFACE_FREE.has(surface)) caps.add(THEME_CAPABILITY.blur);
+  return Array.from(caps);
+}
 
 /** All capabilities a theme experience requires (including per-section overrides). */
 export function requiredCapabilitiesForExperience(experience: ThemeExperience): string[] {
