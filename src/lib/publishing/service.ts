@@ -25,6 +25,8 @@ import { resolveModuleId } from "@/lib/registry/resolve-module";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { buildRuntimeSnapshot } from "@/lib/storefront/build-snapshot";
+import { layoutEngine } from "@/lib/storefront/layout-engine";
+import { renderableNavBases } from "@/lib/navigation/reconcile";
 import { publishRepository } from "@/modules/tenant/infrastructure/publishing-repository";
 import { logger } from "@/lib/observability/logger";
 import { runWorkflow } from "@/lib/observability/workflow-diagnostics";
@@ -165,14 +167,13 @@ export class PublishingService {
       const websiteId = website.id;
       const storeRoot = buildStorefrontUrlWithTenant(tenant.customDomain, tenant.subdomain);
 
-      const [builderPages, websiteFull, aggResult, navItems, correlationId] = await Promise.all([
+      const [builderPages, websiteFull, aggResult, correlationId] = await Promise.all([
         this.loadBuilderPages(websiteId),
         prisma.website.findUnique({
           where: { id: websiteId },
           select: { themePackageId: true, themeColors: true, themeFonts: true },
         }),
         websiteAggregateService.buildWithDiagnostics(tenantId),
-        navigationService.getOrGenerate(tenantId),
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
       const aggregate = aggResult.aggregate;
@@ -226,12 +227,19 @@ export class PublishingService {
       const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
       const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
       const buildStart = Date.now();
+      // RCCF-72.11 — build the snapshot with the CURRENT persisted navigation,
+      // then derive the renderable section graph from the SAME resolved document
+      // the published storefront renders (layoutEngine.resolve + the render
+      // filter), and reconcile navigation against that graph before baking the
+      // final navigation. This is the single canonical graph: layout and nav can
+      // never diverge, and manual overrides always survive.
+      const existingNav = await navigationService.get(tenantId);
       const runtimeSnapshot = buildRuntimeSnapshot({
         websiteId,
         correlationId,
         builderPages,
         aggregate,
-        navItems,
+        navItems: existingNav,
         themePackageId: websiteFull?.themePackageId ?? null,
         themeColors: websiteColors,
         themeFonts: websiteFonts,
@@ -240,6 +248,20 @@ export class PublishingService {
         maintenanceMode,
         experience: resolvedExperience,
       });
+      const doc = layoutEngine.resolve({ ...runtimeSnapshot, content: resolvedHomepage ?? aggregate });
+      const home = doc.pages.find((p) => p.isHome) ?? doc.pages[0];
+      const graphBases = renderableNavBases(home?.sections ?? [], resolvedHomepage ?? aggregate, goalProfilePresent);
+      const navItems = await navigationService.reconcileForPublish(tenantId, graphBases, existingNav);
+      runtimeSnapshot.navigation = navItems.map((n) => ({
+        id: n.id,
+        label: n.label,
+        href: n.href,
+        type: n.type,
+        order: n.order,
+        visible: n.visible,
+        ...(n.target ? { target: n.target } : {}),
+        ...(n.icon ? { icon: n.icon } : {}),
+      }));
       const buildMs = Date.now() - buildStart;
 
       traceRuntime({

@@ -280,6 +280,14 @@ export interface NavigationItem {
   visible: boolean;
   target?: "_self" | "_blank";
   icon?: string | null;
+  /**
+   * RCCF-72.11 — when set, this item is an AUTO-GENERATED section anchor tied
+   * to a renderable section base (e.g. "products"). Reconciliation may add or
+   * remove generated anchors as the renderable section graph changes, but items
+   * WITHOUT this field (page / external / manually authored anchors) are treated
+   * as user-authored and are NEVER removed automatically.
+   */
+  generatedFromSection?: string;
 }
 
 // ── Rendering Hints (from Builder, layout only) ───────────
