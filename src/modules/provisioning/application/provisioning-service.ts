@@ -10,6 +10,7 @@ import { websitePersonalizer } from "@/lib/personalization";
 import { seedStarterData } from "@/modules/tenant/application/seeder";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
+import { getTrialEndDate } from "@/lib/billing";
 import { tenantRepository } from "@/modules/tenant/infrastructure/tenant-repository";
 import { websiteRepository } from "@/modules/tenant/infrastructure/website-repository";
 import { brandRepository } from "@/modules/tenant/infrastructure/brand-repository";
@@ -69,6 +70,18 @@ interface ProvisioningInputBase {
     navigation?: Record<string, unknown>;
     theme?: Record<string, unknown>;
     metadata?: Record<string, unknown>;
+  };
+  /**
+   * RCCF-73.3 — the server-validated Creator plan to provision as a real
+   * TRIALING BillingSubscription on the new Creator workspace. Only set by the
+   * agency provisioning path (confirmProvision); normal Creator signup and
+   * super-admin import leave it unset so the legacy linkSubscriptionToWorkspace
+   * behavior is preserved.
+   */
+  creatorPlan?: {
+    planCode: string;
+    /** Canonical BillingPlan.id, resolved server-side from the commerce registry. */
+    planId: string;
   };
 }
 
@@ -277,14 +290,37 @@ export class ProvisioningService {
           role: "OWNER",
         }, tx as Prisma.TransactionClient);
 
-        // RCCF-07: link the registration-created creator subscription (created
-        // with only accountId) to the canonical workspace so plan readers
-        // (resolveActivePlan → findSubscriptionWithPlan) resolve by workspaceId.
-        // No-op when the self-serve account/subscription does not exist.
-        await billingRepository.linkSubscriptionToWorkspace(
-          { workspaceId: ws.id, accountType: "creator", accountId: user.id },
-          tx as Prisma.TransactionClient,
-        );
+        // RCCF-73.3 — Agency-provisioned clients receive a REAL Creator
+        // BillingSubscription (15-day TRIALING) tied to the new Creator
+        // workspace, created INSIDE this transaction (atomic with the tenant/
+        // workspace — no orphan subscription/account on failure). Reuses the
+        // canonical billing primitive (upsertSubscription) + trial helper.
+        //
+        // Normal Creator signup (attach_existing_user, self-serve) and
+        // super-admin import leave `creatorPlan` unset: the subscription was
+        // already created at registration (account-first) and the legacy
+        // linkSubscriptionToWorkspace backfills the workspaceId. That path is
+        // preserved unchanged.
+        if (input.creatorPlan?.planId) {
+          await billingRepository.upsertSubscription(
+            ws.id,
+            {
+              planId: input.creatorPlan.planId,
+              status: "TRIALING",
+              trialEndsAt: getTrialEndDate(new Date(), 15),
+            },
+            tx as Prisma.TransactionClient,
+          );
+        } else {
+          // RCCF-07: link the registration-created creator subscription (created
+          // with only accountId) to the canonical workspace so plan readers
+          // (resolveActivePlan → findSubscriptionWithPlan) resolve by workspaceId.
+          // No-op when the self-serve account/subscription does not exist.
+          await billingRepository.linkSubscriptionToWorkspace(
+            { workspaceId: ws.id, accountType: "creator", accountId: user.id },
+            tx as Prisma.TransactionClient,
+          );
+        }
 
         if (template && !input.generatedWebsite?.sections?.length) {
           await seedStarterData(

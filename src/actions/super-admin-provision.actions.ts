@@ -11,6 +11,8 @@ import { captureError } from "@/lib/observability/error-tracker";
 import { platformEventBus } from "@/lib/events";
 import { publishingService } from "@/lib/publishing/service";
 import { markOnboardingComplete } from "@/actions/onboarding.actions";
+import { billingRepository } from "@/modules/billing/infrastructure/repository";
+import { validateAgencyCreatorPlanCode } from "@/modules/provisioning/application/creator-plan";
 import {
   runProvisionPipeline, buildProvisioningInput, buildBuilderArtifactData,
   detectPlatform, buildContentSource,
@@ -130,6 +132,24 @@ export async function confirmProvision(params: {
     if (!auth.ok || !auth.session) return { success: false, error: auth.error ?? "Unauthorized" };
     const session = auth.session;
 
+    // RCCF-73.3 — server-authoritative Creator plan validation. The client
+    // supplies only a plan code; the server resolves the canonical commerce
+    // registry and the canonical BillingPlan row. The agency-provisioned client
+    // may only receive a non-manual, non-enterprise, non-Launch Creator plan
+    // (creator_grow / creator_scale). Partner plans, Enterprise, and Launch are
+    // rejected here — the raw string is never trusted for entitlement. Validation
+    // runs BEFORE any tenant creation so an invalid plan has zero side effects.
+    const validated = validateAgencyCreatorPlanCode(params.planCode);
+    if (!validated.ok) {
+      return { success: false, error: validated.error };
+    }
+    const planCode = validated.planCode;
+    const billingPlan = await billingRepository.findPlanByCode(planCode);
+    if (!billingPlan) {
+      return { success: false, error: `Creator plan not provisioned in billing catalog: ${planCode}` };
+    }
+    const creatorPlan = { planCode: billingPlan.code, planId: billingPlan.id };
+
     const sourcePlatform = params.sourcePlatform || detectPlatform(params.sourceUrl);
 
     const runId = await provisioningService.createRun({
@@ -148,10 +168,16 @@ export async function confirmProvision(params: {
       return { success: false, error: "Website generation failed" };
     }
 
-    const provisioningInput = buildProvisioningInput({
-      runId, creatorName: params.creatorName, sourceUrl: params.sourceUrl,
-      sourcePlatform, planCode: params.planCode, pipelineResult,
-    });
+    const provisioningInput = {
+      ...buildProvisioningInput({
+        runId, creatorName: params.creatorName, sourceUrl: params.sourceUrl,
+        sourcePlatform, planCode: params.planCode, pipelineResult,
+      }),
+      // RCCF-73.3 — carry the server-validated canonical Creator plan into the
+      // provisioning transaction so a real TRIALING BillingSubscription is
+      // created on the new Creator workspace.
+      creatorPlan,
+    };
 
     let provisioned;
     try {
