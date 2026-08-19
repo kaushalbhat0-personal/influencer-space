@@ -24,6 +24,59 @@ async function requireAuth(tenantId: string): Promise<void> {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
+ * RCCF-72.12 — conservative technical-error classifier for hero write failures
+ * (same rule as `publish-error-messages.ts`): known product-readable sentences
+ * pass through verbatim; raw Prisma/DB/provider internals collapse to a safe
+ * generic message so creators never see validation/database internals, stack
+ * traces, or zod messages. Never returns an empty string.
+ */
+const HERO_SAVE_TECHNICAL_HINTS = [
+  "prisma",
+  "sql",
+  "database",
+  "postgres",
+  "relation",
+  "query",
+  "connection",
+  "socket",
+  "econnrefused",
+  "econnreset",
+  "etimedout",
+  "enotfound",
+  "eaddrinfo",
+  "timeout",
+  "timed out",
+  "provider",
+  "stack trace",
+  "internal server error",
+  "constraint",
+  "foreign key",
+  "unique constraint",
+  "typeerror",
+  "referenceerror",
+  "is not a function",
+  "is not defined",
+  "cannot read properties",
+  "failed to parse",
+  "failed to fetch",
+];
+
+const HERO_SAVE_GENERIC_ERROR = "Unable to save your hero settings. Please try again.";
+
+function safeHeroSaveError(error: unknown): string {
+  const message = error instanceof Error ? error.message.trim() : "";
+  if (!message) return HERO_SAVE_GENERIC_ERROR;
+  const lower = message.toLowerCase();
+  if (HERO_SAVE_TECHNICAL_HINTS.some((hint) => lower.includes(hint))) {
+    return HERO_SAVE_GENERIC_ERROR;
+  }
+  return message;
+}
+
+const HERO_SAVE_VALIDATION_ERROR =
+  "Unable to save your hero settings. Please review your changes and try again.";
+
+/**
  * RCCF-67.3 — the hero video must be ASSET-BACKED. A raw client-supplied URL
  * can never become a hero-video authority: the referenced asset must exist,
  * belong to the session tenant, be ACTIVE, and pass the canonical RCCF-59 hero
@@ -48,25 +101,44 @@ async function assertHeroVideoWrite(tenantId: string, sparse: Record<string, unk
   await mediaService.assertHeroVideoAsset(tenantId, settingVideoAssetId);
 }
 
+/**
+ * RCCF-72.12 — NULL / OPTIONAL SEMANTICS for hero writes.
+ *
+ * The persistence contract (`SettingsService.patchHeroData` JSONB merge) treats
+ * JSON `null` as "remove this key" — the canonical way a creator CLEARS a hero
+ * field. The action layer then normalizes empty strings to JSON null so cleared
+ * FormData/state values reach the same delete-key path.
+ *
+ * Canonical states at the action boundary:
+ *   - field OMITTED (undefined)  → leave unchanged (sparse patch, no key sent).
+ *   - field = null               → explicit CLEAR → JSON null → key removed.
+ *   - field = "" (empty string)  → normalized to JSON null → same CLEAR result.
+ *
+ * Every string hero field is therefore `nullable().optional()` so the server
+ * explicitly accepts the cleared state instead of relying on client coercion
+ * (72.1-F1: an absent profile picture was sent as explicit `null` and rejected
+ * by `z.string().optional()`, so "Save Identity" always failed with
+ * "Invalid hero data").
+ */
 const heroPartialSchema = z.object({
-  videoUrl: z.string().optional(),
-  posterUrl: z.string().optional(),
-  videoAssetId: z.string().optional(),
-  posterAssetId: z.string().optional(),
-  backgroundUrl: z.string().optional(),
-  backgroundAssetId: z.string().optional(),
-  name: z.string().optional(),
-  profilePictureUrl: z.string().optional(),
-  profilePictureAssetId: z.string().optional(),
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  tagline: z.string().optional(),
-  bio: z.string().optional(),
-  ctaText: z.string().optional(),
-  ctaLink: z.string().optional(),
-  ctaSecondaryText: z.string().optional(),
-  ctaSecondaryLink: z.string().optional(),
-  liveBadgeText: z.string().optional(),
+  videoUrl: z.string().nullable().optional(),
+  posterUrl: z.string().nullable().optional(),
+  videoAssetId: z.string().nullable().optional(),
+  posterAssetId: z.string().nullable().optional(),
+  backgroundUrl: z.string().nullable().optional(),
+  backgroundAssetId: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
+  profilePictureUrl: z.string().nullable().optional(),
+  profilePictureAssetId: z.string().nullable().optional(),
+  title: z.string().nullable().optional(),
+  subtitle: z.string().nullable().optional(),
+  tagline: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
+  ctaText: z.string().nullable().optional(),
+  ctaLink: z.string().nullable().optional(),
+  ctaSecondaryText: z.string().nullable().optional(),
+  ctaSecondaryLink: z.string().nullable().optional(),
+  liveBadgeText: z.string().nullable().optional(),
   showLiveBadge: z.preprocess(
     (v) => {
       if (v === "on" || v === "true") return true;
@@ -110,17 +182,19 @@ export async function updateHeroData(
   if (!parsed.success) {
     return {
       success: false,
+      error: HERO_SAVE_VALIDATION_ERROR,
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
 
   const sparseData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(parsed.data)) {
-    // Empty strings become JSON null so the JSONB merge removes the key,
-    // letting creators clear hero fields that were previously sticky.
-    if (value !== undefined && value !== null) {
-      sparseData[key] = value === "" ? null : value;
-    }
+    // RCCF-72.12 — only OMITTED fields mean "leave unchanged". Empty strings
+    // become JSON null (and explicit null passes through unchanged) so the
+    // JSONB merge removes the key, letting creators clear hero fields that
+    // were previously sticky.
+    if (value === undefined) continue;
+    sparseData[key] = value === "" ? null : value;
   }
 
   try {
@@ -148,7 +222,7 @@ export async function updateHeroData(
       return { success: false, error: error.message };
     }
     captureError(error, { service: "settings-actions", operation: "updateHeroData" });
-    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
+    return { success: false, error: safeHeroSaveError(error) };
   }
 }
 
@@ -158,15 +232,21 @@ export async function updateHeroPartial(
 ): Promise<SettingsActionState> {
   const parsed = heroPartialSchema.safeParse(partial);
   if (!parsed.success) {
-    return { success: false, error: "Invalid hero data" };
+    return {
+      success: false,
+      error: HERO_SAVE_VALIDATION_ERROR,
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
   }
 
   const sparseData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(parsed.data)) {
-    // Empty strings become JSON null so the JSONB merge removes the key.
-    if (value !== undefined && value !== null) {
-      sparseData[key] = value === "" ? null : value;
-    }
+    // RCCF-72.12 — only OMITTED fields mean "leave unchanged". Empty strings
+    // become JSON null (and explicit null passes through unchanged) so the
+    // JSONB merge removes the key, letting creators clear hero fields that
+    // were previously sticky.
+    if (value === undefined) continue;
+    sparseData[key] = value === "" ? null : value;
   }
 
   if (Object.keys(sparseData).length === 0) {
@@ -198,7 +278,7 @@ export async function updateHeroPartial(
       return { success: false, error: error.message };
     }
     captureError(error, { service: "settings-actions", operation: "updateHeroPartial" });
-    return { success: false, error: error instanceof Error ? error.message : "An unknown error occurred" };
+    return { success: false, error: safeHeroSaveError(error) };
   }
 }
 

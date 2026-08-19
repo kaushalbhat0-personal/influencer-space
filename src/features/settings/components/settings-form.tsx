@@ -27,6 +27,7 @@ export function SettingsForm({
   const heroMediaFormRef = useRef<HTMLFormElement>(null);
 
   const [mediaSave, setMediaSave] = useState<SaveState>(emptyState);
+  const [backgroundSave, setBackgroundSave] = useState<SaveState>(emptyState);
   const [identitySave, setIdentitySave] = useState<SaveState>(emptyState);
   const [buttonsSave, setButtonsSave] = useState<SaveState>(emptyState);
   const [liveBadgeSave, setLiveBadgeSave] = useState<SaveState>(emptyState);
@@ -138,10 +139,14 @@ export function SettingsForm({
   }
 
   async function handleSaveBackground() {
+    // RCCF-72.12: the `|| null` payload is the canonical CLEAR — the server
+    // schema now accepts null so a cleared background persists.
+    setBackgroundSave({ pending: true, state: { success: false } });
     const result = await updateHeroPartial(tenantId, {
       backgroundUrl: backgroundUrl || null,
       backgroundAssetId: backgroundAssetId || null,
     });
+    setBackgroundSave({ pending: false, state: result });
     if (result.success) flash(true);
   }
 
@@ -253,6 +258,14 @@ export function SettingsForm({
                 })}
                 onUploadComplete={() => handleSaveBackground()}
               />
+              {backgroundSave.state.success && (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                  Background saved!
+                </div>
+              )}
+              {backgroundSave.state.error && (
+                <p className="text-sm text-red-400">{backgroundSave.state.error}</p>
+              )}
 
               {mediaSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
