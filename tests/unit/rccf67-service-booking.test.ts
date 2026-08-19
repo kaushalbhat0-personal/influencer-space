@@ -139,9 +139,10 @@ beforeEach(() => {
 
 describe("RCCF-67.5 — Service admin bookable toggle", () => {
   it("creator creates a bookable service", async () => {
-    const created = await createService({ title: "Consult", price: 1000, bookable: true });
-    expect(created.bookable).toBe(true);
-    expect(created.title).toBe("Consult");
+    const res = await createService({ title: "Consult", price: 1000, bookable: true });
+    if (!res.success) throw new Error("expected success");
+    expect(res.data.bookable).toBe(true);
+    expect(res.data.title).toBe("Consult");
   });
 
   it("creator can disable bookable", async () => {
@@ -155,14 +156,18 @@ describe("RCCF-67.5 — Service admin bookable toggle", () => {
     await expect(updateService(SERVICE_A, { title: "Hijack", price: 0 })).rejects.toThrow("Service not found");
   });
 
-  it("max_services is enforced on create", async () => {
+  it("max_services is enforced on create (structured rejection, no record)", async () => {
     h.mockEnforceContentLimit.mockResolvedValue({ ok: false, featureKey: "max_services", used: 3, limit: 3, reason: "Services limit reached (3/3)." });
-    await expect(createService({ title: "Overflow", price: 1 })).rejects.toThrow(/limit/i);
+    const res = await createService({ title: "Overflow", price: 1 });
+    expect(res.success).toBe(false);
+    expect(res.error).toMatch(/limit/i);
+    expect(h.offerings.some((o) => o.title === "Overflow")).toBe(false);
   });
 
   it("bookable defaults to false for legacy services", async () => {
-    const legacy = await createService({ title: "Legacy", price: 50 });
-    expect(legacy.bookable).toBe(false);
+    const res = await createService({ title: "Legacy", price: 50 });
+    if (!res.success) throw new Error("expected success");
+    expect(res.data.bookable).toBe(false);
   });
 });
 

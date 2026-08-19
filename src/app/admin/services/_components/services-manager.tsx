@@ -23,6 +23,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceData | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceFormInput>({ title: "", price: 0, status: "PUBLISHED", bookable: false });
   const [slotForm, setSlotForm] = useState<{ serviceId: string; slotDate: string; slotStart: string; slotEnd: string; approvalRequired: boolean }>({ serviceId: "", slotDate: "", slotStart: "10:00", slotEnd: "11:00", approvalRequired: true });
   const [slotMsg, setSlotMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -30,12 +31,14 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
 
   const openCreate = () => {
     setEditing(null);
+    setError(null);
     setForm({ title: "", price: 0, status: "PUBLISHED", bookable: false });
     setDrawerOpen(true);
   };
 
   const openEdit = (item: ServiceData) => {
     setEditing(item);
+    setError(null);
     setForm({
       title: item.title,
       description: item.description ?? undefined,
@@ -52,13 +55,18 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
 
   const handleSave = async () => {
     setSaving(true);
+    setError(null);
     try {
       if (editing) {
         const updated = await updateService(editing.id, form);
         setItems((prev) => prev.map((s) => (s.id === editing.id ? updated : s)));
       } else {
-        const created = await createService(form);
-        setItems((prev) => [created, ...prev]);
+        const res = await createService(form);
+        if (!res.success) {
+          setError(res.error);
+          return;
+        }
+        setItems((prev) => [res.data, ...prev]);
       }
       setDrawerOpen(false);
     } finally {
@@ -238,6 +246,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
               <option value="ARCHIVED">Archived</option>
             </select>
           </div>
+          {error && <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>}
           <div className="flex gap-4">
             <button onClick={handleSave} disabled={saving || !form.title} className="btn-primary flex-1 text-sm">
               {saving ? "Saving..." : editing ? "Update" : "Create"}

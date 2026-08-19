@@ -5,9 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { serviceService } from "./service";
 import { serviceFormSchema } from "./validators";
-import type { ServiceFormInput } from "./types";
+import type { ServiceData, ServiceFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
 import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { contentLimitRejection, type ContentMutationResult } from "@/modules/billing/application/content-limit.result";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 import { prisma } from "@/lib/prisma";
 import { bookingService } from "@/features/bookings/service";
@@ -20,18 +21,22 @@ export async function listServices() {
   return serviceService.list(tenantId);
 }
 
-export async function createService(input: ServiceFormInput) {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-  if (!tenantId) throw new Error("Unauthorized");
+export async function createService(input: ServiceFormInput): Promise<ContentMutationResult<ServiceData>> {
+  try {
+    const session = await getServerSession(authOptions);
+    const tenantId = session?.user?.tenantId;
+    if (!tenantId) throw new Error("Unauthorized");
 
-  const parsed = serviceFormSchema.parse(input);
-  const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.SERVICES });
-  if (!limit.ok) throw new Error(limit.reason);
-  const result = await serviceService.create(tenantId, parsed as ServiceFormInput);
-  revalidatePath("/admin/services");
-  await afterContentChange(tenantId);
-  return result;
+    const parsed = serviceFormSchema.parse(input);
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.SERVICES });
+    if (!limit.ok) return contentLimitRejection(limit);
+    const result = await serviceService.create(tenantId, parsed as ServiceFormInput);
+    revalidatePath("/admin/services");
+    await afterContentChange(tenantId);
+    return { success: true, data: result };
+  } catch {
+    return { success: false, error: "Failed to create service" };
+  }
 }
 
 export async function updateService(id: string, input: ServiceFormInput) {

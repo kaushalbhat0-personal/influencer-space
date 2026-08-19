@@ -23,16 +23,19 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<CourseData | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CourseFormInput>({ title: "", price: 0, status: "PUBLISHED" });
 
   const openCreate = () => {
     setEditing(null);
+    setError(null);
     setForm({ title: "", price: 0, status: "PUBLISHED" });
     setDrawerOpen(true);
   };
 
   const openEdit = (item: CourseData) => {
     setEditing(item);
+    setError(null);
     setForm({
       title: item.title,
       description: item.description ?? undefined,
@@ -47,13 +50,18 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
 
   const handleSave = async () => {
     setSaving(true);
+    setError(null);
     try {
       if (editing) {
         const updated = await updateCourse(editing.id, form);
         setItems((prev) => prev.map((c) => (c.id === editing.id ? updated : c)));
       } else {
-        const created = await createCourse(form);
-        setItems((prev) => [created, ...prev]);
+        const res = await createCourse(form);
+        if (!res.success) {
+          setError(res.error);
+          return;
+        }
+        setItems((prev) => [res.data, ...prev]);
       }
       setDrawerOpen(false);
     } finally {
@@ -182,6 +190,7 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
               <option value="ARCHIVED">Archived</option>
             </select>
           </div>
+          {error && <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>}
           <div className="flex gap-4">
             <button onClick={handleSave} disabled={saving || !form.title} className="btn-primary flex-1 text-sm">
               {saving ? "Saving..." : editing ? "Update" : "Create"}

@@ -5,9 +5,10 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { courseService } from "./service";
 import { courseFormSchema } from "./validators";
-import type { CourseFormInput } from "./types";
+import type { CourseData, CourseFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
 import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { contentLimitRejection, type ContentMutationResult } from "@/modules/billing/application/content-limit.result";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 export async function listCourses() {
@@ -26,18 +27,22 @@ export async function getCourse(id: string) {
   return courseService.getById(tenantId, id);
 }
 
-export async function createCourse(input: CourseFormInput) {
-  const session = await getServerSession(authOptions);
-  const tenantId = session?.user?.tenantId;
-  if (!tenantId) throw new Error("Unauthorized");
+export async function createCourse(input: CourseFormInput): Promise<ContentMutationResult<CourseData>> {
+  try {
+    const session = await getServerSession(authOptions);
+    const tenantId = session?.user?.tenantId;
+    if (!tenantId) throw new Error("Unauthorized");
 
-  const parsed = courseFormSchema.parse(input);
-  const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.COURSES });
-  if (!limit.ok) throw new Error(limit.reason);
-  const result = await courseService.create(tenantId, parsed as CourseFormInput);
-  revalidatePath("/admin/courses");
-  await afterContentChange(tenantId);
-  return result;
+    const parsed = courseFormSchema.parse(input);
+    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.COURSES });
+    if (!limit.ok) return contentLimitRejection(limit);
+    const result = await courseService.create(tenantId, parsed as CourseFormInput);
+    revalidatePath("/admin/courses");
+    await afterContentChange(tenantId);
+    return { success: true, data: result };
+  } catch {
+    return { success: false, error: "Failed to create course" };
+  }
 }
 
 export async function updateCourse(id: string, input: CourseFormInput) {
