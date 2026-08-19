@@ -73,6 +73,6 @@ export default async function StorefrontSlugPage({
   if (!data) notFound();
 
   return (
-    <StorefrontPage data={data} domain={params.domain} isPreview={isPreview} pageSlug={normalizePageSlug(params.slug)} />
+    <StorefrontPage data={data} domain={params.domain} isPreview={data.previewAuthorized} pageSlug={normalizePageSlug(params.slug)} />
   );
 }

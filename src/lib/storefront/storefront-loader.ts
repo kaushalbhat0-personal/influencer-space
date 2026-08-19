@@ -22,6 +22,7 @@ import { buildRuntimeSnapshot } from "@/lib/storefront/build-snapshot";
 import { BuilderService } from "@/lib/builder/builder-service";
 import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
+import { canPreviewTenant } from "@/lib/storefront/preview-auth";
 import type { AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 
 export { normalizePageSlug, resolvePageBySlug } from "@/lib/storefront/page-resolver";
@@ -30,6 +31,13 @@ export interface StorefrontData {
   tenantId: string;
   snapshot: unknown | null;
   diagnostics: AggregateTraceDiagnostics;
+  /**
+   * RCCF-72.9 — whether the `?preview=true` request was actually authorized for
+   * this tenant. Consumers must render the preview chrome ONLY when this is true;
+   * anonymous/wrong-tenant requests receive the published snapshot and this flag
+   * is false (the request degrades to the public storefront).
+   */
+  previewAuthorized: boolean;
 }
 
 export interface StorefrontDataOptions {
@@ -43,15 +51,17 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
 
   const homepage = options?.homepage ?? false;
 
-  if (preview) {
+  if (preview && (await canPreviewTenant(tenant.id))) {
     // Preview IS the Builder Runtime full-page: Draft Layout + Live CMS
     // Content, resolved through the same LayoutEngine + registry renderers as
     // publish and the builder canvas. No preview snapshot is ever persisted.
+    // RCCF-72.9: gated on tenant ownership — anonymous/wrong-tenant requests
+    // fall through to the public published snapshot below (never draft).
     const website = await prisma.website.findUnique({
       where: { tenantId: tenant.id },
       select: { id: true, themePackageId: true, themeColors: true, themeFonts: true },
     });
-    if (!website) return { tenantId: tenant.id, snapshot: null, diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] } };
+    if (!website) return { tenantId: tenant.id, snapshot: null, previewAuthorized: true, diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] } };
 
     const builderService = new BuilderService();
     const [builderPages, aggResult, navItems] = await Promise.all([
@@ -63,6 +73,7 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
       return {
         tenantId: tenant.id,
         snapshot: null,
+        previewAuthorized: true,
         diagnostics: { invalidAssetIds: aggResult.invalidAssetIds, skippedAssets: aggResult.skippedAssets, moduleFailures: aggResult.moduleFailures },
       };
     }
@@ -80,6 +91,7 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
     return {
       tenantId: tenant.id,
       snapshot,
+      previewAuthorized: true,
       diagnostics: { invalidAssetIds: aggResult.invalidAssetIds, skippedAssets: aggResult.skippedAssets, moduleFailures: aggResult.moduleFailures },
     };
   }
@@ -90,11 +102,12 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
   // No mergeLiveContent — zero business-table reads at render time.
   const published = await getPublishedPageData(tenant.id);
   if (!published.snapshot) {
-    return { tenantId: tenant.id, snapshot: null, diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] } };
+    return { tenantId: tenant.id, snapshot: null, previewAuthorized: false, diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] } };
   }
   return {
     tenantId: tenant.id,
     snapshot: published.snapshot as unknown,
+    previewAuthorized: false,
     diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] },
   };
 });

@@ -41,6 +41,6 @@ export default async function PublicPage({
   if (!data) notFound();
 
   return (
-    <StorefrontPage data={data} domain={params.domain} isPreview={isPreview} pageSlug={null} />
+    <StorefrontPage data={data} domain={params.domain} isPreview={data.previewAuthorized} pageSlug={null} />
   );
 }
