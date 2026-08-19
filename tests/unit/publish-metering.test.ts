@@ -115,7 +115,7 @@ describe("commitPublishWithMetering — RCCF-31", () => {
     );
   });
 
-  it("exhausted lifetime quota rejects without creating a snapshot", async () => {
+  it("RCCF-72.13 — exhausted lifetime quota rejects without creating a snapshot or touching usage writes", async () => {
     h.usageUpdateMany.mockResolvedValue({ count: 0 });
     h.usageCreate.mockRejectedValue({ code: "P2002" });
     h.usageFindUnique.mockResolvedValue({ id: "u1", used: 3 });
@@ -139,6 +139,90 @@ describe("commitPublishWithMetering — RCCF-31", () => {
     });
     expect(h.snapCreate).not.toHaveBeenCalled();
     expect(h.statusUpdate).not.toHaveBeenCalled();
+    // The exhausted path never attempts a create — a create on the existing row
+    // would P2002 and abort the caller's transaction (raw DB error in the UI).
+    expect(h.usageCreate).not.toHaveBeenCalled();
+    // The conditional increment ran once (matched 0 rows) and stopped.
+    expect(h.usageUpdateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("RCCF-72.13 — exhausted monthly quota rejects without creating a snapshot or incrementing usage", async () => {
+    h.usageUpdateMany.mockResolvedValue({ count: 0 });
+    h.usageCreate.mockRejectedValue({ code: "P2002" });
+    h.usageFindUnique.mockResolvedValue({ id: "u1", used: 10 });
+
+    const res = await publishingService.commitPublishWithMetering({
+      tenantId: "t1",
+      websiteId: "w1",
+      canonicalSnapshot: snapshot(),
+      policy: { mode: "monthly", limit: 10 },
+      tenantCreatedAt: CREATED,
+    });
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.used).toBe(10);
+      expect(res.limit).toBe(10);
+      expect(res.mode).toBe("monthly");
+      expect(res.periodEnd).not.toBeNull();
+    }
+    expect(h.snapCreate).not.toHaveBeenCalled();
+    expect(h.usageCreate).not.toHaveBeenCalled();
+    expect(h.usageUpdateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("RCCF-72.13 — concurrent final-slot publishes: exactly one reserves, the loser is denied without a create", async () => {
+    // Request A wins the final slot via the conditional increment.
+    h.usageUpdateMany
+      .mockResolvedValueOnce({ count: 1 }) // A: used 2 → 3 (at limit)
+      .mockResolvedValueOnce({ count: 0 }); // B: used < 3 matches nothing
+    h.usageCreate.mockRejectedValue({ code: "P2002" });
+    h.usageFindUnique.mockResolvedValue({ id: "u1", used: 3 });
+
+    const resA = await publishingService.commitPublishWithMetering({
+      tenantId: "t1",
+      websiteId: "w1",
+      canonicalSnapshot: snapshot(),
+      policy: { mode: "lifetime", limit: 3 },
+      tenantCreatedAt: CREATED,
+    });
+    expect(resA).toEqual({ ok: true, version: 1 });
+
+    const resB = await publishingService.commitPublishWithMetering({
+      tenantId: "t1",
+      websiteId: "w1",
+      canonicalSnapshot: snapshot(),
+      policy: { mode: "lifetime", limit: 3 },
+      tenantCreatedAt: CREATED,
+    });
+    expect(resB).toEqual({
+      ok: false,
+      used: 3,
+      limit: 3,
+      periodStart: CREATED.toISOString(),
+      periodEnd: null,
+      mode: "lifetime",
+      suggestedUpgrade: null,
+    });
+    // Loser never attempted a create (no P2002, no transaction abort).
+    expect(h.usageCreate).not.toHaveBeenCalled();
+  });
+
+  it("RCCF-72.13 — successful publish increments usage exactly once", async () => {
+    h.usageUpdateMany.mockResolvedValue({ count: 1 });
+
+    const res = await publishingService.commitPublishWithMetering({
+      tenantId: "t1",
+      websiteId: "w1",
+      canonicalSnapshot: snapshot(),
+      policy: { mode: "monthly", limit: 10 },
+      tenantCreatedAt: CREATED,
+    });
+
+    expect(res).toEqual({ ok: true, version: 1 });
+    expect(h.usageUpdateMany).toHaveBeenCalledTimes(1);
+    expect(h.usageCreate).not.toHaveBeenCalled();
+    expect(h.snapCreate).toHaveBeenCalledTimes(1);
   });
 
   it("a failed snapshot rolls the quota back (transaction aborts)", async () => {
