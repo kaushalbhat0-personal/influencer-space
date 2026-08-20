@@ -13,6 +13,11 @@ if (!secret && process.env.NODE_ENV === "production") {
   throw new Error("NEXTAUTH_SECRET is required in production");
 }
 
+/** Loopback / localhost callers are the developer machine — never rate-limited. */
+function isLoopbackIp(ip: string): boolean {
+  return ip === "::1" || ip === "127.0.0.1" || ip === "localhost" || ip.startsWith("127.") || ip.startsWith("0:0:0:0:0:0:0:1");
+}
+
 /**
  * Platform domains (marketing/admin/builder) vs tenant subdomains.
  *
@@ -65,8 +70,16 @@ export async function middleware(request: NextRequest) {
   // is rate-limited inside its own route (V-016 — not double-counted).
   if (pathname === "/api/auth/callback/credentials" || pathname === "/api/auth/signin") {
     const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-    const rate = checkRateLimit(`/api/auth/login:${ip}`, "/api/auth/login");
-    if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    // RCCF-72.17C.1: loopback/local development traffic (the developer machine,
+    // local E2E/Playwright runs) is exempt from the auth rate limit. The limit
+    // exists to throttle external credential-stuffing; a local caller cannot be
+    // an attacker at this layer (the request is not yet authenticated, so a
+    // "super admin" exemption is not determinable here). Production external
+    // IPs remain rate-limited.
+    if (!isLoopbackIp(ip)) {
+      const rate = checkRateLimit(`/api/auth/login:${ip}`, "/api/auth/login");
+      if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
   }
 
   // ── Phase 1: Always-allow routes (static, internal, public marketing, public storefront, login) ──

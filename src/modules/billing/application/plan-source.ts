@@ -11,6 +11,7 @@ import { billingRepository } from "../infrastructure/repository";
 import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 import { resolveRestrictedPlanCode } from "./plan-restriction";
 import { loadRuntimeFeatureOverrides } from "./runtime-config-loader";
+import { headers } from "next/headers";
 
 export type PlanOrigin = "v2" | "legacy" | "none";
 
@@ -32,8 +33,57 @@ export interface AdminSubscriptionRow {
   origin: PlanOrigin;
 }
 
+/**
+ * RCCF-72.17C.1 — request-scoped plan memoization.
+ *
+ * `resolveActivePlan` runs ~3 DB queries (5 cold) per call and is invoked
+ * multiple times within one logical request (publish ×3, dashboard, agency).
+ * The result is a pure function of (workspaceId, tenantId) + committed DB
+ * state — NOT of user/session/role — and the resolver never uses a transaction
+ * client, so it is safe to memoize per request.
+ *
+ * React 18 (this app) does not export `cache`, and a module/global Map would
+ * leak billing state across requests. Next.js creates a UNIQUE `Headers`
+ * instance per request (RSC + Server Actions); keying a WeakMap on that
+ * instance yields a true request scope that is garbage-collected when the
+ * request ends. Outside a request context (`headers()` throws) the cache is a
+ * no-op — cron/job/build callers resolve fresh, preserving correctness.
+ */
+const requestPlanCache = new WeakMap<object, Map<string, Promise<ResolvedActivePlan>>>();
+
+function cachedPlan(
+  workspaceId: string | null | undefined,
+  tenantId: string | null | undefined,
+  compute: () => Promise<ResolvedActivePlan>,
+): Promise<ResolvedActivePlan> {
+  let scope: Map<string, Promise<ResolvedActivePlan>> | undefined;
+  try {
+    const h = headers();
+    let m = requestPlanCache.get(h);
+    if (!m) {
+      m = new Map();
+      requestPlanCache.set(h, m);
+    }
+    scope = m;
+  } catch {
+    // Not in a request scope (tests, cron, build): resolve fresh each call.
+    return compute();
+  }
+  const key = JSON.stringify([workspaceId ?? null, tenantId ?? null]);
+  const hit = scope.get(key);
+  if (hit) return hit;
+  const p = compute();
+  // Never cache a failure: if compute() rejects, drop the entry so a later
+  // call in the same request re-invokes instead of reusing a rejection.
+  p.catch(() => {
+    if (scope?.get(key) === p) scope.delete(key);
+  });
+  scope.set(key, p);
+  return p;
+}
+
 /** Resolve the active plan for a workspace (v2 first). */
-export async function resolveActivePlan(
+async function resolveActivePlanImpl(
   workspaceId?: string | null,
   tenantId?: string | null,
 ): Promise<ResolvedActivePlan> {
@@ -73,6 +123,19 @@ export async function resolveActivePlan(
   }
 
   return { code: null, origin: "none", status: null };
+}
+
+/**
+ * RCCF-72.17C.1 — request-scoped memoized plan resolution.
+ * Repeated calls with the same (workspaceId, tenantId) within one request reuse
+ * the first resolution; different requests and different tenants never share.
+ * Signature and semantics are unchanged from the pre-memoization resolver.
+ */
+export function resolveActivePlan(
+  workspaceId?: string | null,
+  tenantId?: string | null,
+): Promise<ResolvedActivePlan> {
+  return cachedPlan(workspaceId, tenantId, () => resolveActivePlanImpl(workspaceId, tenantId));
 }
 
 /**
