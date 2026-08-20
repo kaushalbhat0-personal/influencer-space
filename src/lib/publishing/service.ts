@@ -173,7 +173,9 @@ export class PublishingService {
           where: { id: websiteId },
           select: { themePackageId: true, themeColors: true, themeFonts: true },
         }),
-        websiteAggregateService.buildWithDiagnostics(tenantId),
+        // RCCF-72.17C.2: also return the shared reads so the homepage aggregate
+        // build below can reuse them (identical committed rows, same request).
+        websiteAggregateService.buildWithDiagnosticsAndShared(tenantId),
         Promise.resolve(safeCorrelationId(correlation)),
       ]);
       const aggregate = aggResult.aggregate;
@@ -184,7 +186,10 @@ export class PublishingService {
       // with the same curation the live path used; no render-time aggregation.
       let resolvedHomepage: Awaited<ReturnType<typeof websiteAggregateService.build>> | null = null;
       try {
-        resolvedHomepage = await websiteAggregateService.build(tenantId, { homepage: true });
+        // RCCF-72.17C.2: reuse the full build's shared reads instead of
+        // re-querying them (~9 fewer round-trips). Output is identical to the
+        // previous `build(tenantId, { homepage: true })`.
+        resolvedHomepage = await websiteAggregateService.buildHomepageFromShared(tenantId, aggResult.sharedReads);
       } catch (err) {
         captureError(err, { service: "publishing", operation: "publish-homepage-aggregate", tenantId });
       }

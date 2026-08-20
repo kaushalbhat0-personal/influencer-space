@@ -60,6 +60,25 @@ export const DEFAULT_HOMEPAGE_LIMITS = {
   contentFeed: 12,
 } as const;
 
+/**
+ * RCCF-72.17C.2 — reads shared between the FULL aggregate build and the
+ * HOMEPAGE aggregate build. In one request these rows are identical, so a
+ * second build can reuse them instead of re-querying (9 fewer round-trips per
+ * publish). Preloading is only ever used within the same request; never across
+ * requests and never across transaction boundaries.
+ */
+export interface SharedReads {
+  brand: Awaited<ReturnType<typeof brandRepository.findByTenantId>> | null;
+  heroData: unknown | null;
+  links: Awaited<ReturnType<typeof linkRepository.findPublished>> | null;
+  seoData: unknown | null;
+  website: Awaited<ReturnType<typeof websiteRepository.findByTenantId>> | null;
+  testimonialsData: unknown | null;
+  faqData: unknown | null;
+  knowledgeCompletion: unknown | null;
+  openBookings: Awaited<ReturnType<typeof prisma.booking.findMany>> | null;
+}
+
 /** Featured-first pick with a zero-featured fallback to all items. */
 export function featuredPick<T>(items: T[], limit: number): T[] {
   if (items.length === 0) return items;
@@ -95,11 +114,49 @@ export class WebsiteAggregateService {
     };
   }
 
+  /**
+   * RCCF-72.17C.2 — full aggregate build that ALSO returns the shared reads so a
+   * subsequent homepage build in the same request can reuse them (9 fewer
+   * round-trips per publish). Full-build output is byte-identical to
+   * `buildWithDiagnostics`; only the extra `sharedReads` is added.
+   */
+  async buildWithDiagnosticsAndShared(tenantId: string): Promise<{
+    aggregate: WebsiteAggregate;
+    sharedReads: SharedReads;
+    invalidAssetIds: AggregateDiagnostics["invalidAssetIds"];
+    skippedAssets: number;
+    moduleFailures: string[];
+  }> {
+    const diagnostics: AggregateDiagnostics = { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] };
+    const { aggregate, sharedReads } = await this.buildWithCollector(tenantId, diagnostics, undefined);
+    return {
+      aggregate,
+      sharedReads,
+      invalidAssetIds: diagnostics.invalidAssetIds,
+      skippedAssets: diagnostics.skippedAssets,
+      moduleFailures: diagnostics.moduleFailures,
+    };
+  }
+
+  /**
+   * RCCF-72.17C.2 — homepage aggregate build reusing the shared reads already
+   * loaded by the full build in the same request. Output is identical to
+   * `build(tenantId, { homepage: true })`: the collection queries that differ in
+   * homepage mode (products/gallery/timeline/games/contentFeed/offerings) still
+   * run; only the 9 shared reads are reused. Never call across a request or
+   * transaction boundary.
+   */
+  async buildHomepageFromShared(tenantId: string, sharedReads: SharedReads): Promise<WebsiteAggregate> {
+    const { aggregate } = await this.buildWithCollector(tenantId, null, { homepage: true }, sharedReads);
+    return aggregate;
+  }
+
   private async buildWithCollector(
     tenantId: string,
     diagnostics: AggregateDiagnostics | null,
     options?: AggregateBuildOptions,
-  ): Promise<{ aggregate: WebsiteAggregate }> {
+    preload?: SharedReads | null,
+  ): Promise<{ aggregate: WebsiteAggregate; sharedReads: SharedReads }> {
     const safe = async <T>(name: string, fn: () => Promise<T>): Promise<T | null> => {
       try {
         return await fn();
@@ -125,18 +182,17 @@ export class WebsiteAggregateService {
     const curated = <T>(items: T[], key: keyof typeof DEFAULT_HOMEPAGE_LIMITS): T[] =>
       homepage ? featuredPick(items, limit(key)) : items;
 
+    // RCCF-72.17C.2 — shared reads are reused when a prior build in the same
+    // request already fetched them (identical committed data, no intervening
+    // writes). `sharedReads` is returned so the next build can preload them.
+    const sharedReads: SharedReads = await this.loadSharedReads(tenantId, diagnostics, preload);
+    const { brand, heroData, links, seoData, website, testimonialsData, faqData, knowledgeCompletion, openBookings } = sharedReads;
+
     const [
-      brand, heroData, products, gallery, links, seoData, website, timelineEvents,
-      gameList, feedItems, testimonialsData, faqData, offerings, knowledgeCompletion,
-      openBookings,
+      products, gallery, timelineEvents, gameList, feedItems, offerings,
     ] = await Promise.all([
-      safe("brand", () => brandRepository.findByTenantId(tenantId)),
-      safe("hero", () => SettingsService.getHeroData(tenantId)),
       safe("products", () => this.loadProducts(tenantId, homepage, options)),
       safe("gallery", () => this.loadGallery(tenantId, homepage, options)),
-      safe("links", () => linkRepository.findPublished(tenantId)),
-      safe("seo", () => SettingsService.getSeo(tenantId)),
-      safe("website", () => websiteRepository.findByTenantId(tenantId)),
       safe("timeline", () => prisma.timelineEvent.findMany({ where: { tenantId }, orderBy: { year: "desc" }, ...(homepage ? { take: this.limit("timeline") } : {}) })),
       safe("games", () => prisma.game.findMany({ where: { tenantId }, orderBy: { order: "asc" }, ...(homepage ? { take: this.limit("games") } : {}) })),
       safe("contentFeed", () => prisma.contentFeedItem.findMany({
@@ -144,23 +200,11 @@ export class WebsiteAggregateService {
         orderBy: [{ pinned: "desc" }, { order: "asc" }, { createdAt: "desc" }],
         ...(homepage ? { take: this.limit("contentFeed") } : {}),
       })),
-      safe("testimonials", () => SettingsService.getSettingByKey(tenantId, "testimonials")),
-      safe("faq", () => SettingsService.getSettingByKey(tenantId, "faq")),
       safe("offerings", () => prisma.offering.findMany({
         where: { tenantId, status: "published" },
         orderBy: { createdAt: "desc" },
         select: { id: true, type: true, title: true, description: true, price: true, metadata: true, bookable: true },
         ...(homepage ? { take: this.limit("courses") + this.limit("services") } : {}),
-      })),
-      safe("knowledgeCompletion", () => SettingsService.getSettingByKey(tenantId, "knowledge_completion")),
-      // RCCF-67.4 — bookable slots: creator-created OPEN bookings (no customer
-      // claimed yet), not cancelled, not in the past. Only future slots are
-      // exposed so the storefront never offers an already-past appointment.
-      // RCCF-67.5 — slots now carry offeringId so service-linked availability
-      // can be grouped per Service.
-      safe("openBookings", () => prisma.booking.findMany({
-        where: { tenantId, customerEmail: null, status: { not: "cancelled" }, slotDate: { gte: new Date() } },
-        orderBy: { slotDate: "asc" },
       })),
     ]);
 
@@ -462,7 +506,46 @@ export class WebsiteAggregateService {
       });
     }
 
-    return { aggregate: result };
+    return { aggregate: result, sharedReads };
+  }
+
+  /**
+   * RCCF-72.17C.2 — load the reads shared between the full and homepage builds.
+   * Reuses a preloaded set when available (same request, same committed rows);
+   * otherwise issues the query. `safe()` preserves per-module failure capture.
+   */
+  private async loadSharedReads(
+    tenantId: string,
+    diagnostics: AggregateDiagnostics | null,
+    preload?: SharedReads | null,
+  ): Promise<SharedReads> {
+    const safe = async <T>(name: string, fn: () => Promise<T>): Promise<T | null> => {
+      try {
+        return await fn();
+      } catch (error) {
+        if (diagnostics) {
+          diagnostics.moduleFailures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        return null;
+      }
+    };
+    const use = <T>(key: keyof SharedReads, name: string, fn: () => Promise<T>): Promise<T | null> =>
+      preload && preload[key] !== undefined ? Promise.resolve(preload[key] as T | null) : safe(name, fn);
+
+    return {
+      brand: await use("brand", "brand", () => brandRepository.findByTenantId(tenantId)),
+      heroData: await use("heroData", "hero", () => SettingsService.getHeroData(tenantId)),
+      links: await use("links", "links", () => linkRepository.findPublished(tenantId)),
+      seoData: await use("seoData", "seo", () => SettingsService.getSeo(tenantId)),
+      website: await use("website", "website", () => websiteRepository.findByTenantId(tenantId)),
+      testimonialsData: await use("testimonialsData", "testimonials", () => SettingsService.getSettingByKey(tenantId, "testimonials")),
+      faqData: await use("faqData", "faq", () => SettingsService.getSettingByKey(tenantId, "faq")),
+      knowledgeCompletion: await use("knowledgeCompletion", "knowledgeCompletion", () => SettingsService.getSettingByKey(tenantId, "knowledge_completion")),
+      openBookings: await use("openBookings", "openBookings", () => prisma.booking.findMany({
+        where: { tenantId, customerEmail: null, status: { not: "cancelled" }, slotDate: { gte: new Date() } },
+        orderBy: { slotDate: "asc" },
+      })),
+    };
   }
 
   async buildWithTrace(tenantId: string): Promise<WebsiteAggregate> {
