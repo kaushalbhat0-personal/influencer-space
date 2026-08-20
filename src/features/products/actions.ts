@@ -50,7 +50,19 @@ export async function updateProduct(id: string, input: Partial<ProductFormInput>
 
   // VALIDATION-01 V-029: validate updates (blocks negative/NaN prices).
   const parsed = productFormSchema.partial().parse(input);
-  const result = await productService.update(id, tenantId, parsed as Partial<ProductFormInput>);
+  // RCCF-72.16B: a DRAFT/ARCHIVED → PUBLISHED transition re-runs the Launch
+  // global active-core capacity check under the tenant row lock, so draft
+  // stockpiling can never be promoted beyond 3 ACTIVE core items.
+  const outcome = await withLaunchCoreContentCapacity(
+    tenantId,
+    FEATURE_IDS.PRODUCTS,
+    (tx) => productService.update(id, tenantId, parsed as Partial<ProductFormInput>, tx),
+    (tx) => productService.resolveUpdateTransition(id, tenantId, parsed as Partial<ProductFormInput>, tx),
+  );
+  if (typeof outcome === "object" && outcome !== null && "ok" in outcome) {
+    if (!outcome.ok) throw new Error(outcome.reason ?? "Limit reached for this plan.");
+  }
+  const result = outcome as ProductData;
   revalidatePath("/admin/products");
   await afterContentChange(tenantId, { revalidateDashboard: true });
   return result;

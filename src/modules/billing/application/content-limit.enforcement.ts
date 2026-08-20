@@ -13,7 +13,7 @@ import { capabilityService } from "@/lib/capabilities";
 import { getFeatureInfo } from "@/lib/capabilities/features";
 import { getPlan } from "@/lib/capabilities/plans";
 import { DEFAULT_PLAN_CODE, FEATURE_IDS, type FeatureId } from "@/lib/capabilities/constants";
-import { resolveActivePlan } from "./plan-source";
+import { resolveActivePlan, type ResolvedActivePlan } from "./plan-source";
 import type { Prisma } from "@/generated/prisma/client";
 
 /**
@@ -151,10 +151,12 @@ export async function enforceContentLimit(params: {
   tenantId: string;
   featureKey: FeatureId;
   used?: number;
+  /** Pre-resolved plan (avoids a second plan read under a transaction lock). */
+  plan?: ResolvedActivePlan;
 }): Promise<ContentLimitDecision> {
   const { tenantId, featureKey } = params;
 
-  const plan = await resolveActivePlan(undefined, tenantId);
+  const plan = params.plan ?? (await resolveActivePlan(undefined, tenantId));
   const planCode = plan.code ?? DEFAULT_PLAN_CODE;
 
   if (isLaunchPlan(planCode) && LAUNCH_CORE_FEATURES.has(featureKey)) {
@@ -183,6 +185,23 @@ export async function enforceContentLimit(params: {
 }
 
 /**
+ * RCCF-72.16B — active-state transition for an existing core-content item.
+ *
+ * The Launch capacity check only fires when an update ACTIVATES a previously
+ * inactive item (DRAFT/ARCHIVED → PUBLISHED/ACTIVE). Edits of already-active
+ * items keep their existing slot and demotions (ACTIVE → DRAFT/ARCHIVED)
+ * release capacity, so both are always allowed. `wasActive`/`willBeActive` are
+ * the item's EFFECTIVE active states (Product: status PUBLISHED + isActive +
+ * not archived; Course/Service: status published) before/after the update.
+ */
+export interface LaunchActiveTransition {
+  /** Effective ACTIVE state of the item BEFORE the update. */
+  wasActive: boolean;
+  /** Effective ACTIVE state of the item AFTER the update. */
+  willBeActive: boolean;
+}
+
+/**
  * RCCF-72.15B — authoritative, race-safe core-content create for Creator Launch.
  *
  * Mirrors the established media quota pattern: locks the tenant row
@@ -192,27 +211,63 @@ export async function enforceContentLimit(params: {
  * transaction so the created row is committed atomically with the capacity
  * check — a Launch user cannot fan out 3 concurrent requests to exceed 3.
  *
- * Growth/Scale and Testimonials/FAQ never enter this path.
+ * RCCF-72.16B — the same primitive now guards ACTIVE-STATE TRANSITIONS. Pass
+ * `resolveTransition` (read the existing item under the lock, return its
+ * effective before/after active state) and the identical Launch ceiling is
+ * enforced before any DRAFT/ARCHIVED → PUBLISHED/ACTIVE update commits. This
+ * closes the draft-stockpiling → publish-by-update bypass without a second
+ * quota mechanism.
+ *
+ * Growth/Scale and Testimonials/FAQ never enter this path. Non-Launch updates
+ * are not newly gated (existing update behavior is preserved); non-Launch
+ * creates keep the existing per-type enforcement contract.
  */
 export async function withLaunchCoreContentCapacity<T>(
   tenantId: string,
   featureKey: FeatureId,
   work: (tx: Prisma.TransactionClient) => Promise<T>,
+  resolveTransition?: (tx: Prisma.TransactionClient) => Promise<LaunchActiveTransition>,
 ): Promise<ContentLimitDecision | T> {
-  return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`;
-    const plan = await resolveActivePlan(undefined, tenantId);
-    const planCode = plan.code ?? DEFAULT_PLAN_CODE;
-    if (!isLaunchPlan(planCode)) {
-      // Non-Launch: fall through to the existing per-type enforcement contract.
-      const decision = await enforceContentLimit({ tenantId, featureKey, used: await countContentUsage(tenantId, featureKey) });
-      if (!decision.ok) return decision;
+  // Resolve the ACTIVE plan BEFORE acquiring the tenant row lock. The plan
+  // read (workspace + billing subscription + runtime override warm-up) is the
+  // slowest part of this path and does not need to be under the lock — the
+  // FOR UPDATE serialization exists to make the active-count read + write
+  // atomic, not to guard billing state. Threading the resolved plan into
+  // enforceContentLimit avoids a second plan read inside the transaction.
+  const plan = await resolveActivePlan(undefined, tenantId);
+  const planCode = plan.code ?? DEFAULT_PLAN_CODE;
+
+  // RCCF-72.16B: the transition path adds the pre-write active-state read plus
+  // the update read/write on top of the count, so give the interactive
+  // transaction explicit headroom beyond Prisma's 5s default (dev cold-compile
+  // and remote-Supabase round-trips can exceed 5s on the first invocation).
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`;
+      if (!isLaunchPlan(planCode)) {
+        // Non-Launch: creates fall through to the existing per-type enforcement
+        // contract; update transitions are not newly gated (existing behavior).
+        if (!resolveTransition) {
+          const decision = await enforceContentLimit({ tenantId, featureKey, used: await countContentUsage(tenantId, featureKey), plan });
+          if (!decision.ok) return decision;
+        }
+        return work(tx);
+      }
+
+      const used = await countActiveCoreContentUsage(tenantId, tx);
+      if (resolveTransition) {
+        const { wasActive, willBeActive } = await resolveTransition(tx);
+        // Editing an active item keeps its slot; demoting to DRAFT/ARCHIVED or a
+        // draft→draft edit consumes nothing. Only an activation consumes a slot.
+        if (wasActive || !willBeActive) {
+          return work(tx);
+        }
+      }
+      if (used >= LAUNCH_GLOBAL_LIMIT) {
+        return launchCoreDecision(featureKey, used, planCode);
+      }
       return work(tx);
-    }
-    const used = await countActiveCoreContentUsage(tenantId, tx);
-    if (used >= LAUNCH_GLOBAL_LIMIT) {
-      return launchCoreDecision(featureKey, used, planCode);
-    }
-    return work(tx);
-  });
+    },
+    { timeout: 15_000 },
+  );
 }

@@ -66,11 +66,12 @@ export const productService = {
     return mapProduct(row as Record<string, unknown>);
   },
 
-  async update(id: string, tenantId: string, input: Partial<ProductFormInput>): Promise<ProductData> {
+  async update(id: string, tenantId: string, input: Partial<ProductFormInput>, tx?: Prisma.TransactionClient): Promise<ProductData> {
     // VALIDATION-01 V-035: scope product updates to the session tenant.
-    const existing = await prisma.product.findFirst({ where: { id, tenantId }, select: { id: true } });
+    const client = tx ?? prisma;
+    const existing = await client.product.findFirst({ where: { id, tenantId }, select: { id: true } });
     if (!existing) throw new Error("Product not found");
-    const row = await prisma.product.update({
+    const row = await client.product.update({
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),
@@ -89,6 +90,29 @@ export const productService = {
       },
     });
     return mapProduct(row as Record<string, unknown>);
+  },
+
+  /**
+   * RCCF-72.16B — effective active-state transition for an update, read under
+   * the tenant lock. `wasActive` is the item's current active state; the
+   * resulting state is PUBLISHED + isActive + not archived after applying the
+   * parsed input. An edit that keeps an already-active product active does not
+   * consume a second Launch slot.
+   */
+  async resolveUpdateTransition(
+    id: string,
+    tenantId: string,
+    input: Partial<ProductFormInput>,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ wasActive: boolean; willBeActive: boolean }> {
+    const client = tx ?? prisma;
+    const existing = await client.product.findFirst({ where: { id, tenantId } });
+    if (!existing) throw new Error("Product not found");
+    const wasActive = existing.status === "PUBLISHED" && existing.isActive === true && existing.archivedAt === null;
+    const effectiveStatus = input.status ?? existing.status;
+    const effectiveIsActive = input.isActive ?? existing.isActive;
+    const willBeActive = effectiveStatus === "PUBLISHED" && effectiveIsActive === true && existing.archivedAt === null;
+    return { wasActive, willBeActive };
   },
 
   async delete(id: string, tenantId: string): Promise<void> {

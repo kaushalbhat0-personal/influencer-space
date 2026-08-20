@@ -50,7 +50,18 @@ export async function updateService(id: string, input: ServiceFormInput) {
   if (!tenantId) throw new Error("Unauthorized");
 
   const parsed = serviceFormSchema.parse(input);
-  const result = await serviceService.update(tenantId, id, parsed as ServiceFormInput);
+  // RCCF-72.16B: DRAFT/ARCHIVED → PUBLISHED re-runs the Launch global
+  // active-core capacity check under the tenant row lock.
+  const outcome = await withLaunchCoreContentCapacity(
+    tenantId,
+    FEATURE_IDS.SERVICES,
+    (tx) => serviceService.update(tenantId, id, parsed as ServiceFormInput, tx),
+    (tx) => serviceService.resolveUpdateTransition(tenantId, id, parsed as ServiceFormInput, tx),
+  );
+  if (typeof outcome === "object" && outcome !== null && "ok" in outcome) {
+    if (!outcome.ok) throw new Error(outcome.reason ?? "Limit reached for this plan.");
+  }
+  const result = outcome as ServiceData;
   revalidatePath("/admin/services");
   await afterContentChange(tenantId);
   return result;

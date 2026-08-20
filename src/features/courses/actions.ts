@@ -56,7 +56,18 @@ export async function updateCourse(id: string, input: CourseFormInput) {
   if (!tenantId) throw new Error("Unauthorized");
 
   const parsed = courseFormSchema.parse(input);
-  const result = await courseService.update(tenantId, id, parsed as CourseFormInput);
+  // RCCF-72.16B: DRAFT/ARCHIVED → PUBLISHED re-runs the Launch global
+  // active-core capacity check under the tenant row lock.
+  const outcome = await withLaunchCoreContentCapacity(
+    tenantId,
+    FEATURE_IDS.COURSES,
+    (tx) => courseService.update(tenantId, id, parsed as CourseFormInput, tx),
+    (tx) => courseService.resolveUpdateTransition(tenantId, id, parsed as CourseFormInput, tx),
+  );
+  if (typeof outcome === "object" && outcome !== null && "ok" in outcome) {
+    if (!outcome.ok) throw new Error(outcome.reason ?? "Limit reached for this plan.");
+  }
+  const result = outcome as CourseData;
   revalidatePath("/admin/courses");
   await afterContentChange(tenantId);
   return result;

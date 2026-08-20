@@ -72,12 +72,13 @@ export const courseService = {
     return toCourseData(offering);
   },
 
-  async update(tenantId: string, id: string, input: CourseFormInput): Promise<CourseData> {
-    const existing = await prisma.offering.findFirst({ where: { id, tenantId } });
+  async update(tenantId: string, id: string, input: CourseFormInput, tx?: Prisma.TransactionClient): Promise<CourseData> {
+    const client = tx ?? prisma;
+    const existing = await client.offering.findFirst({ where: { id, tenantId } });
     if (!existing) throw new Error("Course not found");
 
     const existingMeta = (existing.metadata as Record<string, unknown> | null) ?? {};
-    const offering = await prisma.offering.update({
+    const offering = await client.offering.update({
       where: { id },
       data: {
         title: input.title,
@@ -93,6 +94,26 @@ export const courseService = {
       },
     });
     return toCourseData(offering);
+  },
+
+  /**
+   * RCCF-72.16B — effective active-state transition for a course update, read
+   * under the tenant lock. A course is ACTIVE when its Offering status is
+   * `published` (the exact predicate used by the Launch counter).
+   */
+  async resolveUpdateTransition(
+    tenantId: string,
+    id: string,
+    input: CourseFormInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ wasActive: boolean; willBeActive: boolean }> {
+    const client = tx ?? prisma;
+    const existing = await client.offering.findFirst({ where: { id, tenantId }, select: { status: true } });
+    if (!existing) throw new Error("Course not found");
+    return {
+      wasActive: existing.status === "published",
+      willBeActive: input.status === "PUBLISHED",
+    };
   },
 
   async delete(tenantId: string, id: string): Promise<void> {
