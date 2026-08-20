@@ -7,7 +7,7 @@ import { publishingService } from "@/lib/publishing/service";
 import {
   runProvisionPipeline, buildProvisioningInput, detectPlatform, buildContentSource,
 } from "@/lib/generation/integration/provision-pipeline";
-import { markOnboardingComplete } from "@/actions/onboarding.actions";
+import { writeOnboardingComplete } from "@/lib/onboarding/complete";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
 import { captureError } from "@/lib/observability/error-tracker";
@@ -106,7 +106,7 @@ export async function provisionCreator(
           captureError(new Error(publishResult.error ?? "Publishing failed"), { service: "provision-actions", operation: "provisionCreator-publish", tenantId: result.tenantId });
           return { success: false, error: publishResult.error ?? "Publishing failed" };
         }
-        await markOnboardingComplete(result.tenantId).catch((err) => {
+        await writeOnboardingComplete(result.tenantId).catch((err) => {
           captureError(err, { service: "provision-actions", operation: "provisionCreator-markComplete" });
         });
       } catch (err) {

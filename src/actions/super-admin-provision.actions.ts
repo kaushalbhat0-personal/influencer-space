@@ -10,7 +10,7 @@ import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { platformEventBus } from "@/lib/events";
 import { publishingService } from "@/lib/publishing/service";
-import { markOnboardingComplete } from "@/actions/onboarding.actions";
+import { writeOnboardingComplete } from "@/lib/onboarding/complete";
 import { billingRepository } from "@/modules/billing/infrastructure/repository";
 import { validateAgencyCreatorPlanCode } from "@/modules/provisioning/application/creator-plan";
 import {
@@ -213,7 +213,7 @@ export async function confirmProvision(params: {
         // VALIDATION-03 (CRITICAL): the agency provisioning path must mark
         // onboarding complete — otherwise the claimed client lands in an
         // infinite redirect between /admin/dashboard and /onboarding.
-        await markOnboardingComplete(provisioned.tenantId);
+        await writeOnboardingComplete(provisioned.tenantId);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Publishing failed";
         captureError(err, { service: "super-admin-provision", operation: "publish", tenantId: provisioned.tenantId });

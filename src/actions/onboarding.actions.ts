@@ -2,18 +2,19 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorization";
 import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
 import { onboardingService } from "@/lib/onboarding/service";
+import { writeOnboardingComplete } from "@/lib/onboarding/complete";
 import { goldenDataset, GoldenValidator } from "@/lib/generation/golden";
 import { publishingService } from "@/lib/publishing/service";
 import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
-import { emitEvent } from "@/modules/event-runtime";
 import { applyGoalSectionPriority } from "@/modules/goals-runtime";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
@@ -71,6 +72,22 @@ export async function createManualWebsite(): Promise<{
     // provision above already attached the caller to the new tenant.
     const applied = await applyBlueprintToWebsite(websiteId, "com.creatos.creator", "com.creatos.neon-dark");
     if (!applied.success) return applied;
+
+    // RCCF-70.6.6: every creator provisioning path must mark onboarding complete
+    // so the DB-backed requireTenant (lib/lifecycle/service.ts) enters READY for
+    // the new tenant. Without this, a Build-Manually creator signs up + provisions
+    // successfully but a fresh login bounces /admin/dashboard → /onboarding
+    // (middleware READY via token-only) → /admin/dashboard (requireTenant
+    // ONBOARDING via DB) indefinitely.
+    try {
+      await writeOnboardingComplete(tenantId);
+    } catch (error) {
+      captureError(error, {
+        service: "onboarding-actions",
+        operation: "createManualWebsite-markOnboardingComplete",
+        tenantId,
+      });
+    }
 
     return { success: true, tenantId, websiteId };
   } catch (error) {
@@ -621,7 +638,7 @@ export async function runCreatorGeneration(
     }
 
     try {
-      await markOnboardingComplete(provisioned.tenantId);
+      await writeOnboardingComplete(provisioned.tenantId);
     } catch {
       // onboarding_completed upsert is best-effort; dashboard uses it for recovery UX
     }
@@ -750,6 +767,12 @@ export async function getGenerationSessionProgress(sessionId: string): Promise<S
 
     const gs = await sessionService.getById(sessionId);
     if (!gs) return { success: false, error: "Session not found" };
+    // A generation session is only readable by its owning creator (or an
+    // established cross-tenant administrator). Non-owners are masked as
+    // "Session not found" to avoid revealing whether the session exists.
+    if (session.user.role !== "SUPER_ADMIN" && gs.creatorId !== session.user.id) {
+      return { success: false, error: "Session not found" };
+    }
 
     const stages = gs.stages.map((s) => ({
       type: s.type,
@@ -809,28 +832,61 @@ export async function getActiveGenerationSession(): Promise<{ success: boolean; 
   }
 }
 
+/**
+ * RCCF-72.16A — tenant-scoped authorization helper. A client-supplied tenantId
+ * is never treated as a credential: the caller must own the tenant, be an
+ * established cross-tenant administrator (SUPER_ADMIN), or — for onboarding
+ * state — an AGENCY_ADMIN whose agency manages the tenant (established
+ * assertAgencyOwnsTenant IDOR guard). No new roles or privileges are invented.
+ */
+type TenantAccessDecision = "ok" | "unauthorized" | "forbidden";
+
+async function assertTenantAccess(tenantId: string, opts?: { allowAgency?: boolean }): Promise<TenantAccessDecision> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return "unauthorized";
+  const role = session.user.role ?? null;
+  if (role === "SUPER_ADMIN") return "ok";
+  // DB-backed ownership: the token's tenantId can be stale for a freshly
+  // provisioned tenant (a new creator's session is not re-minted on the same
+  // request), so the authoritative owner signal is the user record.
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { tenantId: true },
+  });
+  if (dbUser?.tenantId === tenantId) return "ok";
+  if (opts?.allowAgency !== false && role === "AGENCY_ADMIN" && session.user.agencyId) {
+    const agency = await assertAgencyOwnsTenant(session.user.id, session.user.agencyId, tenantId);
+    if (agency.ok) return "ok";
+  }
+  return "forbidden";
+}
+
 export async function markOnboardingComplete(tenantId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await prisma.setting.upsert({
-      where: { tenantId_key: { tenantId, key: "onboarding_completed" } },
-      update: { value: { completedAt: new Date().toISOString() } },
-      create: { tenantId, key: "onboarding_completed", value: { completedAt: new Date().toISOString() } },
-    });
-    await emitEvent("onboarding.completed", tenantId);
-    return { success: true };
+    const access = await assertTenantAccess(tenantId);
+    if (access !== "ok") {
+      return { success: false, error: access === "unauthorized" ? "Unauthorized" : "Forbidden" };
+    }
+    return await writeOnboardingComplete(tenantId);
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to mark onboarding" };
   }
 }
 
-export async function isOnboardingComplete(tenantId: string): Promise<boolean> {
+export async function isOnboardingComplete(
+  tenantId: string,
+): Promise<{ success: boolean; complete?: boolean; error?: string }> {
   try {
+    const access = await assertTenantAccess(tenantId);
+    if (access !== "ok") {
+      return { success: false, error: access === "unauthorized" ? "Unauthorized" : "Forbidden" };
+    }
     const setting = await prisma.setting.findUnique({
       where: { tenantId_key: { tenantId, key: "onboarding_completed" } },
     });
-    return !!setting;
-  } catch {
-    return false;
+    return { success: true, complete: !!setting };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to check onboarding" };
   }
 }
 
@@ -838,8 +894,10 @@ export async function retryPublish(
   tenantId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const sess = await getServerSession(authOptions);
-    if (!sess?.user?.id) return { success: false, error: "Unauthorized" };
+    const access = await assertTenantAccess(tenantId, { allowAgency: false });
+    if (access !== "ok") {
+      return { success: false, error: access === "unauthorized" ? "Unauthorized" : "Forbidden" };
+    }
 
     const result = await publishingService.publish(tenantId);
     if (!result.success) return { success: false, error: result.error ?? "Publish failed" };

@@ -5,7 +5,7 @@ const h = vi.hoisted(() => ({
   mockCreateRun: vi.fn(),
   mockProvision: vi.fn(),
   mockPublish: vi.fn(),
-  mockMarkOnboardingComplete: vi.fn(),
+  mockWriteOnboardingComplete: vi.fn(),
   mockLogAction: vi.fn(),
   mockTrack: vi.fn(),
 }));
@@ -18,7 +18,7 @@ vi.mock("@/lib/publishing/service", () => ({ publishingService: { publish: h.moc
 vi.mock("@/lib/prisma", () => ({ prisma: { product: { create: vi.fn() } } }));
 vi.mock("@/lib/analytics", () => ({ track: h.mockTrack }));
 vi.mock("@/lib/audit", () => ({ logAction: h.mockLogAction }));
-vi.mock("@/actions/onboarding.actions", () => ({ markOnboardingComplete: h.mockMarkOnboardingComplete }));
+vi.mock("@/lib/onboarding/complete", () => ({ writeOnboardingComplete: h.mockWriteOnboardingComplete }));
 
 import { acquireAndProvision } from "@/actions/acquisition/acquire.actions";
 
@@ -38,7 +38,7 @@ beforeEach(() => {
   h.mockCreateRun.mockResolvedValue("run-1");
   h.mockProvision.mockResolvedValue({ success: true, tenantId: "t1", websiteId: "w1", tenantSlug: "new-store", storefrontUrl: "http://x/t", websiteStatus: "published" });
   h.mockPublish.mockResolvedValue({ success: true });
-  h.mockMarkOnboardingComplete.mockResolvedValue(undefined);
+  h.mockWriteOnboardingComplete.mockResolvedValue({ success: true });
   h.mockLogAction.mockResolvedValue(undefined);
   h.mockTrack.mockReturnValue(undefined);
 });
@@ -62,6 +62,7 @@ describe("RCCF-36 — acquireAndProvision authorization", () => {
 
     expect(res.success).toBe(true);
     expect(h.mockProvision).toHaveBeenCalled();
+    expect(h.mockWriteOnboardingComplete).toHaveBeenCalledWith("t1");
   });
 
   it("allows AGENCY_ADMIN to provision a new tenant", async () => {

@@ -9,7 +9,7 @@ import { publishingService } from "@/lib/publishing/service";
 import { track } from "@/lib/analytics";
 import { logAction } from "@/lib/audit";
 import { captureError } from "@/lib/observability/error-tracker";
-import { markOnboardingComplete } from "@/actions/onboarding.actions";
+import { writeOnboardingComplete } from "@/lib/onboarding/complete";
 import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord, AcquisitionProvisionResult } from "@/lib/acquisition/types";
 
@@ -165,7 +165,7 @@ export async function acquireAndProvision(
     const status = publishResult.success ? "published" : "failed";
 
     if (publishResult.success) {
-      await markOnboardingComplete(provisionResult.tenantId).catch((err) => {
+      await writeOnboardingComplete(provisionResult.tenantId).catch((err) => {
         captureError(err, { service: "acquisition-actions", operation: "markOnboardingComplete" });
       });
     }
