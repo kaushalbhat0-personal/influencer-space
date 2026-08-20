@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PlatformRegistrySyncService } from "@/lib/registry-sync";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,9 +20,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: report.errors.length === 0, report });
   } catch (e) {
+    // RCCF-72.17A: never leak internal exception detail to callers.
+    captureError(e, { service: "platform-sync-api", operation: "POST" });
     return NextResponse.json({
       success: false,
-      error: e instanceof Error ? e.message : String(e),
+      error: "Internal error",
     }, { status: 500 });
   }
 }
@@ -41,9 +44,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, report });
   } catch (e) {
+    // RCCF-72.17A: never leak internal exception detail to callers.
+    captureError(e, { service: "platform-sync-api", operation: "GET" });
     return NextResponse.json({
       success: false,
-      error: e instanceof Error ? e.message : String(e),
+      error: "Internal error",
     }, { status: 500 });
   }
 }

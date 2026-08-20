@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicPricingData } from "@/modules/pricing/application/runtime";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,8 @@ export async function GET() {
       },
     });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "Failed" }, { status: 500 });
+    // RCCF-72.17A: never leak internal exception detail to public callers.
+    captureError(e, { service: "pricing-api", operation: "plans" });
+    return NextResponse.json({ ok: false, error: "Internal error" }, { status: 500 });
   }
 }

@@ -10,6 +10,7 @@ import { resolvePlansForTenantIds } from "@/modules/billing/application/plan-sou
 import { maxNewFeedItems } from "./feed-cap";
 import { entitlementService } from "@/lib/capabilities";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
+import { verifyBearerAuth } from "@/lib/security/verify-bearer";
 
 const BATCH_SIZE = 5;
 const MEDIA_LIMIT = 10;
@@ -358,10 +359,8 @@ async function syncContentItems(
 /* ── Handler ── */
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
-
-  if (!authHeader || authHeader !== expected) {
+  // RCCF-72.17A (SEC-08): const-time secret compare.
+  if (!verifyBearerAuth(request, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -500,8 +499,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     await persistedJobRuntime.recordCron("Sync Socials", false, error instanceof Error ? error.message : "failed");
     captureError(error, { service: "sync-socials", operation: "GET" });
+    // RCCF-72.17A: detail is captured server-side; never echo it to callers.
     return NextResponse.json(
-      { error: "Sync failed", detail: error instanceof Error ? error.message : String(error) },
+      { error: "Sync failed" },
       { status: 500 },
     );
   }

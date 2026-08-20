@@ -13,6 +13,7 @@ import { isFlagEnabled } from "@/lib/platform/platform-config";
 import { resolvePageBySlug, withViewAllHref, resolveStorefrontNavigation } from "@/lib/storefront/page-resolver";
 import { resolveRenderableSections } from "@/lib/storefront/section-pipeline";
 import { getPageHref } from "@/lib/storefront/storefront-root";
+import { serializeJsonLd } from "@/lib/storefront/json-ld";
 import type { GoalProfile } from "@/modules/goals-runtime";
 import type { ThemeExperience } from "@/modules/theme/runtime/experience";
 
@@ -179,7 +180,7 @@ export async function StorefrontPage({
           container with its device frame. */}
       <main id="main-content" className="@container/main min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
-          <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
+          <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }} />
         ))}
         {sections.map((section, i) => {
           const isFirst = i === 0;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUpgrade, getEffectiveMonthlyPrice, getRuntimePlan } from "@/modules/pricing/application/runtime";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,8 @@ export async function GET(request: Request) {
       pricing: { monthly, yearly },
     });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "Failed" }, { status: 500 });
+    // RCCF-72.17A: never leak internal exception detail to public callers.
+    captureError(e, { service: "pricing-api", operation: "upgrade" });
+    return NextResponse.json({ ok: false, error: "Internal error" }, { status: 500 });
   }
 }

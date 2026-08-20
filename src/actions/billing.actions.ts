@@ -155,8 +155,14 @@ export async function simulateRazorpayEvent(
   if (process.env.NODE_ENV === "production") {
     return { success: false, error: "dev-only" };
   }
+  // RCCF-72.17A (SEC-02): the billing simulator can mint entitlement/subscription
+  // state, so it requires an authenticated SUPER_ADMIN session. Development mode
+  // is NOT an authorization mechanism — role is derived from the server session,
+  // never from client-supplied identifiers.
   const session = await getServerSession(authOptions);
-  if (!session?.user) return { success: false, error: "Unauthorized" };
+  if (!session || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
 
   try {
     const result = await billingService.handleSubscriptionWebhook({

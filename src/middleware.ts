@@ -115,7 +115,16 @@ export async function middleware(request: NextRequest) {
     } else if (!extractedTenant) {
       headers.delete("x-tenant-host");
     }
-    return NextResponse.next({ request: { headers } });
+    // RCCF-72.17A (SEC-05): an authorized draft preview (?preview=true) must
+    // NEVER be cached/shared as a public response. Without this override the
+    // `Cache-Control: public, … s-maxage=60` header set for `/:slug` in
+    // next.config would let the edge cache a tenant's draft for up to 60s and
+    // serve it to anonymous visitors, leaking unpublished content.
+    const previewResponse = NextResponse.next({ request: { headers } });
+    if (request.nextUrl.searchParams.get("preview") === "true") {
+      previewResponse.headers.set("Cache-Control", "private, no-store");
+    }
+    return previewResponse;
   }
 
   // ── Phase 2: Protected routes — authenticate first, then authorize ───────────────────────────

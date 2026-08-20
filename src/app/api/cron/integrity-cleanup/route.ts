@@ -3,13 +3,14 @@ import { runSafeCleanup, runIntegrityScan } from "@/lib/integrity/runtime";
 import { partnerEngine } from "@/lib/partners/engine";
 import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
 import { captureError } from "@/lib/observability/error-tracker";
+import { verifyBearerAuth } from "@/lib/security/verify-bearer";
 
 // RCCF-LAUNCH-01: daily integrity + recovery cron (was super-admin-button-only).
 // Recovers stuck generation sessions, purges stale terminal sessions and
 // expired partner invites, and records the integrity scan for the Ops feed.
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // RCCF-72.17A (SEC-08): const-time secret compare.
+  if (!verifyBearerAuth(request, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

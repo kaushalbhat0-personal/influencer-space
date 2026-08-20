@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { purgeOldAuditLogs } from "@/lib/audit";
 import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
+import { verifyBearerAuth } from "@/lib/security/verify-bearer";
+
+// RCCF-72.17A (SEC-08): const-time secret compare + days clamping. A negative
+// or absurd `days` value would delete the entire audit trail.
+const MAX_PURGE_DAYS = 3650;
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyBearerAuth(request, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const url = new URL(request.url);
-  const days = parseInt(url.searchParams.get("days") || "90");
+  const rawDays = url.searchParams.get("days") ?? "90";
+  const parsedDays = Number.parseInt(rawDays, 10);
+  const days = Number.isNaN(parsedDays) ? 90 : Math.min(Math.max(parsedDays, 1), MAX_PURGE_DAYS);
 
   try {
     const result = await purgeOldAuditLogs(days);
