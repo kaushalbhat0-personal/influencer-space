@@ -298,11 +298,13 @@ describe("plan resolution unchanged (RCCF-72.7)", () => {
     expect(plan?.features.storage_mb).toBe(100);
   });
 
-  it("creator_launch still resolves with Launch limits", () => {
+  it("RCCF-72.15B: creator_launch now resolves with all core content types available", () => {
     const plan = getPlan("creator_launch");
     expect(plan?.features.max_products).toBe(3);
-    expect(plan?.features.max_courses).toBe(0);
-    expect(plan?.features.max_games).toBe(0);
+    expect(plan?.features.max_courses).toBe(3);
+    expect(plan?.features.max_games).toBe(3);
+    expect(plan?.features.max_testimonials).toBe(3);
+    expect(plan?.features.max_faq).toBe(3);
     expect(plan?.features.storage_mb).toBe(20);
   });
 });
@@ -314,13 +316,15 @@ describe("plan resolution unchanged (RCCF-72.7)", () => {
 describe("capability resolution unchanged (RCCF-72.7)", () => {
   it("capabilityService.limit returns identical values", () => {
     expect(capabilityService.limit("creator_grow", "max_games")).toBe(10);
-    expect(capabilityService.limit("creator_launch", "max_courses")).toBe(0);
+    expect(capabilityService.limit("creator_launch", "max_courses")).toBe(3);
+    expect(capabilityService.limit("creator_launch", "max_games")).toBe(3);
     expect(capabilityService.limit("creator_scale", "max_bookings")).toBe(100);
     expect(capabilityService.limit("creator_scale", "custom_domain")).toBe(-1);
   });
 
-  it("publish-capable features are unchanged", () => {
+  it("RCCF-72.15B: Launch core content types are capability-available", () => {
     expect(capabilityService.can("creator_grow", "max_bookings").allowed).toBe(true);
-    expect(capabilityService.can("creator_launch", "max_courses").allowed).toBe(false);
+    expect(capabilityService.can("creator_launch", "max_courses").allowed).toBe(true);
+    expect(capabilityService.can("creator_launch", "max_games").allowed).toBe(true);
   });
 });

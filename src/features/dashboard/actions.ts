@@ -6,6 +6,8 @@ import { dashboardService } from "./service";
 import { runtimeContextBuilder } from "@/modules/runtime-context";
 import { businessHealthRuntime } from "@/modules/business-health";
 import { websiteEvolutionRuntime } from "@/modules/website-evolution";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { isLaunchPlan, countActiveCoreContentUsage, LAUNCH_GLOBAL_LIMIT } from "@/modules/billing/application/content-limit.enforcement";
 
 export async function getDashboardData() {
   const session = await getServerSession(authOptions);
@@ -29,8 +31,16 @@ export async function getDashboardData() {
 
   const { metrics, health, knowledge, goals, recommendations, success, storefrontScore } = context;
 
+  // RCCF-72.15B — Launch core-content allowance, sourced from the shared
+  // server primitive so the UI never invents or hardcodes its own counter.
+  const plan = await resolveActivePlan(undefined, tenantId);
+  const launchAllowance = isLaunchPlan(plan.code ?? null)
+    ? { used: await countActiveCoreContentUsage(tenantId), limit: LAUNCH_GLOBAL_LIMIT }
+    : null;
+
   return {
     metrics,
+    launchAllowance,
     activity,
     health: health.checks.map((c) => ({
       id: c.id,

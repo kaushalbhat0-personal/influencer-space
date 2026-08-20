@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import type { CourseData, CourseFormInput } from "./types";
 
 function toCourseData(o: {
@@ -48,9 +49,10 @@ export const courseService = {
     return toCourseData(o);
   },
 
-  async create(tenantId: string, input: CourseFormInput): Promise<CourseData> {
+  async create(tenantId: string, input: CourseFormInput, tx?: Prisma.TransactionClient): Promise<CourseData> {
+    const client = tx ?? prisma;
     const slug = input.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const offering = await prisma.offering.create({
+    const offering = await client.offering.create({
       data: {
         tenantId,
         type: "course",

@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { GAMES_ROUTE } from "@/lib/constants";
 import { logAction } from "@/lib/audit";
 import { afterContentChange } from "@/lib/publishing/content-change";
-import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { withLaunchCoreContentCapacity } from "@/modules/billing/application/content-limit.enforcement";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 const gameSchema = z.object({
@@ -46,24 +46,27 @@ export async function createGame(
 
   try {
     const tenantId = await requireAuth();
-    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.GAMES });
-    if (!limit.ok) return { success: false, error: limit.reason };
+    const outcome = await withLaunchCoreContentCapacity(tenantId, FEATURE_IDS.GAMES, async (tx) => {
+      const maxSort = await tx.game.aggregate({
+        where: { tenantId },
+        _max: { order: true },
+      });
 
-    const maxSort = await prisma.game.aggregate({
-      where: { tenantId },
-      _max: { order: true },
+      return tx.game.create({
+        data: {
+          tenantId,
+          name: parsed.data.name,
+          logoUrl: parsed.data.logoUrl || null,
+          description: parsed.data.description || null,
+          genre: parsed.data.genre || null,
+          order: (maxSort._max.order ?? 0) + 1,
+        },
+      });
     });
-
-    const result = await prisma.game.create({
-      data: {
-        tenantId,
-        name: parsed.data.name,
-        logoUrl: parsed.data.logoUrl || null,
-        description: parsed.data.description || null,
-        genre: parsed.data.genre || null,
-        order: (maxSort._max.order ?? 0) + 1,
-      },
-    });
+    if (typeof outcome === "object" && outcome !== null && "ok" in outcome && !outcome.ok) {
+      return { success: false, error: outcome.reason ?? "Limit reached for this plan." };
+    }
+    const result = outcome as { id: string; name: string };
 
     await logAction(tenantId, "createGame", { gameId: result.id, name: result.name });
     revalidatePath(GAMES_ROUTE);

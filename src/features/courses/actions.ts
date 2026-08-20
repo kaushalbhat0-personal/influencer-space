@@ -7,7 +7,7 @@ import { courseService } from "./service";
 import { courseFormSchema } from "./validators";
 import type { CourseData, CourseFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
-import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { withLaunchCoreContentCapacity } from "@/modules/billing/application/content-limit.enforcement";
 import { contentLimitRejection, type ContentMutationResult } from "@/modules/billing/application/content-limit.result";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
@@ -34,9 +34,14 @@ export async function createCourse(input: CourseFormInput): Promise<ContentMutat
     if (!tenantId) throw new Error("Unauthorized");
 
     const parsed = courseFormSchema.parse(input);
-    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.COURSES });
-    if (!limit.ok) return contentLimitRejection(limit);
-    const result = await courseService.create(tenantId, parsed as CourseFormInput);
+    const outcome = await withLaunchCoreContentCapacity(tenantId, FEATURE_IDS.COURSES, (tx) =>
+      courseService.create(tenantId, parsed as CourseFormInput, tx),
+    );
+    if (typeof outcome === "object" && outcome !== null && "ok" in outcome) {
+      if (!outcome.ok) return contentLimitRejection(outcome);
+      return { success: false, error: "Failed to create course" };
+    }
+    const result = outcome as CourseData;
     revalidatePath("/admin/courses");
     await afterContentChange(tenantId);
     return { success: true, data: result };

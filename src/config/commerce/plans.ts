@@ -147,13 +147,18 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       max_products: 3,
       max_gallery: 3,
       max_services: 3,
-      max_courses: 0,
+      // RCCF-72.15B: Launch is a fully functional Creator plan — Courses and
+      // Games are capability-available. The four core content types share ONE
+      // Launch-wide ceiling of 3 ACTIVE items (enforced by the global counter
+      // in content-limit.enforcement), so these values only mark availability;
+      // the per-type value is superseded by the global counter on Launch.
+      max_courses: 3,
       max_testimonials: 3,
       max_faq: 3,
       max_timeline: 3,
       max_links: 3,
       max_feed: 3,
-      max_games: 0,
+      max_games: 3,
       max_bookings: 0,
       max_orders: 10,
       ai_credits: 0,
@@ -172,6 +177,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "Basic themes",
       "3 products",
       "3 services",
+      "3 courses",
+      "3 games",
       "3 gallery items",
       "3 testimonials",
       "3 FAQs",

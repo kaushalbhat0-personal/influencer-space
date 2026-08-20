@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import type { ServiceData, ServiceFormInput } from "./types";
 
 function toServiceData(o: {
@@ -38,9 +39,10 @@ export const serviceService = {
     return offerings.map(toServiceData);
   },
 
-  async create(tenantId: string, input: ServiceFormInput): Promise<ServiceData> {
+  async create(tenantId: string, input: ServiceFormInput, tx?: Prisma.TransactionClient): Promise<ServiceData> {
+    const client = tx ?? prisma;
     const slug = input.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const offering = await prisma.offering.create({
+    const offering = await client.offering.create({
       data: {
         tenantId,
         type: "coaching",

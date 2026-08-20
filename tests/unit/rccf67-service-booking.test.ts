@@ -14,6 +14,7 @@ const h = vi.hoisted(() => {
     mockGetTenantContext: vi.fn(),
     mockCheckRateLimit: vi.fn(),
     mockEnforceContentLimit: vi.fn(),
+    mockWithCapacity: vi.fn(),
     mockHeaderGet: vi.fn(),
     mockGetServerSession: vi.fn(),
     reset: () => { offerings.length = 0; bookings.length = 0; updateCalls.length = 0; },
@@ -23,7 +24,11 @@ const h = vi.hoisted(() => {
 vi.mock("next-auth", () => ({ getServerSession: h.mockGetServerSession }));
 vi.mock("@/lib/tenant", () => ({ getTenantContext: h.mockGetTenantContext }));
 vi.mock("@/lib/security/rate-limiter", () => ({ checkRateLimit: h.mockCheckRateLimit }));
-vi.mock("@/modules/billing/application/content-limit.enforcement", () => ({ enforceContentLimit: h.mockEnforceContentLimit }));
+vi.mock("@/modules/billing/application/content-limit.enforcement", () => ({
+  enforceContentLimit: h.mockEnforceContentLimit,
+  // RCCF-72.15B: createService routes through the transactional wrapper.
+  withLaunchCoreContentCapacity: h.mockWithCapacity,
+}));
 vi.mock("next/headers", () => ({ headers: () => ({ get: h.mockHeaderGet }) }));
 vi.mock("@/lib/observability/logger", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/observability/error-tracker", () => ({ captureError: vi.fn() }));
@@ -127,6 +132,9 @@ beforeEach(() => {
   h.mockGetTenantContext.mockResolvedValue({ id: TENANT_A });
   h.mockCheckRateLimit.mockReturnValue({ allowed: true, remaining: 9, resetAt: Date.now() + 60_000, retryAfterMs: 0 });
   h.mockEnforceContentLimit.mockResolvedValue({ ok: true, featureKey: "max_bookings", used: 0, limit: 20 });
+  // Default: capacity available → run the create work (falls back to the mocked
+  // prisma client when tx is undefined, matching the real service behavior).
+  h.mockWithCapacity.mockImplementation(async (_tenantId: string, _featureKey: string, work: (tx: unknown) => Promise<unknown>) => work(undefined));
   h.mockHeaderGet.mockReturnValue("8.8.8.8");
   registerBuiltinComponents();
   h.offerings.push({ id: SERVICE_A, tenantId: TENANT_A, type: "coaching", title: "Strategy Call", price: 2000, status: "published", bookable: true, metadata: { duration: "60 min" } });
@@ -157,7 +165,7 @@ describe("RCCF-67.5 — Service admin bookable toggle", () => {
   });
 
   it("max_services is enforced on create (structured rejection, no record)", async () => {
-    h.mockEnforceContentLimit.mockResolvedValue({ ok: false, featureKey: "max_services", used: 3, limit: 3, reason: "Services limit reached (3/3)." });
+    h.mockWithCapacity.mockResolvedValue({ ok: false, featureKey: "max_services", used: 3, limit: 3, reason: "Services limit reached (3/3)." });
     const res = await createService({ title: "Overflow", price: 1 });
     expect(res.success).toBe(false);
     expect(res.error).toMatch(/limit/i);

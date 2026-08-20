@@ -11,6 +11,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const h = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnforceContentLimit: vi.fn(),
+  // RCCF-72.15B: the core-content create actions now route through the
+  // transactional `withLaunchCoreContentCapacity` wrapper (which internally
+  // calls enforceContentLimit for the global Launch ceiling).
+  mockWithCapacity: vi.fn(),
   mockCourseCreate: vi.fn(),
   mockServiceCreate: vi.fn(),
   mockRevalidatePath: vi.fn(),
@@ -20,7 +24,10 @@ const h = vi.hoisted(() => ({
 vi.mock("next-auth", () => ({ getServerSession: h.mockGetServerSession }));
 vi.mock("next/cache", () => ({ revalidatePath: h.mockRevalidatePath }));
 vi.mock("@/lib/publishing/content-change", () => ({ afterContentChange: h.mockAfterContentChange }));
-vi.mock("@/modules/billing/application/content-limit.enforcement", () => ({ enforceContentLimit: h.mockEnforceContentLimit }));
+vi.mock("@/modules/billing/application/content-limit.enforcement", () => ({
+  enforceContentLimit: h.mockEnforceContentLimit,
+  withLaunchCoreContentCapacity: h.mockWithCapacity,
+}));
 
 vi.mock("@/features/courses/service", () => ({
   courseService: { list: vi.fn(), getById: vi.fn(), create: h.mockCourseCreate, update: vi.fn(), delete: vi.fn() },
@@ -71,6 +78,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.mockGetServerSession.mockResolvedValue({ user: { id: "u1", tenantId: "t1" } });
   h.mockEnforceContentLimit.mockResolvedValue({ ok: true, featureKey: "max_courses", used: 1, limit: -1 });
+  // Default: capacity available → run the create work inside the transaction.
+  h.mockWithCapacity.mockImplementation(async (_tenantId: string, _featureKey: string, work: (tx: unknown) => Promise<unknown>) => work({}));
   h.mockCourseCreate.mockResolvedValue(courseData);
   h.mockServiceCreate.mockResolvedValue(serviceData);
 });
@@ -79,53 +88,37 @@ describe("createCourse — RCCF-72.10 structured limit errors", () => {
   it("returns the created course when the limit has headroom", async () => {
     const res = await createCourse({ title: "Intro Course", price: 0 });
 
-    expect(h.mockEnforceContentLimit).toHaveBeenCalledWith({ tenantId: "t1", featureKey: "max_courses" });
-    expect(h.mockCourseCreate).toHaveBeenCalledWith("t1", expect.objectContaining({ title: "Intro Course" }));
+    expect(h.mockWithCapacity).toHaveBeenCalledWith("t1", "max_courses", expect.any(Function));
+    expect(h.mockCourseCreate).toHaveBeenCalledWith("t1", expect.objectContaining({ title: "Intro Course" }), {});
     expect(res).toEqual({ success: true, data: courseData });
     expect(h.mockRevalidatePath).toHaveBeenCalledWith("/admin/courses");
     expect(h.mockAfterContentChange).toHaveBeenCalledWith("t1");
   });
 
-  it("rejects with a structured result when courses are disabled (Launch max_courses=0) and creates nothing", async () => {
-    h.mockEnforceContentLimit.mockResolvedValue({
-      ok: false,
-      featureKey: "max_courses",
-      used: 0,
-      limit: 0,
-      reason: "Courses is not available on your current plan.",
-      suggestedUpgrade: "creator_grow",
-    });
-
-    const res = await createCourse({ title: "Locked", price: 0 });
-
-    expect(res.success).toBe(false);
-    expect(res.error).toBe("Courses is not available on your current plan.");
-    expect(res).toMatchObject({
-      success: false,
-      featureKey: "max_courses",
-      used: 0,
-      limit: 0,
-      suggestedUpgrade: "creator_grow",
-    });
-    expect(h.mockCourseCreate).not.toHaveBeenCalled();
-    expect(h.mockRevalidatePath).not.toHaveBeenCalled();
-    expect(h.mockAfterContentChange).not.toHaveBeenCalled();
-  });
-
-  it("rejects with the friendly reason when the course limit is reached", async () => {
-    h.mockEnforceContentLimit.mockResolvedValue({
+  it("RCCF-72.15B: rejects with a structured result when the Launch global ceiling is reached and creates nothing", async () => {
+    h.mockWithCapacity.mockResolvedValue({
       ok: false,
       featureKey: "max_courses",
       used: 3,
       limit: 3,
-      reason: "Courses limit reached (3/3).",
+      reason: "Core content limit reached (3/3).",
+      suggestedUpgrade: "creator_grow",
     });
 
     const res = await createCourse({ title: "Fourth", price: 0 });
 
     expect(res.success).toBe(false);
-    expect(res.error).toBe("Courses limit reached (3/3).");
+    expect(res.error).toBe("Core content limit reached (3/3).");
+    expect(res).toMatchObject({
+      success: false,
+      featureKey: "max_courses",
+      used: 3,
+      limit: 3,
+      suggestedUpgrade: "creator_grow",
+    });
     expect(h.mockCourseCreate).not.toHaveBeenCalled();
+    expect(h.mockRevalidatePath).not.toHaveBeenCalled();
+    expect(h.mockAfterContentChange).not.toHaveBeenCalled();
   });
 
   it("returns a generic structured failure when persistence throws (no unhandled rejection)", async () => {
@@ -150,27 +143,27 @@ describe("createService — RCCF-72.10 structured limit errors", () => {
   it("returns the created service when the limit has headroom", async () => {
     const res = await createService({ title: "Consult", price: 1000 });
 
-    expect(h.mockEnforceContentLimit).toHaveBeenCalledWith({ tenantId: "t1", featureKey: "max_services" });
-    expect(h.mockServiceCreate).toHaveBeenCalledWith("t1", expect.objectContaining({ title: "Consult" }));
+    expect(h.mockWithCapacity).toHaveBeenCalledWith("t1", "max_services", expect.any(Function));
+    expect(h.mockServiceCreate).toHaveBeenCalledWith("t1", expect.objectContaining({ title: "Consult" }), {});
     expect(res).toEqual({ success: true, data: serviceData });
     expect(h.mockRevalidatePath).toHaveBeenCalledWith("/admin/services");
     expect(h.mockAfterContentChange).toHaveBeenCalledWith("t1");
   });
 
-  it("rejects with a structured result when the service limit is reached (Launch 3/3) and creates nothing", async () => {
-    h.mockEnforceContentLimit.mockResolvedValue({
+  it("RCCF-72.15B: rejects with a structured result when the Launch global ceiling is reached and creates nothing", async () => {
+    h.mockWithCapacity.mockResolvedValue({
       ok: false,
       featureKey: "max_services",
       used: 3,
       limit: 3,
-      reason: "Services limit reached (3/3).",
+      reason: "Core content limit reached (3/3).",
       suggestedUpgrade: "creator_grow",
     });
 
     const res = await createService({ title: "Overflow", price: 1 });
 
     expect(res.success).toBe(false);
-    expect(res.error).toBe("Services limit reached (3/3).");
+    expect(res.error).toBe("Core content limit reached (3/3).");
     expect(res).toMatchObject({
       success: false,
       featureKey: "max_services",

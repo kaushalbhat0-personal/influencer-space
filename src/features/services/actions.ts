@@ -7,7 +7,7 @@ import { serviceService } from "./service";
 import { serviceFormSchema } from "./validators";
 import type { ServiceData, ServiceFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
-import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { withLaunchCoreContentCapacity } from "@/modules/billing/application/content-limit.enforcement";
 import { contentLimitRejection, type ContentMutationResult } from "@/modules/billing/application/content-limit.result";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 import { prisma } from "@/lib/prisma";
@@ -28,9 +28,14 @@ export async function createService(input: ServiceFormInput): Promise<ContentMut
     if (!tenantId) throw new Error("Unauthorized");
 
     const parsed = serviceFormSchema.parse(input);
-    const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.SERVICES });
-    if (!limit.ok) return contentLimitRejection(limit);
-    const result = await serviceService.create(tenantId, parsed as ServiceFormInput);
+    const outcome = await withLaunchCoreContentCapacity(tenantId, FEATURE_IDS.SERVICES, (tx) =>
+      serviceService.create(tenantId, parsed as ServiceFormInput, tx),
+    );
+    if (typeof outcome === "object" && outcome !== null && "ok" in outcome) {
+      if (!outcome.ok) return contentLimitRejection(outcome);
+      return { success: false, error: "Failed to create service" };
+    }
+    const result = outcome as ServiceData;
     revalidatePath("/admin/services");
     await afterContentChange(tenantId);
     return { success: true, data: result };

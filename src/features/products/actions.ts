@@ -5,9 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { productService } from "./service";
 import { productFormSchema } from "./validators";
-import type { ProductFormInput } from "./types";
+import type { ProductData, ProductFormInput } from "./types";
 import { afterContentChange } from "@/lib/publishing/content-change";
-import { enforceContentLimit } from "@/modules/billing/application/content-limit.enforcement";
+import { withLaunchCoreContentCapacity } from "@/modules/billing/application/content-limit.enforcement";
 import { FEATURE_IDS } from "@/lib/capabilities/constants";
 
 export async function listProducts() {
@@ -31,9 +31,13 @@ export async function createProduct(input: ProductFormInput) {
   if (!tenantId) throw new Error("Unauthorized");
 
   const parsed = productFormSchema.parse(input);
-  const limit = await enforceContentLimit({ tenantId, featureKey: FEATURE_IDS.PRODUCTS });
-  if (!limit.ok) throw new Error(limit.reason);
-  const result = await productService.create(tenantId, parsed as ProductFormInput);
+  const outcome = await withLaunchCoreContentCapacity(tenantId, FEATURE_IDS.PRODUCTS, (tx) =>
+    productService.create(tenantId, parsed as ProductFormInput, tx),
+  );
+  if (typeof outcome === "object" && outcome !== null && "ok" in outcome) {
+    if (!outcome.ok) throw new Error(outcome.reason ?? "Limit reached for this plan.");
+  }
+  const result = outcome as ProductData;
   revalidatePath("/admin/products");
   await afterContentChange(tenantId, { revalidateDashboard: true });
   return result;

@@ -41,15 +41,26 @@ describe("enforceContentLimit — RCCF-08", () => {
     mockPlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "ACTIVE" });
     const r = await enforceContentLimit({ tenantId: "t1", featureKey: FEATURE_IDS.PRODUCTS, used: 3 });
     expect(r.ok).toBe(false);
-    expect(r.reason).toContain("Products");
+    expect(r.reason).toContain("Core content limit reached");
     expect(r.reason).toContain("3/3");
   });
 
-  it("rejects disabled features (max_courses = 0 on Launch) with a clear reason", async () => {
+  it("RCCF-72.15B: courses are capability-available on Launch (no longer max_courses=0)", async () => {
     mockPlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "ACTIVE" });
+    mockCount.mockResolvedValue(0);
     const r = await enforceContentLimit({ tenantId: "t1", featureKey: FEATURE_IDS.COURSES, used: 0 });
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBeUndefined();
+  });
+
+  it("RCCF-72.15B: Launch enforces the global 3-active-core ceiling across types", async () => {
+    mockPlan.mockResolvedValue({ code: "creator_launch", origin: "v2", status: "ACTIVE" });
+    // 3 active core items (product + service + course counts sum to 3).
+    mockCount.mockResolvedValue(3);
+    const r = await enforceContentLimit({ tenantId: "t1", featureKey: FEATURE_IDS.GAMES, used: 3 });
     expect(r.ok).toBe(false);
-    expect(r.reason).toContain("not available");
+    expect(r.reason).toContain("Core content limit reached");
+    expect(r.limit).toBe(3);
     expect(r.suggestedUpgrade).toBeTruthy();
   });
 

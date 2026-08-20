@@ -60,7 +60,8 @@ describe("RCCF-IMPLEMENTATION-70 — canonical commerce registry", () => {
   it("keeps every public highlight backed by a real capability keyword", () => {
     const known = [
       "AI", "website", "domain", "theme", "builder", "products", "services", "gallery",
-      "testimonials", "FAQs", "timeline", "links", "feed", "mobile", "support",
+      "testimonials", "FAQs", "timeline", "links", "feed", "courses", "games",
+      "mobile", "support",
       "unlimited", "analytics", "SEO", "components", "API", "webhooks", "automation",
       "team", "credits", "storage", "generation", "commerce", "CRM", "dashboard",
       "client", "workspace", "commission", "white label", "priority", "growth",

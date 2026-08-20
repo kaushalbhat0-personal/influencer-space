@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import { DEFAULT_PRODUCT_TYPE } from "@/modules/product-types";
 import { DEFAULT_COMMERCE_MODE, normalizeCommerceMode } from "@/config/commerce/commerce-mode";
 import type { ProductData, ProductFormInput } from "./types";
@@ -42,8 +43,9 @@ export const productService = {
     return row ? mapProduct(row as Record<string, unknown>) : null;
   },
 
-  async create(tenantId: string, input: ProductFormInput): Promise<ProductData> {
-    const row = await prisma.product.create({
+  async create(tenantId: string, input: ProductFormInput, tx?: Prisma.TransactionClient): Promise<ProductData> {
+    const client = tx ?? prisma;
+    const row = await client.product.create({
       data: {
         tenantId,
         name: input.name,
