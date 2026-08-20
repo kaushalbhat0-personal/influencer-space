@@ -1,10 +1,15 @@
 import { PrismaClient } from "../../../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 let prisma: PrismaClient | null = null;
 
 export async function getDb(): Promise<PrismaClient> {
   if (!prisma) {
-    prisma = new PrismaClient();
+    prisma = new PrismaClient({
+      adapter: new PrismaPg({
+        connectionString: process.env.DATABASE_URL!,
+      }),
+    });
   }
   return prisma;
 }
