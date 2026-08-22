@@ -1,7 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PAYMENT_PROVIDERS, getPaymentProviderAdapter, getPaymentProviderLabel } from "@/modules/payment-account";
 import { PRODUCT_TYPE_REGISTRY, PRODUCT_TYPE_BY_ID } from "@/modules/product-types";
 import { RazorpayPaymentAdapter } from "@/modules/payment-account/providers/razorpay";
+
+// RCCF-72.18D.6.2 — the adapter now performs a REAL provider probe
+// (authenticated read-only GET /v1/orders?count=1). The razorpay SDK is
+// stubbed so tests are deterministic and never touch the network.
+const h = vi.hoisted(() => ({
+  rzpOrdersAll: vi.fn(),
+}));
+
+vi.mock("razorpay", () => ({
+  default: class {
+    orders = { all: h.rzpOrdersAll };
+  },
+}));
 
 describe("RCCF-IMPLEMENTATION-74 — provider registry", () => {
   it("launches Razorpay and reserves the future providers", () => {
@@ -37,16 +50,28 @@ describe("RCCF-IMPLEMENTATION-74 — product type runtime", () => {
 describe("RCCF-IMPLEMENTATION-74 — Razorpay adapter", () => {
   const adapter = new RazorpayPaymentAdapter();
 
-  it("treats valid keys as configuration-validated (no provider verification claim)", async () => {
-    const r = await adapter.getAccountStatus({ providerKeyId: "rzp_live_abc", providerKeySecret: "secret" });
-    expect(r.success).toBe(true);
-    // RCCF-69.2 — truthfulness: format validation only, never "verified".
-    expect(r.verified).toBe(false);
-    expect(r.status).toBe("configured");
+  beforeEach(() => {
+    h.rzpOrdersAll.mockReset();
   });
 
-  it("rejects missing or malformed keys", async () => {
-    expect((await adapter.getAccountStatus({ providerKeyId: null, providerKeySecret: "x" })).success).toBe(false);
-    expect((await adapter.getAccountStatus({ providerKeyId: "bad_key", providerKeySecret: "x" })).success).toBe(false);
+  // RCCF-72.18D.6.2 — superseded guardrail: format-only validation is gone;
+  // verification is REAL and only claims success when Razorpay authenticates.
+  it("reports VERIFIED only when the provider authenticates the key pair", async () => {
+    h.rzpOrdersAll.mockResolvedValue({ entity: "collection", count: 0, items: [] });
+    const r = await adapter.getAccountStatus({ providerKeyId: "rzp_live_abc", providerKeySecret: "secret" });
+    expect(r.success).toBe(true);
+    expect(r.verified).toBe(true);
+    expect(r.status).toBe("verified");
+    expect(h.rzpOrdersAll).toHaveBeenCalledWith({ count: 1 });
+  });
+
+  it("rejects missing or malformed keys without a provider call", async () => {
+    const missing = await adapter.getAccountStatus({ providerKeyId: null, providerKeySecret: "x" });
+    expect(missing.success).toBe(false);
+    expect(missing.classification).toBe("credential_failed");
+    const malformed = await adapter.getAccountStatus({ providerKeyId: "bad_key", providerKeySecret: "x" });
+    expect(malformed.success).toBe(false);
+    expect(malformed.classification).toBe("credential_failed");
+    expect(h.rzpOrdersAll).not.toHaveBeenCalled();
   });
 });

@@ -25,7 +25,7 @@ export const COMMERCE_STRATEGY_REGISTRY: CommerceStrategyDefinition[] = [
   {
     id: "DIRECT_CREATOR",
     label: "Direct Creator",
-    description: "Future. The creator is the merchant of record for product sales. Funds land in the creator's own Razorpay account. CreatorStore never touches product revenue.",
+    description: "Active. The creator is the merchant of record for product sales. Funds land in the creator's own Razorpay account. CreatorStore never touches product revenue.",
     merchantOfRecord: "creator",
     supportsTransfers: false,
     supportsSubscriptions: true,
@@ -37,7 +37,7 @@ export const COMMERCE_STRATEGY_REGISTRY: CommerceStrategyDefinition[] = [
     requiresSettlement: true,
     requiresShipping: false,
     requiresDigitalDelivery: false,
-    status: "future",
+    status: "active",
   },
   {
     id: "MARKETPLACE",

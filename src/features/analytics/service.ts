@@ -17,7 +17,9 @@ export const analyticsService = {
       }),
     ]);
 
-    const paidOrders = orders.filter((o) => o.status === "PAID" || o.status === "COMPLETED");
+    // RCCF-72.18D.5.2-A: "PAID" was dead ProductOrder vocabulary (never
+    // written); COMPLETED is the canonical paid state.
+    const paidOrders = orders.filter((o) => o.status === "COMPLETED");
     const totalRevenue = paidOrders.reduce((sum, o) => sum + o.amount, 0);
     const conversions = paidOrders.length;
     const totalVisitors = sessions.length;

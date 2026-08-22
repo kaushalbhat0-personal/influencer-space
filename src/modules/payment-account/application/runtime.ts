@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { cache as reactCache } from "react";
 import { encrypt, decrypt } from "@/lib/crypto";
 import { logAction } from "@/lib/audit";
+import { captureError } from "@/lib/observability/error-tracker";
 import { runtimeEventBus } from "@/modules/event-runtime";
 import { resolveCommerceStrategy } from "@/modules/commerce-strategy";
 import { getPaymentProviderAdapter } from "../providers/registry";
@@ -101,29 +102,76 @@ export async function verifyPaymentAccount(tenantId: string, actor: string): Pro
   const adapter = getPaymentProviderAdapter(row.provider);
   if (!adapter) return { success: false, error: "No adapter for provider" };
 
-  const secretId = row.providerKeyId ? decrypt(row.providerKeyId) : null;
-  const secretKey = row.providerKeySecret ? decrypt(row.providerKeySecret) : null;
+  // RCCF-72.18D.6.2 — decrypt strictly in memory. A decryption failure means
+  // OUR stored ciphertext/env is unreadable — it is NEVER proof about the
+  // credentials themselves, so persisted verification state is NOT mutated.
+  let secretId: string | null = null;
+  let secretKey: string | null = null;
+  try {
+    secretId = row.providerKeyId ? decrypt(row.providerKeyId) : null;
+    secretKey = row.providerKeySecret ? decrypt(row.providerKeySecret) : null;
+  } catch (err) {
+    captureError(err instanceof Error ? err : new Error("credential decrypt failed"), {
+      service: "payment-account",
+      operation: "verifyDecrypt",
+      tenantId,
+    });
+    return { success: false, error: "Stored credentials could not be decrypted. Please re-save your keys." };
+  }
+
+  // Snapshot the row version BEFORE any provider I/O — the optimistic
+  // concurrency guard must compare against what we READ, never against a
+  // re-evaluated (possibly concurrently rotated) value.
+  const readVersion = row.updatedAt;
+
   const result = await adapter.getAccountStatus({ providerKeyId: secretId, providerKeySecret: secretKey });
 
-  // RCCF-69.2 — truthfulness: the adapter reports only that credentials are
-  // present and well-formatted ("configured"). It does NOT perform a real
-  // provider API verification, so we must never write `verified`. The state is
-  // persisted as `configured` and the caller is told verification is not real.
-  if (result.success && result.status === "configured") {
-    await prisma.paymentAccount.update({
-      where: { tenantId },
-      data: { verificationStatus: "configured", status: "active" },
+  // ── RCCF-72.18D.6.2 — classification-driven persistence ──────────────────
+  // verified          → persist `verified` (+ lastVerifiedAt), guarded so a
+  //                     credential rotation racing the probe is never marked.
+  // credential_failed → PERMANENT provider rejection → persist `failed`.
+  // transient/unknown → NO WRITE AT ALL: an outage must never destroy a
+  //                     previously valid state, and an unknown answer proves
+  //                     nothing. Fail-closed readiness handles the rest.
+  if (result.classification === "verified") {
+    // Optimistic-concurrency guard on the EXISTING updatedAt column (no new
+    // schema field): if keys were re-saved while the provider call was in
+    // flight, updatedAt moved and this stale result must NOT attach.
+    const applied = await prisma.paymentAccount.updateMany({
+      where: { tenantId, status: { not: "disconnected" }, updatedAt: readVersion },
+      data: { verificationStatus: "verified", lastVerifiedAt: new Date(), status: "active" },
     });
+    if (applied.count === 0) {
+      return { success: false, error: "Credentials changed during verification. Please verify again." };
+    }
     await emitEvent("payment.account.updated", tenantId, row.id, { provider: row.provider });
-    await logAction(tenantId, "payment:account-configured", { accountId: row.id, by: actor }).catch(() => {});
-    return {
-      success: true,
-      verified: false,
-      error: "Credentials format validated. Provider-side verification is not available for Direct Creator mode yet.",
-    };
+    await logAction(tenantId, "payment:account-provider-verified", { accountId: row.id, by: actor }).catch(() => {});
+    return { success: true, verified: true };
   }
-  await prisma.paymentAccount.update({ where: { tenantId }, data: { verificationStatus: "failed" } });
-  return { success: false, error: result.error ?? "Verification failed" };
+
+  if (result.classification === "credential_failed") {
+    const applied = await prisma.paymentAccount
+      .updateMany({
+        where: { tenantId, updatedAt: readVersion },
+        data: { verificationStatus: "failed" },
+      })
+      .catch(() => ({ count: 0 }));
+    if (applied.count > 0) {
+      await emitEvent("payment.account.updated", tenantId, row.id, { provider: row.provider });
+      await logAction(tenantId, "payment:account-provider-failed", { accountId: row.id, by: actor }).catch(() => {});
+    }
+    return { success: false, error: result.error ?? "Provider rejected these credentials" };
+  }
+
+  // transient | unknown | legacy adapters without a classification.
+  if (result.classification === "unknown") {
+    captureError(new Error(result.error ?? "unexpected provider verification answer"), {
+      service: "payment-account",
+      operation: "verifyUnknown",
+      tenantId,
+    });
+  }
+  return { success: false, error: result.error ?? "Verification could not be completed. Try again shortly." };
 }
 
 export async function disconnectPaymentAccount(tenantId: string, actor: string): Promise<{ success: boolean; error?: string }> {
@@ -153,11 +201,20 @@ export const computePaymentReadiness = requestCache(async (tenantId: string): Pr
     { key: "configured", label: "Account configured", met: !!(account && (account.hasProviderKeys || account.upiId || account.bankAccountName)), severity: "required" as const },
     { key: "identity", label: "Account holder identified", met: !!account?.accountHolderName, severity: "required" as const },
     { key: "settlement", label: "Settlement detail provided", met: !!(account && (account.settlementMode === "upi" ? !!account.upiId : !!(account.bankAccountName && account.hasBankAccountNumber && account.ifsc))), severity: "required" as const },
-    { key: "verification", label: "Provider verification complete", met: account?.verificationStatus === "verified", severity: "required" as const },
+    // RCCF-72.18D.6.2 — the verification requirement is now REAL provider
+    // verification (`verified`), not format validation (`configured`).
+    // Fail-closed: configured/pending/failed/unverified accounts stay blocked.
+    { key: "verification", label: "Provider credentials verified", met: account?.verificationStatus === "verified", severity: "required" as const },
   ];
 
   // For PLATFORM_COLLECT the creator does not need their own account.
-  const needed = strategy.id === "DIRECT_CREATOR" ? requirements : requirements.map((r) => ({ ...r, met: r.key === "strategy" || r.key === "verification" ? true : r.met }));
+  // For DIRECT_CREATOR, only provider-API-verified credentials establish
+  // eligibility (RCCF-72.18D.6.2). This is per-tenant readiness ONLY — the
+  // DIRECT_CREATOR strategy itself remains `future` in the canonical registry;
+  // activation is a separate, explicitly authorized RCCF.
+  const needed = strategy.id === "DIRECT_CREATOR"
+    ? requirements.map((r) => r.key === "verification" ? { ...r, met: account?.verificationStatus === "verified" } : r)
+    : requirements;
 
   const missing = needed.filter((r) => !r.met).map((r) => r.label);
   const readiness: PaymentReadiness = strategy.id === "PLATFORM_COLLECT" ? "ready" : missing.length === 0 ? "ready" : missing.length <= 2 ? "warning" : "blocked";

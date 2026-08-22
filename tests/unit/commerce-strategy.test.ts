@@ -22,19 +22,25 @@ describe("RCCF-IMPLEMENTATION-73 — commerce strategy registry", () => {
     }
   });
 
-  it("PLATFORM_COLLECT is the default and the only active strategy", () => {
+  it("PLATFORM_COLLECT remains the default strategy; DIRECT_CREATOR joined it as active (D.6.5)", () => {
     expect(DEFAULT_COMMERCE_STRATEGY_ID).toBe("PLATFORM_COLLECT");
-    const active = COMMERCE_STRATEGY_REGISTRY.filter((s) => s.status === "active");
-    expect(active.map((s) => s.id)).toEqual(["PLATFORM_COLLECT"]);
-    expect(active[0]!.merchantOfRecord).toBe("platform");
-    expect(active[0]!.requiresLinkedAccount).toBe(false);
-    expect(active[0]!.requiresSettlement).toBe(false);
+    // RCCF-72.18D.6.5 modernized this guardrail: pre-flip revisions asserted
+    // PLATFORM_COLLECT was the ONLY active strategy. The authorized activation
+    // makes DIRECT_CREATOR the second active strategy; platform behavior
+    // itself is unchanged.
+    const active = COMMERCE_STRATEGY_REGISTRY.filter((s) => s.status === "active").map((s) => s.id);
+    expect(active).toEqual(["PLATFORM_COLLECT", "DIRECT_CREATOR"]);
+    expect(COMMERCE_STRATEGY_BY_ID["PLATFORM_COLLECT"]!.merchantOfRecord).toBe("platform");
+    expect(COMMERCE_STRATEGY_BY_ID["PLATFORM_COLLECT"]!.requiresLinkedAccount).toBe(false);
+    expect(COMMERCE_STRATEGY_BY_ID["PLATFORM_COLLECT"]!.requiresSettlement).toBe(false);
   });
 
-  it("DIRECT_CREATOR is declared future and needs a linked account + settlement", () => {
+  it("DIRECT_CREATOR is active and requires a linked account + settlement", () => {
     const dc = COMMERCE_STRATEGY_BY_ID["DIRECT_CREATOR"];
     expect(dc).toBeDefined();
-    expect(dc!.status).toBe("future");
+    // RCCF-72.18D.6.5 — `future` gated the strategy pre-activation; `active`
+    // is the canonical state since the authorized flip.
+    expect(dc!.status).toBe("active");
     expect(dc!.merchantOfRecord).toBe("creator");
     expect(dc!.requiresLinkedAccount).toBe(true);
     expect(dc!.requiresSettlement).toBe(true);

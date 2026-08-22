@@ -19,6 +19,14 @@ const REQUIRED = [
   "TOKEN_ENCRYPTION_KEY",
   "RAZORPAY_KEY_ID",
   "RAZORPAY_KEY_SECRET",
+  // RCCF-72.18D.7.4 — D.6.3 deferred these two to the activation/deployment
+  // boundary (this ticket). Both fail closed at runtime already:
+  //   - missing webhook secret → /api/webhooks/razorpay answers 500 and never
+  //     mutates (all DIRECT_CREATOR reconciliation dies silently);
+  //   - missing public key → PLATFORM_COLLECT checkout cannot initialize in
+  //     the browser. Deployment validation must therefore refuse before ship.
+  "RAZORPAY_WEBHOOK_SECRET",
+  "NEXT_PUBLIC_RAZORPAY_KEY_ID",
   "DEFAULT_TENANT_SUBDOMAIN",
 ];
 
@@ -40,10 +48,12 @@ console.log("\n🔐 Environment Variable Validation\n");
 for (const key of REQUIRED) {
   const value = process.env[key];
   if (!value || value.startsWith("your-") || value === "") {
-    console.error(`  ❌ ${key} — MISSING or placeholder`);
+    console.error(`  ✗ ${key} — MISSING or placeholder`);
     exitCode = 1;
   } else {
-    console.log(`  ✅ ${key} — ${value.length > 20 ? value.slice(0, 12) + "..." : "Set"}`);
+    // RCCF-72.18D.7.4 — presence-only reporting. Never echo even a prefix of
+    // credential values into deployment logs.
+    console.log(`  ✅ ${key} — Set (${value.length} chars)`);
   }
 }
 

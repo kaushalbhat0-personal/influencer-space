@@ -2,7 +2,44 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { DEFAULT_PRODUCT_TYPE } from "@/modules/product-types";
 import { DEFAULT_COMMERCE_MODE, normalizeCommerceMode } from "@/config/commerce/commerce-mode";
+import type { CommerceMode } from "@/config/commerce/commerce-mode";
 import type { ProductData, ProductFormInput } from "./types";
+
+/**
+ * RCCF-72.18D.7.1 — Boundary A (publishing/selling gate).
+ *
+ * An ONLINE or BOTH offering can only become sellable when the tenant's
+ * canonical payment readiness is `ready`. The check REUSES the single
+ * authoritative readiness runtime (`computePaymentReadiness`, which resolves
+ * strategy → PaymentAccount → verified credentials → settlement) — no second
+ * readiness implementation exists. WHATSAPP-only offerings collect no online
+ * payment and are exempt.
+ *
+ * Enforced on: creation that results in a sellable state, updates that
+ * TRANSITION into a sellable state, and sellable products whose mode upgrades
+ * from WHATSAPP to ONLINE/BOTH. Pure metadata edits of an already-sellable
+ * product with unchanged mode are NOT blocked (an already-published offering
+ * stays structurally intact; Boundary C — checkout readiness — remains the
+ * final money authority if readiness lapses later).
+ */
+export const PAYMENT_SETUP_REQUIRED = "PAYMENT_SETUP_REQUIRED";
+
+function isSellableState(status: string | undefined, isActive: boolean | undefined): boolean {
+  return (status ?? "PUBLISHED") === "PUBLISHED" && (isActive ?? true);
+}
+
+async function assertOnlineSellingReadiness(tenantId: string, mode: CommerceMode): Promise<void> {
+  if (mode === "WHATSAPP") return;
+  const { computePaymentReadiness } = await import("@/modules/payment-account");
+  const readiness = await computePaymentReadiness(tenantId);
+  if (readiness.readiness !== "ready") {
+    const err = new Error(
+      "Payment setup required. Connect and verify your payment account before selling this offering online.",
+    ) as Error & { code: string };
+    err.code = PAYMENT_SETUP_REQUIRED;
+    throw err;
+  }
+}
 
 function mapProduct(row: Record<string, unknown>): ProductData {
   return {
@@ -44,6 +81,12 @@ export const productService = {
   },
 
   async create(tenantId: string, input: ProductFormInput, tx?: Prisma.TransactionClient): Promise<ProductData> {
+    // RCCF-72.18D.7.1 — Boundary A: a new ONLINE/BOTH product is sellable the
+    // moment it is created (PUBLISHED defaults), so payment readiness is
+    // required up front. WHATSAPP-only creation needs no payment setup.
+    if (isSellableState(input.status, input.isActive)) {
+      await assertOnlineSellingReadiness(tenantId, normalizeCommerceMode(input.commerceMode));
+    }
     const client = tx ?? prisma;
     const row = await client.product.create({
       data: {
@@ -69,8 +112,27 @@ export const productService = {
   async update(id: string, tenantId: string, input: Partial<ProductFormInput>, tx?: Prisma.TransactionClient): Promise<ProductData> {
     // VALIDATION-01 V-035: scope product updates to the session tenant.
     const client = tx ?? prisma;
-    const existing = await client.product.findFirst({ where: { id, tenantId }, select: { id: true } });
+    const existing = await client.product.findFirst({
+      where: { id, tenantId },
+      select: { id: true, status: true, isActive: true, archivedAt: true, commerceMode: true },
+    });
     if (!existing) throw new Error("Product not found");
+
+    // RCCF-72.18D.7.1 — Boundary A: enforce readiness when this update would
+    // GRANT online sellability (draft→published transition, reactivation, or a
+    // WHATSAPP→ONLINE/BOTH mode upgrade on an already-sellable product).
+    const wasSellable =
+      existing.status === "PUBLISHED" && existing.isActive === true && existing.archivedAt === null;
+    const willBeSellable =
+      (input.status ?? existing.status) === "PUBLISHED" &&
+      (input.isActive ?? existing.isActive) === true &&
+      existing.archivedAt === null;
+    const previousMode = normalizeCommerceMode(existing.commerceMode);
+    const effectiveMode = input.commerceMode !== undefined ? normalizeCommerceMode(input.commerceMode) : previousMode;
+    if (willBeSellable && effectiveMode !== "WHATSAPP" && (!wasSellable || previousMode === "WHATSAPP")) {
+      await assertOnlineSellingReadiness(tenantId, effectiveMode);
+    }
+
     const row = await client.product.update({
       where: { id },
       data: {

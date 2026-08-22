@@ -29,8 +29,8 @@ beforeEach(() => { vi.clearAllMocks(); });
 describe("Analytics service", () => {
   it("getData returns analytics", async () => {
     mockOrdersFindMany.mockResolvedValue([
-      { amount: 100, status: "PAID", createdAt: new Date() },
-      { amount: 200, status: "PAID", createdAt: new Date() },
+      { amount: 100, status: "COMPLETED", createdAt: new Date() },
+      { amount: 200, status: "COMPLETED", createdAt: new Date() },
     ]);
     mockProductCount.mockResolvedValue(5);
     mockGalleryCount.mockResolvedValue(10);
@@ -66,7 +66,7 @@ describe("Analytics service", () => {
 
   it("calculates conversion rate correctly", async () => {
     mockOrdersFindMany.mockResolvedValue([
-      { amount: 50, status: "PAID", createdAt: new Date() },
+      { amount: 50, status: "COMPLETED", createdAt: new Date() },
     ]);
     mockProductCount.mockResolvedValue(1);
     mockGalleryCount.mockResolvedValue(1);

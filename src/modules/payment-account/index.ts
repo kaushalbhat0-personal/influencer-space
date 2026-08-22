@@ -1,6 +1,6 @@
 // ── Payment Account — Public API ────────────────────────────
 export { PAYMENT_PROVIDERS, getPaymentProviderAdapter, getPaymentProviderLabel } from "./providers/registry";
-export type { PaymentProviderAdapter, PaymentCheckoutInput, PaymentCheckoutResult, PaymentVerificationInput, PaymentVerificationResult, PaymentRefundInput, PaymentAccountStatusResult } from "./providers/types";
+export type { PaymentProviderAdapter, PaymentCheckoutInput, PaymentCheckoutResult, PaymentVerificationInput, PaymentVerificationResult, PaymentRefundInput, PaymentRefundResult, PaymentAccountStatusResult } from "./providers/types";
 export {
   getPaymentAccount,
   savePaymentAccount,

@@ -57,10 +57,10 @@ export function PaymentsClient({ account, readiness, error }: Props) {
   const verify = async () => {
     setBusy("verify"); setMsg(null);
     const r = await verifyMyPaymentAccount();
-    // RCCF-69.2 — the action only validates credential format; it does NOT claim
-    // provider-side verification. Show the truthful message (which includes any
-    // "not available" note) instead of "Account verified."
-    setMsg(r.success ? (r.error ?? "Credentials format validated.") : r.error ?? "Verification failed");
+    // RCCF-72.18D.6.2 — verification is a REAL provider probe now: success
+    // means Razorpay authenticated the stored key pair. Failure messages are
+    // the safe, provider-derived strings from the runtime (never credentials).
+    setMsg(r.success ? (r.error ?? "Provider credentials verified.") : r.error ?? "Verification failed");
     if (r.success) setTimeout(() => window.location.reload(), 700);
     setBusy(null);
   };
@@ -106,11 +106,20 @@ export function PaymentsClient({ account, readiness, error }: Props) {
 
       {/* Status */}
       {account && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatusCard label="Provider" value={PAYMENT_PROVIDERS.find((p) => p.id === account.provider)?.label ?? account.provider} />
-          <StatusCard label="Status" value={account.status} />
-          <StatusCard label="Verification" value={account.verificationStatus} />
-          <StatusCard label="Settlement" value={account.settlementMode} />
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatusCard label="Provider" value={PAYMENT_PROVIDERS.find((p) => p.id === account.provider)?.label ?? account.provider} />
+            <StatusCard label="Status" value={account.status} />
+            <StatusCard label="Verification" value={account.verificationStatus} />
+            <StatusCard label="Settlement" value={account.settlementMode} />
+          </div>
+          {/* RCCF-72.18D.6.3 — operational visibility only. Safe timestamp of
+              the last successful provider probe; never credentials/responses. */}
+          {account.lastVerifiedAt && (
+            <p className="text-[11px] text-zinc-500">
+              Last verified: {new Date(account.lastVerifiedAt).toLocaleString()}
+            </p>
+          )}
         </div>
       )}
 

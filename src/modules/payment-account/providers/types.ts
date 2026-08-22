@@ -19,6 +19,14 @@ export interface PaymentCheckoutInput {
     description: string;
     customerEmail?: string | null;
     customerName?: string | null;
+    /**
+     * RCCF-72.18D.6.1 — extra server-generated key/value pairs attached to the
+     * provider checkout entity (Payment Link notes for Razorpay). Razorpay
+     * propagates link notes onto every payment made through the link, which is
+     * what lets the signed webhook reconcile a Payment Link payment back to its
+     * exact ProductOrder WITHOUT trusting client/tenant data from the wire.
+     */
+    metadata?: Record<string, string>;
   };
 }
 
@@ -49,8 +57,15 @@ export interface PaymentRefundInput {
   providerKeyId?: string | null;
   providerKeySecret?: string | null;
   providerPaymentId: string;
-  amount?: number;
+  amount: number;  // in rupees — converted to paise internally
   currency?: string;
+}
+
+export interface PaymentRefundResult {
+  success: boolean;
+  providerRefundId?: string;
+  status?: string;
+  error?: string;
 }
 
 export interface PaymentAccountStatusResult {
@@ -58,6 +73,20 @@ export interface PaymentAccountStatusResult {
   verified?: boolean;
   status?: string;
   error?: string;
+  /**
+   * RCCF-72.18D.6.2 — provider-answer classification.
+   *
+   *  - "verified"          — provider authenticated the credential pair.
+   *  - "credential_failed" — PERMANENT: provider rejected the credentials
+   *                          (401/403) or the stored pair is unusable.
+   *  - "transient"         — provider outage / rate limit / network failure:
+   *                          nothing can be concluded about the credentials;
+   *                          callers must NOT mutate persisted state.
+   *  - "unknown"           — unexpected/malformed provider answer.
+   *
+   * Optional so adapters that cannot verify (manual etc.) stay compatible.
+   */
+  classification?: "verified" | "credential_failed" | "transient" | "unknown";
 }
 
 /**
@@ -73,7 +102,7 @@ export interface PaymentProviderAdapter {
   /** Verify a payment was captured for the expected amount. */
   verifyPayment(input: PaymentVerificationInput): Promise<PaymentVerificationResult>;
   /** Refund a payment. May be unimplemented for a provider. */
-  refundPayment?(input: PaymentRefundInput): Promise<{ success: boolean; error?: string }>;
+  refundPayment?(input: PaymentRefundInput): Promise<PaymentRefundResult>;
   /** Probe the merchant account status (keys valid? verified?). */
   getAccountStatus(input: { providerKeyId?: string | null; providerKeySecret?: string | null }): Promise<PaymentAccountStatusResult>;
 }

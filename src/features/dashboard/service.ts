@@ -24,7 +24,9 @@ export const dashboardService = {
     const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website, bookings, offerings, orders] = await Promise.all([
       prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true, status: true } }),
       prisma.productOrder.aggregate({
-        where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
+        // RCCF-72.18D.6.4 — dead "PAID" predicate removed (D.5.2-A established
+        // COMPLETED as the only written paid state; no writer creates PAID).
+        where: { tenantId, status: "COMPLETED" },
         _sum: { amount: true },
       }),
       prisma.galleryImage.count({ where: { tenantId } }),
@@ -40,7 +42,7 @@ export const dashboardService = {
       prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } }),
       safeMetric(() => prisma.booking.count({ where: { tenantId } }), 0),
       safeMetric(() => prisma.offering.count({ where: { tenantId } }), 0),
-      prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
+      prisma.productOrder.count({ where: { tenantId, status: "COMPLETED" } }),
     ]);
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 

@@ -24,6 +24,7 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ProductData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState<ProductFormInput>({
     name: "",
     price: 0,
@@ -60,6 +61,7 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError(null);
     try {
       if (editing) {
         const updated = await updateProduct(editing.id, form);
@@ -69,6 +71,16 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
         setProducts((prev) => [created, ...prev]);
       }
       setDrawerOpen(false);
+    } catch (err) {
+      // RCCF-72.18D.7.1 — guided creator UX for the selling gate: point the
+      // creator at the canonical payment setup surface. Unknown failures
+      // rethrow so nothing is silently swallowed.
+      const message = err instanceof Error ? err.message : "";
+      if (message.startsWith("Payment setup required")) {
+        setSaveError(`${message} Open Admin → Payments to connect and verify your account.`);
+      } else {
+        throw err;
+      }
     } finally {
       setIsSaving(false);
     }
@@ -208,6 +220,12 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
               }));
             }}
           />
+          {saveError && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-200">
+              {saveError}{" "}
+              <a href="/admin/payments" className="font-semibold text-cyan-300 underline">Set up payments</a>
+            </div>
+          )}
           <div className="flex gap-4">
             <button
               onClick={handleSave}

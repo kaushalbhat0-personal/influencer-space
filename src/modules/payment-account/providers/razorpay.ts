@@ -4,7 +4,7 @@
 // customer pays the creator's Razorpay and funds settle to the creator's bank.
 
 import Razorpay from "razorpay";
-import type { PaymentProviderAdapter, PaymentCheckoutInput, PaymentCheckoutResult, PaymentVerificationInput, PaymentVerificationResult, PaymentRefundInput, PaymentAccountStatusResult } from "./types";
+import type { PaymentProviderAdapter, PaymentCheckoutInput, PaymentCheckoutResult, PaymentVerificationInput, PaymentVerificationResult, PaymentRefundInput, PaymentRefundResult, PaymentAccountStatusResult } from "./types";
 
 function creatorRazorpay(keyId?: string | null, keySecret?: string | null): { client: Razorpay | null; missing: boolean } {
   if (!keyId || !keySecret) return { client: null, missing: true };
@@ -29,7 +29,19 @@ export class RazorpayPaymentAdapter implements PaymentProviderAdapter {
         customer: input.order.customerEmail
           ? { email: input.order.customerEmail, ...(input.order.customerName ? { name: input.order.customerName } : {}) }
           : undefined,
-        notes: { referenceId: input.order.referenceId, creatorStore: "true" },
+        // RCCF-72.18D.6.1 + RCCF-72.18D.7.3 — merge the server-generated
+        // reconciliationRef into the link notes. Razorpay propagates Payment
+        // Link notes onto payments, giving the signed webhook a server-
+        // persisted, order-unique identity. Since D.7.3 the reference_id IS the
+        // per-checkout reconciliationRef (Razorpay enforces global uniqueness on
+        // reference_id, so reusing the productId broke repeat purchases); the
+        // notes echo it so webhook reconciliation never depends on provider-only
+        // fields.
+        notes: {
+          referenceId: input.order.referenceId,
+          creatorStore: "true",
+          ...(input.order.metadata ?? {}),
+        },
       });
       return { success: true, checkoutUrl: link.short_url, providerReference: link.id };
     } catch (err) {
@@ -51,27 +63,107 @@ export class RazorpayPaymentAdapter implements PaymentProviderAdapter {
     }
   }
 
-  async refundPayment(input: PaymentRefundInput): Promise<{ success: boolean; error?: string }> {
+  async refundPayment(input: PaymentRefundInput): Promise<PaymentRefundResult> {
     const { client, missing } = creatorRazorpay(input.providerKeyId, input.providerKeySecret);
     if (missing) return { success: false, error: "Creator Razorpay keys not configured" };
     try {
-      await (client as unknown as { payments: { refund(id: string, opts?: { amount?: number }): Promise<unknown> } }).payments.refund(input.providerPaymentId, input.amount ? { amount: Math.round(input.amount * 100) } : undefined);
-      return { success: true };
+      const refund = await (client as unknown as {
+        payments: {
+          refund(id: string, opts?: { amount?: number }): Promise<{ id: string; status: string; amount?: number }>;
+        };
+      }).payments.refund(
+        input.providerPaymentId,
+        input.amount ? { amount: Math.round(input.amount * 100) } : undefined,
+      );
+      return {
+        success: true,
+        providerRefundId: refund.id,
+        status: refund.status,
+      };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : "Refund failed" };
     }
   }
 
   async getAccountStatus(input: { providerKeyId?: string | null; providerKeySecret?: string | null }): Promise<PaymentAccountStatusResult> {
-    // RCCF-69.2 — truthful configuration validation. This checks that the stored
-    // credentials are PRESENT and well-FORMATTED. It is NOT a provider-side
-    // verification: no Razorpay API call is made, so the account must never be
-    // reported as "verified" here. DIRECT_CREATOR (the only consumer of this
-    // state) is gated off until real provider verification exists.
-    const kid = input.providerKeyId ?? "";
-    const ks = input.providerKeySecret ?? "";
-    if (!kid || !ks) return { success: false, error: "Keys missing" };
-    if (!kid.startsWith("rzp_")) return { success: false, error: "Invalid key id format" };
-    return { success: true, verified: false, status: "configured" };
+    // ── RCCF-72.18D.6.2 — REAL provider credential verification ─────────────
+    // Razorpay authenticates EVERY API call with Basic Auth (key_id:key_secret)
+    // and provides no dedicated "auth check" endpoint. The canonical safe probe
+    // is a minimal authenticated READ — `GET /v1/orders?count=1`:
+    //   read-only + non-financial (creates nothing) + idempotent + low-risk.
+    // A 200 collection response proves the pair authenticates; 401/403 proves
+    // it does not. Transient infrastructure failures classify separately so
+    // callers never mistake an outage for bad credentials.
+    const keyId = input.providerKeyId ?? "";
+    const keySecret = input.providerKeySecret ?? "";
+    if (!keyId || !keySecret) {
+      return { success: false, verified: false, status: "failed", classification: "credential_failed", error: "Keys missing" };
+    }
+    if (!keyId.startsWith("rzp_")) {
+      return { success: false, verified: false, status: "failed", classification: "credential_failed", error: "Invalid key id format" };
+    }
+
+    const { client } = creatorRazorpay(keyId, keySecret);
+    if (!client) {
+      return { success: false, verified: false, status: "failed", classification: "credential_failed", error: "Keys missing" };
+    }
+
+    try {
+      // The SDK's TS types are loose for list params/results — typed cast,
+      // consistent with the other operations in this adapter.
+      const result = await (
+        client as unknown as {
+          orders: { all(args: Record<string, unknown>): Promise<{ entity?: string; count?: number; items?: unknown[] }> };
+        }
+      ).orders.all({ count: 1 });
+
+      if (result && typeof result === "object" && result.entity === "collection") {
+        return { success: true, verified: true, status: "verified", classification: "verified" };
+      }
+      return {
+        success: false,
+        verified: false,
+        status: "unknown",
+        classification: "unknown",
+        error: "Unexpected provider verification response",
+      };
+    } catch (err) {
+      // The razorpay-node client surfaces HTTP failures with `.statusCode`
+      // (request-lib style errors). Classify defensively — never treat an
+      // outage as a credential failure and vice versa.
+      const statusCode =
+        err && typeof err === "object" && typeof (err as { statusCode?: unknown }).statusCode === "number"
+          ? ((err as { statusCode: number }).statusCode)
+          : null;
+
+      if (statusCode === 401 || statusCode === 403) {
+        return {
+          success: false,
+          verified: false,
+          status: "failed",
+          classification: "credential_failed",
+          error: statusCode === 403 ? "Credentials rejected by provider (insufficient permission)" : "Provider rejected these credentials",
+        };
+      }
+      if (statusCode !== null && (statusCode === 429 || statusCode >= 500)) {
+        return {
+          success: false,
+          verified: false,
+          status: "unknown",
+          classification: "transient",
+          error: "Payment provider is temporarily unavailable. Try again shortly.",
+        };
+      }
+      // No HTTP status at all → network/DNS/timeout class failure.
+      const message = err instanceof Error ? err.message : "";
+      const transientSignal = /timeout|timed out|econn|enotfound|ehostunreach|enetunreach|eai_again|socket/i.test(message);
+      return {
+        success: false,
+        verified: false,
+        status: "unknown",
+        classification: transientSignal ? "transient" : "unknown",
+        error: transientSignal ? "Could not reach the payment provider. Try again shortly." : "Verification could not be completed",
+      };
+    }
   }
 }

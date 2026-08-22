@@ -90,7 +90,20 @@ export async function updateFulfillment(tenantId: string, fulfillmentId: string,
   if (nextStatus === "shipped" && !f.shippedAt) data.shippedAt = new Date();
   if (nextStatus === "delivered" && !f.deliveredAt) data.deliveredAt = new Date();
 
-  const updated = await prisma.orderFulfillment.update({ where: { id: f.id }, data });
+  // RCCF-72.18D.5.2-C — smallest-safe concurrency guard: the write is
+  // conditioned on the status we validated against, so a racing mutation that
+  // already moved the row cannot land a second transition derived from stale
+  // state (no contradictory final status/timeline). count===0 ⇒ lost race or
+  // concurrent delete; the caller is told the truth instead of pretending.
+  const raced = await prisma.orderFulfillment.updateMany({
+    where: { id: f.id, tenantId, status: f.status },
+    data,
+  });
+  if (raced.count === 0) {
+    return { success: false, error: "This fulfillment was just updated elsewhere. The latest state is shown." };
+  }
+  const updated = await prisma.orderFulfillment.findUnique({ where: { id: f.id } });
+  if (!updated) return { success: false, error: "Fulfillment not found" };
 
   await emit("fulfillment.updated", tenantId, f.id, { status: nextStatus });
   if (nextStatus === "shipped") await emit("shipment.created", tenantId, f.id, { trackingNumber: input.trackingNumber ?? null, courier: input.courier ?? null });
@@ -131,7 +144,7 @@ export async function generateDownload(tenantId: string, fulfillmentId: string, 
 
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + DOWNLOAD_TTL_MS);
-  const updated = await prisma.orderFulfillment.update({
+  await prisma.orderFulfillment.update({
     where: { id: f.id },
     data: { downloadToken: token, downloadExpiresAt: expiresAt, downloadCount: 0, status: "ready", timeline: [...((f.timeline as Array<{ status: string; at: string }>) ?? []), { status: "ready", at: new Date().toISOString(), by }] as never },
   });
@@ -168,6 +181,21 @@ export async function resolveDownloadToken(token: string): Promise<{ ok: boolean
 export async function listFulfillments(tenantId: string, params: { status?: string; search?: string; limit?: number; offset?: number } = {}): Promise<{ items: Array<FulfillmentView & { productName: string; customer: string | null; amount: number }>; total: number }> {
   const where: Record<string, unknown> = { tenantId };
   if (params.status) where.status = params.status;
+  // RCCF-72.18D.5.2-A (S-7 fix): search now runs INSIDE the database WHERE
+  // clause so it applies before count/pagination. Previously the query took
+  // the first N rows and JS-filtered them afterwards, silently missing
+  // matches beyond the first page and returning a mismatched total.
+  if (params.search && params.search.trim()) {
+    const q = params.search.trim();
+    where.order = {
+      is: {
+        OR: [
+          { fanEmail: { contains: q, mode: "insensitive" as const } },
+          { product: { is: { name: { contains: q, mode: "insensitive" as const } } } },
+        ],
+      },
+    };
+  }
 
   const [rows, total] = await Promise.all([
     prisma.orderFulfillment.findMany({
@@ -180,11 +208,7 @@ export async function listFulfillments(tenantId: string, params: { status?: stri
     prisma.orderFulfillment.count({ where }),
   ]);
 
-  let items = rows.map((f) => ({ ...serialize(f), productName: f.order.product.name, customer: f.order.fanEmail, amount: f.order.amount }));
-  if (params.search) {
-    const q = params.search.toLowerCase();
-    items = items.filter((i) => i.productName.toLowerCase().includes(q) || (i.customer ?? "").toLowerCase().includes(q));
-  }
+  const items = rows.map((f) => ({ ...serialize(f), productName: f.order.product.name, customer: f.order.fanEmail, amount: f.order.amount }));
   return { items, total };
 }
 

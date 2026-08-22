@@ -20,7 +20,9 @@ export default async function OrdersPage({
   let orders: Awaited<ReturnType<typeof fetchOrders>> = [];
   try { orders = await fetchOrders(tenantId); } catch { /* handled below */ }
 
-  const paidOrders = orders.filter((o) => o.status === "PAID" || o.status === "COMPLETED");
+  // RCCF-72.18D.5.2-A: "PAID" was dead ProductOrder vocabulary (never written);
+  // COMPLETED is the canonical paid state written by completeProductOrder.
+  const paidOrders = orders.filter((o) => o.status === "COMPLETED");
   const pendingOrders = orders.filter((o) => o.status === "PENDING");
   const totalRevenue = paidOrders.reduce((s, o) => s + o.amount, 0);
 

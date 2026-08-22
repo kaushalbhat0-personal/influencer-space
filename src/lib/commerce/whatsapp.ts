@@ -31,11 +31,17 @@ export interface WhatsAppSocialLink {
 export function resolveWhatsAppDestination(socialLinks: WhatsAppSocialLink[] | null | undefined): string {
   const link = (socialLinks ?? []).find((l) => (l.platform ?? "").toLowerCase() === "whatsapp");
   if (!link?.url) return "";
-  const safe = safeUrl(link.url);
-  if (!safe) return "";
-  // The destination must be a wa.me-style URL or a bare number we can build
-  // from; otherwise no CTA is rendered.
-  return extractWhatsAppNumber(safe) ? safe : "";
+  // RCCF-72.18D.7.5 — honor the documented contract: bare E.164 numbers and
+  // protocol-less wa.me URLs are legitimate creator input (the social-link
+  // field is freeform). extractWhatsAppNumber IS the security boundary here —
+  // strict wa.me/whatsapp.com host checks or bare-digit shape, everything else
+  // → "" — so the http(s)-only safeUrl gate must not run first: a creator who
+  // types "+91 98765 43210" into the field previously lost the CTA silently.
+  // Returns the canonical https://wa.me/<digits> form so downstream
+  // buildWaMeLink always re-extracts cleanly.
+  const number = extractWhatsAppNumber(link.url);
+  if (!number) return "";
+  return `https://wa.me/${number}`;
 }
 
 /**

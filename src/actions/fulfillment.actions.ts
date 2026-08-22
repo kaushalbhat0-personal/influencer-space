@@ -3,7 +3,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { requireTenant } from "@/lib/auth/require-tenant";
-import { listFulfillments, updateFulfillment, generateDownload, getFulfillmentByOrder, getShippingAddress } from "@/modules/fulfillment";
+import { requireCreatorOrSuperAdminSession } from "@/lib/auth/role-guards";
+import { listFulfillments, updateFulfillment, generateDownload, getShippingAddress } from "@/modules/fulfillment";
 import type { FulfillmentStatus } from "@/modules/fulfillment";
 
 /** Phase 8 — the creator's fulfillment queue. */
@@ -14,19 +15,29 @@ export async function getFulfillmentQueue(status?: string): Promise<{ ok: boolea
   return { ok: true, items: result.items, total: result.total };
 }
 
-/** Phase 3 — update a fulfillment's status / tracking. */
+/**
+ * Phase 3 — update a fulfillment's status / tracking.
+ * RCCF-72.18D.5.2-A: role authorization now exists at the mutation boundary
+ * (previously tenant membership only). ALLOW: ADMIN (creator), SUPER_ADMIN.
+ * DENY: AGENCY_ADMIN, AGENCY_STAFF, SUPPORT, READ_ONLY, anonymous. Server-side
+ * transition validation in @/modules/fulfillment remains authoritative.
+ */
 export async function updateFulfillmentStatus(fulfillmentId: string, input: { status?: FulfillmentStatus; trackingNumber?: string; courier?: string; carrierNotes?: string }): Promise<{ success: boolean; error?: string }> {
-  const { tenantId } = await requireTenant().catch(() => ({ tenantId: null as string | null }));
-  if (!tenantId) return { success: false, error: "Unauthorized" };
-  const result = await updateFulfillment(tenantId, fulfillmentId, input, "creator");
+  const ctx = await requireCreatorOrSuperAdminSession();
+  if (!ctx || !ctx.tenantId) return { success: false, error: "Unauthorized" };
+  const result = await updateFulfillment(ctx.tenantId, fulfillmentId, input, ctx.actor ?? "creator");
   return result.success ? { success: true } : { success: false, error: result.error };
 }
 
-/** Phase 4 — generate a secure download link for an order. */
+/**
+ * Phase 4 — generate a secure download link for an order.
+ * RCCF-72.18D.5.2-A: same mutation-boundary role guard as status updates
+ * (generating a token mutates the fulfillment record).
+ */
 export async function generateDownloadLink(fulfillmentId: string): Promise<{ success: boolean; url?: string; error?: string }> {
-  const { tenantId } = await requireTenant().catch(() => ({ tenantId: null as string | null }));
-  if (!tenantId) return { success: false, error: "Unauthorized" };
-  return generateDownload(tenantId, fulfillmentId, "creator");
+  const ctx = await requireCreatorOrSuperAdminSession();
+  if (!ctx || !ctx.tenantId) return { success: false, error: "Unauthorized" };
+  return generateDownload(ctx.tenantId, fulfillmentId, ctx.actor ?? "creator");
 }
 
 /** Phase 8 — shipping address for an order (creator view). */

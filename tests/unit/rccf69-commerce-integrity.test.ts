@@ -4,7 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // 1) Checkout cross-tenant IDOR closure (P0)
 // 2) Checkout rate limit
 // 3) DIRECT_CREATOR truthfully gated (future strategy never invoked)
-// 4) Payment-account verification truth (config-validated, never "verified")
+// 4) Payment-account verification truth — RCCF-72.18D.6.2: "verified" is only
+//    ever written from a REAL provider authentication; outages never fabricate
+//    or destroy verification state.
 // 5) Payment-account tenant isolation
 
 const h = vi.hoisted(() => {
@@ -23,13 +25,21 @@ const h = vi.hoisted(() => {
     mockRazorpayCreate: vi.fn(),
     mockCompleteProductOrder: vi.fn(),
     mockComputePaymentReadiness: vi.fn(),
+    rzpOrdersAll: vi.fn(),
     reset: () => {
       products.length = 0; orders.length = 0; accounts.length = 0; rateCalls.length = 0;
       h.session = null; h.storefrontTenant = null;
       h.strategyId = "PLATFORM_COLLECT"; h.strategyStatus = "active"; h.rateAllowed = true;
+      h.rzpOrdersAll.mockReset();
     },
   };
 });
+
+vi.mock("razorpay", () => ({
+  default: class {
+    orders = { all: h.rzpOrdersAll };
+  },
+}));
 
 vi.mock("next-auth", () => ({ getServerSession: async () => h.session }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -76,12 +86,14 @@ vi.mock("@/modules/payment-account", () => ({
     return { ...a, hasProviderKeys: !!a.providerKeyId && !!a.providerKeySecret };
   },
   savePaymentAccount: async (_tenantId: string, _input: Record<string, unknown>) => ({ success: true }),
+  // D.6.2 contract emulation: verification is provider-evidence-driven. This
+  // mock simulates a TRANSIENT provider outage → no persisted state write,
+  // never a fabricated `verified` (fail-closed).
   verifyPaymentAccount: async (tenantId: string, _actor: string) => {
     const a = h.accounts.find((x) => x.tenantId === tenantId);
     if (!a) return { success: false, error: "No payment account" };
     if (a.providerKeyId && a.providerKeyId.startsWith("rzp_")) {
-      a.verificationStatus = "configured";
-      return { success: true, verified: false, error: "Credentials format validated. Provider-side verification is not available for Direct Creator mode yet." };
+      return { success: false, error: "Payment provider is temporarily unavailable. Try again shortly." };
     }
     return { success: false, error: "Keys missing" };
   },
@@ -319,29 +331,46 @@ describe("RCCF-69.2 — DIRECT_CREATOR truthfully gated", () => {
   });
 });
 
-describe("RCCF-69.2 — payment account verification truth", () => {
-  it("Razorpay adapter reports configuration-format validation, NOT provider verification", async () => {
+describe("RCCF-69.2 — payment account verification truth (D.6.2 contract)", () => {
+  it("Razorpay adapter claims VERIFIED only from a real provider authentication", async () => {
     const adapter = new RazorpayPaymentAdapter();
+    h.rzpOrdersAll.mockResolvedValue({ entity: "collection", count: 0, items: [] });
     const ok = await adapter.getAccountStatus({ providerKeyId: "rzp_live_abc", providerKeySecret: "secret" });
     expect(ok.success).toBe(true);
-    expect(ok.verified).toBe(false);
-    expect(ok.status).toBe("configured");
+    expect(ok.verified).toBe(true);
+    expect(ok.classification).toBe("verified");
   });
 
-  it("adapter rejects missing or malformed keys", async () => {
+  it("Razorpay adapter classifies a 401 as a PERMANENT credential failure — never verified", async () => {
     const adapter = new RazorpayPaymentAdapter();
-    expect((await adapter.getAccountStatus({ providerKeyId: null, providerKeySecret: "x" })).success).toBe(false);
-    expect((await adapter.getAccountStatus({ providerKeyId: "bad", providerKeySecret: "x" })).success).toBe(false);
+    h.rzpOrdersAll.mockRejectedValue({ statusCode: 401 });
+    const bad = await adapter.getAccountStatus({ providerKeyId: "rzp_live_abc", providerKeySecret: "wrong" });
+    expect(bad.success).toBe(false);
+    expect(bad.verified).toBe(false);
+    expect(bad.classification).toBe("credential_failed");
   });
 
-  it("verifyMyPaymentAccount never writes a false 'verified' state", async () => {
+  it("adapter rejects missing or malformed keys without any provider call", async () => {
+    const adapter = new RazorpayPaymentAdapter();
+    const missing = await adapter.getAccountStatus({ providerKeyId: null, providerKeySecret: "x" });
+    expect(missing.success).toBe(false);
+    expect(missing.classification).toBe("credential_failed");
+    const malformed = await adapter.getAccountStatus({ providerKeyId: "bad", providerKeySecret: "x" });
+    expect(malformed.success).toBe(false);
+    expect(malformed.classification).toBe("credential_failed");
+    expect(h.rzpOrdersAll).not.toHaveBeenCalled();
+  });
+
+  it("verifyMyPaymentAccount never fabricates 'verified' without provider proof", async () => {
+    // Module-mock emulation of the D.6.2 runtime contract: a TRANSIENT provider
+    // outage proves nothing → NO state write → never verified (fail-closed).
     h.session = { user: { id: "uA", tenantId: TENANT_A, role: "ADMIN" } };
     h.accounts.push({ tenantId: TENANT_A, provider: "razorpay", verificationStatus: "pending", status: "active", providerKeyId: "rzp_live_abc", providerKeySecret: "secret" });
     const res = await verifyMyPaymentAccount();
-    expect(res.success).toBe(true);
-    expect(res.verified).toBe(false);
+    expect(res.success).toBe(false);
+    expect(res.verified).toBeFalsy();
     const account = h.accounts.find((a) => a.tenantId === TENANT_A)!;
-    expect(account.verificationStatus).toBe("configured");
+    expect(account.verificationStatus).toBe("pending"); // untouched by the outage
     expect(account.verificationStatus).not.toBe("verified");
   });
 });

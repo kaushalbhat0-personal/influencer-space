@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { DataTable } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import type { Column } from "@/components/data/DataTable";
 import type { OrderRow } from "@/actions/order.types";
 import { formatCurrency } from "@/lib/utils";
+import { OrderDetailDrawer } from "./order-detail-drawer";
 
 function formatINR(amount: number) {
   return formatCurrency(amount);
@@ -14,8 +16,8 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
+// RCCF-72.18D.5.2-A: PAID removed — dead ProductOrder vocabulary (never written).
 const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "default"> = {
-  PAID: "success",
   COMPLETED: "success",
   PENDING: "warning",
   FAILED: "danger",
@@ -36,14 +38,31 @@ const columns: Column<OrderRow>[] = [
 ];
 
 export function OrdersTable({ orders }: { orders: OrderRow[] }) {
+  // RCCF-72.18D.5.2-B — row click opens the detail drawer. Detail data is
+  // fetched lazily inside the drawer (one getCreatorOrderDetail call per
+  // open) — never eagerly per row, so the list stays N+1-free.
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   return (
-    <DataTable
-      columns={columns}
-      data={orders}
-      pageSize={15}
-      searchable
-      searchPlaceholder="Search orders by product or email..."
-      emptyMessage="No orders found. Share your storefront to start receiving orders."
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={orders}
+        pageSize={15}
+        searchable
+        searchPlaceholder="Search orders by product or email..."
+        emptyMessage="No orders found. Share your storefront to start receiving orders."
+        onRowClick={(row) => {
+          setSelectedOrderId(row.id);
+          setDrawerOpen(true);
+        }}
+      />
+      <OrderDetailDrawer
+        orderId={selectedOrderId}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
+    </>
   );
 }
