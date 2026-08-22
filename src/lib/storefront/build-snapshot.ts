@@ -10,10 +10,11 @@
  */
 
 import type { BuilderPage } from "@/lib/builder/types";
-import type { PublishedSnapshot, WebsiteAggregate, NavigationItem } from "@/types/snapshot";
+import type { PublishedSnapshot, WebsiteAggregate, NavigationItem, HeroContent } from "@/types/snapshot";
 import { builderPagesToLayoutSnapshot } from "@/lib/builder/layout";
 import { themeResolver } from "@/lib/theme/resolver-new";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
+import { applyHeroPresentation } from "@/lib/hero/presentation-options";
 
 export const FALLBACK_THEME_ID = "com.creatos.neon-dark";
 
@@ -26,6 +27,13 @@ export interface RuntimeSnapshotInput {
   themePackageId: string | null;
   themeColors: Record<string, string>;
   themeFonts: Record<string, string>;
+  /**
+   * RCCF-71.1: creator appearance config (borderRadius px string, layoutDensity
+   * preset) persisted on Website.themeConfig. Threaded into the canonical
+   * snapshot so Builder preview, the preview route and the published storefront
+   * all resolve the SAME appearance values through LayoutEngine.
+   */
+  themeConfig?: Record<string, string>;
   /**
    * RCCF-02: homepage-curated aggregate (featured-first, capped). Baked at
    * publish so the published homepage reads no live business tables.
@@ -56,7 +64,11 @@ export const EMPTY_AGGREGATE: WebsiteAggregate = {
 };
 
 export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnapshot {
-  const hasOverrides = Object.keys(input.themeColors).length > 0 || Object.keys(input.themeFonts).length > 0;
+  const hasOverrides =
+    Object.keys(input.themeColors).length > 0 ||
+    Object.keys(input.themeFonts).length > 0 ||
+    (input.themeConfig && Object.keys(input.themeConfig).length > 0) ||
+    false;
   const resolvedTheme = themeResolver.resolveForSnapshot(
     input.themePackageId ?? FALLBACK_THEME_ID,
     "dark",
@@ -73,10 +85,26 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
         typography: {
           heading: input.themeFonts.heading as string | undefined,
           body: input.themeFonts.body as string | undefined,
+          // RCCF-71.2: controlled heading weight resolves through the SAME
+          // resolver authority as fonts/appearance (never a Builder-only value).
+          headingWeight: input.themeConfig?.headingWeight as string | undefined,
         },
+        // RCCF-71.1: appearance config resolves through the SAME authority as
+        // the theme — never a Builder-only CSS value.
+        borderRadius: input.themeConfig?.borderRadius as string | undefined,
+        layoutDensity: input.themeConfig?.layoutDensity as "compact" | "comfortable" | "spacious" | undefined,
       } as Partial<ResolvedSnapshotTheme>,
     } : undefined,
   );
+
+  // RCCF-71.3: HERO PRESENTATION (textAlign/contentWidth/overlay) persists in
+  // Website.themeConfig and is merged onto snapshot.content.hero by the SAME
+  // pure rule the Builder canvas uses — so publish == preview route == canvas.
+  // Content fields are never touched; old themeConfig without hero keys leaves
+  // the hero unchanged (renderer falls back to the current look).
+  const themeConfig = input.themeConfig ?? {};
+  const applyHero = (hero: HeroContent): HeroContent =>
+    applyHeroPresentation(hero as unknown as Record<string, unknown>, themeConfig) as unknown as HeroContent;
 
   return {
     _schema: "creatorstore.snapshot",
@@ -90,8 +118,10 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
       goalProfilePresent: input.goalProfilePresent ?? false,
       maintenanceMode: input.maintenanceMode ?? false,
     },
-    content: input.aggregate,
-    ...(input.homepageAggregate ? { homepageContent: input.homepageAggregate } : {}),
+    content: { ...input.aggregate, hero: applyHero(input.aggregate.hero) },
+    ...(input.homepageAggregate
+      ? { homepageContent: { ...input.homepageAggregate, hero: applyHero(input.homepageAggregate.hero) } as WebsiteAggregate }
+      : {}),
     layout: builderPagesToLayoutSnapshot(input.builderPages),
     theme: {
       packageId: resolvedTheme?.packageId ?? input.themePackageId ?? FALLBACK_THEME_ID,
@@ -106,7 +136,10 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
       typography: {
         heading: resolvedTheme?.typography.heading ?? "Inter",
         body: resolvedTheme?.typography.body ?? "Inter",
+        ...(resolvedTheme?.typography.headingWeight ? { headingWeight: resolvedTheme.typography.headingWeight } : {}),
       },
+      ...(resolvedTheme?.borderRadius ? { borderRadius: resolvedTheme.borderRadius } : {}),
+      ...(resolvedTheme?.layoutDensity ? { layoutDensity: resolvedTheme.layoutDensity } : {}),
     },
     navigation: input.navItems.map((n) => ({
       id: n.id,

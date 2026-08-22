@@ -43,6 +43,14 @@ enum WorkspaceStatus {
   CLOSED
 }
 
+enum RefundStatus {
+  NONE
+  PENDING
+  PARTIAL
+  REFUNDED
+  FAILED
+}
+
 model Tenant {
   id                    String    @id @default(uuid()) @db.Uuid
   name                  String
@@ -496,25 +504,31 @@ model Product {
 }
 
 model ProductOrder {
-  id                 String   @id @default(cuid())
-  tenantId           String   @db.Uuid
-  productId          String   @db.Uuid
-  amount             Float
-  status             String   @default("PENDING")
-  razorpayOrderId    String   @unique
-  razorpayPaymentId  String?
-  fanEmail           String?
-  platformFeePercent Float    @default(5)
-  agencyFeePercent   Float?
-  agencyId           String?  @db.Uuid
-  routeTransferId    String?
+  id                   String      @id @default(cuid())
+  tenantId             String      @db.Uuid
+  productId            String      @db.Uuid
+  amount               Float
+  status               String      @default("PENDING")
+  razorpayOrderId      String      @unique
+  razorpayPaymentId    String?
+  fanEmail             String?
+  platformFeePercent   Float       @default(5)
+  agencyFeePercent     Float?
+  agencyId             String?     @db.Uuid
+  routeTransferId      String?
   // RCCF-IMPLEMENTATION-74: order runtime metadata (provider-agnostic).
-  commerceStrategy   String?
-  provider           String?
-  providerReference  String?
-  providerMetadata   Json?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  commerceStrategy     String?
+  provider             String?
+  providerReference    String?
+  providerMetadata     Json?
+  // RCCF-72.18D.2: historical payment account binding + refund state
+  paymentAccountId     String?     @db.Uuid
+  refundStatus         RefundStatus @default(NONE)
+  refundId             String?
+  refundAmount         Int?        // cumulative refunded amount in minor units (paise)
+  refundedAt           DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -526,6 +540,8 @@ model ProductOrder {
   @@index([productId])
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
+  @@index([paymentAccountId])
+  @@index([refundStatus])
 }
 
 /// RCCF-TRACK-01 — the post-payment fulfillment record for an order.

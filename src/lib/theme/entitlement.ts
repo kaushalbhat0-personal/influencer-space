@@ -6,7 +6,8 @@
  * CapabilityService premium_themes capability.
  */
 import { capabilityService } from "@/lib/capabilities";
-import { canonicalPlanCode } from "@/lib/capabilities/plan-resolution";
+import { canonicalPlanCode, planTierFor } from "@/lib/capabilities/plan-resolution";
+import { tierRank } from "./access";
 import type { ThemeTier } from "./types-new";
 
 export interface ThemeEntitlementDecision {
@@ -22,6 +23,14 @@ export function themeEntitlementDecision(
   const canonical = canonicalPlanCode(planValue);
   if (!canonical) return { allowed: false, reason: "premium_themes:no_plan" };
   const check = capabilityService.can(canonical, "premium_themes");
-  if (check.allowed) return { allowed: true };
-  return { allowed: false, reason: check.reason ?? "premium_themes:requires_upgrade" };
+  if (!check.allowed) return { allowed: false, reason: check.reason ?? "premium_themes:requires_upgrade" };
+  // RCCF-71.4.5 (F2): the server must agree with the marketplace tier-band
+  // lock. premium_themes alone is insufficient — a theme whose tier exceeds
+  // the user's canonical plan tier is NOT allowed (e.g. a business-tier theme
+  // on creator_grow). Reuses the canonical PLAN_TO_TIER registry (no duplicate
+  // matrix, no hardcoded plan/tier names).
+  if (tierRank(tier) > tierRank(planTierFor(canonical))) {
+    return { allowed: false, reason: "theme_tier:plan_too_low" };
+  }
+  return { allowed: true };
 }

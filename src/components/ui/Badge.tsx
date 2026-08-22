@@ -1,8 +1,12 @@
 import { cn } from "@/lib/utils";
 
+// RCCF-70.4.2 (Workstream 6) — exported for presentation helpers to reuse the
+// canonical badge variant vocabulary (no new badge system).
+export type BadgeVariant = "default" | "success" | "warning" | "danger" | "info" | "cyan" | "gold";
+
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "default" | "success" | "warning" | "danger" | "info" | "cyan" | "gold";
+  variant?: BadgeVariant;
   size?: "sm" | "md";
   className?: string;
 }

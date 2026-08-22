@@ -79,6 +79,38 @@ export class LayoutEngine {
       "--brand-font-body": t.body,
       "--brand-font-mono": t.mono ?? "ui-monospace, monospace",
       "--brand-font-display": t.display ?? t.heading,
+      // RCCF-71.2: controlled heading weight (renderers fall back to 700).
+      ...(t.headingWeight ? { "--brand-font-weight-heading": t.headingWeight } : {}),
+      // RCCF-71.1: creator appearance config. The base radius px (default 8)
+      // derives the full radius scale; layoutDensity derives section spacing.
+      // Old snapshots without these fields fall back to the current defaults
+      // (8px scale / comfortable spacing), so published output is unchanged.
+      ...this.buildAppearanceVars(snapshot.theme.borderRadius, snapshot.theme.layoutDensity),
+    };
+  }
+
+  /**
+   * RCCF-71.1: derive the radius scale and section spacing from the canonical
+   * appearance config. Radius steps preserve the Tailwind proportions used by
+   * the renderers at the default base (rounded-sm=2px … rounded-2xl=16px), so a
+   * default "8" produces exactly the current look.
+   */
+  private buildAppearanceVars(
+    borderRadius?: string,
+    layoutDensity?: "compact" | "comfortable" | "spacious",
+  ): Record<string, string> {
+    const parsed = Number.parseFloat(borderRadius ?? "");
+    const base = Number.isFinite(parsed) && borderRadius !== undefined ? Math.min(24, Math.max(0, parsed)) : 8;
+    const px = (n: number) => `${base * n}px`;
+    return {
+      "--radius-sm": px(0.25),
+      "--radius-md": px(0.75),
+      "--radius-lg": px(1),
+      "--radius-xl": px(1.5),
+      "--radius-2xl": px(2),
+      "--radius-3xl": px(3),
+      "--radius-full": "9999px",
+      "--section-spacing": layoutDensity === "compact" ? "2rem" : layoutDensity === "spacious" ? "5rem" : "3rem",
     };
   }
 

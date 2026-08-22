@@ -203,6 +203,14 @@ export interface HeroContent {
   videoMobileAlignment?: "top" | "center" | "bottom";
   imageDesktopAlignment?: "top" | "center" | "bottom";
   imageMobileAlignment?: "top" | "center" | "bottom";
+  // RCCF-71.3: HERO PRESENTATION only — persisted via Website.themeConfig and
+  // merged onto snapshot.content.hero by buildRuntimeSnapshot / the Builder
+  // canvas. Old snapshots without them render the exact current look (the
+  // renderer falls back to center / medium / the current gradient). Content is
+  // NEVER stored here (hero_data owns content).
+  textAlign?: "left" | "center" | "right";
+  contentWidth?: "narrow" | "medium" | "wide";
+  overlay?: "none" | "soft" | "medium" | "strong";
   // IMPLEMENTATION-21 (BUG 3): resolved by resolveHeroMediaForRuntime() in the
   // aggregate. Renderers consume ONLY these fields — never the raw *_Url /
   // *_AssetId values above.
@@ -264,7 +272,19 @@ export interface ThemeSnapshot {
     body: string;
     mono?: string;
     display?: string;
+    /**
+     * RCCF-71.2: controlled heading weight (e.g. "700"). Optional — old
+     * snapshots render with the renderer-side 700 fallback.
+     */
+    headingWeight?: string;
   };
+  /**
+   * RCCF-71.1: creator appearance config baked into the canonical snapshot.
+   * Optional — old snapshots without these fields render with the defaults
+   * (8px radius scale / comfortable section spacing) via LayoutEngine.
+   */
+  borderRadius?: string;
+  layoutDensity?: "compact" | "comfortable" | "spacious";
 }
 
 // ── Navigation (persisted, canonical) ────────────────────

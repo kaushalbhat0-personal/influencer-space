@@ -26,7 +26,19 @@ export interface ResolvedSnapshotTheme {
     body: string;
     mono?: string;
     display?: string;
+    /**
+     * RCCF-71.2: controlled heading weight (e.g. "700"). Resolves into
+     * `--brand-font-weight-heading` with a renderer-side 700 fallback, so old
+     * snapshots render unchanged.
+     */
+    headingWeight?: string;
   };
+  // RCCF-71.1: creator appearance config resolved alongside the theme. The
+  // resolver owns the single authority for BOTH theme-package values and
+  // per-website appearance overrides, so builder preview and published snapshot
+  // resolve identically. Optional — old snapshots default via LayoutEngine.
+  borderRadius?: string;
+  layoutDensity?: "compact" | "comfortable" | "spacious";
 }
 
 export type ThemeResolutionMode = "light" | "dark";
@@ -100,7 +112,11 @@ export class ThemeResolver {
         body: overrides.typography?.body ?? base.typography.body,
         ...(overrides.typography?.mono ?? base.typography.mono !== undefined ? { mono: overrides.typography?.mono ?? base.typography.mono } : {}),
         ...(overrides.typography?.display ?? base.typography.display !== undefined ? { display: overrides.typography?.display ?? base.typography.display } : {}),
+        // RCCF-71.2: heading weight override (additive, optional).
+        ...(overrides.typography?.headingWeight ?? base.typography.headingWeight !== undefined ? { headingWeight: overrides.typography?.headingWeight ?? base.typography.headingWeight } : {}),
       },
+      borderRadius: overrides.borderRadius ?? base.borderRadius,
+      layoutDensity: overrides.layoutDensity ?? base.layoutDensity,
     };
   }
 

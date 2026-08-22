@@ -23,7 +23,8 @@ export type BuilderEventType =
   | "drag:targetChanged"
   | "drag:autoScroll"
   | "drag:cancelled"
-  | "drag:completed";
+  | "drag:completed"
+  | "appearance:changed";
 
 export interface BuilderEventPayloads {
   "node:selected": { elementId: ElementId; multi: boolean; selectedIds: ElementId[] };
@@ -49,6 +50,8 @@ export interface BuilderEventPayloads {
   "drag:autoScroll": { edge: string };
   "drag:cancelled": { elementId: ElementId | null };
   "drag:completed": { elementId: ElementId | null; targetSectionId: SectionId | null; dropZone: string; valid: boolean };
+  // RCCF-71.2: a creator appearance change was persisted (refetch live preview).
+  "appearance:changed": { timestamp: number };
 }
 
 export interface BuilderEvent<T extends BuilderEventType = BuilderEventType> {
