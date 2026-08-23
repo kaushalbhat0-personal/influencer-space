@@ -6,12 +6,19 @@ import type { CustomerSuccess, TimelineEvent } from "@/modules/customer-success"
 import { TrendingUp, AlertTriangle, Sparkles, Clock, CheckCircle2 } from "lucide-react";
 
 /** RCCF-EPIC-09 Phase 6 — Success Journey on the creator dashboard. */
-export function SuccessJourneyCard() {
-  const [data, setData] = useState<{ success: CustomerSuccess; timeline: TimelineEvent[] } | null>(null);
+export function SuccessJourneyCard({ initialData }: { initialData?: { success: CustomerSuccess; timeline: TimelineEvent[] } }) {
+  const [data, setData] = useState<{ success: CustomerSuccess; timeline: TimelineEvent[] } | null>(
+    initialData ?? null,
+  );
 
   useEffect(() => {
-    getMyCustomerSuccess().then((r) => { if (r.ok && r.success) setData({ success: r.success, timeline: r.timeline ?? [] }); });
-  }, []);
+    // Checkin side-effect: fire getMyCustomerSuccess with the prebuilt data
+    // (if the caller didn't provide it, a full load/signals+timeline round-trip
+    // will happen inside the action to preserve the behavior).
+    if (!initialData) {
+      getMyCustomerSuccess().then((r) => { if (r.ok && r.success) setData({ success: r.success, timeline: r.timeline ?? [] }); });
+    }
+  }, [initialData]);
 
   if (!data) return null;
   const { success: s, timeline } = data;
