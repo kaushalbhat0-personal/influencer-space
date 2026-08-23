@@ -24,14 +24,14 @@ describe("RCCF-IMPLEMENTATION-70 — canonical commerce registry", () => {
     expect(getEnterprisePlan("creator")?.enterprise).toBe(true);
   });
 
-  it("restructures the partner lineup (Launch/Solo/Scale/Enterprise; Growth hidden)", () => {
+  it("restructures the partner lineup (Launch/Solo/Scale/Enterprise; Growth removed)", () => {
     const partner = getMarketingPlans("partner");
     expect(partner.map((p) => p.code)).toEqual(["partner_free", "partner_solo", "partner_scale"]);
     expect(getMarketingPlans("partner").every((p) => !p.hidden && !p.enterprise)).toBe(true);
     expect(getEnterprisePlan("partner")?.code).toBe("partner_enterprise");
-    // Partner Growth is kept for legacy resolution but hidden from marketing.
-    const growth = COMMERCE_PLANS.find((p) => p.code === "partner_growth");
-    expect(growth?.hidden).toBe(true);
+    // RCCF-MKT-04-R1: Partner Growth is fully removed from the registry —
+    // Agency never launched and there are no users/subscribers to grandfather.
+    expect(COMMERCE_PLANS.some((p) => p.code === "partner_growth")).toBe(false);
   });
 
   it("applies the canonical prices", () => {
@@ -90,6 +90,8 @@ describe("RCCF-IMPLEMENTATION-70 — canonical commerce registry", () => {
   it("keeps legacy mapping internal only", () => {
     expect(LEGACY_TO_CANONICAL.agency_free).toBe("partner_free");
     expect(LEGACY_TO_CANONICAL.agency_growth).toBe("partner_scale");
-    expect(LEGACY_TO_CANONICAL.agency_agency).toBe("partner_growth");
+    // RCCF-MKT-04-R1: the agency_agency → partner_growth alias is removed
+    // together with the retired plan.
+    expect(LEGACY_TO_CANONICAL.agency_agency).toBeUndefined();
   });
 });

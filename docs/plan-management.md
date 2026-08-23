@@ -16,7 +16,7 @@
 | `comparisonOrder` | Left-to-right order in the comparison |
 | `ctaType` / `ctaLabel` | signup / checkout / contact routing |
 | `trialDays` | Free-trial length (Launch plans) |
-| `hidden` | Retired tiers (e.g. Partner Growth) — excluded from marketing, kept for legacy resolution |
+| `hidden` | Retired/hidden tiers — excluded from marketing (Partner Growth itself was fully removed in RCCF-MKT-04-R1) |
 | `enterprise` | Contact-sales tier — shown only under Enterprise Solutions |
 
 ## Editing a plan
@@ -35,8 +35,10 @@
 - **Never hardcode a price/feature/bullet in a component.** Every surface reads
   the registry.
 - **Never rename a plan code.** Add new codes + legacy mapping instead.
-- **Keep `partner_growth`** (hidden) so existing subscribers and legacy codes
-  keep resolving; it is simply not shown publicly.
+- **Retired plans** — RCCF-MKT-04-R1 removed `partner_growth` (and its
+  `agency_agency` alias) outright: Agency never launched and there were no
+  subscribers to grandfather. If a future retirement happens after launch,
+  prefer `hidden: true` over deletion so existing subscribers keep resolving.
 - **Enterprise plans** carry `hidden: true` + `enterprise: true` — they are
   excluded from the comparison matrix and JSON-LD, and shown only in the
   Enterprise section.

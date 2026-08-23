@@ -31,7 +31,8 @@ test("R16.1 - Marketing pricing renders canonical creator + partner plans", asyn
   // Partner tab → canonical partner plans + partner-rules note.
   await page.click("text=For Partners");
   await page.waitForSelector("text=Solo Partner", { timeout: 30000 });
-  expect(await page.locator("text=Partner Growth").count()).toBeGreaterThan(0);
+  // RCCF-MKT-04-R1: Partner Growth is removed from the public lineup.
+  expect(await page.locator("text=Partner Growth").count()).toBe(0);
   expect(await page.locator("text=₹1,499").count()).toBeGreaterThan(0);
   expect(await page.locator("text=How Partner plans work").count()).toBeGreaterThan(0);
   expect(await page.locator("text=Partner Enterprise").count()).toBeGreaterThan(0);

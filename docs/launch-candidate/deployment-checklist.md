@@ -38,8 +38,8 @@
   - [ ] Creator Grow (plan_TLTGQBU1EXkseF)
   - [ ] Creator Scale (plan_TLTH45wQlPdW7v)
   - [ ] Solo Partner (plan_solo)
-  - [ ] Partner Growth (plan_growth)
   - [ ] Partner Scale (plan_scale)
+  <!-- RCCF-MKT-04-R1: Partner Growth (plan_growth) removed — retired plan, Agency not launched -->
 
 ### Vercel
 - [ ] Custom domain configured for platform (`creatorstore.app`)

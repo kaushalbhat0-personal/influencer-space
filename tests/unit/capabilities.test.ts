@@ -37,7 +37,8 @@ describe("Capabilities — Constants", () => {
     expect(PLAN_CODES).toContain("creator_enterprise");
     expect(PLAN_CODES).toContain("partner_free");
     expect(PLAN_CODES).toContain("partner_solo");
-    expect(PLAN_CODES).toContain("partner_growth");
+    // RCCF-MKT-04-R1: partner_growth removed — retired plan, no subscribers.
+    expect(PLAN_CODES).not.toContain("partner_growth");
     expect(PLAN_CODES).toContain("partner_scale");
     expect(PLAN_CODES).toContain("partner_enterprise");
   });
@@ -48,7 +49,8 @@ describe("Capabilities — Constants", () => {
     expect(PLAN_CODES).toContain("creator_elite");
     expect(PLAN_CODES).toContain("agency_free");
     expect(PLAN_CODES).toContain("agency_studio");
-    expect(PLAN_CODES).toContain("agency_agency");
+    // RCCF-MKT-04-R1: agency_agency removed with its canonical target.
+    expect(PLAN_CODES).not.toContain("agency_agency");
     expect(PLAN_CODES).toContain("agency_starter");
     expect(PLAN_CODES).toContain("agency_growth");
   });
@@ -80,9 +82,8 @@ describe("Capabilities — Constants", () => {
   });
 
   it("should have canonical UPGRADE_PATHS for partner plans", () => {
-    expect(UPGRADE_PATHS.agency_free).toEqual(["partner_solo", "partner_growth", "partner_scale", "partner_enterprise"]);
-    expect(UPGRADE_PATHS.agency_studio).toEqual(["partner_growth", "partner_scale", "partner_enterprise"]);
-    expect(UPGRADE_PATHS.agency_agency).toEqual(["partner_enterprise"]);
+    expect(UPGRADE_PATHS.agency_free).toEqual(["partner_solo", "partner_scale", "partner_enterprise"]);
+    expect(UPGRADE_PATHS.agency_studio).toEqual(["partner_scale", "partner_enterprise"]);
   });
 });
 
@@ -122,10 +123,8 @@ describe("Capabilities — Plans", () => {
     expect(studio!.name).toBe("Solo Partner");
     expect(studio!.recommended).toBe(true);
 
-    const agency = getPlan("agency_agency");
-    expect(agency).toBeDefined();
-    expect(agency!.name).toBe("Partner Growth");
-    expect(agency!.price).toBe(4999);
+    // RCCF-MKT-04-R1: the agency_agency → Partner Growth alias is gone.
+    expect(getPlan("agency_agency")).toBeUndefined();
   });
 
   it("should resolve backward-compat aliases to canonical partner plans", () => {
@@ -139,7 +138,7 @@ describe("Capabilities — Plans", () => {
 
   it("should list all canonical plans (no legacy dupes)", () => {
     const all = getAllPlans();
-    expect(all.length).toBe(9);
+    expect(all.length).toBe(8);
     const codes = all.map((p) => p.code);
     expect(codes).toContain("creator_launch");
     expect(codes).toContain("creator_grow");
@@ -147,7 +146,8 @@ describe("Capabilities — Plans", () => {
     expect(codes).toContain("creator_enterprise");
     expect(codes).toContain("partner_free");
     expect(codes).toContain("partner_solo");
-    expect(codes).toContain("partner_growth");
+    // RCCF-MKT-04-R1: partner_growth is not part of the canonical plan list.
+    expect(codes).not.toContain("partner_growth");
     expect(codes).toContain("partner_scale");
     expect(codes).toContain("partner_enterprise");
   });
@@ -158,7 +158,8 @@ describe("Capabilities — Plans", () => {
     expect(creator.every((p) => p.family === "creator")).toBe(true);
 
     const agency = getPlansByFamily("agency");
-    expect(agency.length).toBe(5);
+    // RCCF-MKT-04-R1: 5 → 4 after Partner Growth removal.
+    expect(agency.length).toBe(4);
     expect(agency.every((p) => p.family === "agency")).toBe(true);
   });
 });
@@ -479,7 +480,8 @@ describe("Capabilities — Validation", () => {
     expect(validatePlanCode("creator_free")).toBe(true);
     expect(validatePlanCode("creator_pro")).toBe(true);
     expect(validatePlanCode("creator_launch")).toBe(true);
-    expect(validatePlanCode("agency_agency")).toBe(true);
+    // RCCF-MKT-04-R1: agency_agency is no longer a valid plan code.
+    expect(validatePlanCode("agency_agency")).toBe(false);
     expect(validatePlanCode("bogus")).toBe(false);
   });
 
@@ -576,7 +578,8 @@ describe("Capabilities — Service Delegation", () => {
 
   it("should delegate canonical plan accessors", () => {
     expect(capabilityService.getPlan("creator_free")?.name).toBe("Creator Launch");
-    expect(capabilityService.getAllPlans().length).toBe(9);
+    // RCCF-MKT-04-R1: 9 → 8 plans after Partner Growth removal.
+    expect(capabilityService.getAllPlans().length).toBe(8);
     expect(capabilityService.getPlansByFamily("creator").length).toBe(4);
     expect(capabilityService.getPlan("creator_grow")?.price).toBe(999);
     expect(capabilityService.getPlan("creator_scale")?.price).toBe(1995);

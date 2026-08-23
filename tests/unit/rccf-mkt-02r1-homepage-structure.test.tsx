@@ -100,15 +100,24 @@ describe("RCCF-MKT-02-R1 — new narrative sections render cleanly", () => {
   // RCCF-MKT-03: the deferral ended — the certified SPower Gaming captures
   // (RCCF-MKT-02/R2/R3) are wired in as demonstration. The guardrail is
   // modernized: exactly the two canonical certified assets, nothing else.
+  // RCCF-MKT-04-R1: the primary capture is breakpoint-aware (<picture> renders
+  // one <img> whose src is the mobile default; a <source> carries the desktop
+  // asset at md+), plus the phone side-card — still only certified assets.
   it("StorefrontShowcase renders exactly the two certified example captures", async () => {
     const { StorefrontShowcase } = await import("@/components/marketing/StorefrontShowcase");
     const { container } = render(<StorefrontShowcase />);
     const imgs = Array.from(container.querySelectorAll("img"));
     expect(imgs.length).toBe(2);
-    expect(imgs.map((i) => i.getAttribute("src"))).toEqual([
+    const rendered = new Set(
+      imgs.flatMap((i) => [
+        i.getAttribute("src"),
+        ...Array.from(i.parentElement?.querySelectorAll("source") ?? []).map((s) => s.getAttribute("srcSet")),
+      ]).filter(Boolean) as string[],
+    );
+    expect(rendered).toEqual(new Set([
       "/marketing-assets/storefront/01-desktop.png",
       "/marketing-assets/storefront/02-mobile.png",
-    ]);
+    ]));
     expect(screen.getByText(/You keep 100%/i)).toBeTruthy();
   });
 });

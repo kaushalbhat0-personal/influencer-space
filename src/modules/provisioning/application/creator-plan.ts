@@ -5,7 +5,7 @@
  * The client supplies only a plan code; the server resolves the canonical
  * commerce registry (`src/config/commerce/plans.ts`) and rejects anything that
  * is not a non-manual, non-enterprise, non-Launch Creator plan. Partner plans
- * (partner_growth / partner_solo / partner_scale), Enterprise plans
+ * (partner_solo / partner_scale), Enterprise plans
  * (creator_enterprise / partner_enterprise), manual plans, Creator Launch, and
  * unknown codes are all rejected.
  *

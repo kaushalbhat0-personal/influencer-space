@@ -12,7 +12,7 @@
 | Creator Enterprise | in config | **hidden from comparison**, shown only under Enterprise Solutions |
 | Partner Free | "Partner Free" | **"Partner Launch"**, 15-day trial |
 | Solo Partner | ₹1,499 | **₹2,999**, Recommended |
-| Partner Growth | shown publicly | **hidden** (legacy code kept for resolution) |
+| Partner Growth | shown publicly | ~~hidden~~ **removed** (RCCF-MKT-04-R1: retired plan deleted from the registry — Agency never launched, no subscribers) |
 | Partner Scale | ₹9,999 | **₹7,999**, Best Value |
 | Partner Enterprise | duplicate cards | single **"Enterprise Partner"**, Enterprise Solutions |
 
@@ -52,10 +52,11 @@
 
 ## Migration safety
 
-- **Codes unchanged** — `partner_free`, `partner_solo`, `partner_growth`,
-  `partner_scale`, `partner_enterprise`, `creator_*` all keep their codes;
+- **Codes unchanged** — `partner_free`, `partner_solo`, `partner_scale`,
+  `partner_enterprise`, `creator_*` all keep their codes;
   `LEGACY_TO_CANONICAL` untouched. No subscription, checkout, or billing code
-  changes required.
+  changes required. (RCCF-MKT-04-R1 later removed the retired
+  `partner_growth` code and its `agency_agency` alias entirely.)
 - **Billing runtime unchanged** — plans still resolve via `getPlan`/`getPlanByCode`;
   only names/prices/limits changed (display + future enforcement).
 - **Entitlement runtime unchanged** — `resolvePlanEntitlements` reads the same

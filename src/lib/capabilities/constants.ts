@@ -11,12 +11,14 @@ export const PLAN_CODES = [
   "creator_elite",
   "partner_free",
   "partner_solo",
-  "partner_growth",
+  // RCCF-MKT-04-R1: partner_growth removed — retired plan fully deleted from
+  // the registry (Agency not launched, no users/subscribers to grandfather).
   "partner_scale",
   "partner_enterprise",
   "agency_free",
   "agency_studio",
-  "agency_agency",
+  // RCCF-MKT-04-R1: agency_agency removed — its sole canonical target was
+  // partner_growth.
   "agency_starter",
   "agency_growth",
 ] as const;
@@ -159,15 +161,13 @@ export const UPGRADE_PATHS: Record<string, string[]> = {
   creator_free: ["creator_grow", "creator_scale", "creator_enterprise"],
   creator_pro: ["creator_scale", "creator_enterprise"],
   creator_elite: ["creator_enterprise"],
-  partner_free: ["partner_solo", "partner_growth", "partner_scale", "partner_enterprise"],
-  partner_solo: ["partner_growth", "partner_scale", "partner_enterprise"],
-  partner_growth: ["partner_scale", "partner_enterprise"],
+  partner_free: ["partner_solo", "partner_scale", "partner_enterprise"],
+  partner_solo: ["partner_scale", "partner_enterprise"],
   partner_scale: ["partner_enterprise"],
   partner_enterprise: [],
-  agency_free: ["partner_solo", "partner_growth", "partner_scale", "partner_enterprise"],
-  agency_studio: ["partner_growth", "partner_scale", "partner_enterprise"],
-  agency_agency: ["partner_enterprise"],
-  agency_starter: ["partner_growth", "partner_scale", "partner_enterprise"],
+  agency_free: ["partner_solo", "partner_scale", "partner_enterprise"],
+  agency_studio: ["partner_scale", "partner_enterprise"],
+  agency_starter: ["partner_scale", "partner_enterprise"],
   agency_growth: ["partner_scale", "partner_enterprise"],
 };
 
@@ -180,6 +180,6 @@ export const LEGACY_PLAN_MAP: Record<string, string> = {
   STARTER: "creator_launch",
   PRO: "creator_grow",
   FREELANCER: "partner_solo",
-  GROWTH: "partner_growth",
+  // RCCF-MKT-04-R1: GROWTH → partner_growth removed with the plan itself.
   ENTERPRISE: "partner_enterprise",
 };

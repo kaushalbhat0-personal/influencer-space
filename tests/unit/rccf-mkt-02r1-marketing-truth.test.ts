@@ -187,7 +187,9 @@ describe("RCCF-MKT-02-R1 — screenshot safety (modernized by RCCF-MKT-03: certi
 
   it("proof section presents exactly the certified desktop+mobile demonstration pair", () => {
     const proof = read("src/components/marketing/StorefrontShowcase.tsx");
-    expect(proof).toContain('src="/marketing-assets/storefront/01-desktop.png"');
+    // Guardrail modernized (RCCF-MKT-04-R1): desktop capture may be wired via
+    // <picture><source srcSet> (breakpoint-aware) or a direct src.
+    expect(proof).toMatch(/srcSet="\/marketing-assets\/storefront\/01-desktop\.png"|src="\/marketing-assets\/storefront\/01-desktop\.png"/);
     expect(proof).toContain('src="/marketing-assets/storefront/02-mobile.png"');
     // Demonstration framing only — never endorsement/testimonial language.
     expect(proof.toLowerCase()).not.toMatch(/endorse|testimonial|customer success|official/);

@@ -43,8 +43,8 @@ Most Popular) → Creator Scale (₹1,999/mo, Best Value) → Creator Enterprise
 
 **Partner:** Partner Launch (free, 15-day trial) → Solo Partner (₹2,999/mo,
 Recommended) → Partner Scale (₹7,999/mo, Best Value) → Enterprise Partner
-(Contact Sales). Partner Growth is retired from the public lineup (kept as a
-legacy code for resolution, `hidden: true`).
+(Contact Sales). Partner Growth was retired and is now **fully removed** from
+the registry (RCCF-MKT-04-R1 — Agency never launched, no subscribers).
 
 ## Limit source of truth
 

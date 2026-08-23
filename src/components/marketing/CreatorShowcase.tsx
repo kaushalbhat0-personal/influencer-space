@@ -57,7 +57,9 @@ export function CreatorShowcase() {
                 i % 2 === 1 ? "sm:pl-10" : ""
               }`}
             >
-              <h3 className="w-56 shrink-0 text-sm font-semibold text-white">{a.who}</h3>
+              {/* RCCF-MKT-04-R1: fixed w-56 shrink-0 forced intrinsic width on
+                  320-414px viewports; fixed-width alignment is now sm+ only. */}
+              <h3 className="text-sm font-semibold text-white sm:w-56 sm:shrink-0">{a.who}</h3>
               <p className="text-sm leading-relaxed text-zinc-400">{a.what}</p>
             </div>
           ))}

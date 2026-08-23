@@ -4,5 +4,4 @@ export { MetricGrid } from "./MetricGrid";
 export { CaseStudyGrid } from "./CaseStudyGrid";
 export { IntegrationLogos } from "./IntegrationLogos";
 export { TrustBadges } from "./TrustBadges";
-export { ComparisonTable } from "./ComparisonTable";
-export { StickyCTA } from "./StickyCTA";
+export { StickyCTA } from "./StickyCTA";;

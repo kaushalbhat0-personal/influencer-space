@@ -502,38 +502,6 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     comparisonOrder: 2,
   },
   {
-    code: "partner_growth",
-    name: "Partner Growth",
-    description: "Legacy mid-tier — retired from the public lineup; kept for existing subscribers and legacy mapping.",
-    family: "partner",
-    price: 4999,
-    currency: "INR",
-    cycle: "monthly",
-    razorpayPlanId: "plan_growth",
-    manual: false,
-    hidden: true,
-    capabilities: [
-      "premium_themes",
-      "custom_domain",
-      "advanced_builder",
-      "advanced_ai",
-      "api_access",
-      "api_integrations",
-      "advanced_analytics",
-      "theme_background_solid",
-      "theme_background_gradient",
-      "theme_background_image",
-      "theme_background_animation",
-      "theme_effects_particles",
-      "theme_effects_glow",
-      "theme_effects_noise",
-      "theme_effects_blur",
-    ],
-    ctaType: "checkout",
-    ctaLabel: "Upgrade to Growth",
-    comparisonOrder: 3,
-  },
-  {
     code: "partner_scale",
     name: "Partner Scale",
     description: "Scale many creators under your own brand with white-label and priority support.",
@@ -668,14 +636,15 @@ export const COMMERCE_PLAN_BY_CODE: Record<string, CommercePlanConfig> = Object.
   COMMERCE_PLANS.map((p) => [p.code, p]),
 );
 
-/** Legacy creator plan codes → canonical commerce codes (backward compat). */
+/** Legacy creator plan codes → canonical commerce codes (backward compat).
+ *  RCCF-MKT-04-R1: `agency_agency → partner_growth` removed — Partner Growth
+ *  is fully retired from the registry (Agency never launched; no subscribers). */
 export const LEGACY_TO_CANONICAL: Record<string, string> = {
   creator_free: "creator_launch",
   creator_pro: "creator_grow",
   creator_elite: "creator_scale",
   agency_free: "partner_free",
   agency_studio: "partner_solo",
-  agency_agency: "partner_growth",
   agency_growth: "partner_scale",
   agency_starter: "partner_solo",
 };

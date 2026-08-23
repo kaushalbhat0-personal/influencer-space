@@ -10,14 +10,16 @@ describe("canonicalPlanCode — maps legacy to canonical commerce codes", () => 
     expect(canonicalPlanCode("creator_grow")).toBe("creator_grow");
     expect(canonicalPlanCode("creator_scale")).toBe("creator_scale");
     expect(canonicalPlanCode("partner_free")).toBe("partner_free");
-    expect(canonicalPlanCode("partner_growth")).toBe("partner_growth");
+    // RCCF-MKT-04-R1: partner_growth is no longer a canonical code.
+    expect(canonicalPlanCode("partner_growth")).toBeNull();
   });
 
   it("maps legacy DB codes to canonical commerce codes", () => {
     expect(canonicalPlanCode("creator_pro")).toBe("creator_grow");
     expect(canonicalPlanCode("creator_free")).toBe("creator_launch");
     expect(canonicalPlanCode("creator_elite")).toBe("creator_scale");
-    expect(canonicalPlanCode("agency_agency")).toBe("partner_growth");
+    // RCCF-MKT-04-R1: agency_agency (→ partner_growth) alias removed.
+    expect(canonicalPlanCode("agency_agency")).toBeNull();
     expect(canonicalPlanCode("agency_studio")).toBe("partner_solo");
     expect(canonicalPlanCode("agency_free")).toBe("partner_free");
   });
@@ -25,7 +27,8 @@ describe("canonicalPlanCode — maps legacy to canonical commerce codes", () => 
   it("resolves legacy string plans to canonical codes", () => {
     expect(canonicalPlanCode("STARTER")).toBe("creator_launch");
     expect(canonicalPlanCode("PRO")).toBe("creator_grow");
-    expect(canonicalPlanCode("GROWTH")).toBe("partner_growth");
+    // RCCF-MKT-04-R1: GROWTH → partner_growth mapping removed with the plan.
+    expect(canonicalPlanCode("GROWTH")).toBeNull();
     expect(canonicalPlanCode("ENTERPRISE")).toBe("partner_enterprise");
     expect(canonicalPlanCode("FREELANCER")).toBe("partner_solo");
   });
@@ -88,8 +91,9 @@ describe("theme access delegation (canonical mapping)", () => {
     expect(planTier("PRO")).toBe("pro");
     expect(planTier("creator_pro")).toBe("pro");
     expect(planTier("creator_grow")).toBe("pro");
-    expect(planTier("GROWTH")).toBe("business");
-    expect(planTier("partner_growth")).toBe("business");
+    // RCCF-MKT-04-R1: partner_growth resolves to the none/free band.
+    expect(planTier("GROWTH")).toBe("free");
+    expect(planTier("partner_growth")).toBe("free");
     expect(planTier("creator_enterprise")).toBe("enterprise");
     expect(planTier(null)).toBe("free");
   });

@@ -33,23 +33,24 @@ describe("IMPLEMENTATION-42 — Canonical commerce config (Phase 1/2/3)", () => 
     expect(getCommercePlan("creator_enterprise")?.price).toBeNull();
   });
 
-  it("defines the five partner plans with canonical prices (Phase 3)", () => {
+  it("defines the four partner plans with canonical prices (RCCF-MKT-04-R1)", () => {
     const partner = getPartnerCommercePlans();
-    expect(partner.map((p) => p.code)).toEqual(["partner_free", "partner_solo", "partner_growth", "partner_scale", "partner_enterprise"]);
+    expect(partner.map((p) => p.code)).toEqual(["partner_free", "partner_solo", "partner_scale", "partner_enterprise"]);
     expect(getCommercePlan("partner_free")?.price).toBe(0);
     expect(getCommercePlan("partner_solo")?.price).toBe(4999);
-    expect(getCommercePlan("partner_growth")?.price).toBe(4999);
     expect(getCommercePlan("partner_scale")?.price).toBe(7999);
     expect(getCommercePlan("partner_enterprise")?.price).toBe(14999);
     // Only Solo carries "Recommended" (a product decision, not fabricated).
     expect(getCommercePlan("partner_solo")?.badge).toBe("Recommended");
-    expect(getCommercePlan("partner_growth")?.badge).toBeUndefined();
+    // RCCF-MKT-04-R1: Partner Growth is fully removed from the registry.
+    expect(getCommercePlan("partner_growth")).toBeUndefined();
   });
 
   it("keeps legacy agency mapping internal only", () => {
     expect(LEGACY_TO_CANONICAL.agency_free).toBe("partner_free");
     expect(LEGACY_TO_CANONICAL.agency_studio).toBe("partner_solo");
-    expect(LEGACY_TO_CANONICAL.agency_agency).toBe("partner_growth");
+    // RCCF-MKT-04-R1: the agency_agency → partner_growth alias is removed.
+    expect(LEGACY_TO_CANONICAL.agency_agency).toBeUndefined();
   });
 
   it("RCCF-28: Creator Enterprise is a strict superset of Creator Scale", () => {

@@ -43,7 +43,9 @@ describe("RCCF-73.3 — plan validation (server authoritative)", () => {
     for (const code of ["partner_solo", "partner_growth", "partner_scale"]) {
       const r = validateAgencyCreatorPlanCode(code);
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.error).toContain("Invalid Creator plan");
+      // RCCF-MKT-04-R1: partner_growth is no longer in the registry, so it is
+      // rejected as an unknown plan ("Invalid plan: …") rather than by family.
+      if (!r.ok) expect(r.error).toMatch(/Invalid( Creator)? plan/);
     }
   });
 

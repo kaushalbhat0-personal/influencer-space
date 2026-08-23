@@ -12,7 +12,7 @@ limits, and the full marketing surface. It is the ONLY place these are defined.
 | --- | --- |
 | `CommerceCapability` | The boolean capability enum (basic/advanced builder, themes, domain, AI, API, white-label, analytics, support, storage…) |
 | `CommercePlanConfig` | Full plan record (Phase 1–6 fields) |
-| `COMMERCE_PLANS` | The 9 plans (4 creator, 5 partner incl. hidden Partner Growth) |
+| `COMMERCE_PLANS` | The 8 plans (4 creator, 4 partner — RCCF-MKT-04-R1 removed the retired Partner Growth) |
 | `CAPABILITY_LABELS` | Human labels for capabilities |
 | `COMMERCE_CAPABILITY_TO_FEATURE` | Capability → entitlement feature/value mapping |
 | `LEGACY_TO_CANONICAL` | Legacy DB codes → canonical codes (backward compat) |

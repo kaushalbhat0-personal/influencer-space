@@ -69,5 +69,5 @@ Final pre-launch verification across every surface.
 - [ ] Apply `20260807000000_scale_hardening_indexes` + `_billing_plan_marketing` + `_pricing_runtime` migrations on `DIRECT_URL`
 - [ ] Drop the anon storage upload policy
 - [ ] `sslmode=require` on both URLs; `HEALTH_SECRET` set
-- [ ] `partner_growth` hidden; pricing runtime seeded (`Re-sync catalog`)
+- [ ] `partner_growth` removed from registry (RCCF-MKT-04-R1); pricing runtime seeded (`Re-sync catalog`) so any stale DB row is deprecated
 - [ ] Run `prisma migrate deploy`, `next build`, full test suite, Playwright e2e
