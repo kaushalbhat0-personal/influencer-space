@@ -10,13 +10,21 @@ import { runtimeContextBuilder } from "@/modules/runtime-context";
 import { computePaymentReadiness } from "@/modules/payment-account";
 import { recommendationHistory } from "@/modules/recommendation-runtime";
 import type { SuccessSignals } from "../domain/types";
+import type { RuntimeContext } from "@/modules/runtime-context/domain/types";
 
 const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
   typeof reactCache === "function" ? reactCache : ((fn: (x: never) => unknown) => fn as never);
 
-export async function loadSignals(tenantId: string): Promise<SuccessSignals> {
-  const [context, payment, tenant, sub, lastActivity, recommendations] = await Promise.all([
-    runtimeContextBuilder.build(tenantId),
+/**
+ * RCCF-72.17C.4 — full canonical signals. `context` may be supplied when the
+ * Runtime Context was already built earlier in the same request (the dashboard
+ * does this); the ~62-query context build is then skipped and the signals are
+ * derived from the passed context, leaving only the ~5 companion reads. The
+ * result is identical because the signals are a pure function of the context.
+ */
+export async function loadSignals(tenantId: string, context?: RuntimeContext): Promise<SuccessSignals> {
+  const builtContext = context ?? (await runtimeContextBuilder.build(tenantId));
+  const [payment, tenant, sub, lastActivity, recommendations] = await Promise.all([
     computePaymentReadiness(tenantId),
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { createdAt: true } }),
     prisma.billingSubscription.findFirst({ where: { workspace: { tenantId } }, select: { status: true, trialEndsAt: true, plan: { select: { code: true } } } }),
@@ -30,25 +38,25 @@ export async function loadSignals(tenantId: string): Promise<SuccessSignals> {
     tenantId,
     createdAt: tenant?.createdAt ?? new Date(),
     lastActivityAt: lastActivity?.createdAt ?? null,
-    productCount: context.metrics.productCount,
-    orderCount: context.metrics.orderCount,
-    galleryCount: context.metrics.galleryCount,
-    published: context.intelligence.published,
-    healthScore: context.health.overallScore,
-    knowledgeScore: context.knowledge.score.overall,
-    goalAlignment: context.goals.alignment.overall,
-    successCompletion: context.success?.completionPercent ?? null,
+    productCount: builtContext.metrics.productCount,
+    orderCount: builtContext.metrics.orderCount,
+    galleryCount: builtContext.metrics.galleryCount,
+    published: builtContext.intelligence.published,
+    healthScore: builtContext.health.overallScore,
+    knowledgeScore: builtContext.knowledge.score.overall,
+    goalAlignment: builtContext.goals.alignment.overall,
+    successCompletion: builtContext.success?.completionPercent ?? null,
     completedRecommendations,
     paymentReady: payment.readiness === "ready",
     paymentIncomplete: payment.readiness !== "ready",
     subscriptionStatus: sub?.status ?? null,
     trialEndsAt: sub?.trialEndsAt ?? null,
-    hasProducts: context.metrics.productCount > 0,
-    hasOrders: context.metrics.orderCount > 0,
-    analyticsActive: context.intelligence.analyticsActive,
-    seoConfigured: context.metrics.hasSeo,
+    hasProducts: builtContext.metrics.productCount > 0,
+    hasOrders: builtContext.metrics.orderCount > 0,
+    analyticsActive: builtContext.intelligence.analyticsActive,
+    seoConfigured: builtContext.metrics.hasSeo,
     planCode: sub?.plan?.code ?? null,
-    commerceStrategy: context.commerceStrategy.id,
+    commerceStrategy: builtContext.commerceStrategy.id,
   };
 }
 

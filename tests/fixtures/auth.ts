@@ -13,6 +13,9 @@ interface AuthFixtures {
   guestPage: Page;
 }
 
+// Canonical E2E test password (matches tests/fixtures/test-seed.ts).
+const E2E_PASSWORD = process.env.E2E_TEST_PASSWORD ?? "admin123";
+
 export const test = base.extend<AuthFixtures>({
   superAdminPage: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -20,7 +23,7 @@ export const test = base.extend<AuthFixtures>({
     await page.goto("/admin/login?tenant=testcreator");
     await page.waitForLoadState("networkidle");
     await page.fill('input#email', "admin@creatorstore.test");
-    await page.fill('input#password', "TestPass123!");
+    await page.fill('input#password', E2E_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL("**/super-admin", { timeout: 30000 });
     await use(page);
@@ -33,7 +36,7 @@ export const test = base.extend<AuthFixtures>({
     await page.goto("/admin/login");
     await page.waitForLoadState("networkidle");
     await page.fill('input#email', "agency@creatorstore.test");
-    await page.fill('input#password', "TestPass123!");
+    await page.fill('input#password', E2E_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL("**/agency**", { timeout: 30000 });
     await use(page);
@@ -46,7 +49,7 @@ export const test = base.extend<AuthFixtures>({
     await page.goto("/admin/login?tenant=testcreator");
     await page.waitForLoadState("networkidle");
     await page.fill('input#email', "creator@creatorstore.test");
-    await page.fill('input#password', "TestPass123!");
+    await page.fill('input#password', E2E_PASSWORD);
     await page.click('button[type="submit"]');
     await page.waitForURL("**/admin/dashboard", { timeout: 30000 });
     await use(page);

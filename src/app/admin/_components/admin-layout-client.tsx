@@ -9,8 +9,9 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { RuntimeNotificationBell } from "@/components/layout/RuntimeNotificationBell";
 import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
-import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
+import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import type { NavConfigWire } from "@/config/admin-nav";
+import { AdminPublishControl } from "./admin-publish-control";
 
 export function AdminLayoutClient({
   children,
@@ -56,7 +57,7 @@ export function AdminLayoutClient({
           CreatorStore
         </span>
         <div className="flex-1" />
-        <PublishStatusBadge status={publishStatus} size="sm" />
+        <AdminPublishControl status={publishStatus} size="sm" />
         <button
           onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
           className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white"
@@ -79,7 +80,7 @@ export function AdminLayoutClient({
           <kbd className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
         </button>
         <div className="flex-1" />
-        <PublishStatusBadge status={publishStatus} size="md" />
+        <AdminPublishControl status={publishStatus} size="md" />
         <Link
           href="/builder"
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"

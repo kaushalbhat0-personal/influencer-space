@@ -138,9 +138,14 @@ describe("RCCF-60.2 — public pricing metadata", () => {
     expect(page).toContain("Partner plans from ₹4,999/month");
   });
 
-  it("Creator metadata truthfully acknowledges the free/trial tier", () => {
+  // MODERNIZED in RCCF-MKT-02-R1: the creator "from" price is now DERIVED from
+  // runtime plans at request time (the old pinned token "paid plans from ₹999"
+  // contradicted live Growth pricing of ₹699/month and was removed).
+  it("Creator metadata truthfully acknowledges the free/trial tier and derives paid prices from runtime", () => {
     expect(page).toContain("Creator plans from Free");
-    expect(page).toContain("paid plans from ₹999");
+    expect(page).not.toContain("paid plans from ₹999"); // stale hardcoded figure absent
+    expect(page).toContain("export async function generateMetadata"); // runtime derivation present
+    expect(page).toContain("Math.min(...paidPrices)");
   });
 });
 

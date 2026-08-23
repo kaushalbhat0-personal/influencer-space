@@ -78,7 +78,7 @@ export class BillingService {
     idempotencyKey: string;
     renewsAt?: Date | null;
     amount?: number;
-  }): Promise<{ handled: boolean; status?: string; error?: string }> {
+  }): Promise<{ handled: boolean; status?: string | null; error?: string }> {
     const { eventName, workspaceId, planCode, providerReference, idempotencyKey } = input;
     const start = Date.now();
 
@@ -119,6 +119,38 @@ export class BillingService {
     }
     if (!plan) throw new Error(`Unknown plan for ${eventName}`);
 
+    // RCCF-71.4.5 (F1) — a paid transition (activate/renew) must be backed by a
+    // valid positive captured payment BEFORE the subscription becomes ACTIVE.
+    // A zero/absent/invalid amount NEVER transitions to ACTIVE (no paid plan
+    // resolution → no paid entitlement). The BillingEvent is still recorded so
+    // a duplicate delivery stays idempotent; the subscription state is left
+    // unchanged. Non-paid transitions (cancel/pause/past_due/resume) keep their
+    // existing semantics and are unaffected by the payment guard.
+    const isPaidTransition = mapping.action === "activate" || mapping.action === "renew";
+    const validPaidAmount: number | null =
+      isPaidTransition &&
+      typeof input.amount === "number" &&
+      Number.isFinite(input.amount) &&
+      input.amount > 0
+        ? Math.round(input.amount * 100) / 100
+        : null;
+
+    if (isPaidTransition && validPaidAmount === null) {
+      await billingRepository.createEvent({
+        workspaceId,
+        accountId: workspaceId,
+        type: mapping.eventType,
+        idempotencyKey,
+        payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: existing?.status, note: "payment_guard:no_activation" },
+      });
+      await logAction(
+        (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
+        "billing:payment-ignored",
+        { eventName, planCode: plan.code, providerReference, reason: "zero-or-missing-amount" },
+      ).catch(() => {});
+      return { handled: true, status: existing?.status ?? null };
+    }
+
     const sub = await billingRepository.upsertSubscription(workspaceId, {
       planId: plan.id,
       status,
@@ -134,23 +166,10 @@ export class BillingService {
     });
 
     // Renewal / activation → paid invoice.
-    if (mapping.action === "activate" || mapping.action === "renew") {
-      // RCCF-41: zero-value/invalid payment guard. A webhook without a real
-      // captured amount (missing payment entity, null/zero/negative amount)
-      // NEVER mints an invoice or commission. The BillingEvent above already
-      // recorded the event; nothing financial is created.
-      const amount =
-        typeof input.amount === "number" && Number.isFinite(input.amount) && input.amount > 0
-          ? Math.round(input.amount * 100) / 100
-          : null;
-      if (amount === null) {
-        await logAction(
-          (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
-          "billing:payment-ignored",
-          { eventName, planCode: plan.code, providerReference, reason: "zero-or-missing-amount" },
-        ).catch(() => {});
-        return { handled: true, status };
-      }
+    // RCCF-41: the zero-value guard above guarantees a paid transition reaching
+    // this point carries a valid positive captured amount.
+    if (isPaidTransition && validPaidAmount !== null) {
+      const amount = validPaidAmount;
 
       // RCCF-37 (P1): a single charge can raise multiple events (subscription.charged
       // + payment.captured) that collapse to the same payment reference at the route

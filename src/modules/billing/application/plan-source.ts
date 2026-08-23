@@ -22,6 +22,41 @@ export interface ResolvedActivePlan {
   status: string | null;
 }
 
+export interface SubscriptionEntitlementState {
+  status: string | null | undefined;
+  trialEndsAt?: Date | null;
+  renewsAt?: Date | null;
+  currentPeriodEnd?: Date | null;
+}
+
+/**
+ * Resolve whether a subscription currently grants plan capabilities.
+ *
+ * Billing lifecycle semantics are deliberately centralized here: ACTIVE is
+ * eligible until an explicit period end, TRIALING is eligible only while its
+ * trial is open (or when the existing record has no trial end), and PAST_DUE /
+ * CANCELLED / EXPIRED never grant access because no grace period exists.
+ */
+export function isSubscriptionEntitlementEligible(
+  subscription: SubscriptionEntitlementState,
+  now = new Date(),
+): boolean {
+  const status = subscription.status;
+  if (status === "ACTIVE") {
+    const end = subscription.renewsAt ?? subscription.currentPeriodEnd;
+    return !end || end.getTime() > now.getTime();
+  }
+  if (status === "TRIALING") {
+    const end = subscription.trialEndsAt ?? subscription.currentPeriodEnd;
+    return !end || end.getTime() > now.getTime();
+  }
+  return false;
+}
+
+function noEntitlement(origin: PlanOrigin, status: string | null | undefined): ResolvedActivePlan {
+  return { code: null, origin, status: status ?? null };
+}
+
 /** Admin-facing subscription row (v2 + legacy union, canonical display). */
 export interface AdminSubscriptionRow {
   tenantId: string;
@@ -94,6 +129,7 @@ async function resolveActivePlanImpl(
   if (workspaceId) {
     const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
     if (sub?.plan?.code) {
+      if (!isSubscriptionEntitlementEligible(sub)) return noEntitlement("v2", sub.status);
       // IMPLEMENTATION-42 Phase 5: clamp Launch → Grow for agency-managed creators.
       const code = await resolveRestrictedPlanCode({ tenantId, code: sub.plan.code });
       return { code, origin: "v2", status: sub.status };
@@ -108,17 +144,21 @@ async function resolveActivePlanImpl(
     if (workspace) {
       const sub = await billingRepository.findSubscriptionWithPlan(workspace.id);
       if (sub?.plan?.code) {
+        if (!isSubscriptionEntitlementEligible(sub)) return noEntitlement("v2", sub.status);
         const code = await resolveRestrictedPlanCode({ tenantId, code: sub.plan.code });
         return { code, origin: "v2", status: sub.status };
       }
     }
-    const legacy = await prisma.subscription.findUnique({
-      where: { tenantId },
-      select: { plan: true, status: true },
-    });
-    if (legacy?.plan) {
-      const code = await resolveRestrictedPlanCode({ tenantId, code: legacy.plan });
-      return { code, origin: "legacy", status: legacy.status };
+      const legacy = await prisma.subscription.findUnique({
+        where: { tenantId },
+        select: { plan: true, status: true, currentPeriodEnd: true },
+      });
+      if (legacy?.plan) {
+        if (!isSubscriptionEntitlementEligible({ status: legacy.status, currentPeriodEnd: legacy.currentPeriodEnd })) {
+          return noEntitlement("legacy", legacy.status);
+        }
+        const code = await resolveRestrictedPlanCode({ tenantId, code: legacy.plan });
+        return { code, origin: "legacy", status: legacy.status };
     }
   }
 
@@ -205,7 +245,7 @@ export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<Ten
     prisma.workspace.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true } }),
     prisma.subscription.findMany({
       where: { tenantId: { in: tenantIds } },
-      select: { tenantId: true, plan: true, status: true },
+      select: { tenantId: true, plan: true, status: true, currentPeriodEnd: true },
     }),
   ]);
 
@@ -217,22 +257,34 @@ export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<Ten
   const workspaceByTenant = new Map<string, string>();
   for (const w of workspaces) workspaceByTenant.set(w.tenantId ?? "", w.id);
 
-  const subByWorkspace = new Map<string, { code: string; name: string; status: string }>();
+  const subByWorkspace = new Map<string, { code: string; name: string; status: string; trialEndsAt: Date | null; renewsAt: Date | null }>();
   for (const s of subs) {
-    if (s.workspaceId && s.plan?.code) subByWorkspace.set(s.workspaceId, { code: s.plan.code, name: s.plan.name, status: s.status });
+    if (s.workspaceId && s.plan?.code) subByWorkspace.set(s.workspaceId, {
+      code: s.plan.code,
+      name: s.plan.name,
+      status: s.status,
+      trialEndsAt: s.trialEndsAt,
+      renewsAt: s.renewsAt,
+    });
   }
 
-  const legacyByTenant = new Map<string, { plan: string; status: string }>();
-  for (const l of legacy) legacyByTenant.set(l.tenantId, { plan: l.plan, status: l.status ?? "" });
+  const legacyByTenant = new Map<string, { plan: string; status: string; currentPeriodEnd: Date | null }>();
+  for (const l of legacy) legacyByTenant.set(l.tenantId, { plan: l.plan, status: l.status ?? "", currentPeriodEnd: l.currentPeriodEnd });
 
   const rows = tenantIds.map((tenantId) => {
     const workspaceId = workspaceByTenant.get(tenantId);
     const v2 = workspaceId ? subByWorkspace.get(workspaceId) : undefined;
     if (v2) {
+      if (!isSubscriptionEntitlementEligible(v2)) {
+        return { tenantId, planCode: null, planDisplay: "Free", origin: "v2" as const, status: v2.status };
+      }
       return { tenantId, planCode: v2.code, planDisplay: v2.name, origin: "v2" as const, status: v2.status };
     }
     const legacy = legacyByTenant.get(tenantId);
     if (legacy?.plan) {
+      if (!isSubscriptionEntitlementEligible(legacy)) {
+        return { tenantId, planCode: null, planDisplay: "Free", origin: "legacy" as const, status: legacy.status };
+      }
       return { tenantId, planCode: legacy.plan, planDisplay: resolvePlan(legacy.plan).displayName, origin: "legacy" as const, status: legacy.status };
     }
     return { tenantId, planCode: null, planDisplay: "Free", origin: "none" as const, status: null };

@@ -12,6 +12,7 @@ import { CreatorImage, CreatorVideo } from "@/components/shared";
 import { AffiliateGrid, type AffiliateGridItem } from "@/components/public/AffiliateGrid";
 import { HeroMedia, responsiveAlignmentClass } from "@/components/shared/HeroMedia";
 import type { HeroMediaKind } from "@/lib/media/hero-media";
+import { heroTextAlignClass, heroContentWidthClass, heroOverlayClass } from "@/lib/hero/presentation-options";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
 import { Star } from "lucide-react";
 import { shouldRenderSection } from "@/modules/section-presentation";
@@ -45,8 +46,8 @@ function useVisibility(props: Record<string, unknown>): boolean {
 function EmptyState({ label = "No content yet" }: { label?: string }) {
   if (process.env.NODE_ENV === "production") return null;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 text-center">
-      <div className="rounded-lg border border-dashed border-white/10 p-8 text-sm text-zinc-600">
+    <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)] text-center">
+      <div className="rounded-[var(--radius-lg,0.5rem)] border border-dashed border-white/10 p-8 text-sm text-zinc-600">
         {label}
       </div>
     </div>
@@ -61,7 +62,7 @@ function SectionHeading({ p, title }: { p: Record<string, unknown>; title: strin
   const description = p.description ? String(p.description) : null;
   return (
     <div className="mb-6 text-center">
-      <h2 className="text-2xl font-bold text-[var(--text-primary,#FAFAFA)]">{title}</h2>
+      <h2 className="text-2xl font-[var(--brand-font-weight-heading,700)] text-[var(--text-primary,#FAFAFA)]">{title}</h2>
       {description && <p className="mx-auto mt-2 max-w-2xl text-sm text-zinc-400">{description}</p>}
     </div>
   );
@@ -93,7 +94,7 @@ function responsiveGridClass(columns: unknown): string {
 
 /* â”€â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
+export function HeroRenderer({ props, elementId: _elementId, previewMode }: RendererProps) {
   const p = props as Record<string, unknown>;
   const title = String(p.title || "");
   const name = String(p.name || p.title || "");
@@ -130,7 +131,20 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
   const [videoEnded, setVideoEnded] = useState(false);
   const showVideo = resolvedMedia === "video" && !videoEnded;
 
-  const alignment = resolvedMedia === "video" ? videoAlign : resolvedMedia === "background" ? "object-center" : imageAlign;
+  // RCCF-71.3: HERO PRESENTATION — controlled text alignment, content width and
+  // overlay strength from Website.themeConfig (merged onto content.hero by
+  // buildRuntimeSnapshot / the canvas). Each helper falls back to the EXACT
+  // current look when the value is absent or unknown, so old snapshots render
+  // unchanged.
+  const textAlignClass = heroTextAlignClass(String(p.textAlign || "center"));
+  const contentWidthClass = heroContentWidthClass(String(p.contentWidth || "medium"));
+  const overlayClass = heroOverlayClass(String(p.overlay || "medium"));
+
+  // RCCF-71.3 (B→A fix): the background fallback media uses the SAVED image
+  // focal point (imageDesktopAlignment/imageMobileAlignment) instead of the old
+  // hardcoded object-center, so video/poster/background all honor the creator's
+  // image positioning.
+  const alignment = resolvedMedia === "video" ? videoAlign : imageAlign;
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
@@ -182,12 +196,14 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
             )}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-zinc-950" />
+        {/* RCCF-71.3: controlled overlay strength (default = the current
+            gradient). "none" renders no overlay. */}
+        {overlayClass && <div className={`absolute inset-0 ${overlayClass}`} />}
       </div>
 
       {/* â”€â”€ Overlapping profile picture + identity (never above the media) â”€â”€ */}
       <div className="-mt-[100px] @sm/main:-mt-[24%] relative z-10">
-        <div className="mx-auto max-w-2xl px-4 pb-12 pt-2 text-center @sm/main:pb-20">
+        <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-12 pt-2 @sm/main:pb-20`}>
           {profilePictureUrl && (
             <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm/main:h-36 @sm/main:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
@@ -205,11 +221,14 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           )}
 
           {name || title ? (
-            <h1 className="text-3xl font-bold tracking-tight text-white @sm/main:text-4xl @lg/main:text-5xl">{name || title}</h1>
+            // RCCF-71.4.1 P3: `break-words` keeps a long creator identity/title
+            // wrapping inside the canvas on narrow screens instead of extending
+            // past the 390px frame and being clipped on both sides.
+            <h1 className="text-3xl font-[var(--brand-font-weight-heading,700)] tracking-tight text-white break-words @sm/main:text-4xl @lg/main:text-5xl">{name || title}</h1>
           ) : null}
 
           {title && title !== name && (
-            <h2 className="mt-2 text-xl font-semibold text-white @sm/main:text-2xl">{title}</h2>
+            <h2 className="mt-2 text-xl font-semibold text-white break-words @sm/main:text-2xl">{title}</h2>
           )}
           {tagline && <p className="mt-3 text-base text-zinc-400">{tagline}</p>}
           {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">{bio}</p>}
@@ -217,23 +236,23 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {cta && (
-              ctaLink ? (
-                <a href={ctaLink} className="inline-flex items-center gap-2 rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">
+              ctaLink && !previewMode ? (
+                <a href={ctaLink} className="inline-flex items-center gap-2 rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">
                   {cta}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)]">
+                <span className="inline-flex items-center gap-2 rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)]">
                   {cta}
                 </span>
               )
             )}
             {ctaSecondaryText && (
-              ctaSecondaryLink ? (
-                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-lg border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)] transition-colors hover:border-[var(--button-secondary-hover-fg,#FAFAFA)] hover:text-[var(--button-secondary-hover-fg,#FAFAFA)]">
+              ctaSecondaryLink && !previewMode ? (
+                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-[var(--radius-lg,0.5rem)] border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)] transition-colors hover:border-[var(--button-secondary-hover-fg,#FAFAFA)] hover:text-[var(--button-secondary-hover-fg,#FAFAFA)]">
                   {ctaSecondaryText}
                 </a>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-lg border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)]">
+                <span className="inline-flex items-center gap-2 rounded-[var(--radius-lg,0.5rem)] border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)]">
                   {ctaSecondaryText}
                 </span>
               )
@@ -243,15 +262,24 @@ export function HeroRenderer({ props, elementId: _elementId }: RendererProps) {
           {socialLinks.length > 0 && (
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               {socialLinks.map((l, i) => (
-                <a
-                  key={i}
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-white/30 hover:text-white"
-                >
-                  {l.label || platformLabel(l.platform || "Link")}
-                </a>
+                previewMode ? (
+                  <span
+                    key={i}
+                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400"
+                  >
+                    {l.label || platformLabel(l.platform || "Link")}
+                  </span>
+                ) : (
+                  <a
+                    key={i}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-white/30 hover:text-white"
+                  >
+                    {l.label || platformLabel(l.platform || "Link")}
+                  </a>
+                )
               ))}
             </div>
           )}
@@ -272,12 +300,12 @@ export function GalleryRenderer({ props }: RendererProps) {
 
   if (images.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         {/* RCCF-68.3.2: container-aware grid — mobile 1 col, medium 2, desktop = configured columns. */}
         <div className={responsiveGridClass(columns)}>
           {images.map((img: Record<string, unknown>, i: number) => (
-            <div key={i} className="aspect-square overflow-hidden rounded-lg bg-[var(--surface-card-hover,#27272A)]">
+            <div key={i} className="aspect-square overflow-hidden rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)]">
               {img.isVideo && img.videoUrl ? (
                 <video
                   src={img.videoUrl as string}
@@ -345,7 +373,7 @@ function ProductCardCtas({ prod, previewMode }: { prod: Record<string, unknown>;
             type="button"
             disabled
             title="Ordering available on your live website"
-            className="w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)] disabled:cursor-not-allowed"
+            className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)] disabled:cursor-not-allowed"
           >
             Order on WhatsApp
           </button>
@@ -354,12 +382,12 @@ function ProductCardCtas({ prod, previewMode }: { prod: Record<string, unknown>;
             href={waHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-secondary,#A1A1AA)] transition-colors hover:border-[var(--brand-secondary,#00f5ff)] hover:text-[var(--brand-secondary,#00f5ff)]"
+            className="block w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-secondary,#A1A1AA)] transition-colors hover:border-[var(--brand-secondary,#00f5ff)] hover:text-[var(--brand-secondary,#00f5ff)]"
           >
             Order on WhatsApp
           </a>
         ) : (
-          <p className="w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
+          <p className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
             Order on WhatsApp
           </p>
         ))}
@@ -376,12 +404,12 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
 
   if (products.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         {/* RCCF-68.3.2: container-aware grid — mobile 1 col, medium 2, desktop = configured columns. */}
         <div className={responsiveGridClass(columns)}>
           {products.map((prod: Record<string, unknown>, idx: number) => (
-            <div key={idx} className="group rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 transition-colors hover:border-[var(--brand-primary,#6366F1)] hover:bg-[var(--surface-card,#18181B)]">
+            <div key={idx} className="group rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 transition-colors hover:border-[var(--brand-primary,#6366F1)] hover:bg-[var(--surface-card,#18181B)]">
               <div className="relative mb-2 overflow-hidden rounded">
                 {prod.imageUrl ? (
                   <CreatorImage
@@ -412,7 +440,7 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
                   previewMode={previewMode}
                 />
               ) : (
-                <p className="mt-1.5 w-full rounded-lg bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
+                <p className="mt-1.5 w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">
                   Buy Now
                 </p>
               )}
@@ -437,14 +465,14 @@ export function TimelineRenderer({ props }: RendererProps) {
 
   if (milestones.length > 0) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mx-auto max-w-3xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <div className="space-y-6">
           {milestones.map((m: Record<string, string>, i: number) => (
             <div key={i} className="relative border-l-2 border-zinc-800 pl-6">
               <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-[var(--surface-root,#0A0A0B)]" />
               {m.imageUrl && (
-                <div className="mb-2 w-full max-w-xs overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card-hover,#27272A)]">
+                <div className="mb-2 w-full max-w-xs overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card-hover,#27272A)]">
                   <CreatorImage
                     src={m.imageUrl}
                     alt={m.title || m.name || "Milestone"}
@@ -476,11 +504,11 @@ export function LinksRenderer({ props }: RendererProps) {
 
   if (links.length > 0) {
     return (
-      <div className="mx-auto max-w-md px-4 py-12 text-center">
+      <div className="mx-auto max-w-md px-4 py-[var(--section-spacing,3rem)] text-center">
         <SectionHeading p={p} title={title} />
         <div className="space-y-3">
           {links.map((link: Record<string, string>, i: number) => (
-            <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg bg-[var(--surface-card-hover,#27272A)] px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)] hover:bg-[var(--surface-card-hover,#27272A)] transition-colors">
+            <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)] hover:bg-[var(--surface-card-hover,#27272A)] transition-colors">
               <span>{link.platform || link.label || "Link"}</span>
             </a>
           ))}
@@ -518,7 +546,7 @@ export function AffiliateLinksRenderer({ props, previewMode }: RendererProps) {
 
   if (affiliates.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <AffiliateGrid affiliates={affiliates} previewMode={previewMode} />
       </div>
@@ -573,14 +601,14 @@ export function TestimonialsRenderer({ props }: RendererProps) {
 
   if (items.length > 0) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
+      <div className="mx-auto max-w-4xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         {/* RCCF-68.3.2: container-aware grid. Desktop keeps the configured
             column count (capped by item count, matching the old behavior);
             mobile is 1 column so testimonials never cram. */}
         <div className={responsiveGridClass(Math.min(columns, items.length))}>
           {items.map((item: Record<string, string>, i: number) => (
-            <div key={i} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4">
+            <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4">
               <div className="mb-2 flex items-center gap-2">
                 {item.avatarUrl ? (
                   <CreatorImage
@@ -628,11 +656,11 @@ export function FaqRenderer({ props }: RendererProps) {
 
   if (items.length > 0) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mx-auto max-w-3xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <div className="space-y-3">
           {items.map((item: Record<string, string>, i: number) => (
-            <details key={i} className="group rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60">
+            <details key={i} className="group rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60">
               <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">
                 {item.question || item.q}
                 <svg className="h-4 w-4 text-[var(--text-muted,#71717A)] transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -660,9 +688,9 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
 
   if (state.success) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-12 text-center">
+      <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)] text-center">
         <SectionHeading p={props} title={title} />
-        <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
+        <div className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
           <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">Thanks for reaching out! I&apos;ll get back to you soon.</p>
         </div>
       </div>
@@ -674,7 +702,7 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
   // untouched (previewMode is a UX layer, not a security boundary).
   if (previewMode) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-12">
+      <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={props} title={title} />
         {!p.description && (
           <p className="mb-6 text-center text-sm text-[var(--text-muted,#71717A)]">Have a question or want to collaborate? Reach out!</p>
@@ -682,17 +710,17 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Name</label>
-            <input disabled placeholder="Your name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+            <input disabled placeholder="Your name" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Email</label>
-            <input disabled type="email" placeholder="your@email.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+            <input disabled type="email" placeholder="your@email.com" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Message</label>
-            <textarea disabled rows={4} className="w-full resize-none rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" placeholder="Your message..." />
+            <textarea disabled rows={4} className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" placeholder="Your message..." />
           </div>
-          <button type="button" disabled className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">Send Message</button>
+          <button type="button" disabled className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">Send Message</button>
           <p className="text-center text-[10px] font-medium uppercase tracking-widest text-amber-400/80">Preview — submissions disabled</p>
         </div>
       </div>
@@ -700,7 +728,7 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-12">
+    <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)]">
       <SectionHeading p={props} title={title} />
       {!p.description && (
         <p className="mb-6 text-center text-sm text-[var(--text-muted,#71717A)]">Have a question or want to collaborate? Reach out!</p>
@@ -712,21 +740,21 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
         <input type="hidden" name="tenantId" value={tenantId} />
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Name</label>
-          <input name="name" required maxLength={200} className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your name" />
+          <input name="name" required maxLength={200} className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your name" />
           {state.fieldErrors?.name && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.name[0]}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Email</label>
-          <input name="email" type="email" required maxLength={200} className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="your@email.com" />
+          <input name="email" type="email" required maxLength={200} className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="your@email.com" />
           {state.fieldErrors?.email && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Message</label>
-          <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full resize-none rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your message..." />
+          <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your message..." />
           {state.fieldErrors?.message && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.message[0]}</p>}
         </div>
         {state.error && <p className="text-xs text-red-400">{state.error}</p>}
-        <button type="submit" className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">Send Message</button>
+        <button type="submit" className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">Send Message</button>
       </form>
     </div>
   );
@@ -744,9 +772,9 @@ export function NewsletterRenderer({ props, previewMode }: RendererProps) {
 
   if (state.success) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-12 text-center">
+      <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)] text-center">
         <SectionHeading p={props} title={title} />
-        <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
+        <div className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
           <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">You&apos;re subscribed! Stay tuned for updates.</p>
         </div>
       </div>
@@ -756,12 +784,12 @@ export function NewsletterRenderer({ props, previewMode }: RendererProps) {
   // RCCF-68.3.2 — preview isolation: subscribe UI stays visible but INERT.
   if (previewMode) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-12 text-center">
+      <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)] text-center">
         <SectionHeading p={props} title={title} />
         <p className="mb-6 text-sm text-[var(--text-muted,#71717A)]">Stay updated with the latest content and announcements.</p>
         <div className="flex gap-2">
-          <input disabled placeholder={p.placeholder || "Your email"} className="flex-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
-          <button type="button" disabled className="rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">{p.buttonText || "Subscribe"}</button>
+          <input disabled placeholder={p.placeholder || "Your email"} className="flex-1 rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+          <button type="button" disabled className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">{p.buttonText || "Subscribe"}</button>
         </div>
         <p className="mt-2 text-[10px] font-medium uppercase tracking-widest text-amber-400/80">Preview — subscriptions disabled</p>
       </div>
@@ -769,7 +797,7 @@ export function NewsletterRenderer({ props, previewMode }: RendererProps) {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-12 text-center">
+    <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)] text-center">
       <SectionHeading p={props} title={title} />
       <p className="mb-6 text-sm text-[var(--text-muted,#71717A)]">Stay updated with the latest content and announcements.</p>
       <form action={async (fd) => {
@@ -777,8 +805,8 @@ export function NewsletterRenderer({ props, previewMode }: RendererProps) {
         action(fd);
       }} className="flex gap-2">
         <input type="hidden" name="tenantId" value={tenantId} />
-        <input name="email" type="email" required className="flex-1 rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
-        <button type="submit" className="rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">{p.buttonText || "Subscribe"}</button>
+        <input name="email" type="email" required className="flex-1 rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
+        <button type="submit" className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">{p.buttonText || "Subscribe"}</button>
       </form>
       {state.error && <p className="mt-2 text-xs text-red-400">{state.error}</p>}
       {state.fieldErrors?.email && <p className="mt-2 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
@@ -795,11 +823,11 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
 
   if (courses.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {courses.map((course: Record<string, unknown>, i: number) => (
-            <div key={i} className="group overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 transition-colors hover:border-[var(--brand-primary,#6366F1)]">
+            <div key={i} className="group overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
                 {course.imageUrl ? (
                   <CreatorImage
@@ -844,11 +872,11 @@ export function ServicesRenderer({ props, previewMode }: RendererProps) {
 
   if (services.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {services.map((service: Record<string, unknown>, i: number) => (
-            <div key={i} className="group overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 text-center transition-colors hover:border-[var(--brand-primary,#6366F1)]">
+            <div key={i} className="group overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 text-center transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
                 {service.imageUrl ? (
                   <CreatorImage
@@ -903,7 +931,7 @@ function ServiceBookingCta({ service, previewMode }: { service: Record<string, u
   if (!bookable) return null;
   if (slots.length === 0) {
     return (
-      <p className="mt-4 rounded-lg bg-[var(--surface-card-hover,#27272A)] px-3 py-2 text-[11px] text-[var(--text-muted,#71717A)]">
+      <p className="mt-4 rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] px-3 py-2 text-[11px] text-[var(--text-muted,#71717A)]">
         No upcoming availability.
       </p>
     );
@@ -918,14 +946,14 @@ function ServiceBookingCta({ service, previewMode }: { service: Record<string, u
           type="button"
           disabled
           title="Booking available on your live website"
-          className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed"
         >
           Book Now
         </button>
         <div className="mt-3 space-y-2">
           <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted,#71717A)]">Available times</p>
           {slots.map((slot) => (
-            <div key={String(slot.id || "")} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2 text-xs text-[var(--text-muted,#71717A)]">
+            <div key={String(slot.id || "")} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2 text-xs text-[var(--text-muted,#71717A)]">
               {formatSlotLabel(slot)}
             </div>
           ))}
@@ -939,7 +967,7 @@ function ServiceBookingCta({ service, previewMode }: { service: Record<string, u
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
+        className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
       >
         {open ? "Hide times" : "Book Now"}
       </button>
@@ -986,7 +1014,7 @@ function ServiceSlotBooker({ slot }: { slot: Record<string, unknown> }) {
 
   if (done) {
     return (
-      <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2">
+      <div className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2">
         <p className="text-xs text-[var(--text-primary,#FAFAFA)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
         <p className="mt-1 text-[11px] text-emerald-300">
           {done.status === "confirmed" ? "Booking confirmed." : "Booking submitted — awaiting approval."}
@@ -996,7 +1024,7 @@ function ServiceSlotBooker({ slot }: { slot: Record<string, unknown> }) {
   }
 
   return (
-    <div className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2">
+    <div className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 px-3 py-2">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between text-xs text-[var(--text-primary,#FAFAFA)]">
         <span>{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</span>
         <span className="text-[var(--brand-secondary,#00f5ff)]">{open ? "Cancel" : "Select"}</span>
@@ -1005,11 +1033,11 @@ function ServiceSlotBooker({ slot }: { slot: Record<string, unknown> }) {
       {open && (
         <form action={submit} className="mt-2 space-y-1.5">
           <input type="hidden" name="bookingId" value={String(slot.id || "")} />
-          <input name="customerName" required maxLength={200} placeholder="Your name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
-          <input name="customerEmail" type="email" required maxLength={200} placeholder="you@example.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
-          <input name="customerPhone" maxLength={30} placeholder="Phone (optional)" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerName" required maxLength={200} placeholder="Your name" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerEmail" type="email" required maxLength={200} placeholder="you@example.com" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerPhone" maxLength={30} placeholder="Phone (optional)" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-2.5 py-1.5 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
           {error && <p className="text-[11px] text-red-400">{error}</p>}
-          <button type="submit" disabled={submitting} className="w-full rounded-lg bg-[var(--brand-secondary,#00f5ff)] py-1.5 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="submit" disabled={submitting} className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--brand-secondary,#00f5ff)] py-1.5 text-xs font-semibold text-[var(--text-primary,#FAFAFA)] disabled:cursor-not-allowed disabled:opacity-50">
             {submitting ? "Booking…" : approvalRequired ? "Request Booking" : "Confirm"}
           </button>
         </form>
@@ -1029,7 +1057,7 @@ export function BookingsRenderer({ props, previewMode }: RendererProps) {
   if (slots.length === 0) return null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
       <SectionHeading p={p} title={title} />
       <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
         {slots.map((slot, i) => (
@@ -1069,7 +1097,7 @@ function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; pre
   // no submitPublicBooking request, no rate-limit request.
   if (previewMode) {
     return (
-      <div className="flex flex-col rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
+      <div className="flex flex-col rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
         <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(slot.title || "Booking")}</p>
         {slot.description ? <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(slot.description)}</p> : null}
         <p className="mt-2 text-xs text-[var(--brand-secondary,#00f5ff)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
@@ -1080,7 +1108,7 @@ function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; pre
           {typeof slot.duration === "number" ? `${slot.duration} min` : ""}
           {approvalRequired ? " · requires approval" : ""}
         </p>
-        <button type="button" disabled title="Booking available on your live website" className="mt-4 w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">
+        <button type="button" disabled title="Booking available on your live website" className="mt-4 w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">
           {approvalRequired ? "Request Booking" : "Book Now"}
         </button>
       </div>
@@ -1088,7 +1116,7 @@ function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; pre
   }
 
   return (
-    <div className="flex flex-col rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
+    <div className="flex flex-col rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
       <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(slot.title || "Booking")}</p>
       {slot.description ? <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(slot.description)}</p> : null}
       <p className="mt-2 text-xs text-[var(--brand-secondary,#00f5ff)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
@@ -1101,18 +1129,18 @@ function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; pre
       </p>
 
       {done ? (
-        <p className="mt-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+        <p className="mt-4 rounded-[var(--radius-lg,0.5rem)] bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
           {done.status === "confirmed" ? "Booking confirmed!" : "Booking submitted — pending approval."}
         </p>
       ) : (
         <form action={submit} className="mt-4 space-y-2">
           <input type="hidden" name="bookingId" value={String(slot.id || "")} />
-          <input name="customerName" required maxLength={200} placeholder="Your name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
-          <input name="customerEmail" type="email" required maxLength={200} placeholder="you@example.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
-          <input name="customerPhone" maxLength={30} placeholder="Phone (optional)" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
-          <textarea name="notes" maxLength={2000} rows={2} placeholder="Notes (optional)" className="w-full resize-none rounded-lg border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerName" required maxLength={200} placeholder="Your name" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerEmail" type="email" required maxLength={200} placeholder="you@example.com" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input name="customerPhone" maxLength={30} placeholder="Phone (optional)" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <textarea name="notes" maxLength={2000} rows={2} placeholder="Notes (optional)" className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.1))] bg-[var(--surface-card,#18181B)] px-3 py-2 text-xs text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
           {error && <p className="text-[11px] text-red-400">{error}</p>}
-          <button type="submit" disabled={submitting} className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)] disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="submit" disabled={submitting} className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)] disabled:cursor-not-allowed disabled:opacity-50">
             {submitting ? "Booking…" : approvalRequired ? "Request Booking" : "Book Now"}
           </button>
         </form>
@@ -1134,14 +1162,14 @@ export function SpotifyRenderer({ props }: RendererProps) {
 
   if (src) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-12">
+      <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)]">
         <iframe
           src={src.includes("?") ? `${src}&utm_source=generator` : `${src}?utm_source=generator`}
           width="100%"
           height={p.height || "352"}
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           loading="lazy"
-          className="rounded-xl"
+          className="rounded-[var(--radius-xl,0.75rem)]"
         />
       </div>
     );
@@ -1164,8 +1192,8 @@ export function YouTubeRenderer({ props }: RendererProps) {
 
   if (src) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <div className="aspect-video overflow-hidden rounded-xl">
+      <div className="mx-auto max-w-3xl px-4 py-[var(--section-spacing,3rem)]">
+        <div className="aspect-video overflow-hidden rounded-[var(--radius-xl,0.75rem)]">
           <iframe
             src={src}
             width="100%"
@@ -1194,8 +1222,8 @@ export function DiscordRenderer({ props }: RendererProps) {
   if (serverId) {
     const inviteUrl = p.inviteUrl || `https://discord.gg/${serverId}`;
     return (
-      <div className="mx-auto max-w-md px-4 py-12 text-center">
-        <div className="rounded-lg bg-[var(--brand-primary,#6366F1)]/20 p-6">
+      <div className="mx-auto max-w-md px-4 py-[var(--section-spacing,3rem)] text-center">
+        <div className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--brand-primary,#6366F1)]/20 p-6">
           <p className="text-3xl">ðŸ’¬</p>
           <p className="mt-2 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">Discord Community</p>
           <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">Join the conversation</p>
@@ -1203,7 +1231,7 @@ export function DiscordRenderer({ props }: RendererProps) {
             href={inviteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block rounded-lg bg-[var(--button-primary-bg,#6366F1)] px-4 py-2 text-xs font-semibold text-[var(--button-primary-fg,#FAFAFA)] transition-colors hover:bg-[var(--button-primary-hover,#4F46E5)]"
+            className="mt-4 inline-block rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#6366F1)] px-4 py-2 text-xs font-semibold text-[var(--button-primary-fg,#FAFAFA)] transition-colors hover:bg-[var(--button-primary-hover,#4F46E5)]"
           >
             {label}
           </a>
@@ -1228,7 +1256,7 @@ export function InstagramRenderer({ props }: RendererProps) {
   // feed lives in contentFeed.default.
   if (username) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-[var(--section-spacing,3rem)] text-center">
         <p className="text-sm font-medium text-[var(--text-secondary,#A1A1AA)]">
           Follow{" "}
           <a
@@ -1245,7 +1273,7 @@ export function InstagramRenderer({ props }: RendererProps) {
           href={`https://instagram.com/${username}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-block rounded-lg bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
+          className="mt-4 inline-block rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-colors hover:bg-[var(--button-primary-hover,#00d9f2)]"
         >
           View on Instagram
         </a>
@@ -1266,11 +1294,11 @@ export function GamesRenderer({ props }: RendererProps) {
 
   if (games.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {games.map((game: Record<string, string>, i: number) => (
-            <div key={i} className="rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 text-center">
+            <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 text-center">
               {game.logoUrl ? (
                 <div className="mx-auto mb-3 h-20 w-20">
                   <CreatorImage src={game.logoUrl} alt={game.name} variant="logo" />
@@ -1304,7 +1332,7 @@ export function ContentFeedRenderer({ props }: RendererProps) {
 
   if (items.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
         <div className="grid grid-cols-2 gap-3 @sm/main:grid-cols-3 @lg/main:grid-cols-4">
           {items.map((item: Record<string, string>, i: number) => {
@@ -1315,7 +1343,7 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                 href={item.permalink || "#"}
                 target={item.permalink ? "_blank" : undefined}
                 rel={item.permalink ? "noopener noreferrer" : undefined}
-                className="group relative overflow-hidden rounded-xl bg-[var(--surface-card,#18181B)] ring-1 ring-white/[0.06] transition-all hover:ring-white/20"
+                className="group relative overflow-hidden rounded-[var(--radius-xl,0.75rem)] bg-[var(--surface-card,#18181B)] ring-1 ring-white/[0.06] transition-all hover:ring-white/20"
                 style={{ aspectRatio: isVideo ? "9 / 16" : "1 / 1" }}
               >
                 {(item.thumbnailUrl || item.url) ? (
@@ -1344,7 +1372,7 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                     <p className="line-clamp-2 text-xs leading-relaxed text-[var(--text-primary,#FAFAFA)]/90">{item.caption}</p>
                   </div>
                 )}
-                <div className="absolute left-2 top-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-primary,#FAFAFA)]/80 backdrop-blur-sm">
+                <div className="absolute left-2 top-2 rounded-[var(--radius-md,0.375rem)] bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-primary,#FAFAFA)]/80 backdrop-blur-sm">
                   {item.platform || "social"}
                 </div>
               </a>

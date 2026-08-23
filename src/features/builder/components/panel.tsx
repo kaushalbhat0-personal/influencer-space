@@ -130,7 +130,7 @@ export function ResizablePanel({
           aria-label={`Resize ${side === "left" ? "sections" : "properties"} panel`}
           className={cn(
             "absolute top-0 h-full w-1 cursor-col-resize touch-none select-none",
-            dragging ? "bg-s8ul-cyan/60" : "hover:bg-s8ul-cyan/50",
+            dragging ? "bg-indigo-400/60" : "hover:bg-indigo-400/50",
             side === "left" ? "right-0" : "left-0",
           )}
         />

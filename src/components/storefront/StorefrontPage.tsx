@@ -140,26 +140,28 @@ export async function StorefrontPage({
   // gets no view-all href.
   const sections = withViewAllHref(filteredSections, doc.pages, (pageSlug) => getPageHref(domain, pageSlug), target.slug);
 
-  // RCCF-02: the published storefront uses the capability-resolved experience
-  // baked into the snapshot — NO plan/billing reads at render time. Old
+  // RCCF-02 + RCCF-71.2: the capability-resolved experience baked into the
+  // snapshot is preferred in BOTH published and preview paths (publish and the
+  // preview loader bake the override-applied, capability-resolved experience),
+  // so the storefront applies NO plan/billing reads at render time. Old
   // snapshots without a baked experience fall back to resolving against the
-  // free tier (null plan), which is always the safe minimal fallback. Preview
-  // (draft) resolves against the live plan as before.
+  // live plan (preview) / free tier (published) — always the safe minimal look.
   const themeDef = snap.theme?.packageId ? themeRegistry.getById(snap.theme.packageId) : undefined;
   const baseExperience = experienceRegistry.resolve({
     id: snap.theme?.packageId ?? null,
     category: themeDef?.category ?? null,
     premium: themeDef?.premium ?? null,
   });
-  const experience = isPreview
-    ? resolveExperienceForCapabilities(
+  const bakedExperience = snap.renderingHints?.experience as ThemeExperience | undefined;
+  const experience = bakedExperience
+    ?? resolveExperienceForCapabilities(
         baseExperience,
-        await resolveActivePlan(undefined, data.tenantId)
-          .then((p) => p.code)
-          .catch(() => null),
-      )
-    : (snap.renderingHints?.experience as ThemeExperience | undefined)
-      ?? resolveExperienceForCapabilities(baseExperience, null);
+        isPreview
+          ? await resolveActivePlan(undefined, data.tenantId)
+              .then((p) => p.code)
+              .catch(() => null)
+          : null,
+      );
 
   return (
     <>
@@ -178,7 +180,7 @@ export async function StorefrontPage({
           renderers — on live the container width equals the viewport, so they
           behave exactly like sm:/lg:. The Builder canvas uses the same named
           container with its device frame. */}
-      <main id="main-content" className="@container/main min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
+      <main id="main-content" className="@container/main theme-root min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }} />
         ))}

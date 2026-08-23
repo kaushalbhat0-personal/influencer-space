@@ -111,7 +111,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
         <div
           className={cn(
             "rounded-lg border px-2 py-1.5 text-[9px] font-medium",
-            previewingLocked ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-s8ul-cyan/40 bg-s8ul-cyan/10 text-s8ul-cyan",
+            previewingLocked ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-indigo-400/40 bg-indigo-500/10 text-indigo-300",
           )}
           data-testid="preview-banner"
         >
@@ -128,7 +128,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search themes..."
-          className="w-full rounded-md border border-white/10 bg-zinc-900 py-1.5 pl-6 pr-2 text-[10px] text-zinc-300 placeholder-zinc-600 outline-none focus:border-zinc-600"
+          className="admin-input py-1.5 pl-6 pr-2 text-[10px]"
         />
       </div>
 
@@ -137,7 +137,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="w-full rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-[9px] text-zinc-400 outline-none"
+          className="admin-select px-2 py-1 text-[9px]"
         >
           <option value="">All categories</option>
           {categories.map((c) => <option key={c} value={c}>{CATEGORY_LABELS[c as keyof typeof CATEGORY_LABELS] || c}</option>)}
@@ -171,7 +171,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
               className={cn(
                 "group relative cursor-pointer rounded-lg border p-1.5 text-left transition-all",
                 isActive
-                  ? "border-s8ul-cyan/40 bg-s8ul-cyan/5 shadow-[0_0_8px_rgba(0,245,255,0.08)]"
+                  ? "border-indigo-400/40 bg-indigo-500/5 ring-1 ring-indigo-500/20"
                   : "border-white/5 bg-zinc-900/50 hover:border-white/10 hover:bg-zinc-900",
               )}
               data-testid={`builder-theme-${theme.slug}`}
@@ -193,7 +193,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
 
               <div className="flex items-center gap-1">
                 <p className="flex-1 truncate text-[10px] font-medium text-zinc-300">{theme.name}</p>
-                {isCurrent && <span className="rounded bg-s8ul-cyan px-1 py-0.5 text-[7px] font-bold text-black">Current</span>}
+                {isCurrent && <span className="rounded bg-indigo-500 px-1 py-0.5 text-[7px] font-bold text-white">Current</span>}
                 {isPreview && <span className="rounded bg-purple-500/20 px-1 py-0.5 text-[7px] font-bold text-purple-300">Preview</span>}
               </div>
 

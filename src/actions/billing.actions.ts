@@ -151,7 +151,7 @@ export async function simulateRazorpayEvent(
   eventName: string,
   workspaceId: string,
   planCode: string,
-): Promise<{ success: boolean; handled?: boolean; status?: string; error?: string }> {
+): Promise<{ success: boolean; handled?: boolean; status?: string | null; error?: string }> {
   if (process.env.NODE_ENV === "production") {
     return { success: false, error: "dev-only" };
   }
@@ -165,6 +165,7 @@ export async function simulateRazorpayEvent(
   }
 
   try {
+    const isPaidEvent = eventName === "subscription.activated" || eventName === "subscription.charged" || eventName === "order.paid" || eventName === "payment.captured";
     const result = await billingService.handleSubscriptionWebhook({
       eventName,
       workspaceId,
@@ -172,6 +173,9 @@ export async function simulateRazorpayEvent(
       providerReference: `sim_${eventName}_${Date.now()}`,
       idempotencyKey: `sim_${eventName}_${Date.now()}`,
       renewsAt: eventName === "subscription.activated" || eventName === "subscription.charged" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
+      // RCCF-71.4.5 (F1): paid events must carry a valid positive captured
+      // amount or the subscription will never transition to ACTIVE.
+      amount: isPaidEvent ? capabilityService.getPlan(planCode)?.price ?? 999 : undefined,
     });
     return { success: true, handled: result.handled, status: result.status, error: result.error };
   } catch (error) {

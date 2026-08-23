@@ -131,72 +131,65 @@ export const TARGET_AUDIENCES = {
 
 export const PLATFORM_CAPABILITIES = [
   {
-    category: "Storefront",
-    items: [
-      "Generated from your social profile",
-      "Custom domain with free SSL",
-      "Mobile-responsive design",
-      "SEO optimized structure",
-      "Fast loading and secure",
-    ],
-  },
-  {
-    category: "Products",
-    items: [
-      "Digital downloads",
-      "Physical merchandise",
-      "Service bookings",
-      "Affiliate links",
-    ],
-  },
-  {
-    category: "Payments",
-    items: [
-      "UPI (BHIM, Google Pay, PhonePe, Paytm)",
-      "Credit and debit cards",
-      "Net banking and wallets",
-      "Instant payouts",
-      "Secure via Razorpay",
-    ],
-  },
-  {
-    category: "Marketing",
-    items: [
-      "SEO optimization",
-      "Email capture forms",
-      "Social media integration",
-      "Order analytics",
-    ],
-  },
-  {
-    category: "Management",
-    items: [
-      "Orders dashboard",
-      "Customer management",
-      "Product catalog",
-      "Content management",
-    ],
-  },
-  {
-    category: "Builder",
+    category: "Build",
     items: [
       "Visual drag-and-drop editor",
       "Section-based layout",
       "Theme customization",
       "Real-time preview",
       "One-click publishing",
+      "Custom domain with free SSL",
+      "Mobile-responsive design",
     ],
   },
   {
-    category: "Agency",
+    category: "Showcase",
     items: [
-      "Multi-client workspaces",
-      "White-label branding",
-      "Team collaboration",
-      "Revenue splitting",
-      "Cross-client analytics",
+      "Product catalog",
+      "Digital downloads and physical merchandise",
+      "Services with bookings",
+      "Course showcases",
+      "Affiliate links",
+      "Content management",
     ],
   },
+  {
+    category: "Sell",
+    items: [
+      "UPI (BHIM, Google Pay, PhonePe, Paytm)",
+      "Credit and debit cards",
+      "Net banking and wallets",
+      "Secure checkout via Razorpay",
+      "Payouts to your linked account",
+      "Orders dashboard and customer management",
+    ],
+  },
+  {
+    category: "Promote",
+    items: [
+      "SEO optimized structure",
+      "Email capture forms",
+      "Social media integration",
+    ],
+  },
+  {
+    category: "Grow",
+    items: [
+      "Order analytics",
+      "Customer insights from your dashboard",
+      "Room to expand at your own pace",
+    ],
+  },
+] as const;
+
+/** RCCF-MKT-03: partner capabilities are surfaced separately so partner-only
+ * features are never implied to be part of ordinary creator plans. */
+export const AGENCY_CAPABILITIES = [
+  "Multi-client workspaces",
+  "White-label branding on higher tiers",
+  "Team collaboration",
+  "Revenue splitting",
+  "Cross-client analytics",
 ] as const;
 
 export const HERO_OUTPUT_LINES = [
@@ -209,12 +202,3 @@ export const HERO_OUTPUT_LINES = [
   "Payments",
   "Publishing",
 ] as const;
-
-export const SOCIAL_PROOF_STATS = {
-  storefrontsGenerated: "10,000+",
-  creatorsOnboarded: "5,000+",
-  processingSpeed: "Under 2 minutes",
-  supportedPlatforms: "8",
-  paymentProcessing: "Razorpay",
-  availability: "99.9% uptime",
-} as const;

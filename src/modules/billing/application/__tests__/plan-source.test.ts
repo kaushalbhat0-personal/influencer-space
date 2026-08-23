@@ -74,6 +74,41 @@ describe("resolveActivePlan — Billing v2 first, legacy fallback", () => {
     expect(r.origin).toBe("none");
     expect(r.status).toBeNull();
   });
+
+  it.each(["CANCELLED", "EXPIRED", "PAST_DUE"])("does not resolve an inactive v2 %s plan", async (status) => {
+    mockWorkspace.mockResolvedValue({ id: "ws-inactive" });
+    mockFindSub.mockResolvedValue({ plan: { code: "creator_grow" }, status });
+    mockLegacy.mockResolvedValue({ plan: "PRO", status: "ACTIVE", currentPeriodEnd: null });
+
+    const r = await resolveActivePlan(null, "tenant-inactive");
+
+    expect(r).toMatchObject({ code: null, origin: "v2", status });
+  });
+
+  it("does not resolve an ended v2 trial", async () => {
+    mockWorkspace.mockResolvedValue({ id: "ws-trial" });
+    mockFindSub.mockResolvedValue({
+      plan: { code: "creator_grow" },
+      status: "TRIALING",
+      trialEndsAt: new Date(Date.now() - 1),
+    });
+
+    const r = await resolveActivePlan(null, "tenant-trial");
+
+    expect(r).toMatchObject({ code: null, origin: "v2", status: "TRIALING" });
+  });
+
+  it("applies the effective period to legacy subscriptions", async () => {
+    mockLegacy.mockResolvedValue({
+      plan: "PRO",
+      status: "ACTIVE",
+      currentPeriodEnd: new Date(Date.now() - 1),
+    });
+
+    const r = await resolveActivePlan(null, "tenant-legacy-expired");
+
+    expect(r).toMatchObject({ code: null, origin: "legacy", status: "ACTIVE" });
+  });
 });
 
 describe("listAllSubscriptions — v2 + legacy union without duplication", () => {

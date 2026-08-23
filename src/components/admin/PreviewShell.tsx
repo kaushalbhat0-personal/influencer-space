@@ -86,9 +86,21 @@ export function PreviewShell({
             style={
               theme
                 ? {
-                    "--accent": theme.accent,
-                    "--primary": theme.primary,
-                    "--secondary": theme.secondary,
+                    // RCCF-71.1: emit the CANONICAL theme variable names (the
+                    // LayoutEngine/runtime language) rather than legacy aliases.
+                    // radius + density + fonts map to the same appearance vars
+                    // the storefront resolves from the canonical snapshot.
+                    "--brand-primary": theme.primary,
+                    "--brand-secondary": theme.secondary,
+                    "--brand-accent": theme.accent,
+                    "--radius-sm": `calc(${theme.borderRadius ?? "8px"} * 0.25)`,
+                    "--radius-md": `calc(${theme.borderRadius ?? "8px"} * 0.75)`,
+                    "--radius-lg": theme.borderRadius ?? "8px",
+                    "--radius-xl": `calc(${theme.borderRadius ?? "8px"} * 1.5)`,
+                    "--radius-2xl": `calc(${theme.borderRadius ?? "8px"} * 2)`,
+                    "--section-spacing": theme.layoutDensity === "compact" ? "2rem" : theme.layoutDensity === "spacious" ? "5rem" : "3rem",
+                    "--brand-font-heading": theme.font === "mono" ? "'JetBrains Mono', monospace" : theme.font === "plex" ? "'IBM Plex Sans', system-ui, sans-serif" : theme.font === "inter" ? "Inter, system-ui, sans-serif" : "Geist, system-ui, sans-serif",
+                    "--brand-font-body": theme.font === "mono" ? "'JetBrains Mono', monospace" : theme.font === "plex" ? "'IBM Plex Sans', system-ui, sans-serif" : theme.font === "inter" ? "Inter, system-ui, sans-serif" : "Geist, system-ui, sans-serif",
                   } as React.CSSProperties
                 : undefined
             }

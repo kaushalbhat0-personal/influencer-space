@@ -114,7 +114,7 @@ function SectionCard({
         className={cn(
           "group flex items-center gap-1.5 rounded-lg px-2 py-2 cursor-pointer transition-colors",
           isSelected
-            ? "bg-s8ul-cyan/10 text-s8ul-cyan ring-1 ring-s8ul-cyan/20"
+            ? "bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/30"
             : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
         )}
       >
@@ -131,7 +131,7 @@ function SectionCard({
               Only repeatable sections with count > 0 show a badge — never "(0)",
               never a static section, never block/slot count. */}
           {section.itemCount != null && section.itemCount > 0 && (
-            <span className="text-[9px] text-zinc-600 shrink-0">
+            <span className="text-[9px] text-zinc-500 shrink-0">
               {section.itemCount} {contentLabel.toLowerCase()}
             </span>
           )}
@@ -149,7 +149,7 @@ function SectionCard({
         <div className="flex items-center gap-1.5 mt-0.5">
           <span className={cn(
             "flex items-center gap-0.5 text-[9px]",
-            section.visible ? "text-emerald-600" : "text-zinc-700"
+            section.visible ? "text-emerald-400/80" : "text-zinc-600"
           )}>
             {section.visible ? <Eye className="h-2.5 w-2.5" /> : <EyeOff className="h-2.5 w-2.5" />}
             {section.visible ? "Visible" : "Hidden"}
@@ -157,38 +157,45 @@ function SectionCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Actions are always visible below lg (touch has no hover) and revealed
+          on hover/focus on desktop — never hover-only. */}
+      <div className="flex items-center gap-0.5 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
         <button onClick={(e) => { e.stopPropagation(); onMoveUp(section.id); }}
           data-testid={`section-${tid}-up`}
+          aria-label={`Move ${section.name} up`}
           disabled={index === 0}
-          className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400 disabled:opacity-20">
+          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 disabled:opacity-20">
           <ArrowUp className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onMoveDown(section.id); }}
           data-testid={`section-${tid}-down`}
+          aria-label={`Move ${section.name} down`}
           disabled={index === total - 1}
-          className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400 disabled:opacity-20">
+          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 disabled:opacity-20">
           <ArrowDown className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(section.id); }}
           data-testid={`section-${tid}-toggle`}
-          className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400">
+          aria-label={section.visible ? `Hide ${section.name}` : `Show ${section.name}`}
+          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300">
           {section.visible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </button>
         {editHref && (
-          <Link href={editHref} className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-s8ul-cyan"
+          <Link href={editHref} className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-indigo-400"
             onClick={(e) => e.stopPropagation()}>
             <ExternalLink className="h-3 w-3" />
           </Link>
         )}
         <button onClick={(e) => { e.stopPropagation(); onDuplicate(section.id); }}
           data-testid={`section-${tid}-duplicate`}
-          className="rounded p-0.5 text-zinc-700 hover:bg-white/10 hover:text-zinc-400">
+          aria-label={`Duplicate ${section.name}`}
+          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300">
           <Copy className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onDelete(section.id); }}
           data-testid={`section-${tid}-delete`}
-          className="rounded p-0.5 text-zinc-700 hover:bg-red-500/20 hover:text-red-400">
+          aria-label={`Delete ${section.name}`}
+          className="rounded p-0.5 text-zinc-500 hover:bg-red-500/20 hover:text-red-400">
           <Trash2 className="h-3 w-3" />
         </button>
       </div>
@@ -296,19 +303,24 @@ export function SectionManager({
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-xs text-zinc-600 text-center">No sections yet.<br />Add one below.</p>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400">
+              <Layout className="h-5 w-5" />
+            </div>
+            <p className="text-xs text-zinc-600">No sections yet.<br />Add one below.</p>
+          </div>
         </div>
       )}
 
       <div className="border-t border-white/5 p-2">
-        <p className="text-[9px] font-medium text-zinc-700 uppercase mb-1.5 px-1">Add Section</p>
+        <p className="text-[9px] font-medium text-zinc-600 uppercase mb-1.5 px-1">Add Section</p>
         <div className="grid grid-cols-2 gap-1">
           {DEFAULT_SECTIONS.map((entry) => {
             const Icon = getIcon(entry.name);
             return (
               <button key={entry.componentId} onClick={() => addSection(entry)}
                 data-testid={`add-section-${entry.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-2 py-1.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition-colors">
+                className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-2 py-1.5 text-[10px] text-zinc-500 hover:bg-indigo-500/10 hover:text-indigo-300 hover:ring-1 hover:ring-indigo-500/30 transition-colors">
                 <Icon className="h-3 w-3 shrink-0" />
                 {entry.name}
               </button>

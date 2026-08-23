@@ -13,6 +13,7 @@ interface Props {
   previewThemeId: string | null;
   onApplyTheme: (themeId: string) => void;
   overview?: BuilderOverviewData | null;
+  tenantId?: string | null;
 }
 
 export function BuilderProperties(props: Props) {

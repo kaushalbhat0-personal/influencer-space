@@ -8,6 +8,8 @@ import { businessHealthRuntime } from "@/modules/business-health";
 import { websiteEvolutionRuntime } from "@/modules/website-evolution";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { isLaunchPlan, countActiveCoreContentUsage, LAUNCH_GLOBAL_LIMIT } from "@/modules/billing/application/content-limit.enforcement";
+import { loadSignals, getCustomerTimeline } from "@/modules/customer-success";
+import { computeFromSignals } from "@/modules/customer-success";
 
 export async function getDashboardData() {
   const session = await getServerSession(authOptions);
@@ -31,7 +33,17 @@ export async function getDashboardData() {
 
   const { metrics, health, knowledge, goals, recommendations, success, storefrontScore } = context;
 
-  // RCCF-72.15B — Launch core-content allowance, sourced from the shared
+  // RCCF-72.17C.4 (DASH-03): the Success Journey card previously rebuilt the
+  // full ~62-query Runtime Context in a second client request. The CustomerSuccess
+  // is a pure function of the SAME context already built here — derive it from
+  // that context (only the ~5 companion signal reads + 5 timeline reads remain)
+  // and thread it into the card so the redundant build disappears.
+  const successJourney = {
+    success: computeFromSignals(await loadSignals(tenantId, context)),
+    timeline: await getCustomerTimeline(tenantId, 20),
+  };
+
+  // RCCF-72.15B �?" Launch core-content allowance, sourced from the shared
   // server primitive so the UI never invents or hardcodes its own counter.
   const plan = await resolveActivePlan(undefined, tenantId);
   const launchAllowance = isLaunchPlan(plan.code ?? null)
@@ -41,6 +53,7 @@ export async function getDashboardData() {
   return {
     metrics,
     launchAllowance,
+    successJourney,
     activity,
     health: health.checks.map((c) => ({
       id: c.id,

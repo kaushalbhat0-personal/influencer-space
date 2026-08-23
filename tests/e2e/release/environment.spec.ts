@@ -12,8 +12,11 @@ test.describe("Level 3 — Environment Validation", () => {
   });
 
   test("health endpoint responds", async ({ page }) => {
-    const resp = await page.goto("/api/health");
-    expect(resp?.status()).toBe(200);
+    const healthSecret = process.env.HEALTH_SECRET ?? "local-dev-secret";
+    const resp = await page.request.get("/api/health", {
+      headers: { "x-health-secret": healthSecret },
+    });
+    expect(resp.status()).toBe(200);
   });
 
   test("database has Super Admin account", async () => {

@@ -15,15 +15,29 @@ const SUCCESS_HIGH_RISK: RiskLevel[] = ["high", "critical"];
  * RCCF-EPIC-09: compute a creator's CustomerSuccess and emit events when the
  * stage / risk / opportunities change since the last check-in. Deterministic,
  * read-only, derived from the canonical Runtime Context.
+ *
+ * RCCF-72.17C.4 (DASH-03): `prebuilt` carries the success + timeline already
+ * computed by the dashboard's getDashboardData() from the SAME request-scoped
+ * Runtime Context. When supplied, the expensive `loadSignals → context build`
+ * and timeline reads are skipped — the action only performs the check-in
+ * side-effect (change detection + events + persisted check-in). Authorization
+ * is unchanged: the tenant is still derived from the server session.
  */
-export async function getMyCustomerSuccess(): Promise<{ ok: boolean; success?: CustomerSuccess; timeline?: Awaited<ReturnType<typeof getCustomerTimeline>>; error?: string }> {
+export async function getMyCustomerSuccess(prebuilt?: {
+  success: CustomerSuccess;
+  timeline?: Awaited<ReturnType<typeof getCustomerTimeline>>;
+}): Promise<{ ok: boolean; success?: CustomerSuccess; timeline?: Awaited<ReturnType<typeof getCustomerTimeline>>; error?: string }> {
   const session = await getServerSession(authOptions);
   const tenantId = session?.user?.tenantId;
   if (!tenantId) return { ok: false, error: "Unauthorized" };
 
-  const signals = await loadSignals(tenantId);
-  const success = computeFromSignals(signals);
-  const timeline = await getCustomerTimeline(tenantId, 20);
+  let success = prebuilt?.success ?? null;
+  let timeline = prebuilt?.timeline ?? [];
+  if (!success) {
+    const signals = await loadSignals(tenantId);
+    success = computeFromSignals(signals);
+    timeline = await getCustomerTimeline(tenantId, 20);
+  }
 
   const previous = await prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: SUCCESS_KEY } }, select: { value: true } });
   const prev = (previous?.value ?? {}) as { stage?: string; risk?: string; opportunities?: string[] };

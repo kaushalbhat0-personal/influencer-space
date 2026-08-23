@@ -85,7 +85,7 @@ export async function getConstructionSnapshot(
 
     const website = await prisma.website.findUnique({
       where: { tenantId },
-      select: { id: true, themePackageId: true, themeColors: true, themeFonts: true },
+      select: { id: true, themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
     });
     if (!website) return { success: true, snapshot: null };
 
@@ -106,6 +106,7 @@ export async function getConstructionSnapshot(
       themePackageId: website.themePackageId,
       themeColors: (website.themeColors ?? {}) as Record<string, string>,
       themeFonts: (website.themeFonts ?? {}) as Record<string, string>,
+      themeConfig: (website.themeConfig ?? {}) as Record<string, string>,
     });
 
     const doc = layoutEngine.resolve(snapshot as Parameters<typeof layoutEngine.resolve>[0]);

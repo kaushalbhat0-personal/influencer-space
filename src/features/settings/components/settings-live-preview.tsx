@@ -1,65 +1,131 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { HeroMedia, heroAlignmentClass } from "@/components/shared/HeroMedia";
+import { useState } from "react";
+import { HeroRenderer } from "@/lib/registry/components/renderers";
+import { resolveHeroMediaForRuntime } from "@/lib/media/hero-media";
 
 type Alignment = "top" | "center" | "bottom";
 
 interface SettingsLivePreviewProps {
   videoUrl: string;
   posterUrl: string;
+  backgroundUrl: string;
   videoDesktopAlignment: Alignment;
   videoMobileAlignment: Alignment;
   imageDesktopAlignment: Alignment;
   imageMobileAlignment: Alignment;
   profileUrl: string | null;
   name: string;
+  title: string;
+  subtitle: string;
   tagline: string;
   bio: string;
+  ctaText: string;
+  ctaLink: string;
+  ctaSecondaryText: string;
+  ctaSecondaryLink: string;
   liveBadgeText: string;
   showLiveBadge: boolean;
+  socialLinks?: Array<{ platform: string; url: string; label?: string }>;
+  /**
+   * RCCF-71.3: persisted HERO PRESENTATION (text alignment / content width /
+   * overlay strength) from Website.themeConfig, threaded from the settings
+   * server page so the preview renders the exact presets publish + Builder use.
+   * Optional — when absent the canonical HeroRenderer falls back to today's look.
+   */
+  textAlign?: string;
+  contentWidth?: string;
+  overlay?: string;
 }
 
+/**
+ * RCCF-70.5.2 — the settings preview is the CANONICAL Hero, not a mock.
+ *
+ * Media decision: the same pure resolver the runtime pipeline uses
+ * (video → poster → background → placeholder), applied to the form's raw
+ * state — so the preview's media semantics always match live + Builder.
+ *
+ * Rendering: the actual HeroRenderer (the single renderer the storefront and
+ * Builder use), mounted inside a named `@container/main` boundary whose width
+ * follows the device toggle (320px mobile / 1024px desktop). This is the exact
+ * mechanism the Builder device frame uses, so the container-query variants
+ * (@sm/main: / @lg/main:) flip identically to a live site at that width.
+ *
+ * Non-actionable: `previewMode` renders CTAs and social links as inert spans —
+ * the preview can never navigate, open checkout/WhatsApp/booking, submit forms
+ * or mutate anything.
+ */
 export function SettingsLivePreview({
   videoUrl,
   posterUrl,
+  backgroundUrl,
   videoDesktopAlignment,
   videoMobileAlignment,
   imageDesktopAlignment,
   imageMobileAlignment,
   profileUrl,
   name,
+  title,
+  subtitle,
   tagline,
   bio,
+  ctaText,
+  ctaLink,
+  ctaSecondaryText,
+  ctaSecondaryLink,
   liveBadgeText,
   showLiveBadge,
+  socialLinks,
+  textAlign,
+  contentWidth,
+  overlay,
 }: SettingsLivePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
-  const [previewMedia, setPreviewMedia] = useState<"video" | "image">("video");
-
-  const lastVideoRef = useRef(videoUrl);
-  const lastPosterRef = useRef(posterUrl);
-
-  useEffect(() => {
-    if (videoUrl) lastVideoRef.current = videoUrl;
-  }, [videoUrl]);
-  useEffect(() => {
-    if (posterUrl) lastPosterRef.current = posterUrl;
-  }, [posterUrl]);
-
-  const displayVideoUrl = videoUrl || lastVideoRef.current;
-  const displayPosterUrl = posterUrl || lastPosterRef.current;
-
-  const isVideo = previewMedia === "video" || !displayPosterUrl;
-  const activeAlignment =
-    isVideo
-      ? (previewDevice === "desktop" ? videoDesktopAlignment : videoMobileAlignment)
-      : (previewDevice === "desktop" ? imageDesktopAlignment : imageMobileAlignment);
-  const objectPos = heroAlignmentClass(activeAlignment);
   const isMobile = previewDevice === "mobile";
+  const frameWidth = isMobile ? 320 : 1024;
+
+  // RCCF-70.5.2: canonical decision — same precedence as the aggregate
+  // (resolveHeroMediaForRuntime on the server at build time).
+  const resolved = resolveHeroMediaForRuntime({
+    videoUrl,
+    posterUrl,
+    backgroundUrl,
+  });
+
+  // Mirror of content.hero as composed by LayoutEngine for hero.* sections
+  // (Object.assign(config, content.hero) + ctaText→cta, ctaSecondaryText→ctaSecondary).
+  const heroProps: Record<string, unknown> = {
+    title,
+    name,
+    subtitle,
+    tagline,
+    bio,
+    cta: ctaText,
+    ctaLink,
+    ctaSecondaryText,
+    ctaSecondaryLink,
+    liveBadgeText,
+    showLiveBadge,
+    profilePictureUrl: profileUrl,
+    videoDesktopAlignment,
+    videoMobileAlignment,
+    imageDesktopAlignment,
+    imageMobileAlignment,
+    socialLinks: socialLinks ?? [],
+    // RCCF-71.3: HERO PRESENTATION values flow straight into the canonical
+    // HeroRenderer (which resolves them via the shared registry helpers).
+    textAlign,
+    contentWidth,
+    overlay,
+    resolvedMedia: resolved.resolvedMedia,
+    mediaType: resolved.mediaType,
+    mediaUrl: resolved.mediaUrl,
+    mediaPoster: resolved.mediaPoster,
+    rendererDecision: resolved.rendererDecision,
+  };
 
   return (
-    <div className="w-full max-w-[320px] mx-auto space-y-3">
+    <div className="w-full space-y-3">
       <div className="flex justify-center gap-1 rounded-lg bg-zinc-800/50 p-1">
         <button
           type="button"
@@ -91,123 +157,17 @@ export function SettingsLivePreview({
         </button>
       </div>
 
-      <div className="flex justify-center gap-1 rounded-lg bg-zinc-800/50 p-1">
-        <button
-          type="button"
-          onClick={() => setPreviewMedia("video")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-            previewMedia === "video"
-              ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30"
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Video
-        </button>
-        <button
-          type="button"
-          onClick={() => setPreviewMedia("image")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-            previewMedia === "image"
-              ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Poster
-        </button>
-      </div>
-
-      <div
-        className={`overflow-hidden shadow-2xl shadow-black/50 bg-[#0f0f13] ${
-          isMobile
-            ? "rounded-[2.5rem] border-[6px] border-zinc-800 mx-auto"
-            : "rounded-lg border border-zinc-700 w-full"
-        }`}
-      >
-        {isMobile && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-7 bg-zinc-800 rounded-b-2xl z-20" />
-        )}
-
-        <div
-          className={`relative w-full bg-zinc-950 ${isMobile ? "" : "aspect-video"}`}
-          style={isMobile ? { height: 230 } : undefined}
-        >
-          <div className="relative w-full h-full overflow-hidden bg-neutral-950">
-            {isVideo && displayVideoUrl ? (
-              <HeroMedia
-                type="video"
-                url={displayVideoUrl}
-                alignmentClass={objectPos}
-                className="absolute inset-0 pointer-events-auto"
-                autoPlay
-                muted
-                playsInline
-                controls
-              />
-            ) : displayPosterUrl ? (
-              <HeroMedia
-                type="image"
-                url={displayPosterUrl}
-                alignmentClass={objectPos}
-                opacity="opacity-70"
-                className="absolute inset-0"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-                <p className="text-xs text-zinc-600">No media uploaded</p>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0f0f13] pointer-events-none" />
-
-            {showLiveBadge && liveBadgeText && (
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 backdrop-blur-sm pointer-events-none">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                  {liveBadgeText}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="relative z-10 flex justify-center -mt-12">
-          <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white/10 ring-4 ring-[#0f0f13] bg-zinc-800">
-            {profileUrl ? (
-              <img
-                src={profileUrl}
-                alt={name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <svg className="h-full w-full p-3 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            )}
-          </div>
-        </div>
-
-        <div className="px-5 pt-3 pb-6 text-center">
-          <h2 className="text-sm font-bold text-white leading-tight">
-            {name || "Your Name"}
-          </h2>
-          {tagline && (
-            <p className="mt-1 text-[11px] text-zinc-400 leading-snug">{tagline}</p>
-          )}
-          {bio && (
-            <p className="mt-2 text-[10px] text-zinc-500 leading-relaxed">{bio}</p>
-          )}
-        </div>
-
-        <div className="border-t border-white/5 px-5 py-3">
-          <div className="flex justify-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-zinc-800" />
-            <div className="h-8 w-8 rounded-full bg-zinc-800" />
-            <div className="h-8 w-8 rounded-full bg-zinc-800" />
-          </div>
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[#0f0f13] shadow-2xl shadow-black/50">
+        {/* RCCF-70.5.2: named container boundary — width drives the responsive
+            variants exactly like the live <main> / Builder device frame. */}
+        <div className="@container/main overflow-hidden" style={{ width: frameWidth, margin: "0 auto" }}>
+          <HeroRenderer key={resolved.mediaUrl ?? "empty"} props={heroProps} previewMode />
         </div>
       </div>
+
+      <p className="text-center text-[10px] uppercase tracking-widest text-zinc-600">
+        Preview is non-interactive — buttons and links are inert.
+      </p>
     </div>
   );
 }

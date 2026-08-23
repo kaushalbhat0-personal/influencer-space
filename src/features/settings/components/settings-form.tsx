@@ -19,9 +19,15 @@ function emptyState(): SaveState {
 export function SettingsForm({
   heroData,
   tenantId,
+  heroPresentation,
 }: {
   heroData: HeroDataType;
   tenantId: string;
+  /**
+   * RCCF-71.3: persisted HERO PRESENTATION (Website.themeConfig) threaded from
+   * the settings server page into the canonical preview renderer.
+   */
+  heroPresentation?: { textAlign?: string; contentWidth?: string; overlay?: string };
 }) {
   const router = useRouter();
   const heroMediaFormRef = useRef<HTMLFormElement>(null);
@@ -138,13 +144,17 @@ export function SettingsForm({
     if (result.success) flash(true);
   }
 
-  async function handleSaveBackground() {
-    // RCCF-72.12: the `|| null` payload is the canonical CLEAR — the server
-    // schema now accepts null so a cleared background persists.
+  async function handleSaveBackground(overrides?: { backgroundUrl?: string; backgroundAssetId?: string }) {
+    // RCCF-70.5.2: the upload handler must pass the NEW value explicitly —
+    // reading state from the closure here would capture the value from the
+    // render BEFORE the MediaField onChange committed, silently dropping the
+    // first background save (mirrors the video/poster override pattern).
+    // RCCF-72.12: the `|| null` below is the canonical CLEAR payload — the
+    // server schema now accepts null so a cleared background persists.
     setBackgroundSave({ pending: true, state: { success: false } });
     const result = await updateHeroPartial(tenantId, {
-      backgroundUrl: backgroundUrl || null,
-      backgroundAssetId: backgroundAssetId || null,
+      backgroundUrl: (overrides?.backgroundUrl ?? backgroundUrl) || null,
+      backgroundAssetId: (overrides?.backgroundAssetId ?? backgroundAssetId) || null,
     });
     setBackgroundSave({ pending: false, state: result });
     if (result.success) flash(true);
@@ -256,7 +266,7 @@ export function SettingsForm({
                   setBackgroundUrl(v?.url ?? "");
                   setBackgroundAssetId(v?.assetId ?? "");
                 })}
-                onUploadComplete={() => handleSaveBackground()}
+                onUploadComplete={(v) => handleSaveBackground({ backgroundUrl: v.url ?? "", backgroundAssetId: v.assetId ?? "" })}
               />
               {backgroundSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
@@ -424,16 +434,27 @@ export function SettingsForm({
           <SettingsLivePreview
             videoUrl={videoUrl || heroData.videoUrl || ""}
             posterUrl={posterUrl || heroData.posterUrl || ""}
+            backgroundUrl={backgroundUrl || heroData.backgroundUrl || ""}
             videoDesktopAlignment={videoDesktopAlignment}
             videoMobileAlignment={videoMobileAlignment}
             imageDesktopAlignment={imageDesktopAlignment}
             imageMobileAlignment={imageMobileAlignment}
             profileUrl={profilePictureUrl || heroData.profilePictureUrl || null}
             name={creatorName || heroData.name || ""}
+            title={heroTitle || heroData.title || ""}
+            subtitle={heroSubtitle || heroData.subtitle || ""}
             tagline={heroTagline || heroData.tagline || ""}
             bio={heroBio || heroData.bio || ""}
+            ctaText={ctaText || heroData.ctaText || ""}
+            ctaLink={ctaLink || heroData.ctaLink || ""}
+            ctaSecondaryText={ctaSecondaryText || heroData.ctaSecondaryText || ""}
+            ctaSecondaryLink={ctaSecondaryLink || heroData.ctaSecondaryLink || ""}
             liveBadgeText={liveBadgeText}
             showLiveBadge={liveShowBadge}
+            socialLinks={heroData.socialLinks}
+            textAlign={heroPresentation?.textAlign}
+            contentWidth={heroPresentation?.contentWidth}
+            overlay={heroPresentation?.overlay}
           />
         </div>
       </div>

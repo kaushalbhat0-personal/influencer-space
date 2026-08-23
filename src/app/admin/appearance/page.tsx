@@ -29,16 +29,15 @@ export default async function AppearancePage() {
   }
 
   const resolved = await resolveActivePlan(null, tenantId);
-  // RCCF-11: the page manages premium appearance/theme customization. Gate on
-  // the canonical premium_themes capability (previously gated on custom_branding,
-  // which no plan grants — locking the page for every plan).
-  const canAppearance = entitlementService.has(resolved.code, "premium_themes");
+  // Theme package selection uses premium_themes; custom Appearance uses the
+  // canonical advanced_builder capability instead.
+  const canAppearance = entitlementService.has(resolved.code, "advanced_builder");
   if (!canAppearance) {
     return (
       <div>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance</h1>
         <div className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
-          <p className="text-sm text-amber-400">Premium appearance and themes require a <span className="font-semibold">Creator Grow</span> subscription or higher.</p>
+          <p className="text-sm text-amber-400">Custom appearance requires an eligible advanced builder plan.</p>
           <Link href="/admin/billing" className="mt-4 inline-block admin-btn-cyan px-6 py-2.5 text-sm">Upgrade Plan</Link>
         </div>
       </div>

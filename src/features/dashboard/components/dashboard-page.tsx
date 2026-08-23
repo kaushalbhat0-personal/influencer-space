@@ -7,8 +7,8 @@ import { ShoppingBag, Package, Link2, Image as ImageIcon, MessageSquare, UserChe
 import type { LucideIcon } from "lucide-react";
 import { MetricGrid, DashboardGrid, DashboardGridMain, DashboardGridSide } from "@/components/layout";
 import { DashboardWidget } from "@/components/ui/DashboardWidget";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
+import { MetricCard } from "@/components/data/MetricCard";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { StorefrontStatusCard } from "@/components/dashboard/StorefrontStatusCard";
 import { KnowledgeScoreCard } from "@/modules/knowledge-runtime/presentation/knowledge-score-card";
@@ -58,19 +58,23 @@ function commerceSurfaceOf(href: string): "products" | "bookings" | "courses" | 
   return null;
 }
 
-function MetricCard({ label, value, sub, subColor }: { label: string; value: string | number; sub?: string; subColor?: string }) {
+function SectionLabel({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
-      <p className="text-xs text-zinc-500 mb-1">{label}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      {sub && <p className={cn("text-[10px] mt-0.5", subColor ?? "text-zinc-600")}>{sub}</p>}
-    </div>
+    <h2 id={id} className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+      {children}
+    </h2>
   );
 }
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const [data] = useState(initialData);
-  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success, businessHealth, evolution } = data;
+  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success, successJourney, businessHealth, evolution, launchAllowance } = data;
+
+  // RCCF-72.15B — Launch core-content allowance, displayed only for Launch and
+  // only from the server-derived value (never a hardcoded UI counter).
+  const launch = launchAllowance
+    ? { used: launchAllowance.used, limit: launchAllowance.limit, remaining: Math.max(0, launchAllowance.limit - launchAllowance.used) }
+    : null;
 
   // RCCF-INTEGRATION-01 Phase 6: goal-aware commerce ordering — booking-first
   // creators see Bookings first, products-first see Products first (no-op
@@ -91,6 +95,8 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
     ? formatCurrency(Math.round(metrics.revenue / metrics.orderCount))
     : "—";
 
+  const emptyStore = metrics.productCount === 0 && metrics.bookingCount === 0 && metrics.orderCount === 0;
+
   return (
     <FeaturePage
       title={`Welcome back, ${creatorName}`}
@@ -108,33 +114,68 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       }
     >
       <div className="space-y-6">
+        <section aria-labelledby="dashboard-storefront" className="space-y-3">
+          <SectionLabel id="dashboard-storefront">Storefront</SectionLabel>
+          <StorefrontStatusCard
+            storefrontUrl={metrics.storefrontUrl}
+            publishState={metrics.publishState}
+            publishedVersion={metrics.publishedVersion}
+            publishedAt={metrics.publishedAt}
+            recentVersions={metrics.recentVersions}
+            hasProducts={metrics.publishedProductCount > 0}
+            currentTheme={metrics.currentTheme}
+          />
+        </section>
+
+        {launch && (
+          <section aria-labelledby="dashboard-launch-allowance" className="space-y-3">
+            <SectionLabel id="dashboard-launch-allowance">Core Content Allowance</SectionLabel>
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <p className="text-sm text-zinc-300">
+                <span className="font-semibold text-white">{launch.used} / {launch.limit}</span> used
+                {launch.remaining > 0 ? (
+                  <span className="text-zinc-400"> · {launch.remaining} remaining</span>
+                ) : (
+                  <span className="text-amber-400"> · limit reached</span>
+                )}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Products, services, courses and games count toward one shared limit on your plan.
+              </p>
+            </div>
+          </section>
+        )}
+
+        <section aria-labelledby="dashboard-quick-actions" className="space-y-3">
+          <SectionLabel id="dashboard-quick-actions">Quick Actions</SectionLabel>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
+            {quickCards.map((card) => (
+              <Link
+                key={card.label}
+                href={card.href}
+                className="flex flex-col items-center gap-1.5 rounded-xl bg-white/[0.03] border border-white/5 px-2 py-3 text-center hover:bg-white/[0.06] hover:border-white/10 transition-all group"
+              >
+                <card.icon className={cn("h-5 w-5", card.color)} />
+                <span className="text-[10px] font-medium text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                  {card.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {businessHealth && (
           <BusinessHealthHero health={businessHealth.health} trend={businessHealth.trend} />
         )}
 
-        {/* RCCF-EPIC-09: Success Journey — stage, risk, opportunities, timeline */}
-        <SuccessJourneyCard />
+{/* RCCF-EPIC-09: Success Journey — stage, risk, opportunities, timeline */}
+         <SuccessJourneyCard initialData={{ success: successJourney.success, timeline: successJourney.timeline }} />
 
         {!checklistComplete && (
           <OnboardingChecklist steps={checklistSteps} creatorName={creatorName} />
         )}
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-          {quickCards.map((card) => (
-            <Link
-              key={card.label}
-              href={card.href}
-              className="flex flex-col items-center gap-1.5 rounded-xl bg-white/[0.03] border border-white/5 px-2 py-3 text-center hover:bg-white/[0.06] hover:border-white/10 transition-all group"
-            >
-              <card.icon className={cn("h-5 w-5", card.color)} />
-              <span className="text-[10px] font-medium text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                {card.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-
-        {metrics.productCount === 0 && metrics.bookingCount === 0 && metrics.orderCount === 0 ? (
+        {emptyStore ? (
           <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.04] p-6">
             <h3 className="text-sm font-semibold text-white mb-1">Let&apos;s set up your store</h3>
             <p className="text-xs text-zinc-400 mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
@@ -155,12 +196,12 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           </div>
         ) : (
         <MetricGrid>
-          <MetricCard label="Products" value={metrics.productCount} sub={`${metrics.activeProductCount} active`} />
-          <MetricCard label="Services" value={metrics.offeringCount} sub={`${metrics.totalOrders} orders`} />
-          <MetricCard label="Orders" value={metrics.orderCount} sub={`${formatCurrency(metrics.revenue)} revenue`} />
-          <MetricCard label="Bookings" value={metrics.bookingCount} sub={metrics.bookingCount > 0 ? "appointments" : "No bookings yet"} />
-          <MetricCard label="Gallery" value={metrics.galleryCount} />
-          <MetricCard label="Avg Order" value={avgOrder} sub={metrics.orderCount > 0 ? "per order" : "No orders yet"} subColor={metrics.orderCount > 0 ? "text-zinc-500" : "text-zinc-600"} />
+          <MetricCard label="Products" value={metrics.productCount} subtext={`${metrics.activeProductCount} active`} icon={ShoppingBag} />
+          <MetricCard label="Services" value={metrics.offeringCount} subtext={`${metrics.totalOrders} orders`} icon={BriefcaseIcon} />
+          <MetricCard label="Orders" value={metrics.orderCount} subtext={`${formatCurrency(metrics.revenue)} revenue`} icon={Package} />
+          <MetricCard label="Bookings" value={metrics.bookingCount} subtext={metrics.bookingCount > 0 ? "appointments" : "No bookings yet"} icon={CalendarIcon} />
+          <MetricCard label="Gallery" value={metrics.galleryCount} icon={ImageIcon} />
+          <MetricCard label="Avg Order" value={avgOrder} subtext={metrics.orderCount > 0 ? "per order" : "No orders yet"} icon={CreditCard} />
         </MetricGrid>
         )}
 
@@ -175,8 +216,10 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
 
             {evolution && <EvolutionFeedCard initial={evolution.opportunities} />}
 
-            <GlassCard className="p-5">
-              <h3 className="mb-4 text-sm font-semibold text-zinc-400 uppercase tracking-wider">Recent Activity</h3>
+            <DashboardWidget
+              title="Recent Activity"
+              icon={Activity}
+            >
               {activity.length > 0 ? (
                 <div className="space-y-1">
                   {activity.slice(0, 5).map((a) => (
@@ -196,7 +239,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                   <p className="text-xs text-zinc-600">Your actions will appear here</p>
                 </div>
               )}
-            </GlassCard>
+            </DashboardWidget>
 
             <DashboardWidget
               title="Website Health"
@@ -232,15 +275,6 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           </DashboardGridMain>
 
           <DashboardGridSide className="space-y-6">
-            <StorefrontStatusCard
-              storefrontUrl={metrics.storefrontUrl}
-              publishState={metrics.publishState}
-              publishedVersion={metrics.publishedVersion}
-              publishedAt={metrics.publishedAt}
-              recentVersions={metrics.recentVersions}
-              hasProducts={metrics.publishedProductCount > 0}
-              currentTheme={metrics.currentTheme}
-            />
             {knowledge && (
               <KnowledgeScoreCard
                 overall={knowledge.overall}
@@ -258,5 +292,3 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
     </FeaturePage>
   );
 }
-
-

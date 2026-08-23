@@ -41,7 +41,7 @@ export function PricingFAQ() {
   return (
     <section id="faq" className="px-4 py-16 sm:px-8 sm:py-24">
       <div className="mx-auto max-w-2xl">
-        <h3 className="text-center text-lg font-semibold text-white mb-8">Frequently asked questions</h3>
+        <h2 className="text-center text-lg font-semibold text-white mb-8">Frequently asked questions</h2>
         <div className="space-y-4">
           {FAQ_ITEMS.map((item) => (
             <details key={item.q} className="group rounded-xl border border-white/[0.06] bg-[var(--surface-base)]/30">

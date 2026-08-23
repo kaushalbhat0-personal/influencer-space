@@ -445,23 +445,28 @@ export class WebsiteAggregateService {
       }
     }
 
-    // Hero media: resolve video/poster from their asset ids so the storefront
-    // always receives the current storage URL, not a stale baked URL.
+    // Hero media: resolve video/poster/background from their asset ids so the
+    // storefront always receives the current storage URL, not a stale baked URL.
     // Asset ids are normalized first — "" or malformed ids are skipped and
     // recorded so the trace reports the exact bad source.
     const rawVideoAssetId = (heroData as Record<string, unknown>)?.videoAssetId as string | null | undefined;
     const rawPosterAssetId = (heroData as Record<string, unknown>)?.posterAssetId as string | null | undefined;
+    const rawBackgroundAssetId = (heroData as Record<string, unknown>)?.backgroundAssetId as string | null | undefined;
     const videoAssetId = rawVideoAssetId
       ? normalizeAssetId(rawVideoAssetId, { module: "aggregate.hero", field: "videoAssetId" })
       : null;
     const posterAssetId = rawPosterAssetId
       ? normalizeAssetId(rawPosterAssetId, { module: "aggregate.hero", field: "posterAssetId" })
       : null;
+    const backgroundAssetId = rawBackgroundAssetId
+      ? normalizeAssetId(rawBackgroundAssetId, { module: "aggregate.hero", field: "backgroundAssetId" })
+      : null;
     if (rawVideoAssetId && !videoAssetId) recordInvalidAsset(rawVideoAssetId, "aggregate.hero", "videoAssetId");
     if (rawPosterAssetId && !posterAssetId) recordInvalidAsset(rawPosterAssetId, "aggregate.hero", "posterAssetId");
+    if (rawBackgroundAssetId && !backgroundAssetId) recordInvalidAsset(rawBackgroundAssetId, "aggregate.hero", "backgroundAssetId");
 
-    if (videoAssetId || posterAssetId) {
-      const resolved = await mediaService.resolveUrls([videoAssetId, posterAssetId]);
+    if (videoAssetId || posterAssetId || backgroundAssetId) {
+      const resolved = await mediaService.resolveUrls([videoAssetId, posterAssetId, backgroundAssetId]);
       if (videoAssetId && resolved[videoAssetId]) {
         result.hero.videoUrl = resolved[videoAssetId];
       } else if (videoAssetId) {
@@ -470,6 +475,11 @@ export class WebsiteAggregateService {
       if (posterAssetId && resolved[posterAssetId]) {
         result.hero.posterUrl = resolved[posterAssetId];
       } else if (posterAssetId) {
+        if (diagnostics) diagnostics.skippedAssets++;
+      }
+      if (backgroundAssetId && resolved[backgroundAssetId]) {
+        result.hero.backgroundUrl = resolved[backgroundAssetId];
+      } else if (backgroundAssetId) {
         if (diagnostics) diagnostics.skippedAssets++;
       }
     }

@@ -1,14 +1,4 @@
 
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  content: string;
-  platform?: string;
-  featured?: boolean;
-}
-
 export interface CreatorStat {
   label: string;
   value: string;
@@ -20,68 +10,6 @@ export interface StatItem {
   value: string;
   description?: string;
 }
-
-const PLACEHOLDER_AVATAR = "/placeholder-avatar.svg";
-
-export const TESTIMONIALS: Testimonial[] = [
-  {
-    id: "testimonial-1",
-    name: "Priya Sharma",
-    role: "Fitness Creator",
-    avatar: PLACEHOLDER_AVATAR,
-    content:
-      "CreatorStore built my storefront from my Instagram in under 2 minutes. I was selling workout plans within an hour. My brand colors and style matched perfectly — I barely had to customize anything.",
-    platform: "Instagram",
-    featured: true,
-  },
-  {
-    id: "testimonial-2",
-    name: "Arun Kumar",
-    role: "Tech YouTuber",
-    avatar: PLACEHOLDER_AVATAR,
-    content:
-      "I've been on YouTube for 3 years and always wanted a website that felt like me. CreatorStore analyzed my channel and built a storefront that matched my video style. My merch sales went up 3x in the first month.",
-    platform: "YouTube",
-    featured: true,
-  },
-  {
-    id: "testimonial-3",
-    name: "Neha Patel",
-    role: "Digital Artist",
-    avatar: PLACEHOLDER_AVATAR,
-    content:
-      "The drag-and-drop builder is incredible. I could rearrange everything exactly how I wanted without touching code. My customers love the clean storefront, and UPI payments make checkout seamless for my Indian audience.",
-    platform: "Instagram",
-    featured: true,
-  },
-  {
-    id: "testimonial-4",
-    name: "Rahul Verma",
-    role: "Course Creator",
-    avatar: PLACEHOLDER_AVATAR,
-    content:
-      "I was paying for a separate website builder, course platform, and payment processor. CreatorStore replaced all three. My storefront's SEO and order tracking were a bonus — my course pages started ranking within weeks.",
-    platform: "YouTube",
-  },
-  {
-    id: "testimonial-5",
-    name: "Divya Iyer",
-    role: "Lifestyle Creator",
-    avatar: PLACEHOLDER_AVATAR,
-    content:
-      "What surprised me most was the orders dashboard. I can see exactly which products are selling and how my storefront performs, all from one place.",
-    platform: "Instagram",
-  },
-  {
-    id: "testimonial-6",
-    name: "Vikram Singh",
-    role: "Agency Owner",
-    avatar: PLACEHOLDER_AVATAR,
-    content:
-      "We manage 15 creator clients and CreatorStore's agency platform is a game-changer. White-label dashboards, centralized billing, and the ability to generate storefronts for new clients in minutes. Our onboarding time dropped from weeks to hours.",
-    platform: "Agency",
-  },
-];
 
 export const CREATOR_STATS: CreatorStat[] = [
   {
@@ -121,7 +49,7 @@ export const ABOUT_HERO_DATA = {
   story: [
     "CreatorStore started with a simple observation: creators pour their hearts into content but have no easy way to turn that into a real business. Existing tools were either too complex (build a website from scratch), too limited (link-in-bio pages), or too expensive (enterprise platforms).",
     "We built CreatorStore to bridge that gap. Our platform analyzes your existing content — your videos, posts, style, and audience — and builds a complete business platform tailored to you. Not a template. Not a generic page. A real business, built from your content.",
-    "Today, thousands of creators use CreatorStore to sell products, manage orders, grow their audience, and run their entire business — all from one platform. We're proud to be the infrastructure that powers the creator economy.",
+    "CreatorStore is new, and we grow with the creators who build on it. Every storefront published today runs on the same platform end to end: a website you own, commerce when you want it, and a dashboard that keeps everything in one place. We're building the infrastructure we wished every creator had from day one.",
   ],
   values: [
     {
@@ -206,7 +134,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "What does it cost to sell?",
-        a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan (Creator Growth ₹999/month, Creator Scale ₹1,995/month), and every rupee your customers spend goes to you.",
+        a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan, and every rupee your customers spend goes to you. See the pricing page for current plan rates.",
       },
       {
         q: "Can I offer subscriptions or memberships?",

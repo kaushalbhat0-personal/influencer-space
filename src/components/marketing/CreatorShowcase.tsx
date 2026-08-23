@@ -1,21 +1,34 @@
-import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 
-interface DemoCreator {
-  name: string;
-  niche: string;
-  products: string;
-  avatarInitial: string;
-  accent: string;
-}
-
-const CREATORS: DemoCreator[] = [
-  { name: "TechBytes", niche: "Tech Education", products: "Courses, Templates, Ebooks", avatarInitial: "T", accent: "from-blue-500 to-indigo-500" },
-  { name: "FitWithPriya", niche: "Fitness Coaching", products: "Workout Plans, Meal Guides, Coaching", avatarInitial: "F", accent: "from-emerald-500 to-teal-500" },
-  { name: "BeatLab", niche: "Music Production", products: "Sample Packs, Courses, Presets", avatarInitial: "B", accent: "from-violet-500 to-purple-500" },
-  { name: "Lens & Light", niche: "Photography", products: "Presets, Tutorials, Prints", avatarInitial: "L", accent: "from-amber-500 to-orange-500" },
-  { name: "MarketMinute", niche: "Finance", products: "Courses, Newsletters, Webinars", avatarInitial: "M", accent: "from-rose-500 to-pink-500" },
-  { name: "SpiceRoute", niche: "Food & Cooking", products: "Recipe Ebooks, Masterclasses, Kits", avatarInitial: "S", accent: "from-red-500 to-rose-500" },
-];
+/**
+ * RCCF-MKT-02-R1 — Section 3: Showcase.
+ * "Show what you do. Show what you make." — represents the breadth of people
+ * who build a home here (creators, freelancers, artists, educators,
+ * professionals, businesses) and what their space holds. Deliberately NOT
+ * fictional named creators with empty preview placeholders.
+ */
+const AUDIENCES = [
+  {
+    who: "Creators",
+    what: "Channel highlights, content feeds, merch, and courses for your audience.",
+  },
+  {
+    who: "Freelancers & professionals",
+    what: "Services, case studies, testimonials, and a booking link clients can actually find.",
+  },
+  {
+    who: "Artists & photographers",
+    what: "A portfolio that looks like you — gallery sections tuned to your work.",
+  },
+  {
+    who: "Educators & coaches",
+    what: "Course showcases, session bookings, and resources in one place.",
+  },
+  {
+    who: "Businesses & brands",
+    what: "A real website with products, contact, and your links — not just another profile page.",
+  },
+] as const;
 
 export function CreatorShowcase() {
   return (
@@ -23,47 +36,37 @@ export function CreatorShowcase() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-14 text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Built for{" "}
+            Show what you do.
+            <br />
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-              creators like you
+              Show what you make.
             </span>
           </h2>
           <p className="mt-3 text-zinc-500 max-w-xl mx-auto">
-            From tech educators to fitness coaches — CreatorStore works for every niche.
+            Your home is built from who you already are online — so whatever you
+            create, it has a place to live.
           </p>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {CREATORS.map((creator) => (
+        {/* Alternating editorial list — no repetitive icon cards */}
+        <div className="mx-auto max-w-4xl space-y-4" role="list">
+          {AUDIENCES.map((a, i) => (
             <div
-              key={creator.name}
-              className="group rounded-2xl border border-white/[0.06] bg-[var(--surface-base)]/30 p-6 transition-all hover:border-white/[0.12] hover:bg-[var(--surface-base)]/50"
+              key={a.who}
+              className={`flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-[var(--surface-base)]/40 p-5 sm:flex-row sm:items-center sm:gap-6 ${
+                i % 2 === 1 ? "sm:pl-10" : ""
+              }`}
             >
-              <div className="flex items-center gap-4 mb-4">
-                <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${creator.accent} flex items-center justify-center text-sm font-bold text-white`}>
-                  {creator.avatarInitial}
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">{creator.name}</h3>
-                  <p className="text-xs text-zinc-500">{creator.niche}</p>
-                </div>
-              </div>
-
-              {/* Store preview */}
-              <div className="rounded-xl border border-white/[0.06] bg-[var(--surface-root)] p-4 mb-4 min-h-[100px] flex items-center justify-center">
-                <span className="text-xs text-zinc-700">Storefront preview</span>
-              </div>
-
-              <p className="text-xs text-zinc-600 mb-3">Selling: <span className="text-zinc-400">{creator.products}</span></p>
-
-              <a
-                href="/showcase"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                Explore demo storefronts <ExternalLink className="h-3 w-3" aria-hidden="true" />
-              </a>
+              <h3 className="w-56 shrink-0 text-sm font-semibold text-white">{a.who}</h3>
+              <p className="text-sm leading-relaxed text-zinc-400">{a.what}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <Link href="/signup?persona=creator" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+            Put your work on the web →
+          </Link>
         </div>
       </div>
     </section>

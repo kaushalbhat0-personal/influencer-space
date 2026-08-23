@@ -30,13 +30,22 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
       return;
     }
 
-    // Redirect to admin dashboard after login. The middleware will
-    // handle role-based redirects: SUPER_ADMIN → /super-admin,
-    // AGENCY → /agency, ADMIN → /admin/dashboard.
+    // RCCF-71.4.1 P1: navigate to the admin dashboard with a FULL document
+    // navigation (window.location.href) instead of a client-side router.push.
+    // On the first-ever load the target route (or /onboarding for a fresh
+    // account) is compiled on demand; the App Router client aborts the soft
+    // RSC navigation while that compile is in flight (net::ERR_ABORTED) and
+    // the user is left looking at /admin/login even though the session cookie
+    // was issued successfully. A full document GET waits server-side for the
+    // compile, then re-enters through middleware with the fresh cookie — the
+    // same route the browser would take on a manual reload. This preserves
+    // the middleware role redirects (SUPER_ADMIN → /super-admin, AGENCY →
+    // /agency, ADMIN → /admin/dashboard) and the lifecycle bounce for
+    // non-provisioned accounts (→ /onboarding).
     // DO NOT call getSession() here — the new session cookie may not
     // have propagated to the browser cookie jar yet, causing the
     // session callback to read a stale JWT from a deleted user.
-    router.push("/admin/dashboard");
+    window.location.href = "/admin/dashboard";
   }
 
   return (

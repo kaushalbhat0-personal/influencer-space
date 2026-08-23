@@ -16,6 +16,8 @@ import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 import { applyThemePackage } from "@/actions/theme.actions";
 import { publishWebsite } from "@/actions/publish.actions";
+import Link from "next/link";
+import { getPublishFailurePresentation, type PublishFailureAction } from "@/lib/publishing/publish-error-messages";
 import { normalizeThemeId } from "@/lib/theme/resolver-new";
 import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-overview.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
@@ -52,6 +54,7 @@ export function BuilderWorkspace() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+  const [publishUpgradeAction, setPublishUpgradeAction] = useState<PublishFailureAction | null>(null);
   const [storefrontUrl, setStorefrontUrl] = useState("/");
   const [publishStatus, setPublishStatus] = useState<PublishStatusValue>("draft");
   const [themeName, setThemeName] = useState<string | null>(null);
@@ -219,6 +222,7 @@ export function BuilderWorkspace() {
   // draft first so the publish always reads the latest builder pages.
   const handlePublish = useCallback(async () => {
     setPublishing(true);
+    setPublishUpgradeAction(null);
     setStatusMsg("Saving draft...");
     // Publish the APPLIED theme + draft — a preview theme is never published.
     const saved = await performSave(currentThemeId, currentThemeId);
@@ -234,11 +238,14 @@ export function BuilderWorkspace() {
         setStatusMsg("Published");
         window.location.reload();
       } else {
-        setStatusMsg(res.error || "Publish failed");
+        const presentation = getPublishFailurePresentation(res);
+        setStatusMsg(presentation.message);
+        setPublishUpgradeAction(presentation.action ?? null);
         setPublishing(false);
       }
     } catch (e) {
-      setStatusMsg(e instanceof Error ? e.message : "Publish failed");
+      setStatusMsg(getPublishFailurePresentation({ success: false, error: e instanceof Error ? e.message : undefined }).message);
+      setPublishUpgradeAction(null);
       setPublishing(false);
     }
   }, [performSave, previewThemeId, currentThemeId]);
@@ -298,7 +305,7 @@ export function BuilderWorkspace() {
     return (
       <div className="flex h-screen items-center justify-center bg-zinc-950">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-s8ul-cyan border-t-transparent" />
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
           <p className="text-sm text-zinc-400">Loading your editor…</p>
         </div>
       </div>
@@ -346,6 +353,7 @@ export function BuilderWorkspace() {
             previewThemeId={previewThemeId}
             onApplyTheme={handleApplyTheme}
             overview={overviewData}
+            tenantId={overviewData?.tenant.id ?? null}
           />
         </ResizablePanel>
       </div>
@@ -401,6 +409,7 @@ export function BuilderWorkspace() {
           previewThemeId={previewThemeId}
           onApplyTheme={handleApplyTheme}
           overview={overviewData}
+          tenantId={overviewData?.tenant.id ?? null}
         />
       </BuilderMobilePanel>
 
@@ -412,6 +421,14 @@ export function BuilderWorkspace() {
           </span>
           <span className="text-zinc-800 hidden sm:inline">|</span>
           {statusMsg && <span className={cn("truncate", statusMsg === "Saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
+          {publishUpgradeAction && (
+            <Link
+              href={publishUpgradeAction.href}
+              className="shrink-0 text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+            >
+              {publishUpgradeAction.label}
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-zinc-700 hidden md:inline">v{builderStore.publish.version}</span>
@@ -472,7 +489,7 @@ function MobileBarButton({
       data-testid={testId}
       className={cn(
         "flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[9px] font-medium transition-colors",
-        active ? "text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300",
+        active ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300",
       )}
     >
       {children}

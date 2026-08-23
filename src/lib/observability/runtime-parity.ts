@@ -183,7 +183,7 @@ export interface RuntimeParityResult {
 export async function runtimeParityReport(tenantId: string): Promise<RuntimeParityResult> {
   const website = await prisma.website.findUnique({
     where: { tenantId },
-    select: { id: true, themePackageId: true, themeColors: true, themeFonts: true },
+    select: { id: true, themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
   });
   if (!website) throw new Error("Website not found");
 
@@ -204,6 +204,7 @@ export async function runtimeParityReport(tenantId: string): Promise<RuntimePari
     themePackageId: website.themePackageId,
     themeColors: (website.themeColors ?? {}) as Record<string, string>,
     themeFonts: (website.themeFonts ?? {}) as Record<string, string>,
+    themeConfig: (website.themeConfig ?? {}) as Record<string, string>,
   });
 
   const draftSignature = computeRuntimeSignature({

@@ -4,8 +4,10 @@ import { SignupForm } from "@/components/auth/signup/SignupForm";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
 
+// RCCF-MKT-03: title must not carry the brand — the root template appends
+// "— CreatorStore", so a branded title here rendered "…CreatorStore — CreatorStore".
 export const metadata: Metadata = {
-  title: "Sign Up Free — CreatorStore",
+  title: "Sign Up Free",
   description: "Create your free CreatorStore account and build your creator website in minutes.",
 };
 

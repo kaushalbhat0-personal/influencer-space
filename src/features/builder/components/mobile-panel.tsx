@@ -81,7 +81,7 @@ export function BuilderMobilePanel({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-hidden rounded-t-2xl border-t border-white/10 bg-zinc-950 shadow-2xl"
+            className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-hidden rounded-t-2xl border-t border-white/10 bg-zinc-950 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <h2 className="text-sm font-semibold text-white">{title}</h2>
@@ -94,7 +94,7 @@ export function BuilderMobilePanel({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="max-h-[calc(80vh-3rem)] overflow-y-auto overscroll-contain">
+            <div className="min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
               {children}
             </div>
           </MotionDiv>

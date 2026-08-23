@@ -1,6 +1,7 @@
 import { OrderLookup } from "./_components/order-lookup";
 
-export const metadata = { title: "Track Your Order — CreatorStore" };
+// RCCF-MKT-03: no brand in title — root template appends "— CreatorStore".
+export const metadata = { title: "Track Your Order" };
 
 export default function PurchasePage() {
   return (

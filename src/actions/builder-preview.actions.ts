@@ -19,6 +19,9 @@ export async function getLivePreviewData(): Promise<{
   themePackageId?: string | null;
   themeColors?: Record<string, string>;
   themeFonts?: Record<string, string>;
+  /** RCCF-71.1: persisted appearance config (borderRadius/layoutDensity) so the
+   * Builder canvas resolves the same appearance as the preview route + publish. */
+  themeConfig?: Record<string, string>;
   /** RCCF-LAUNCH-TRACK-05: the tenant's plan so the preview resolves theme
    * experience capabilities identically to the storefront. */
   planCode?: string | null;
@@ -34,7 +37,7 @@ export async function getLivePreviewData(): Promise<{
       websiteAggregateService.buildWithDiagnostics(tenantId),
       prisma.website.findUnique({
         where: { tenantId },
-        select: { themePackageId: true, themeColors: true, themeFonts: true },
+        select: { themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
       }),
       resolveActivePlan(undefined, tenantId).catch(() => ({ code: null })),
     ]);
@@ -45,6 +48,7 @@ export async function getLivePreviewData(): Promise<{
       themePackageId: website?.themePackageId ?? null,
       themeColors: (website?.themeColors ?? {}) as Record<string, string>,
       themeFonts: (website?.themeFonts ?? {}) as Record<string, string>,
+      themeConfig: (website?.themeConfig ?? {}) as Record<string, string>,
       planCode: plan?.code ?? null,
       diagnostics: {
         invalidAssetIds: aggResult.invalidAssetIds,

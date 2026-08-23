@@ -42,8 +42,8 @@ export function BuilderToolbar({
   return (
     <div className="flex flex-col flex-shrink-0 border-b border-white/10 bg-zinc-950 z-20">
       {/* Row 1 — brand + identity + undo/redo + mobile panel toggles */}
-      <div className="flex h-9 items-center justify-between gap-2 px-3">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex h-11 items-center justify-between gap-2 px-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Link
             href="/admin/dashboard"
             aria-label="Back to Dashboard"
@@ -53,13 +53,13 @@ export function BuilderToolbar({
           </Link>
           <Link
             href="/admin/dashboard"
-            className="hidden sm:inline shrink-0 text-sm font-bold bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-transparent font-display hover:opacity-80 transition-opacity"
+            className="hidden sm:inline shrink-0 text-sm font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent font-display hover:opacity-80 transition-opacity"
           >
             CreatorStore
           </Link>
-          <span className="hidden md:inline h-3 w-px bg-white/10 shrink-0" />
+          <span className="hidden md:inline h-4 w-px bg-white/10 shrink-0" />
           <span className="truncate text-xs text-zinc-300 font-medium">{creatorName}</span>
-          <span className="hidden lg:inline h-3 w-px bg-white/10 shrink-0" />
+          <span className="hidden lg:inline h-4 w-px bg-white/10 shrink-0" />
           <span className="hidden lg:inline truncate text-[11px] text-zinc-600">{themeName ?? "No theme"}</span>
           <span className="hidden xl:inline text-zinc-800 text-[10px]">·</span>
           <span className="hidden xl:inline truncate text-[11px] text-zinc-600">{blueprintName ?? "—"}</span>
@@ -73,7 +73,7 @@ export function BuilderToolbar({
                 onClick={onOpenSections}
                 aria-pressed={mobilePanel === "sections"}
                 aria-label="Toggle sections panel"
-                className={cn("rounded p-1 transition-colors", mobilePanel === "sections" ? "text-s8ul-cyan bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
+                className={cn("rounded p-1 transition-colors", mobilePanel === "sections" ? "text-indigo-400 bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
               >
                 <Layers className="h-3.5 w-3.5" />
               </button>
@@ -81,21 +81,21 @@ export function BuilderToolbar({
                 onClick={onOpenProperties}
                 aria-pressed={mobilePanel === "properties"}
                 aria-label="Toggle properties panel"
-                className={cn("rounded p-1 transition-colors", mobilePanel === "properties" ? "text-s8ul-cyan bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
+                className={cn("rounded p-1 transition-colors", mobilePanel === "properties" ? "text-indigo-400 bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
               >
                 <Settings2 className="h-3.5 w-3.5" />
               </button>
             </div>
           )}
-          <span className="hidden sm:inline h-3 w-px bg-white/10 shrink-0" />
+          <span className="hidden sm:inline h-4 w-px bg-white/10 shrink-0" />
           <CompletionBadge pct={completionPct} />
-          <span className="h-3 w-px bg-white/10 shrink-0" />
+          <span className="h-4 w-px bg-white/10 shrink-0" />
           <button
             onClick={() => builderCommands.undo()}
             disabled={!history.canUndo}
             aria-label="Undo"
             title="Undo"
-            className={cn("rounded p-1 transition-colors", history.canUndo ? "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" : "text-zinc-700")}
+            className={cn("rounded p-1 transition-colors", history.canUndo ? "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" : "text-zinc-700")}
           >
             <Undo className="h-3.5 w-3.5" />
           </button>
@@ -104,7 +104,7 @@ export function BuilderToolbar({
             disabled={!history.canRedo}
             aria-label="Redo"
             title="Redo"
-            className={cn("rounded p-1 transition-colors", history.canRedo ? "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300" : "text-zinc-700")}
+            className={cn("rounded p-1 transition-colors", history.canRedo ? "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" : "text-zinc-700")}
           >
             <Redo className="h-3.5 w-3.5" />
           </button>
@@ -112,22 +112,22 @@ export function BuilderToolbar({
       </div>
 
       {/* Row 2 — device switch + preview + view live + save (wraps on narrow screens) */}
-      <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/5 px-3 py-1">
+      <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/5 px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-md bg-zinc-800/50 p-0.5">
+          <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/50 p-0.5">
             {devices.map((d) => (
               <button
                 key={d.id}
                 onClick={() => onDeviceChange(d.id)}
                 aria-pressed={device === d.id}
                 aria-label={`${d.label} preview`}
-                className={cn("rounded px-1.5 py-0.5 transition-colors", device === d.id ? "bg-zinc-700 text-zinc-200" : "text-zinc-600 hover:text-zinc-400")}
+                className={cn("rounded-md px-1.5 py-0.5 transition-colors", device === d.id ? "bg-indigo-500/20 text-indigo-300" : "text-zinc-600 hover:text-zinc-400")}
               >
                 <d.icon className="h-3 w-3" />
               </button>
             ))}
           </div>
-          <span className="h-3 w-px bg-white/5" />
+          <span className="h-4 w-px bg-white/5" />
           <PreviewDraftToggle status={publishStatus} />
         </div>
 
@@ -142,7 +142,7 @@ export function BuilderToolbar({
             <span className="hidden sm:inline">View Live</span>
             <span className="sm:hidden">Live</span>
           </Link>
-          <span className="h-3 w-px bg-white/5" />
+          <span className="h-4 w-px bg-white/5" />
           <button
             onClick={onSave}
             disabled={saving}
@@ -171,14 +171,14 @@ function PreviewDraftToggle({ status }: { status: PublishStatusValue }) {
   const current = status === "published" || status === "outdated" ? "live" : status === "preview" ? "preview" : "draft";
 
   return (
-    <div className="flex items-center gap-0.5 rounded-md bg-zinc-800/50 p-0.5">
+    <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/50 p-0.5">
       {items.map((item) => (
         <span
           key={item.id}
           className={cn(
-            "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+            "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
             current === item.id
-              ? item.id === "live" ? "bg-emerald-500/20 text-emerald-400" : item.id === "preview" ? "bg-blue-500/20 text-blue-400" : "bg-zinc-700 text-zinc-300"
+              ? item.id === "live" ? "bg-emerald-500/20 text-emerald-400" : item.id === "preview" ? "bg-indigo-500/20 text-indigo-300" : "bg-zinc-700 text-zinc-300"
               : "text-zinc-600"
           )}
         >

@@ -24,6 +24,7 @@ vi.mock("@/lib/prisma", () => ({
 
 import { productService } from "../service";
 import { productFormSchema } from "../validators";
+import { PRODUCT_TYPE_REGISTRY } from "@/modules/product-types";
 
 beforeEach(() => { vi.clearAllMocks(); });
 
@@ -43,8 +44,8 @@ describe("Product validators", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts all product types", () => {
-    for (const type of ["digital", "physical", "service", "membership", "bundle"] as const) {
+  it("accepts all canonical product types", () => {
+    for (const type of PRODUCT_TYPE_REGISTRY.map((t) => t.id)) {
       const result = productFormSchema.safeParse({ name: "Test", price: 0, type });
       expect(result.success).toBe(true);
     }

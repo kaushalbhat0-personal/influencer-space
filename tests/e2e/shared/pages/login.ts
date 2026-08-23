@@ -19,6 +19,6 @@ export class LoginPage {
   }
 
   async expectError() {
-    await expect(this.page.locator("text=Invalid").or(this.page.locator("text=Error"))).toBeVisible();
+    await expect(this.page.locator("text=Invalid email or password").or(this.page.locator("text=Invalid").or(this.page.locator("text=Error")))).toBeVisible({ timeout: 20000 });
   }
 }

@@ -171,7 +171,7 @@ export class PublishingService {
         this.loadBuilderPages(websiteId),
         prisma.website.findUnique({
           where: { id: websiteId },
-          select: { themePackageId: true, themeColors: true, themeFonts: true },
+          select: { themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
         }),
         // RCCF-72.17C.2: also return the shared reads so the homepage aggregate
         // build below can reuse them (identical committed rows, same request).
@@ -218,19 +218,26 @@ export class PublishingService {
         })(),
         (async () => {
           const themeDef = websiteFull?.themePackageId ? themeRegistry.getById(websiteFull.themePackageId) : undefined;
-          const experience = experienceRegistry.resolve({
+          const base = experienceRegistry.resolve({
             id: websiteFull?.themePackageId ?? null,
             category: themeDef?.category ?? null,
             premium: themeDef?.premium ?? null,
           });
-          const { resolveExperienceForCapabilities } = await import("@/modules/theme/runtime/experience");
+          const { resolveExperienceForCapabilities, applyExperienceOverride } = await import("@/modules/theme/runtime/experience");
           const active = await resolveActivePlan(undefined, tenantId);
-          return resolveExperienceForCapabilities(experience, active?.code ?? null);
+          // RCCF-71.2: the creator's background/surface overrides (persisted in
+          // Website.themeConfig) are applied to the base experience BEFORE
+          // capability resolution — the canonical Capability Runtime still
+          // governs what the plan actually renders.
+          const overridden = applyExperienceOverride(base, (websiteFull?.themeConfig ?? {}) as Record<string, string>);
+          return resolveExperienceForCapabilities(overridden, active?.code ?? null);
         })(),
       ]);
 
       const websiteColors = websiteFull?.themeColors as Record<string, string> | null ?? {};
       const websiteFonts = websiteFull?.themeFonts as Record<string, string> | null ?? {};
+      const websiteThemeConfig = websiteFull?.themeConfig as Record<string, string> | null ?? {};
+
       const buildStart = Date.now();
       // RCCF-72.11 — build the snapshot with the CURRENT persisted navigation,
       // then derive the renderable section graph from the SAME resolved document
@@ -248,6 +255,7 @@ export class PublishingService {
         themePackageId: websiteFull?.themePackageId ?? null,
         themeColors: websiteColors,
         themeFonts: websiteFonts,
+        themeConfig: websiteThemeConfig,
         homepageAggregate: resolvedHomepage ?? undefined,
         goalProfilePresent,
         maintenanceMode,

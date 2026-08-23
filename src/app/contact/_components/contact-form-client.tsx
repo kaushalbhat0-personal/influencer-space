@@ -28,7 +28,7 @@ export function ContactFormClient() {
     <>
       {state.success ? (
         <div className="rounded-lg bg-green-500/20 p-4 text-green-300 backdrop-blur-sm">
-          <p className="font-medium">Thanks for reaching out! We&apos;ll get back to you within 24 hours.</p>
+          <p className="font-medium">Thanks for reaching out! We&apos;ll get back to you as soon as we can.</p>
         </div>
       ) : (
         <form ref={formRef} action={handleSubmit} className="space-y-4">

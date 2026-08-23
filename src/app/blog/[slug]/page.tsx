@@ -35,13 +35,13 @@ const posts = {
     title: "UPI Integration for Creators: Accept Payments Instantly",
     date: "2026-06-28",
     content: `
-      <p>UPI (Unified Payments Interface) is India's digital payment revolution. For creators, it means instant payments with zero transaction fees for small amounts.</p>
+      <p>UPI (Unified Payments Interface) is India's digital payment revolution. It lets your audience pay instantly from the apps they already use — no cards required.</p>
       <h2>Why UPI Matters for Creators</h2>
-      <p>90% of Indian digital transactions happen via UPI. If your storefront doesn't support UPI, you're leaving money on the table. Credit cards work, but UPI is what your audience actually uses.</p>
+      <p>UPI is how a large share of Indian audiences prefer to pay online. If your storefront doesn't support UPI, you're leaving money on the table. Credit cards work, but UPI is what your audience actually uses day to day.</p>
       <h2>Setting Up UPI Payments</h2>
-      <p>With CreatorStore, UPI is built-in. Connect your UPI ID once and every sale goes directly to your bank account. No third-party payment gateways, no monthly fees.</p>
-      <h2>Instant Settlements</h2>
-      <p>Unlike credit cards which take 3-5 days for settlement, UPI payments are instant. The money appears in your account within seconds of a sale.</p>
+      <p>With CreatorStore, UPI is built in through Razorpay. Your customers can pay via UPI, cards, net banking, and wallets, and payouts go directly to your linked account.</p>
+      <h2>Instant Checkout</h2>
+      <p>UPI payments confirm at checkout in seconds, so customers aren't waiting on approvals or card OTPs. You keep 100% of every sale — CreatorStore never takes a transaction fee.</p>
     `,
   },
 };
@@ -60,6 +60,7 @@ export function generateMetadata({
   return {
     title: post.title,
     description: post.content.replace(/<[^>]*>/g, "").slice(0, 160),
+    alternates: { canonical: `/blog/${params.slug}` },
     openGraph: {
       title: post.title,
       description: post.content.replace(/<[^>]*>/g, "").slice(0, 160),

@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { getPlansByFamily } from "@/lib/capabilities";
+import { getPlansByFamily, getSignupEligiblePlans } from "@/lib/capabilities";
 import type { SignupState, Persona } from "./types";
 import { STEP_ORDER } from "./types";
 import { User, Building2, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -30,7 +30,15 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
     const planParam = params.get("plan");
     // Map "partner" URL param to internal "agency" persona type
     const mappedPersona: Persona | null = personaParam === "partner" ? "agency" : personaParam === "creator" ? "creator" : null;
-    const initialPlan = planParam || null;
+    const personaForPlan = mappedPersona ?? "creator";
+    // RCCF-71.4.3: self-serve signup is FREE-only (RCCF-LAUNCH-01) — only plans
+    // the registration lifecycle can actually provision (ctaType "signup") are
+    // selectable. A paid plan code in the URL (e.g. ?plan=creator_grow) cannot
+    // be granted at signup, so it falls back to no pre-selection.
+    const initialPlan =
+      planParam && getSignupEligiblePlans(personaForPlan === "agency" ? "agency" : "creator").some((p) => p.code === planParam)
+        ? planParam
+        : null;
     // Skip persona step if provided via URL, jump directly to plan selection.
     const initialStep = mappedPersona ? "plan" : (initialPlan || socialUrl ? "plan" : "welcome");
     return {
@@ -191,12 +199,11 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
             </div>
             <div className="space-y-2">
               {(() => {
-                const plans = getPlansByFamily(state.persona === "agency" ? "agency" : "creator").filter(
-                  (p) => !p.hidden || p.ctaType === "contact",
-                );
-                const nonEnterprise = plans.filter((p) => p.ctaType !== "contact").sort((a, b) => a.price - b.price);
-                const enterprise = plans.filter((p) => p.ctaType === "contact");
-                const sorted = [...nonEnterprise, ...enterprise];
+                // RCCF-71.4.3: signup is FREE-only — only plans the
+                // registration lifecycle provisions (ctaType "signup") are
+                // selectable. Paid plans are acquired via checkout afterwards.
+                const plans = getSignupEligiblePlans(state.persona === "agency" ? "agency" : "creator");
+                const sorted = [...plans].sort((a, b) => a.price - b.price);
                 return sorted.map((plan) => (
                 <button
                   key={plan.code}

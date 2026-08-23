@@ -12,6 +12,8 @@ import { ImageManager } from "@/components/products/ImageManager";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { ProductData, ProductFormInput } from "../types";
 import { createProduct, updateProduct, deleteProduct } from "../actions";
+import { getProductTypeLabel, getProductStatusPresentation, getCommerceModePresentation } from "../presentation";
+import { PRODUCT_TYPE_REGISTRY } from "@/modules/product-types";
 import { formatCurrency } from "@/lib/utils";
 
 interface ProductsPageProps {
@@ -98,9 +100,8 @@ const [saveError, setSaveError] = useState<string | null>(null);
       header: "Status",
       render: (p: Record<string, unknown>) => {
         const d = p as unknown as ProductData;
-        return (
-          <Badge variant={d.status === "PUBLISHED" ? "default" : "warning"}>{d.status}</Badge>
-        );
+        const s = getProductStatusPresentation(d.status);
+        return <Badge variant={s.badgeVariant}>{s.label}</Badge>;
       },
       sortable: true,
     },
@@ -116,7 +117,19 @@ const [saveError, setSaveError] = useState<string | null>(null);
     {
       key: "type",
       header: "Type",
-      render: (p: Record<string, unknown>) => <span className="text-xs text-zinc-500">{(p as unknown as ProductData).type}</span>,
+      render: (p: Record<string, unknown>) => {
+        const d = p as unknown as ProductData;
+        return <span className="text-xs text-zinc-400">{getProductTypeLabel(d.type)}</span>;
+      },
+    },
+    {
+      key: "commerceMode",
+      header: "Sells via",
+      render: (p: Record<string, unknown>) => {
+        const d = p as unknown as ProductData;
+        const c = getCommerceModePresentation(d.commerceMode);
+        return <Badge variant={c.badgeVariant}>{c.label}</Badge>;
+      },
     },
     {
       key: "actions",
@@ -140,7 +153,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
   return (
     <FeaturePage
       title="Products"
-      description="Manage your products."
+      description="Create, price, and manage the products your audience can buy."
       actions={
         <button onClick={openCreate} className="btn-primary text-xs">
           <Plus className="h-4 w-4" /> Add Product
@@ -152,7 +165,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
         data={products as unknown as Record<string, unknown>[]}
         keyExtractor={(p) => (p as unknown as ProductData).id}
         searchable
-        searchKeys={["name"]}
+        searchKeys={["name", "type", "status"]}
         emptyMessage="No products yet. Create your first product."
       />
 
@@ -173,13 +186,11 @@ const [saveError, setSaveError] = useState<string | null>(null);
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ProductFormInput["type"] }))}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+                className="admin-input w-full text-sm"
               >
-                <option value="digital">Digital</option>
-                <option value="physical">Physical</option>
-                <option value="service">Service</option>
-                <option value="membership">Membership</option>
-                <option value="bundle">Bundle</option>
+                {PRODUCT_TYPE_REGISTRY.map((t) => (
+                  <option key={t.id} value={t.id}>{getProductTypeLabel(t.id)}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1.5">
@@ -187,7 +198,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
               <select
                 value={form.status}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ProductFormInput["status"] }))}
-                className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+                className="admin-input w-full text-sm"
               >
                 <option value="PUBLISHED">Published</option>
                 <option value="DRAFT">Draft</option>
@@ -200,7 +211,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
             <select
               value={form.commerceMode}
               onChange={(e) => setForm((f) => ({ ...f, commerceMode: e.target.value as ProductFormInput["commerceMode"] }))}
-              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+              className="admin-input w-full text-sm"
             >
               <option value="ONLINE">Sell Online — customers pay through your online checkout</option>
               <option value="WHATSAPP">Order on WhatsApp — customers contact you on WhatsApp to place the order</option>

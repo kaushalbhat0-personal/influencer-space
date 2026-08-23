@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useReducer, useMemo, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { builderEvents } from "@/lib/builder/events";
 import { ComponentRenderer } from "@/lib/renderer";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
@@ -15,11 +16,13 @@ import {
   experienceRegistry,
   ExperienceSection,
   resolveExperienceForCapabilities,
+  applyExperienceOverride,
   THEME_EXPERIENCES,
 } from "@/modules/theme/runtime/experience";
 import type { PublishedSnapshot, LayoutSnapshot, ThemeSnapshot } from "@/types/snapshot";
 import { traceRuntime, computeRuntimeSignature, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
+import { applyHeroPresentation } from "@/lib/hero/presentation-options";
 
 const DEVICE_WIDTHS: Record<string, number> = { mobile: 375, tablet: 768, desktop: 1200 };
 
@@ -49,6 +52,7 @@ export function InteractiveCanvas({
   const [fetchedThemePackageId, setFetchedThemePackageId] = useState<string | null>(null);
   const [themeColors, setThemeColors] = useState<Record<string, string>>({});
   const [themeFonts, setThemeFonts] = useState<Record<string, string>>({});
+  const [themeConfig, setThemeConfig] = useState<Record<string, string>>({});
   const [diagnostics, setDiagnostics] = useState<AggregateTraceDiagnostics>({
     invalidAssetIds: [], skippedAssets: 0, moduleFailures: [],
   });
@@ -71,6 +75,7 @@ export function InteractiveCanvas({
       setFetchedThemePackageId(res.themePackageId ?? null);
       setThemeColors(res.themeColors ?? {});
       setThemeFonts(res.themeFonts ?? {});
+      setThemeConfig(res.themeConfig ?? {});
       setDiagnostics(res.diagnostics ?? { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] });
       setPreviewPlanCode(res.planCode ?? null);
       onLiveContentChange?.(content);
@@ -111,6 +116,13 @@ export function InteractiveCanvas({
     return builderEvents.subscribe("store:changed", () => forceRender());
   }, []);
 
+  // RCCF-71.2: appearance changes (font/background/surface/heading weight)
+  // persisted via updateTheme refetch the live preview so the canvas reflects
+  // the new appearance exactly like the preview route + publish.
+  useEffect(() => {
+    return builderEvents.subscribe("appearance:changed", () => loadLiveContent());
+  }, [loadLiveContent]);
+
   const storeHasSections = builderStore.canvas.pages.some((p) =>
     p.sections.some((s) => s.slots.length > 0),
   );
@@ -129,7 +141,10 @@ export function InteractiveCanvas({
 
   const resolved = useMemo(() => {
     if (!dataReady || !liveContent) return null;
-    const hasOverrides = Object.keys(themeColors).length > 0 || Object.keys(themeFonts).length > 0;
+    const hasOverrides =
+      Object.keys(themeColors).length > 0 ||
+      Object.keys(themeFonts).length > 0 ||
+      Object.keys(themeConfig).length > 0;
     const resolvedTheme = themeResolver.resolveForSnapshot(
       themePackageId ?? FALLBACK_THEME_ID,
       "dark",
@@ -146,7 +161,14 @@ export function InteractiveCanvas({
           typography: {
             heading: themeFonts.heading as string | undefined,
             body: themeFonts.body as string | undefined,
+            // RCCF-71.2: controlled heading weight resolves through the SAME
+            // resolver authority as the server snapshot.
+            headingWeight: themeConfig.headingWeight as string | undefined,
           },
+          // RCCF-71.1: appearance config resolves through the SAME authority as
+          // the server snapshot, so the canvas == preview route == publish.
+          borderRadius: themeConfig.borderRadius as string | undefined,
+          layoutDensity: themeConfig.layoutDensity as "compact" | "comfortable" | "spacious" | undefined,
         } as Partial<ResolvedSnapshotTheme>,
       } : undefined,
     );
@@ -173,9 +195,23 @@ export function InteractiveCanvas({
         body: resolvedTheme?.typography.body ?? "Inter",
         mono: resolvedTheme?.typography.mono,
         display: resolvedTheme?.typography.display,
+        ...(resolvedTheme?.typography.headingWeight ? { headingWeight: resolvedTheme.typography.headingWeight } : {}),
       },
+      ...(resolvedTheme?.borderRadius ? { borderRadius: resolvedTheme.borderRadius } : {}),
+      ...(resolvedTheme?.layoutDensity ? { layoutDensity: resolvedTheme.layoutDensity } : {}),
     };
     const layout = builderPagesToLayoutSnapshot(serializedPages);
+    // RCCF-71.3: HERO PRESENTATION — the canvas applies the SAME pure merge rule
+    // the server snapshot builder uses (Website.themeConfig → content.hero), so
+    // the Builder canvas renders the exact text alignment / content width /
+    // overlay strength that the preview route and publish resolve.
+    const contentForRender: PublishedSnapshot["content"] = {
+      ...liveContent,
+      hero: applyHeroPresentation(
+        liveContent.hero as unknown as Record<string, unknown>,
+        themeConfig,
+      ) as unknown as PublishedSnapshot["content"]["hero"],
+    };
     const snapshot: PublishedSnapshot = {
       _schema: "creatorstore.snapshot",
       _version: 1,
@@ -186,7 +222,7 @@ export function InteractiveCanvas({
         correlationId: "builder-preview",
         generatedBy: "dashboard",
       },
-      content: liveContent,
+      content: contentForRender,
       layout,
       theme,
       navigation: [],
@@ -196,14 +232,20 @@ export function InteractiveCanvas({
 
     // RCCF-LAUNCH-TRACK-05: resolve the theme experience (backgrounds/effects)
     // exactly like the storefront, capability-filtered by the tenant's plan, so
-    // the Builder preview and the live storefront render identically.
+    // the Builder preview and the live storefront render identically. RCCF-71.2:
+    // the creator's persisted background/surface overrides (Website.themeConfig)
+    // are applied to the base experience BEFORE capability resolution — the same
+    // rule the preview loader and publish use.
     const themeDef = themePackageId ? themeRegistry.getById(themePackageId) : undefined;
     const experience = resolveExperienceForCapabilities(
-      experienceRegistry.resolve({
-        id: themePackageId ?? null,
-        category: themeDef?.category ?? null,
-        premium: themeDef?.premium ?? null,
-      }),
+      applyExperienceOverride(
+        experienceRegistry.resolve({
+          id: themePackageId ?? null,
+          category: themeDef?.category ?? null,
+          premium: themeDef?.premium ?? null,
+        }),
+        themeConfig,
+      ),
       previewPlanCode,
     );
 
@@ -221,7 +263,7 @@ export function InteractiveCanvas({
     };
     // serializedPages is derived 1:1 from layoutSignature — never memoize store state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, themeFonts, previewPlanCode]);
+  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, themeFonts, themeConfig, previewPlanCode]);
 
   const sections = resolved?.sections ?? [];
   const experience = resolved?.experience ?? THEME_EXPERIENCES.minimal;
@@ -248,8 +290,8 @@ export function InteractiveCanvas({
   }, [signature, dataReady, liveContent, resolved, diagnostics]);
 
   return (
-    <div className="relative flex-1 overflow-auto bg-[var(--surface-root,#0A0A0B)]" data-testid="builder-canvas" data-runtime-signature={signature}>
-      <div className="flex min-h-full items-start justify-center p-8">
+    <div className="relative flex-1 overflow-auto bg-zinc-900/40" data-testid="builder-canvas" data-runtime-signature={signature}>
+      <div className="flex min-h-full min-w-max items-start justify-start p-8">
         <div
           // RCCF-RESPONSIVE-02/03: the device frame is the named `@container/main`
           // boundary so container-query breakpoint variants (@sm/main:/@lg/main:)
@@ -258,7 +300,12 @@ export function InteractiveCanvas({
           // classes as the live storefront at 375px. shrink-0 keeps the desktop
           // frame at its full 1200px (a shrinking flex item would otherwise drop
           // below the @lg threshold and lose its desktop styling).
-          className="@container/main relative shrink-0 overflow-hidden rounded-lg border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-root,#0A0A0B)] shadow-2xl shadow-black/50 transition-all"
+          // RCCF-71.4.3: `mx-auto` (not `justify-center` on the parent) centers the
+          // frame when it fits AND keeps its left edge reachable when the frame is
+          // wider than the viewport — `justify-center` pushes the overflow to both
+          // sides, and because scrollLeft cannot go negative, the left overflow
+          // (Hero identity heading) was permanently clipped on narrow screens.
+          className="@container/main theme-root relative mx-auto shrink-0 overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50 ring-1 ring-white/5 transition-all"
           style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center", ...(resolved?.themeVars as React.CSSProperties | undefined) }}
         >
           <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">
@@ -273,7 +320,7 @@ export function InteractiveCanvas({
           <div className="relative min-h-[600px] p-4">
             {!dataReady && (
               <div className="flex flex-col items-center gap-4 pt-12 text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-s8ul-cyan border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
                 <p className="text-xs text-zinc-500">Loading live preview...</p>
               </div>
             )}
@@ -301,6 +348,9 @@ export function InteractiveCanvas({
               const isFirst = i === 0;
               const isLast = i === sections.length - 1;
               const sectionVariant: "hero" | "footer" | "default" = isFirst ? "hero" : isLast ? "footer" : "default";
+              // Canvas selection: reflects the SAME store selection state that
+              // drives the left sidebar / properties panel — pure visual ring.
+              const isSelected = builderStore.isSelected(slotId);
               return (
                 // RCCF-LAUNCH-TRACK-05: the Builder preview now renders the SAME
                 // ExperienceSection (backgrounds/effects/dividers) as the live
@@ -314,7 +364,14 @@ export function InteractiveCanvas({
                   divider="bottom"
                   data-testid={`builder-experience-${i}`}
                 >
-                  <div data-element-id={slotId} data-module={section.moduleId} className="relative">
+                  <div
+                    data-element-id={slotId}
+                    data-module={section.moduleId}
+                    className={cn(
+                      "relative rounded transition-shadow",
+                      isSelected && "ring-2 ring-indigo-500/60",
+                    )}
+                  >
                     <ComponentErrorBoundary componentId={section.moduleId}>
                       <ComponentRenderer
                         componentId={section.moduleId}

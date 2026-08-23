@@ -16,6 +16,7 @@ const FAQ_SCHEMA = [
 export const metadata: Metadata = {
   title: "FAQ",
   description: "Frequently asked questions about CreatorStore — storefront generation, pricing, payments, agency features, and more.",
+  alternates: { canonical: "/faq" },
   openGraph: {
     title: "FAQ — CreatorStore",
     description: "Everything you need to know about CreatorStore. Storefront generation, pricing, payments, custom domains, and agency features.",

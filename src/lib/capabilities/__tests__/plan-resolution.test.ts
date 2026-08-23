@@ -144,7 +144,12 @@ describe("theme server-side entitlement decision", () => {
     expect(themeEntitlementDecision("business", "creator_scale").allowed).toBe(true);
     expect(themeEntitlementDecision("business", "creator_elite").allowed).toBe(true);
     expect(themeEntitlementDecision("enterprise", "creator_enterprise").allowed).toBe(true);
-    expect(themeEntitlementDecision("business", "PRO").allowed).toBe(true);
+    // RCCF-71.4.5 (F2): premium_themes alone is not enough — the theme tier
+    // must also be within the plan's tier band. PRO (legacy creator_grow, pro
+    // tier) cannot apply a business-tier theme.
+    expect(themeEntitlementDecision("business", "PRO").allowed).toBe(false);
+    expect(themeEntitlementDecision("business", "creator_grow").allowed).toBe(false);
+    expect(themeEntitlementDecision("pro", "creator_grow").allowed).toBe(true);
   });
 });
 

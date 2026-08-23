@@ -102,7 +102,10 @@ describe("handleSubscriptionWebhook — lifecycle transitions", () => {
       amount: 0, // missing/zero payment entity → amount 0
     });
     expect(result.handled).toBe(true);
-    expect(result.status).toBe("ACTIVE");
+    // RCCF-71.4.5 (F1): a zero/absent amount NEVER transitions to ACTIVE.
+    expect(result.status).toBeNull(); // subscription never activated
+    expect(h.upsertSub).not.toHaveBeenCalled(); // state never corrupted
+    expect(h.createEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "SUBSCRIPTION_ACTIVATED" })); // idempotency preserved
     expect(h.createInvoice).not.toHaveBeenCalled();
     expect(h.publish).not.toHaveBeenCalled();
   });

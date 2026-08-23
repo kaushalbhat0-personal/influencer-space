@@ -28,26 +28,26 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
     default:
-      "CreatorStore | Turn your content into a business",
+      "CreatorStore | Your presence. Your business.",
     template: "%s — CreatorStore",
   },
   description:
-    "Turn your content into a business you own. CreatorStore builds your storefront, products and checkout from your social profile — and you keep 100% of every sale. Built for Indian creators with UPI.",
+    "CreatorStore is a professional home online — a website you own with your work, links, storefront, products, and checkout in one place. Keep 100% of every sale. Built for Indian creators with UPI.",
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     siteName: "CreatorStore",
     url: APP_URL,
-    title: "CreatorStore | Turn your content into a business",
+    title: "CreatorStore | Your presence. Your business.",
     description:
-      "Paste your social profile and launch a storefront you fully own. Keep 100% of every sale. Built for Indian creators.",
+      "A professional home for everything you create, share, showcase, and sell — one place you own. Keep 100% of every sale.",
     images: [{ url: `${APP_URL}/marketing-assets/storefront/01-desktop.png`, width: 1440, height: 900, alt: "A CreatorStore storefront built from a creator's profile" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CreatorStore | Turn your content into a business",
+    title: "CreatorStore | Your presence. Your business.",
     description:
-      "Launch a storefront you fully own from your social profile. Keep 100% of every sale.",
+      "Your professional home online — website, showcase, links, and commerce in one place you own.",
     images: [`${APP_URL}/marketing-assets/storefront/01-desktop.png`],
   },
 };

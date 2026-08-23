@@ -6,13 +6,16 @@ import { useState, useEffect, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import { MotionPresence, MotionDiv } from "@/components/ui/MotionSafe";
 
+/**
+ * RCCF-MKT-02-R1: nav carries the platform story, not a sitemap. Blog and
+ * Contact move to footer weight (both already linked there); every href maps
+ * to an existing route.
+ */
 const NAV_LINKS = [
   { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/showcase", label: "Showcase" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
-  { href: "/blog", label: "Blog" },
-  { href: "/contact", label: "Contact" },
 ];
 
 export function MarketingNav() {

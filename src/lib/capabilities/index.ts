@@ -3,7 +3,7 @@ export type { CapabilityEngine } from "./engine";
 export { capabilityService } from "./service";
 export type { CapabilityService } from "./service";
 
-export { getPlan, getAllPlans, getPlansByFamily } from "./plans";
+export { getPlan, getAllPlans, getPlansByFamily, getSignupEligiblePlans } from "./plans";
 export { getFeatureInfo, getAllFeatureIds, getFeaturesByCategory, FEATURE_CATALOG } from "./features";
 export { getFeaturesByGroup, getFeatureGroups, groupForFeature, CAPABILITY_GROUP_LABELS, CAPABILITY_GROUPS } from "./features";
 export type { CapabilityGroup } from "./features";

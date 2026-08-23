@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // info.micronest@gmail.com — no phone/WhatsApp anywhere on the page.
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Contact CreatorStore support at ${CONTACT_EMAIL}. We usually respond within one business day.`,
+  description: `Contact CreatorStore support at ${CONTACT_EMAIL}. We read every message and reply as soon as we can.`,
   alternates: { canonical: "/contact" },
 };
 
@@ -31,7 +31,7 @@ export default function ContactPage() {
               Have a question about the platform, billing, or your storefront? We&apos;re here to help.
             </p>
             <p className="mt-2 text-sm text-zinc-500">
-              We usually respond within one business day.
+              We read every message and reply as soon as we can.
             </p>
           </div>
 
@@ -60,9 +60,8 @@ export default function ContactPage() {
                     <div>
                       <p className="font-medium text-white">Address</p>
                       <p className="text-zinc-400">
-                        CreatorStore India Pvt. Ltd.<br />
-                        Pune, Maharashtra 411001<br />
-                        India
+                        Influencer Space<br />
+                        Pune, Maharashtra, India
                       </p>
                     </div>
                   </div>
@@ -84,7 +83,7 @@ export default function ContactPage() {
               <div className="rounded-2xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-sm">
                 <h2 className="mb-1 text-lg font-semibold text-white">Send Us a Message</h2>
                 <p className="mb-5 text-sm text-zinc-500">
-                  Fill out the form below and we&apos;ll get back to you within one business day.
+                  Fill out the form below and we&apos;ll get back to you as soon as we can.
                 </p>
                 <ContactFormClient />
               </div>

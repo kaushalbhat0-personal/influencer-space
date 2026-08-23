@@ -108,6 +108,17 @@ export function getPlansByFamily(family: "creator" | "agency"): PlanDefinition[]
   return getAllPlans().filter((p) => p.family === family);
 }
 
+/**
+ * RCCF-71.4.3: plans a self-serve signup can actually provision.
+ * Registration is FREE-only (RCCF-LAUNCH-01) — it never grants a paid plan, so
+ * the signup wizard must only offer plans whose CTA is `signup` (the free
+ * tiers). Paid plans (ctaType `checkout`) come through the canonical checkout
+ * flow after account creation. Registry-driven: no plan codes hardcoded here.
+ */
+export function getSignupEligiblePlans(family: "creator" | "agency"): PlanDefinition[] {
+  return getPlansByFamily(family).filter((p) => p.ctaType === "signup");
+}
+
 export function getPlanOrThrow(code: string): PlanDefinition {
   const plan = getPlan(code);
   if (!plan) throw new Error(`Unknown plan code: ${code}`);

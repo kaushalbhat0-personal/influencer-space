@@ -28,6 +28,7 @@ export function SectionActions({
           <div
             className="flex cursor-grab items-center justify-center rounded-md bg-zinc-800 p-1 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300 active:cursor-grabbing"
             title="Drag to reorder"
+            aria-hidden="true"
           >
             <GripVertical className="h-3.5 w-3.5" />
           </div>
@@ -37,6 +38,7 @@ export function SectionActions({
             onClick={() => builderEditor.duplicateSection(sectionId, pageId)}
             className="flex items-center justify-center rounded-md bg-zinc-800 p-1 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300"
             title="Duplicate section"
+            aria-label={`Duplicate ${sectionName || "section"}`}
           >
             <Copy className="h-3 w-3" />
           </button>
@@ -50,6 +52,7 @@ export function SectionActions({
             }}
             className="flex items-center justify-center rounded-md bg-zinc-800 p-1 text-zinc-500 hover:bg-red-500/20 hover:text-red-400"
             title="Delete section"
+            aria-label={`Delete ${sectionName || "section"}`}
           >
             <Trash2 className="h-3 w-3" />
           </button>
@@ -78,11 +81,12 @@ export function SectionDropZone() {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <div className={`absolute inset-x-0 h-0.5 transition-colors ${hover ? "bg-s8ul-cyan/40" : "bg-white/5"}`} />
+      <div className={`absolute inset-x-0 h-0.5 transition-colors ${hover ? "bg-indigo-400/40" : "bg-white/5"}`} />
       {hover && (
         <button
-          className="absolute z-10 flex items-center gap-1 rounded-full bg-s8ul-cyan px-2 py-0.5 text-[9px] font-semibold text-black shadow-lg hover:opacity-90"
+          className="absolute z-10 flex items-center gap-1 rounded-full bg-indigo-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-lg hover:opacity-90"
           title="Add component"
+          aria-label="Add component"
         >
           <Plus className="h-3 w-3" />
           Add
