@@ -109,7 +109,7 @@ describe("Capabilities — Plans", () => {
     const elite = getPlan("creator_elite");
     expect(elite).toBeDefined();
     expect(elite!.name).toBe("Creator Scale");
-    expect(elite!.price).toBe(1995);
+    expect(elite!.price).toBe(1999); // RCCF-MKT-05
   });
 
   it("should return canonical Partner plans via legacy codes", () => {
@@ -385,7 +385,7 @@ describe("Capabilities — Engine.comparePlans", () => {
     expect(addedLabels).toContain("Custom Domain");
     expect(addedLabels).toContain("Payment webhooks (platform-managed)");
     expect(addedLabels).toContain("Live Social Sync");
-    expect(cmp!.priceDifference).toBe(996);
+    expect(cmp!.priceDifference).toBe(1000); // RCCF-MKT-05: 1999 − 999
   });
 
   it("should return null for invalid plans", () => {
@@ -582,7 +582,7 @@ describe("Capabilities — Service Delegation", () => {
     expect(capabilityService.getAllPlans().length).toBe(8);
     expect(capabilityService.getPlansByFamily("creator").length).toBe(4);
     expect(capabilityService.getPlan("creator_grow")?.price).toBe(999);
-    expect(capabilityService.getPlan("creator_scale")?.price).toBe(1995);
+    expect(capabilityService.getPlan("creator_scale")?.price).toBe(1999); // RCCF-MKT-05
   });
 
   it("should delegate feature accessors", () => {

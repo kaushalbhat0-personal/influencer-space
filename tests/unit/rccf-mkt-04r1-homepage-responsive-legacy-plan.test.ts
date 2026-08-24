@@ -193,7 +193,7 @@ describe("RCCF-MKT-04-R1 — Creator capabilities/pricing verified correct & unc
     ]);
     expect(COMMERCE_PLAN_BY_CODE.creator_launch?.price).toBe(0);
     expect(COMMERCE_PLAN_BY_CODE.creator_grow?.price).toBe(999);
-    expect(COMMERCE_PLAN_BY_CODE.creator_scale?.price).toBe(1995);
+    expect(COMMERCE_PLAN_BY_CODE.creator_scale?.price).toBe(1999); // RCCF-MKT-05
     expect(COMMERCE_PLAN_BY_CODE.creator_enterprise?.price).toBeNull();
     expect(getEnterprisePlan("creator")?.code).toBe("creator_enterprise");
   });
@@ -201,7 +201,7 @@ describe("RCCF-MKT-04-R1 — Creator capabilities/pricing verified correct & unc
   it("surviving Agency plans keep their audited prices", () => {
     expect(COMMERCE_PLAN_BY_CODE.partner_free?.price).toBe(0);
     expect(COMMERCE_PLAN_BY_CODE.partner_solo?.price).toBe(4999);
-    expect(COMMERCE_PLAN_BY_CODE.partner_scale?.price).toBe(7999);
+    expect(COMMERCE_PLAN_BY_CODE.partner_scale?.price).toBe(14999); // RCCF-MKT-05
     expect(COMMERCE_PLAN_BY_CODE.partner_enterprise?.price).toBe(14999);
   });
 

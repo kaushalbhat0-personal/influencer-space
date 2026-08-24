@@ -143,6 +143,13 @@ export async function savePlanConfig(input: PlanEditorInput): Promise<{ success:
     const cfg = getCommercePlan(input.code);
     const isManual = cfg?.manual ?? false;
     const priceChanged = !existingPlan || existingPlan.price !== newPrice;
+    // RCCF-MKT-06.1 — preserve the DB-authoritative Razorpay plan id across
+    // saves that do not change the price. Provider plans are immutable; the
+    // stored contract must survive unrelated edits (marketing, capabilities,
+    // limits) instead of silently detaching and forcing a fresh provisioning
+    // cycle. A successful reprovisioning below overwrites this value.
+    runtimeConfig.pricing!.razorpayPlanId =
+      (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.razorpayPlanId ?? null;
     let warning: string | undefined;
     if (newPrice > 0 && !isManual && priceChanged) {
       try {
@@ -209,6 +216,16 @@ export async function savePlanConfig(input: PlanEditorInput): Promise<{ success:
  * a new plan (never mutating the plan existing subscriptions are on).
  */
 async function createRazorpayPlanForPlan(planCode: string, planName: string, monthlyPrice: number): Promise<string> {
+  // RCCF-MKT-06 — live-mode fail-closed guard. Provisioning against LIVE keys
+  // creates a real-money subscription contract, so it requires explicit
+  // operator authorization (RAZORPAY_LIVE_PROVISIONING_AUTHORIZED=1). Without
+  // it the error surfaces as a non-fatal warning: the price still saves, the
+  // plan id stays null, and checkout keeps using the DB-authoritative
+  // one-time-order path. TEST keys are unaffected.
+  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "";
+  if (keyId.startsWith("rzp_live_") && process.env.RAZORPAY_LIVE_PROVISIONING_AUTHORIZED !== "1") {
+    throw new Error("LIVE MODE CONFIRMATION REQUIRED: set RAZORPAY_LIVE_PROVISIONING_AUTHORIZED=1 to provision a live Razorpay subscription plan");
+  }
   const Razorpay = (await import("razorpay")).default;
   const razorpay = new Razorpay({
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",

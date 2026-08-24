@@ -8,6 +8,7 @@ import { ComparisonMatrix } from "./comparison";
 import { PricingFAQ } from "./faq";
 import { Sparkles, BadgePercent } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { PARTNER_ADDON_UNIT_PRICE_INR } from "@/config/commerce/agency-addons";
 
 const TABS: { id: PlanFamily; label: string }[] = [
   { id: "creator", label: "For Creators" },
@@ -96,9 +97,10 @@ export function Pricing({ data }: PricingProps) {
                 <li key={point}>• {point}</li>
               ))}
               <li className="pt-1 text-zinc-600">Your clients pay CreatorStore directly for their own Creator plan (Creator Growth minimum for partner-onboarded creators).</li>
-              {/* RCCF-61: add-on economics — a canonical commercial constant, never a hardcoded UI value. */}
+              {/* RCCF-61: add-on economics — the canonical commercial constant,
+                  never a hardcoded UI value (RCCF-MKT-05). */}
               <li className="text-zinc-600">
-                Additional client websites beyond your plan&apos;s included capacity: <span className="text-zinc-300">₹1,499/month</span> each. Every paid Partner plan includes at least 5 client websites.
+                Additional client websites beyond your plan&apos;s included capacity: <span className="text-zinc-300">₹{PARTNER_ADDON_UNIT_PRICE_INR.toLocaleString("en-IN")}/month</span> each. Every paid Partner plan includes at least 5 client websites.
               </li>
               {/* RCCF-IMPLEMENTATION-73: a concrete, runtime-derived revenue example. */}
               {(() => {

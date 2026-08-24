@@ -13,10 +13,10 @@ const highlights = (code: string) => (partner(code).marketingHighlights ?? []).j
 afterEach(() => resetRuntimeFeatureOverrides());
 
 describe("RCCF-60.2 — Partner pricing matrix (canonical)", () => {
-  it("Launch = 0, Solo = 4999, Scale = 7999, Enterprise = 14999/manual", () => {
+  it("Launch = 0, Solo = 4999, Scale = 14999, Enterprise = 14999/manual (RCCF-MKT-05)", () => {
     expect(partner("partner_free").price).toBe(0);
     expect(partner("partner_solo").price).toBe(4999);
-    expect(partner("partner_scale").price).toBe(7999);
+    expect(partner("partner_scale").price).toBe(14999);
     expect(partner("partner_enterprise").price).toBe(14999);
     expect(partner("partner_enterprise").manual).toBe(true);
     expect(partner("partner_enterprise").enterprise).toBe(true);
@@ -135,17 +135,22 @@ describe("RCCF-60.2 — public pricing metadata", () => {
 
   it("does not say Partner plans start at ₹2,999", () => {
     expect(page).not.toContain("2,999");
-    expect(page).toContain("Partner plans from ₹4,999/month");
+    expect(page).not.toContain("₹7,999");
   });
 
   // MODERNIZED in RCCF-MKT-02-R1: the creator "from" price is now DERIVED from
   // runtime plans at request time (the old pinned token "paid plans from ₹999"
   // contradicted live Growth pricing of ₹699/month and was removed).
-  it("Creator metadata truthfully acknowledges the free/trial tier and derives paid prices from runtime", () => {
+  // MODERNIZED in RCCF-MKT-05: the partner "from" price derives from runtime
+  // too — the hardcoded "Partner plans from ₹4,999/month" token is gone so
+  // Super Admin pricing edits can never leave stale metadata behind.
+  it("Creator + Partner metadata derive paid prices from runtime (no hardcoded figures)", () => {
     expect(page).toContain("Creator plans from Free");
     expect(page).not.toContain("paid plans from ₹999"); // stale hardcoded figure absent
+    expect(page).not.toContain("₹4,999"); // RCCF-MKT-05: no hardcoded partner figure
     expect(page).toContain("export async function generateMetadata"); // runtime derivation present
-    expect(page).toContain("Math.min(...paidPrices)");
+    expect(page).toContain("paidFromPrice(data.creator)");
+    expect(page).toContain("paidFromPrice(data.partner)");
   });
 });
 

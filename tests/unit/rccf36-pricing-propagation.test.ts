@@ -52,19 +52,20 @@ describe("RCCF-36 — price propagation: Super Admin → DB → runtime", () => 
     expect(plan?.price).toBe(999);
   });
 
-  it("runtime sees the new Scale price (1995) after a Super Admin save", async () => {
+  it("runtime sees the Scale price after a Super Admin save (DB wins over registry)", async () => {
     h.mockPlansFindMany.mockResolvedValue([
       DB_ROW(999, { pricing: { price: 999 } }),
-      { ...DB_ROW(1995, { pricing: { price: 1995 } }), code: "creator_scale" },
+      // RCCF-MKT-05: fixture simulates a Super Admin-saved runtimeConfig price.
+      { ...DB_ROW(1999, { pricing: { price: 1999 } }), code: "creator_scale" },
     ]);
     const plan = await getRuntimePlan("creator_scale");
-    expect(plan?.price).toBe(1995);
+    expect(plan?.price).toBe(1999);
   });
 
   it("runtime falls back to the registry default when no DB row exists", async () => {
     h.mockPlansFindMany.mockResolvedValue([]);
     expect((await getRuntimePlan("creator_grow"))?.price).toBe(999);
-    expect((await getRuntimePlan("creator_scale"))?.price).toBe(1995);
+    expect((await getRuntimePlan("creator_scale"))?.price).toBe(1999); // RCCF-MKT-05
   });
 });
 

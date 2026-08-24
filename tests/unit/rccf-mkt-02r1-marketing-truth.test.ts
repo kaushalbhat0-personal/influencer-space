@@ -93,7 +93,10 @@ describe("RCCF-MKT-02-R1 — pricing truth", () => {
   it("creator 'from' price derives from runtime plans, not a hardcoded figure", () => {
     expect(page).toContain("export async function generateMetadata");
     expect(page).toContain("getPublicPricingData()");
-    expect(page).toContain("Math.min(...paidPrices)");
+    // MODERNIZED in RCCF-MKT-05: both family "from" prices derive via the
+    // paidFromPrice helper (the old inline Math.min(...paidPrices) was folded
+    // into it when the partner figure stopped being hardcoded too).
+    expect(page).toContain("paidFromPrice(data.creator)");
     expect(page).toContain("Creator plans from Free");
     // The stale token that contradicted runtime pricing must never return,
     // and no static creator ₹ figure may be reintroduced.
@@ -101,8 +104,12 @@ describe("RCCF-MKT-02-R1 — pricing truth", () => {
     expect(page).not.toMatch(/paid plans from ₹\d/);
   });
 
-  it("partner pricing line stays aligned with the RCCF-60 approved value", () => {
-    expect(page).toContain("Partner plans from ₹4,999/month");
+  // MODERNIZED in RCCF-MKT-05: the partner "from" price is DERIVED from the
+  // runtime plans (Super Admin pricing edits can never leave stale metadata).
+  it("partner pricing line derives from runtime, not a hardcoded figure", () => {
+    expect(page).toContain("paidFromPrice(data.partner)");
+    expect(page).not.toContain("₹4,999");
+    expect(page).not.toMatch(/Partner plans from ₹\d/);
   });
 
   it("FAQ schema no longer hardcodes a Growth price figure", () => {

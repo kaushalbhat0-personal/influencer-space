@@ -262,7 +262,10 @@ describe("RCCF-61 — boundaries (Creator/commission/team/storage/marketing)", (
     const pricing = readFileSync(join(process.cwd(), "src/components/marketing/Pricing/index.tsx"), "utf8");
     expect(config).toMatch(/1 client website/);
     expect(config).toMatch(/paid partner plan \(from 5 client websites\)/);
-    expect(pricing).toMatch(/₹1,499\/month/);
+    // MODERNIZED in RCCF-MKT-05: the marketing copy renders the canonical
+    // PARTNER_ADDON_UNIT_PRICE_INR constant — no formatted UI literal.
+    expect(pricing).toMatch(/PARTNER_ADDON_UNIT_PRICE_INR/);
+    expect(pricing).not.toMatch(/₹1,499\/month/);
     expect(config.toLowerCase()).not.toMatch(/free forever/);
     expect(config.toLowerCase()).not.toMatch(/unlimited clients/);
     expect(pricing.toLowerCase()).not.toMatch(/unlimited clients/);

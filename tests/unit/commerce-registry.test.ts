@@ -35,10 +35,11 @@ describe("RCCF-IMPLEMENTATION-70 — canonical commerce registry", () => {
   });
 
   it("applies the canonical prices", () => {
+    // RCCF-MKT-05 approved pricing contract.
     expect(getMarketingPlans("creator").find((p) => p.code === "creator_grow")?.price).toBe(999);
-    expect(getMarketingPlans("creator").find((p) => p.code === "creator_scale")?.price).toBe(1995);
+    expect(getMarketingPlans("creator").find((p) => p.code === "creator_scale")?.price).toBe(1999);
     expect(getMarketingPlans("partner").find((p) => p.code === "partner_solo")?.price).toBe(4999);
-    expect(getMarketingPlans("partner").find((p) => p.code === "partner_scale")?.price).toBe(7999);
+    expect(getMarketingPlans("partner").find((p) => p.code === "partner_scale")?.price).toBe(14999);
   });
 
   it("exposes per-plan tiered limits via feature overrides", () => {

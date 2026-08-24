@@ -6,6 +6,17 @@ import type { ResolvedPlan } from "@/modules/pricing/application/runtime";
 import { getComparisonFeatureIds, getFeatureDisplayValue, type PlanFamily } from "./data";
 import { Check, Minus } from "lucide-react";
 
+/**
+ * RCCF-MKT-05 — Launch core-content truth. On Creator Launch, products,
+ * services, courses and games share ONE combined allowance of active items
+ * (LAUNCH_GLOBAL_LIMIT = 3 in content-limit.enforcement). This client module
+ * cannot import that server module (it pulls Prisma), so the value is pinned
+ * by tests/unit/rccf-mkt-05-pricing-truth.test.ts which asserts parity with
+ * the runtime constant — if the runtime ceiling ever changes, that test fails.
+ */
+const LAUNCH_CORE_CONTENT_NOTE =
+  "On Creator Launch, products, services, courses and games share one combined allowance of up to 3 active items. All other content limits are independent per section.";
+
 interface ComparisonProps {
   plans: ResolvedPlan[];
   family: PlanFamily;
@@ -96,6 +107,12 @@ export function ComparisonMatrix({ plans, family }: ComparisonProps) {
           </tbody>
         </table>
       </div>
+      {family === "creator" && plans.some((p) => p.code === "creator_launch") && (
+        <p data-testid="launch-core-content-note" className="mt-3 text-xs leading-relaxed text-zinc-500">
+          {LAUNCH_CORE_CONTENT_NOTE}
+        </p>
+      )}
     </div>
   );
 }
+//touch

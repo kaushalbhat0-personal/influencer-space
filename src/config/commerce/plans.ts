@@ -170,15 +170,17 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     },
     marketingDescription: "Get online with a website built from your creator profile. 15-day free trial — no credit card required.",
     targetAudience: "New creators getting started",
+    // RCCF-MKT-05: truthful Launch entitlement copy. Products, services,
+    // courses and games share ONE combined allowance of 3 ACTIVE items
+    // (LAUNCH_GLOBAL_LIMIT, content-limit.enforcement) — never advertise them
+    // as four independent "3×" buckets. Gallery/testimonials/FAQs/timeline/
+    // links/feed keep their independent per-type limits of 3.
     marketingHighlights: [
       "Profile-built website generation",
       "Beautiful creator website",
       "CreatorStore subdomain",
       "Basic themes",
-      "3 products",
-      "3 services",
-      "3 courses",
-      "3 games",
+      "Up to 3 active items across products, services, courses & games",
       "3 gallery items",
       "3 testimonials",
       "3 FAQs",
@@ -262,14 +264,23 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     name: "Creator Scale",
     description: "Run your creator business at full scale with advanced AI, API access and a brand you own.",
     family: "creator",
-    price: 1995,
+    // RCCF-MKT-05 approved pricing contract: Creator Scale = ₹1,999/month.
+    // Annual keeps the catalog-wide invariant annualPrice = 10 × monthly.
+    price: 1999,
     currency: "INR",
     cycle: "monthly",
-    razorpayPlanId: "plan_TLTH45wQlPdW7v",
+    // RCCF-MKT-05: the previous Razorpay plan id (`plan_TLTH45wQlPdW7v`) was a
+    // provider contract priced at the retired ₹1,995 amount. A stale id would
+    // bill the old price after a catalog re-sync (subscriptions.create charges
+    // the Razorpay plan's own amount), so it is removed; checkout falls back to
+    // the existing one-time-order path at the DB-authoritative price until a
+    // fresh subscription plan is provisioned via the Super Admin Pricing Center
+    // (savePlanConfig provisions one automatically on the next price edit).
+    razorpayPlanId: null,
     manual: false,
     bestValue: true,
     badge: "Best Value",
-    annualPrice: 19950,
+    annualPrice: 19990,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -506,14 +517,16 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     name: "Partner Scale",
     description: "Scale many creators under your own brand with white-label and priority support.",
     family: "partner",
-    price: 7999,
+    // RCCF-MKT-05 approved pricing contract: Partner Scale = ₹14,999/month.
+    // Annual keeps the catalog-wide invariant annualPrice = 10 × monthly.
+    price: 14999,
     currency: "INR",
     cycle: "monthly",
     razorpayPlanId: "plan_scale",
     manual: false,
     bestValue: true,
     badge: "Best Value",
-    annualPrice: 79990,
+    annualPrice: 149990,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -565,7 +578,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "Commission that grows with your client count",
       "Priority support",
     ],
-    comparisonOrder: 4,
+    // RCCF-MKT-05: post-Growth lineup is Free(1) → Solo(2) → Scale(3).
+    comparisonOrder: 3,
   },
   {
     code: "partner_enterprise",

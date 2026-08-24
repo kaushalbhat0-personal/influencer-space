@@ -10,16 +10,22 @@ export const dynamic = "force-dynamic";
  * RCCF-MKT-02-R1: pricing metadata derives the live "from" price from the
  * RUNTIME plans — never a hardcoded figure (the old static description pinned
  * a creator price that had drifted from the live runtime value).
+ * RCCF-MKT-05: the partner "from" price derives from the runtime too — a
+ * hardcoded partner figure would drift when Super Admin edits Partner pricing.
  * Title is "Pricing" only — the root template appends the brand.
  */
+function paidFromPrice(plans: Array<{ price: number | null }>): number | null {
+  const paid = plans.map((p) => p.price).filter((price): price is number => price != null && price > 0);
+  return paid.length > 0 ? Math.min(...paid) : null;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getPublicPricingData();
-  const paidPrices = data.creator
-    .map((p) => p.price)
-    .filter((price): price is number => price != null && price > 0);
-  const minPrice = paidPrices.length > 0 ? Math.min(...paidPrices) : null;
-  const fromCreator = minPrice != null ? ` Paid plans from ₹${minPrice}/month.` : "";
-  const description = `Transparent pricing for creators and partners. Creator plans from Free.${fromCreator} Partner plans from ₹4,999/month.`;
+  const minCreator = paidFromPrice(data.creator);
+  const minPartner = paidFromPrice(data.partner);
+  const fromCreator = minCreator != null ? ` Paid plans from ₹${minCreator}/month.` : "";
+  const fromPartner = minPartner != null ? ` Partner plans from ₹${minPartner}/month.` : "";
+  const description = `Transparent pricing for creators and partners. Creator plans from Free.${fromCreator}${fromPartner}`;
   return {
     title: "Pricing",
     description,
