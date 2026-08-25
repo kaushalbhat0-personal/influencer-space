@@ -8,7 +8,7 @@ import { BRAND } from "@/lib/marketing/messaging";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `Learn about CreatorStore — the creator business platform. Our mission, story, and values. ${BRAND.shortDescription}`,
+  description: `Learn about CreatorStore — the platform for your presence and your business. Our mission, story, and values. ${BRAND.shortDescription}`,
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About — CreatorStore",
@@ -103,7 +103,7 @@ export default function AboutPage() {
             website, your work, and your offers in one place you own.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/signup" className="btn-primary text-sm">
+            <Link href="/signup?persona=creator" className="btn-primary text-sm">
               Start Free
             </Link>
             <Link href="/features" className="btn-secondary text-sm">

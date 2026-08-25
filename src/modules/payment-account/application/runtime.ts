@@ -95,7 +95,14 @@ export async function savePaymentAccount(tenantId: string, input: PaymentAccount
   }
 }
 
-export async function verifyPaymentAccount(tenantId: string, actor: string): Promise<{ success: boolean; verified?: boolean; error?: string }> {
+/**
+ * RCCF-72.18D.6.2 — REAL provider credential verification with
+ * classification-driven persistence.
+ * RCCF-72.18D.7.5 — on success the response carries the CANONICAL readiness
+ * snapshot (`readiness`) so the creator UI can state "credentials verified"
+ * and "account ready / not yet ready" as two distinct, truthful facts.
+ */
+export async function verifyPaymentAccount(tenantId: string, actor: string): Promise<{ success: boolean; verified?: boolean; readiness?: PaymentReadinessReport; error?: string }> {
   const row = await prisma.paymentAccount.findUnique({ where: { tenantId } });
   if (!row) return { success: false, error: "No payment account" };
 
@@ -146,7 +153,17 @@ export async function verifyPaymentAccount(tenantId: string, actor: string): Pro
     }
     await emitEvent("payment.account.updated", tenantId, row.id, { provider: row.provider });
     await logAction(tenantId, "payment:account-provider-verified", { accountId: row.id, by: actor }).catch(() => {});
-    return { success: true, verified: true };
+    // ── RCCF-72.18D.7.5 ────────────────────────────────────────────────────────
+    // The production defect: the UI said "credentials verified" while storefront
+    // checkout answered "Creator payment account not ready". Both were TRUE —
+    // verification proves only the key pair authenticates; readiness ALSO
+    // requires holder identity and settlement details. Close the communication
+    // boundary by returning the CANONICAL readiness snapshot alongside the
+    // verdict so the creator sees exactly what still blocks storefront payments.
+    // Readiness is never hand-rolled here — computePaymentReadiness stays the
+    // single authority (request-cached; no extra provider calls).
+    const readiness = await computePaymentReadiness(tenantId);
+    return { success: true, verified: true, readiness };
   }
 
   if (result.classification === "credential_failed") {

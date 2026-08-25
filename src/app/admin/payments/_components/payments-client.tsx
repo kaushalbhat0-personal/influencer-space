@@ -60,7 +60,19 @@ export function PaymentsClient({ account, readiness, error }: Props) {
     // RCCF-72.18D.6.2 — verification is a REAL provider probe now: success
     // means Razorpay authenticated the stored key pair. Failure messages are
     // the safe, provider-derived strings from the runtime (never credentials).
-    setMsg(r.success ? (r.error ?? "Provider credentials verified.") : r.error ?? "Verification failed");
+    // RCCF-72.18D.7.5 — "verified" and "ready" are DIFFERENT states. The
+    // message must never imply storefront payments work when the canonical
+    // readiness report still lists unmet requirements; the missing labels come
+    // from computePaymentReadiness itself, so the next action is always the
+    // actual requirement (e.g. holder identity / settlement detail).
+    if (!r.success) {
+      setMsg(r.error ?? "Verification failed");
+    } else if (r.readiness?.readiness === "ready") {
+      setMsg("Provider credentials verified. Your payment account is ready to accept storefront payments.");
+    } else {
+      const remaining = r.readiness?.missing?.length ? r.readiness.missing.join(", ") : "the remaining setup steps";
+      setMsg(`Provider credentials verified. Storefront payments stay unavailable until you complete: ${remaining}.`);
+    }
     if (r.success) setTimeout(() => window.location.reload(), 700);
     setBusy(null);
   };

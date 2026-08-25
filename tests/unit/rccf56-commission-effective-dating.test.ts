@@ -92,6 +92,9 @@ const h = vi.hoisted(() => {
         updateMany: async ({ where, data }: { where: Record<string, unknown>; data: Record<string, unknown> }) => { mutationCalls.updateMany.push({ where, data }); return { count: rules.filter((r) => matches(r, where)).length }; },
       },
       commissionPolicy: { findFirst: async () => null },
+    // RCCF-73 eligibility gate: partner is a PAID (ACTIVE) Solo agency.
+    billingAccount: { findUnique: async () => ({ id: "acc-1" }) },
+    billingSubscription: { findMany: async () => [{ status: "ACTIVE", plan: { code: "partner_solo", family: "partner" } }] },
       agencyTenant: { findUnique: async () => ({ agencyId: "p1", revSharePercent: 0 }) },
       workspace: { findUnique: async () => ({ tenantId: "t1" }) },
       commissionEntry: {

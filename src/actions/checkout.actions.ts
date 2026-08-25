@@ -65,6 +65,8 @@ export type CheckoutResult = {
   free?: boolean;
   /** RCCF-IMPLEMENTATION-74: hosted checkout URL for DIRECT_CREATOR (customer pays the creator's own account). */
   checkoutUrl?: string;
+  /** RCCF-72.18D.7.5: stable failure category (e.g. PAYMENT_SETUP_REQUIRED) for safe UI mapping. */
+  code?: string;
 };
 
 export async function createCheckout(
@@ -127,6 +129,16 @@ export async function createCheckout(
       const direct = await createDirectCheckout({ productId: product.id, customerEmail: buyerEmail });
       if (direct.success && direct.checkoutUrl) {
         return { success: true, checkoutUrl: direct.checkoutUrl, orderId: undefined };
+      }
+      // RCCF-72.18D.7.5 — fail-closed is preserved, but the buyer receives a
+      // safe category instead of the creator's internal account state. The
+      // canonical readiness gate itself is unchanged.
+      if (direct.error === "Creator payment account not ready") {
+        return {
+          success: false,
+          error: "Payments for this store aren't available yet. Please contact the seller.",
+          code: "PAYMENT_SETUP_REQUIRED",
+        };
       }
       return { success: false, error: direct.error ?? "Creator payment account not ready" };
     }

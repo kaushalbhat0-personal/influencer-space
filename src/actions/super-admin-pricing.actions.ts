@@ -8,7 +8,7 @@ import { logAction } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { seedBillingCatalog } from "@/modules/billing/infrastructure/catalog-seed";
 import { resetRuntimeConfigLoaderCache } from "@/modules/billing/application/runtime-config-loader";
-import { COMMERCE_CAPABILITY_TO_FEATURE, getCommercePlan } from "@/config/commerce/plans";
+import { COMMERCE_CAPABILITY_TO_FEATURE, getCommercePlan, isOneTimePlan } from "@/config/commerce/plans";
 import type { PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
 
 export interface PlanEditorInput {
@@ -151,7 +151,13 @@ export async function savePlanConfig(input: PlanEditorInput): Promise<{ success:
     runtimeConfig.pricing!.razorpayPlanId =
       (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.razorpayPlanId ?? null;
     let warning: string | undefined;
-    if (newPrice > 0 && !isManual && priceChanged) {
+    // RCCF-73 — family/billing-form aware provisioning. ONE-TIME plans
+    // (Partner Solo/Scale) are charged as single Razorpay ORDERS; they must
+    // NEVER receive a recurring provider subscription contract, so the price
+    // save skips provisioning entirely for them. Creator subscription plans
+    // keep the exact RCCF-36 auto-provisioning behavior (Creator Scale's live
+    // contract is untouched).
+    if (newPrice > 0 && !isManual && priceChanged && !isOneTimePlan(input.code)) {
       try {
         const providerPlanId = await createRazorpayPlanForPlan(input.code, input.name, newPrice);
         runtimeConfig.pricing!.razorpayPlanId = providerPlanId;

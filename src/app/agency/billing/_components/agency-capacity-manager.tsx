@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addAgencyCapacityAction, cancelAgencyCapacityAction } from "@/actions/partner.actions";
+import { createAdditionalClientCheckoutAction, cancelAgencyCapacityAction } from "@/actions/partner.actions";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 
@@ -28,17 +28,43 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
   const addonQty = addons.reduce((s, a) => s + a.quantity, 0);
   const effectiveLimit = includedLimit === -1 ? Infinity : includedLimit + addonQty;
   const remaining = effectiveLimit === Infinity ? null : Math.max(0, effectiveLimit - used);
-  const recurring = addonQty * unitPriceInr;
+
+  async function loadRazorpay(): Promise<unknown> {
+    if ((window as unknown as { Razorpay?: unknown }).Razorpay) return (window as unknown as { Razorpay?: unknown }).Razorpay;
+    await new Promise<void>((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("Razorpay failed to load"));
+      document.body.appendChild(s);
+    });
+    return (window as unknown as { Razorpay?: unknown }).Razorpay;
+  }
 
   const buy = () => {
     startTransition(async () => {
-      const key = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      const res = await addAgencyCapacityAction({ quantity, idempotencyKey: key });
-      if (res.success) {
-        setNotice({ ok: true, message: `Added ${res.quantity} client website(s) at ${formatCurrency(res.unitPriceInr ?? unitPriceInr)}/month each.` });
-        router.refresh();
-      } else {
-        setNotice({ ok: false, message: res.error ?? "Failed to add capacity" });
+      // RCCF-73 — payment-gated capacity: the server creates a ONE-TIME order
+      // at the canonical unit price; the webhook grants capacity after the
+      // capture is verified. Nothing is granted by this request itself.
+      const res = await createAdditionalClientCheckoutAction({ quantity });
+      if (!res.success || !res.orderId || !res.keyId || !res.amountPaise) {
+        setNotice({ ok: false, message: res.error ?? "Failed to start checkout" });
+        return;
+      }
+      try {
+        const RazorpayCtor = (await loadRazorpay()) as new (o: unknown) => { open: () => void };
+        new RazorpayCtor({
+          key: res.keyId,
+          order_id: res.orderId,
+          amount: res.amountPaise,
+          currency: res.currency ?? "INR",
+          name: "CreatorStore",
+          description: `${quantity} additional client website${quantity > 1 ? "s" : ""}`,
+          theme: { color: "#6366f1" },
+        }).open();
+        setNotice({ ok: true, message: `Checkout opened — ${formatCurrency(res.amountPaise / 100)} one-time for ${quantity} additional client website${quantity > 1 ? "s" : ""}. Capacity activates automatically once payment is confirmed.` });
+      } catch {
+        setNotice({ ok: false, message: "Payment window could not be opened. Try again." });
       }
     });
   };
@@ -60,7 +86,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
       <h3 className="mb-1 font-semibold text-white">Client Website Capacity</h3>
       <p className="mb-4 text-xs text-zinc-500">
         Each managed creator client equals one client website. Additional capacity beyond your plan&apos;s included
-        allowance is charged at <span className="text-zinc-300">{formatCurrency(unitPriceInr)}/month</span> per client website.
+        allowance is <span className="text-zinc-300">{formatCurrency(unitPriceInr)} one-time</span> per client website — no monthly charge.
       </p>
 
       {notice && (
@@ -92,12 +118,11 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
         <div className="mb-4 space-y-1.5">
           {addons.map((a) => (
             <div key={a.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-zinc-800/30 px-3 py-1.5 text-xs">
-              <span className="text-zinc-300">+{a.quantity} client website(s) · {formatCurrency(a.quantity * a.unitPriceInr)}/month</span>
+              <span className="text-zinc-300">+{a.quantity} client website(s) · {formatCurrency(a.quantity * a.unitPriceInr)} one-time</span>
               <span className="text-zinc-600">added {new Date(a.createdAt).toLocaleDateString()}</span>
               <button onClick={() => cancel(a.id)} disabled={pending} className="text-red-400 hover:text-red-300 disabled:opacity-40">Cancel</button>
             </div>
           ))}
-          <p className="pt-1 text-xs text-zinc-400">Estimated recurring capacity amount: <span className="font-semibold text-emerald-300">{formatCurrency(recurring)}/month</span></p>
         </div>
       )}
 
@@ -112,7 +137,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
           />
         </label>
         <button onClick={buy} disabled={pending || quantity < 1} className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-40">
-          {pending ? "Adding…" : `Add capacity (${formatCurrency(quantity * unitPriceInr)}/mo)`}
+          {pending ? "Opening checkout…" : `Add another client — ${formatCurrency(quantity * unitPriceInr)} one-time`}
         </button>
       </div>
     </div>

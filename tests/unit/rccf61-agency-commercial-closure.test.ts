@@ -5,7 +5,7 @@ import { PARTNER_ADDON_UNIT_PRICE_INR, PARTNER_MIN_PAID_CAPACITY, PARTNER_TRIAL_
 import { capabilityService } from "@/lib/capabilities";
 import { resolveStorageLimitBytes } from "@/modules/billing/application/storage.enforcement";
 import { getAgencyClientCapacity, agencyTenantRelationship } from "@/modules/partner/application/partner-relationship";
-import { addAgencyCapacityAction, cancelAgencyCapacityAction } from "@/actions/partner.actions";
+import { createAdditionalClientCheckoutAction, cancelAgencyCapacityAction } from "@/actions/partner.actions";
 
 const v = vi.hoisted(() => {
   const links: Array<{ agencyId: string; tenantId: string; status: string }> = [];
@@ -20,6 +20,8 @@ const v = vi.hoisted(() => {
     mockGetServerSession: vi.fn(),
     mockLogAction: vi.fn(),
     mockRevalidatePath: vi.fn(),
+    mockCreateCapacityOrder: vi.fn(),
+    mockBillingEventCreate: vi.fn(),
   };
   return hoisted;
 });
@@ -28,12 +30,18 @@ vi.mock("next-auth", () => ({ getServerSession: v.mockGetServerSession }));
 vi.mock("next/cache", () => ({ revalidatePath: v.mockRevalidatePath }));
 vi.mock("@/lib/audit", () => ({ logAction: v.mockLogAction }));
 vi.mock("@/modules/billing/application/plan-source", () => ({ resolveActivePlan: async () => ({ code: v.planCode, origin: "v2" as const, status: v.subscription.status }) }));
+// RCCF-73: capacity purchases go through the Razorpay provider primitive —
+// the order amount is derived server-side from the canonical constant.
+vi.mock("@/modules/billing/infrastructure/providers/razorpay", () => ({
+  razorpayProvider: { createCapacityAddonOrder: v.mockCreateCapacityOrder },
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    workspace: { findUnique: async () => ({ id: "ws-a" }), findMany: async () => [{ id: "ws-a" }] },
+    workspace: { findUnique: async () => ({ id: "ws-a" }), findMany: async () => [{ id: "ws-a" }], findFirst: async () => ({ id: "ws-a" }) },
     websiteAgency: { findUnique: async () => ({ status: "ACTIVE" }) },
     workspaceMember: { findFirst: async () => ({ id: "m1" }) },
     billingSubscription: { findFirst: async () => v.subscription, findMany: async () => [] },
+    billingEvent: { create: v.mockBillingEventCreate },
     agencyTenant: {
       count: async ({ where }: { where: { agencyId: string; status: string } }) => v.links.filter((l) => l.agencyId === where.agencyId && l.status === where.status).length,
       findUnique: async ({ where }: { where: { tenantId: string } }) => v.links.find((l) => l.tenantId === where.tenantId) ?? null,
@@ -44,10 +52,8 @@ vi.mock("@/lib/prisma", () => ({
       aggregate: async ({ where }: { where: { agencyId: string; status: string } }) => ({ _sum: { quantity: v.addons.filter((a) => a.agencyId === where.agencyId && a.status === where.status).reduce((s, a) => s + a.quantity, 0) } }),
       findMany: async ({ where: _where }: { where: { agencyId: string; status: string } }) => v.addons.filter((a) => a.agencyId === _where.agencyId && a.status === _where.status),
       findFirst: async ({ where: _where }: { where: { id: string; agencyId: string; status: string } }) => v.addons.find((a) => a.id === _where.id && a.agencyId === _where.agencyId && a.status === _where.status) ?? null,
-      upsert: async ({ where, create }: { where: { agencyId_idempotencyKey: { agencyId: string; idempotencyKey: string } }; create: { agencyId: string; quantity: number; unitPriceInr: number; status: string; idempotencyKey: string } }) => {
-        const existing = v.addons.find((a) => a.agencyId === where.agencyId_idempotencyKey.agencyId && a.idempotencyKey === where.agencyId_idempotencyKey.idempotencyKey);
-        if (existing) return existing;
-        const row = { id: `addon-${++v.seq}`, ...create };
+      create: async ({ data }: { data: { agencyId: string; quantity: number; unitPriceInr: number; status: string; idempotencyKey: string } }) => {
+        const row = { id: `addon-${++v.seq}`, ...data };
         v.addons.push(row);
         return row;
       },
@@ -85,6 +91,7 @@ beforeEach(() => {
   v.reset();
   v.mockGetServerSession.mockResolvedValue(session("AGENCY_ADMIN", AGENCY_A));
   v.mockLogAction.mockResolvedValue(undefined);
+  v.mockBillingEventCreate.mockResolvedValue({ id: "evt-1" });
 });
 
 describe("RCCF-61 — trial semantics", () => {
@@ -122,13 +129,15 @@ describe("RCCF-61 — paid minimum + add-on economics", () => {
     expect(capabilityService.limit("partner_solo", "max_clients")).toBe(5);
   });
 
-  it("additional capacity unit price is ₹1,499/month", () => {
-    expect(PARTNER_ADDON_UNIT_PRICE_INR).toBe(1499);
+  // MODERNIZED in RCCF-73: the additional-client charge is ₹2,000 ONE-TIME
+  // and payment-gated (webhook-verified capture) — never a recurring price.
+  it("additional capacity unit price is ₹2,000 one-time", () => {
+    expect(PARTNER_ADDON_UNIT_PRICE_INR).toBe(2000);
   });
 
   it("an ACTIVE add-on increases effective max_clients", async () => {
     v.planCode = "partner_solo";
-    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 2, unitPriceInr: 1499, status: "ACTIVE", idempotencyKey: "k1" });
+    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 2, unitPriceInr: 2000, status: "ACTIVE", idempotencyKey: "k1" });
     const cap = await getAgencyClientCapacity(AGENCY_A);
     expect(cap.includedLimit).toBe(5);
     expect(cap.addonQuantity).toBe(2);
@@ -137,60 +146,53 @@ describe("RCCF-61 — paid minimum + add-on economics", () => {
 
   it("a cancelled add-on no longer counts", async () => {
     v.planCode = "partner_solo";
-    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 3, unitPriceInr: 1499, status: "CANCELLED", idempotencyKey: "k1" });
+    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 3, unitPriceInr: 2000, status: "CANCELLED", idempotencyKey: "k1" });
     const cap = await getAgencyClientCapacity(AGENCY_A);
     expect(cap.limit).toBe(5);
   });
 
   it("Enterprise custom capacity stays unlimited even with add-ons", async () => {
     v.planCode = "partner_enterprise";
-    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 2, unitPriceInr: 1499, status: "ACTIVE", idempotencyKey: "k1" });
+    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 2, unitPriceInr: 2000, status: "ACTIVE", idempotencyKey: "k1" });
     const cap = await getAgencyClientCapacity(AGENCY_A);
     expect(cap.limit).toBe(-1);
   });
 });
 
-describe("RCCF-61 — add-on actions (server-side authority + idempotency)", () => {
-  it("adds capacity with the server-derived price and agency (client cannot spoof either)", async () => {
-    const res = await addAgencyCapacityAction({ quantity: 3, idempotencyKey: "k-add" });
+describe("RCCF-61 (modernized by RCCF-73) — capacity CHECKOUT authority (payment-gated)", () => {
+  it("creates an order priced from the server-derived constant (client cannot spoof the amount)", async () => {
+    v.mockCreateCapacityOrder.mockResolvedValue({ success: true, orderId: "order_cap_1", amountPaise: 6000 });
+    const res = await createAdditionalClientCheckoutAction({ quantity: 3 });
     expect(res.success).toBe(true);
-    expect(res.unitPriceInr).toBe(1499);
-    const row = v.addons.find((a) => a.agencyId === AGENCY_A && a.idempotencyKey === "k-add")!;
-    expect(row.quantity).toBe(3);
-    expect(row.unitPriceInr).toBe(1499);
+    expect(v.mockCreateCapacityOrder).toHaveBeenCalledWith({ agencyId: AGENCY_A, quantity: 3, unitPriceInr: 2000 });
+    expect(res.amountPaise).toBe(6000);
+    expect(res.unitPriceInr).toBe(2000);
+    expect(v.addons.filter((a) => a.agencyId === AGENCY_A)).toHaveLength(0); // NO grant at checkout time
   });
 
-  it("a duplicate request with the same idempotency key is idempotent (no double add-on)", async () => {
-    const first = await addAgencyCapacityAction({ quantity: 1, idempotencyKey: "k-dup" });
-    const second = await addAgencyCapacityAction({ quantity: 1, idempotencyKey: "k-dup" });
-    expect(first.success).toBe(true);
-    expect(second.success).toBe(true);
-    const rows = v.addons.filter((a) => a.agencyId === AGENCY_A && a.idempotencyKey === "k-dup");
-    expect(rows).toHaveLength(1);
-  });
-
-  it("rejects an invalid quantity (client-supplied quantity is validated)", async () => {
-    const res = await addAgencyCapacityAction({ quantity: 0, idempotencyKey: "k0" });
+  it("rejects an invalid quantity before any order exists", async () => {
+    const res = await createAdditionalClientCheckoutAction({ quantity: 0 });
     expect(res.success).toBe(false);
+    expect(v.mockCreateCapacityOrder).not.toHaveBeenCalled();
     expect(v.addons).toHaveLength(0);
   });
 
-  it("staff cannot add capacity", async () => {
+  it("staff cannot start a capacity checkout", async () => {
     v.mockGetServerSession.mockResolvedValue(session("AGENCY_STAFF", AGENCY_A));
-    const res = await addAgencyCapacityAction({ quantity: 1, idempotencyKey: "k-staff" });
+    const res = await createAdditionalClientCheckoutAction({ quantity: 1 });
     expect(res.success).toBe(false);
-    expect(v.addons).toHaveLength(0);
+    expect(v.mockCreateCapacityOrder).not.toHaveBeenCalled();
   });
 
-  it("a creator (no agency) cannot add Agency capacity", async () => {
+  it("a creator (no agency) cannot start an Agency capacity checkout", async () => {
     v.mockGetServerSession.mockResolvedValue(session("ADMIN", null));
-    const res = await addAgencyCapacityAction({ quantity: 1, idempotencyKey: "k-creator" });
+    const res = await createAdditionalClientCheckoutAction({ quantity: 1 });
     expect(res.success).toBe(false);
-    expect(v.addons).toHaveLength(0);
+    expect(v.mockCreateCapacityOrder).not.toHaveBeenCalled();
   });
 
   it("Agency B cannot cancel Agency A's add-on (isolation)", async () => {
-    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 1, unitPriceInr: 1499, status: "ACTIVE", idempotencyKey: "kA" });
+    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 1, unitPriceInr: 2000, status: "ACTIVE", idempotencyKey: "kA" });
     v.mockGetServerSession.mockResolvedValue(session("AGENCY_ADMIN", AGENCY_B));
     const res = await cancelAgencyCapacityAction("a1");
     expect(res.success).toBe(false);
@@ -199,7 +201,7 @@ describe("RCCF-61 — add-on actions (server-side authority + idempotency)", () 
 
   it("cancelling an add-on releases capacity (non-destructive history preserved)", async () => {
     v.planCode = "partner_solo";
-    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 2, unitPriceInr: 1499, status: "ACTIVE", idempotencyKey: "kA" });
+    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 2, unitPriceInr: 2000, status: "ACTIVE", idempotencyKey: "kA" });
     const res = await cancelAgencyCapacityAction("a1");
     expect(res.success).toBe(true);
     expect(v.addons[0].status).toBe("CANCELLED");
@@ -224,7 +226,7 @@ describe("RCCF-61 — capacity enforcement + reclaim", () => {
 
   it("concurrent provisioning cannot exceed the effective (included + add-on) capacity", async () => {
     v.planCode = "partner_solo";
-    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 1, unitPriceInr: 1499, status: "ACTIVE", idempotencyKey: "k1" }); // 5 + 1 = 6
+    v.addons.push({ id: "a1", agencyId: AGENCY_A, quantity: 1, unitPriceInr: 2000, status: "ACTIVE", idempotencyKey: "k1" }); // 5 + 1 = 6
     for (let i = 0; i < 5; i++) v.links.push({ agencyId: AGENCY_A, tenantId: t(i + 1), status: "ACTIVE" }); // one free slot
     const results = await Promise.allSettled([
       agencyTenantRelationship.linkCreator({ agencyId: AGENCY_A, tenantId: t(50) }),
@@ -257,13 +259,13 @@ describe("RCCF-61 — boundaries (Creator/commission/team/storage/marketing)", (
     expect(capabilityService.limit("partner_scale", "max_team_members")).toBe(10);
   });
 
-  it("marketing reflects trial + paid minimum + ₹1,499 add-on, with no 'Free forever' or 'Unlimited clients'", () => {
+  it("marketing reflects trial + paid minimum + the canonical add-on constant, with no 'Free forever' or 'Unlimited clients'", () => {
     const config = readFileSync(join(process.cwd(), "src/config/commerce/plans.ts"), "utf8");
     const pricing = readFileSync(join(process.cwd(), "src/components/marketing/Pricing/index.tsx"), "utf8");
     expect(config).toMatch(/1 client website/);
     expect(config).toMatch(/paid partner plan \(from 5 client websites\)/);
-    // MODERNIZED in RCCF-MKT-05: the marketing copy renders the canonical
-    // PARTNER_ADDON_UNIT_PRICE_INR constant — no formatted UI literal.
+    // MODERNIZED in RCCF-MKT-05/RCCF-73: the marketing copy renders the
+    // canonical PARTNER_ADDON_UNIT_PRICE_INR constant — no formatted UI literal.
     expect(pricing).toMatch(/PARTNER_ADDON_UNIT_PRICE_INR/);
     expect(pricing).not.toMatch(/₹1,499\/month/);
     expect(config.toLowerCase()).not.toMatch(/free forever/);
@@ -273,16 +275,19 @@ describe("RCCF-61 — boundaries (Creator/commission/team/storage/marketing)", (
 
   it("no duplicate pricing authority — the add-on price is centralized, not scattered", () => {
     const addonConfig = readFileSync(join(process.cwd(), "src/config/commerce/agency-addons.ts"), "utf8");
-    expect(addonConfig).toContain("1499");
-    // The add-on action derives the price from the canonical constant, not a UI-scattered literal.
+    expect(addonConfig).toContain("2000");
+    expect(addonConfig).not.toContain("1499");
+    // The capacity flow derives the price from the canonical constant, not a UI-scattered literal.
     const action = readFileSync(join(process.cwd(), "src/actions/partner.actions.ts"), "utf8");
     expect(action).toMatch(/PARTNER_ADDON_UNIT_PRICE_INR/);
   });
 
-  it("add-on creation never mutates Creator subscription/billing records", async () => {
-    const res = await addAgencyCapacityAction({ quantity: 1, idempotencyKey: "k-billing" });
+  it("capacity checkout never mutates Creator subscription/billing records", async () => {
+    v.mockCreateCapacityOrder.mockResolvedValue({ success: true, orderId: "order_cap_2", amountPaise: 2000 });
+    const res = await createAdditionalClientCheckoutAction({ quantity: 1 });
     expect(res.success).toBe(true);
-    // Only AgencyCapacityAddon rows were created — no subscription/invoice rows exist.
-    expect(v.addons.filter((a) => a.agencyId === AGENCY_A && a.status === "ACTIVE").length).toBe(1);
+    // Only an ORDER was created — no AgencyCapacityAddon rows exist yet (grant
+    // happens exclusively on webhook-verified capture).
+    expect(v.addons.filter((a) => a.agencyId === AGENCY_A)).toHaveLength(0);
   });
 });

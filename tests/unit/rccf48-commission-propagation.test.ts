@@ -35,6 +35,9 @@ vi.mock("@/lib/prisma", () => ({
       create: h.mockCreate,
     },
     commissionPolicy: { findFirst: async () => (h.state.policyShare === null ? null : { agencyDefaultShare: h.state.policyShare }) },
+    // RCCF-73 eligibility gate: partner is a PAID (ACTIVE) Solo agency.
+    billingAccount: { findUnique: async () => ({ id: "acc-1" }) },
+    billingSubscription: { findMany: async () => [{ status: "ACTIVE", plan: { code: "partner_solo", family: "partner" } }] },
     agencyTenant: { findUnique: async () => ({ agencyId: "p1", revSharePercent: 0 }) },
     workspace: { findUnique: async () => ({ tenantId: "t1" }) },
     commissionEntry: {

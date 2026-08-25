@@ -87,10 +87,16 @@ describe("RCCF-MKT-05 — Partner pricing contract", () => {
 // ── 3. Yearly pricing architecture (existing invariant — documented, not invented)
 
 describe("RCCF-MKT-05 — yearly pricing architecture", () => {
+  // MODERNIZED in RCCF-73: the annual=10×monthly invariant covers the
+  // RECURRING (Creator) catalog; Partner Solo/Scale are one-time and carry no
+  // annual variant at all.
   it("annualPrice keeps the catalog invariant annual = 10 × monthly (~17% saving)", () => {
-    for (const code of ["creator_grow", "creator_scale", "partner_solo", "partner_scale"]) {
+    for (const code of ["creator_grow", "creator_scale"]) {
       const p = plan(code);
       expect(p.annualPrice, `${code} annual`).toBe((p.price as number) * 10);
+    }
+    for (const code of ["partner_solo", "partner_scale"]) {
+      expect(plan(code).annualPrice ?? null, `${code} one-time`).toBeNull();
     }
   });
 

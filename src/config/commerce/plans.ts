@@ -46,6 +46,8 @@ export type CommerceCapability =
   | "theme_effects_blur"
   | "theme_effects_custom";
 
+export type CommerceCycle = "monthly" | "yearly";
+
 export interface CommercePlanConfig {
   code: string;
   name: string;
@@ -53,7 +55,16 @@ export interface CommercePlanConfig {
   family: "creator" | "partner";
   price: number | null;
   currency: string;
-  cycle: "monthly" | "yearly";
+  cycle: CommerceCycle;
+  /**
+   * RCCF-73 — the billing FORM this plan charges with.
+   *  - "subscription" (default): recurring Razorpay subscription contract
+   *    (Creator Growth/Scale — unchanged).
+   *  - "one_time": a single Razorpay ORDER at the DB-authoritative price.
+   *    No renewal, no annual variant, no provider subscription contract is
+   *    ever created or provisioned for these plans (Partner Solo/Scale).
+   */
+  billingForm?: "one_time";
   razorpayPlanId: string | null;
   manual: boolean;
   capabilities: CommerceCapability[];
@@ -455,14 +466,17 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     name: "Solo Partner",
     description: "Run client projects with confidence: custom domains, premium themes and automation help.",
     family: "partner",
+    // RCCF-73 approved pricing contract: Solo Partner = ₹4,999 ONE-TIME for the
+    // included client capacity. No monthly renewal, no annual variant — the
+    // purchase is a single Razorpay order (never a subscription).
     price: 4999,
     currency: "INR",
     cycle: "monthly",
-    razorpayPlanId: "plan_solo",
+    billingForm: "one_time",
+    razorpayPlanId: null,
     manual: false,
     recommended: true,
     badge: "Recommended",
-    annualPrice: 49990,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -497,13 +511,16 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       max_team_members: 3,
       ai_credits: 1000,
     },
-    marketingDescription: "Run client projects with custom domains, premium themes, team members and recurring commission.",
+    marketingDescription: "Run client projects with custom domains, premium themes, team members and recurring commission eligibility.",
     targetAudience: "Independent agencies",
     marketingHighlights: [
       "Agency dashboard",
       "Client management",
       "Workspace management",
-      "Recurring commission",
+      // RCCF-MKT-08-R1: commission is ELIGIBILITY for paid Partners (the rate
+      // lives in the runtime configuration hierarchy) — never a guaranteed
+      // amount or fixed percentage.
+      "Recurring commission eligibility",
       "Team members",
       "Partner analytics",
       "Premium themes",
@@ -517,16 +534,17 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     name: "Partner Scale",
     description: "Scale many creators under your own brand with white-label and priority support.",
     family: "partner",
-    // RCCF-MKT-05 approved pricing contract: Partner Scale = ₹14,999/month.
-    // Annual keeps the catalog-wide invariant annualPrice = 10 × monthly.
+    // RCCF-73 approved pricing contract: Partner Scale = ₹14,999 ONE-TIME for
+    // the included client capacity. No monthly renewal, no annual variant —
+    // the purchase is a single Razorpay order (never a subscription).
     price: 14999,
     currency: "INR",
     cycle: "monthly",
-    razorpayPlanId: "plan_scale",
+    billingForm: "one_time",
+    razorpayPlanId: null,
     manual: false,
     bestValue: true,
     badge: "Best Value",
-    annualPrice: 149990,
     capabilities: [
       "premium_themes",
       "custom_domain",
@@ -575,7 +593,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       "White label",
       "Multi-client management",
       "Advanced analytics",
-      "Commission that grows with your client count",
+      // RCCF-MKT-08-R1: eligibility wording — no guaranteed escalation claim.
+      "Recurring commission from eligible active clients",
       "Priority support",
     ],
     // RCCF-MKT-05: post-Growth lineup is Free(1) → Solo(2) → Scale(3).
@@ -747,6 +766,23 @@ export function minEligiblePlanForAgencyCreator(code: string | null | undefined)
 export function razorpayPlanIdFor(code: string | null | undefined): string | null {
   if (!code) return null;
   return getCommercePlan(code)?.razorpayPlanId ?? null;
+}
+
+// ── RCCF-73 — billing-form selectors ─────────────────────────────────────────
+/**
+ * The authoritative billing FORM for a plan code. Registry plans without an
+ * explicit form are recurring subscriptions (every Creator plan — unchanged).
+ * Unknown/DB-only codes default to "subscription", preserving pre-RCCF-73
+ * behavior for any plan outside this registry.
+ */
+export function planBillingForm(code: string | null | undefined): "subscription" | "one_time" {
+  if (!code) return "subscription";
+  return getCommercePlan(code)?.billingForm === "one_time" ? "one_time" : "subscription";
+}
+
+/** True when the plan is purchased as a single one-time order (never renews). */
+export function isOneTimePlan(code: string | null | undefined): boolean {
+  return planBillingForm(code) === "one_time";
 }
 
 export function capabilitiesForPlan(code: string | null | undefined): CommerceCapability[] {

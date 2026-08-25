@@ -32,10 +32,55 @@ export interface RevenueSplit {
 
 export interface CommissionRecordResult {
   success: boolean;
-  skipped?: "no-partner" | "already-recorded";
+  skipped?: "no-partner" | "already-recorded" | "free-partner";
   entryId?: string;
   split?: RevenueSplit;
 }
+
+// ── Partner-plan commission eligibility (RCCF-73 §13) ────────────────────────
+// Explicit business invariant: the FREE Partner tier NEVER earns commission;
+// PAID Partner plans are eligible, with the percentage still resolved through
+// the existing configurable hierarchy (rules → loyalty → relationship →
+// policy → default). This predicate gates ELIGIBILITY only — never a rate.
+//
+// Eligible   = the agency's OWN subscription is ACTIVE (paid) on a partner-
+//              family plan other than partner_free (Solo/Scale/Enterprise…).
+// Ineligible = partner_free (trial or post-trial), TRIALING paid plans (not
+//              yet paid), or no resolvable agency subscription.
+export function isCommissionEligiblePartnerPlan(planCode: string | null | undefined): boolean {
+  return !!planCode && planCode.startsWith("partner_") && planCode !== "partner_free";
+}
+
+/**
+ * Resolve the commission ELIGIBILITY of a partner from their own billing state.
+ * Server-derived from the canonical BillingAccount(accountType="agency") →
+ * BillingSubscription chain — never from client input or the invoice payload.
+ */
+export const resolvePartnerCommissionEligibility = requestCache(
+  async (partnerId: string): Promise<{ eligible: boolean; planCode: string | null; status: string | null }> => {
+    const account = await prisma.billingAccount.findUnique({
+      where: { accountType_accountId: { accountType: "agency", accountId: partnerId } },
+      select: { id: true },
+    });
+    if (!account) return { eligible: false, planCode: null, status: null };
+    const subs = await prisma.billingSubscription.findMany({
+      where: { accountId: account.id },
+      select: { status: true, plan: { select: { code: true, family: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+    for (const s of subs) {
+      if (
+        s.status === "ACTIVE" &&
+        s.plan?.family === "partner" &&
+        isCommissionEligiblePartnerPlan(s.plan.code)
+      ) {
+        return { eligible: true, planCode: s.plan.code, status: s.status };
+      }
+    }
+    return { eligible: false, planCode: subs[0]?.plan?.code ?? null, status: subs[0]?.status ?? null };
+  },
+);
 
 // ── Attribution (Phase 1) ────────────────────────────────────────────────────
 
@@ -160,6 +205,14 @@ export async function recordSubscriptionCommission(
 ): Promise<CommissionRecordResult> {
   const partnerId = await resolvePartnerForWorkspace(params.workspaceId);
   if (!partnerId) return { success: false, skipped: "no-partner" };
+
+  // RCCF-73 §13 — the free Partner tier earns ZERO commission. Paid plans
+  // proceed; the rate still comes exclusively from the configured hierarchy.
+  const eligibility = await resolvePartnerCommissionEligibility(partnerId);
+  if (!eligibility.eligible) {
+    await logAction("system", "commission:partner-ineligible", { partnerId, planCode: eligibility.planCode, status: eligibility.status }).catch(() => {});
+    return { success: false, skipped: "free-partner" };
+  }
 
   const existing = await prisma.commissionEntry.findFirst({
     where: { invoiceId: params.invoiceId },

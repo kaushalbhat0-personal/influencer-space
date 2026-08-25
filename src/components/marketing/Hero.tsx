@@ -41,13 +41,17 @@ export function Hero() {
               and sell — one place you own online.
             </p>
 
-            {/* What your home can hold — outcomes, not a feature list. */}
+            {/* What your home can hold — outcomes, not a feature list.
+                RCCF-MKT-09: positioning breadth — the platform is for creators,
+                freelancers, coaches, brands, small businesses and agencies, not
+                a single "Indian creators" segment; "professional website"
+                avoids implying a custom domain on every plan (Scale+ only). */}
             <ul className="mt-5 grid max-w-lg gap-2 sm:grid-cols-2" role="list">
               {[
-                "Your own website, on your domain",
+                "Your own professional website",
                 "Showcase work, links & products",
                 "Sell and keep 100% of every sale",
-                "Built for Indian creators",
+                "For creators, freelancers & businesses",
               ].map((point) => (
                 <li key={point} className="flex items-start gap-2 text-sm text-zinc-300">
                   <span className="mt-0.5 text-emerald-400 flex-shrink-0">✓</span>

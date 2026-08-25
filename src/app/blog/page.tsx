@@ -1,4 +1,12 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+// RCCF-MKT-11: page-level metadata replaces the layout's openGraph object, so
+// the index declares its own canonical here (the layout cannot carry one —
+// /blog/guides would inherit the wrong URL).
+export const metadata: Metadata = {
+  alternates: { canonical: "/blog" },
+};
 
 const posts = [
   {
@@ -32,8 +40,12 @@ export default function BlogPage() {
     <div className="space-y-12">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">CreatorStore Blog</h1>
+        {/* RCCF-MKT-10 P3-A: the blog index is a positioning surface — it
+            speaks to the full platform audience, not a single segment.
+            Individual articles stay topic-specific on purpose. */}
         <p className="mt-2 text-sm text-zinc-500">
-          Tips, guides, and strategies for Indian creators.
+          Tips, guides, and strategies for creators, freelancers, and
+          businesses building their presence online.
         </p>
       </div>
 

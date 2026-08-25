@@ -22,7 +22,7 @@ const PILLAR_ICONS = {
 
 export const metadata: Metadata = {
   title: "Features",
-  description: `Everything you need to run your creator business: profile-built storefronts, visual builder, commerce, order analytics, SEO, and agency tools. ${BRAND.shortDescription}`,
+  description: `Everything you need to run your business online: profile-built websites, visual builder, commerce, order analytics, SEO, and agency tools. ${BRAND.shortDescription}`,
   alternates: { canonical: "/features" },
   openGraph: {
     title: "Features — CreatorStore",
@@ -43,7 +43,7 @@ export default function FeaturesPage() {
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           Everything you need to run your{" "}
           <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-            creator business
+            business
           </span>
         </h1>
         <p className="mt-4 text-lg text-zinc-400">
@@ -51,7 +51,7 @@ export default function FeaturesPage() {
           builder, and agency tools — all in one platform.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link href="/signup" className="btn-primary text-sm">
+          <Link href="/signup?persona=creator" className="btn-primary text-sm">
             Start Free
           </Link>
           <Link href="/pricing" className="btn-secondary text-sm">
@@ -64,7 +64,7 @@ export default function FeaturesPage() {
       <Section id="value-props">
         <SectionHeading
           title="Why CreatorStore?"
-          subtitle="Seven reasons creators choose us over templates, link-in-bio tools, and website builders."
+          subtitle="Seven reasons people choose CreatorStore over templates, link-in-bio tools, and website builders."
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {VALUE_PROPOSITIONS.map((vp) => (
@@ -170,7 +170,7 @@ export default function FeaturesPage() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/signup"
+              href="/signup?persona=creator"
               className="btn-primary text-sm"
             >
               Start Free

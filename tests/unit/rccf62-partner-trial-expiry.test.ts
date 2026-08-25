@@ -92,7 +92,7 @@ import { resolveAgencyAccess, PLATFORM_LOCKED_MESSAGE } from "@/modules/partner/
 import { requireAgencyActive } from "@/modules/partner/application/authorization";
 import { isInactiveAgencyDeletionEligible, cleanupExpiredTrialAgencies } from "@/lib/integrity/runtime";
 import { inviteAgencyTeamMember, removeAgencyTeamMember, changeAgencyTeamRole } from "@/actions/team.actions";
-import { addAgencyCapacityAction } from "@/actions/partner.actions";
+import { createAdditionalClientCheckoutAction } from "@/actions/partner.actions";
 
 const AGENCY_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const AGENCY_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -156,9 +156,9 @@ describe("RCCF-62 — server-side mutation enforcement", () => {
     expect((await changeAgencyTeamRole({ userId: "u", role: "AGENCY_ADMIN" })).success).toBe(false);
   });
 
-  it("expired trial → capacity add-ons are blocked", async () => {
+  it("expired trial → capacity purchases are blocked (RCCF-73: checkout action, payment-gated)", async () => {
     v.subscription = { status: "TRIALING", trialEndsAt: new Date(Date.now() - 1) };
-    const res = await addAgencyCapacityAction({ quantity: 1, idempotencyKey: "k" });
+    const res = await createAdditionalClientCheckoutAction({ quantity: 1 });
     expect(res.success).toBe(false);
     expect(res.error).toContain("trial has ended");
   });

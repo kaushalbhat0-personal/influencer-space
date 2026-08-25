@@ -10,7 +10,7 @@ const FAQ_SCHEMA = [
   { q: "Is there a free trial?", a: "Yes. Creator Launch is a 15-day free trial — no credit card required. Your site stays live after the trial; editing and publishing follow your plan." },
   { q: "What does it cost to sell?", a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan, and everything your customers spend goes to you." },
   { q: "How do payments work?", a: "CreatorStore uses Razorpay. Your customers can pay via UPI, cards, net banking and wallets, and money lands in your account." },
-  { q: "Can agencies use CreatorStore?", a: "Yes. Partner plans support client management, white-label branding and recurring subscription revenue sharing." },
+  { q: "Can agencies use CreatorStore?", a: "Yes. Partner plans support client management and white-label branding, and paid Partners can earn recurring commission from eligible active clients." },
 ];
 
 export const metadata: Metadata = {
@@ -42,6 +42,10 @@ export default function FAQPage() {
       />
       <MarketingNav />
       <div className="pt-16">
+        {/* RCCF-MKT-11: the standalone FAQ route had no H1 (PricingFAQ renders an
+            h2 section heading shared with home/pricing). An sr-only H1 gives the
+            route exactly one top-level heading without changing any visuals. */}
+        <h1 className="sr-only">Frequently asked questions</h1>
         <PricingFAQ />
       </div>
       <Footer />

@@ -115,6 +115,34 @@ export async function POST(req: Request) {
   const workspaceId: string = notes.workspaceId || notes.accountId || "";
 
   try {
+    // ── RCCF-73 — Partner additional-client capacity purchases ─────────────
+    // Capacity add-on orders carry notes.purpose=partner_capacity_addon and
+    // deliberately NO workspaceId/accountId, so the generic subscription
+    // branches below can never mis-route them. The capture handler verifies
+    // identity (server-set order notes), amount (canonical unit × quantity)
+    // and idempotency before granting +1×quantity client capacity exactly once.
+    if (
+      (event === "payment.captured" || event === "order.paid") &&
+      entityNotes(payload).purpose === "partner_capacity_addon"
+    ) {
+      const addonNotes = entityNotes(payload);
+      const addonPaymentEntity = (payload.payload?.payment?.entity ?? {}) as Record<string, unknown>;
+      const addonPaymentId = (addonPaymentEntity.id as string | undefined) || "";
+      const capturedAmountPaise = Number(addonPaymentEntity.amount ?? 0);
+      try {
+        const { partnerCapacityPurchase } = await import("@/modules/billing/application/partner-capacity-purchase");
+        await partnerCapacityPurchase.handleCapture({
+          paymentId: addonPaymentId || ref,
+          orderId: (addonPaymentEntity.order_id as string | undefined) || "",
+          capturedAmountPaise,
+          notes: addonNotes,
+        });
+      } catch (error) {
+        captureError(error, { service: "razorpay-webhook", operation: "partnerCapacityCaptured" });
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     // ── RCCF-72.18D.5.5 — payment failure diagnostics for product orders ──
     // Records WHY a creator-commerce payment failed while the order still
     // awaits payment. The Razorpay order id persisted at checkout is the only
@@ -174,6 +202,27 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         captureError(error, { service: "razorpay-webhook", operation: "productOrderFailureReason" });
+      }
+
+      // ── RCCF-73 — capacity-order failure diagnostics ─────────────────────
+      // A failed capacity purchase grants nothing; only a sanitized audit
+      // trail is written so the agency dashboard/support can explain state.
+      if ((payload.payload?.payment?.entity?.notes as Record<string, string> | undefined)?.purpose === "partner_capacity_addon") {
+        const failedAddonPaymentId = ((payload.payload?.payment?.entity?.id as string | undefined) ?? "").slice(0, 64);
+        await prisma.billingEvent
+          .create({
+            data: {
+              accountId: "00000000-0000-0000-0000-000000000000",
+              type: "PAYMENT_FAILED_CAPACITY",
+              idempotencyKey: `partner_capacity_failed_${failedAddonPaymentId}`,
+              payload: {
+                providerPaymentId: failedAddonPaymentId,
+                webhookEvent: event,
+                note: "no capacity granted — purchase not completed",
+              },
+            },
+          })
+          .catch(() => {});
       }
     }
 

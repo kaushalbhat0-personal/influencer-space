@@ -55,7 +55,7 @@ vi.mock("razorpay", () => ({
 
 import { savePlanConfig, resyncBillingCatalog } from "@/actions/super-admin-pricing.actions";
 import type { PlanEditorInput } from "@/actions/super-admin-pricing.actions";
-import { COMMERCE_PLANS, getCommercePlan } from "@/config/commerce/plans";
+import { COMMERCE_PLANS, getCommercePlan, isOneTimePlan } from "@/config/commerce/plans";
 import { getAllPlans } from "@/lib/capabilities";
 import { getRuntimePlan, mergeRuntimePlan } from "@/modules/pricing/application/runtime";
 
@@ -81,15 +81,20 @@ describe("MKT-06 Catalog — registry contract is the corrected MKT-05 truth", (
     }
   });
 
-  it("keeps the annualPrice = 10 × monthly invariant on every paid plan that declares one", () => {
+  it("keeps the annualPrice = 10 × monthly invariant on every recurring paid plan; one-time partners have none", () => {
     for (const plan of COMMERCE_PLANS) {
       if (plan.price === null || plan.price === 0 || plan.annualPrice === undefined) continue;
       expect(plan.annualPrice, `${plan.code} annual`).toBe(plan.price * 10);
     }
-    // The six public plans all declare the invariant explicitly.
+    // MODERNIZED in RCCF-73: Creator plans declare the annual invariant; the
+    // one-time partner plans declare NO annual variant at all.
     for (const [code, price] of Object.entries(APPROVED_MONTHLY)) {
       if (price === 0) continue;
-      expect(getCommercePlan(code)?.annualPrice).toBe(price * 10);
+      if (isOneTimePlan(code)) {
+        expect(getCommercePlan(code)?.annualPrice ?? null, `${code} is one-time`).toBeNull();
+      } else {
+        expect(getCommercePlan(code)?.annualPrice).toBe(price * 10);
+      }
     }
   });
 
@@ -290,8 +295,13 @@ describe("MKT-06 Marketing — no hardcoded pricing, runtime-derived only", () =
     const src = read("src/app/pricing/page.tsx");
     expect(src).toContain("paidFromPrice(data.creator)");
     expect(src).toContain("paidFromPrice(data.partner)");
-    expect(src).toContain('from ₹${minCreator}/month');
-    expect(src).toContain('from ₹${minPartner}/month');
+    // MODERNIZED in RCCF-MKT-08-R1: creators remain monthly subscriptions;
+    // partners are ONE-TIME purchases (RCCF-73) — never described as /month.
+    // RCCF-MKT-10 P3-D: runtime values render via the canonical formatCurrency
+    // helper (grouped INR), not raw ₹${…} interpolation.
+    expect(src).toContain('from ${formatCurrency(minCreator)}/month');
+    expect(src).toMatch(/from \$\{formatCurrency\(minPartner\)\} one-time\./);
+    expect(src).not.toMatch(/minPartner\}\/month/);
     expect(src).toMatch(/getPublicPricingData/);
   });
 

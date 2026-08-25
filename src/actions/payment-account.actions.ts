@@ -49,7 +49,12 @@ export async function saveMyPaymentAccount(input: PaymentAccountInput): Promise<
   return { success: result.success, error: result.error };
 }
 
-export async function verifyMyPaymentAccount(): Promise<{ success: boolean; verified?: boolean; error?: string }> {
+/**
+ * RCCF-72.18D.7.5 — a successful verification carries the canonical readiness
+ * snapshot so the creator UI can distinguish "credentials verified" from
+ * "account ready to accept storefront payments" in the same response.
+ */
+export async function verifyMyPaymentAccount(): Promise<{ success: boolean; verified?: boolean; readiness?: Awaited<ReturnType<typeof computePaymentReadiness>>; error?: string }> {
   const ctx = await requireCreatorOrSuperAdmin();
   if (!ctx.tenantId) return { success: false, error: "Unauthorized" };
   const result = await verifyPaymentAccount(ctx.tenantId, ctx.actor ?? "creator");

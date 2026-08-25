@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s — CreatorStore",
   },
   description:
-    "CreatorStore is a professional home online — a website you own with your work, links, storefront, products, and checkout in one place. Keep 100% of every sale. Built for Indian creators with UPI.",
+    "CreatorStore is a professional home online — a website you own with your work, links, storefront, products, and checkout in one place. Keep 100% of every sale. UPI and card checkout via Razorpay.",
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",

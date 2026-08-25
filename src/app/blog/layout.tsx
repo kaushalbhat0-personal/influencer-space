@@ -4,12 +4,15 @@ import { Footer } from "@/components/marketing/Footer";
 
 export const metadata: Metadata = {
   title: "Blog",
+  // RCCF-MKT-10 P3-A: index metadata addresses the broad platform audience
+  // (creators, freelancers, businesses) — the previous "Indian creators"
+  // framing narrowed the platform on an entry positioning surface.
   description:
-    "Tips, guides, and strategies for Indian creators to monetize their audience and build a sustainable online business.",
+    "Tips, guides, and strategies for creators, freelancers, and businesses building their presence and business online.",
   openGraph: {
-    title: "CreatorStore Blog — Tips for Indian Creators",
+    title: "CreatorStore Blog",
     description:
-      "Learn how to sell merch, grow your brand, and earn more with your content.",
+      "Learn how to build your presence online — showcase your work, sell products and services, and grow your business.",
   },
 };
 

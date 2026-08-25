@@ -16,8 +16,12 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  async function openCheckout(checkout: { subscriptionId?: string; keyId?: string }) {
-    if (!checkout.subscriptionId || !checkout.keyId) return;
+  async function openCheckout(checkout: { orderId?: string; subscriptionId?: string; keyId?: string; amountPaise?: number; currency?: string }) {
+    if (!checkout.keyId) return;
+    // RCCF-73 — one-time partner purchases arrive as ORDERS (order_id);
+    // legacy/defensive path keeps subscription support for any recurring form.
+    const isOrder = !!checkout.orderId && !checkout.subscriptionId;
+    if (isOrder && !checkout.amountPaise) return;
     if (!(window as unknown as { Razorpay?: unknown }).Razorpay) {
       await new Promise<void>((resolve, reject) => {
         const s = document.createElement("script");
@@ -27,12 +31,21 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
         document.body.appendChild(s);
       });
     }
-    const options = {
-      key: checkout.keyId,
-      subscription_id: checkout.subscriptionId,
-      name: "CreatorStore",
-      theme: { color: "#6366f1" },
-    };
+    const options = isOrder
+      ? {
+          key: checkout.keyId,
+          order_id: checkout.orderId,
+          amount: checkout.amountPaise,
+          currency: checkout.currency ?? "INR",
+          name: "CreatorStore",
+          theme: { color: "#6366f1" },
+        }
+      : {
+          key: checkout.keyId,
+          subscription_id: checkout.subscriptionId,
+          name: "CreatorStore",
+          theme: { color: "#6366f1" },
+        };
     new (window as unknown as { Razorpay: new (o: unknown) => { open: () => void } }).Razorpay(options).open();
   }
 
@@ -41,7 +54,12 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
     setMsg(null);
     const res = await changeAgencyPlanAction(planCode);
     if (res.success && res.checkout) {
-      await openCheckout(res.checkout).catch(() => setMsg("Checkout window could not be opened. Try again."));
+      try {
+        await openCheckout(res.checkout);
+        setMsg(null);
+      } catch {
+        setMsg("Checkout window could not be opened. Try again.");
+      }
     } else {
       setMsg(res.error ?? "Failed to start checkout");
     }

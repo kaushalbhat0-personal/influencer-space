@@ -15,6 +15,13 @@ const CATEGORIES = ["Gaming", "Fitness", "Music", "Food", "Education",
                     "Technology", "Lifestyle", "Fashion", "Art", "Business"];
 
 export class ShowcaseService {
+  /**
+   * RCCF-MKT-10 P3-C: /showcase claims "Every site is a real, published
+   * creator storefront" — so this service returns ONLY real published sites.
+   * The previous fabricated demo fallback rendered invented brand names and
+   * dead URLs as if they were customer sites; it is removed. With zero
+   * published sites the page renders an honest empty state.
+   */
   async getPublished(filters?: { category?: string; search?: string }): Promise<ShowcaseSite[]> {
     const published = await websiteRepository.listPublished();
     let sites: ShowcaseSite[] = published.map((ps) => ({
@@ -25,7 +32,6 @@ export class ShowcaseService {
       storefrontUrl: buildStorefrontUrl(ps.tenant.subdomain),
       products: [],
     }));
-    if (sites.length === 0) sites = this.getFallbackSites();
     if (filters?.category) sites = sites.filter((s) => s.category === filters.category);
     if (filters?.search) {
       const q = filters.search.toLowerCase();
@@ -35,11 +41,13 @@ export class ShowcaseService {
   }
 
   async getCategories(): Promise<string[]> {
+    // RCCF-MKT-10 P3-C: with no published sites there are no categories to
+    // offer — returning [] avoids rendering filter pills that can only lead
+    // to an empty result set.
     const published = await websiteRepository.listPublished();
+    if (published.length === 0) return [];
     const used = new Set(published.map((ps) => this.inferCategory(ps.brand?.name || "")));
-    return CATEGORIES.filter((c) => used.has(c)).length > 0
-      ? CATEGORIES.filter((c) => used.has(c))
-      : CATEGORIES;
+    return CATEGORIES.filter((c) => used.has(c));
   }
 
   private inferCategory(name: string): string {
@@ -54,16 +62,6 @@ export class ShowcaseService {
     if (n.includes("art") || n.includes("photo") || n.includes("design")) return "Art";
     if (n.includes("business") || n.includes("consult") || n.includes("agency")) return "Business";
     return "Lifestyle";
-  }
-
-  private getFallbackSites(): ShowcaseSite[] {
-    return [
-      { id: "gamer-demo", name: "NexusGamer", category: "Gaming", description: "Pro gaming highlights and setup tours", storefrontUrl: "https://gamer-demo.creatos.com" },
-      { id: "fitness-demo", name: "FitWithZara", category: "Fitness", description: "Workout programs and nutrition guides", storefrontUrl: "https://fitness-demo.creatos.com" },
-      { id: "music-demo", name: "DJElectra", category: "Music", description: "Electronic music and live mixes", storefrontUrl: "https://music-demo.creatos.com" },
-      { id: "food-demo", name: "Chef Marco", category: "Food", description: "Italian recipes and cooking classes", storefrontUrl: "https://food-demo.creatos.com" },
-      { id: "art-demo", name: "ArtByMaya", category: "Art", description: "Digital art and commissioned portraits", storefrontUrl: "https://art-demo.creatos.com" },
-    ];
   }
 }
 

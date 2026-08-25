@@ -30,6 +30,9 @@ vi.mock("@/lib/prisma", () => ({
     },
     commissionRule: { findMany: async () => [] },
     commissionPolicy: { findFirst: async () => null },
+    // RCCF-73 eligibility gate: the partner is a PAID (ACTIVE) Solo agency.
+    billingAccount: { findUnique: async () => ({ id: "acc-1" }) },
+    billingSubscription: { findMany: async () => [{ status: "ACTIVE", plan: { code: "partner_solo", family: "partner" } }] },
     agencyTenant: { findUnique: async ({ where }: { where: { tenantId: string } }) =>
       where.tenantId === "t1" ? { agencyId: PARTNER, revSharePercent: 20 } : null,
     },

@@ -24,8 +24,11 @@ export const CREATOR_STATS: CreatorStat[] = [
   },
   {
     label: "Platforms you can import from",
-    value: "8",
-    description: "YouTube, Instagram, TikTok, X, LinkedIn, Twitch, and more",
+    // RCCF-MKT-09 truth fix: the runtime detects exactly six named platforms
+    // (YouTube, Instagram, TikTok, X, LinkedIn, Twitch) plus any website URL —
+    // the previous "8" was a fabricated statistic.
+    value: "6+",
+    description: "YouTube, Instagram, TikTok, X, LinkedIn, Twitch, and any website URL",
   },
   {
     label: "Setup time",
@@ -41,11 +44,11 @@ export const FEATURES_HERO_DATA = {
 };
 
 export const ABOUT_HERO_DATA = {
-  title: "We believe every creator deserves a real business platform",
+  title: "We believe every creator and business deserves a real platform",
   subtitle:
-    "CreatorStore was founded to give creators the same powerful tools that enterprises have — personalized, automated, and affordable.",
+    "CreatorStore was founded to give creators, freelancers, and small businesses the same powerful tools that enterprises have — personalized, automated, and affordable.",
   mission:
-    "To democratize creator commerce by making enterprise-grade business infrastructure accessible to every creator, regardless of size or technical skill.",
+    "To democratize online business by making enterprise-grade infrastructure accessible to every creator, freelancer, and business, regardless of size or technical skill.",
   story: [
     "CreatorStore started with a simple observation: creators pour their hearts into content but have no easy way to turn that into a real business. Existing tools were either too complex (build a website from scratch), too limited (link-in-bio pages), or too expensive (enterprise platforms).",
     "We built CreatorStore to bridge that gap. Our platform analyzes your existing content — your videos, posts, style, and audience — and builds a complete business platform tailored to you. Not a template. Not a generic page. A real business, built from your content.",
@@ -70,7 +73,7 @@ export const ABOUT_HERO_DATA = {
     {
       title: "India-Ready, Global-Ready",
       description:
-        "Built for Indian creators with UPI, INR pricing, and local support — but designed for global scale.",
+        "Built for India with UPI and INR pricing — and designed for creators and businesses everywhere.",
     },
   ],
 };

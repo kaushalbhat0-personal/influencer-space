@@ -6,7 +6,7 @@
  */
 
 import type { BillingProvider, CheckoutParams, CheckoutResult } from "../../domain/types";
-import { razorpayPlanIdFor, isManualPlan, getCommercePlan } from "@/config/commerce/plans";
+import { razorpayPlanIdFor, isManualPlan, getCommercePlan, isOneTimePlan } from "@/config/commerce/plans";
 import crypto from "crypto";
 
 export class RazorpayProvider implements BillingProvider {
@@ -33,7 +33,12 @@ export class RazorpayProvider implements BillingProvider {
       // by the Pricing Center when the price is provisioned) wins; the registry
       // mapping is the fallback so existing flows never break. Manual plans
       // (enterprise) never create a public checkout.
-      const planId = params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
+      //
+      // RCCF-73: ONE-TIME plans (Partner Solo/Scale) NEVER take this branch —
+      // no recurring subscription contract may exist for them, even if a stale
+      // DB runtimeConfig still carries a legacy provider plan id. They fall
+      // through to a single Razorpay ORDER at the DB-authoritative price.
+      const planId = isOneTimePlan(params.planCode) ? null : params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
       if (planId && !isManualPlan(params.planCode)) {
         const subscription = await razorpay.subscriptions.create({
           plan_id: planId,
@@ -55,11 +60,12 @@ export class RazorpayProvider implements BillingProvider {
         };
       }
 
-      // Fallback: one-time order (free/manual-adjacent flows).
-      // RCCF-IMPLEMENTATION-72: the amount was hardcoded to 0 (Razorpay rejects
-      // ₹0 orders). RCCF-36: use the DB-authoritative price so a plan without a
-      // Razorpay subscription id still produces a valid payable order at the
-      // currently configured price.
+      // Fallback: one-time order (free/manual-adjacent flows AND RCCF-73
+      // one-time partner plan purchases). The amount was hardcoded to 0
+      // (Razorpay rejects ₹0 orders) before RCCF-IMPLEMENTATION-72; RCCF-36
+      // made it the DB-authoritative price so a plan without a Razorpay
+      // subscription id still produces a valid payable order at the currently
+      // configured price.
       const price = params.price ?? getCommercePlan(params.planCode)?.price ?? 0;
       const order = await razorpay.orders.create({
         amount: Math.round((price ?? 0) * 100),
@@ -94,6 +100,45 @@ export class RazorpayProvider implements BillingProvider {
     }
 
     return { success: true };
+  }
+
+  /**
+   * RCCF-73 — create a ONE-TIME order for additional partner client capacity.
+   * The amount is derived server-side from the canonical unit price × the
+   * requested quantity — never from client input. Order notes carry the
+   * purpose tag + agency identity (both server-derived) so the webhook can
+   * reconcile the capture without trusting any tenant signal from the wire.
+   * No capacity is granted here — only the payment capture (webhook) grants.
+   */
+  async createCapacityAddonOrder(input: { agencyId: string; quantity: number; unitPriceInr: number }): Promise<{ success: boolean; orderId?: string; amountPaise?: number; error?: string }> {
+    try {
+      if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
+        return { success: false, error: "Invalid quantity" };
+      }
+      const Razorpay = (await import("razorpay")).default;
+      const razorpay = new Razorpay({
+        key_id: this.keyId,
+        key_secret: this.keySecret,
+      });
+      const amountPaise = Math.round(input.unitPriceInr * input.quantity * 100);
+      const order = await razorpay.orders.create({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: `cap_${Date.now()}`,
+        notes: {
+          purpose: "partner_capacity_addon",
+          agencyId: input.agencyId,
+          quantity: String(input.quantity),
+          unitPriceInr: String(input.unitPriceInr),
+        },
+      });
+      return { success: true, orderId: order.id, amountPaise };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Capacity order creation failed",
+      };
+    }
   }
 
   verifyWebhookSignature(rawBody: string, signature: string): boolean {

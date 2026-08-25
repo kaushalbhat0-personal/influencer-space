@@ -39,10 +39,15 @@ describe("MKT-07 — authoritative pricing truth", () => {
     expect(getCommercePlan("partner_scale")?.price).toBe(14999);
   });
 
-  it("keeps annualPrice = 10 × monthly across the public paid catalog", () => {
-    for (const code of ["creator_grow", "creator_scale", "partner_solo", "partner_scale"]) {
+  // MODERNIZED in RCCF-73: annual billing exists ONLY for recurring Creator
+  // plans. Partner Solo/Scale are ONE-TIME purchases — no annual variant.
+  it("keeps annualPrice = 10 × monthly across the recurring (Creator) catalog; partners have none", () => {
+    for (const code of ["creator_grow", "creator_scale"]) {
       const p = getCommercePlan(code)!;
       expect(p.annualPrice, code).toBe(p.price! * 10);
+    }
+    for (const code of ["partner_solo", "partner_scale"]) {
+      expect(getCommercePlan(code)?.annualPrice ?? null, `${code} is one-time`).toBeNull();
     }
   });
 
@@ -279,14 +284,17 @@ describe("MKT-07 — super-admin authority and client injection resistance", () 
 
 describe("MKT-07 — BillingPlan/provider contract alignment", () => {
   it("declares provider contracts exactly where approved (registry layer)", () => {
+    // MODERNIZED in RCCF-73: partner plans carry NO provider subscription id —
+    // they are one-time orders; the legacy "plan_solo"/"plan_scale" placeholders
+    // were retired so the subscription branch can never be selected for them.
     const expected: Record<string, string | null> = {
       creator_launch: null,
       creator_grow: "plan_TLTGQBU1EXkseF", // pre-existing valid Growth contract
       creator_scale: null, // BY DESIGN: Scale's LIVE contract is DB-authoritative
       creator_enterprise: null,
       partner_free: null,
-      partner_solo: "plan_solo",
-      partner_scale: "plan_scale",
+      partner_solo: null,
+      partner_scale: null,
       partner_enterprise: null,
     };
     for (const p of COMMERCE_PLANS) {

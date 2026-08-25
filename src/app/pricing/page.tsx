@@ -3,6 +3,8 @@ import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Pricing } from "@/components/marketing/Pricing";
 import { Footer } from "@/components/marketing/Footer";
 import { getPublicPricingData, getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
+import { isOneTimePlan } from "@/config/commerce/plans";
+import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +14,13 @@ export const dynamic = "force-dynamic";
  * a creator price that had drifted from the live runtime value).
  * RCCF-MKT-05: the partner "from" price derives from the runtime too — a
  * hardcoded partner figure would drift when Super Admin edits Partner pricing.
+ * RCCF-MKT-08-R1: Creator plans are described as monthly subscriptions;
+ * Partner Solo/Scale are ONE-TIME purchases (RCCF-73) — never "/month".
  * Title is "Pricing" only — the root template appends the brand.
+ * RCCF-MKT-10 P3-D: the runtime-derived figures render through the canonical
+ * formatCurrency helper (Intl INR grouping) so a four-digit price reads
+ * grouped in metadata, never as an ungrouped raw figure. The VALUE still
+ * comes only from the runtime catalog — nothing is hardcoded.
  */
 function paidFromPrice(plans: Array<{ price: number | null }>): number | null {
   const paid = plans.map((p) => p.price).filter((price): price is number => price != null && price > 0);
@@ -23,8 +31,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const data = await getPublicPricingData();
   const minCreator = paidFromPrice(data.creator);
   const minPartner = paidFromPrice(data.partner);
-  const fromCreator = minCreator != null ? ` Paid plans from ₹${minCreator}/month.` : "";
-  const fromPartner = minPartner != null ? ` Partner plans from ₹${minPartner}/month.` : "";
+  const fromCreator = minCreator != null ? ` Paid plans from ${formatCurrency(minCreator)}/month.` : "";
+  const fromPartner = minPartner != null ? ` Partner plans from ${formatCurrency(minPartner)} one-time.` : "";
   const description = `Transparent pricing for creators and partners. Creator plans from Free.${fromCreator}${fromPartner}`;
   return {
     title: "Pricing",
@@ -40,6 +48,9 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * RCCF-IMPLEMENTATION-71: JSON-LD derives from the RUNTIME plans (BillingPlan +
  * registry fallback). Hidden/enterprise tiers are excluded. Never hardcoded.
+ * RCCF-MKT-08-R1: one-time Partner plans (RCCF-73) must not communicate
+ * recurring subscription semantics — the offer category states a one-time
+ * purchase, while Creator offers keep their subscription semantics.
  */
 async function PricingSchemaJsonLd() {
   const [creator, partner] = await Promise.all([
@@ -54,7 +65,11 @@ async function PricingSchemaJsonLd() {
       description: p.marketingDescription,
       price: String(p.price),
       priceCurrency: p.currency,
-      category: p.family === "creator" ? "Creator subscription" : "Partner subscription",
+      category: isOneTimePlan(p.code)
+        ? "Partner plan (one-time purchase)"
+        : p.family === "creator"
+          ? "Creator subscription"
+          : "Partner subscription",
     }));
 
   return (

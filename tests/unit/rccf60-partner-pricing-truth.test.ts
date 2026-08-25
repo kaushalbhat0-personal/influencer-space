@@ -98,13 +98,19 @@ describe("RCCF-60.2 — no unsupported Partner claims", () => {
     }
   });
 
-  it("no plan-specific commission percentage claim (client-count loyalty only)", () => {
+  it("no plan-specific commission percentage claim (eligibility only — RCCF-MKT-08-R1)", () => {
     for (const p of PARTNER) {
       const h = highlights(p.code);
       expect(h).not.toMatch(/higher commission rates|commission rates/);
       expect(h).not.toMatch(/\d+% commission/);
     }
-    expect(highlights("partner_scale")).toContain("commission that grows with your client count");
+    // MODERNIZED in RCCF-MKT-08-R1: the old loyalty-escalation guarantee
+    // ("commission that grows with your client count") is replaced by the
+    // RCCF-73 eligibility wording — paid Partners are ELIGIBLE, the rate
+    // lives in the runtime configuration hierarchy, never marketing.
+    const scaleH = highlights("partner_scale");
+    expect(scaleH).toContain("recurring commission from eligible active clients");
+    expect(scaleH).not.toContain("commission that grows");
   });
 
   it("no client-facing portal / Partner builder / multi-website claims", () => {

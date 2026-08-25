@@ -208,13 +208,18 @@ export async function offboardAgencyClient(relationshipId: string): Promise<{ su
  * server-side from the authenticated session; the target plan is resolved against
  * the canonical BillingPlan (never client-supplied price/limits). Reuses the
  * canonical createCheckout → Razorpay → webhook → BillingSubscription path.
+ *
+ * RCCF-73: Partner Solo/Scale are ONE-TIME purchases — checkout returns an
+ * ORDER (order_id) at the DB-authoritative price, never a subscription. The
+ * authoritative amount is returned so checkout.js can render the exact
+ * server-derived figure.
  */
-export async function changeAgencyPlanAction(planCode: string): Promise<{ success: boolean; checkout?: { orderId?: string; subscriptionId?: string; keyId?: string }; error?: string }> {
+export async function changeAgencyPlanAction(planCode: string): Promise<{ success: boolean; checkout?: { orderId?: string; subscriptionId?: string; keyId?: string; amountPaise?: number; currency?: string }; error?: string }> {
   const ctx = await requireAgencyMember();
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Only agency admins can change the plan" };
 
-  const { getCommercePlan } = await import("@/config/commerce/plans");
+  const { getCommercePlan, isOneTimePlan } = await import("@/config/commerce/plans");
   const target = getCommercePlan(planCode);
   if (!target || target.family !== "partner") return { success: false, error: "Invalid partner plan" };
 
@@ -225,55 +230,89 @@ export async function changeAgencyPlanAction(planCode: string): Promise<{ succes
   const checkout = await billingService.changePlan(workspace.id, planCode);
   if (!checkout.success) return { success: false, error: checkout.error ?? "Checkout failed" };
 
+  // Server-derived display amount for one-time orders (never client input).
+  let amountPaise: number | undefined;
+  let currency: string | undefined;
+  if (isOneTimePlan(planCode)) {
+    const { getRuntimePlan } = await import("@/modules/pricing/application/runtime");
+    const runtime = await getRuntimePlan(planCode).catch(() => null);
+    const price = runtime?.price ?? target.price ?? 0;
+    if (!(price > 0)) return { success: false, error: "Plan price is not configured" };
+    amountPaise = Math.round(price * 100);
+    currency = runtime?.currency ?? target.currency;
+  }
+
   return {
     success: true,
     checkout: {
       orderId: checkout.orderId,
       subscriptionId: checkout.subscriptionId,
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+      amountPaise,
+      currency,
     },
   };
 }
 
 /**
- * RCCF-61 — purchase additional managed client/website capacity.
- * Server-derived agency; quantity × canonical unit price (₹1,499). Idempotent
- * via (agencyId, idempotencyKey): a retried request returns the existing add-on
- * instead of creating a duplicate paid entitlement. Admin-only.
+ * RCCF-73 — purchase additional managed client/website capacity.
+ * PAYMENT-GATED: this action creates a Razorpay ONE-TIME ORDER at the
+ * server-derived amount (canonical unit price × quantity) tagged with the
+ * session-derived agency identity. NO capacity is granted here — capacity
+ * becomes ACTIVE only after the provider capture is verified by the webhook
+ * (identity + amount + idempotency in partner-capacity-purchase.ts).
+ *
+ * Repeated requests simply create additional unpaid orders; they can never
+ * inflate capacity. Admin-only; agency/price/quantity are never client-trusted
+ * (quantity is range-checked, then encoded into the order and re-verified at
+ * capture time).
  */
-export async function addAgencyCapacityAction(input: {
+export async function createAdditionalClientCheckoutAction(input: {
   quantity: number;
-  idempotencyKey: string;
-}): Promise<{ success: boolean; addonId?: string; quantity?: number; unitPriceInr?: number; error?: string }> {
+}): Promise<{ success: boolean; orderId?: string; keyId?: string; amountPaise?: number; currency?: string; unitPriceInr?: number; error?: string }> {
   const ctx = await requireAgencyActive();
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Only agency admins can add capacity" };
 
   const qty = Number(input.quantity);
-  if (!Number.isInteger(qty) || qty <= 0 || qty > 1000) return { success: false, error: "Quantity must be a positive integer" };
-  if (!input.idempotencyKey || input.idempotencyKey.length > 128) return { success: false, error: "A valid idempotency key is required" };
+  if (!Number.isInteger(qty) || qty <= 0 || qty > 100) return { success: false, error: "Quantity must be a positive integer (max 100 per order)" };
 
   const { PARTNER_ADDON_UNIT_PRICE_INR } = await import("@/config/commerce/agency-addons");
+
   try {
-    // Idempotent: the unique (agencyId, idempotencyKey) constraint makes a
-    // retried request return the already-created entitlement.
-    const addon = await prisma.agencyCapacityAddon.upsert({
-      where: { agencyId_idempotencyKey: { agencyId: ctx.agencyId, idempotencyKey: input.idempotencyKey } },
-      update: {},
-      create: {
-        agencyId: ctx.agencyId,
-        quantity: qty,
-        unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
-        status: "ACTIVE",
-        idempotencyKey: input.idempotencyKey,
-      },
-      select: { id: true, quantity: true, unitPriceInr: true },
+    const { razorpayProvider } = await import("@/modules/billing/infrastructure/providers/razorpay");
+    const order = await razorpayProvider.createCapacityAddonOrder({
+      agencyId: ctx.agencyId,
+      quantity: qty,
+      unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
     });
-    await logAction("system", "partner:capacity-addon-created", { agencyId: ctx.agencyId, quantity: qty, unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR }).catch(() => {});
-    revalidatePath("/agency/billing");
-    return { success: true, addonId: addon.id, quantity: addon.quantity, unitPriceInr: addon.unitPriceInr };
+    if (!order.success || !order.orderId) {
+      return { success: false, error: order.error ?? "Failed to create capacity checkout" };
+    }
+
+    // Durable checkout trail (no entitlement semantics — audit only).
+    await prisma.billingEvent.create({
+      data: {
+        workspaceId: null,
+        accountId: ctx.agencyId,
+        type: "CAPACITY_CHECKOUT_STARTED",
+        idempotencyKey: `capacity_checkout_${order.orderId}`,
+        payload: { purpose: "partner_capacity_addon", orderId: order.orderId, quantity: qty, unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR },
+      },
+    }).catch(() => {});
+
+    await logAction("system", "partner:capacity-checkout-created", { agencyId: ctx.agencyId, quantity: qty, unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR, orderId: order.orderId }).catch(() => {});
+
+    return {
+      success: true,
+      orderId: order.orderId,
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+      amountPaise: order.amountPaise,
+      currency: "INR",
+      unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+    };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Failed to add capacity" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to start capacity checkout" };
   }
 }
 

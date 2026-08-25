@@ -439,13 +439,17 @@ describe("RCCF-72.18D.6.2 — security & authorization", () => {
 // ── E. Performance shape ────────────────────────────────────────────────────
 
 describe("RCCF-72.18D.6.2 — measurement", () => {
-  it("one verification = exactly ONE provider call + 1 read + 1 guarded write", async () => {
+  it("one verification = exactly ONE provider call + reads bounded to account+readiness + 1 guarded write", async () => {
     const row = pushAccount({ verificationStatus: "pending" });
 
     await verifyPaymentAccount(row.tenantId as string, "creator");
 
     expect(h.rzpOrdersAll).toHaveBeenCalledTimes(1);
-    expect(h.mockAccountFindUnique).toHaveBeenCalledTimes(1);
+    // RCCF-72.18D.7.5: a successful verification now ALSO returns the canonical
+    // readiness snapshot (computePaymentReadiness re-reads the row — still one
+    // provider call, still exactly ONE guarded write; the extra read is an
+    // indexed single-row fetch, request-cached, never a provider call).
+    expect(h.mockAccountFindUnique).toHaveBeenCalledTimes(2);
     expect(h.mockAccountUpdateMany).toHaveBeenCalledTimes(1);
     expect(h.mockOrderUpdate).not.toHaveBeenCalled(); // historical orders untouched
   });

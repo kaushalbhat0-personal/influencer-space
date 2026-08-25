@@ -42,12 +42,20 @@ export function getTrialFraming(plan: ResolvedPlan): { title: string; subtitle: 
   };
 }
 
-/** Recurring-revenue framing for partner plans (Phase 13). */
+/**
+ * "How Partner plans work" steps (RCCF-MKT-08-R1) — the RCCF-73 commercial
+ * model, stated without recurring-Partner semantics:
+ *   1–4 below render as numbered steps; the add-on step renders from the
+ *   canonical PARTNER_ADDON_UNIT_PRICE_INR constant in the component.
+ * Commission is described as ELIGIBILITY for paid Partners — never a fixed
+ * percentage or a guaranteed amount (the rate lives in the runtime
+ * configuration hierarchy, not marketing).
+ */
 export const PARTNER_VALUE_POINTS = [
-  "Earn recurring commission as your clients grow",
-  "Manage every client website from one dashboard",
-  "Your clients pay CreatorStore directly — you focus on delivery",
-  "Scale with white-label branding and commission that grows with your client count",
+  "Choose your Partner plan — start free with Partner Launch or pick a paid plan for more client capacity and advanced agency capabilities.",
+  "Paid plans are a one-time purchase. Partner Solo and Partner Scale are paid once — there is no monthly Partner subscription.",
+  "Your clients have their own Creator plans and pay CreatorStore directly (partner-onboarded creators use Creator Growth or higher).",
+  "Earn recurring commission from eligible active clients as a paid Partner — your commission rate is determined by your Partner configuration and eligible client activity.",
 ];
 
 export function getComparisonFeatures(): Array<{ key: string; description: string; valueType: string }> {

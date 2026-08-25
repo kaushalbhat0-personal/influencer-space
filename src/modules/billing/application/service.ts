@@ -1,6 +1,7 @@
 import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
 import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
+import { isOneTimePlan } from "@/config/commerce/plans";
 import { assertEligiblePlan } from "./plan-restriction";
 import { countStorageUsage, resolveStorageCapability, BYTES_PER_MB } from "./storage.enforcement";
 import { validateTransition } from "../domain/lifecycle";
@@ -149,6 +150,31 @@ export class BillingService {
         { eventName, planCode: plan.code, providerReference, reason: "zero-or-missing-amount" },
       ).catch(() => {});
       return { handled: true, status: existing?.status ?? null };
+    }
+
+    // RCCF-73 — ONE-TIME price integrity. A paid transition for a one-time
+    // plan (Partner Solo/Scale) must carry EXACTLY the DB-authoritative price.
+    // A ₹4,998 or ₹5,000 capture NEVER activates and NEVER mints an invoice;
+    // the event is recorded (idempotent replay) and the subscription state is
+    // left untouched. Subscription-form plans keep their existing provider-
+    // contract semantics (Creator behavior unchanged).
+    if (isPaidTransition && isOneTimePlan(plan.code)) {
+      const expectedAmount = Math.round((plan.price ?? 0) * 100) / 100;
+      if (validPaidAmount === null || expectedAmount <= 0 || validPaidAmount !== expectedAmount) {
+        await billingRepository.createEvent({
+          workspaceId,
+          accountId: workspaceId,
+          type: mapping.eventType,
+          idempotencyKey,
+          payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: existing?.status, note: "one_time_amount_mismatch:no_activation", capturedAmount: validPaidAmount, expectedAmount },
+        });
+        await logAction(
+          (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
+          "billing:payment-ignored",
+          { eventName, planCode: plan.code, providerReference, reason: "one-time-amount-mismatch", capturedAmount: validPaidAmount, expectedAmount },
+        ).catch(() => {});
+        return { handled: true, status: existing?.status ?? null };
+      }
     }
 
     const sub = await billingRepository.upsertSubscription(workspaceId, {
@@ -614,6 +640,14 @@ export class BillingService {
       if (!canChange && current.status !== "CANCELLED") {
         return { success: false, error: `Cannot change plan from status ${current.status}` };
       }
+    }
+
+    // RCCF-73 — one-time lifecycle: ACTIVE → NO RENEWAL. Re-checking out the
+    // SAME one-time plan while it is already ACTIVE is a no-op error, not a
+    // second charge. Upgrades (Solo → Scale) remain allowed and are paid
+    // through their own one-time checkout.
+    if (current?.plan?.code === planCode && current.status === "ACTIVE" && isOneTimePlan(planCode)) {
+      return { success: false, error: "This plan is already active — a one-time purchase does not renew." };
     }
 
     return this.createCheckout(workspaceId, planCode, email);

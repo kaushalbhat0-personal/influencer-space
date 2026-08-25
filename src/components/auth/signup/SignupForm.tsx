@@ -291,8 +291,11 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               <h2 className="text-xl font-semibold text-white">
                 {state.persona === "creator" ? "Let's build your website." : "Let's onboard your first creator."}
               </h2>
+              {/* RCCF-MKT-11: the plan name is derived from the selected plan so a
+                  Partner on Partner Launch is never told they are on "the Creator
+                  Launch plan" (wrong-persona claim on the conversion journey). */}
               <p className="text-sm text-zinc-500 mt-2">
-                Your account is ready. {!isEnterprise && (selectedPlanDef?.price === 0) ? "You're on the Creator Launch plan." : ""}
+                Your account is ready. {!isEnterprise && selectedPlanDef && selectedPlanDef.price === 0 ? `You're on the ${selectedPlanDef.name} plan.` : ""}
               </p>
             </div>
             <button

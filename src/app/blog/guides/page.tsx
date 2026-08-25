@@ -3,8 +3,12 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Guides",
+  // RCCF-MKT-10 P3-A: broadened audience framing (see blog index metadata).
   description:
-    "Step-by-step guides for Indian creators to set up their storefront, connect social media, and start selling.",
+    "Step-by-step guides for creators, freelancers, and businesses — set up your website, connect social media, and start selling.",
+  // RCCF-MKT-11: explicit canonical (page-level metadata would otherwise
+  // inherit nothing — the layout must not pin /blog for this route).
+  alternates: { canonical: "/blog/guides" },
 };
 
 const guides = [

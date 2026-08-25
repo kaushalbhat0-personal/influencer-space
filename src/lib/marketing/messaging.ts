@@ -5,8 +5,11 @@ export const CONTACT_EMAIL = "info.micronest@gmail.com";
 export const BRAND = {
   name: "CreatorStore",
   tagline: "Turn your content into a business.",
+  // RCCF-MKT-09: positioning breadth — the platform serves creators, freelancers,
+  // coaches, artists, brands, small businesses and agencies. "Presence" keeps the
+  // "Your presence. Your business." story while dropping the single-persona framing.
   shortDescription:
-    "Turn your social profile into a creator business website.",
+    "Turn your presence into a website and business you own.",
   description:
     "CreatorStore turns your social profile into a complete creator business website — storefront, products, orders, analytics, SEO, and a visual drag-and-drop builder. Paste your YouTube, Instagram, or TikTok profile and get a storefront that matches your content and brand.",
   foundingYear: 2024,

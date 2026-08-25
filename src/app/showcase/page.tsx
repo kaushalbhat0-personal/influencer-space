@@ -35,23 +35,29 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
           <p className="mt-3 text-zinc-500">Explore websites built with CreatorStore. Every site is a real, published creator storefront.</p>
         </div>
 
-        {/* Search + Categories */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-10 justify-center">
-          <form className="flex gap-2 max-w-md w-full">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-              <input type="text" name="q" defaultValue={q} placeholder="Search creators..." className="admin-input pl-10 py-2 text-sm" />
+        {/* Search + Categories. RCCF-MKT-10 P3-C: filter chrome is hidden when
+            there are no published sites — pills would only lead to empty
+            results, and the honest empty state carries the page instead. */}
+        {sites.length > 0 && (
+          <>
+            <div className="flex flex-col sm:flex-row gap-4 mb-10 justify-center">
+              <form className="flex gap-2 max-w-md w-full">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <input type="text" name="q" defaultValue={q} placeholder="Search creators..." className="admin-input pl-10 py-2 text-sm" />
+                </div>
+                <button type="submit" className="btn-primary px-4 py-2 text-sm">Search</button>
+              </form>
             </div>
-            <button type="submit" className="btn-primary px-4 py-2 text-sm">Search</button>
-          </form>
-        </div>
 
-        <div className="flex flex-wrap gap-2 justify-center mb-10">
-          <Link href="/showcase" className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${!category ? "bg-indigo-500 text-white" : "bg-white/[0.04] text-zinc-400 hover:text-zinc-200"}`}>All</Link>
-          {categories.map((c) => (
-            <Link key={c} href={`/showcase?category=${encodeURIComponent(c)}`} className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${category === c ? "bg-indigo-500 text-white" : "bg-white/[0.04] text-zinc-400 hover:text-zinc-200"}`}>{c}</Link>
-          ))}
-        </div>
+            <div className="flex flex-wrap gap-2 justify-center mb-10">
+              <Link href="/showcase" className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${!category ? "bg-indigo-500 text-white" : "bg-white/[0.04] text-zinc-400 hover:text-zinc-200"}`}>All</Link>
+              {categories.map((c) => (
+                <Link key={c} href={`/showcase?category=${encodeURIComponent(c)}`} className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${category === c ? "bg-indigo-500 text-white" : "bg-white/[0.04] text-zinc-400 hover:text-zinc-200"}`}>{c}</Link>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Featured */}
         {featured.length > 0 && !category && !q && (
@@ -65,23 +71,28 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
           </div>
         )}
 
-        {/* All Sites */}
+        {/* All Sites. RCCF-MKT-10 P3-C: with no published sites the page shows
+            an honest empty state — never fabricated example storefronts. */}
         <div>
           {sites.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {sites.map((site) => <ShowcaseCard key={site.id} site={site} />)}
             </div>
           ) : (
-            <div className="admin-card p-12 text-center">
+            <div className="admin-card p-12 text-center" data-testid="showcase-empty">
               <Search className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">No sites match your filter. Try a different category or search.</p>
+              <p className="text-sm font-medium text-zinc-300">No published sites yet.</p>
+              <p className="mt-2 text-sm text-zinc-500">
+                Every site shown here is a real, published CreatorStore website —
+                yours could be the first.
+              </p>
             </div>
           )}
         </div>
 
         {/* CTA */}
         <div className="mt-16 text-center">
-          <Link href="/signup" className="btn-primary px-10 py-3.5 text-sm inline-flex items-center gap-2">
+          <Link href="/signup?persona=creator" className="btn-primary px-10 py-3.5 text-sm inline-flex items-center gap-2">
             Build Your Website <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

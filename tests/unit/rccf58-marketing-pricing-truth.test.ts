@@ -86,7 +86,11 @@ describe("RCCF-58 — marketing copy truth", () => {
     expect(partnerScale.marketingHighlights).not.toContain("Higher commission rates");
     expect(partnerScale.marketingHighlights).not.toContain("Automation");
     expect(partnerScale.marketingHighlights).not.toContain("Bulk operations");
-    expect(partnerScale.marketingHighlights).toContain("Commission that grows with your client count");
+    // MODERNIZED in RCCF-MKT-08-R1: the loyalty-escalation guarantee was
+    // replaced by RCCF-73 eligibility wording (paid Partners only; runtime-
+    // resolved rate — never a marketing guarantee tied to client count).
+    expect(partnerScale.marketingHighlights).toContain("Recurring commission from eligible active clients");
+    expect(partnerScale.marketingHighlights).not.toContain("Commission that grows with your client count");
 
     const creatorScale = COMMERCE_PLANS.find((p) => p.code === "creator_scale")!;
     expect(creatorScale.marketingHighlights).not.toContain("Team members");
