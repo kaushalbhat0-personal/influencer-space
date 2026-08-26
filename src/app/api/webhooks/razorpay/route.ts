@@ -245,7 +245,16 @@ export async function POST(req: Request) {
     }
 
     // â”€â”€ payment.captured (legacy + plan activation + product orders) â”€â”€â”€â”€â”€
-    if (event === "payment.captured") {
+    // RCCF-COM-01: Razorpay emits a DEDICATED `payment_link.paid` event when a
+    // Payment Link is paid (payload carries `payment_link.entity` + the same
+    // `payment.entity` as payment.captured). Creator-direct checkout is
+    // Payment-Link-based, so an account delivering only link events previously
+    // fell through this branch untouched and its ProductOrder stayed PENDING
+    // forever while Razorpay already showed Paid. Accepting the event here
+    // reuses the unchanged legacy-notes path and DIRECT_CREATOR reconciliation;
+    // idempotency keys on the payment id collapse cross-event duplicates into
+    // ONE financial occurrence.
+    if (event === "payment.captured" || event === "payment_link.paid") {
       const planCode: string | undefined = notes.planCode || undefined;
       // RCCF-72.18D.5.5: payload is now strictly typed — provider fields are
       // read through explicit string casts instead of implicit any.
