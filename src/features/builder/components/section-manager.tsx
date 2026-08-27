@@ -109,6 +109,7 @@ function SectionCard({
 
   return (
       <div
+        role="listitem"
         onClick={() => onSelect(section.id)}
         data-testid={`builder-section-${tid}`}
         className={cn(
@@ -118,15 +119,27 @@ function SectionCard({
             : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
         )}
       >
-      <div className="flex items-center gap-0.5 shrink-0 cursor-grab active:cursor-grabbing text-zinc-700">
+      <div className="flex items-center gap-0.5 shrink-0 cursor-grab active:cursor-grabbing text-zinc-700" aria-hidden="true">
         <GripVertical className="h-3 w-3" />
       </div>
 
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium truncate">{section.name}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(section.id);
+            }}
+            aria-pressed={isSelected}
+            aria-label={`Select ${section.name} section`}
+            data-testid={`builder-section-select-${tid}`}
+            className="text-left text-[11px] font-medium truncate rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-0"
+          >
+            {section.name}
+          </button>
           {/* RCCF-IMPLEMENTATION-74: canonical item count (aggregate-driven).
               Only repeatable sections with count > 0 show a badge — never "(0)",
               never a static section, never block/slot count. */}
@@ -284,7 +297,7 @@ export function SectionManager({
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {sections.length > 0 ? (
-        <div className="flex-1 overflow-y-auto space-y-0.5 p-1.5">
+        <div className="flex-1 overflow-y-auto space-y-0.5 p-1.5" role="list" aria-label="Sections">
           {sections.map((section, index) => (
             <SectionCard
               key={section.id}

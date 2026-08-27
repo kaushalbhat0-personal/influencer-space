@@ -125,8 +125,16 @@ export function MediaPickerDialog({
           </label>
         </div>
 
-        {uploadError && <p className="px-5 pt-2 text-xs text-red-400">{uploadError}</p>}
-        {loadError && <p className="px-5 pt-2 text-xs text-red-400">{loadError}</p>}
+        {uploadError && (
+          <p className="px-5 pt-2 text-xs text-red-400" role="alert">
+            {uploadError}
+          </p>
+        )}
+        {loadError && (
+          <p className="px-5 pt-2 text-xs text-red-400" role="alert">
+            {loadError}
+          </p>
+        )}
 
         <div className="grid flex-1 grid-cols-3 gap-3 overflow-y-auto p-5 sm:grid-cols-4">
           {loading && Array.from({ length: 8 }).map((_, i) => (

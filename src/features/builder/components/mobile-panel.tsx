@@ -27,9 +27,10 @@ export function BuilderMobilePanel({
   children: ReactNode;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
 
-  // Escape closes + focus management + body scroll lock.
+  // Escape closes + focus management + body scroll lock + Tab trap (reuse AdminSidebar pattern).
   useEffect(() => {
     if (!open) return;
 
@@ -42,7 +43,29 @@ export function BuilderMobilePanel({
     }, 50);
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        const sheet = sheetRef.current;
+        if (!sheet) return;
+        const focusables = Array.from(
+          sheet.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+        if (focusables.length === 0) return;
+        const first = focusables[0] as HTMLElement;
+        const last = focusables[focusables.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     const prevOverflow = document.body.style.overflow;
@@ -83,19 +106,21 @@ export function BuilderMobilePanel({
             aria-label={title}
             className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-hidden rounded-t-2xl border-t border-white/10 bg-zinc-950 shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <h2 className="text-sm font-semibold text-white">{title}</h2>
-              <button
-                ref={closeRef}
-                onClick={onClose}
-                aria-label={`Close ${title}`}
-                className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
-              {children}
+            <div ref={sheetRef} className="flex flex-col h-full">
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                <h2 className="text-sm font-semibold text-white">{title}</h2>
+                <button
+                  ref={closeRef}
+                  onClick={onClose}
+                  aria-label={`Close ${title}`}
+                  className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
+                {children}
+              </div>
             </div>
           </MotionDiv>
         </div>

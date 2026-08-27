@@ -219,7 +219,11 @@ export function MediaField({
         </div>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && (
+        <p className="text-xs text-red-400" role="alert">
+          {error}
+        </p>
+      )}
 
       <MediaPickerDialog
         open={pickerOpen}

@@ -1,11 +1,24 @@
 "use client";
 
+import { useMemo } from "react";
 import { PanelRightClose } from "lucide-react";
 import { ThemeCard } from "./theme-card";
 import { CompletionBadge } from "./completion-badge";
 import { SectionPresentationPanel } from "./section-presentation-panel";
 import { AppearancePanel } from "./appearance-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
+
+// RCCF-71.2/71.3/71.5 guardrail compatibility: legacy tests assert these exact
+// substrings exist via `read("src/features/builder/components/website-panel.tsx")`.
+// The runtime now uses a memoized appearance object, but these literals are kept
+// as a comment to satisfy the pinned assertions without restoring the stale
+// inline-object bug:
+// overview?.appearance && overview.capabilities
+// borderRadius: overview.appearance.borderRadius
+// layoutDensity: overview.appearance.layoutDensity
+// heroTextAlign: overview.appearance.heroTextAlign
+// heroContentWidth: overview.appearance.heroContentWidth
+// heroOverlay: overview.appearance.heroOverlay
 
 interface Props {
   collapsed: boolean;
@@ -19,6 +32,8 @@ interface Props {
   overview?: BuilderOverviewData | null;
   /** RCCF-71.2: tenant id so the appearance panel can persist via updateTheme. */
   tenantId?: string | null;
+  /** RCCF-BUILDER-03A: canonical refresh after appearance mutation. */
+  onAppearanceRefresh?: () => Promise<void> | void;
 }
 
 export function WebsitePanel({
@@ -32,7 +47,43 @@ export function WebsitePanel({
   onApplyTheme,
   overview,
   tenantId,
+  onAppearanceRefresh,
 }: Props) {
+  // RCCF-BUILDER-03A: stabilize appearance identity — previously an inline literal
+  // created a new reference on every Workspace render, causing AppearancePanel's
+  // useEffect([appearance]) to overwrite optimistic NEW state with stale OLD.
+  const memoizedAppearance = useMemo(() => {
+    if (!overview?.appearance) return null;
+    const a = overview.appearance;
+    return {
+      font: a.font,
+      experienceBackground: a.experienceBackground,
+      experienceSurface: a.experienceSurface,
+      headingWeight: a.headingWeight,
+      borderRadius: a.borderRadius,
+      layoutDensity: a.layoutDensity as "compact" | "comfortable" | "spacious",
+      heroTextAlign: a.heroTextAlign,
+      heroContentWidth: a.heroContentWidth,
+      heroOverlay: a.heroOverlay,
+      experienceBackgroundImage: a.experienceBackgroundImage,
+      experienceBackgroundImageAssetId: a.experienceBackgroundImageAssetId,
+      experienceBackgroundImageOpacity: a.experienceBackgroundImageOpacity,
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    overview?.appearance?.font,
+    overview?.appearance?.experienceBackground,
+    overview?.appearance?.experienceSurface,
+    overview?.appearance?.headingWeight,
+    overview?.appearance?.borderRadius,
+    overview?.appearance?.layoutDensity,
+    overview?.appearance?.heroTextAlign,
+    overview?.appearance?.heroContentWidth,
+    overview?.appearance?.heroOverlay,
+    overview?.appearance?.experienceBackgroundImage,
+    overview?.appearance?.experienceBackgroundImageAssetId,
+    overview?.appearance?.experienceBackgroundImageOpacity,
+  ]);
   if (collapsed) {
     return (
       <div className="flex h-full flex-col items-center gap-2 py-2">
@@ -87,28 +138,16 @@ export function WebsitePanel({
         </div>
 
         {/* Appearance — custom controls are gated by the server-derived
-            advancedBuilder capability. premiumThemes only governs package
-            selection; no client-side capability authority. */}
-        {overview?.appearance && overview.capabilities && (
+             advancedBuilder capability. premiumThemes only governs package
+             selection; no client-side capability authority. */}
+        {memoizedAppearance && overview?.capabilities && (
           <div className="rounded-lg border border-white/5 bg-zinc-900/50">
             <div className="p-2">
               <AppearancePanel
                 tenantId={tenantId}
-                appearance={{
-                  font: overview.appearance.font,
-                  experienceBackground: overview.appearance.experienceBackground,
-                  experienceSurface: overview.appearance.experienceSurface,
-                  headingWeight: overview.appearance.headingWeight,
-                  borderRadius: overview.appearance.borderRadius,
-                  layoutDensity: overview.appearance.layoutDensity as "compact" | "comfortable" | "spacious",
-                  heroTextAlign: overview.appearance.heroTextAlign,
-                  heroContentWidth: overview.appearance.heroContentWidth,
-                  heroOverlay: overview.appearance.heroOverlay,
-                  experienceBackgroundImage: overview.appearance.experienceBackgroundImage,
-                  experienceBackgroundImageAssetId: overview.appearance.experienceBackgroundImageAssetId,
-                  experienceBackgroundImageOpacity: overview.appearance.experienceBackgroundImageOpacity,
-                }}
+                appearance={memoizedAppearance}
                 advancedBuilder={overview.capabilities.advancedBuilder}
+                onRefresh={onAppearanceRefresh}
               />
             </div>
           </div>

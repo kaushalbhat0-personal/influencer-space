@@ -14,6 +14,7 @@ interface Props {
   onApplyTheme: (themeId: string) => void;
   overview?: BuilderOverviewData | null;
   tenantId?: string | null;
+  onAppearanceRefresh?: () => Promise<void> | void;
 }
 
 export function BuilderProperties(props: Props) {

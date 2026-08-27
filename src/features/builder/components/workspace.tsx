@@ -76,6 +76,19 @@ export function BuilderWorkspace() {
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
   const [publishing, setPublishing] = useState(false);
 
+  // RCCF-BUILDER-03A: canonical reconciliation after appearance mutation.
+  // The overview is the authority for `appearance`; after a successful
+  // updateTheme we re-read it so the panel's memoized prop heals to NEW.
+  // No polling, no N+1 — only one fetch per successful mutation.
+  const refreshOverview = useCallback(async () => {
+    try {
+      const r = await getBuilderOverview();
+      if (r.success && r.data) setOverviewData(r.data);
+    } catch {
+      // best-effort — preview already reflects NEW via appearance:changed
+    }
+  }, []);
+
   useEffect(() => {
     loadBuilderPages()
       .then((res) => {
@@ -354,6 +367,7 @@ export function BuilderWorkspace() {
             onApplyTheme={handleApplyTheme}
             overview={overviewData}
             tenantId={overviewData?.tenant.id ?? null}
+            onAppearanceRefresh={refreshOverview}
           />
         </ResizablePanel>
       </div>
@@ -410,6 +424,7 @@ export function BuilderWorkspace() {
           onApplyTheme={handleApplyTheme}
           overview={overviewData}
           tenantId={overviewData?.tenant.id ?? null}
+          onAppearanceRefresh={refreshOverview}
         />
       </BuilderMobilePanel>
 

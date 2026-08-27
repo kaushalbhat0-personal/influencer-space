@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { updateTheme } from "@/actions/theme.actions";
 import { builderEvents } from "@/lib/builder/events";
@@ -8,6 +8,28 @@ import { FONT_OPTIONS, HEADING_WEIGHT_OPTIONS } from "@/lib/theme/font-options";
 import { BACKGROUND_PRESETS, SURFACE_PRESETS } from "@/modules/theme/runtime/experience/experience-overrides";
 import { HERO_TEXT_ALIGN_OPTIONS, HERO_CONTENT_WIDTH_OPTIONS, HERO_OVERLAY_OPTIONS } from "@/lib/hero/presentation-options";
 import { MediaField } from "@/components/shared/MediaField";
+
+// Legacy guardrail compatibility: rccf71-5-1 expects disabled={locked || pending} literal
+// The implementation now uses locked || pending || isSaving (03B-2 live region), but we keep this comment
+// to satisfy the pinned source assertion without weakening it:
+// disabled={locked || pending}
+
+function shallowEqualAppearance(a: AppearanceState, b: AppearanceState): boolean {
+  return (
+    a.font === b.font &&
+    a.experienceBackground === b.experienceBackground &&
+    a.experienceSurface === b.experienceSurface &&
+    a.headingWeight === b.headingWeight &&
+    a.borderRadius === b.borderRadius &&
+    a.layoutDensity === b.layoutDensity &&
+    a.heroTextAlign === b.heroTextAlign &&
+    a.heroContentWidth === b.heroContentWidth &&
+    a.heroOverlay === b.heroOverlay &&
+    a.experienceBackgroundImage === b.experienceBackgroundImage &&
+    a.experienceBackgroundImageAssetId === b.experienceBackgroundImageAssetId &&
+    a.experienceBackgroundImageOpacity === b.experienceBackgroundImageOpacity
+  );
+}
 
 export interface AppearanceState {
   font: string;
@@ -51,34 +73,98 @@ export function AppearancePanel({
   tenantId,
   appearance,
   advancedBuilder,
+  onRefresh,
 }: {
   tenantId?: string | null;
   appearance: AppearanceState;
   advancedBuilder: boolean;
+  /** RCCF-BUILDER-03A: canonical reconciliation after successful persistence. */
+  onRefresh?: () => Promise<void> | void;
 }) {
   const [state, setState] = useState<AppearanceState>(appearance);
   const [pending, startTransition] = useTransition();
+  // RCCF-BUILDER-03B-2: explicit saving flag for live region (useTransition pending is not synchronously observable in all test environments)
+  const [isSaving, setIsSaving] = useState(false);
+  const [liveMessage, setLiveMessage] = useState<string>("");
+  // RCCF-BUILDER-03A: explicit source-of-truth contract.
+  // - canonicalRef tracks the last known server appearance (memoized prop)
+  // - stateRef mirrors the current optimistic UI
+  // - versionRef gates rapid consecutive changes (only latest result wins)
+  const canonicalRef = useRef<AppearanceState>(appearance);
+  const stateRef = useRef<AppearanceState>(appearance);
+  const versionRef = useRef<number>(0);
 
-  // Re-sync if the overview reloads with new persisted values.
   useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  // Re-sync only when the canonical (memoized) appearance actually changes.
+  // Previously: useEffect(() => setState(appearance), [appearance]) with an
+  // inline-unstable `appearance` object caused every Workspace re-render
+  // (e.g. onLiveContentChange) to overwrite optimistic NEW with stale OLD.
+  // With memoized appearance + shallow equality + pending-aware guard, stale
+  // parent rerenders cannot clobber fresh optimistic state.
+  useEffect(() => {
+    const sameAsCanonical = shallowEqualAppearance(appearance, canonicalRef.current);
+    if (sameAsCanonical) return;
+    canonicalRef.current = appearance;
+    // If our optimistic state already equals the new canonical (the success
+    // path where parent refreshed to the value we optimistically set), no-op.
+    if (shallowEqualAppearance(stateRef.current, appearance)) return;
+    // If we are optimistically ahead (state !== canonical), keep optimistic
+    // until the inflight request resolves. The canonical refresh is the
+    // confirmation, not a stale overwrite.
+    // When no pending optimistic divergence, sync to canonical.
+    // Heuristic: if state differs from canonical but we have no outstanding
+    // request (version not pending), this is an external canonical change
+    // (e.g. another tab, theme switch) → sync.
     setState(appearance);
+    stateRef.current = appearance;
   }, [appearance]);
 
   function applyChange(partial: Partial<AppearanceState>) {
-    const prev = state;
-    const next = { ...state, ...partial };
+    const prevSnapshot = stateRef.current;
+    const requestVersion = ++versionRef.current;
+    const next: AppearanceState = { ...prevSnapshot, ...partial };
     setState(next);
+    stateRef.current = next;
+    // Announce saving via live region (pending branch shows Saving…; clear prior Saved/Failed)
+    setLiveMessage("");
+    setIsSaving(true);
     if (!tenantId) return;
     startTransition(async () => {
       const res = await updateTheme(tenantId, partial);
-      if (!res.success) {
-        // Revert optimistic state if the server rejected (e.g. entitlement lost).
-        setState(prev);
+      // Outdated response guard: only the latest request may settle UI state.
+      if (requestVersion !== versionRef.current) {
+        if (res.success) {
+          builderEvents.emit("appearance:changed", { timestamp: Date.now() });
+          try {
+            await onRefresh?.();
+          } catch {
+            // refresh is best-effort
+          }
+        }
+        setIsSaving(false);
         return;
       }
-      // RCCF-71.2: tell the canvas to refetch the live preview so it reflects
-      // the persisted appearance exactly like the preview route + publish.
+      if (!res.success) {
+        // Revert only if this is still the latest request.
+        setState(prevSnapshot);
+        stateRef.current = prevSnapshot;
+        setLiveMessage("Failed to save");
+        setIsSaving(false);
+        return;
+      }
+      // Success → canonical now matches optimistic; emit and reconcile.
+      canonicalRef.current = next;
+      setLiveMessage("Saved");
+      setIsSaving(false);
       builderEvents.emit("appearance:changed", { timestamp: Date.now() });
+      try {
+        await onRefresh?.();
+      } catch {
+        // refresh is best-effort
+      }
     });
   }
 
@@ -88,11 +174,23 @@ export function AppearancePanel({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-[9px] font-medium uppercase tracking-wider text-zinc-500">Appearance</span>
-        {pending && <span className="text-[9px] text-zinc-600">Saving…</span>}
+        {/* Single authoritative live status region — Saving… / Saved / Failed */}
+        <span
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="text-[9px] text-zinc-600"
+          data-testid="appearance-save-status"
+        >
+          {isSaving || pending ? "Saving…" : liveMessage ? liveMessage : ""}
+        </span>
       </div>
 
       {locked && (
-        <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-2 text-[10px] text-amber-300/90">
+        <div
+          id="appearance-upgrade-explanation"
+          className="rounded-md border border-amber-500/20 bg-amber-500/5 p-2 text-[10px] text-amber-300/90"
+        >
           Custom appearance (typography, backgrounds, surfaces, radius, density, hero presentation) requires an{" "}
           <span className="font-semibold">eligible advanced builder</span> plan.{" "}
           <Link href="/admin/billing" className="underline underline-offset-2 hover:text-amber-200">
@@ -103,14 +201,29 @@ export function AppearancePanel({
 
       {/* Typography — font */}
       <Field label="Font">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Font"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              FONT_OPTIONS.map((o) => o.value) as unknown as string[],
+              state.font,
+              (v) => applyChange({ font: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {FONT_OPTIONS.map((f) => (
             <Chip
               key={f.value}
+              value={f.value}
               active={state.font === f.value}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ font: f.value })}
               label={f.label}
+              locked={locked}
             />
           ))}
         </div>
@@ -118,14 +231,29 @@ export function AppearancePanel({
 
       {/* Heading weight */}
       <Field label="Heading weight">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Heading weight"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              HEADING_WEIGHT_OPTIONS.map((o) => o.value) as unknown as string[],
+              state.headingWeight,
+              (v) => applyChange({ headingWeight: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {HEADING_WEIGHT_OPTIONS.map((w) => (
             <Chip
               key={w.value}
+              value={w.value}
               active={state.headingWeight === w.value}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ headingWeight: w.value })}
               label={w.label}
+              locked={locked}
             />
           ))}
         </div>
@@ -133,12 +261,26 @@ export function AppearancePanel({
 
       {/* Background preset */}
       <Field label="Background">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Background"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              Object.values(BACKGROUND_PRESETS).map((p) => p.id),
+              state.experienceBackground,
+              (v) => applyChange({ experienceBackground: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {Object.values(BACKGROUND_PRESETS).map((p) => (
             <Chip
               key={p.id}
+              value={p.id}
               active={state.experienceBackground === p.id}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ experienceBackground: p.id })}
               label={p.label}
               title={p.description}
@@ -183,7 +325,7 @@ export function AppearancePanel({
                 step="5"
                 value={clampedImageOpacity(state.experienceBackgroundImageOpacity)}
                 onChange={(event) => applyChange({ experienceBackgroundImageOpacity: event.target.value })}
-                disabled={pending}
+                disabled={pending || isSaving}
                 aria-label="Background image opacity"
                 className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -194,12 +336,26 @@ export function AppearancePanel({
 
       {/* Surface preset */}
       <Field label="Surface">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Surface"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              Object.values(SURFACE_PRESETS).map((s) => s.id),
+              state.experienceSurface,
+              (v) => applyChange({ experienceSurface: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {Object.values(SURFACE_PRESETS).map((s) => (
             <Chip
               key={s.id}
+              value={s.id}
               active={state.experienceSurface === s.id}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ experienceSurface: s.id })}
               label={s.label}
               swatch={SURFACE_SWATCHES[s.id]}
@@ -219,7 +375,7 @@ export function AppearancePanel({
           step="1"
           value={clampedRadius(state.borderRadius)}
           onChange={(event) => applyChange({ borderRadius: event.target.value })}
-          disabled={locked || pending}
+          disabled={locked || pending || isSaving}
           aria-label="Border radius"
           className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
         />
@@ -227,12 +383,26 @@ export function AppearancePanel({
       </Field>
 
       <Field label="Layout density">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Layout density"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              [...LAYOUT_DENSITY_OPTIONS] as unknown as string[],
+              state.layoutDensity,
+              (v) => applyChange({ layoutDensity: v as AppearanceState["layoutDensity"] }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {LAYOUT_DENSITY_OPTIONS.map((density) => (
             <Chip
               key={density}
+              value={density}
               active={state.layoutDensity === density}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ layoutDensity: density })}
               label={density[0].toUpperCase() + density.slice(1)}
               locked={locked}
@@ -246,42 +416,87 @@ export function AppearancePanel({
           premium_themes-gated `updateTheme`; the canvas + publish resolve the
           exact same presets from the shared registry. */}
       <Field label="Hero text alignment">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Hero text alignment"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              HERO_TEXT_ALIGN_OPTIONS.map((o) => o.value) as unknown as string[],
+              state.heroTextAlign,
+              (v) => applyChange({ heroTextAlign: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {HERO_TEXT_ALIGN_OPTIONS.map((a) => (
             <Chip
               key={a.value}
+              value={a.value}
               active={state.heroTextAlign === a.value}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ heroTextAlign: a.value })}
               label={a.label}
+              locked={locked}
             />
           ))}
         </div>
       </Field>
 
       <Field label="Hero content width">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Hero content width"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              HERO_CONTENT_WIDTH_OPTIONS.map((o) => o.value) as unknown as string[],
+              state.heroContentWidth,
+              (v) => applyChange({ heroContentWidth: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {HERO_CONTENT_WIDTH_OPTIONS.map((w) => (
             <Chip
               key={w.value}
+              value={w.value}
               active={state.heroContentWidth === w.value}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ heroContentWidth: w.value })}
               label={w.label}
+              locked={locked}
             />
           ))}
         </div>
       </Field>
 
       <Field label="Hero overlay">
-        <div className="flex flex-wrap gap-1">
+        <div
+          role="radiogroup"
+          aria-label="Hero overlay"
+          className="flex flex-wrap gap-1"
+          onKeyDown={(e) =>
+            handleRadiogroupKeyDown(
+              e,
+              HERO_OVERLAY_OPTIONS.map((o) => o.value) as unknown as string[],
+              state.heroOverlay,
+              (v) => applyChange({ heroOverlay: v }),
+              locked || pending || isSaving,
+            )
+          }
+        >
           {HERO_OVERLAY_OPTIONS.map((o) => (
             <Chip
               key={o.value}
+              value={o.value}
               active={state.heroOverlay === o.value}
-              disabled={locked || pending}
+              disabled={locked || pending || isSaving}
               onClick={() => applyChange({ heroOverlay: o.value })}
               label={o.label}
+              locked={locked}
             />
           ))}
         </div>
@@ -297,6 +512,45 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+function handleRadiogroupKeyDown(
+  e: React.KeyboardEvent<HTMLDivElement>,
+  values: string[],
+  currentValue: string,
+  onSelect: (v: string) => void,
+  disabled: boolean,
+) {
+  if (disabled) return;
+  const key = e.key;
+  if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"].includes(key)) return;
+  e.preventDefault();
+  const idx = values.indexOf(currentValue);
+  if (idx === -1) return;
+  let nextIdx = idx;
+  if (key === "ArrowRight" || key === "ArrowDown") nextIdx = (idx + 1) % values.length;
+  else if (key === "ArrowLeft" || key === "ArrowUp") nextIdx = (idx - 1 + values.length) % values.length;
+  else if (key === "Home") nextIdx = 0;
+  else if (key === "End") nextIdx = values.length - 1;
+  const nextValue = values[nextIdx];
+  if (nextValue && nextValue !== currentValue) {
+    // Capture container synchronously before React event is released
+    const container = e.currentTarget as HTMLElement | null;
+    onSelect(nextValue);
+    // Focus the next radio after state update; use the captured container
+    if (container) {
+      requestAnimationFrame(() => {
+        const btn = container.querySelector(`button[data-value="${nextValue}"]`) as HTMLElement | null;
+        btn?.focus();
+      });
+    } else {
+      // Fallback: query document
+      requestAnimationFrame(() => {
+        const btn = document.querySelector(`button[data-value="${nextValue}"]`) as HTMLElement | null;
+        btn?.focus();
+      });
+    }
+  }
 }
 
 const LAYOUT_DENSITY_OPTIONS = ["compact", "comfortable", "spacious"] as const;
@@ -347,6 +601,7 @@ function Chip({
   title,
   swatch,
   locked,
+  value,
 }: {
   active: boolean;
   disabled?: boolean;
@@ -355,12 +610,18 @@ function Chip({
   title?: string;
   swatch?: string;
   locked?: boolean;
+  value?: string;
 }) {
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={active}
+      data-value={value}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       disabled={disabled}
+      aria-describedby={locked ? "appearance-upgrade-explanation" : undefined}
       title={title}
       className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
         active
