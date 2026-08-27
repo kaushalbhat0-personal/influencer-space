@@ -305,7 +305,10 @@ export function InteractiveCanvas({
           // wider than the viewport — `justify-center` pushes the overflow to both
           // sides, and because scrollLeft cannot go negative, the left overflow
           // (Hero identity heading) was permanently clipped on narrow screens.
-          className="@container/main theme-root relative mx-auto shrink-0 overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50 ring-1 ring-white/5 transition-all"
+          // RCCF-BUILDER-04B F-07: stronger canvas dominance — frame border/ring/shadow
+          // strengthened so the canvas reads as the primary website object vs surrounding zinc-950 rails
+          // (outer bg kept at 900/40 to preserve preview-gutter contract).
+          className="@container/main theme-root relative mx-auto shrink-0 overflow-hidden rounded-lg border border-white/[0.15] bg-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 transition-all"
           style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center", ...(resolved?.themeVars as React.CSSProperties | undefined) }}
         >
           <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">

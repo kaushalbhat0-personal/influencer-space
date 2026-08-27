@@ -163,23 +163,29 @@ export function BuilderToolbar({
 
 function PreviewDraftToggle({ status }: { status: PublishStatusValue }) {
   const items = [
-    { id: "preview" as const, label: "Preview" },
-    { id: "live" as const, label: "Live" },
-    { id: "draft" as const, label: "Draft" },
+    { id: "preview" as const, label: "Preview", hint: "Draft preview before publishing" },
+    { id: "live" as const, label: "Live", hint: "Published and visible to visitors" },
+    { id: "draft" as const, label: "Draft", hint: "Local changes not yet published" },
   ];
 
   const current = status === "published" || status === "outdated" ? "live" : status === "preview" ? "preview" : "draft";
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/50 p-0.5">
+    <div
+      role="group"
+      aria-label={`Publish status: ${current}`}
+      className="flex items-center gap-0.5 rounded-lg bg-zinc-800/50 p-0.5"
+    >
       {items.map((item) => (
         <span
           key={item.id}
+          aria-current={current === item.id ? "true" : undefined}
+          title={item.hint}
           className={cn(
             "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
             current === item.id
-              ? item.id === "live" ? "bg-emerald-500/20 text-emerald-400" : item.id === "preview" ? "bg-indigo-500/20 text-indigo-300" : "bg-zinc-700 text-zinc-300"
-              : "text-zinc-600"
+              ? item.id === "live" ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30" : item.id === "preview" ? "bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30" : "bg-zinc-700 text-zinc-200 ring-1 ring-white/10"
+              : "text-zinc-500"
           )}
         >
           {item.label}

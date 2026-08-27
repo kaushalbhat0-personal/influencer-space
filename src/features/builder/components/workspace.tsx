@@ -461,7 +461,8 @@ export function BuilderWorkspace() {
             onClick={handlePublish}
             disabled={saving || publishing}
             data-testid="builder-publish"
-            className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2.5 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/20 disabled:opacity-50"
+            aria-label="Publish website"
+            className="flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1 text-[10px] font-semibold text-zinc-950 shadow-sm shadow-emerald-500/20 transition-colors hover:bg-emerald-400 disabled:opacity-50"
           >
             {publishing ? (
               <Loader2 className="h-3 w-3 animate-spin" />

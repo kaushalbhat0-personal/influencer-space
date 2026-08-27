@@ -119,7 +119,7 @@ function SectionCard({
             : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
         )}
       >
-      <div className="flex items-center gap-0.5 shrink-0 cursor-grab active:cursor-grabbing text-zinc-700" aria-hidden="true">
+      <div className="flex items-center justify-center shrink-0 cursor-default text-zinc-700" aria-hidden="true" title="Use ↑↓ to reorder">
         <GripVertical className="h-3 w-3" />
       </div>
 
@@ -171,30 +171,30 @@ function SectionCard({
       </div>
 
       {/* Actions are always visible below lg (touch has no hover) and revealed
-          on hover/focus on desktop — never hover-only. */}
+           on hover/focus on desktop — never hover-only. */}
       <div className="flex items-center gap-0.5 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
         <button onClick={(e) => { e.stopPropagation(); onMoveUp(section.id); }}
           data-testid={`section-${tid}-up`}
           aria-label={`Move ${section.name} up`}
           disabled={index === 0}
-          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 disabled:opacity-20">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-20 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <ArrowUp className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onMoveDown(section.id); }}
           data-testid={`section-${tid}-down`}
           aria-label={`Move ${section.name} down`}
           disabled={index === total - 1}
-          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 disabled:opacity-20">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-20 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <ArrowDown className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(section.id); }}
           data-testid={`section-${tid}-toggle`}
           aria-label={section.visible ? `Hide ${section.name}` : `Show ${section.name}`}
-          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           {section.visible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </button>
         {editHref && (
-          <Link href={editHref} className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-indigo-400"
+          <Link href={editHref} className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1"
             onClick={(e) => e.stopPropagation()}>
             <ExternalLink className="h-3 w-3" />
           </Link>
@@ -202,13 +202,13 @@ function SectionCard({
         <button onClick={(e) => { e.stopPropagation(); onDuplicate(section.id); }}
           data-testid={`section-${tid}-duplicate`}
           aria-label={`Duplicate ${section.name}`}
-          className="rounded p-0.5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <Copy className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onDelete(section.id); }}
           data-testid={`section-${tid}-delete`}
           aria-label={`Delete ${section.name}`}
-          className="rounded p-0.5 text-zinc-500 hover:bg-red-500/20 hover:text-red-400">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-red-500/20 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <Trash2 className="h-3 w-3" />
         </button>
       </div>
@@ -327,13 +327,13 @@ export function SectionManager({
 
       <div className="border-t border-white/5 p-2">
         <p className="text-[9px] font-medium text-zinc-600 uppercase mb-1.5 px-1">Add Section</p>
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-1">
           {DEFAULT_SECTIONS.map((entry) => {
             const Icon = getIcon(entry.name);
             return (
               <button key={entry.componentId} onClick={() => addSection(entry)}
                 data-testid={`add-section-${entry.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-2 py-1.5 text-[10px] text-zinc-500 hover:bg-indigo-500/10 hover:text-indigo-300 hover:ring-1 hover:ring-indigo-500/30 transition-colors">
+                className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-3 py-2.5 text-[11px] text-zinc-500 hover:bg-indigo-500/10 hover:text-indigo-300 hover:ring-1 hover:ring-indigo-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors lg:px-2 lg:py-1.5 lg:text-[10px]">
                 <Icon className="h-3 w-3 shrink-0" />
                 {entry.name}
               </button>

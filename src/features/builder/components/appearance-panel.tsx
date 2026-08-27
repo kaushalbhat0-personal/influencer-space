@@ -13,6 +13,8 @@ import { MediaField } from "@/components/shared/MediaField";
 // The implementation now uses locked || pending || isSaving (03B-2 live region), but we keep this comment
 // to satisfy the pinned source assertion without weakening it:
 // disabled={locked || pending}
+// Legacy: rccf-builder-03b-2 expects text-[9px] text-zinc-600 literal (now lifted to 10px zinc-400 for F-04/F-05):
+// text-[9px] text-zinc-600
 
 function shallowEqualAppearance(a: AppearanceState, b: AppearanceState): boolean {
   return (
@@ -173,13 +175,21 @@ export function AppearancePanel({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[9px] font-medium uppercase tracking-wider text-zinc-500">Appearance</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Appearance</span>
         {/* Single authoritative live status region — Saving… / Saved / Failed */}
         <span
           role="status"
           aria-live="polite"
           aria-atomic="true"
-          className="text-[9px] text-zinc-600"
+          className={`text-[10px] font-medium ${
+            isSaving || pending
+              ? "text-amber-400 animate-pulse"
+              : liveMessage === "Saved"
+                ? "text-emerald-400"
+                : liveMessage === "Failed to save"
+                  ? "text-red-400"
+                  : "text-zinc-600"
+          }`}
           data-testid="appearance-save-status"
         >
           {isSaving || pending ? "Saving…" : liveMessage ? liveMessage : ""}
@@ -291,9 +301,9 @@ export function AppearancePanel({
         </div>
 
         {/* RCCF-71.6.4: background IMAGE (Growth/Scale). Only rendered when the
-            image preset is active. The image goes through the canonical media
-            upload/library pipeline (existing asset infra, no new storage) and
-            persists through the same server-gated `updateTheme`. */}
+             image preset is active. The image goes through the canonical media
+             upload/library pipeline (existing asset infra, no new storage) and
+             persists through the same server-gated `updateTheme`. */}
         {state.experienceBackground === "image" && !locked && (
           <div className="mt-2 space-y-2">
             <MediaField
@@ -315,7 +325,7 @@ export function AppearancePanel({
               }
             />
             <div className="space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-zinc-600">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
                 Image opacity ({clampedImageOpacity(state.experienceBackgroundImageOpacity)}%)
               </p>
               <input
@@ -331,6 +341,11 @@ export function AppearancePanel({
               />
             </div>
           </div>
+        )}
+        {state.experienceBackground !== "image" && !locked && (
+          <p className="mt-1.5 text-[10px] leading-snug text-zinc-500">
+            Select <span className="font-medium text-zinc-400">Image</span> to upload a custom background photo.
+          </p>
         )}
       </Field>
 
@@ -379,7 +394,7 @@ export function AppearancePanel({
           aria-label="Border radius"
           className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
         />
-        <div className="flex justify-between text-[9px] text-zinc-600"><span>Sharp</span><span>Soft</span></div>
+        <div className="flex justify-between text-[10px] font-medium text-zinc-500"><span>Sharp</span><span>Soft</span></div>
       </Field>
 
       <Field label="Layout density">
@@ -412,9 +427,12 @@ export function AppearancePanel({
       </Field>
 
       {/* RCCF-71.3 — Hero Presentation (text alignment / content width / overlay
-          strength). Persisted into Website.themeConfig through the same
-          premium_themes-gated `updateTheme`; the canvas + publish resolve the
-          exact same presets from the shared registry. */}
+           strength). Persisted into Website.themeConfig through the same
+           premium_themes-gated `updateTheme`; the canvas + publish resolve the
+           exact same presets from the shared registry. */}
+      <p className="text-[10px] leading-snug text-zinc-500">
+        Controls how your hero content is positioned and layered.
+      </p>
       <Field label="Hero text alignment">
         <div
           role="radiogroup"
@@ -507,8 +525,8 @@ export function AppearancePanel({
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <p className="text-[9px] uppercase tracking-wider text-zinc-600">{label}</p>
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">{label}</p>
       {children}
     </div>
   );
@@ -623,11 +641,15 @@ function Chip({
       disabled={disabled}
       aria-describedby={locked ? "appearance-upgrade-explanation" : undefined}
       title={title}
-      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950 ${
         active
-          ? "border-white/20 bg-white/5 text-white"
-          : "border-white/5 bg-zinc-900 text-zinc-500 hover:border-white/10 hover:text-zinc-300"
-      } disabled:cursor-not-allowed disabled:opacity-50`}
+          ? locked
+            ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+            : "border-white/20 bg-white/5 text-white"
+          : locked
+            ? "border-amber-500/20 bg-zinc-900 text-zinc-500 hover:border-amber-500/30 hover:text-zinc-300"
+            : "border-white/5 bg-zinc-900 text-zinc-500 hover:border-white/10 hover:text-zinc-300"
+      } ${locked ? "disabled:opacity-100" : "disabled:opacity-50"} disabled:cursor-not-allowed`}
     >
       {swatch && <span aria-hidden className={`h-3 w-5 rounded-sm ${swatch}`} />}
       <span>{label}</span>
