@@ -151,6 +151,39 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
       ...(n.target ? { target: n.target } : {}),
       ...(n.icon ? { icon: n.icon } : {}),
     })),
-    renderingHints: input.experience ? { experience: input.experience } : {},
+    renderingHints: (() => {
+      const hints: PublishedSnapshot["renderingHints"] = input.experience ? { experience: input.experience } : {};
+      // RCCF-BUILDER-05B: per-section flow derived from ThemeExperience family defaults.
+      // Legacy snapshots (no ThemeExperience) default to shared.
+      const exp = input.experience as { defaultFlow?: string; sections?: Record<string, { flow?: string }> } | null | undefined;
+      if (exp) {
+        const flowHints: Record<string, string> = {};
+        for (const page of input.builderPages) {
+          for (const section of page.sections) {
+            const variant = (() => {
+              const m = ((section as unknown as Record<string, unknown>).moduleId as string | undefined) ?? ((section as unknown as { slots?: Array<{ moduleId: string }> }).slots?.[0]?.moduleId) ?? "";
+              if (m.startsWith("hero.")) return "hero";
+              if (m.startsWith("products.")) return "commerce";
+              if (m.startsWith("gallery.")) return "gallery";
+              if (m.startsWith("timeline.")) return "timeline";
+              if (m.startsWith("testimonials.")) return "social";
+              if (m.startsWith("faq.")) return "default";
+              if (m.startsWith("links.")) return "social";
+              if (m.startsWith("contact.") || m.startsWith("newsletter.")) return "cta";
+              if (m.startsWith("footer.")) return "footer";
+              if (m.startsWith("courses.")) return "commerce";
+              if (m.startsWith("services.")) return "commerce";
+              if (m.startsWith("games.")) return "commerce";
+              return "default";
+            })();
+            const perVariant = exp.sections?.[variant] as { flow?: string } | undefined;
+            const flow = perVariant?.flow ?? exp.defaultFlow ?? "shared";
+            flowHints[section.id] = flow;
+          }
+        }
+        if (Object.keys(flowHints).length > 0) hints.flow = flowHints as PublishedSnapshot["renderingHints"]["flow"];
+      }
+      return hints;
+    })(),
   };
 }

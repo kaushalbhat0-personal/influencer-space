@@ -323,6 +323,11 @@ export interface RenderingHints {
    * Optional — old snapshots fall back to the free-tier experience.
    */
   experience?: unknown;
+  /**
+   * RCCF-BUILDER-05B: per-section flow (shared/bleed/overlap/softSeparator/isolated).
+   * Optional — legacy snapshots default to shared.
+   */
+  flow?: Record<string, "shared" | "bleed" | "overlap" | "softSeparator" | "isolated">;
 }
 
 // ── Current schema version ────────────────────────────────

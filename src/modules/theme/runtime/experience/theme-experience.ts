@@ -59,6 +59,8 @@ export type ExperienceMotion =
 
 export type ExperienceSurface = "flat" | "glass" | "elevated" | "gradient-border" | "soft-glow" | "floating" | "luxury" | "neon" | "minimal";
 
+export type SectionFlow = "shared" | "bleed" | "overlap" | "softSeparator" | "isolated";
+
 export interface ExperienceBackground {
   kind: ExperienceBackgroundKind;
   /** CSS gradient stops / mesh colors (theme-aware, low contrast). */
@@ -84,6 +86,10 @@ export interface SectionExperienceOverride {
   heroBlend?: boolean;
   /** Reduced decoration density for this section type. */
   reducedDecorations?: boolean;
+  /** RCCF-BUILDER-05B: semantic flow for this section variant. */
+  flow?: SectionFlow;
+  /** RCCF-BUILDER-05B: when true with bleed flow, inner content stays constrained while outer extends. */
+  fullBleed?: boolean;
 }
 
 export interface ThemeExperience {
@@ -99,6 +105,8 @@ export interface ThemeExperience {
   heroFadeTo?: string;
   /** Alternate surface tone for rhythm (alternate sections). */
   alternateSurface?: boolean;
+  /** RCCF-BUILDER-05B: default flow for sections without explicit override (shared = minimal boundary). */
+  defaultFlow?: SectionFlow;
   /** Per-section variant overrides (Hero, Commerce, Footer, etc.) */
   sections?: Partial<Record<SectionVariant, SectionExperienceOverride>>;
 }
@@ -114,6 +122,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "flat",
+    defaultFlow: "shared",
   },
   classic: {
     id: "classic",
@@ -124,6 +133,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "elevated",
+    defaultFlow: "shared",
     sections: {
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
     },
@@ -137,6 +147,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "glass",
+    defaultFlow: "shared",
     sections: {
       hero: { divider: "none", heroBlend: true },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
@@ -151,6 +162,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "gradient-shift",
     divider: "fade",
     surface: "glass",
+    defaultFlow: "bleed",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(129,140,248,0.22)", "rgba(192,132,252,0.14)", "rgba(34,211,238,0.10)"] }, divider: "none", heroBlend: true, surface: "flat" },
       footer: { decoration: "minimal", divider: "fade", motion: "static" },
@@ -168,6 +180,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "float",
     divider: "curve",
     surface: "glass",
+    defaultFlow: "bleed",
     sections: {
       hero: { divider: "none", heroBlend: true },
       footer: { decoration: "dots", divider: "fade", motion: "static", reducedDecorations: true },
@@ -182,6 +195,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "diagonal",
     surface: "gradient-border",
+    defaultFlow: "bleed",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(34,211,238,0.20)", "rgba(168,85,247,0.14)"] }, divider: "none", heroBlend: true, surface: "flat" },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
@@ -197,6 +211,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "elevated",
+    defaultFlow: "shared",
     sections: {
       hero: { divider: "none", heroBlend: true, surface: "flat" },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
@@ -211,6 +226,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "float",
     divider: "fade",
     surface: "soft-glow",
+    defaultFlow: "shared",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(236,72,153,0.18)", "rgba(249,115,22,0.12)"] }, divider: "none", heroBlend: true },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
@@ -226,6 +242,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "glow",
     surface: "gradient-border",
+    defaultFlow: "bleed",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(234,179,8,0.14)", "rgba(202,138,4,0.08)"] }, divider: "none", heroBlend: true, surface: "minimal" },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
@@ -240,6 +257,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "particle-drift",
     divider: "fade",
     surface: "floating",
+    defaultFlow: "bleed",
     sections: {
       hero: { divider: "none", heroBlend: true },
       footer: { decoration: "minimal", divider: "fade", motion: "static", reducedDecorations: true },
@@ -254,6 +272,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "flat",
+    defaultFlow: "shared",
     sections: {
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
     },
@@ -267,6 +286,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "particle-drift",
     divider: "fade",
     surface: "floating",
+    defaultFlow: "shared",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(249,115,22,0.20)", "rgba(34,211,238,0.12)"] }, divider: "none", heroBlend: true },
       footer: { decoration: "minimal", divider: "fade", motion: "static", reducedDecorations: true },
@@ -281,6 +301,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "elevated",
+    defaultFlow: "bleed",
     sections: {
       hero: { divider: "none", heroBlend: true },
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
@@ -295,6 +316,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "fade",
     surface: "glass",
+    defaultFlow: "shared",
     sections: {
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
     },
@@ -308,6 +330,7 @@ const BASE: Record<string, ThemeExperience> = {
     motion: "static",
     divider: "none",
     surface: "flat",
+    defaultFlow: "isolated",
   },
 };
 

@@ -504,6 +504,8 @@ export class LayoutEngine {
         ? JSON.parse(JSON.stringify(snapshot.renderingHints.animations))
         : undefined,
       customCss: snapshot.renderingHints.customCss,
+      // RCCF-BUILDER-05B: per-section flow (shared/bleed/overlap/softSeparator/isolated) — legacy undefined → shared via buildRuntimeSnapshot
+      flow: snapshot.renderingHints.flow ? { ...snapshot.renderingHints.flow } : undefined,
     };
   }
 

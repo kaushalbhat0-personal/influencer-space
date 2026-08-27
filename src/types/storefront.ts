@@ -46,5 +46,6 @@ export interface StorefrontDocument {
     responsive?: Record<string, { mobile?: boolean; tablet?: boolean; desktop?: boolean }>;
     animations?: Record<string, { id: string; duration?: number }>;
     customCss?: string;
+    flow?: Record<string, "shared" | "bleed" | "overlap" | "softSeparator" | "isolated">;
   };
 }
