@@ -1,9 +1,14 @@
 /**
- * Theme Catalog Expansion — IMPLEMENTATION-25.
+ * Theme Catalog Expansion — IMPLEMENTATION-25, extended RCCF-BUILDER-05A.
  *
- * 20 additional professionally-designed themes (total catalog ≈ 50). Each theme
- * is pure configuration — a curated palette + metadata. Adding theme #51, #100
- * or #500 requires only another entry here; no engine/runtime/UI code changes.
+ * 20 additional themes now mapped to 8–10 distinct visual families with
+ * genuine typography/surface differences, not just palette permutations.
+ * Each theme preserves its legacy ID (persisted Website.themePackageId)
+ * and declares family/variantGroup for clustering. Color variants within a
+ * family share the same family grammar and are not separate design systems.
+ *
+ * Adding theme #51 remains one entry; adding family #11 requires a new
+ * ThemeExperience pack + family token set — both via existing pipeline.
  */
 import type { ThemeCategory } from "../types-new";
 import { createTheme } from "./index";
@@ -37,6 +42,8 @@ function makeTheme(o: {
   dark: Palette;
   light?: Palette;
   fonts?: { heading?: string; body?: string };
+  family?: string;
+  variantGroup?: string;
 }): ReturnType<typeof createTheme> {
   return createTheme(o.id, o.slug, o.name, o.description, o.category, o.tags, {
     featured: o.featured,
@@ -46,6 +53,8 @@ function makeTheme(o: {
     updatedAt: o.updatedAt,
     colorSwatches: o.swatches,
     supportsDarkMode: true,
+    family: o.family,
+    variantGroup: o.variantGroup,
     lightTokens: o.light ? { colors: o.light } : undefined,
     darkTokens: {
       colors: o.dark,
@@ -69,6 +78,30 @@ const D = {
   }),
 };
 
+// Family typography stacks — generic fallbacks so no font-file dependency, yet visually distinct.
+const F = {
+  // Editorial serif — for photography/light & academy
+  editorial: { heading: "Literata, Georgia, serif", body: "Inter, system-ui, sans-serif" },
+  // Luxury display serif
+  luxury: { heading: "'Playfair Display', Georgia, serif", body: "Inter, system-ui, sans-serif" },
+  // Brutalist mono — sharp, technical
+  brutalist: { heading: "'Courier Prime', Courier, monospace", body: "'Courier Prime', Courier, monospace" },
+  // Tech/Cyber geometric mono
+  tech: { heading: "'JetBrains Mono', monospace", body: "Inter, system-ui, sans-serif" },
+  // Creator soft sans (Plus Jakarta-like via system)
+  creator: { heading: "'Plus Jakarta Sans', Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Minimal airy sans
+  minimal: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Midnight cinematic — same sans but distinct pack handles contrast
+  midnight: { heading: "Sora, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Organic/Aurora soft rounded
+  organic: { heading: "Outfit, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Glass studio — Inter but surface glass distinguishes
+  glass: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Executive commerce — formal sans
+  executive: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+};
+
 export const catalogThemes: ReturnType<typeof createTheme>[] = [
   makeTheme({
     id: "com.creatos.creator-dark", slug: "creator-dark", name: "Creator Dark",
@@ -76,6 +109,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "creator", tags: ["dark", "violet", "professional", "creator"],
     featured: true, recommended: true, industries: ["creator"],
     releaseDate: "2025-01-05", updatedAt: "2025-06-01", swatches: ["#7C3AED", "#A78BFA", "#18181B", "#0B0B1A"],
+    family: "creator", variantGroup: "creator-dark",
+    fonts: F.creator,
     dark: D.dark("#7C3AED", "#A78BFA", "#22D3EE", "#0B0B1A", "#12122A", "#1C1C3A"),
   }),
   makeTheme({
@@ -83,6 +118,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Clean light theme with a soft violet identity — bright, friendly and content-first.",
     category: "creator", tags: ["light", "violet", "clean", "minimal"],
     releaseDate: "2025-01-12", updatedAt: "2025-06-08", swatches: ["#7C3AED", "#06B6D4", "#FFFFFF"],
+    family: "minimal", variantGroup: "minimal-light",
+    fonts: F.minimal,
     dark: D.dark("#7C3AED", "#06B6D4", "#A78BFA", "#F8FAFC", "#FFFFFF", "#F1F5F9"),
     light: D.light("#7C3AED", "#06B6D4", "#A78BFA", "#FFFFFF", "#FAFAFA", "#F4F4F5"),
   }),
@@ -92,6 +129,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "creator", tags: ["gold", "luxury", "dark", "premium"],
     featured: true, industries: ["creator", "luxury & lifestyle"],
     releaseDate: "2025-02-01", updatedAt: "2025-06-12", swatches: ["#D4AF37", "#F5D06F", "#0A0A0A"],
+    family: "luxury", variantGroup: "luxury-gold",
+    fonts: F.luxury,
     dark: D.dark("#D4AF37", "#F5D06F", "#8B5CF6", "#0A0A0A", "#141414", "#1F1F1F"),
   }),
   makeTheme({
@@ -99,6 +138,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Bold black with neon green and cyan — high energy for gaming, tech and hype creators.",
     category: "creator", tags: ["neon", "green", "cyan", "dark", "energetic"],
     releaseDate: "2025-02-14", updatedAt: "2025-06-20", swatches: ["#00FF88", "#00CCFF", "#0A0A0A"],
+    family: "tech-cyber", variantGroup: "tech-neon",
+    fonts: F.tech,
     dark: D.dark("#00FF88", "#00CCFF", "#39FF14", "#0A0A0A", "#101010", "#1A1A1A"),
   }),
   makeTheme({
@@ -106,6 +147,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Deep midnight navy with warm amber accents — cinematic and sophisticated.",
     category: "creator", tags: ["midnight", "navy", "amber", "dark"],
     releaseDate: "2025-03-01", updatedAt: "2025-06-25", swatches: ["#0F172A", "#F59E0B", "#38BDF8"],
+    family: "midnight", variantGroup: "midnight-amber",
+    fonts: F.midnight,
     dark: D.dark("#F59E0B", "#38BDF8", "#FB7185", "#0F172A", "#1E293B", "#334155"),
   }),
   makeTheme({
@@ -113,6 +156,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Frosted glass aesthetic over deep teal — translucent cards, soft glows and a modern blur feel.",
     category: "creator", tags: ["glass", "teal", "modern", "dark"],
     releaseDate: "2025-03-10", updatedAt: "2025-06-28", swatches: ["#14B8A6", "#2DD4BF", "#0F172A"],
+    family: "glass", variantGroup: "glass-teal",
+    fonts: F.glass,
     dark: D.dark("#14B8A6", "#2DD4BF", "#818CF8", "#0B1220", "#152033", "#1E2B42"),
   }),
   makeTheme({
@@ -120,6 +165,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Hot pink and cyan on black — arcade energy for gaming and esports brands.",
     category: "gaming", tags: ["neon", "pink", "cyan", "gaming", "dark"],
     releaseDate: "2025-02-20", updatedAt: "2025-07-01", swatches: ["#FF2D78", "#00E5FF", "#0A0A0A"],
+    family: "tech-cyber", variantGroup: "tech-neon",
+    fonts: F.tech,
     dark: D.dark("#FF2D78", "#00E5FF", "#B026FF", "#0A0A0A", "#121212", "#1C1C1C"),
   }),
   makeTheme({
@@ -127,6 +174,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Cyberpunk green and purple on near-black — futuristic and intense.",
     category: "gaming", tags: ["cyberpunk", "green", "purple", "gaming"],
     releaseDate: "2025-03-05", updatedAt: "2025-07-05", swatches: ["#00FF9F", "#B026FF", "#0D0D12"],
+    family: "tech-cyber", variantGroup: "tech-cyber",
+    fonts: F.tech,
     dark: D.dark("#00FF9F", "#B026FF", "#00D4FF", "#0D0D12", "#16161E", "#20202A"),
   }),
   makeTheme({
@@ -134,6 +183,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Classic matrix green on pure black — retro-digital for tech and simulation creators.",
     category: "gaming", tags: ["matrix", "green", "retro", "dark"],
     releaseDate: "2025-03-20", updatedAt: "2025-07-08", swatches: ["#00FF41", "#39FF14", "#000000"],
+    family: "brutalist", variantGroup: "brutalist-matrix",
+    fonts: F.brutalist,
     dark: D.dark("#00FF41", "#39FF14", "#00FFCC", "#000000", "#0A0F0A", "#122012"),
   }),
   makeTheme({
@@ -142,6 +193,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "gaming", tags: ["streaming", "purple", "pink", "dark"],
     featured: true, industries: ["gaming", "creator"],
     releaseDate: "2025-04-01", updatedAt: "2025-07-10", swatches: ["#8B5CF6", "#EC4899", "#0B0B1A"],
+    family: "organic-aurora", variantGroup: "aurora-purple",
+    fonts: F.organic,
     dark: D.dark("#8B5CF6", "#EC4899", "#22D3EE", "#0B0B1A", "#151530", "#20204A"),
   }),
   makeTheme({
@@ -149,6 +202,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Streamer neon green on charcoal — high contrast for overlays and live pages.",
     category: "gaming", tags: ["streaming", "green", "charcoal", "dark"],
     releaseDate: "2025-04-12", updatedAt: "2025-07-12", swatches: ["#22C55E", "#4ADE80", "#18181B"],
+    family: "tech-cyber", variantGroup: "tech-green",
+    fonts: F.tech,
     dark: D.dark("#22C55E", "#4ADE80", "#00E5FF", "#18181B", "#202024", "#2A2A30"),
   }),
   makeTheme({
@@ -156,6 +211,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "White, airy and typographic — the quiet authority theme for consultants and studios.",
     category: "business & agency", tags: ["minimal", "white", "light", "business"],
     releaseDate: "2025-01-18", updatedAt: "2025-07-15", swatches: ["#111827", "#6366F1", "#FFFFFF"],
+    family: "minimal", variantGroup: "minimal-business",
+    fonts: F.minimal,
     dark: D.dark("#6366F1", "#818CF8", "#34D399", "#F9FAFB", "#FFFFFF", "#F3F4F6"),
     light: D.light("#111827", "#6366F1", "#10B981", "#FFFFFF", "#FAFAFA", "#F4F4F5"),
   }),
@@ -165,6 +222,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "business & agency", tags: ["blue", "light", "corporate", "business"],
     industries: ["business & agency"],
     releaseDate: "2025-02-05", updatedAt: "2025-07-18", swatches: ["#2563EB", "#3B82F6", "#F8FAFC"],
+    family: "executive", variantGroup: "executive-blue",
+    fonts: F.executive,
     dark: D.dark("#3B82F6", "#60A5FA", "#22D3EE", "#F8FAFC", "#FFFFFF", "#F1F5F9"),
     light: D.light("#2563EB", "#3B82F6", "#06B6D4", "#FFFFFF", "#FAFAFA", "#F1F5F9"),
   }),
@@ -174,6 +233,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "business & agency", tags: ["black", "blue", "dark", "corporate"],
     featured: true, industries: ["business & agency"],
     releaseDate: "2025-02-18", updatedAt: "2025-07-20", swatches: ["#3B82F6", "#60A5FA", "#000000"],
+    family: "executive", variantGroup: "executive-black",
+    fonts: F.executive,
     dark: D.dark("#3B82F6", "#60A5FA", "#818CF8", "#000000", "#0D0D0D", "#161616"),
   }),
   makeTheme({
@@ -182,6 +243,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "photography", tags: ["photography", "light", "editorial", "minimal"],
     industries: ["photography"],
     releaseDate: "2025-03-08", updatedAt: "2025-07-22", swatches: ["#111827", "#9CA3AF", "#FFFFFF"],
+    family: "editorial", variantGroup: "editorial-light",
+    fonts: F.editorial,
     dark: D.dark("#111827", "#9CA3AF", "#6B7280", "#FAFAFA", "#FFFFFF", "#F3F4F6"),
     light: D.light("#111827", "#4B5563", "#9CA3AF", "#FFFFFF", "#FCFCFC", "#F5F5F5"),
   }),
@@ -191,6 +254,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "music", tags: ["music", "festival", "multicolor", "dark"],
     industries: ["music"],
     releaseDate: "2025-04-05", updatedAt: "2025-07-25", swatches: ["#F43F5E", "#8B5CF6", "#22D3EE"],
+    family: "organic-aurora", variantGroup: "aurora-festival",
+    fonts: F.organic,
     dark: D.dark("#F43F5E", "#8B5CF6", "#22D3EE", "#0B0B12", "#14141E", "#1E1E2A"),
   }),
   makeTheme({
@@ -198,6 +263,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     description: "Deep stage-red with gold highlights — spotlight-ready for performers.",
     category: "music", tags: ["music", "stage", "red", "gold", "dark"],
     releaseDate: "2025-04-18", updatedAt: "2025-07-28", swatches: ["#DC2626", "#D4AF37", "#0A0A0A"],
+    family: "luxury", variantGroup: "luxury-stage",
+    fonts: F.luxury,
     dark: D.dark("#DC2626", "#D4AF37", "#F87171", "#0A0A0A", "#131313", "#1D1D1D"),
   }),
   makeTheme({
@@ -206,6 +273,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "health", tags: ["fitness", "orange", "dark", "energetic"],
     industries: ["health"],
     releaseDate: "2025-05-01", updatedAt: "2025-07-30", swatches: ["#F97316", "#FB923C", "#0A0A0A"],
+    family: "brutalist", variantGroup: "brutalist-energy",
+    fonts: F.brutalist,
     dark: D.dark("#F97316", "#FB923C", "#FACC15", "#0A0A0A", "#121212", "#1B1B1B"),
   }),
   makeTheme({
@@ -214,6 +283,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "coach & education", tags: ["education", "blue", "navy", "light", "academy"],
     industries: ["coach & education"],
     releaseDate: "2025-05-12", updatedAt: "2025-08-01", swatches: ["#1E3A8A", "#3B82F6", "#F8FAFC"],
+    family: "editorial", variantGroup: "editorial-academy",
+    fonts: F.editorial,
     dark: D.dark("#3B82F6", "#60A5FA", "#22D3EE", "#F1F5F9", "#FFFFFF", "#E2E8F0"),
     light: D.light("#1E3A8A", "#3B82F6", "#06B6D4", "#FFFFFF", "#F8FAFC", "#F1F5F9"),
   }),
@@ -223,6 +294,8 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     category: "luxury & lifestyle", tags: ["luxury", "gold", "black", "premium"],
     featured: true, industries: ["luxury & lifestyle"],
     releaseDate: "2025-05-20", updatedAt: "2025-08-03", swatches: ["#C9A227", "#F5E1A4", "#0A0A0A"],
+    family: "luxury", variantGroup: "luxury-champagne",
+    fonts: F.luxury,
     dark: D.dark("#C9A227", "#F5E1A4", "#A3A3A3", "#0A0A0A", "#121212", "#1C1C1C"),
   }),
 ];

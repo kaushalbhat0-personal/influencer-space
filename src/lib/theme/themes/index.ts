@@ -43,6 +43,8 @@ export function createTheme(
     incompatibleBlueprints?: string[];
     minimumPlatformVersion?: string;
     requiredCapabilities?: string[];
+    family?: string;
+    variantGroup?: string;
     releaseDate?: string;
     updatedAt?: string;
     changelog?: string;
@@ -81,7 +83,7 @@ export function createTheme(
     });
   }
 
-  return {
+   return {
     id,
     slug,
     name,
@@ -97,6 +99,8 @@ export function createTheme(
     status: "active",
     supportsDarkMode: opts?.supportsDarkMode ?? false,
     supportsRTL: opts?.supportsRTL ?? false,
+    family: opts?.family,
+    variantGroup: opts?.variantGroup,
     industries: opts?.industries,
     supportedBlueprints: opts?.supportedBlueprints,
     incompatibleBlueprints: opts?.incompatibleBlueprints,

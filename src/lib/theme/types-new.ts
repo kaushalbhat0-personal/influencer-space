@@ -178,6 +178,12 @@ export interface ThemeDefinition {
   /** Capabilities required to use this theme (e.g. "premium_themes") */
   requiredCapabilities?: string[];
 
+  /** RCCF-BUILDER-05A: visual family (e.g., editorial, luxury, brutalist) */
+  family?: string;
+
+  /** RCCF-BUILDER-05A: variant group — themes sharing same family grammar (palette variants) */
+  variantGroup?: string;
+
   /** ISO date of initial release */
   releaseDate?: string;
 

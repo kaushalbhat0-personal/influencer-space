@@ -299,29 +299,43 @@ const BASE: Record<string, ThemeExperience> = {
       footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
     },
   },
+  brutalist: {
+    id: "brutalist",
+    name: "Brutalist",
+    premium: true,
+    background: { kind: "pattern", pattern: "grid", glow: null },
+    decoration: "grid",
+    motion: "static",
+    divider: "none",
+    surface: "flat",
+  },
 };
 
 export const THEME_EXPERIENCES: Record<string, ThemeExperience> = BASE;
 
-/** Premium theme ids → named experience (configuration only). */
+/** Premium theme ids → named experience (configuration only). RCCF-BUILDER-05A: catalog families mapped explicitly to distinct packs. */
 export const THEME_TO_EXPERIENCE: Record<string, string> = {
+  "com.creatos.creator-dark": "creator",
+  "com.creatos.creator-light": "minimal",
+  "com.creatos.creator-gold": "luxury",
   "com.creatos.creator-neon": "cyber",
-  "com.creatos.gaming-neon": "cyber",
-  "com.creatos.gaming-cyber": "cyber",
-  "com.creatos.gaming-matrix": "arena",
   "com.creatos.creator-midnight": "midnight",
   "com.creatos.creator-glass": "glass",
-  "com.creatos.creator-gold": "luxury",
+  "com.creatos.gaming-neon": "cyber",
+  "com.creatos.gaming-cyber": "cyber",
+  "com.creatos.gaming-matrix": "brutalist",
+  "com.creatos.streaming-purple": "aurora",
+  "com.creatos.streaming-green": "cyber",
+  "com.creatos.business-minimal": "minimal",
+  "com.creatos.corporate-modern": "executive",
+  "com.creatos.corporate-black": "executive",
+  "com.creatos.photography-light": "editorial",
+  "com.creatos.music-festival": "aurora",
+  "com.creatos.music-stage": "luxury",
+  "com.creatos.fitness-energy": "brutalist",
+  "com.creatos.education-academy": "editorial",
   "com.creatos.luxury-champagne": "luxury",
   "com.creatos.luxury-gold": "luxury",
-  "com.creatos.music-festival": "velocity",
-  "com.creatos.music-stage": "editorial",
-  "com.creatos.fitness-energy": "arena",
-  "com.creatos.corporate-black": "executive",
-  "com.creatos.business-minimal": "minimal",
-  "com.creatos.corporate-modern": "classic",
-  "com.creatos.streaming-purple": "nebula",
-  "com.creatos.streaming-green": "cyber",
 };
 
 export { BASE as EXPERIENCE_PACKS };
@@ -347,6 +361,7 @@ export const EXPERIENCE_MIN_PLAN: Record<string, string> = {
   luxury: "creator_scale",
   executive: "creator_scale",
   arena: "creator_scale",
+  brutalist: "creator_scale",
 };
 
 /**
