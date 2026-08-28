@@ -34,6 +34,9 @@ interface Props {
   tenantId?: string | null;
   /** RCCF-BUILDER-03A: canonical refresh after appearance mutation. */
   onAppearanceRefresh?: () => Promise<void> | void;
+  /** 06A: local preview draft (no persistence per control). */
+  appearanceDraft?: import("./appearance-panel").AppearanceState | null;
+  onAppearancePreviewChange?: (next: import("./appearance-panel").AppearanceState) => void;
 }
 
 export function WebsitePanel({
@@ -48,6 +51,8 @@ export function WebsitePanel({
   overview,
   tenantId,
   onAppearanceRefresh,
+  appearanceDraft,
+  onAppearancePreviewChange,
 }: Props) {
   // RCCF-BUILDER-03A: stabilize appearance identity — previously an inline literal
   // created a new reference on every Workspace render, causing AppearancePanel's
@@ -145,9 +150,10 @@ export function WebsitePanel({
             <div className="p-2">
               <AppearancePanel
                 tenantId={tenantId}
-                appearance={memoizedAppearance}
+                appearance={appearanceDraft ?? memoizedAppearance}
                 advancedBuilder={overview.capabilities.advancedBuilder}
                 onRefresh={onAppearanceRefresh}
+                onPreviewChange={onAppearancePreviewChange}
               />
             </div>
           </div>

@@ -76,43 +76,31 @@ describe("RCCF-BUILDER-03B-2 — Save status live region", () => {
   });
 
   it("Saving is announced when change begins (pending)", async () => {
-    let neverResolve: Promise<{ success: boolean }>;
-    neverResolve = new Promise(() => {});
-    h.mockUpdateTheme.mockReturnValue(neverResolve as unknown as Promise<{ success: boolean }>);
+    // 06A: local preview — Preview announced immediately, no pending/Saving
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     fireEvent.click(findChip("Inter"));
-    // Pending should show Saving…
-    await waitFor(() => {
-      const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
-      expect(region.textContent).toContain("Saving");
-    });
+    const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
+    expect(region.textContent).toContain("Preview");
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled();
   });
 
   it("Saved is announced only after successful persistence", async () => {
-    h.mockUpdateTheme.mockResolvedValue({ success: true });
+    // 06A: local preview — Preview, no Saved, no persistence
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
-    await waitFor(() => {
-      const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
-      expect(region.textContent).toContain("Saved");
-    });
-    // Ensure Saving was shown before Saved (pending true then liveMessage Saved)
-    // The region should not show Saved before the mock resolves — we already verified Saved appears after
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled();
+    const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
+    expect(region.textContent).toContain("Preview");
   });
 
   it("Failed to save is announced after failed persistence and reverts", async () => {
-    h.mockUpdateTheme.mockResolvedValue({ success: false, error: "Theme capability required: advanced_builder" });
+    // 06A: local preview — no failure, stays Preview and Inter
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
-    await waitFor(() => {
-      const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
-      expect(region.textContent).toContain("Failed to save");
-    });
-    // Should have reverted to geist
-    const geist = findChip("Geist");
-    expect(geist.getAttribute("aria-checked")).toBe("true");
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled();
+    const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
+    expect(region.textContent).toContain("Preview");
+    expect(findChip("Inter").getAttribute("aria-checked")).toBe("true");
   });
 
   it("existing visual save indicator remains intact (no redesign)", () => {
@@ -123,31 +111,23 @@ describe("RCCF-BUILDER-03B-2 — Save status live region", () => {
   });
 
   it("state-sync contract remains intact (03A)", async () => {
+    // 06A: local preview — no updateTheme, no emit, but optimistic stays Inter
     const onRefresh = vi.fn().mockResolvedValue(undefined);
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder onRefresh={onRefresh} />);
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "inter" }));
-    await waitFor(() => expect(h.mockEmit).toHaveBeenCalledWith("appearance:changed", expect.any(Object)));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled();
+    expect(h.mockEmit).not.toHaveBeenCalled();
     expect(findChip("Inter").getAttribute("aria-checked")).toBe("true");
   });
 
   it("live region does not announce optimistic state as persisted before success", async () => {
-    let resolveSave: (v: { success: boolean }) => void;
-    const promise = new Promise<{ success: boolean }>((res) => (resolveSave = res));
-    h.mockUpdateTheme.mockReturnValue(promise as Promise<{ success: boolean }>);
+    // 06A: local preview — immediately Preview, never Saving/Saved
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     fireEvent.click(findChip("Inter"));
-    // While pending, region should show Saving, not Saved
-    await waitFor(() => {
-      const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
-      expect(region.textContent).toContain("Saving");
-      expect(region.textContent).not.toContain("Saved");
-    });
-    resolveSave!({ success: true });
-    await waitFor(() => {
-      const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
-      expect(region.textContent).toContain("Saved");
-    });
+    const region = document.querySelector('[data-testid="appearance-save-status"]') as HTMLElement;
+    expect(region.textContent).toContain("Preview");
+    expect(region.textContent).not.toContain("Saving");
+    expect(region.textContent).not.toContain("Saved");
   });
 });
 

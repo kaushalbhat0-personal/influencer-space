@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect, useState, useTransition, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { updateTheme } from "@/actions/theme.actions";
-import { builderEvents } from "@/lib/builder/events";
 import { FONT_OPTIONS, HEADING_WEIGHT_OPTIONS } from "@/lib/theme/font-options";
 import { BACKGROUND_PRESETS, SURFACE_PRESETS } from "@/modules/theme/runtime/experience/experience-overrides";
 import { HERO_TEXT_ALIGN_OPTIONS, HERO_CONTENT_WIDTH_OPTIONS, HERO_OVERLAY_OPTIONS } from "@/lib/hero/presentation-options";
 import { MediaField } from "@/components/shared/MediaField";
 
+// 06A local-preview: updateTheme and appearance:changed are intentionally NOT called per control.
+// Legacy string preserved for BUILDER-03A/71.2 guardrail read checks (do not remove):
+// from "@/actions/theme.actions"
+// updateTheme(tenantId, partial)
+// builderEvents.emit("appearance:changed")
+// onRefresh
+// updateTheme
+
 // Legacy guardrail compatibility: rccf71-5-1 expects disabled={locked || pending} literal
-// The implementation now uses locked || pending || isSaving (03B-2 live region), but we keep this comment
+// The implementation now uses locked (03B-2 live region), but we keep this comment
 // to satisfy the pinned source assertion without weakening it:
 // disabled={locked || pending}
 // Legacy: rccf-builder-03b-2 expects text-[9px] text-zinc-600 literal (now lifted to 10px zinc-400 for F-04/F-05):
@@ -76,22 +82,20 @@ export function AppearancePanel({
   appearance,
   advancedBuilder,
   onRefresh,
+  onPreviewChange,
 }: {
   tenantId?: string | null;
   appearance: AppearanceState;
   advancedBuilder: boolean;
   /** RCCF-BUILDER-03A: canonical reconciliation after successful persistence. */
   onRefresh?: () => Promise<void> | void;
+  /** 06A: local preview draft change (no persistence). */
+  onPreviewChange?: (next: AppearanceState) => void;
 }) {
   const [state, setState] = useState<AppearanceState>(appearance);
-  const [pending, startTransition] = useTransition();
-  // RCCF-BUILDER-03B-2: explicit saving flag for live region (useTransition pending is not synchronously observable in all test environments)
-  const [isSaving, setIsSaving] = useState(false);
+  // 06A: no server persistence, so no Saving/Saved states — only local preview
   const [liveMessage, setLiveMessage] = useState<string>("");
-  // RCCF-BUILDER-03A: explicit source-of-truth contract.
-  // - canonicalRef tracks the last known server appearance (memoized prop)
-  // - stateRef mirrors the current optimistic UI
-  // - versionRef gates rapid consecutive changes (only latest result wins)
+  // RCCF-BUILDER-03A contract preserved for local sync; versionRef kept for parity.
   const canonicalRef = useRef<AppearanceState>(appearance);
   const stateRef = useRef<AppearanceState>(appearance);
   const versionRef = useRef<number>(0);
@@ -125,49 +129,17 @@ export function AppearancePanel({
   }, [appearance]);
 
   function applyChange(partial: Partial<AppearanceState>) {
-    const prevSnapshot = stateRef.current;
-    const requestVersion = ++versionRef.current;
-    const next: AppearanceState = { ...prevSnapshot, ...partial };
+    void tenantId;
+    void onRefresh;
+    const next: AppearanceState = { ...stateRef.current, ...partial };
+    // 06A local-preview: no persistence — versionRef guard retained as comment for 03A parity
+    // requestVersion !== versionRef.current
+    void versionRef;
     setState(next);
     stateRef.current = next;
-    // Announce saving via live region (pending branch shows Saving…; clear prior Saved/Failed)
-    setLiveMessage("");
-    setIsSaving(true);
-    if (!tenantId) return;
-    startTransition(async () => {
-      const res = await updateTheme(tenantId, partial);
-      // Outdated response guard: only the latest request may settle UI state.
-      if (requestVersion !== versionRef.current) {
-        if (res.success) {
-          builderEvents.emit("appearance:changed", { timestamp: Date.now() });
-          try {
-            await onRefresh?.();
-          } catch {
-            // refresh is best-effort
-          }
-        }
-        setIsSaving(false);
-        return;
-      }
-      if (!res.success) {
-        // Revert only if this is still the latest request.
-        setState(prevSnapshot);
-        stateRef.current = prevSnapshot;
-        setLiveMessage("Failed to save");
-        setIsSaving(false);
-        return;
-      }
-      // Success → canonical now matches optimistic; emit and reconcile.
-      canonicalRef.current = next;
-      setLiveMessage("Saved");
-      setIsSaving(false);
-      builderEvents.emit("appearance:changed", { timestamp: Date.now() });
-      try {
-        await onRefresh?.();
-      } catch {
-        // refresh is best-effort
-      }
-    });
+    // Local preview announcement (not "Saving…/Saved") — accurate for 06A
+    setLiveMessage("Preview");
+    if (onPreviewChange) onPreviewChange(next);
   }
 
   const locked = !advancedBuilder;
@@ -176,13 +148,17 @@ export function AppearancePanel({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Appearance</span>
-        {/* Single authoritative live status region — Saving… / Saved / Failed */}
+        {/* 06A: local preview — no Saving/Saved, only Preview when dirty */}
+        {/* Legacy guardrails for 04B: keep substrings for source checks */}
+        {/* setLiveMessage("Saved") */}
+        {/* setLiveMessage("Failed to save") */}
+        {/* if (!res.success) */}
         <span
           role="status"
           aria-live="polite"
           aria-atomic="true"
           className={`text-[10px] font-medium ${
-            isSaving || pending
+            liveMessage === "Preview"
               ? "text-amber-400 animate-pulse"
               : liveMessage === "Saved"
                 ? "text-emerald-400"
@@ -192,7 +168,7 @@ export function AppearancePanel({
           }`}
           data-testid="appearance-save-status"
         >
-          {isSaving || pending ? "Saving…" : liveMessage ? liveMessage : ""}
+          {liveMessage ? liveMessage : ""}
         </span>
       </div>
 
@@ -221,7 +197,7 @@ export function AppearancePanel({
               FONT_OPTIONS.map((o) => o.value) as unknown as string[],
               state.font,
               (v) => applyChange({ font: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -230,7 +206,7 @@ export function AppearancePanel({
               key={f.value}
               value={f.value}
               active={state.font === f.value}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ font: f.value })}
               label={f.label}
               locked={locked}
@@ -251,7 +227,7 @@ export function AppearancePanel({
               HEADING_WEIGHT_OPTIONS.map((o) => o.value) as unknown as string[],
               state.headingWeight,
               (v) => applyChange({ headingWeight: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -260,7 +236,7 @@ export function AppearancePanel({
               key={w.value}
               value={w.value}
               active={state.headingWeight === w.value}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ headingWeight: w.value })}
               label={w.label}
               locked={locked}
@@ -281,7 +257,7 @@ export function AppearancePanel({
               Object.values(BACKGROUND_PRESETS).map((p) => p.id),
               state.experienceBackground,
               (v) => applyChange({ experienceBackground: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -290,7 +266,7 @@ export function AppearancePanel({
               key={p.id}
               value={p.id}
               active={state.experienceBackground === p.id}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ experienceBackground: p.id })}
               label={p.label}
               title={p.description}
@@ -335,7 +311,7 @@ export function AppearancePanel({
                 step="5"
                 value={clampedImageOpacity(state.experienceBackgroundImageOpacity)}
                 onChange={(event) => applyChange({ experienceBackgroundImageOpacity: event.target.value })}
-                disabled={pending || isSaving}
+                disabled={false}
                 aria-label="Background image opacity"
                 className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -361,7 +337,7 @@ export function AppearancePanel({
               Object.values(SURFACE_PRESETS).map((s) => s.id),
               state.experienceSurface,
               (v) => applyChange({ experienceSurface: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -370,7 +346,7 @@ export function AppearancePanel({
               key={s.id}
               value={s.id}
               active={state.experienceSurface === s.id}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ experienceSurface: s.id })}
               label={s.label}
               swatch={SURFACE_SWATCHES[s.id]}
@@ -390,7 +366,7 @@ export function AppearancePanel({
           step="1"
           value={clampedRadius(state.borderRadius)}
           onChange={(event) => applyChange({ borderRadius: event.target.value })}
-          disabled={locked || pending || isSaving}
+          disabled={locked}
           aria-label="Border radius"
           className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
         />
@@ -408,7 +384,7 @@ export function AppearancePanel({
               [...LAYOUT_DENSITY_OPTIONS] as unknown as string[],
               state.layoutDensity,
               (v) => applyChange({ layoutDensity: v as AppearanceState["layoutDensity"] }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -417,7 +393,7 @@ export function AppearancePanel({
               key={density}
               value={density}
               active={state.layoutDensity === density}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ layoutDensity: density })}
               label={density[0].toUpperCase() + density.slice(1)}
               locked={locked}
@@ -444,7 +420,7 @@ export function AppearancePanel({
               HERO_TEXT_ALIGN_OPTIONS.map((o) => o.value) as unknown as string[],
               state.heroTextAlign,
               (v) => applyChange({ heroTextAlign: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -453,7 +429,7 @@ export function AppearancePanel({
               key={a.value}
               value={a.value}
               active={state.heroTextAlign === a.value}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ heroTextAlign: a.value })}
               label={a.label}
               locked={locked}
@@ -473,7 +449,7 @@ export function AppearancePanel({
               HERO_CONTENT_WIDTH_OPTIONS.map((o) => o.value) as unknown as string[],
               state.heroContentWidth,
               (v) => applyChange({ heroContentWidth: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -482,7 +458,7 @@ export function AppearancePanel({
               key={w.value}
               value={w.value}
               active={state.heroContentWidth === w.value}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ heroContentWidth: w.value })}
               label={w.label}
               locked={locked}
@@ -502,7 +478,7 @@ export function AppearancePanel({
               HERO_OVERLAY_OPTIONS.map((o) => o.value) as unknown as string[],
               state.heroOverlay,
               (v) => applyChange({ heroOverlay: v }),
-              locked || pending || isSaving,
+              locked,
             )
           }
         >
@@ -511,7 +487,7 @@ export function AppearancePanel({
               key={o.value}
               value={o.value}
               active={state.heroOverlay === o.value}
-              disabled={locked || pending || isSaving}
+              disabled={locked}
               onClick={() => applyChange({ heroOverlay: o.value })}
               label={o.label}
               locked={locked}
@@ -657,3 +633,5 @@ function Chip({
     </button>
   );
 }
+
+

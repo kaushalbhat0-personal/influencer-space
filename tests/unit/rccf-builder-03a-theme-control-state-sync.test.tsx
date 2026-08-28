@@ -100,8 +100,8 @@ describe("RCCF-BUILDER-03A — font lifecycle", () => {
     expect(chipActive(findChip("Inter"))).toBe(true);
     expect(chipActive(findChip("Geist"))).toBe(false);
 
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "inter" }));
-    await waitFor(() => expect(h.mockEmit).toHaveBeenCalledWith("appearance:changed", expect.any(Object)));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
+    expect(h.mockEmit).not.toHaveBeenCalled(); // 06A local preview
     // still NEW after success
     expect(chipActive(findChip("Inter"))).toBe(true);
   });
@@ -112,7 +112,7 @@ describe("RCCF-BUILDER-03A — font lifecycle", () => {
     const { rerender } = render(<AppearancePanel tenantId="t1" appearance={oldAppearance} advancedBuilder onRefresh={onRefresh} />);
 
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
 
     // Parent rerenders with same stale OLD object (simulates Workspace liveContent re-render without refresh)
     // The appearance prop reference is same OLD (stable memoized avoids new object, but we simulate the old bug path by reusing same object)
@@ -130,7 +130,7 @@ describe("RCCF-BUILDER-03A — font lifecycle", () => {
     const { rerender } = render(<AppearancePanel tenantId="t1" appearance={oldAppearance} advancedBuilder onRefresh={onRefresh} />);
 
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
 
     // Simulate parent having refreshed overview to NEW
     rerender(<AppearancePanel tenantId="t1" appearance={newAppearance} advancedBuilder onRefresh={onRefresh} />);
@@ -145,7 +145,7 @@ describe("RCCF-BUILDER-03A — heading weight, background, surface", () => {
     expect(chipActive(findChip("Bold"))).toBe(true);
     fireEvent.click(findChip("Semibold"));
     expect(chipActive(findChip("Semibold"))).toBe(true);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { headingWeight: "600" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Semibold"))).toBe(true);
   });
 
@@ -155,7 +155,7 @@ describe("RCCF-BUILDER-03A — heading weight, background, surface", () => {
     expect(chipActive(findChip("Solid"))).toBe(true);
     fireEvent.click(findChip("Aurora"));
     expect(chipActive(findChip("Aurora"))).toBe(true);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { experienceBackground: "aurora" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     // stale rerender must not restore solid
     rerender(<AppearancePanel tenantId="t1" appearance={appearance} advancedBuilder />);
     expect(chipActive(findChip("Aurora"))).toBe(true);
@@ -167,7 +167,7 @@ describe("RCCF-BUILDER-03A — heading weight, background, surface", () => {
     expect(chipActive(findChip("Flat"))).toBe(true);
     fireEvent.click(findChip("Glass"));
     expect(chipActive(findChip("Glass"))).toBe(true);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { experienceSurface: "glass" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Glass"))).toBe(true);
   });
 });
@@ -180,7 +180,7 @@ describe("RCCF-BUILDER-03A — radius", () => {
     expect(slider.value).toBe("8");
     fireEvent.change(slider, { target: { value: "16" } });
     expect(slider.value).toBe("16");
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", expect.objectContaining({ borderRadius: "16" })));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     // stale parent
     rerender(<AppearancePanel tenantId="t1" appearance={appearance} advancedBuilder />);
     expect((screen.getByLabelText("Border radius") as HTMLInputElement).value).toBe("16");
@@ -194,7 +194,7 @@ describe("RCCF-BUILDER-03A — density", () => {
     expect(chipActive(findChip("Comfortable"))).toBe(true);
     fireEvent.click(findChip("Compact"));
     expect(chipActive(findChip("Compact"))).toBe(true);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { layoutDensity: "compact" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Compact"))).toBe(true);
   });
 });
@@ -204,15 +204,15 @@ describe("RCCF-BUILDER-03A — hero controls", () => {
     const appearance = baseAppearance({ heroTextAlign: "center", heroContentWidth: "medium", heroOverlay: "medium" });
     render(<AppearancePanel tenantId="t1" appearance={appearance} advancedBuilder />);
     fireEvent.click(findChip("Left"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { heroTextAlign: "left" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Left"))).toBe(true);
 
     fireEvent.click(findChip("Narrow"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { heroContentWidth: "narrow" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Narrow"))).toBe(true);
 
     fireEvent.click(findChip("Strong"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { heroOverlay: "strong" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Strong"))).toBe(true);
   });
 });
@@ -226,22 +226,22 @@ describe("RCCF-BUILDER-03A — background image", () => {
     const opacity = screen.getByLabelText("Background image opacity") as HTMLInputElement;
     expect(opacity.value).toBe("35");
     fireEvent.change(opacity, { target: { value: "60" } });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", expect.objectContaining({ experienceBackgroundImageOpacity: "60" })));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect((screen.getByLabelText("Background image opacity") as HTMLInputElement).value).toBe("60");
   });
 });
 
 describe("RCCF-BUILDER-03A — failed persistence", () => {
   it("optimistic change reverts on failure", async () => {
-    h.mockUpdateTheme.mockResolvedValueOnce({ success: false, error: "Theme capability required: advanced_builder" });
+    // 06A: local preview — no server call, so optimistic stays (no revert)
     const appearance = baseAppearance({ font: "geist" });
     render(<AppearancePanel tenantId="t1" appearance={appearance} advancedBuilder />);
     fireEvent.click(findChip("Inter"));
     expect(chipActive(findChip("Inter"))).toBe(true);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
-    // after failure, reverts to geist
-    await waitFor(() => expect(chipActive(findChip("Geist"))).toBe(true));
-    expect(chipActive(findChip("Inter"))).toBe(false);
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
+    // remains Inter, no revert, no failure
+    expect(chipActive(findChip("Inter"))).toBe(true);
+    expect(chipActive(findChip("Geist"))).toBe(false);
     expect(h.mockEmit).not.toHaveBeenCalled();
   });
 });
@@ -263,7 +263,7 @@ describe("RCCF-BUILDER-03A — rapid changes", () => {
     // Instead simulate: second applyChange after first is still inflight via direct second click after mock resolves pending disabled? We test the guard by manually triggering second change after first's pending flag would normally block.
     // For this test, we bypass disabled by checking versionRef logic: if pending, UI is disabled, so rapid spam is blocked. The regression to verify is that an older failure does not clobber a newer success when requests are in flight via background image or programmatic calls.
     // We verify the simpler property: after a failed outdated request, the latest optimistic is kept.
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledTimes(1));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     // Simulate second change after first is still pending — we can't click while disabled, so we test the version guard by resolving first as failure after second would have succeeded.
     // Resolve first as failure (stale)
     (resolveFirst as unknown as (v: unknown) => void)({ success: false, error: "fail" });
@@ -277,7 +277,7 @@ describe("RCCF-BUILDER-03A — rapid changes", () => {
     // Now appearance is inter, click mono
     const monoChip = Array.from(document.querySelectorAll("button")).find((b) => b.textContent?.includes("Mono"));
     if (monoChip) fireEvent.click(monoChip);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     // If overlapping, version guard ensures last wins — we assert no revert to old.
   });
 
@@ -312,7 +312,7 @@ describe("RCCF-BUILDER-03A — parent rerender reproduction", () => {
 
     // Optimistic NEW change
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalled());
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     expect(chipActive(findChip("Inter"))).toBe(true);
 
     // Trigger parent rerender with stale OLD object — with the fix, WebsitePanel memoizes
@@ -324,7 +324,7 @@ describe("RCCF-BUILDER-03A — parent rerender reproduction", () => {
     expect(chipActive(findChip("Inter"))).toBe(true);
 
     // After server success, canonical refresh provides NEW — should remain NEW
-    await waitFor(() => expect(h.mockEmit).toHaveBeenCalled());
+    expect(h.mockEmit).not.toHaveBeenCalled(); // 06A local preview
     const newAppearance = baseAppearance({ font: "inter", headingWeight: "700", experienceBackground: "solid" });
     rerender(<AppearancePanel tenantId="t1" appearance={newAppearance} advancedBuilder onRefresh={onRefresh} />);
     expect(chipActive(findChip("Inter"))).toBe(true);

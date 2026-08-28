@@ -118,18 +118,19 @@ describe("RCCF-BUILDER-03B-1 — Appearance chips", () => {
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     const inter = findChip("Inter");
     inter.focus();
-    fireEvent.keyDown(inter, { key: "Enter" }); // Enter on radio should not automatically select via our handler (we only handle arrows), but native click via Enter on button does
-    // Instead test that clicking via Enter (fireEvent.click) works, and that Space also triggers click
-    // Native button: pressing Enter fires click
+    fireEvent.keyDown(inter, { key: "Enter" });
     fireEvent.click(inter);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "inter" }));
+    // 06A local preview — chip updates, no server persistence
+    expect(findChip("Inter").getAttribute("aria-checked")).toBe("true");
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled();
   });
 
   it("Space selects a chip (click)", async () => {
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     const inter = findChip("Inter");
     fireEvent.click(inter);
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "inter" }));
+    expect(findChip("Inter").getAttribute("aria-checked")).toBe("true");
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
   });
 
   it("ArrowRight moves selection and focus", async () => {
@@ -139,12 +140,9 @@ describe("RCCF-BUILDER-03B-1 — Appearance chips", () => {
     geist.focus();
     expect(document.activeElement).toBe(geist);
     fireEvent.keyDown(group, { key: "ArrowRight" });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "inter" }));
-    // focus moves to next radio on next frame
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A local preview
     await new Promise((r) => setTimeout(r, 20));
-    const inter = findChip("Inter");
-    // focus may have moved to inter
-    expect(document.activeElement === inter || h.mockUpdateTheme.mock.calls.length > 0).toBeTruthy();
+    expect(findChip("Inter").getAttribute("aria-checked")).toBe("true");
   });
 
   it("ArrowLeft moves correctly", async () => {
@@ -153,27 +151,30 @@ describe("RCCF-BUILDER-03B-1 — Appearance chips", () => {
     const inter = findChip("Inter");
     inter.focus();
     fireEvent.keyDown(group, { key: "ArrowLeft" });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "geist" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A
+    expect(findChip("Geist").getAttribute("aria-checked")).toBe("true");
   });
 
   it("ArrowDown/ArrowUp behave correctly", async () => {
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance({ headingWeight: "700" })} advancedBuilder />);
     const group = document.querySelector('[role="radiogroup"][aria-label="Heading weight"]') as HTMLElement;
     fireEvent.keyDown(group, { key: "ArrowDown" });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { headingWeight: "800" }));
-    h.mockUpdateTheme.mockClear();
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A
+    expect(document.querySelector('button[data-value="800"]')?.getAttribute("aria-checked")).toBe("true");
     fireEvent.keyDown(group, { key: "ArrowUp" });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { headingWeight: "700" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A
+    expect(document.querySelector('button[data-value="700"]')?.getAttribute("aria-checked")).toBe("true");
   });
 
   it("Home moves to first, End to last", async () => {
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance({ font: "inter" })} advancedBuilder />);
     const group = document.querySelector('[role="radiogroup"][aria-label="Font"]') as HTMLElement;
     fireEvent.keyDown(group, { key: "Home" });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "geist" }));
-    h.mockUpdateTheme.mockClear();
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A
+    expect(findChip("Geist").getAttribute("aria-checked")).toBe("true");
     fireEvent.keyDown(group, { key: "End" });
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "mono" }));
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A
+    expect(findChip("JetBrains Mono").getAttribute("aria-checked")).toBe("true");
   });
 
   it("disabled chips cannot be selected", async () => {
@@ -201,10 +202,12 @@ describe("RCCF-BUILDER-03B-1 — Appearance chips", () => {
   });
 
   it("existing applyChange path preserved (optimistic + emit)", async () => {
+    // 06A: local preview — optimistic still, but no server emit
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     fireEvent.click(findChip("Inter"));
-    await waitFor(() => expect(h.mockUpdateTheme).toHaveBeenCalledWith("t1", { font: "inter" }));
-    await waitFor(() => expect(h.mockEmit).toHaveBeenCalledWith("appearance:changed", expect.any(Object)));
+    expect(findChip("Inter").getAttribute("aria-checked")).toBe("true");
+    expect(h.mockUpdateTheme).not.toHaveBeenCalled(); // 06A
+    expect(h.mockEmit).not.toHaveBeenCalled(); // 06A local preview
   });
 
   it("source contains radiogroup/radio semantics", () => {

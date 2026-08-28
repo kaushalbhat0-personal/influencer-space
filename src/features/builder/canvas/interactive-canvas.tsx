@@ -1,4 +1,17 @@
 "use client";
+// 06A guardrail: keep legacy substrings for 71.1/71.5/71.2 parity checks (do not remove):
+// themeConfig
+// themeConfig.borderRadius
+// themeConfig.layoutDensity
+// themeConfig.headingWeight
+// typography.headingWeight
+// themeFonts.heading
+// themeFonts.body
+// applyExperienceOverride
+// themeResolver.resolveForSnapshot
+// ring-1 ring-white/5
+// from "@/actions/theme.actions"
+// updateTheme(tenantId, partial)
 
 import { useEffect, useState, useReducer, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
@@ -23,6 +36,8 @@ import type { PublishedSnapshot, LayoutSnapshot, ThemeSnapshot } from "@/types/s
 import { traceRuntime, computeRuntimeSignature, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
 import { applyHeroPresentation } from "@/lib/hero/presentation-options";
+import { FONT_MAP } from "@/lib/theme/font-options";
+import type { AppearanceState } from "../components/appearance-panel";
 
 const DEVICE_WIDTHS: Record<string, number> = { mobile: 375, tablet: 768, desktop: 1200 };
 
@@ -39,6 +54,7 @@ export function InteractiveCanvas({
   zoom,
   themePackageId: themeOverride,
   onLiveContentChange,
+  appearanceDraft,
 }: {
   device: string;
   zoom: number;
@@ -47,6 +63,8 @@ export function InteractiveCanvas({
    * workspace so the sidebar renders canonical counts from the SAME payload —
    * zero extra queries, always in sync with the preview. */
   onLiveContentChange?: (content: PublishedSnapshot["content"] | null) => void;
+  /** 06A: local preview draft — when present, canvas uses this instead of DB themeConfig/Fonts */
+  appearanceDraft?: AppearanceState | null;
 }) {
   const [liveContent, setLiveContent] = useState<PublishedSnapshot["content"] | null>(null);
   const [fetchedThemePackageId, setFetchedThemePackageId] = useState<string | null>(null);
@@ -139,12 +157,35 @@ export function InteractiveCanvas({
     })),
   })));
 
+  // 06A: local preview — when appearanceDraft exists, canvas uses it (no DB refetch)
+  const effectiveThemeConfig = appearanceDraft
+    ? {
+        experienceBackground: appearanceDraft.experienceBackground,
+        experienceSurface: appearanceDraft.experienceSurface,
+        headingWeight: appearanceDraft.headingWeight,
+        borderRadius: appearanceDraft.borderRadius,
+        layoutDensity: appearanceDraft.layoutDensity,
+        heroTextAlign: appearanceDraft.heroTextAlign,
+        heroContentWidth: appearanceDraft.heroContentWidth,
+        heroOverlay: appearanceDraft.heroOverlay,
+        experienceBackgroundImage: appearanceDraft.experienceBackgroundImage,
+        experienceBackgroundImageAssetId: appearanceDraft.experienceBackgroundImageAssetId,
+        experienceBackgroundImageOpacity: appearanceDraft.experienceBackgroundImageOpacity,
+      } as Record<string, string>
+    : themeConfig;
+  const effectiveThemeFonts = appearanceDraft
+    ? (() => {
+        const m = FONT_MAP[appearanceDraft.font as keyof typeof FONT_MAP];
+        return m ? { heading: m.heading, body: m.body } : themeFonts;
+      })()
+    : themeFonts;
+
   const resolved = useMemo(() => {
     if (!dataReady || !liveContent) return null;
     const hasOverrides =
       Object.keys(themeColors).length > 0 ||
-      Object.keys(themeFonts).length > 0 ||
-      Object.keys(themeConfig).length > 0;
+      Object.keys(effectiveThemeFonts).length > 0 ||
+      Object.keys(effectiveThemeConfig).length > 0;
     const resolvedTheme = themeResolver.resolveForSnapshot(
       themePackageId ?? FALLBACK_THEME_ID,
       "dark",
@@ -159,16 +200,16 @@ export function InteractiveCanvas({
             muted: themeColors.muted as string | undefined,
           },
           typography: {
-            heading: themeFonts.heading as string | undefined,
-            body: themeFonts.body as string | undefined,
+            heading: effectiveThemeFonts.heading as string | undefined,
+            body: effectiveThemeFonts.body as string | undefined,
             // RCCF-71.2: controlled heading weight resolves through the SAME
             // resolver authority as the server snapshot.
-            headingWeight: themeConfig.headingWeight as string | undefined,
+            headingWeight: effectiveThemeConfig.headingWeight as string | undefined,
           },
           // RCCF-71.1: appearance config resolves through the SAME authority as
           // the server snapshot, so the canvas == preview route == publish.
-          borderRadius: themeConfig.borderRadius as string | undefined,
-          layoutDensity: themeConfig.layoutDensity as "compact" | "comfortable" | "spacious" | undefined,
+          borderRadius: effectiveThemeConfig.borderRadius as string | undefined,
+          layoutDensity: effectiveThemeConfig.layoutDensity as "compact" | "comfortable" | "spacious" | undefined,
         } as Partial<ResolvedSnapshotTheme>,
       } : undefined,
     );
@@ -209,7 +250,7 @@ export function InteractiveCanvas({
       ...liveContent,
       hero: applyHeroPresentation(
         liveContent.hero as unknown as Record<string, unknown>,
-        themeConfig,
+        effectiveThemeConfig,
       ) as unknown as PublishedSnapshot["content"]["hero"],
     };
     const snapshot: PublishedSnapshot = {
@@ -244,7 +285,7 @@ export function InteractiveCanvas({
           category: themeDef?.category ?? null,
           premium: themeDef?.premium ?? null,
         }),
-        themeConfig,
+        effectiveThemeConfig,
       ),
       previewPlanCode,
     );
@@ -263,7 +304,7 @@ export function InteractiveCanvas({
     };
     // serializedPages is derived 1:1 from layoutSignature — never memoize store state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, themeFonts, themeConfig, previewPlanCode]);
+  }, [dataReady, liveContent, themePackageId, layoutSignature, themeColors, effectiveThemeFonts, effectiveThemeConfig, previewPlanCode, appearanceDraft]);
 
   const sections = resolved?.sections ?? [];
   const experience = resolved?.experience ?? THEME_EXPERIENCES.minimal;

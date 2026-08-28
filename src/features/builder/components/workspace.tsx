@@ -75,18 +75,43 @@ export function BuilderWorkspace() {
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
   const [publishing, setPublishing] = useState(false);
+  // 06A: local appearance draft — preview-first, no server persistence per control
+  const [appearanceDraft, setAppearanceDraft] = useState<import("./appearance-panel").AppearanceState | null>(null);
 
   // RCCF-BUILDER-03A: canonical reconciliation after appearance mutation.
-  // The overview is the authority for `appearance`; after a successful
-  // updateTheme we re-read it so the panel's memoized prop heals to NEW.
-  // No polling, no N+1 — only one fetch per successful mutation.
+  // 06A: local preview — refresh is best-effort legacy, not triggered per control.
   const refreshOverview = useCallback(async () => {
     try {
       const r = await getBuilderOverview();
       if (r.success && r.data) setOverviewData(r.data);
     } catch {
-      // best-effort — preview already reflects NEW via appearance:changed
+      // best-effort
     }
+  }, []);
+
+  // 06A: preview-first local draft — initialize from canonical, preserve local until reload
+  useEffect(() => {
+    if (!overviewData?.appearance) return;
+    if (appearanceDraft) return;
+    const a = overviewData.appearance;
+    setAppearanceDraft({
+      font: a.font,
+      experienceBackground: a.experienceBackground,
+      experienceSurface: a.experienceSurface,
+      headingWeight: a.headingWeight,
+      borderRadius: a.borderRadius,
+      layoutDensity: a.layoutDensity as "compact" | "comfortable" | "spacious",
+      heroTextAlign: a.heroTextAlign,
+      heroContentWidth: a.heroContentWidth,
+      heroOverlay: a.heroOverlay,
+      experienceBackgroundImage: a.experienceBackgroundImage,
+      experienceBackgroundImageAssetId: a.experienceBackgroundImageAssetId,
+      experienceBackgroundImageOpacity: a.experienceBackgroundImageOpacity,
+    });
+  }, [overviewData?.appearance, appearanceDraft]);
+
+  const handleAppearancePreviewChange = useCallback((next: import("./appearance-panel").AppearanceState) => {
+    setAppearanceDraft(next);
   }, []);
 
   useEffect(() => {
@@ -234,6 +259,14 @@ export function BuilderWorkspace() {
   // Publish through the SAME server action the Dashboard uses. Saves the
   // draft first so the publish always reads the latest builder pages.
   const handlePublish = useCallback(async () => {
+    if (loading) {
+      setStatusMsg("Still loading — try again in a moment");
+      return;
+    }
+    if (!builderStore.canvas.pages.length) {
+      setStatusMsg("No pages — cannot publish");
+      return;
+    }
     setPublishing(true);
     setPublishUpgradeAction(null);
     setStatusMsg("Saving draft...");
@@ -261,7 +294,7 @@ export function BuilderWorkspace() {
       setPublishUpgradeAction(null);
       setPublishing(false);
     }
-  }, [performSave, previewThemeId, currentThemeId]);
+  }, [performSave, previewThemeId, currentThemeId, loading]);
 
   const handleThemePreview = useCallback((themeId: string) => {
     // IMPLEMENTATION-26: preview is TEMPORARY — it must never mark the draft
@@ -351,7 +384,7 @@ export function BuilderWorkspace() {
 
         <div className="flex flex-1 flex-col overflow-hidden min-w-0">
           <div className="flex-1 overflow-auto">
-            <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} onLiveContentChange={setLiveContent} />
+            <InteractiveCanvas device={device} zoom={1} themePackageId={previewThemeId ?? currentThemeId ?? null} onLiveContentChange={setLiveContent} appearanceDraft={appearanceDraft} />
           </div>
         </div>
 
@@ -368,6 +401,8 @@ export function BuilderWorkspace() {
             overview={overviewData}
             tenantId={overviewData?.tenant.id ?? null}
             onAppearanceRefresh={refreshOverview}
+            appearanceDraft={appearanceDraft}
+            onAppearancePreviewChange={handleAppearancePreviewChange}
           />
         </ResizablePanel>
       </div>
@@ -425,6 +460,8 @@ export function BuilderWorkspace() {
           overview={overviewData}
           tenantId={overviewData?.tenant.id ?? null}
           onAppearanceRefresh={refreshOverview}
+          appearanceDraft={appearanceDraft}
+          onAppearancePreviewChange={handleAppearancePreviewChange}
         />
       </BuilderMobilePanel>
 
