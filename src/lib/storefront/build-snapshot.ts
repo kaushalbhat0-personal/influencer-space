@@ -13,6 +13,7 @@ import type { BuilderPage } from "@/lib/builder/types";
 import type { PublishedSnapshot, WebsiteAggregate, NavigationItem, HeroContent } from "@/types/snapshot";
 import { builderPagesToLayoutSnapshot } from "@/lib/builder/layout";
 import { themeResolver } from "@/lib/theme/resolver-new";
+import { themeRegistry } from "@/lib/theme/registry-new";
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
 import { applyHeroPresentation } from "@/lib/hero/presentation-options";
 
@@ -69,9 +70,22 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
     Object.keys(input.themeFonts).length > 0 ||
     (input.themeConfig && Object.keys(input.themeConfig).length > 0) ||
     false;
+  // R2.5: light theme fix — resolve the theme's *primary* variant rather than
+  // hardcoding "dark". Light-capable catalog themes declare their light
+  // variant first (variants[0].mode === "light", bg #FFFFFF/FFFBEB/FCFCFC);
+  // dark-only themes have variants[0].mode === "dark". This uses the existing
+  // canonical variant ordering and requires no new isLight flag, no
+  // theme-id hardcode, and no capability bypass. Preview == publish.
+  let resolveMode: "light" | "dark" = "dark";
+  try {
+    const t = themeRegistry.getById(input.themePackageId ?? FALLBACK_THEME_ID) ?? themeRegistry.getAll().find((x) => x.slug === (input.themePackageId ?? "")) ?? null;
+    if (t && t.variants[0]) resolveMode = t.variants[0].mode as "light" | "dark";
+  } catch {
+    // fallback to dark
+  }
   const resolvedTheme = themeResolver.resolveForSnapshot(
     input.themePackageId ?? FALLBACK_THEME_ID,
-    "dark",
+    resolveMode,
     hasOverrides ? {
       overrides: {
         colors: {
@@ -96,6 +110,8 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
       } as Partial<ResolvedSnapshotTheme>,
     } : undefined,
   );
+
+
 
   // RCCF-71.3: HERO PRESENTATION (textAlign/contentWidth/overlay) persists in
   // Website.themeConfig and is merged onto snapshot.content.hero by the SAME
@@ -132,6 +148,14 @@ export function buildRuntimeSnapshot(input: RuntimeSnapshotInput): PublishedSnap
         background: resolvedTheme?.colors.background ?? "#09090b",
         foreground: resolvedTheme?.colors.foreground ?? "#fafafa",
         muted: resolvedTheme?.colors.muted ?? "#a1a1aa",
+        ...(resolvedTheme?.colors.border ? { border: resolvedTheme.colors.border } : {}),
+        ...(resolvedTheme?.colors.textSecondary ? { textSecondary: resolvedTheme.colors.textSecondary } : {}),
+        ...(resolvedTheme?.colors.surface ? { surface: resolvedTheme.colors.surface } : {}),
+        ...(resolvedTheme?.colors.surfaceSecondary ? { surfaceSecondary: resolvedTheme.colors.surfaceSecondary } : {}),
+        ...(resolvedTheme?.colors.success ? { success: resolvedTheme.colors.success } : {}),
+        ...(resolvedTheme?.colors.warning ? { warning: resolvedTheme.colors.warning } : {}),
+        ...(resolvedTheme?.colors.danger ? { danger: resolvedTheme.colors.danger } : {}),
+        ...(resolvedTheme?.colors.focus ? { focus: resolvedTheme.colors.focus } : {}),
       },
       typography: {
         heading: resolvedTheme?.typography.heading ?? "Inter",

@@ -184,47 +184,74 @@ export async function StorefrontPage({
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }} />
         ))}
-        {/* RCCF-BUILDER-06D: page owns the ambient background — sections compose transparently over it. */}
-        <PageExperience experience={experience}>
-          {sections.map((section, i) => {
-            const isFirst = i === 0;
-            const isLast = i === sections.length - 1;
-            const sectionVariant = isFirst ? "hero" as const : isLast ? "footer" as const : "default" as const;
-            // RCCF-BUILDER-05B flow is baked per-section via buildRuntimeSnapshot → renderingHints.flow
-            const flow = (doc.renderingHints as unknown as { flow?: Record<string, string> })?.flow?.[section.id] as
-              | "shared"
-              | "bleed"
-              | "overlap"
-              | "softSeparator"
-              | "isolated"
-              | undefined;
-            // RCCF-19 P1-C: the public Contact/Newsletter forms submit to server
-            // actions that require a tenantId. Inject the TRUSTED resolved tenant
-            // id at the render boundary (never persisted into Block.config, never
-            // user-editable) so submissions succeed and stay tenant-scoped.
-            const isInteractionSection =
-              section.moduleId.startsWith("contact.") || section.moduleId.startsWith("newsletter.");
-            const config = isInteractionSection
-              ? { ...(section.config ?? {}), tenantId: data.tenantId }
-              : section.config;
-            return (
-              <ExperienceSection
-                key={`${section.id}-${i}`}
-                id={section.moduleId?.split(".")[0] ?? `section-${i}`}
-                experience={experience}
-                index={i}
-                variant={sectionVariant}
-                divider="bottom"
-                flow={flow}
-                data-testid={`experience-section-${i}`}
-              >
-                <ComponentErrorBoundary componentId={section.moduleId}>
-                  <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} previewMode={isPreview} />
-                </ComponentErrorBoundary>
-              </ExperienceSection>
-            );
-          })}
-        </PageExperience>
+        {(() => {
+          // 06E-FIX: dedicated footer composition — footer is not a generic section
+          const bodySections = sections.filter((s) => !s.moduleId.startsWith("footer."));
+          const footerSections = sections.filter((s) => s.moduleId.startsWith("footer."));
+          return (
+            <>
+              {/* RCCF-BUILDER-06D: page owns the ambient background — sections compose transparently over it. */}
+              <PageExperience experience={experience}>
+                {bodySections.map((section, i) => {
+                  const isHero = i === 0 && section.moduleId.startsWith("hero.");
+                  const sectionVariant = isHero ? "hero" as const : "default" as const;
+                  const flow = (doc.renderingHints as unknown as { flow?: Record<string, string> })?.flow?.[section.id] as
+                    | "shared"
+                    | "bleed"
+                    | "overlap"
+                    | "softSeparator"
+                    | "isolated"
+                    | undefined;
+                  const isInteractionSection =
+                    section.moduleId.startsWith("contact.") || section.moduleId.startsWith("newsletter.");
+                  const config = isInteractionSection
+                    ? { ...(section.config ?? {}), tenantId: data.tenantId }
+                    : section.config;
+                  return (
+                    <ExperienceSection
+                      key={`${section.id}-${i}`}
+                      id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+                      experience={experience}
+                      index={i}
+                      variant={sectionVariant}
+                      divider="bottom"
+                      flow={flow}
+                      data-testid={`experience-section-${i}`}
+                    >
+                      <ComponentErrorBoundary componentId={section.moduleId}>
+                        <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} previewMode={isPreview} />
+                      </ComponentErrorBoundary>
+                    </ExperienceSection>
+                  );
+                })}
+              </PageExperience>
+              {/* 06E-FIX: dedicated footer — semantic <footer>, centered, deliberate separation from Contact */}
+              {footerSections.map((section) => {
+                const config = section.config;
+                return (
+                  <footer
+                    key={`footer-${section.id}`}
+                    data-testid="storefront-footer"
+                    className="border-t border-[var(--border,rgba(0,0,0,0.08))] bg-[var(--surface-root,#0A0A0B)]"
+                  >
+                    <div className="mx-auto max-w-6xl px-6 py-10 sm:py-12">
+                      <ComponentErrorBoundary componentId={section.moduleId}>
+                        <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} previewMode={isPreview} />
+                      </ComponentErrorBoundary>
+                    </div>
+                  </footer>
+                );
+              })}
+              {footerSections.length === 0 && (
+                <footer data-testid="storefront-footer" className="border-t border-[var(--border,rgba(0,0,0,0.08))] bg-[var(--surface-root,#0A0A0B)]">
+                  <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-[var(--text-muted,#71717A)]">
+                    © {snap.content.identity.name || "CreatorStore"}
+                  </div>
+                </footer>
+              )}
+            </>
+          );
+        })()}
         <TrustIndicators declaredFacts={snap.content?.declaredFacts} />
       </main>
     </>

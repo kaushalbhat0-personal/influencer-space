@@ -187,9 +187,15 @@ export function InteractiveCanvas({
       Object.keys(themeColors).length > 0 ||
       Object.keys(effectiveThemeFonts).length > 0 ||
       Object.keys(effectiveThemeConfig).length > 0;
+    // 06E-FIX: respect light variant (same as buildRuntimeSnapshot) — do not hardcode dark
+    let resolveMode: "light" | "dark" = "dark";
+    try {
+      const t = themeRegistry.getById(themePackageId ?? FALLBACK_THEME_ID) ?? themeRegistry.getAll().find((x) => x.slug === (themePackageId ?? "")) ?? null;
+      if (t && t.variants[0]) resolveMode = t.variants[0].mode as "light" | "dark";
+    } catch {}
     const resolvedTheme = themeResolver.resolveForSnapshot(
       themePackageId ?? FALLBACK_THEME_ID,
-      "dark",
+      resolveMode,
       hasOverrides ? {
         overrides: {
           colors: {
@@ -389,50 +395,88 @@ export function InteractiveCanvas({
             )}
 
             {/* RCCF-BUILDER-06D: builder canvas uses the exact same PageExperience → ExperienceSection pipeline as the storefront. */}
+            {/* 06E-FIX: dedicated footer — same split as StorefrontPage */}
             <PageExperience experience={experience}>
-              {sections.map((section, i) => {
+              {sections
+                .filter((s) => !s.moduleId.startsWith("footer."))
+                .map((section, i) => {
+                  const slotId = slotIdFromSectionId(section.id);
+                  const isHero = i === 0 && section.moduleId.startsWith("hero.");
+                  const sectionVariant: "hero" | "default" = isHero ? "hero" : "default";
+                  const isSelected = builderStore.isSelected(slotId);
+                  return (
+                    <ExperienceSection
+                      key={section.id}
+                      id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+                      experience={experience}
+                      index={i}
+                      variant={sectionVariant}
+                      divider="bottom"
+                      data-testid={`builder-experience-${i}`}
+                    >
+                      <div
+                        data-element-id={slotId}
+                        data-module={section.moduleId}
+                        className={cn(
+                          "relative rounded transition-shadow",
+                          isSelected && "ring-2 ring-indigo-500/60",
+                        )}
+                      >
+                        <ComponentErrorBoundary componentId={section.moduleId}>
+                          <ComponentRenderer
+                            componentId={section.moduleId}
+                            props={section.config}
+                            elementId={slotId}
+                            viewport={builderStore.canvas.device}
+                            previewMode
+                          />
+                        </ComponentErrorBoundary>
+                      </div>
+                    </ExperienceSection>
+                  );
+                })}
+            </PageExperience>
+            {sections
+              .filter((s) => s.moduleId.startsWith("footer."))
+              .map((section) => {
                 const slotId = slotIdFromSectionId(section.id);
-                const isFirst = i === 0;
-                const isLast = i === sections.length - 1;
-                const sectionVariant: "hero" | "footer" | "default" = isFirst ? "hero" : isLast ? "footer" : "default";
-                // Canvas selection: reflects the SAME store selection state that
-                // drives the left sidebar / properties panel — pure visual ring.
                 const isSelected = builderStore.isSelected(slotId);
                 return (
-                  // RCCF-LAUNCH-TRACK-05: the Builder preview now renders the SAME
-                  // ExperienceSection (backgrounds/effects/dividers) as the live
-                  // storefront, so previews accurately represent the theme.
-                  <ExperienceSection
-                    key={section.id}
-                    id={section.moduleId?.split(".")[0] ?? `section-${i}`}
-                    experience={experience}
-                    index={i}
-                    variant={sectionVariant}
-                    divider="bottom"
-                    data-testid={`builder-experience-${i}`}
+                  <footer
+                    key={`footer-${section.id}`}
+                    data-testid="builder-footer"
+                    className="border-t border-[var(--border,rgba(0,0,0,0.08))] bg-[var(--surface-root,#0A0A0B)]"
                   >
-                    <div
-                      data-element-id={slotId}
-                      data-module={section.moduleId}
-                      className={cn(
-                        "relative rounded transition-shadow",
-                        isSelected && "ring-2 ring-indigo-500/60",
-                      )}
-                    >
-                      <ComponentErrorBoundary componentId={section.moduleId}>
-                        <ComponentRenderer
-                          componentId={section.moduleId}
-                          props={section.config}
-                          elementId={slotId}
-                          viewport={builderStore.canvas.device}
-                          previewMode
-                        />
-                      </ComponentErrorBoundary>
+                    <div className="mx-auto max-w-6xl px-6 py-8">
+                      <div
+                        data-element-id={slotId}
+                        data-module={section.moduleId}
+                        className={cn(
+                          "relative rounded transition-shadow",
+                          isSelected && "ring-2 ring-indigo-500/60",
+                        )}
+                      >
+                        <ComponentErrorBoundary componentId={section.moduleId}>
+                          <ComponentRenderer
+                            componentId={section.moduleId}
+                            props={section.config}
+                            elementId={slotId}
+                            viewport={builderStore.canvas.device}
+                            previewMode
+                          />
+                        </ComponentErrorBoundary>
+                      </div>
                     </div>
-                  </ExperienceSection>
+                  </footer>
                 );
               })}
-            </PageExperience>
+            {sections.filter((s) => s.moduleId.startsWith("footer.")).length === 0 && (
+              <footer data-testid="builder-footer" className="border-t border-[var(--border,rgba(0,0,0,0.08))] bg-[var(--surface-root,#0A0A0B)]">
+                <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-[var(--text-muted,#71717A)]">
+                  © {liveContent?.identity?.name || "CreatorStore"}
+                </div>
+              </footer>
+            )}
           </div>
         </div>
       </div>

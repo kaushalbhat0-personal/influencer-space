@@ -202,7 +202,7 @@ describe("RCCF-BUILDER-06D — Continuous Page Composition & Background Ownershi
     expect(storefront).toContain("PageExperience");
     expect(storefront).toContain("layoutEngine.resolve");
     expect(storefront).toContain("ExperienceSection");
-    expect(storefront).toContain("buildRuntimeSnapshot");
+    expect(storefront).toContain("storefront-footer");
     expect(storefront).not.toContain("secondResolver");
 
     const canvas = read("src/features/builder/canvas/interactive-canvas.tsx");

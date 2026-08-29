@@ -46,8 +46,8 @@ function useVisibility(props: Record<string, unknown>): boolean {
 function EmptyState({ label = "No content yet" }: { label?: string }) {
   if (process.env.NODE_ENV === "production") return null;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)] text-center">
-      <div className="rounded-[var(--radius-lg,0.5rem)] border border-dashed border-white/10 p-8 text-sm text-zinc-600">
+    <div className="mx-auto max-w-5xl px-4 py-6 text-center">
+      <div className="rounded-[var(--radius-lg,0.5rem)] border border-dashed border-[var(--border,rgba(0,0,0,0.08))] p-6 text-sm text-[var(--text-muted,#71717A)]">
         {label}
       </div>
     </div>
@@ -63,7 +63,7 @@ function SectionHeading({ p, title }: { p: Record<string, unknown>; title: strin
   return (
     <div className="mb-6 text-center">
       <h2 className="text-2xl font-[var(--brand-font-weight-heading,700)] text-[var(--text-primary,#FAFAFA)]">{title}</h2>
-      {description && <p className="mx-auto mt-2 max-w-2xl text-sm text-zinc-400">{description}</p>}
+      {description && <p className="mx-auto mt-2 max-w-2xl text-sm text-[var(--text-secondary,#A1A1AA)]">{description}</p>}
     </div>
   );
 }
@@ -147,7 +147,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
   const alignment = resolvedMedia === "video" ? videoAlign : imageAlign;
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
+    <div className="relative overflow-hidden bg-[var(--surface-root,#09090B)]" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
       {/* â”€â”€ Hero media â€” ALWAYS renders first; avatar never replaces it â”€â”€ */}
       {/* RCCF-RESPONSIVE-02: breakpoints are CONTAINER-query variants (@sm/@lg)
           so the Builder device frame (a 375px-scaled div inside a wide window)
@@ -187,10 +187,10 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
             className="absolute inset-0"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-800/60 via-zinc-900/60 to-black">
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-card,#18181B)]">
             {process.env.NODE_ENV !== "production" && (
-              <div className="flex flex-col items-center gap-2 text-zinc-600">
-                <span className="text-2xl">âœ¦</span>
+              <div className="flex flex-col items-center gap-2 text-[var(--text-muted,#71717A)]">
+                <span className="text-2xl">✦</span>
                 <span className="text-xs tracking-wide">Your hero goes here</span>
               </div>
             )}
@@ -203,7 +203,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
 
       {/* â”€â”€ Overlapping profile picture + identity (never above the media) â”€â”€ */}
       <div className="-mt-[100px] @sm/main:-mt-[24%] relative z-10">
-        <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-12 pt-2 @sm/main:pb-20`}>
+        <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-16 pt-6 @sm/main:pb-24 @sm/main:pt-8`}>
           {profilePictureUrl && (
             <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm/main:h-36 @sm/main:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
@@ -224,15 +224,15 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
             // RCCF-71.4.1 P3: `break-words` keeps a long creator identity/title
             // wrapping inside the canvas on narrow screens instead of extending
             // past the 390px frame and being clipped on both sides.
-            <h1 className="text-3xl font-[var(--brand-font-weight-heading,700)] tracking-tight text-white break-words @sm/main:text-4xl @lg/main:text-5xl">{name || title}</h1>
+            <h1 className="text-3xl font-[var(--brand-font-weight-heading,700)] tracking-tight text-[var(--text-primary,#FAFAFA)] break-words @sm/main:text-4xl @lg/main:text-5xl">{name || title}</h1>
           ) : null}
 
           {title && title !== name && (
-            <h2 className="mt-2 text-xl font-semibold text-white break-words @sm/main:text-2xl">{title}</h2>
+            <h2 className="mt-2 text-xl font-semibold text-[var(--text-primary,#FAFAFA)] break-words @sm/main:text-2xl">{title}</h2>
           )}
-          {tagline && <p className="mt-3 text-base text-zinc-400">{tagline}</p>}
-          {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-zinc-500">{bio}</p>}
-          {!bio && subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+          {tagline && <p className="mt-3 text-base text-[var(--text-secondary,#A1A1AA)]">{tagline}</p>}
+          {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--text-secondary,#A1A1AA)]">{bio}</p>}
+          {!bio && subtitle && <p className="mt-1 text-sm text-[var(--text-secondary,#A1A1AA)]">{subtitle}</p>}
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {cta && (
@@ -265,7 +265,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
                 previewMode ? (
                   <span
                     key={i}
-                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400"
+                    className="rounded-full border border-[var(--border,rgba(255,255,255,0.08))] px-3 py-1 text-xs text-[var(--text-muted,#71717A)]"
                   >
                     {l.label || platformLabel(l.platform || "Link")}
                   </span>
@@ -275,7 +275,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
                     href={l.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-white/30 hover:text-white"
+                    className="rounded-full border border-[var(--border,rgba(255,255,255,0.08))] px-3 py-1 text-xs text-[var(--text-muted,#71717A)] transition-colors hover:border-[var(--border,rgba(0,0,0,0.12))] hover:text-[var(--text-primary,#FAFAFA)]"
                   >
                     {l.label || platformLabel(l.platform || "Link")}
                   </a>
