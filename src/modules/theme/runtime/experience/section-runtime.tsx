@@ -18,6 +18,8 @@ export interface ExperienceSectionProps {
   divider?: "top" | "bottom" | "none";
   /** RCCF-BUILDER-05B: semantic flow for this section (shared/bleed/overlap/softSeparator/isolated). */
   flow?: import("./theme-experience").SectionFlow;
+  /** 06F: content-aware rhythm — when false, section receives compact spacing */
+  hasContent?: boolean;
   "data-testid"?: string;
 }
 
@@ -47,6 +49,7 @@ export function ExperienceSection({
   divider,
   variant,
   flow,
+  hasContent,
   ...rest
 }: ExperienceSectionProps) {
   const override = resolveOverride(experience, variant);
@@ -83,11 +86,22 @@ export function ExperienceSection({
   // RCCF-BUILDER-06D: fullBleed must remain horizontally safe — w-full only, never viewport hacks
   const fullBleed = (override as { fullBleed?: boolean }).fullBleed === true && isBleed;
 
+  // 06F: content-aware rhythm — sparse sections receive compact spacing via CSS variable override
+  // ONE clear ownership model: LayoutEngine provides --section-spacing, ExperienceSection overrides per content state, renderers consume via py-[var(--section-spacing)]
+  // Hero is intentionally spacious (no override, uses renderer hero weight); sparse uses 1.5rem compact (derived from comfortable 3rem * 0.5)
+  const isHeroVariant = variant === "hero";
+  const isSparse = hasContent === false && !isHeroVariant;
+  const rhythmStyle: React.CSSProperties | undefined = isSparse
+    ? ({ "--section-spacing": "1.5rem" } as React.CSSProperties)
+    : undefined;
+  const combinedStyle: React.CSSProperties | undefined =
+    overlapStyle || rhythmStyle ? ({ ...overlapStyle, ...rhythmStyle } as React.CSSProperties) : undefined;
+
   return (
     <section
       id={id}
       className={`relative ${fullBleed ? "w-full" : ""} overflow-hidden ${motionClass(motion)} ${isIsolated ? alternateSurfaceClass(index, experience.alternateSurface === true) : ""} ${className}`}
-      style={overlapStyle}
+      style={combinedStyle}
       {...rest}
     >
       {shouldRenderBackground && <ExperienceBackground background={background} />}

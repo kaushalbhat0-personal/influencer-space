@@ -412,6 +412,7 @@ export function InteractiveCanvas({
                       index={i}
                       variant={sectionVariant}
                       divider="bottom"
+                      hasContent={section.config.hasContent as boolean | undefined}
                       data-testid={`builder-experience-${i}`}
                     >
                       <div

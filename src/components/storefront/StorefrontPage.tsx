@@ -216,6 +216,7 @@ export async function StorefrontPage({
                       variant={sectionVariant}
                       divider="bottom"
                       flow={flow}
+                      hasContent={section.config.hasContent as boolean | undefined}
                       data-testid={`experience-section-${i}`}
                     >
                       <ComponentErrorBoundary componentId={section.moduleId}>
