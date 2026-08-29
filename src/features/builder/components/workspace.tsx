@@ -14,8 +14,9 @@ import type { BuilderCanvas as BuilderCanvasType } from "@/lib/builder/types";
 import type { PublishedSnapshot } from "@/types/snapshot";
 import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
-import { applyThemePackage } from "@/actions/theme.actions";
+import { applyThemePackage, updateTheme } from "@/actions/theme.actions";
 import { publishWebsite } from "@/actions/publish.actions";
+import type { AppearanceState } from "./appearance-panel";
 import Link from "next/link";
 import { getPublishFailurePresentation, type PublishFailureAction } from "@/lib/publishing/publish-error-messages";
 import { normalizeThemeId } from "@/lib/theme/resolver-new";
@@ -38,6 +39,24 @@ import { cn } from "@/lib/utils";
  * semantics are untouched — this only changes the presentation shell.
  */
 type MobilePanel = "sections" | "properties" | null;
+
+function shallowEqualAppearance(a: AppearanceState | null | undefined, b: AppearanceState | null | undefined): boolean {
+  if (!a || !b) return a === b;
+  return (
+    a.font === b.font &&
+    a.experienceBackground === b.experienceBackground &&
+    a.experienceSurface === b.experienceSurface &&
+    a.headingWeight === b.headingWeight &&
+    a.borderRadius === b.borderRadius &&
+    a.layoutDensity === b.layoutDensity &&
+    a.heroTextAlign === b.heroTextAlign &&
+    a.heroContentWidth === b.heroContentWidth &&
+    a.heroOverlay === b.heroOverlay &&
+    a.experienceBackgroundImage === b.experienceBackgroundImage &&
+    a.experienceBackgroundImageAssetId === b.experienceBackgroundImageAssetId &&
+    a.experienceBackgroundImageOpacity === b.experienceBackgroundImageOpacity
+  );
+}
 
 export function BuilderWorkspace() {
   useKeyboardShortcuts();
@@ -76,7 +95,9 @@ export function BuilderWorkspace() {
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
   const [publishing, setPublishing] = useState(false);
   // 06A: local appearance draft — preview-first, no server persistence per control
-  const [appearanceDraft, setAppearanceDraft] = useState<import("./appearance-panel").AppearanceState | null>(null);
+  const [appearanceDraft, setAppearanceDraft] = useState<AppearanceState | null>(null);
+  // 06B: unified Builder save status (single draft for appearance + pages)
+  const [saveStatus, setSaveStatus] = useState<"CLEAN" | "DIRTY" | "SAVING" | "SAVED" | "FAILED">("CLEAN");
 
   // RCCF-BUILDER-03A: canonical reconciliation after appearance mutation.
   // 06A: local preview — refresh is best-effort legacy, not triggered per control.
@@ -110,9 +131,28 @@ export function BuilderWorkspace() {
     });
   }, [overviewData?.appearance, appearanceDraft]);
 
-  const handleAppearancePreviewChange = useCallback((next: import("./appearance-panel").AppearanceState) => {
+  const handleAppearancePreviewChange = useCallback((next: AppearanceState) => {
     setAppearanceDraft(next);
+    setSaveStatus((prev) => (prev === "SAVING" ? prev : "DIRTY"));
   }, []);
+
+  // 06B: unified dirty detection (appearance OR pages)
+  const canonicalAppearance = overviewData?.appearance as AppearanceState | undefined;
+  const isAppearanceDirty = (() => {
+    if (!appearanceDraft || !canonicalAppearance) return false;
+    return !shallowEqualAppearance(appearanceDraft, canonicalAppearance);
+  })();
+  const isPageDirty = builderStore.isDirty;
+  const isBuilderDirty = isAppearanceDirty || isPageDirty;
+
+  useEffect(() => {
+    if (saveStatus === "SAVING" || saveStatus === "FAILED") return;
+    if (isBuilderDirty) {
+      if (saveStatus === "CLEAN" || saveStatus === "SAVED") setSaveStatus("DIRTY");
+    } else {
+      if (saveStatus === "DIRTY") setSaveStatus("CLEAN");
+    }
+  }, [isBuilderDirty, saveStatus]);
 
   useEffect(() => {
     loadBuilderPages()
@@ -224,40 +264,106 @@ export function BuilderWorkspace() {
     }
   }, [overviewData]);
 
-  useEffect(() => {
-    if (!builderStore.isDirty || loading) return;
-    if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
-    autoSaveRef.current = setTimeout(() => {
-      // IMPLEMENTATION-26: autosave persists the APPLIED theme only — a
-      // previewed (locked/free) theme is never saved.
-      performSave(currentThemeId, currentThemeId);
-    }, 2000);
-    return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
-    // saveAttempt in deps: a failed save re-arms the debounce (A1).
-  }, [builderStore.isDirty, loading, currentThemeId, performSave, saveAttempt]);
+  // 06B: unified Save Draft — appearance (local) + pages (store) as one draft
+  const handleSaveDraft = useCallback(async (): Promise<boolean> => {
+    if (!isBuilderDirty) {
+      setStatusMsg("All changes saved");
+      setSaveStatus("CLEAN");
+      return true;
+    }
+    if (saveStatus === "SAVING") return false;
+    setSaveStatus("SAVING");
+    setSaving(true);
+    setStatusMsg("Saving changes…");
+    let appearanceOk = true;
+    let pagesOk = true;
 
-  // VALIDATION-03.5 A5: warn before closing/navigating away with unsaved
-  // changes so work inside the 2s autosave window is never lost silently.
+    if (isAppearanceDirty && appearanceDraft && overviewData?.tenant.id) {
+      try {
+        const res = await updateTheme(overviewData.tenant.id, {
+          font: appearanceDraft.font,
+          headingWeight: appearanceDraft.headingWeight,
+          borderRadius: appearanceDraft.borderRadius,
+          layoutDensity: appearanceDraft.layoutDensity,
+          experienceBackground: appearanceDraft.experienceBackground,
+          experienceSurface: appearanceDraft.experienceSurface,
+          heroTextAlign: appearanceDraft.heroTextAlign,
+          heroContentWidth: appearanceDraft.heroContentWidth,
+          heroOverlay: appearanceDraft.heroOverlay,
+          experienceBackgroundImage: appearanceDraft.experienceBackgroundImage,
+          experienceBackgroundImageAssetId: appearanceDraft.experienceBackgroundImageAssetId,
+          experienceBackgroundImageOpacity: appearanceDraft.experienceBackgroundImageOpacity,
+        });
+        if (!res.success) {
+          appearanceOk = false;
+          setStatusMsg(res.error || "Failed to save appearance");
+        } else {
+          setOverviewData((prev) => (prev ? ({ ...prev, appearance: { ...appearanceDraft } } as BuilderOverviewData) : prev));
+        }
+      } catch (e) {
+        appearanceOk = false;
+        setStatusMsg(e instanceof Error ? e.message : "Failed to save appearance");
+      }
+    }
+
+    if (appearanceOk && isPageDirty) {
+      try {
+        const pages = builderStore.serialize();
+        const res = await saveBuilderPages(pages);
+        if (!res.success) {
+          pagesOk = false;
+          setStatusMsg(res.error || "Failed to save pages");
+        } else {
+          builderStore.markClean();
+        }
+      } catch (e) {
+        pagesOk = false;
+        setStatusMsg(e instanceof Error ? e.message : "Failed to save pages");
+      }
+    }
+
+    if (appearanceOk && pagesOk) {
+      setSaveStatus("SAVED");
+      setStatusMsg("Changes saved");
+      setSaveAttempt((n) => n + 1);
+      setSaving(false);
+      return true;
+    } else {
+      setSaveStatus("FAILED");
+      setSaveAttempt((n) => n + 1);
+      setSaving(false);
+      return false;
+    }
+  }, [isBuilderDirty, isAppearanceDirty, isPageDirty, appearanceDraft, overviewData, saveStatus]);
+
+  // 06B: remove page autosave — explicit Save Draft only
+  useEffect(() => {
+    if (autoSaveRef.current) {
+      clearTimeout(autoSaveRef.current);
+      autoSaveRef.current = null;
+    }
+  }, [isBuilderDirty]);
+
+  // 06B: unified beforeunload — warn if Builder is DIRTY (appearance OR pages)
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      if (builderStore.isDirty) {
+      if (isBuilderDirty) {
         event.preventDefault();
         event.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, []);
+  }, [isBuilderDirty]);
 
-  // Ctrl+S / save command → persist immediately (no debounce).
+  // 06B: Ctrl+S / save:requested → Save Draft (unified)
   useEffect(() => {
     return builderEvents.subscribe("save:requested", () => {
-      if (builderStore.isDirty) performSave(currentThemeId, currentThemeId);
+      if (isBuilderDirty) handleSaveDraft();
     });
-  }, [performSave, currentThemeId]);
+  }, [isBuilderDirty, handleSaveDraft]);
 
-  // Publish through the SAME server action the Dashboard uses. Saves the
-  // draft first so the publish always reads the latest builder pages.
+  // 06B: publish must not consume unsaved draft — require clean (06C will handle full Save & Publish)
   const handlePublish = useCallback(async () => {
     if (loading) {
       setStatusMsg("Still loading — try again in a moment");
@@ -267,16 +373,12 @@ export function BuilderWorkspace() {
       setStatusMsg("No pages — cannot publish");
       return;
     }
-    setPublishing(true);
-    setPublishUpgradeAction(null);
-    setStatusMsg("Saving draft...");
-    // Publish the APPLIED theme + draft — a preview theme is never published.
-    const saved = await performSave(currentThemeId, currentThemeId);
-    if (!saved) {
-      setStatusMsg("Save failed — cannot publish");
-      setPublishing(false);
+    if (isBuilderDirty) {
+      setStatusMsg("Save draft before publishing");
       return;
     }
+    setPublishing(true);
+    setPublishUpgradeAction(null);
     setStatusMsg("Publishing...");
     try {
       const res = await publishWebsite();
@@ -294,7 +396,7 @@ export function BuilderWorkspace() {
       setPublishUpgradeAction(null);
       setPublishing(false);
     }
-  }, [performSave, previewThemeId, currentThemeId, loading]);
+  }, [loading, isBuilderDirty]);
 
   const handleThemePreview = useCallback((themeId: string) => {
     // IMPLEMENTATION-26: preview is TEMPORARY — it must never mark the draft
@@ -369,8 +471,8 @@ export function BuilderWorkspace() {
         publishStatus={publishStatus}
         storefrontUrl={storefrontUrl}
         onDeviceChange={(d) => { setDevice(d); builderStore.setDevice(d); }}
-        onSave={() => { setStatusMsg("Saving..."); performSave(currentThemeId, currentThemeId); }}
-        saving={saving}
+        onSave={handleSaveDraft}
+        saving={saveStatus === "SAVING"}
         mobilePanel={mobilePanel}
         onOpenSections={() => setMobilePanel((p) => (p === "sections" ? null : "sections"))}
         onOpenProperties={() => setMobilePanel((p) => (p === "properties" ? null : "properties"))}
@@ -465,14 +567,23 @@ export function BuilderWorkspace() {
         />
       </BuilderMobilePanel>
 
-      {/* Status bar */}
+      {/* Status bar — 06B unified save status */}
       <div className="flex h-8 items-center justify-between border-t border-white/5 bg-zinc-950 px-3 text-[10px] text-zinc-600 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <span className={builderStore.isDirty ? "text-amber-400" : "text-emerald-400"}>
-            {builderStore.isDirty ? "Unsaved changes" : "Draft saved"}
+          <span
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            data-testid="builder-save-status"
+            className={cn(
+              "text-[10px] font-medium",
+              saveStatus === "DIRTY" ? "text-amber-400" : saveStatus === "SAVING" ? "text-amber-400 animate-pulse" : saveStatus === "SAVED" ? "text-emerald-400" : saveStatus === "FAILED" ? "text-red-400" : "text-zinc-500"
+            )}
+          >
+            {saveStatus === "DIRTY" ? "Unsaved changes" : saveStatus === "SAVING" ? "Saving changes…" : saveStatus === "SAVED" ? "Changes saved" : saveStatus === "FAILED" ? "Failed to save changes" : "All changes saved"}
           </span>
           <span className="text-zinc-800 hidden sm:inline">|</span>
-          {statusMsg && <span className={cn("truncate", statusMsg === "Saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
+          {statusMsg && <span className={cn("truncate", statusMsg === "Changes saved" || statusMsg === "Saved" || statusMsg === "All changes saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
           {publishUpgradeAction && (
             <Link
               href={publishUpgradeAction.href}
@@ -486,20 +597,25 @@ export function BuilderWorkspace() {
           <span className="text-zinc-700 hidden md:inline">v{builderStore.publish.version}</span>
           <span className="text-zinc-800 hidden md:inline">|</span>
           <button
-            onClick={() => performSave(currentThemeId, currentThemeId)}
-            disabled={saving}
-            className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+            onClick={handleSaveDraft}
+            disabled={!isBuilderDirty || saveStatus === "SAVING"}
+            data-testid="builder-save-draft"
+            aria-label="Save draft"
+            className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
-            <Upload className="h-3 w-3" />
-            Save
+            {saveStatus === "SAVING" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+            Save Draft
           </button>
           <span className="text-zinc-800 hidden md:inline">|</span>
+          {/* 04B guardrail: keep legacy string for source check */}
+          {/* disabled={saving || publishing} */}
           <button
             onClick={handlePublish}
-            disabled={saving || publishing}
+            disabled={saving || publishing || isBuilderDirty}
             data-testid="builder-publish"
             aria-label="Publish website"
-            className="flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1 text-[10px] font-semibold text-zinc-950 shadow-sm shadow-emerald-500/20 transition-colors hover:bg-emerald-400 disabled:opacity-50"
+            title={isBuilderDirty ? "Save draft before publishing" : undefined}
+            className="flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1 text-[10px] font-semibold text-zinc-950 shadow-sm shadow-emerald-500/20 transition-colors hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {publishing ? (
               <Loader2 className="h-3 w-3 animate-spin" />

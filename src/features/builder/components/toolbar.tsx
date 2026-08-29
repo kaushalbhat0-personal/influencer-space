@@ -146,14 +146,16 @@ export function BuilderToolbar({
           <button
             onClick={onSave}
             disabled={saving}
-            className="flex items-center gap-1 rounded-md bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
+            data-testid="toolbar-save-draft"
+            aria-label="Save draft"
+            className="flex items-center gap-1 rounded-md bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
             {saving ? (
               <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
             ) : (
               <Upload className="h-3 w-3" />
             )}
-            {saving ? "Saving..." : "Save"}
+            {saving ? "Saving..." : "Save Draft"}
           </button>
         </div>
       </div>
