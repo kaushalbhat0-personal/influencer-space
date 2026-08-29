@@ -5,6 +5,7 @@ export { DecorationLayer, IllustrationLayer } from "./decoration-runtime";
 export { SectionDivider } from "./divider-runtime";
 export { ExperienceSection, ExperienceHeroSection } from "./section-runtime";
 export type { ExperienceSectionProps } from "./section-runtime";
+export { PageExperience, PageExperienceBackground } from "./page-background-runtime";
 export { ThemedPlaceholder } from "./themed-placeholder";
 export { motionClass, surfaceClass } from "./motion-runtime";
 export { getDecorationPack, DECORATION_PACKS, CATEGORY_DECORATION } from "./category-decoration-packs";

@@ -6,7 +6,7 @@ import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { StorefrontNav } from "@/components/storefront/StorefrontNav";
 import { TrustIndicators } from "@/components/storefront/TrustIndicators";
 import { themeRegistry } from "@/lib/theme/registry-new";
-import { experienceRegistry, ExperienceSection, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
+import { experienceRegistry, ExperienceSection, PageExperience, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { traceRuntime, type AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 import { isFlagEnabled } from "@/lib/platform/platform-config";
@@ -184,35 +184,47 @@ export async function StorefrontPage({
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }} />
         ))}
-        {sections.map((section, i) => {
-          const isFirst = i === 0;
-          const isLast = i === sections.length - 1;
-          const sectionVariant = isFirst ? "hero" as const : isLast ? "footer" as const : "default" as const;
-          // RCCF-19 P1-C: the public Contact/Newsletter forms submit to server
-          // actions that require a tenantId. Inject the TRUSTED resolved tenant
-          // id at the render boundary (never persisted into Block.config, never
-          // user-editable) so submissions succeed and stay tenant-scoped.
-          const isInteractionSection =
-            section.moduleId.startsWith("contact.") || section.moduleId.startsWith("newsletter.");
-          const config = isInteractionSection
-            ? { ...(section.config ?? {}), tenantId: data.tenantId }
-            : section.config;
-          return (
-            <ExperienceSection
-              key={`${section.id}-${i}`}
-              id={section.moduleId?.split(".")[0] ?? `section-${i}`}
-              experience={experience}
-              index={i}
-              variant={sectionVariant}
-              divider="bottom"
-              data-testid={`experience-section-${i}`}
-            >
-              <ComponentErrorBoundary componentId={section.moduleId}>
-                <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} previewMode={isPreview} />
-              </ComponentErrorBoundary>
-            </ExperienceSection>
-          );
-        })}
+        {/* RCCF-BUILDER-06D: page owns the ambient background — sections compose transparently over it. */}
+        <PageExperience experience={experience}>
+          {sections.map((section, i) => {
+            const isFirst = i === 0;
+            const isLast = i === sections.length - 1;
+            const sectionVariant = isFirst ? "hero" as const : isLast ? "footer" as const : "default" as const;
+            // RCCF-BUILDER-05B flow is baked per-section via buildRuntimeSnapshot → renderingHints.flow
+            const flow = (doc.renderingHints as unknown as { flow?: Record<string, string> })?.flow?.[section.id] as
+              | "shared"
+              | "bleed"
+              | "overlap"
+              | "softSeparator"
+              | "isolated"
+              | undefined;
+            // RCCF-19 P1-C: the public Contact/Newsletter forms submit to server
+            // actions that require a tenantId. Inject the TRUSTED resolved tenant
+            // id at the render boundary (never persisted into Block.config, never
+            // user-editable) so submissions succeed and stay tenant-scoped.
+            const isInteractionSection =
+              section.moduleId.startsWith("contact.") || section.moduleId.startsWith("newsletter.");
+            const config = isInteractionSection
+              ? { ...(section.config ?? {}), tenantId: data.tenantId }
+              : section.config;
+            return (
+              <ExperienceSection
+                key={`${section.id}-${i}`}
+                id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+                experience={experience}
+                index={i}
+                variant={sectionVariant}
+                divider="bottom"
+                flow={flow}
+                data-testid={`experience-section-${i}`}
+              >
+                <ComponentErrorBoundary componentId={section.moduleId}>
+                  <DataBoundRenderer slot={{ moduleId: section.moduleId, config }} previewMode={isPreview} />
+                </ComponentErrorBoundary>
+              </ExperienceSection>
+            );
+          })}
+        </PageExperience>
         <TrustIndicators declaredFacts={snap.content?.declaredFacts} />
       </main>
     </>

@@ -28,6 +28,7 @@ import { shouldRenderSection } from "@/modules/section-presentation";
 import {
   experienceRegistry,
   ExperienceSection,
+  PageExperience,
   resolveExperienceForCapabilities,
   applyExperienceOverride,
   THEME_EXPERIENCES,
@@ -387,48 +388,51 @@ export function InteractiveCanvas({
               </div>
             )}
 
-            {sections.map((section, i) => {
-              const slotId = slotIdFromSectionId(section.id);
-              const isFirst = i === 0;
-              const isLast = i === sections.length - 1;
-              const sectionVariant: "hero" | "footer" | "default" = isFirst ? "hero" : isLast ? "footer" : "default";
-              // Canvas selection: reflects the SAME store selection state that
-              // drives the left sidebar / properties panel — pure visual ring.
-              const isSelected = builderStore.isSelected(slotId);
-              return (
-                // RCCF-LAUNCH-TRACK-05: the Builder preview now renders the SAME
-                // ExperienceSection (backgrounds/effects/dividers) as the live
-                // storefront, so previews accurately represent the theme.
-                <ExperienceSection
-                  key={section.id}
-                  id={section.moduleId?.split(".")[0] ?? `section-${i}`}
-                  experience={experience}
-                  index={i}
-                  variant={sectionVariant}
-                  divider="bottom"
-                  data-testid={`builder-experience-${i}`}
-                >
-                  <div
-                    data-element-id={slotId}
-                    data-module={section.moduleId}
-                    className={cn(
-                      "relative rounded transition-shadow",
-                      isSelected && "ring-2 ring-indigo-500/60",
-                    )}
+            {/* RCCF-BUILDER-06D: builder canvas uses the exact same PageExperience → ExperienceSection pipeline as the storefront. */}
+            <PageExperience experience={experience}>
+              {sections.map((section, i) => {
+                const slotId = slotIdFromSectionId(section.id);
+                const isFirst = i === 0;
+                const isLast = i === sections.length - 1;
+                const sectionVariant: "hero" | "footer" | "default" = isFirst ? "hero" : isLast ? "footer" : "default";
+                // Canvas selection: reflects the SAME store selection state that
+                // drives the left sidebar / properties panel — pure visual ring.
+                const isSelected = builderStore.isSelected(slotId);
+                return (
+                  // RCCF-LAUNCH-TRACK-05: the Builder preview now renders the SAME
+                  // ExperienceSection (backgrounds/effects/dividers) as the live
+                  // storefront, so previews accurately represent the theme.
+                  <ExperienceSection
+                    key={section.id}
+                    id={section.moduleId?.split(".")[0] ?? `section-${i}`}
+                    experience={experience}
+                    index={i}
+                    variant={sectionVariant}
+                    divider="bottom"
+                    data-testid={`builder-experience-${i}`}
                   >
-                    <ComponentErrorBoundary componentId={section.moduleId}>
-                      <ComponentRenderer
-                        componentId={section.moduleId}
-                        props={section.config}
-                        elementId={slotId}
-                        viewport={builderStore.canvas.device}
-                        previewMode
-                      />
-                    </ComponentErrorBoundary>
-                  </div>
-                </ExperienceSection>
-              );
-            })}
+                    <div
+                      data-element-id={slotId}
+                      data-module={section.moduleId}
+                      className={cn(
+                        "relative rounded transition-shadow",
+                        isSelected && "ring-2 ring-indigo-500/60",
+                      )}
+                    >
+                      <ComponentErrorBoundary componentId={section.moduleId}>
+                        <ComponentRenderer
+                          componentId={section.moduleId}
+                          props={section.config}
+                          elementId={slotId}
+                          viewport={builderStore.canvas.device}
+                          previewMode
+                        />
+                      </ComponentErrorBoundary>
+                    </div>
+                  </ExperienceSection>
+                );
+              })}
+            </PageExperience>
           </div>
         </div>
       </div>

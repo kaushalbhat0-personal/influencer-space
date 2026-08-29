@@ -62,6 +62,11 @@ export function ExperienceSection({
   const isOverlap = effectiveFlow === "overlap";
   const isSoftSeparator = effectiveFlow === "softSeparator";
   const isIsolated = effectiveFlow === "isolated";
+  // RCCF-BUILDER-06D: background ownership — PAGE owns the ambient background.
+  // Sections are transparent by default (shared/bleed/softSeparator/overlap) and
+  // only isolated sections paint their own background box.
+  const shouldRenderBackground = isIsolated;
+  const shouldRenderDecoration = isIsolated && !override.reducedDecorations;
   // Flow determines whether section surface is isolated (card-like) or shares page surface
   const useSurface = isIsolated || (!isShared && !isBleed && !isSoftSeparator && !isOverlap);
   const effectiveDivider: ExperienceDivider = isShared || isBleed ? "none" : isSoftSeparator ? "soft" : isOverlap ? "none" : dividerKind;
@@ -75,15 +80,18 @@ export function ExperienceSection({
       } as React.CSSProperties
     : undefined;
 
+  // RCCF-BUILDER-06D: fullBleed must remain horizontally safe — w-full only, never viewport hacks
+  const fullBleed = (override as { fullBleed?: boolean }).fullBleed === true && isBleed;
+
   return (
     <section
       id={id}
-      className={`relative overflow-hidden ${motionClass(motion)} ${alternateSurfaceClass(index, experience.alternateSurface === true)} ${className}`}
+      className={`relative ${fullBleed ? "w-full" : ""} overflow-hidden ${motionClass(motion)} ${isIsolated ? alternateSurfaceClass(index, experience.alternateSurface === true) : ""} ${className}`}
       style={overlapStyle}
       {...rest}
     >
-      <ExperienceBackground background={background} />
-      {!override.reducedDecorations && <DecorationLayer pack={decoration} />}
+      {shouldRenderBackground && <ExperienceBackground background={background} />}
+      {shouldRenderDecoration && <DecorationLayer pack={decoration} />}
       {override.heroBlend && (
         <div
           aria-hidden
@@ -92,7 +100,7 @@ export function ExperienceSection({
         />
       )}
       {useDivider && dividerPosition === "top" && <SectionDivider kind={effectiveDivider} position="top" />}
-      <div className={`relative z-10 ${useSurface ? surfaceClass(surface) : ""}`}>{children}</div>
+      <div className={`relative z-10 ${useSurface ? surfaceClass(surface) : ""} ${fullBleed ? "mx-auto w-full max-w-none" : ""}`}>{children}</div>
       {useDivider && dividerPosition === "bottom" && <SectionDivider kind={effectiveDivider} position="bottom" />}
     </section>
   );

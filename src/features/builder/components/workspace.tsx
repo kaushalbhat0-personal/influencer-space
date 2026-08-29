@@ -1,4 +1,6 @@
 "use client";
+// 06A guardrail: workspace must persist APPLIED theme, never preview —
+// performSave(currentThemeId, currentThemeId) — never previewThemeId
 
 import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { ResizablePanel } from "./panel";
