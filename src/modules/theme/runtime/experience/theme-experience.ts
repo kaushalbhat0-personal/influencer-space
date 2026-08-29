@@ -111,7 +111,7 @@ export interface ThemeExperience {
   sections?: Partial<Record<SectionVariant, SectionExperienceOverride>>;
 }
 
-/** Base experiences reused by premium packs. */
+/** Base experiences reused by premium packs — 06E differentiation: each family has unique divider/motion/decoration/geometry. */
 const BASE: Record<string, ThemeExperience> = {
   minimal: {
     id: "minimal",
@@ -131,7 +131,7 @@ const BASE: Record<string, ThemeExperience> = {
     background: { kind: "gradient", colors: ["rgba(99,102,241,0.06)", "transparent"], glow: "top" },
     decoration: "dots",
     motion: "static",
-    divider: "fade",
+    divider: "wave",
     surface: "elevated",
     defaultFlow: "shared",
     sections: {
@@ -144,8 +144,8 @@ const BASE: Record<string, ThemeExperience> = {
     premium: true,
     background: { kind: "mesh", colors: ["rgba(99,102,241,0.10)", "rgba(59,130,246,0.06)"], glow: "top" },
     decoration: "constellation",
-    motion: "static",
-    divider: "fade",
+    motion: "float",
+    divider: "curve",
     surface: "glass",
     defaultFlow: "shared",
     sections: {
@@ -160,14 +160,14 @@ const BASE: Record<string, ThemeExperience> = {
     background: { kind: "aurora", colors: ["rgba(129,140,248,0.14)", "rgba(192,132,252,0.08)", "rgba(34,211,238,0.06)", "rgba(99,102,241,0.04)"], glow: "center" },
     decoration: "blobs",
     motion: "gradient-shift",
-    divider: "fade",
+    divider: "soft",
     surface: "glass",
     defaultFlow: "bleed",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(129,140,248,0.22)", "rgba(192,132,252,0.14)", "rgba(34,211,238,0.10)"] }, divider: "none", heroBlend: true, surface: "flat" },
       footer: { decoration: "minimal", divider: "fade", motion: "static" },
-      commerce: { decoration: "particles", divider: "fade" },
-      gallery: { decoration: "grid", divider: "fade", reducedDecorations: true },
+      commerce: { decoration: "particles", divider: "soft" },
+      gallery: { decoration: "grid", divider: "soft", reducedDecorations: true },
       cta: { background: { glow: "bottom" }, surface: "soft-glow" },
     },
   },
@@ -178,7 +178,7 @@ const BASE: Record<string, ThemeExperience> = {
     background: { kind: "mesh", colors: ["rgba(139,92,246,0.14)", "rgba(236,72,153,0.08)", "rgba(59,130,246,0.06)"], glow: "center" },
     decoration: "orbits",
     motion: "float",
-    divider: "curve",
+    divider: "organic",
     surface: "glass",
     defaultFlow: "bleed",
     sections: {
@@ -223,8 +223,8 @@ const BASE: Record<string, ThemeExperience> = {
     premium: true,
     background: { kind: "mesh", colors: ["rgba(236,72,153,0.12)", "rgba(249,115,22,0.08)", "rgba(139,92,246,0.06)"], glow: "center" },
     decoration: "creator",
-    motion: "float",
-    divider: "fade",
+    motion: "particle-drift",
+    divider: "glow",
     surface: "soft-glow",
     defaultFlow: "shared",
     sections: {
@@ -239,9 +239,9 @@ const BASE: Record<string, ThemeExperience> = {
     premium: true,
     background: { kind: "mesh", colors: ["rgba(234,179,8,0.08)", "rgba(202,138,4,0.05)"], glow: "center", pattern: "noise" },
     decoration: "glow",
-    motion: "static",
+    motion: "glow-pulse",
     divider: "glow",
-    surface: "gradient-border",
+    surface: "luxury",
     defaultFlow: "bleed",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(234,179,8,0.14)", "rgba(202,138,4,0.08)"] }, divider: "none", heroBlend: true, surface: "minimal" },
@@ -255,7 +255,7 @@ const BASE: Record<string, ThemeExperience> = {
     background: { kind: "mesh", colors: ["rgba(249,115,22,0.12)", "rgba(236,72,153,0.08)"], glow: "top" },
     decoration: "waves",
     motion: "particle-drift",
-    divider: "fade",
+    divider: "brush",
     surface: "floating",
     defaultFlow: "bleed",
     sections: {
@@ -270,7 +270,7 @@ const BASE: Record<string, ThemeExperience> = {
     background: { kind: "pattern", pattern: "lines", glow: "top" },
     decoration: "grid",
     motion: "static",
-    divider: "fade",
+    divider: "brush",
     surface: "flat",
     defaultFlow: "shared",
     sections: {
@@ -281,15 +281,15 @@ const BASE: Record<string, ThemeExperience> = {
     id: "arena",
     name: "Arena",
     premium: true,
-    background: { kind: "mesh", colors: ["rgba(249,115,22,0.14)", "rgba(34,211,238,0.08)"], glow: "center" },
+    background: { kind: "multi-radial", colors: ["rgba(249,115,22,0.14)", "rgba(34,211,238,0.08)", "rgba(168,85,247,0.06)"], glow: "center" },
     decoration: "particles",
     motion: "particle-drift",
-    divider: "fade",
+    divider: "diagonal",
     surface: "floating",
     defaultFlow: "shared",
     sections: {
       hero: { background: { glow: "center", colors: ["rgba(249,115,22,0.20)", "rgba(34,211,238,0.12)"] }, divider: "none", heroBlend: true },
-      footer: { decoration: "minimal", divider: "fade", motion: "static", reducedDecorations: true },
+      footer: { decoration: "minimal", divider: "curve", motion: "static", reducedDecorations: true },
     },
   },
   midnight: {
@@ -298,7 +298,7 @@ const BASE: Record<string, ThemeExperience> = {
     premium: true,
     background: { kind: "solid", glow: "center" },
     decoration: "constellation",
-    motion: "static",
+    motion: "parallax",
     divider: "fade",
     surface: "elevated",
     defaultFlow: "bleed",
@@ -313,8 +313,8 @@ const BASE: Record<string, ThemeExperience> = {
     premium: true,
     background: { kind: "mesh", colors: ["rgba(20,184,166,0.10)", "rgba(6,182,212,0.06)"], glow: "top" },
     decoration: "dots",
-    motion: "static",
-    divider: "fade",
+    motion: "float",
+    divider: "wave",
     surface: "glass",
     defaultFlow: "shared",
     sections: {
@@ -336,7 +336,10 @@ const BASE: Record<string, ThemeExperience> = {
 
 export const THEME_EXPERIENCES: Record<string, ThemeExperience> = BASE;
 
-/** Premium theme ids → named experience (configuration only). RCCF-BUILDER-05A: catalog families mapped explicitly to distinct packs. */
+/** Premium theme ids → named experience (configuration only). RCCF-BUILDER-05A: catalog families mapped explicitly to distinct packs.
+ * 06E: legacy cluster de-duplication — each legacy theme maps to a distinct pack matching its design language,
+ * breaking the previous 9× Creator / 6× Classic monotony while preserving family intent.
+ */
 export const THEME_TO_EXPERIENCE: Record<string, string> = {
   "com.creatos.creator-dark": "creator",
   "com.creatos.creator-light": "minimal",
@@ -359,6 +362,34 @@ export const THEME_TO_EXPERIENCE: Record<string, string> = {
   "com.creatos.education-academy": "editorial",
   "com.creatos.luxury-champagne": "luxury",
   "com.creatos.luxury-gold": "luxury",
+  // 06E legacy de-duplication (previously all fell back to Creator/Executive/Classic/Arena/Velocity via category)
+  "com.creatos.neon-dark": "cyber",
+  "com.creatos.creator-studio": "studio",
+  "com.creatos.creator-bold": "brutalist",
+  "com.creatos.stream-vibe": "velocity",
+  "com.creatos.creator-pro": "executive",
+  "com.creatos.midnight-ocean": "midnight",
+  "com.creatos.minimal-portfolio": "minimal",
+  "com.creatos.designer": "glass",
+  "com.creatos.photographer": "editorial",
+  "com.creatos.cyber-arena": "cyber",
+  "com.creatos.esports": "brutalist",
+  "com.creatos.game-stream": "aurora",
+  "com.creatos.royal-plum": "luxury",
+  "com.creatos.forest-canopy": "nebula",
+  "com.creatos.modern-restaurant": "minimal",
+  "com.creatos.fine-dining": "luxury",
+  "com.creatos.bistro": "editorial",
+  "com.creatos.coach": "classic",
+  "com.creatos.academy": "editorial",
+  "com.creatos.mentor": "glass",
+  "com.creatos.podcast-studio": "nebula",
+  "com.creatos.audio-creator": "creator",
+  "com.creatos.voice": "midnight",
+  "com.creatos.executive": "luxury",
+  "com.creatos.startup": "glass",
+  "com.creatos.professional": "minimal",
+  "com.creatos.corporate-blue": "executive",
 };
 
 export { BASE as EXPERIENCE_PACKS };
