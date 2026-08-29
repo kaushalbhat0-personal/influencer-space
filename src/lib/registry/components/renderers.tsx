@@ -562,31 +562,73 @@ export function FooterRenderer({ props }: RendererProps) {
   const p = props as Record<string, unknown>;
   const socialLinks = (p.socialLinks as Array<{ url: string; platform?: string; label?: string }>) ?? [];
   const platformLabel = (platform: string) => platform.charAt(0).toUpperCase() + platform.slice(1);
+  const brandName = String(p.brandName || "Northstar Studio");
+  const footerDescription = String(p.footerDescription || p.bio || p.tagline || "Design that moves your business forward. Digital experiences, visual systems, and products for ambitious modern brands.");
+  const copyright = String(p.copyright || `© ${new Date().getFullYear()} ${brandName} — All rights reserved.`);
+
+  // RCCF-07: realistic footer columns — navigation-consistent anchors + legal.
+  // Admin can override via section config `footerColumns` (array of {title, links:[{label,href}]}).
+  // When absent, we render curated defaults that mirror the Northstar navigation.
+  const defaultColumns: Array<{ title: string; links: Array<{ label: string; href: string }> }> = [
+    { title: "Products", links: [{ label: "Templates", href: "#products" }, { label: "Design Assets", href: "#products" }, { label: "Brand Kits", href: "#products" }, { label: "All Products", href: "#products" }] },
+    { title: "Services", links: [{ label: "Brand Strategy", href: "#services" }, { label: "Web Design", href: "#services" }, { label: "Product Design", href: "#services" }, { label: "Creative Direction", href: "#services" }] },
+    { title: "Company", links: [{ label: "About", href: "#timeline" }, { label: "Gallery / Work", href: "#gallery" }, { label: "Testimonials", href: "#testimonials" }, { label: "Contact", href: "#contact" }] },
+    { title: "Support", links: [{ label: "FAQ", href: "#faq" }, { label: "Privacy", href: "/privacy" }, { label: "Terms", href: "/terms" }, { label: "Refunds", href: "/refund" }] },
+  ];
+  const columns = (p.footerColumns as typeof defaultColumns) ?? defaultColumns;
+
+  // Render as <div> — StorefrontPage already provides the semantic outer <footer data-testid="storefront-footer">.
   return (
-    <footer className="border-t border-[var(--border,rgba(255,255,255,0.08))] py-8 text-center text-sm text-[var(--text-muted,#71717A)]">
-      {socialLinks.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
-          {socialLinks.map((l, i) => (
-            <a
-              key={i}
-              href={l.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]"
-            >
-              {l.label || platformLabel(l.platform || "Link")}
-            </a>
+    <div className="text-sm text-[var(--text-muted,#71717A)]">
+      <div className="grid gap-8 md:grid-cols-12">
+        {/* Brand column */}
+        <div className="md:col-span-4">
+          <p className="text-base font-semibold tracking-tight text-[var(--text-primary,#FAFAFA)]">{brandName}</p>
+          <p className="mt-2 max-w-sm text-xs leading-relaxed text-[var(--text-secondary,#A1A1AA)]">{footerDescription}</p>
+          {socialLinks.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {socialLinks.map((l, i) => (
+                <a
+                  key={i}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-[var(--border,rgba(255,255,255,0.08))] px-2.5 py-1 text-[11px] text-[var(--text-muted,#71717A)] transition-colors hover:border-[var(--border,rgba(0,0,0,0.12))] hover:text-[var(--text-primary,#FAFAFA)]"
+                >
+                  {l.label || platformLabel(l.platform || "Link")}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Link columns */}
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 md:col-span-8 md:grid-cols-4">
+          {columns.map((col) => (
+            <div key={col.title}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-primary,#FAFAFA)]">{col.title}</p>
+              <ul className="mt-3 space-y-2">
+                {col.links.map((l) => (
+                  <li key={`${col.title}-${l.label}`}>
+                    <a href={l.href} className="text-xs text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
-      )}
-      {String(p.copyright || "Â© All rights reserved")}
-      {/* VALIDATION-01 V-032: legal links on the storefront footer. */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-[11px]">
-        <a href="/terms" className="text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Terms</a>
-        <a href="/privacy" className="text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Privacy</a>
-        <a href="/refund" className="text-[var(--text-muted,#71717A)] transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Refunds</a>
       </div>
-    </footer>
+      {/* Bottom bar */}
+      <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-[var(--border,rgba(255,255,255,0.08))] pt-6 text-[11px] sm:flex-row">
+        <span>{copyright}</span>
+        <div className="flex items-center gap-4">
+          <a href="/privacy" className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Privacy</a>
+          <a href="/terms" className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Terms</a>
+          <a href="/refund" className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Refunds</a>
+        </div>
+      </div>
+    </div>
   );
 }
 

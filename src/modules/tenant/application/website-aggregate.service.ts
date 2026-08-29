@@ -77,6 +77,8 @@ export interface SharedReads {
   faqData: unknown | null;
   knowledgeCompletion: unknown | null;
   openBookings: Awaited<ReturnType<typeof prisma.booking.findMany>> | null;
+  siteSocialLinks: unknown | null;
+  footerConfig: unknown | null;
 }
 
 /** Featured-first pick with a zero-featured fallback to all items. */
@@ -186,7 +188,7 @@ export class WebsiteAggregateService {
     // request already fetched them (identical committed data, no intervening
     // writes). `sharedReads` is returned so the next build can preload them.
     const sharedReads: SharedReads = await this.loadSharedReads(tenantId, diagnostics, preload);
-    const { brand, heroData, links, seoData, website, testimonialsData, faqData, knowledgeCompletion, openBookings } = sharedReads;
+    const { brand, heroData, links, seoData, website, testimonialsData, faqData, knowledgeCompletion, openBookings, siteSocialLinks: siteSocialRaw, footerConfig: footerConfigRaw } = sharedReads;
 
     const [
       products, gallery, timelineEvents, gameList, feedItems, offerings,
@@ -223,20 +225,32 @@ export class WebsiteAggregateService {
       ? (faqData as Record<string, unknown>[])
       : [];
 
-    // Hero is the single source of truth for social/streaming links and bio.
+    // RCCF-07A — Shared site-level social links (site_social_links) with
+    // backward compat fallback to hero_data.socialLinks. Hero CTA links
+    // (ctaLink/ctaSecondaryLink) are NEVER used for footer navigation.
     const heroRecord = (heroData as Record<string, unknown>) ?? {};
-    const heroSocialLinks = Array.isArray(heroRecord.socialLinks)
+    const heroSocialLinksLegacy = Array.isArray(heroRecord.socialLinks)
       ? (heroRecord.socialLinks as Array<{ platform: string; url: string; label?: string }>)
       : [];
+    const siteSocialLinksRaw = Array.isArray(siteSocialRaw) ? (siteSocialRaw as Array<{ platform: string; url: string; label?: string }>) : [];
+    const effectiveSocialLinks = siteSocialLinksRaw.length > 0 ? siteSocialLinksRaw : heroSocialLinksLegacy;
     const heroBio = (heroRecord.bio as string) ?? "";
     const heroName = (heroRecord.name as string) ?? "";
     const heroProfilePictureUrl = (heroRecord.profilePictureUrl as string) ?? "";
 
-    // RCCF-66.2: server-authoritative WhatsApp destination from the creator's
-    // Hero social links (platform === "whatsapp"). Resolved ONCE here and baked
-    // into every product so the storefront never needs a live read and can never
-    // receive a client-supplied number.
-    const whatsappDestination = resolveWhatsAppDestination(heroSocialLinks);
+    // RCCF-66.2: server-authoritative WhatsApp destination from the SHARED
+    // site social links (not Hero CTA). Resolved ONCE here and baked
+    // into every product so the storefront never needs a live read.
+    const whatsappDestination = resolveWhatsAppDestination(effectiveSocialLinks);
+
+    // RCCF-07A — Footer-owned configuration (footer_config). Optional for compat.
+    const footerRaw = (footerConfigRaw as Record<string, unknown> | null) ?? null;
+    const footerColumnsRaw = Array.isArray((footerRaw as Record<string, unknown> | null)?.columns) ? ((footerRaw as Record<string, unknown>).columns as unknown[]) : null;
+    const footerColumns = (() => {
+      if (!footerColumnsRaw || footerColumnsRaw.length === 0) return undefined;
+      const cols = (footerColumnsRaw as Array<{ title: string; links: Array<{ label: string; href: string }> }>).filter((c) => c.title && Array.isArray(c.links)).map((c)=> ({ title: String(c.title), links: c.links.filter((l)=> l.label && l.href).map((l)=> ({ label:String(l.label), href:String(l.href)}))})).filter((c)=>c.links.length>0);
+      return cols.length>0 ? cols : undefined;
+    })();
 
     const result: WebsiteAggregate = {
       identity: {
@@ -245,9 +259,17 @@ export class WebsiteAggregateService {
         bio: (heroBio || brand?.bio) ?? "",
         avatarUrl: (heroProfilePictureUrl || brand?.avatarUrl) ?? null,
         bannerUrl: brand?.bannerUrl ?? null,
-        socialLinks: heroSocialLinks.length > 0
-          ? heroSocialLinks
+        socialLinks: effectiveSocialLinks.length > 0
+          ? effectiveSocialLinks
           : ((brand?.socialLinks as Array<{ platform: string; url: string }>) ?? []),
+      },
+      // RCCF-07A — shared site social links (site_social_links) with hero fallback
+      siteSocialLinks: effectiveSocialLinks,
+      // RCCF-07A — footer-owned configuration
+      footer: {
+        description: (footerRaw?.description as string | null) ?? null,
+        copyright: (footerRaw?.copyright as string | null) ?? null,
+        columns: footerColumns ?? [],
       },
       declaredFacts,
       hero: {
@@ -264,7 +286,7 @@ export class WebsiteAggregateService {
         backgroundUrl: (heroData as Record<string, unknown>)?.backgroundUrl as string | null ?? null,
         backgroundAssetId: (heroData as Record<string, unknown>)?.backgroundAssetId as string | null ?? null,
         bio: heroBio,
-        socialLinks: heroSocialLinks,
+        socialLinks: effectiveSocialLinks,
         ctaText: (heroData as Record<string, unknown>)?.ctaText as string ?? "",
         ctaLink: (heroData as Record<string, unknown>)?.ctaLink as string ?? "",
         ctaSecondaryText: (heroData as Record<string, unknown>)?.ctaSecondaryText as string ?? "",
@@ -555,6 +577,8 @@ export class WebsiteAggregateService {
         where: { tenantId, customerEmail: null, status: { not: "cancelled" }, slotDate: { gte: new Date() } },
         orderBy: { slotDate: "asc" },
       })),
+      siteSocialLinks: await use("siteSocialLinks", "siteSocialLinks", () => SettingsService.getSettingByKey(tenantId, "site_social_links")),
+      footerConfig: await use("footerConfig", "footerConfig", () => SettingsService.getSettingByKey(tenantId, "footer_config")),
     };
   }
 

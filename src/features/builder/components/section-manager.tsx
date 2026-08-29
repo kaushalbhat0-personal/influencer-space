@@ -40,6 +40,7 @@ const EDIT_LINKS: Record<string, string> = {
   "contentFeed.default": "/admin/settings/content",
   "courses.default": "/admin/courses",
   "services.default": "/admin/services",
+  "footer.default": "/admin/footer",
 };
 
 const CONTENT_LABELS: Record<string, string> = {

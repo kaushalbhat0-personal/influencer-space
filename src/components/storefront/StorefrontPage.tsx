@@ -180,7 +180,7 @@ export async function StorefrontPage({
           renderers — on live the container width equals the viewport, so they
           behave exactly like sm:/lg:. The Builder canvas uses the same named
           container with its device frame. */}
-      <main id="main-content" className="@container/main theme-root min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-20 md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
+      <main id="main-content" className="@container/main theme-root min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-[calc(var(--mobile-nav-height,3.75rem)+env(safe-area-inset-bottom))] md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }} />
         ))}

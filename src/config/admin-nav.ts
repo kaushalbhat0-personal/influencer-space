@@ -125,6 +125,7 @@ export const ADMIN_NAV: NavConfig = {
         { href: "/admin/blueprints", label: "Templates", icon: LayoutTemplate },
         { href: "/admin/appearance", label: "Appearance", icon: Palette },
         { href: "/admin/website/navigation", label: "Navigation", icon: Menu },
+        { href: "/admin/footer", label: "Footer", icon: Layout },
       ],
     },
 

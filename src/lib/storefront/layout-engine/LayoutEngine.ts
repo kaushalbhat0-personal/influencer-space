@@ -40,6 +40,8 @@ export class LayoutEngine {
     const c = snapshot.theme.colors;
     const t = snapshot.theme.typography;
     return {
+      // RCCF-07C: tokenized mobile bottom nav height + safe-area (not arbitrary pb-20)
+      "--mobile-nav-height": "3.75rem",
       "--brand-primary": c.primary,
       "--brand-secondary": c.secondary,
       "--brand-accent": c.accent,
@@ -321,8 +323,24 @@ export class LayoutEngine {
       config.resolvedTitle = config.resolvedTitle || "Affiliate Links";
       debugLog(tracePrefix, "affiliateLinks", { aggCount: content.links.length, resolvedCount: linkEntries.length });
     } else if (moduleId.startsWith("footer.")) {
-      config.copyright = config.copyright || `© ${content.identity.name} — CreatorStore`;
-      config.socialLinks = content.hero.socialLinks ?? [];
+      // RCCF-07A — Footer owns its navigation/columns/copyright/description.
+      // Hero CTA links NEVER populate footer links. Shared social profiles flow
+      // via content.siteSocialLinks (site_social_links) with identity fallback,
+      // never via content.hero.socialLinks directly.
+      const footer = (content as unknown as { footer?: { description?: string | null; copyright?: string | null; columns?: Array<{ title: string; links: Array<{ label: string; href: string }> }> } }).footer;
+      const siteSocial = (content as unknown as { siteSocialLinks?: Array<{ platform: string; url: string; label?: string }> }).siteSocialLinks;
+      const sharedSocial = siteSocial && siteSocial.length > 0 ? siteSocial : (content.identity.socialLinks ?? []);
+      config.socialLinks = sharedSocial;
+      config.brandName = content.identity.name || "Northstar Studio";
+      config.tagline = content.identity.tagline || "";
+      config.bio = content.identity.bio || "";
+      config.footerDescription = footer?.description ?? (layoutConfig.footerDescription as string) ?? content.identity.bio ?? content.identity.tagline ?? "Design that moves your business forward.";
+      config.copyright = footer?.copyright ?? (layoutConfig.copyright as string) ?? `© ${new Date().getFullYear()} ${content.identity.name || "Northstar Studio"} — All rights reserved.`;
+      // Footer-owned columns: prefer persisted site footer_config, then legacy block config, then FooterRenderer defaults.
+      const ownedColumns = footer?.columns && footer.columns.length > 0 ? footer.columns : null;
+      const blockColumns = layoutConfig.footerColumns as Array<{ title: string; links: Array<{ label: string; href: string }> }> | undefined;
+      if (ownedColumns) config.footerColumns = ownedColumns;
+      else if (blockColumns) config.footerColumns = blockColumns;
     } else if (moduleId.startsWith("contact.")) {
       config.title = config.title || "Get In Touch";
     } else if (moduleId.startsWith("newsletter.")) {

@@ -84,6 +84,25 @@ export interface ContentFeedContent {
   permalink: string | null;
 }
 
+/**
+ * RCCF-07A — Footer-owned configuration (persisted via Setting footer_config).
+ * Optional — old aggregates without it synthesize defaults from identity/navigation.
+ */
+export interface FooterColumnLink {
+  label: string;
+  href: string;
+}
+export interface FooterColumn {
+  title: string;
+  links: FooterColumnLink[];
+}
+export interface FooterContent {
+  description: string | null;
+  copyright: string | null;
+  columns: FooterColumn[];
+  legalLinks?: Array<{ label: string; href: string }>;
+}
+
 export interface WebsiteAggregate {
   identity: {
     name: string;
@@ -93,6 +112,10 @@ export interface WebsiteAggregate {
     bannerUrl: string | null;
     socialLinks: Array<{ platform: string; url: string }>;
   };
+  /** RCCF-07A — shared site-level social links (Setting site_social_links). Optional for compat; falls back to hero.socialLinks. */
+  siteSocialLinks?: Array<{ platform: string; url: string; label?: string }>;
+  /** RCCF-07A — footer-owned configuration (Setting footer_config). Optional for compat. */
+  footer?: FooterContent;
   /** Creator-verified declared facts from the knowledge_completion setting. */
   declaredFacts?: Record<string, unknown>;
   hero: HeroContent;
