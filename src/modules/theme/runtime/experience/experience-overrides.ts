@@ -97,7 +97,6 @@ export const BACKGROUND_PRESETS: Record<string, BackgroundPreset> = {
 /** Surface presets map to the existing `ExperienceSurface` presets surfaceClass renders. */
 export const SURFACE_PRESETS: Record<string, SurfacePreset> = {
   flat: { id: "flat", label: "Flat", surface: "flat", premium: false },
-  minimal: { id: "minimal", label: "Minimal", surface: "minimal", premium: false },
   elevated: { id: "elevated", label: "Elevated", surface: "elevated", premium: false },
   glass: { id: "glass", label: "Glass", surface: "glass", premium: true },
   "soft-glow": { id: "soft-glow", label: "Soft Glow", surface: "soft-glow", premium: true },
@@ -119,8 +118,11 @@ export function applyExperienceOverride(
   config?: Record<string, string> | null,
 ): ThemeExperience {
   if (!config) return base;
+  // RCCF-10 F-04: `minimal` surface is collapsed into `flat` (Option B). Legacy
+  // persisted `experienceSurface=minimal` maps to flat for backward compat.
+  const normalizedSurface = config.experienceSurface === "minimal" ? "flat" : config.experienceSurface;
   const backgroundPreset = config.experienceBackground ? BACKGROUND_PRESETS[config.experienceBackground] : undefined;
-  const surface = config.experienceSurface ? SURFACE_PRESETS[config.experienceSurface] : undefined;
+  const surface = normalizedSurface ? SURFACE_PRESETS[normalizedSurface] : undefined;
   if (!backgroundPreset && !surface) return base;
 
   const out: ThemeExperience = { ...base };

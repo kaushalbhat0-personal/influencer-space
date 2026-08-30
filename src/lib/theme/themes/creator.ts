@@ -18,6 +18,8 @@ export const creatorThemes: ThemeDefinition[] = [
       releaseDate: "2024-06-01",
       updatedAt: "2025-03-15",
       colorSwatches: ["#2D1B69", "#00f5ff", "#ff00e5", "#09090B"],
+      family: "tech-cyber",
+      variantGroup: "tech-neon-legacy",
       lightTokens: {
         colors: {
           primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5",
@@ -25,6 +27,15 @@ export const creatorThemes: ThemeDefinition[] = [
           textPrimary: "#FAFAFA", textSecondary: "#A1A1AA", textMuted: "#71717A",
           border: "rgba(255,255,255,0.08)", focus: "#00f5ff", overlay: "rgba(0,0,0,0.7)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#2D1B69", secondary: "#00f5ff", accent: "#ff00e5",
+          background: "#09090B", surface: "#18181B", surfaceSecondary: "#27272A",
+          textPrimary: "#FAFAFA", textSecondary: "#A1A1AA", textMuted: "#71717A",
+          border: "rgba(255,255,255,0.08)", focus: "#00f5ff", overlay: "rgba(0,0,0,0.7)",
+        },
+        typography: { headingFont: "'JetBrains Mono', monospace", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -46,6 +57,8 @@ export const creatorThemes: ThemeDefinition[] = [
       updatedAt: "2025-02-10",
       supportsDarkMode: true,
       colorSwatches: ["#7C3AED", "#06B6D4", "#A78BFA", "#FFFFFF"],
+      family: "creator",
+      variantGroup: "creator-studio",
       lightTokens: {
         colors: {
           primary: "#7C3AED", secondary: "#06B6D4", accent: "#A78BFA",
@@ -61,6 +74,7 @@ export const creatorThemes: ThemeDefinition[] = [
           textPrimary: "#EDEDFF", textSecondary: "#A1A1D0", textMuted: "#6B6B8A",
           border: "rgba(255,255,255,0.06)", focus: "#A78BFA", overlay: "rgba(0,0,0,0.7)",
         },
+        typography: { headingFont: "'Plus Jakarta Sans', Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -81,6 +95,8 @@ export const creatorThemes: ThemeDefinition[] = [
       releaseDate: "2024-10-01",
       updatedAt: "2025-01-20",
       colorSwatches: ["#DC2626", "#171717", "#F87171", "#000000"],
+      family: "brutalist",
+      variantGroup: "brutalist-bold",
       lightTokens: {
         colors: {
           primary: "#DC2626", secondary: "#F87171", accent: "#FCD34D",
@@ -88,6 +104,15 @@ export const creatorThemes: ThemeDefinition[] = [
           textPrimary: "#FAFAFA", textSecondary: "#A3A3A3", textMuted: "#737373",
           border: "rgba(255,255,255,0.08)", focus: "#DC2626", overlay: "rgba(0,0,0,0.8)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#DC2626", secondary: "#F87171", accent: "#FCD34D",
+          background: "#0A0A0A", surface: "#171717", surfaceSecondary: "#262626",
+          textPrimary: "#FAFAFA", textSecondary: "#A3A3A3", textMuted: "#737373",
+          border: "rgba(255,255,255,0.08)", focus: "#DC2626", overlay: "rgba(0,0,0,0.8)",
+        },
+        typography: { headingFont: "'Courier Prime', Courier, monospace", bodyFont: "'Courier Prime', Courier, monospace" },
       },
     },
   ),
@@ -107,6 +132,8 @@ export const creatorThemes: ThemeDefinition[] = [
       releaseDate: "2024-09-10",
       updatedAt: "2025-02-28",
       colorSwatches: ["#00FF88", "#171717", "#39FF14", "#0A0A0A"],
+      family: "tech-cyber",
+      variantGroup: "tech-vibe",
       lightTokens: {
         colors: {
           primary: "#00FF88", secondary: "#39FF14", accent: "#00CCFF",
@@ -114,6 +141,15 @@ export const creatorThemes: ThemeDefinition[] = [
           textPrimary: "#FFFFFF", textSecondary: "#A0A0A0", textMuted: "#6B6B6B",
           border: "rgba(255,255,255,0.06)", focus: "#00FF88", overlay: "rgba(0,0,0,0.75)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#00FF88", secondary: "#39FF14", accent: "#00CCFF",
+          background: "#0A0A0A", surface: "#141414", surfaceSecondary: "#1F1F1F",
+          textPrimary: "#FFFFFF", textSecondary: "#A0A0A0", textMuted: "#6B6B6B",
+          border: "rgba(255,255,255,0.06)", focus: "#00FF88", overlay: "rgba(0,0,0,0.75)",
+        },
+        typography: { headingFont: "'JetBrains Mono', monospace", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -134,6 +170,8 @@ export const creatorThemes: ThemeDefinition[] = [
       releaseDate: "2024-07-20",
       updatedAt: "2025-03-01",
       colorSwatches: ["#1E3A8A", "#3B82F6", "#60A5FA", "#0F172A"],
+      family: "executive",
+      variantGroup: "executive-pro",
       lightTokens: {
         colors: {
           primary: "#1E3A8A", secondary: "#3B82F6", accent: "#60A5FA",
@@ -141,6 +179,15 @@ export const creatorThemes: ThemeDefinition[] = [
           textPrimary: "#F8FAFC", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#3B82F6", overlay: "rgba(0,0,0,0.6)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#1E3A8A", secondary: "#3B82F6", accent: "#60A5FA",
+          background: "#0F172A", surface: "#1E293B", surfaceSecondary: "#334155",
+          textPrimary: "#F8FAFC", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
+          border: "rgba(255,255,255,0.06)", focus: "#3B82F6", overlay: "rgba(0,0,0,0.6)",
+        },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),

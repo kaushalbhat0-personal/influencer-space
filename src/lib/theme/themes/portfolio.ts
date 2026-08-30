@@ -18,6 +18,8 @@ export const portfolioThemes: ThemeDefinition[] = [
       releaseDate: "2024-06-01",
       updatedAt: "2025-02-20",
       colorSwatches: ["#1e3a5f", "#0ea5e9", "#f59e0b", "#0f172a"],
+      family: "midnight",
+      variantGroup: "midnight-ocean",
       lightTokens: {
         colors: {
           primary: "#1e3a5f", secondary: "#0ea5e9", accent: "#f59e0b",
@@ -25,6 +27,15 @@ export const portfolioThemes: ThemeDefinition[] = [
           textPrimary: "#f8fafc", textSecondary: "#cbd5e1", textMuted: "#94a3b8",
           border: "rgba(255,255,255,0.06)", focus: "#0ea5e9", overlay: "rgba(0,0,0,0.6)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#1e3a5f", secondary: "#0ea5e9", accent: "#f59e0b",
+          background: "#0f172a", surface: "#1e293b", surfaceSecondary: "#334155",
+          textPrimary: "#f8fafc", textSecondary: "#cbd5e1", textMuted: "#94a3b8",
+          border: "rgba(255,255,255,0.06)", focus: "#0ea5e9", overlay: "rgba(0,0,0,0.6)",
+        },
+        typography: { headingFont: "Sora, Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -45,6 +56,8 @@ export const portfolioThemes: ThemeDefinition[] = [
       updatedAt: "2025-03-01",
       supportsDarkMode: true,
       colorSwatches: ["#1E293B", "#475569", "#3B82F6", "#FFFFFF"],
+      family: "minimal",
+      variantGroup: "minimal-portfolio",
       lightTokens: {
         colors: {
           primary: "#1E293B", secondary: "#475569", accent: "#3B82F6",
@@ -60,6 +73,7 @@ export const portfolioThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#60A5FA", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -80,6 +94,8 @@ export const portfolioThemes: ThemeDefinition[] = [
       releaseDate: "2024-08-20",
       updatedAt: "2025-01-15",
       colorSwatches: ["#BE185D", "#EC4899", "#FDF2F8", "#FFFFFF"],
+      family: "creator",
+      variantGroup: "creator-designer",
       lightTokens: {
         colors: {
           primary: "#BE185D", secondary: "#EC4899", accent: "#F472B6",
@@ -95,6 +111,7 @@ export const portfolioThemes: ThemeDefinition[] = [
           textPrimary: "#FDF2F8", textSecondary: "#FBCFE8", textMuted: "#A97A94",
           border: "rgba(255,255,255,0.08)", focus: "#F472B6", overlay: "rgba(0,0,0,0.7)",
         },
+        typography: { headingFont: "'Plus Jakarta Sans', Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -114,6 +131,8 @@ export const portfolioThemes: ThemeDefinition[] = [
       releaseDate: "2024-07-15",
       updatedAt: "2025-02-10",
       colorSwatches: ["#1A1A1A", "#FAFAFA", "#E50914", "#FFFFFF"],
+      family: "editorial",
+      variantGroup: "editorial-photographer",
       lightTokens: {
         colors: {
           primary: "#1A1A1A", secondary: "#FAFAFA", accent: "#E50914",
@@ -121,6 +140,15 @@ export const portfolioThemes: ThemeDefinition[] = [
           textPrimary: "#FAFAFA", textSecondary: "#A3A3A3", textMuted: "#6B6B6B",
           border: "rgba(255,255,255,0.06)", focus: "#FAFAFA", overlay: "rgba(0,0,0,0.8)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#1A1A1A", secondary: "#FAFAFA", accent: "#E50914",
+          background: "#0D0D0D", surface: "#1A1A1A", surfaceSecondary: "#2A2A2A",
+          textPrimary: "#FAFAFA", textSecondary: "#A3A3A3", textMuted: "#6B6B6B",
+          border: "rgba(255,255,255,0.06)", focus: "#FAFAFA", overlay: "rgba(0,0,0,0.8)",
+        },
+        typography: { headingFont: "Literata, Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),

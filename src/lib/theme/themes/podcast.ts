@@ -18,6 +18,8 @@ export const podcastThemes: ThemeDefinition[] = [
       releaseDate: "2024-07-15",
       updatedAt: "2025-03-10",
       colorSwatches: ["#6D28D9", "#8B5CF6", "#C4B5FD", "#0F0A1A"],
+      family: "creator",
+      variantGroup: "creator-podcast",
       lightTokens: {
         colors: {
           primary: "#6D28D9", secondary: "#8B5CF6", accent: "#C4B5FD",
@@ -25,6 +27,15 @@ export const podcastThemes: ThemeDefinition[] = [
           textPrimary: "#F3EEFF", textSecondary: "#B0A5D0", textMuted: "#7A6F9A",
           border: "rgba(255,255,255,0.06)", focus: "#8B5CF6", overlay: "rgba(0,0,0,0.7)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#6D28D9", secondary: "#8B5CF6", accent: "#C4B5FD",
+          background: "#0F0A1A", surface: "#1A122A", surfaceSecondary: "#251C3A",
+          textPrimary: "#F3EEFF", textSecondary: "#B0A5D0", textMuted: "#7A6F9A",
+          border: "rgba(255,255,255,0.06)", focus: "#8B5CF6", overlay: "rgba(0,0,0,0.7)",
+        },
+        typography: { headingFont: "'Plus Jakarta Sans', Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -44,6 +55,8 @@ export const podcastThemes: ThemeDefinition[] = [
       releaseDate: "2024-08-20",
       updatedAt: "2025-02-01",
       colorSwatches: ["#92400E", "#F59E0B", "#FDE68A", "#1C1917"],
+      family: "luxury",
+      variantGroup: "luxury-audio",
       lightTokens: {
         colors: {
           primary: "#92400E", secondary: "#F59E0B", accent: "#FBBF24",
@@ -51,6 +64,15 @@ export const podcastThemes: ThemeDefinition[] = [
           textPrimary: "#F5F5F4", textSecondary: "#A8A29E", textMuted: "#78716C",
           border: "rgba(255,255,255,0.06)", focus: "#F59E0B", overlay: "rgba(0,0,0,0.6)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#92400E", secondary: "#F59E0B", accent: "#FBBF24",
+          background: "#1C1917", surface: "#292524", surfaceSecondary: "#44403C",
+          textPrimary: "#F5F5F4", textSecondary: "#A8A29E", textMuted: "#78716C",
+          border: "rgba(255,255,255,0.06)", focus: "#F59E0B", overlay: "rgba(0,0,0,0.6)",
+        },
+        typography: { headingFont: "'Playfair Display', Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -71,6 +93,8 @@ export const podcastThemes: ThemeDefinition[] = [
       releaseDate: "2024-10-05",
       updatedAt: "2025-01-15",
       colorSwatches: ["#1E3A5F", "#3B82F6", "#93C5FD", "#0F172A"],
+      family: "minimal",
+      variantGroup: "minimal-voice",
       lightTokens: {
         colors: {
           primary: "#1E3A5F", secondary: "#3B82F6", accent: "#93C5FD",
@@ -78,6 +102,15 @@ export const podcastThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#3B82F6", overlay: "rgba(0,0,0,0.6)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#1E3A5F", secondary: "#3B82F6", accent: "#93C5FD",
+          background: "#0F172A", surface: "#1E293B", surfaceSecondary: "#334155",
+          textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
+          border: "rgba(255,255,255,0.06)", focus: "#3B82F6", overlay: "rgba(0,0,0,0.6)",
+        },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),

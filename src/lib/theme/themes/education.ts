@@ -19,6 +19,8 @@ export const educationThemes: ThemeDefinition[] = [
       updatedAt: "2025-03-10",
       supportsDarkMode: true,
       colorSwatches: ["#0F766E", "#14B8A6", "#99F6E4", "#FFFFFF"],
+      family: "minimal",
+      variantGroup: "minimal-coach",
       lightTokens: {
         colors: {
           primary: "#0F766E", secondary: "#14B8A6", accent: "#5EEAD4",
@@ -34,6 +36,7 @@ export const educationThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#5EEAD4", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -53,6 +56,8 @@ export const educationThemes: ThemeDefinition[] = [
       releaseDate: "2024-08-01",
       updatedAt: "2025-02-20",
       colorSwatches: ["#1E3A5F", "#D4A017", "#F5F5DC", "#FFFFFF"],
+      family: "editorial",
+      variantGroup: "editorial-academy-legacy",
       lightTokens: {
         colors: {
           primary: "#1E3A5F", secondary: "#D4A017", accent: "#F5C518",
@@ -68,6 +73,7 @@ export const educationThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#F5C518", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Literata, Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -89,6 +95,8 @@ export const educationThemes: ThemeDefinition[] = [
       updatedAt: "2025-01-30",
       supportsDarkMode: true,
       colorSwatches: ["#0D9488", "#F43F5E", "#5EEAD4", "#FFFFFF"],
+      family: "creator",
+      variantGroup: "creator-mentor",
       lightTokens: {
         colors: {
           primary: "#0D9488", secondary: "#F43F5E", accent: "#2DD4BF",
@@ -104,6 +112,7 @@ export const educationThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#2DD4BF", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "'Plus Jakarta Sans', Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),

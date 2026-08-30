@@ -49,10 +49,8 @@ export interface ThemeAuthor {
 export interface ThemeDesignTokens {
   colors: ColorTokens;
   typography: TypographyTokens;
-  spacing: SpacingTokens;
   motion: MotionTokens;
   radius: RadiusTokens;
-  elevation: ElevationTokens;
   borders: BorderTokens;
 }
 
@@ -81,19 +79,6 @@ export interface TypographyTokens {
   displayFont?: string;
   headingWeights: Record<string, number>;
   bodyWeight: number;
-  baseSize: string;
-  scaleRatio: number;
-}
-
-export interface SpacingTokens {
-  xs: string;
-  sm: string;
-  md: string;
-  lg: string;
-  xl: string;
-  "2xl": string;
-  "3xl": string;
-  "4xl": string;
 }
 
 export interface MotionTokens {
@@ -116,17 +101,7 @@ export interface RadiusTokens {
   full: string;
 }
 
-export interface ElevationTokens {
-  none: string;
-  sm: string;
-  md: string;
-  lg: string;
-  xl: string;
-}
-
 export interface BorderTokens {
-  width: string;
-  style: string;
   radius: string;
 }
 

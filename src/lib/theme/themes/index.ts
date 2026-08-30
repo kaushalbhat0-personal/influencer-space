@@ -1,9 +1,10 @@
 import type {
   ThemeDefinition, ThemeDesignTokens, ThemeCategory,
-  ColorTokens, TypographyTokens, SpacingTokens, MotionTokens,
-  RadiusTokens, ElevationTokens, BorderTokens,
+  ColorTokens, TypographyTokens, MotionTokens,
+  RadiusTokens, BorderTokens,
 } from "../types-new";
 import { DEFAULT_LIGHT_TOKENS, DEFAULT_DARK_TOKENS, mergeTokens, freezeTokens } from "../tokens-new";
+import { THEME_TIER_BY_ID as _TIER_FALLBACK } from "../tiers";
 import { creatorThemes } from "./creator";
 import { businessThemes } from "./business";
 import { portfolioThemes } from "./portfolio";
@@ -17,10 +18,8 @@ import { catalogThemes } from "./catalog";
 interface PartialTokens {
   colors?: Partial<ColorTokens>;
   typography?: Partial<TypographyTokens>;
-  spacing?: Partial<SpacingTokens>;
   motion?: Partial<MotionTokens>;
   radius?: Partial<RadiusTokens>;
-  elevation?: Partial<ElevationTokens>;
   borders?: Partial<BorderTokens>;
 }
 
@@ -56,7 +55,9 @@ export function createTheme(
     darkTokens?: PartialTokens;
   },
 ): ThemeDefinition {
-  const tier = opts?.tier;
+  // RCCF-10 tier cleanup: canonical tier is ThemeDefinition.tier. THEME_TIER_BY_ID
+  // is transitional fallback (see lib/theme/tiers.ts). New themes should set tier directly.
+  const tier = opts?.tier ?? tierFallbackForId(id);
   const variants: ThemeDefinition["variants"] = [];
   const hasDark = opts?.supportsDarkMode !== false;
   const hasLight = opts?.darkTokens !== undefined || opts?.supportsDarkMode === true;
@@ -122,6 +123,10 @@ export function createTheme(
 function extractSwatches(colors: ThemeDefinition["variants"][0]["tokens"]["colors"]): string[] {
   const order = ["primary", "secondary", "accent", "background", "surface", "textPrimary"] as const;
   return order.map((k) => colors[k]).filter((c) => c.startsWith("#"));
+}
+
+function tierFallbackForId(id: string): "free" | "starter" | "pro" | "business" | "enterprise" | undefined {
+  return _TIER_FALLBACK[id] as "free" | "starter" | "pro" | "business" | "enterprise" | undefined;
 }
 
 export const ALL_THEMES: ThemeDefinition[] = [

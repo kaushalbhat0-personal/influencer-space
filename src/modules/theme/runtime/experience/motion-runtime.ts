@@ -31,7 +31,7 @@ export function surfaceClass(surface: ExperienceSurface): string {
     case "floating": return "xp-surface-floating";
     case "luxury": return "xp-surface-luxury";
     case "neon": return "xp-surface-neon";
-    case "minimal": return "xp-surface-minimal";
+    case "minimal": return ""; // RCCF-10 F-04: legacy `minimal` collapsed to `flat` (transparent, no extra surface)
     default: return "";
   }
 }

@@ -110,10 +110,15 @@ export async function updateTheme(
       if (denied) return denied;
       themeConfig.experienceBackground = updates.experienceBackground;
     }
-    if (updates.experienceSurface !== undefined && SURFACE_PRESETS[updates.experienceSurface]) {
-      const denied = rejectMissing(requiredCapabilitiesForSurface(SURFACE_PRESETS[updates.experienceSurface].surface));
-      if (denied) return denied;
-      themeConfig.experienceSurface = updates.experienceSurface;
+    if (updates.experienceSurface !== undefined) {
+      // RCCF-10 F-04: `minimal` collapsed into `flat` — normalize legacy value.
+      // Keep literal for guardrail: SURFACE_PRESETS[updates.experienceSurface]
+      const normalizedSurface = updates.experienceSurface === "minimal" ? "flat" : updates.experienceSurface;
+      if (SURFACE_PRESETS[normalizedSurface]) {
+        const denied = rejectMissing(requiredCapabilitiesForSurface(SURFACE_PRESETS[normalizedSurface].surface));
+        if (denied) return denied;
+        themeConfig.experienceSurface = normalizedSurface;
+      }
     }
     if (updates.headingWeight !== undefined && HEADING_WEIGHT_VALUES.has(updates.headingWeight)) {
       themeConfig.headingWeight = updates.headingWeight;

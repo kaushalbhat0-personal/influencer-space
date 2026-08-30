@@ -18,6 +18,8 @@ export const restaurantThemes: ThemeDefinition[] = [
       releaseDate: "2024-06-15",
       updatedAt: "2025-02-28",
       colorSwatches: ["#166534", "#22C55E", "#D97706", "#052E16"],
+      family: "organic-aurora",
+      variantGroup: "aurora-forest",
       lightTokens: {
         colors: {
           primary: "#166534", secondary: "#22C55E", accent: "#D97706",
@@ -25,6 +27,15 @@ export const restaurantThemes: ThemeDefinition[] = [
           textPrimary: "#F0FDF4", textSecondary: "#BBF7D0", textMuted: "#86EFAC",
           border: "rgba(255,255,255,0.06)", focus: "#22C55E", overlay: "rgba(0,0,0,0.6)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#166534", secondary: "#22C55E", accent: "#D97706",
+          background: "#052E16", surface: "#0F3D1E", surfaceSecondary: "#1A4F2C",
+          textPrimary: "#F0FDF4", textSecondary: "#BBF7D0", textMuted: "#86EFAC",
+          border: "rgba(255,255,255,0.06)", focus: "#22C55E", overlay: "rgba(0,0,0,0.6)",
+        },
+        typography: { headingFont: "Outfit, Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -45,6 +56,8 @@ export const restaurantThemes: ThemeDefinition[] = [
       updatedAt: "2025-03-01",
       supportsDarkMode: true,
       colorSwatches: ["#78350F", "#D97706", "#FEF3C7", "#FFFBEB"],
+      family: "minimal",
+      variantGroup: "minimal-restaurant",
       lightTokens: {
         colors: {
           primary: "#78350F", secondary: "#D97706", accent: "#F59E0B",
@@ -60,6 +73,7 @@ export const restaurantThemes: ThemeDefinition[] = [
           textPrimary: "#F5F5F4", textSecondary: "#A8A29E", textMuted: "#78716C",
           border: "rgba(255,255,255,0.06)", focus: "#FDE68A", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -80,6 +94,8 @@ export const restaurantThemes: ThemeDefinition[] = [
       releaseDate: "2024-09-01",
       updatedAt: "2025-01-30",
       colorSwatches: ["#2D0A0A", "#D97706", "#991B1B", "#1A0505"],
+      family: "luxury",
+      variantGroup: "luxury-dining",
       lightTokens: {
         colors: {
           primary: "#2D0A0A", secondary: "#D97706", accent: "#FCD34D",
@@ -87,6 +103,15 @@ export const restaurantThemes: ThemeDefinition[] = [
           textPrimary: "#FEF2F2", textSecondary: "#D4A0A0", textMuted: "#8A6060",
           border: "rgba(255,255,255,0.06)", focus: "#D97706", overlay: "rgba(0,0,0,0.7)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#2D0A0A", secondary: "#D97706", accent: "#FCD34D",
+          background: "#1A0505", surface: "#2D0A0A", surfaceSecondary: "#3D1515",
+          textPrimary: "#FEF2F2", textSecondary: "#D4A0A0", textMuted: "#8A6060",
+          border: "rgba(255,255,255,0.06)", focus: "#D97706", overlay: "rgba(0,0,0,0.7)",
+        },
+        typography: { headingFont: "'Playfair Display', Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -106,6 +131,8 @@ export const restaurantThemes: ThemeDefinition[] = [
       releaseDate: "2024-08-05",
       updatedAt: "2025-02-15",
       colorSwatches: ["#4A5D23", "#C2410C", "#D97706", "#F5F5DC"],
+      family: "editorial",
+      variantGroup: "editorial-bistro",
       lightTokens: {
         colors: {
           primary: "#4A5D23", secondary: "#C2410C", accent: "#D97706",
@@ -121,6 +148,7 @@ export const restaurantThemes: ThemeDefinition[] = [
           textPrimary: "#F5F5DC", textSecondary: "#C0C0A8", textMuted: "#888870",
           border: "rgba(255,255,255,0.06)", focus: "#EA580C", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Literata, Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),

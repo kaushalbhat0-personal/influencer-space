@@ -19,6 +19,8 @@ export const businessThemes: ThemeDefinition[] = [
       updatedAt: "2025-03-10",
       supportsDarkMode: true,
       colorSwatches: ["#1E40AF", "#2563EB", "#DBEAFE", "#FFFFFF"],
+      family: "executive",
+      variantGroup: "executive-blue",
       lightTokens: {
         colors: {
           primary: "#1E40AF", secondary: "#2563EB", accent: "#60A5FA",
@@ -34,6 +36,7 @@ export const businessThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#60A5FA", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -54,6 +57,8 @@ export const businessThemes: ThemeDefinition[] = [
       releaseDate: "2024-09-01",
       updatedAt: "2025-02-15",
       colorSwatches: ["#1C1917", "#D97706", "#FCD34D", "#0C0A09"],
+      family: "executive",
+      variantGroup: "executive-gold",
       lightTokens: {
         colors: {
           primary: "#1C1917", secondary: "#D97706", accent: "#FCD34D",
@@ -61,6 +66,15 @@ export const businessThemes: ThemeDefinition[] = [
           textPrimary: "#F5F5F4", textSecondary: "#A8A29E", textMuted: "#78716C",
           border: "rgba(255,255,255,0.08)", focus: "#D97706", overlay: "rgba(0,0,0,0.7)",
         },
+      },
+      darkTokens: {
+        colors: {
+          primary: "#1C1917", secondary: "#D97706", accent: "#FCD34D",
+          background: "#0C0A09", surface: "#1C1917", surfaceSecondary: "#292524",
+          textPrimary: "#F5F5F4", textSecondary: "#A8A29E", textMuted: "#78716C",
+          border: "rgba(255,255,255,0.08)", focus: "#D97706", overlay: "rgba(0,0,0,0.7)",
+        },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -81,6 +95,8 @@ export const businessThemes: ThemeDefinition[] = [
       releaseDate: "2024-07-01",
       updatedAt: "2025-01-30",
       colorSwatches: ["#0D9488", "#EA580C", "#99F6E4", "#FFFFFF"],
+      family: "tech-cyber",
+      variantGroup: "tech-startup",
       lightTokens: {
         colors: {
           primary: "#0D9488", secondary: "#EA580C", accent: "#2DD4BF",
@@ -96,6 +112,7 @@ export const businessThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#2DD4BF", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "'JetBrains Mono', monospace", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),
@@ -116,6 +133,8 @@ export const businessThemes: ThemeDefinition[] = [
       updatedAt: "2025-03-05",
       supportsDarkMode: true,
       colorSwatches: ["#334155", "#3B82F6", "#F8FAFC", "#FFFFFF"],
+      family: "minimal",
+      variantGroup: "minimal-professional",
       lightTokens: {
         colors: {
           primary: "#334155", secondary: "#3B82F6", accent: "#60A5FA",
@@ -131,6 +150,7 @@ export const businessThemes: ThemeDefinition[] = [
           textPrimary: "#F1F5F9", textSecondary: "#CBD5E1", textMuted: "#94A3B8",
           border: "rgba(255,255,255,0.06)", focus: "#60A5FA", overlay: "rgba(0,0,0,0.6)",
         },
+        typography: { headingFont: "Inter, system-ui, sans-serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
     },
   ),

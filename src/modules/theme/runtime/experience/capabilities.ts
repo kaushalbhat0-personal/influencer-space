@@ -52,7 +52,9 @@ export const BACKGROUND_KIND_CAP: Record<ExperienceBackgroundKind, ThemeCapabili
   image: THEME_CAPABILITY.image, // RCCF-71.6.4: creator-uploaded background image
 };
 
-const SURFACE_FREE = new Set<ExperienceSurface>(["flat", "elevated", "minimal"]);
+const SURFACE_FREE = new Set<ExperienceSurface>(["flat", "elevated"]);
+// RCCF-10 F-04: `minimal` collapsed into `flat` (Option B). Legacy `minimal` surface
+// values are mapped to `flat` in applyExperienceOverride for backward compat.
 const DIVIDER_FREE = new Set<ExperienceDivider>(["fade", "none"]);
 
 /** Capabilities required when a persisted background preset is creator-selected. */

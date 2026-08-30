@@ -68,6 +68,8 @@ model Tenant {
   twitchAccessToken     String?   @db.Text
   twitchRefreshToken    String?   @db.Text
   twitchTokenExpiry     DateTime?
+  /// @deprecated RCCF-10: legacy FK to `Theme` table — Website.themePackageId is canonical.
+  /// Tenant.themeId is never read by storefront/builder/publish. Retained for migration safety; removal requires data migration.
   themeId               String?   @db.Uuid
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -170,6 +172,9 @@ model PublishSnapshot {
   @@unique([websiteId, version])
 }
 
+/// @deprecated RCCF-10: legacy Theme table — Website.themePackageId/themeColors/themeFonts/themeConfig is canonical.
+/// No runtime reads Tenant.themeId or WebsiteAgency.defaultThemeId. Retained for migration safety; removal requires data migration
+/// (verify all references, migrations, admin paths, scripts, seeds, APIs) — do not drop in this RCCF.
 model Theme {
   id              String   @id @default(uuid()) @db.Uuid
   name            String   @unique

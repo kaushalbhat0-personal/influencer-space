@@ -1,11 +1,14 @@
 /**
- * Theme tier assignment — IMPLEMENTATION-25.
+ * Theme tier assignment — IMPLEMENTATION-25, RCCF-10 transitional.
  *
- * The SINGLE data source that assigns a subscription tier to every theme in
- * the catalog. Distribution: 5 free · 10 starter (15) · 15 pro (30) ·
- * 20 business (50). Enterprise covers future premium releases.
+ * RCCF-10: canonical tier is now ThemeDefinition.tier (set via createTheme).
+ * THEME_TIER_BY_ID remains as a TRANSITIONAL fallback for themes that have not
+ * yet been migrated to an explicit `tier` field. New themes MUST set `tier`
+ * directly in their definition; do not add entries here. This map will be
+ * removed once all 51 themes declare tier inline (tracked, removal path: delete
+ * map + tierFallbackForId in themes/index.ts and make ThemeDefinition.tier required).
  *
- * Data-driven: retiering or adding theme #51+ is a configuration change only.
+ * Distribution: 5 free · 10 starter (15) · 15 pro (30) · 20 business (50).
  */
 import type { ThemeDefinition, ThemeTier } from "./types-new";
 import { tierRank } from "./access";
@@ -68,9 +71,10 @@ export const THEME_TIER_BY_ID: Record<string, ThemeTier> = {
   // ── ENTERPRISE (future premium releases; none assigned today) ──
 };
 
-/** Resolve a theme's tier: explicit field wins, else the catalog map, else free. */
+/** Resolve a theme's tier: explicit field wins, else transitional map, else free. */
 export function getThemeTier(theme: Pick<ThemeDefinition, "id" | "tier">): ThemeTier {
   if (theme.tier) return theme.tier;
+  // Transitional fallback — will be removed once all themes declare tier inline.
   return THEME_TIER_BY_ID[theme.id] ?? "free";
 }
 

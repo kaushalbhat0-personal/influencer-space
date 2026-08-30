@@ -18,6 +18,48 @@ const TIER_COLORS: Record<string, string> = {
   business: "bg-indigo-900/60 text-indigo-300",
   enterprise: "bg-purple-900/60 text-purple-300",
 };
+
+// RCCF-BUILDER-05C-R2.1: family grouping — truthful architecture from actual metadata.
+// familylabels are presentation-only; grouping key is the raw `theme.family` value
+// (or "legacy" for the ~30 pre-05A themes without family). variantGroup is shown
+// per card. No invented taxonomy.
+const FAMILY_LABELS: Record<string, string> = {
+  creator: "Creator",
+  minimal: "Minimal",
+  luxury: "Luxury",
+  "tech-cyber": "Cyber / Gaming",
+  midnight: "Midnight",
+  glass: "Glass / Studio",
+  executive: "Executive",
+  editorial: "Editorial",
+  "organic-aurora": "Aurora",
+  brutalist: "Brutalist",
+  legacy: "Other / Legacy",
+};
+
+const FAMILY_ORDER: string[] = [
+  "creator",
+  "minimal",
+  "editorial",
+  "luxury",
+  "executive",
+  "tech-cyber",
+  "organic-aurora",
+  "midnight",
+  "glass",
+  "brutalist",
+  "legacy",
+];
+
+function familyLabel(family: string): string {
+  return FAMILY_LABELS[family] ?? family.split("-").map((s) => s[0].toUpperCase() + s.slice(1)).join(" / ");
+}
+
+function familyOrderIndex(family: string): number {
+  const i = FAMILY_ORDER.indexOf(family);
+  return i === -1 ? 999 : i;
+}
+
 const FAV_KEY = "theme_favorites";
 const RECENT_KEY = "theme_recent";
 
@@ -79,6 +121,8 @@ export function ThemeMarketplaceClient({
     [plan],
   );
 
+  const tierOrder = (t: ThemeTier | undefined) => ["free", "starter", "pro", "business", "enterprise"].indexOf(t ?? "free");
+
   const filtered = useMemo(() => {
     let result = themes;
     if (search) {
@@ -102,7 +146,19 @@ export function ThemeMarketplaceClient({
       case "featured": result = [...result].sort((a, b) => Number(b.featured || false) - Number(a.featured || false)); break;
     }
     return result;
-  }, [themes, search, categoryFilter, tierFilter, onlyUnlocked, onlyFavorites, sort, recent, unlocked, favorites]);
+  }, [themes, search, categoryFilter, tierFilter, experienceFilter, onlyUnlocked, onlyFavorites, sort, recent, unlocked, favorites]);
+
+  // R2.1 family grouping — derived from already-filtered + sorted result so all
+  // existing filters/sort/favorites/unlocked semantics stay intact.
+  const grouped = useMemo(() => {
+    const map = new Map<string, ThemeDefinition[]>();
+    for (const t of filtered) {
+      const key = t.family ?? "legacy";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    }
+    return Array.from(map.entries()).sort((a, b) => familyOrderIndex(a[0]) - familyOrderIndex(b[0]));
+  }, [filtered]);
 
   // RCCF-LAUNCH-TRACK-06 (Phase 1): the Marketplace is BROWSE-ONLY. It never
   // mutates a website — "Open in Builder" routes to the Builder with the theme
@@ -115,8 +171,6 @@ export function ThemeMarketplaceClient({
   function toggleFavorite(id: string) {
     setFavorites((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]);
   }
-
-  const tierOrder = (t: ThemeTier | undefined) => ["free", "starter", "pro", "business", "enterprise"].indexOf(t ?? "free");
 
   return (
     <div className="space-y-6">
@@ -176,82 +230,161 @@ export function ThemeMarketplaceClient({
         )}
       </div>
 
-      {/* Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((theme) => {
-          const isUnlocked = unlocked(theme);
-          const tier = (theme.tier as ThemeTier | undefined) ?? "free";
-          const isFav = favorites.includes(theme.id);
-          const cv = theme.variants[0]?.tokens.colors;
-          const exp = experienceRegistry.resolve({ id: theme.id, category: theme.category, premium: theme.premium });
-          const expAvailable = plan ? isExperienceAvailableForPlan(exp.id, plan) : false;
+      {/* Grouped by Family — R2.1 truthful architecture: 10 families + legacy (no invented taxonomy) */}
+      <div className="space-y-8" data-testid="family-grouped-marketplace">
+        {grouped.map(([familyKey, familyThemes]) => {
+          const label = familyLabel(familyKey);
+          const isLegacy = familyKey === "legacy";
+          // Variant breakdown for header (restrained metadata, not gradients)
+          const variantCounts = new Map<string, number>();
+          for (const t of familyThemes) {
+            const vg = t.variantGroup ?? "—";
+            variantCounts.set(vg, (variantCounts.get(vg) ?? 0) + 1);
+          }
+          const actualLightCount = familyThemes.filter((t) => t.variants.some((v) => v.mode === "light")).length;
+          const familyUnlocked = familyThemes.some((t) => unlocked(t));
+          const familyPremium = familyThemes.some((t) => t.premium);
           return (
-            <div
-              key={theme.id}
-              onClick={() => setSelectedTheme(theme)}
-              className={`group relative cursor-pointer overflow-hidden rounded-xl border text-left transition-all border-white/10 hover:border-white/30`}
-              data-testid={`theme-card-${theme.slug}`}
-            >
-              <div className="h-32 w-full" style={{ background: `linear-gradient(135deg, ${cv?.primary} 0%, ${cv?.secondary} 50%, ${cv?.accent} 100%)` }}>
-                <div className="absolute left-2 top-2 z-10 flex gap-1">
-                  {theme.featured && <span className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-bold text-black">Featured</span>}
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(theme.id); }}
-                  className={`absolute right-2 top-2 z-10 rounded-full bg-black/40 p-1 backdrop-blur-sm transition-colors ${isFav ? "text-amber-300" : "text-white/60 hover:text-white"}`}
-                  aria-label="Toggle favorite"
-                >
-                  {isFav ? "★" : "☆"}
-                </button>
-                {!isUnlocked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]" data-testid={`lock-badge-${theme.slug}`}>
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-semibold text-white">
-                      Locked · {TIER_LABELS[tier]}
+            <section key={familyKey} data-testid={`family-group-${familyKey}`} className="space-y-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/5 pb-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-300">{label}</h2>
+                  <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+                    {familyThemes.length} theme{familyThemes.length === 1 ? "" : "s"}
+                  </span>
+                  {actualLightCount > 0 && (
+                    <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-zinc-400" title={`${actualLightCount} theme(s) declare a light variant (source)`}>
+                      {actualLightCount} light variant{actualLightCount === 1 ? "" : "s"}
                     </span>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-1.5 p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{theme.name}</p>
-                  <div className="flex items-center gap-1">
-                    {theme.premium && <span className="rounded bg-amber-900/60 px-1 py-0.5 text-[8px] font-bold text-amber-300">PREMIUM</span>}
-                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
-                      {TIER_LABELS[tier]}
+                  )}
+                  {familyPremium && !familyUnlocked && (
+                    <span className="rounded bg-amber-900/30 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300" title="All variants in this family require an upgrade">
+                      Unlock on Grow
                     </span>
-                  </div>
+                  )}
+                  {familyPremium && familyUnlocked && familyThemes.some((t) => !unlocked(t)) && (
+                    <span className="rounded bg-emerald-900/30 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300" title="Some variants unlocked, some require upgrade">
+                      Partially unlocked
+                    </span>
+                  )}
+                  {!familyPremium && (
+                    <span className="rounded bg-emerald-900/30 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300">Available</span>
+                  )}
+                  {isLegacy && (
+                    <span className="rounded bg-amber-900/30 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300" title="Pre-05A legacy themes without family/variantGroup — honestly unclassified, behavior preserved">
+                      Legacy
+                    </span>
+                  )}
                 </div>
-                <p className="text-[10px] text-[var(--text-muted,#71717A)]">{CATEGORY_LABELS[theme.category] || theme.category} &middot; v{theme.version}</p>
-                <p className="text-[10px] text-[var(--text-muted,#71717A)]">
-                  <span className="text-zinc-500">Exp:</span> {exp.name}
-                  {exp.premium && !expAvailable && <span className="ml-1 text-amber-500">(requires upgrade)</span>}
-                </p>
-                <p className="line-clamp-2 text-[11px] text-[var(--text-secondary,#A1A1AA)]">{theme.description}</p>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {theme.variants.map((v) => (
-                    <span key={v.mode} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">{v.mode}</span>
+                <div className="flex flex-wrap items-center gap-1">
+                  {Array.from(variantCounts.entries()).map(([vg, count]) => (
+                    <span key={vg} className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-zinc-500" title={`variantGroup ${vg}`}>
+                      {vg} ×{count}
+                    </span>
                   ))}
                 </div>
-                {isUnlocked && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openInBuilder(theme.id); }}
-                    data-testid={`open-in-builder-${theme.slug}`}
-                    className="mt-1 w-full rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
-                  >
-                    Open in Builder
-                  </button>
-                )}
-                {!isUnlocked && (
-                  <Link
-                    href="/admin/billing"
-                    className="mt-1 block w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-center text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Upgrade to unlock
-                  </Link>
-                )}
               </div>
-            </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {familyThemes.map((theme) => {
+                  const isUnlocked = unlocked(theme);
+                  const tier = (theme.tier as ThemeTier | undefined) ?? "free";
+                  const isFav = favorites.includes(theme.id);
+                  const cv = theme.variants[0]?.tokens.colors;
+                  const exp = experienceRegistry.resolve({ id: theme.id, category: theme.category, premium: theme.premium });
+                  const expAvailable = plan ? isExperienceAvailableForPlan(exp.id, plan) : false;
+                  const hasLight = theme.variants.some((v) => v.mode === "light");
+                  const headingFont = theme.variants[0]?.tokens.typography.headingFont ?? "";
+                  const truncatedFont = headingFont.split(",")[0].replace(/['"]/g, "");
+                  return (
+                    <div
+                      key={theme.id}
+                      onClick={() => setSelectedTheme(theme)}
+                      className={`group relative cursor-pointer overflow-hidden rounded-xl border text-left transition-all border-white/10 hover:border-white/30`}
+                      data-testid={`theme-card-${theme.slug}`}
+                    >
+                      <div className="h-32 w-full" style={{ background: `linear-gradient(135deg, ${cv?.primary} 0%, ${cv?.secondary} 50%, ${cv?.accent} 100%)` }}>
+                        <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1">
+                          {theme.featured && <span className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-bold text-black">Featured</span>}
+                          {hasLight && <span className="rounded bg-white/80 px-1 py-0.5 text-[8px] font-bold text-black" title="Declares a light variant">Light + Dark</span>}
+                          {!hasLight && <span className="rounded bg-black/60 px-1 py-0.5 text-[8px] font-semibold text-white/80">Dark only</span>}
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(theme.id); }}
+                          className={`absolute right-2 top-2 z-10 rounded-full bg-black/40 p-1 backdrop-blur-sm transition-colors ${isFav ? "text-amber-300" : "text-white/60 hover:text-white"}`}
+                          aria-label="Toggle favorite"
+                        >
+                          {isFav ? "★" : "☆"}
+                        </button>
+                        {!isUnlocked && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]" data-testid={`lock-badge-${theme.slug}`}>
+                            <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-semibold text-white">
+                              Locked · {TIER_LABELS[tier]}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1.5 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{theme.name}</p>
+                          <div className="flex shrink-0 items-center gap-1">
+                            {theme.premium && <span className="rounded bg-amber-900/60 px-1 py-0.5 text-[8px] font-bold text-amber-300">PREMIUM</span>}
+                            <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
+                              {TIER_LABELS[tier]}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-[var(--text-muted,#71717A)]">{CATEGORY_LABELS[theme.category] || theme.category} &middot; v{theme.version}</p>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-300" title={`family ${familyKey}`}>
+                            {label}
+                          </span>
+                          {theme.variantGroup && (
+                            <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-zinc-400" title={`variantGroup ${theme.variantGroup}`}>
+                              {theme.variantGroup}
+                            </span>
+                          )}
+                          {!theme.variantGroup && isLegacy && (
+                            <span className="rounded bg-zinc-900 px-1 py-0.5 text-[9px] text-zinc-600">unclassified</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[var(--text-muted,#71717A)]">
+                          <span className="text-zinc-500">Exp:</span> {exp.name}
+                          {exp.premium && !expAvailable && <span className="ml-1 text-amber-500">(requires upgrade)</span>}
+                        </p>
+                        <p className="text-[10px] text-zinc-500" title={headingFont}>
+                          <span className="text-zinc-600">Font:</span> {truncatedFont || "Inter"}
+                        </p>
+                        <p className="line-clamp-2 text-[11px] text-[var(--text-secondary,#A1A1AA)]">{theme.description}</p>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {theme.variants.map((v) => (
+                            <span key={v.mode} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">{v.mode}</span>
+                          ))}
+                        </div>
+                        {isUnlocked && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openInBuilder(theme.id); }}
+                            data-testid={`open-in-builder-${theme.slug}`}
+                            className="mt-1 w-full rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
+                          >
+                            Open in Builder
+                          </button>
+                        )}
+                        {!isUnlocked && (
+                          <Link
+                            href="/admin/billing"
+                            className="mt-1 block w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-center text-xs font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Upgrade to unlock
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           );
         })}
       </div>
@@ -259,9 +392,9 @@ export function ThemeMarketplaceClient({
       {filtered.length === 0 && (
         <div className="py-16 text-center">
           <p className="text-sm text-zinc-500">No themes found matching your criteria.</p>
-          {(search || categoryFilter || tierFilter || onlyUnlocked || onlyFavorites) && (
+          {(search || categoryFilter || tierFilter || experienceFilter || onlyUnlocked || onlyFavorites) && (
             <button
-              onClick={() => { setSearch(""); setCategoryFilter(""); setTierFilter(""); setOnlyUnlocked(false); setOnlyFavorites(false); }}
+              onClick={() => { setSearch(""); setCategoryFilter(""); setTierFilter(""); setExperienceFilter(""); setOnlyUnlocked(false); setOnlyFavorites(false); }}
               className="mt-2 text-xs text-s8ul-cyan hover:underline"
             >
               Clear filters
@@ -283,7 +416,7 @@ export function ThemeMarketplaceClient({
   );
 }
 
-function ThemeDetailPanel({ theme, unlocked, planTierName, onOpenInBuilder, onClose }: {
+function ThemeDetailPanel({ theme, unlocked, planTierName: _planTierName, onOpenInBuilder, onClose }: {
   theme: ThemeDefinition;
   unlocked: boolean;
   planTierName: string;
@@ -292,19 +425,27 @@ function ThemeDetailPanel({ theme, unlocked, planTierName, onOpenInBuilder, onCl
 }) {
   const cv = theme.variants[0]?.tokens.colors;
   const tier = (theme.tier as ThemeTier | undefined) ?? "free";
+  const familyKey = theme.family ?? "legacy";
+  const family = familyLabel(familyKey);
+  const exp = (() => {
+    try { return experienceRegistry.resolve({ id: theme.id, category: theme.category, premium: theme.premium }); } catch { return { id: "minimal", name: "Minimal" } as { id: string; name: string }; }
+  })();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <div className="mx-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 p-6" data-testid="theme-detail">
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-white">{theme.name}</h2>
               <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
                 {TIER_LABELS[tier]}
               </span>
+              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-300" title={`family ${familyKey}`}>{family}</span>
+              {theme.variantGroup && <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-zinc-400">{theme.variantGroup}</span>}
+              {!theme.variantGroup && familyKey === "legacy" && <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-zinc-600">unclassified legacy</span>}
             </div>
-            <p className="text-xs text-zinc-500">by {theme.author.name} &middot; v{theme.version} &middot; {theme.category}</p>
+            <p className="text-xs text-zinc-500">by {theme.author.name} &middot; v{theme.version} &middot; {theme.category} &middot; {exp.name}</p>
           </div>
           <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-lg">&times;</button>
         </div>
