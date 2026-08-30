@@ -140,6 +140,7 @@ export const portfolioThemes: ThemeDefinition[] = [
           textPrimary: "#FAFAFA", textSecondary: "#A3A3A3", textMuted: "#6B6B6B",
           border: "rgba(255,255,255,0.06)", focus: "#FAFAFA", overlay: "rgba(0,0,0,0.8)",
         },
+        typography: { headingFont: "Literata, Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
       darkTokens: {
         colors: {

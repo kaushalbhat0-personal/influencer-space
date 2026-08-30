@@ -140,6 +140,7 @@ export const restaurantThemes: ThemeDefinition[] = [
           textPrimary: "#292524", textSecondary: "#78716C", textMuted: "#A8A29E",
           border: "#D6D3C8", focus: "#C2410C", overlay: "rgba(0,0,0,0.4)",
         },
+        typography: { headingFont: "Literata, Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
       darkTokens: {
         colors: {

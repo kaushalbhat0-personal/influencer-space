@@ -55,7 +55,7 @@ function makeTheme(o: {
     supportsDarkMode: true,
     family: o.family,
     variantGroup: o.variantGroup,
-    lightTokens: o.light ? { colors: o.light } : undefined,
+    lightTokens: o.light ? { colors: o.light, typography: o.fonts ? { headingFont: o.fonts.heading, bodyFont: o.fonts.body } : undefined } : undefined,
     darkTokens: {
       colors: o.dark,
       typography: o.fonts ? { headingFont: o.fonts.heading, bodyFont: o.fonts.body } : undefined,

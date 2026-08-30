@@ -65,6 +65,7 @@ export const educationThemes: ThemeDefinition[] = [
           textPrimary: "#0F172A", textSecondary: "#495057", textMuted: "#868E96",
           border: "#DEE2E6", focus: "#D4A017", overlay: "rgba(0,0,0,0.5)",
         },
+        typography: { headingFont: "Literata, Georgia, serif", bodyFont: "Inter, system-ui, sans-serif" },
       },
       darkTokens: {
         colors: {

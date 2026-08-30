@@ -23,6 +23,8 @@ const nextConfig = {
       { protocol: "https", hostname: "yt3.googleusercontent.com" },
       { protocol: "https", hostname: "**.cdninstagram.com" },
       { protocol: "https", hostname: "static-cdn.jtvnw.net" },
+      { protocol: "https", hostname: "placehold.co" },
+      { protocol: "https", hostname: "picsum.photos" },
     ],
   },
   async headers() {
