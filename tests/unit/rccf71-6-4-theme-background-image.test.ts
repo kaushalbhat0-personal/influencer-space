@@ -195,15 +195,18 @@ describe("RCCF-71.6.4 — image config validation", () => {
     expect(isSafeAssetUrl(null)).toBe(false);
   });
 
-  it("validates the persisted opacity percentage (5..90) and parses to 0..1", () => {
+  it("validates the persisted opacity percentage (0..100) and parses to 0..1 — RCCF-08.1 allows 0 and 100", () => {
+    expect(isValidImageOpacity("0")).toBe(true);
     expect(isValidImageOpacity("5")).toBe(true);
     expect(isValidImageOpacity("90")).toBe(true);
-    expect(isValidImageOpacity("4")).toBe(false);
-    expect(isValidImageOpacity("91")).toBe(false);
+    expect(isValidImageOpacity("100")).toBe(true);
+    expect(isValidImageOpacity("-1")).toBe(false);
+    expect(isValidImageOpacity("101")).toBe(false);
     expect(isValidImageOpacity("abc")).toBe(false);
     expect(parseImageOpacity("40")).toBe(0.4);
+    expect(parseImageOpacity("0")).toBe(0);
     expect(parseImageOpacity("5")).toBe(0.05);
-    expect(parseImageOpacity("90")).toBe(0.9);
+    expect(parseImageOpacity("100")).toBe(1);
     expect(parseImageOpacity("")).toBeUndefined();
   });
 });

@@ -141,8 +141,8 @@ function Layers({ glow, pattern }: { glow?: string | null; pattern?: string | nu
   );
 }
 
-/** Clamp resolved image opacity to a readable range (0.08..0.9). */
+/** Clamp resolved image opacity to 0..1 (RCCF-08.1: 0 = invisible background, 1 = fully opaque, content never affected). */
 function clampOpacity(value: number | undefined): number {
   if (typeof value !== "number" || !Number.isFinite(value)) return 0.35;
-  return Math.min(0.9, Math.max(0.08, value));
+  return Math.min(1, Math.max(0, value));
 }

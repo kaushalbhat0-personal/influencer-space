@@ -306,8 +306,8 @@ export function AppearancePanel({
               </p>
               <input
                 type="range"
-                min="5"
-                max="90"
+                min="0"
+                max="100"
                 step="5"
                 value={clampedImageOpacity(state.experienceBackgroundImageOpacity)}
                 onChange={(event) => applyChange({ experienceBackgroundImageOpacity: event.target.value })}
@@ -580,7 +580,7 @@ function clampedRadius(value: string): number {
 
 function clampedImageOpacity(value: string): number {
   const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? Math.min(90, Math.max(5, parsed)) : 35;
+  return Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : 35;
 }
 
 function borderRadiusLabel(value: string): string {
