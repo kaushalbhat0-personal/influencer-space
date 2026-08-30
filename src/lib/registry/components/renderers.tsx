@@ -206,7 +206,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
       <div className="-mt-[100px] @sm/main:-mt-[24%] relative z-10">
         <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-16 pt-6 @sm/main:pb-24 @sm/main:pt-8`}>
           {profilePictureUrl && (
-            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm/main:h-36 @sm/main:w-36">
+            <div className="relative mx-auto mb-8 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm/main:h-36 @sm/main:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
             </div>
           )}
