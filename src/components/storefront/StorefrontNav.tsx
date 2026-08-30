@@ -87,7 +87,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
             return (
               <a
                 key={s.id}
-                href={isAnchor ? undefined : s.href}
+                href={s.href}
                 target={isExternal ? s.target || "_blank" : undefined}
                 rel={isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {
@@ -119,7 +119,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
                 return (
                   <a
                     key={s.id}
-                    href={!isAnchor ? s.href : undefined}
+                    href={s.href}
                     target={isExternal ? s.target || "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
                     onClick={(e) => {
@@ -146,7 +146,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
             return (
               <a
                 key={s.id}
-                href={!isAnchor ? s.href : undefined}
+                href={s.href}
                 target={isExternal ? s.target || "_blank" : undefined}
                 rel={isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {

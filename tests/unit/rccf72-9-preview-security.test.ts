@@ -11,6 +11,7 @@ const { mockGetPublishedPageData } = vi.hoisted(() => ({ mockGetPublishedPageDat
 const { mockBuilderLoad } = vi.hoisted(() => ({ mockBuilderLoad: vi.fn() }));
 const { mockBuildWithDiagnostics } = vi.hoisted(() => ({ mockBuildWithDiagnostics: vi.fn() }));
 const { mockGetOrGenerate } = vi.hoisted(() => ({ mockGetOrGenerate: vi.fn() }));
+const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
 const { mockThemeGetById } = vi.hoisted(() => ({ mockThemeGetById: vi.fn() }));
 const { mockExperienceResolve } = vi.hoisted(() => ({ mockExperienceResolve: vi.fn() }));
 const { mockApplyExperienceOverride } = vi.hoisted(() => ({ mockApplyExperienceOverride: vi.fn() }));
@@ -19,6 +20,10 @@ const { mockResolveExperienceForCapabilities } = vi.hoisted(() => ({
 }));
 const { mockResolveActivePlan } = vi.hoisted(() => ({ mockResolveActivePlan: vi.fn() }));
 const { mockBuildRuntimeSnapshot } = vi.hoisted(() => ({ mockBuildRuntimeSnapshot: vi.fn() }));
+const { mockRenderableNavBases } = vi.hoisted(() => ({ mockRenderableNavBases: vi.fn() }));
+const { mockReconcileNavigation } = vi.hoisted(() => ({ mockReconcileNavigation: vi.fn() }));
+const { mockLayoutResolve } = vi.hoisted(() => ({ mockLayoutResolve: vi.fn() }));
+const { mockGoalProfileGet } = vi.hoisted(() => ({ mockGoalProfileGet: vi.fn() }));
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -43,9 +48,19 @@ vi.mock("@/modules/tenant/application/website-aggregate.service", () => ({
   websiteAggregateService: { buildWithDiagnostics: mockBuildWithDiagnostics },
 }));
 vi.mock("@/lib/navigation/service", () => ({
-  navigationService: { getOrGenerate: mockGetOrGenerate },
+  navigationService: { getOrGenerate: mockGetOrGenerate, get: mockGet },
 }));
 vi.mock("@/lib/theme/registry-new", () => ({ themeRegistry: { getById: mockThemeGetById } }));
+vi.mock("@/lib/navigation/reconcile", () => ({
+  renderableNavBases: mockRenderableNavBases,
+  reconcileNavigation: mockReconcileNavigation,
+}));
+vi.mock("@/lib/storefront/layout-engine", () => ({
+  layoutEngine: { resolve: mockLayoutResolve },
+}));
+vi.mock("@/modules/goals-runtime", () => ({
+  goalProfileService: { getProfile: mockGoalProfileGet },
+}));
 vi.mock("@/modules/theme/runtime/experience", () => ({
   experienceRegistry: { resolve: mockExperienceResolve },
   applyExperienceOverride: mockApplyExperienceOverride,
@@ -77,12 +92,17 @@ function seedLoaderMocks() {
     aggregate: { identity: { name: "Acme" } }, invalidAssetIds: [], skippedAssets: 0, moduleFailures: [],
   });
   mockGetOrGenerate.mockResolvedValue([]);
+  mockGet.mockResolvedValue([]);
   mockThemeGetById.mockReturnValue(undefined);
   mockExperienceResolve.mockReturnValue({});
   mockApplyExperienceOverride.mockReturnValue({});
   mockResolveExperienceForCapabilities.mockReturnValue({});
   mockResolveActivePlan.mockResolvedValue({ code: "creator_launch" });
   mockBuildRuntimeSnapshot.mockReturnValue(DRAFT_SNAPSHOT);
+  mockRenderableNavBases.mockReturnValue([]);
+  mockReconcileNavigation.mockImplementation((persisted: unknown) => persisted as unknown);
+  mockLayoutResolve.mockReturnValue({ pages: [{ isHome: true, sections: [] }] } as unknown);
+  mockGoalProfileGet.mockResolvedValue(null);
 }
 
 beforeEach(() => {

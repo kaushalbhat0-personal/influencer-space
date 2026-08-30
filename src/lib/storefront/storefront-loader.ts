@@ -23,6 +23,10 @@ import { BuilderService } from "@/lib/builder/builder-service";
 import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 import { navigationService } from "@/lib/navigation/service";
 import { canPreviewTenant } from "@/lib/storefront/preview-auth";
+import { resolveActivePlan } from "@/modules/billing/application/plan-source";
+import { experienceRegistry, applyExperienceOverride, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
+import { renderableNavBases, reconcileNavigation } from "@/lib/navigation/reconcile";
+import { layoutEngine } from "@/lib/storefront/layout-engine";
 import type { AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
 
 export { normalizePageSlug, resolvePageBySlug } from "@/lib/storefront/page-resolver";
@@ -59,15 +63,15 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
     // fall through to the public published snapshot below (never draft).
     const website = await prisma.website.findUnique({
       where: { tenantId: tenant.id },
-      select: { id: true, themePackageId: true, themeColors: true, themeFonts: true },
+      select: { id: true, themePackageId: true, themeColors: true, themeFonts: true, themeConfig: true },
     });
     if (!website) return { tenantId: tenant.id, snapshot: null, previewAuthorized: true, diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] } };
 
     const builderService = new BuilderService();
-    const [builderPages, aggResult, navItems] = await Promise.all([
+    const [builderPages, aggResult, persistedNav] = await Promise.all([
       builderService.load(website.id),
       websiteAggregateService.buildWithDiagnostics(tenant.id, { homepage }),
-      navigationService.getOrGenerate(tenant.id),
+      navigationService.get(tenant.id),
     ]);
     if (builderPages.length === 0) {
       return {
@@ -78,15 +82,72 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
       };
     }
 
+    // RCCF-71.2: canonical experience resolution chain — same order as
+    // publishing (service.ts:219-234) and builder canvas (interactive-canvas.tsx:240-250).
+    // 1) Resolve base experience from theme package
+    const { themeRegistry } = await import("@/lib/theme/registry-new");
+    const themeDef = website.themePackageId ? themeRegistry.getById(website.themePackageId) : undefined;
+    const experienceBase = experienceRegistry.resolve({
+      id: website.themePackageId ?? null,
+      category: themeDef?.category ?? null,
+      premium: themeDef?.premium ?? null,
+    });
+
+    // 2) Apply experience overrides from Website.themeConfig (persisted creator configs)
+    const overridden = applyExperienceOverride(
+      experienceBase,
+      (website.themeConfig ?? {}) as Record<string, string>,
+    );
+
+    // 3) Resolve capability filtering using the active plan (server-authoritative)
+    const activePlan = await resolveActivePlan(undefined, tenant.id);
+    const experience = resolveExperienceForCapabilities(
+      overridden,
+      activePlan.code ?? null,
+    );
+
+    // RCCF-08: preview navigation parity — derive the renderable section graph
+    // from the SAME pipeline the published storefront uses (buildRuntimeSnapshot
+    // → layoutEngine.resolve → renderableNavBases) and reconcile IN-MEMORY.
+    // This is the identical logic to publishing/service.ts reconcileForPublish,
+    // but WITHOUT persistence (preview GET is side-effect free). Manual overrides
+    // survive per reconcileNavigation contract; generated anchors for non-rendering
+    // sections are dropped, newly renderable sections gain anchors.
+    // No second registry, no template nav, no Hero/Footer derivation.
+    const { goalProfileService } = await import("@/modules/goals-runtime");
+    const goalProfilePresent = !!(await goalProfileService.getProfile(tenant.id));
+
+    // Need a snapshot with the persisted nav to resolve the document and derive
+    // the graph (same snapshot shape publish uses before reconciliation).
+    const draftSnapshotForGraph = buildRuntimeSnapshot({
+      websiteId: website.id,
+      correlationId: `preview_graph_${website.id}`,
+      builderPages,
+      aggregate: aggResult.aggregate,
+      navItems: persistedNav,
+      themePackageId: website.themePackageId,
+      themeColors: (website.themeColors ?? {}) as Record<string, string>,
+      themeFonts: (website.themeFonts ?? {}) as Record<string, string>,
+      themeConfig: (website.themeConfig ?? {}) as Record<string, string>,
+      experience,
+    });
+    const doc = layoutEngine.resolve({ ...draftSnapshotForGraph, content: aggResult.aggregate });
+    const home = doc.pages.find((p) => p.isHome) ?? doc.pages[0];
+    const graphBases = renderableNavBases(home?.sections ?? [], aggResult.aggregate, goalProfilePresent);
+    // Pure in-memory reconciliation — side-effect free, no persistence.
+    const previewNav = reconcileNavigation(persistedNav, graphBases);
+
     const snapshot = buildRuntimeSnapshot({
       websiteId: website.id,
       correlationId: `preview_${website.id}`,
       builderPages,
       aggregate: aggResult.aggregate,
-      navItems,
+      navItems: previewNav,
       themePackageId: website.themePackageId,
       themeColors: (website.themeColors ?? {}) as Record<string, string>,
       themeFonts: (website.themeFonts ?? {}) as Record<string, string>,
+      themeConfig: (website.themeConfig ?? {}) as Record<string, string>,
+      experience,
     });
     return {
       tenantId: tenant.id,
