@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GripVertical, Copy, Trash2, Plus } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import { builderEditor } from "@/lib/builder/commands/editor";
 import type { SectionId, PageId } from "@/lib/builder/types";
 
@@ -24,15 +24,6 @@ export function SectionActions({
     >
       {visible && (
         <div className="absolute -left-8 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-0.5">
-          {/* Drag Handle */}
-          <div
-            className="flex cursor-grab items-center justify-center rounded-md bg-zinc-800 p-1 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300 active:cursor-grabbing"
-            title="Drag to reorder"
-            aria-hidden="true"
-          >
-            <GripVertical className="h-3.5 w-3.5" />
-          </div>
-
           {/* Duplicate */}
           <button
             onClick={() => builderEditor.duplicateSection(sectionId, pageId)}
@@ -69,29 +60,4 @@ export function SectionActions({
   );
 }
 
-/** Drop zone indicator between sections — shows a + button to add components. */
-export function SectionDropZone() {
-  const [hover, setHover] = useState(false);
 
-  return (
-    <div
-      className={`relative flex items-center justify-center transition-all duration-200 ${
-        hover ? "h-8" : "h-2"
-      }`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      <div className={`absolute inset-x-0 h-0.5 transition-colors ${hover ? "bg-indigo-400/40" : "bg-white/5"}`} />
-      {hover && (
-        <button
-          className="absolute z-10 flex items-center gap-1 rounded-full bg-indigo-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-lg hover:opacity-90"
-          title="Add component"
-          aria-label="Add component"
-        >
-          <Plus className="h-3 w-3" />
-          Add
-        </button>
-      )}
-    </div>
-  );
-}

@@ -45,6 +45,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showUpgrade, setShowUpgrade] = useState<string | null>(null);
 
@@ -72,11 +73,12 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
       const q = search.toLowerCase();
       result = result.filter((t) => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some((tag) => tag.toLowerCase().includes(q)));
     }
+    if (favoritesOnly) result = result.filter((t) => favorites.includes(t.id));
     if (category) result = result.filter((t) => t.category === category);
     const currentFirst = (a: ThemeDefinition, b: ThemeDefinition) => Number(b.id === currentThemeId) - Number(a.id === currentThemeId);
     const tierSort = (a: ThemeDefinition, b: ThemeDefinition) => TIER_ORDER.indexOf(getThemeTier(a)) - TIER_ORDER.indexOf(getThemeTier(b));
     return [...result].sort((a, b) => currentFirst(a, b) || tierSort(a, b) || a.name.localeCompare(b.name));
-  }, [allThemes, search, category, currentThemeId]);
+  }, [allThemes, search, category, favoritesOnly, favorites, currentThemeId]);
 
   const categories = useMemo(() => [...Array.from(new Set(allThemes.map((t) => t.category)))].sort(), [allThemes]);
 
@@ -143,9 +145,11 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
           {categories.map((c) => <option key={c} value={c}>{CATEGORY_LABELS[c as keyof typeof CATEGORY_LABELS] || c}</option>)}
         </select>
         <button
-          onClick={() => setCategory((c) => (c === "__fav__" ? "" : "__fav__"))}
-          className={cn("rounded-md border px-2 py-1 text-[9px]", category === "__fav__" ? "border-amber-500/40 text-amber-300" : "border-white/10 text-zinc-500 hover:text-zinc-300")}
+          onClick={() => setFavoritesOnly((v) => !v)}
+          className={cn("rounded-md border px-2 py-1 text-[9px]", favoritesOnly ? "border-amber-500/40 text-amber-300" : "border-white/10 text-zinc-500 hover:text-zinc-300")}
           title="Favorites"
+          aria-pressed={favoritesOnly}
+          aria-label="Toggle favorites only"
         >
           <Star className={cn("h-3 w-3", favorites.length > 0 && "fill-amber-400 text-amber-400")} />
         </button>

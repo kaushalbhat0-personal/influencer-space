@@ -17,14 +17,11 @@ import type { PublishedSnapshot } from "@/types/snapshot";
 import { useKeyboardShortcuts } from "../shared/keyboard";
 import { loadBuilderPages, saveBuilderPages } from "@/actions/builder.actions";
 import { applyThemePackage, updateTheme } from "@/actions/theme.actions";
-import { publishWebsite } from "@/actions/publish.actions";
 import type { AppearanceState } from "./appearance-panel";
-import Link from "next/link";
-import { getPublishFailurePresentation, type PublishFailureAction } from "@/lib/publishing/publish-error-messages";
 import { normalizeThemeId } from "@/lib/theme/resolver-new";
 import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-overview.actions";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { Upload, ExternalLink, Rocket, Loader2, Layers, Settings2, MousePointer2 } from "lucide-react";
+import { Upload, ExternalLink, Loader2, Layers, Settings2, MousePointer2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -75,7 +72,6 @@ export function BuilderWorkspace() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
-  const [publishUpgradeAction, setPublishUpgradeAction] = useState<PublishFailureAction | null>(null);
   const [storefrontUrl, setStorefrontUrl] = useState("/");
   const [publishStatus, setPublishStatus] = useState<PublishStatusValue>("draft");
   const [themeName, setThemeName] = useState<string | null>(null);
@@ -95,7 +91,6 @@ export function BuilderWorkspace() {
   const [liveContent, setLiveContent] = useState<PublishedSnapshot["content"] | null>(null);
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
-  const [publishing, setPublishing] = useState(false);
   // 06A: local appearance draft — preview-first, no server persistence per control
   const [appearanceDraft, setAppearanceDraft] = useState<AppearanceState | null>(null);
   // 06B: unified Builder save status (single draft for appearance + pages)
@@ -365,41 +360,6 @@ export function BuilderWorkspace() {
     });
   }, [isBuilderDirty, handleSaveDraft]);
 
-  // 06B: publish must not consume unsaved draft — require clean (06C will handle full Save & Publish)
-  const handlePublish = useCallback(async () => {
-    if (loading) {
-      setStatusMsg("Still loading — try again in a moment");
-      return;
-    }
-    if (!builderStore.canvas.pages.length) {
-      setStatusMsg("No pages — cannot publish");
-      return;
-    }
-    if (isBuilderDirty) {
-      setStatusMsg("Save draft before publishing");
-      return;
-    }
-    setPublishing(true);
-    setPublishUpgradeAction(null);
-    setStatusMsg("Publishing...");
-    try {
-      const res = await publishWebsite();
-      if (res.success) {
-        setStatusMsg("Published");
-        window.location.reload();
-      } else {
-        const presentation = getPublishFailurePresentation(res);
-        setStatusMsg(presentation.message);
-        setPublishUpgradeAction(presentation.action ?? null);
-        setPublishing(false);
-      }
-    } catch (e) {
-      setStatusMsg(getPublishFailurePresentation({ success: false, error: e instanceof Error ? e.message : undefined }).message);
-      setPublishUpgradeAction(null);
-      setPublishing(false);
-    }
-  }, [loading, isBuilderDirty]);
-
   const handleThemePreview = useCallback((themeId: string) => {
     // IMPLEMENTATION-26: preview is TEMPORARY — it must never mark the draft
     // dirty, autosave, or persist. Leaving preview restores the applied theme.
@@ -586,14 +546,6 @@ export function BuilderWorkspace() {
           </span>
           <span className="text-zinc-800 hidden sm:inline">|</span>
           {statusMsg && <span className={cn("truncate", statusMsg === "Changes saved" || statusMsg === "Saved" || statusMsg === "All changes saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
-          {publishUpgradeAction && (
-            <Link
-              href={publishUpgradeAction.href}
-              className="shrink-0 text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
-            >
-              {publishUpgradeAction.label}
-            </Link>
-          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-zinc-700 hidden md:inline">v{builderStore.publish.version}</span>
@@ -607,24 +559,6 @@ export function BuilderWorkspace() {
           >
             {saveStatus === "SAVING" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             Save Draft
-          </button>
-          <span className="text-zinc-800 hidden md:inline">|</span>
-          {/* 04B guardrail: keep legacy string for source check */}
-          {/* disabled={saving || publishing} */}
-          <button
-            onClick={handlePublish}
-            disabled={saving || publishing || isBuilderDirty}
-            data-testid="builder-publish"
-            aria-label="Publish website"
-            title={isBuilderDirty ? "Save draft before publishing" : undefined}
-            className="flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1 text-[10px] font-semibold text-zinc-950 shadow-sm shadow-emerald-500/20 transition-colors hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {publishing ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Rocket className="h-3 w-3" />
-            )}
-            {publishing ? "Publishing..." : "Publish"}
           </button>
           <span className="text-zinc-800 hidden md:inline">|</span>
           <a href={storefrontUrl} target="_blank" rel="noopener noreferrer"

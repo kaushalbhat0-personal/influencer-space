@@ -14,7 +14,7 @@ import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
   ShoppingBag, Image, HelpCircle, Trophy, Gamepad2, Rss,
   Link2, MessageSquare, Mail, CreditCard, BookOpen, Music,
-  MessageCircle, Sparkles, Layout, GripVertical, Briefcase,
+  MessageCircle, Sparkles, Layout, Briefcase,
 } from "lucide-react";
 
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
@@ -120,10 +120,6 @@ function SectionCard({
             : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
         )}
       >
-      <div className="flex items-center justify-center shrink-0 cursor-default text-zinc-700" aria-hidden="true" title="Use ↑↓ to reorder">
-        <GripVertical className="h-3 w-3" />
-      </div>
-
       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
 
       <div className="flex-1 min-w-0">
@@ -206,7 +202,7 @@ function SectionCard({
           className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <Copy className="h-3 w-3" />
         </button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(section.id); }}
+        <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${section.name}"?`)) onDelete(section.id); }}
           data-testid={`section-${tid}-delete`}
           aria-label={`Delete ${section.name}`}
           className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-red-500/20 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">

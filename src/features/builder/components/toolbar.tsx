@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Monitor, Tablet, Smartphone, ExternalLink, Upload, Undo, Redo, Layers, Settings2, ArrowLeft } from "lucide-react";
+import { Monitor, Tablet, Smartphone, Upload, Undo, Redo, Layers, Settings2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuilderCanvas } from "@/lib/builder/types";
 import { builderCommands } from "@/lib/builder/commands";
@@ -132,17 +132,6 @@ export function BuilderToolbar({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Link
-            href={storefrontUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
-          >
-            <ExternalLink className="h-3 w-3" />
-            <span className="hidden sm:inline">View Live</span>
-            <span className="sm:hidden">Live</span>
-          </Link>
-          <span className="h-4 w-px bg-white/5" />
           <button
             onClick={onSave}
             disabled={saving}
