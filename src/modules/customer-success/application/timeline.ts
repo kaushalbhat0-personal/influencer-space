@@ -10,7 +10,7 @@ export async function getCustomerTimeline(tenantId: string, limit = 30): Promise
     prisma.productOrder.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, status: true, createdAt: true } }),
     prisma.publishSnapshot.findMany({ where: { publishStatus: { website: { tenantId } } }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, version: true, createdAt: true } }),
     prisma.product.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, name: true, createdAt: true } }),
-    prisma.paymentAccount.findUnique({ where: { tenantId }, select: { id: true, createdAt: true } }),
+    prisma.paymentAccount.findFirst({ where: { tenantId }, select: { id: true, createdAt: true } }),
   ]);
 
   const events: TimelineEvent[] = [

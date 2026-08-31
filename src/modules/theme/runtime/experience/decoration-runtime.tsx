@@ -18,7 +18,7 @@ export function DecorationLayer({ pack: packKey }: { pack: ExperienceDecorationP
   if (pack.elements.length === 0) return null;
 
   return (
-    <div aria-hidden data-testid="decoration-layer" className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.05] text-[var(--brand-primary,#6366F1)]">
+    <div aria-hidden data-testid="decoration-layer" className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.14] text-[var(--brand-primary,#6366F1)]">
       {pack.elements.map((el, i) => (
         <svg
           key={i}
@@ -36,7 +36,7 @@ export function DecorationLayer({ pack: packKey }: { pack: ExperienceDecorationP
 
 /**
  * IllustrationLayer (IMPLEMENTATION-48.2) — renders a themed SVG illustration
- * pack at 2–5% opacity. Provides category-specific visual identity without
+ * pack at 12–15% opacity. Provides category-specific visual identity without
  * overlapping interactive content.
  */
 export function IllustrationLayer({ packId }: { packId: string }) {
@@ -44,7 +44,7 @@ export function IllustrationLayer({ packId }: { packId: string }) {
   if (!pack || pack.elements.length === 0) return null;
 
   return (
-    <div aria-hidden data-testid="illustration-layer" className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.05] text-[var(--brand-primary,#6366F1)]">
+    <div aria-hidden data-testid="illustration-layer" className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.12] text-[var(--brand-primary,#6366F1)]">
       {pack.elements.map((el, i) => (
         <svg
           key={i}

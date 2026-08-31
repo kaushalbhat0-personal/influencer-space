@@ -40,6 +40,25 @@ export async function getMyPaymentAccount(): Promise<{ ok: boolean; account?: Aw
   return { ok: true, account, readiness };
 }
 
+/** RCCF-LAUNCH-12 — all connected providers for chooser */
+export async function getMyPaymentAccounts(): Promise<{ ok: boolean; accounts?: Awaited<ReturnType<typeof import("@/modules/payment-account").getAllPaymentAccounts>>; activeProvider?: string | null; readiness?: Awaited<ReturnType<typeof computePaymentReadiness>>; error?: string }> {
+  const ctx = await requireCreatorOrSuperAdmin();
+  if (!ctx.tenantId) return { ok: false, error: "Unauthorized" };
+  const { getAllPaymentAccounts, getActivePaymentAccount } = await import("@/modules/payment-account");
+  const [accounts, active, readiness] = await Promise.all([getAllPaymentAccounts(ctx.tenantId), getActivePaymentAccount(ctx.tenantId), computePaymentReadiness(ctx.tenantId)]);
+  return { ok: true, accounts, activeProvider: active?.provider ?? null, readiness };
+}
+
+export async function setMyActiveProvider(provider: string): Promise<{ success: boolean; error?: string }> {
+  const ctx = await requireCreatorOrSuperAdmin();
+  if (!ctx.tenantId) return { success: false, error: "Unauthorized" };
+  const { setActiveProvider } = await import("@/modules/payment-account");
+  const res = await setActiveProvider(ctx.tenantId, provider, ctx.actor ?? "creator");
+  if (!res.success) return res;
+  revalidatePath("/admin/payments");
+  return { success: true };
+}
+
 /** Phase 4 — save/edit the creator's own payment account. */
 export async function saveMyPaymentAccount(input: PaymentAccountInput): Promise<{ success: boolean; error?: string }> {
   const ctx = await requireCreatorOrSuperAdmin();
@@ -54,18 +73,18 @@ export async function saveMyPaymentAccount(input: PaymentAccountInput): Promise<
  * snapshot so the creator UI can distinguish "credentials verified" from
  * "account ready to accept storefront payments" in the same response.
  */
-export async function verifyMyPaymentAccount(): Promise<{ success: boolean; verified?: boolean; readiness?: Awaited<ReturnType<typeof computePaymentReadiness>>; error?: string }> {
+export async function verifyMyPaymentAccount(provider?: string): Promise<{ success: boolean; verified?: boolean; readiness?: Awaited<ReturnType<typeof computePaymentReadiness>>; error?: string }> {
   const ctx = await requireCreatorOrSuperAdmin();
   if (!ctx.tenantId) return { success: false, error: "Unauthorized" };
-  const result = await verifyPaymentAccount(ctx.tenantId, ctx.actor ?? "creator");
+  const result = await verifyPaymentAccount(ctx.tenantId, ctx.actor ?? "creator", provider);
   if (result.success) revalidatePath("/admin/payments");
   return result;
 }
 
-export async function disconnectMyPaymentAccount(): Promise<{ success: boolean; error?: string }> {
+export async function disconnectMyPaymentAccount(provider?: string): Promise<{ success: boolean; error?: string }> {
   const ctx = await requireCreatorOrSuperAdmin();
   if (!ctx.tenantId) return { success: false, error: "Unauthorized" };
-  const result = await disconnectPaymentAccount(ctx.tenantId, ctx.actor ?? "creator");
+  const result = await disconnectPaymentAccount(ctx.tenantId, ctx.actor ?? "creator", provider);
   revalidatePath("/admin/payments");
   return result;
 }
@@ -103,13 +122,21 @@ export async function createDirectCheckout(input: { productId: string; customerE
     return { success: false, error: "Creator payment account not ready" };
   }
 
-  const account = await prisma.paymentAccount.findUnique({ where: { tenantId } });
-  const adapter = getPaymentProviderAdapter(account?.provider ?? "");
+  // RCCF-LAUNCH-12: resolve active verified provider via canonical readiness (never client input)
+  const { getActivePaymentAccount } = await import("@/modules/payment-account");
+  const account = await getActivePaymentAccount(tenantId);
+  if (!account) return { success: false, error: "Creator payment account not ready" };
+  const raw = await prisma.paymentAccount.findUnique({ where: { tenantId_provider: { tenantId, provider: account.provider } } as never }) as unknown as { id: string; provider: string; providerKeyId: string | null; providerKeySecret: string | null; providerAccountId: string | null } | null;
+  if (!raw) return { success: false, error: "Creator payment account not ready" };
+  // Ownership + verification guard (fail closed)
+  if (raw.provider !== account.provider) return { success: false, error: "Creator payment account not ready" };
+  const adapter = getPaymentProviderAdapter(account.provider);
   if (!adapter) return { success: false, error: "No provider adapter" };
 
   const { decrypt } = await import("@/lib/crypto");
-  const keyId = account?.providerKeyId ? decrypt(account.providerKeyId) : null;
-  const keySecret = account?.providerKeySecret ? decrypt(account.providerKeySecret) : null;
+  const keyId = raw.providerKeyId ? decrypt(raw.providerKeyId) : null;
+  const keySecret = raw.providerKeySecret ? decrypt(raw.providerKeySecret) : null;
+  const providerAccountId = raw.providerAccountId ?? null;
 
   // ── RCCF-72.18D.6.1 + RCCF-72.18D.7.3 — order-unique checkout identity ────
   // Razorpay enforces GLOBAL uniqueness on Payment Link reference_id (proven by
@@ -128,7 +155,7 @@ export async function createDirectCheckout(input: { productId: string; customerE
   const reconciliationRef = crypto.randomUUID();
 
   const result = await adapter.createCheckout({
-    providerAccount: { provider: account!.provider as never, providerKeyId: keyId, providerKeySecret: keySecret },
+    providerAccount: { provider: account.provider as never, providerKeyId: keyId, providerKeySecret: keySecret, providerAccountId },
     order: {
       // RCCF-72.18D.7.3 — NEVER the productId (not unique per checkout) and
       // never any client/tenant-provided value. Server-minted per checkout.
@@ -152,10 +179,10 @@ export async function createDirectCheckout(input: { productId: string; customerE
         razorpayOrderId: result.providerReference ?? `dc_${Date.now()}`,
         fanEmail: input.customerEmail ?? null,
         commerceStrategy: "DIRECT_CREATOR",
-        provider: account!.provider,
+        provider: account.provider,
         providerReference: result.providerReference ?? null,
         providerMetadata: { checkoutUrl: result.checkoutUrl, reconciliationRef },
-        paymentAccountId: account!.id,
+        paymentAccountId: raw.id,
       },
     });
   }

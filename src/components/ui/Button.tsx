@@ -3,13 +3,16 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
+// RCCF-70.4.2 (Workstream 1) — Button Reconciliation.
+// Variants map 1:1 to the canonical Premium Creator OS token classes
+// (.btn-primary / .btn-secondary / .btn-ghost / .btn-danger in globals.css).
+// This removes the legacy light-theme indigo/gray palette, keeps the same
+// semantics/click behavior, and reuses one button presentation system.
 const variantStyles = {
-  default:
-    "bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-500",
-  destructive: "bg-red-600 text-white hover:bg-red-500 focus:ring-red-500",
-  outline:
-    "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500",
-  ghost: "text-gray-700 hover:bg-gray-100 focus:ring-indigo-500",
+  default: "btn-primary",
+  destructive: "btn-danger",
+  outline: "btn-secondary",
+  ghost: "btn-ghost",
 };
 
 const sizeStyles = {
@@ -29,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-md font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          "inline-flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-50",
           variantStyles[variant],
           sizeStyles[size],
           className,

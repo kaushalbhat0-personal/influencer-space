@@ -81,6 +81,33 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
 
     const websiteId = await getWebsiteId();
     const { prisma } = await import("@/lib/prisma");
+    // R2.9 empty-state protection: an unhydrated/invalid draft must not
+    // overwrite a valid DB draft with sections. This distinguishes
+    // UNINITIALIZED (different page ID, e.g. defaultPage 60fa... or empty 0)
+    // from INTENTIONAL user-empty (same canonical page ID, 0 sections after
+    // user deleted all sections via UI and set isDirty true).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingPages = await builderService.load(websiteId).catch(() => [] as any[]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existingCount = (existingPages as any[]).reduce((acc: number, p: any) => acc + (p.sections?.length ?? 0), 0);
+    const incomingCount = pages.reduce((acc, p) => acc + p.sections.length, 0);
+    if (existingCount > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existingIds = new Set((existingPages as any[]).map((p: any) => p.id));
+      const incomingIds = new Set(pages.map((p) => p.id));
+      const hasOverlap = Array.from(incomingIds).some((id) => existingIds.has(id));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isSameSinglePage = pages.length === 1 && (existingPages as any[]).length === 1 && pages[0].id === (existingPages as any[])[0].id;
+      if (incomingCount === 0) {
+        // Empty incoming: only block if page IDs differ (uninitialized), allow if same page intentional empty
+        if (!isSameSinglePage && !hasOverlap) {
+          return { success: false, error: "Draft has no sections — not overwriting valid draft" };
+        }
+      } else if (incomingCount > 0 && incomingCount < existingCount && !hasOverlap && existingCount - incomingCount >= 5) {
+        // Large drop with different page ID likely uninitialized default overwriting DB 8 with 1
+        return { success: false, error: "Draft has fewer sections than valid draft — not overwriting" };
+      }
+    }
     const saveStart = Date.now();
     await builderService.save(websiteId, pages);
     metricsService.recordDuration("builder_save", Date.now() - saveStart, { websiteId });

@@ -88,7 +88,7 @@ model Tenant {
   newsletterSubscribers NewsletterSubscriber[]
   subscription          Subscription?
   productOrders         ProductOrder[]
-  paymentAccount        PaymentAccount?
+  paymentAccounts       PaymentAccount[]
   socialStats           SocialStats[]
   auditLogs             AuditLog[]
   contentFeedItems      ContentFeedItem[]
@@ -256,11 +256,13 @@ model AgencyTenant {
 }
 
 /// RCCF-IMPLEMENTATION-74 — the creator's canonical payment account for
-/// DIRECT_CREATOR commerce. One per tenant. Sensitive fields are encrypted
+/// DIRECT_CREATOR commerce. One per (tenant, provider). Sensitive fields are encrypted
 /// (AES-256-GCM via src/lib/crypto). CreatorStore is never in the money flow.
+/// RCCF-LAUNCH-12 — multi-provider: allow Razorpay + Stripe etc. per creator; only
+/// one `isActive` per tenant is the storefront receiving account (verified, ready).
 model PaymentAccount {
   id                    String    @id @default(uuid()) @db.Uuid
-  tenantId              String    @unique @db.Uuid
+  tenantId              String    @db.Uuid
   provider              String    @default("razorpay") // razorpay | stripe | phonepe | cashfree | payu | manual
   displayName           String?
   accountHolderName     String?
@@ -273,14 +275,18 @@ model PaymentAccount {
   status                String    @default("pending") // pending | active | disconnected
   verificationStatus    String    @default("unverified") // unverified | pending | verified | failed
   capabilities          Json      @default("{}") // { products: true, services: true, ... }
-  providerKeyId         String? // encrypted (creator's own Razorpay key)
-  providerKeySecret     String? // encrypted (creator's own Razorpay secret)
+  providerKeyId         String? // encrypted (creator's own Razorpay key / generic)
+  providerKeySecret     String? // encrypted (creator's own Razorpay secret / generic)
+  providerAccountId     String? // Stripe acct_xxx or Razorpay linked account id
+  isActive              Boolean   @default(false) // active storefront provider for this tenant
   lastVerifiedAt        DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, provider])
+  @@index([tenantId, isActive])
   @@index([provider])
   @@index([status])
 }
@@ -1965,6 +1971,64 @@ model PartnerLedger {
   @@index([type])
   @@index([reference])
   @@index([settlementId])
+}
+
+/// RCCF-LAUNCH-10 — agency product commission ledger (canonical order → commission)
+/// One row per ProductOrder that is eligible (creator belongs to agency). Idempotent
+/// via unique orderId (duplicate webhook/order completion cannot duplicate commission).
+/// commissionRate is snapshot at sale time (historical rate preservation).
+model AgencyOrderCommission {
+  id               String   @id @default(uuid()) @db.Uuid
+  orderId          String   @unique
+  agencyId         String   @db.Uuid
+  tenantId         String   @db.Uuid
+  grossAmount      Float
+  refundAmount     Int      @default(0)
+  eligibleRevenue  Float
+  commissionRate   Float
+  commissionEarned Float
+  paidAmount       Float    @default(0)
+  outstanding      Float
+  status           String   @default("UNPAID")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  allocations      AgencyCommissionAllocation[]
+
+  @@index([agencyId, createdAt])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// RCCF-LAUNCH-10 — manual agency payout (NO automated transfer)
+/// Super Admin records a manual payment against one or more commissions.
+model AgencyCommissionPayment {
+  id         String   @id @default(uuid()) @db.Uuid
+  agencyId   String   @db.Uuid
+  amount     Float
+  reference  String?
+  note       String?
+  adminId    String?  @db.Uuid
+  adminEmail String?
+  createdAt  DateTime @default(now())
+
+  allocations AgencyCommissionAllocation[]
+
+  @@index([agencyId, createdAt])
+}
+
+model AgencyCommissionAllocation {
+  id           String   @id @default(uuid()) @db.Uuid
+  paymentId    String   @db.Uuid
+  commissionId String   @db.Uuid
+  amount       Float
+  createdAt    DateTime @default(now())
+
+  payment    AgencyCommissionPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  commission AgencyOrderCommission   @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, commissionId])
+  @@index([commissionId])
 }
 
 /// RCCF-31 — per-tenant commercial usage meter for metered capabilities

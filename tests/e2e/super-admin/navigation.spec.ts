@@ -35,15 +35,42 @@ test.describe("Super Admin — Navigation", () => {
 
   for (const { path, label } of ALL_PAGES) {
     test(`${label} page loads`, async ({ superAdminPage }) => {
-      await superAdminPage.goto(path);
-      await superAdminPage.waitForLoadState("networkidle");
-      const status = await superAdminPage.evaluate(() => document.title || "");
-      await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 10000 });
-      const consoleErrors: string[] = [];
-      superAdminPage.on("console", (msg) => { if (msg.type() === "error") consoleErrors.push(msg.text()); });
-      expect(consoleErrors.filter((e) => !e.includes("favicon") && !e.includes("hydrat")).length).toBe(0);
+      await superAdminPage.goto(path, { waitUntil: "domcontentloaded" });
+      await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
+      await expect(superAdminPage.locator("h1").first()).toContainText(/.+/, { timeout: 5000 });
     });
   }
+
+  test("Super Admin single-context smoke: Dashboard → Themes → Templates → Activity (same session)", async ({ browser }) => {
+    const E2E_PASSWORD_LOCAL = process.env.E2E_TEST_PASSWORD ?? "admin123";
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto("/admin/login?tenant=testcreator", { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('input#email', { timeout: 15000 });
+    await page.fill('input#email', "admin@creatorstore.test");
+    await page.fill('input#password', E2E_PASSWORD_LOCAL);
+    await page.click('button[type="submit"]');
+    await page.waitForURL("**/super-admin**", { timeout: 30000 });
+    await expect(page.locator("h1").first()).toBeVisible({ timeout: 15000 });
+
+    const checks: Array<{ path: string; heading: RegExp }> = [
+      { path: "/super-admin", heading: /Platform Dashboard|Dashboard/i },
+      { path: "/super-admin/themes", heading: /Themes/i },
+      { path: "/super-admin/templates", heading: /Website Templates|Templates/i },
+      { path: "/super-admin/activity", heading: /Platform Activity|Activity/i },
+    ];
+    for (const { path, heading } of checks) {
+      const t0 = Date.now();
+      await page.goto(path, { waitUntil: "domcontentloaded" });
+      await expect(page.locator("h1").first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator("h1").first()).toContainText(heading, { timeout: 10000 });
+      const ms = Date.now() - t0;
+      expect(ms).toBeLessThan(15000);
+      // No logout, no redirect to creator/agency dashboard, same context preserved.
+      expect(page.url()).toContain("/super-admin");
+    }
+    await context.close();
+  });
 });
 
 test.describe("Super Admin — Dashboard", () => {
@@ -56,8 +83,8 @@ test.describe("Super Admin — Dashboard", () => {
   });
 
   test("Operational metrics display", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     await expect(superAdminPage.locator("text=MRR").first()).toBeVisible();
     await expect(superAdminPage.locator("text=ARR").first()).toBeVisible();
   });

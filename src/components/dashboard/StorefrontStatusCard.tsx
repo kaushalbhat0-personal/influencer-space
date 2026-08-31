@@ -8,25 +8,11 @@ const fmtDate = (v: string | Date | null) => (v ? new Date(v).toISOString().slic
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ExternalLink, Layout, Globe, CheckCircle2, Clock, AlertTriangle, Rocket, Loader2, History } from "lucide-react";
+import { ExternalLink, Layout, Globe, CheckCircle2, Clock, AlertTriangle, Rocket, Loader2, History, ArrowUpRight } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { publishWebsite, rollbackWebsite, getCreatorPublishUsage, type PublishActionResult } from "@/actions/publish.actions";
+import { publishWebsite, rollbackWebsite, getCreatorPublishUsage } from "@/actions/publish.actions";
 import type { PublishUsage } from "@/lib/publishing/publish-usage";
-
-function buildQuotaMessage(res: PublishActionResult): string {
-  if (res.code === "PUBLISH_TRIAL_EXPIRED") {
-    return "Your Launch trial has ended. Your website remains live, but publishing new changes requires an active subscription. Upgrade to Growth to continue publishing.";
-  }
-  const limit = res.limit ?? 0;
-  if (res.suggestedUpgrade === "growth") {
-    return `You've used all ${limit} Launch publishes. Upgrade to Growth for 10 publishes per month.`;
-  }
-  if (res.suggestedUpgrade === "scale") {
-    const reset = res.periodEnd ? ` Your allowance resets ${fmtDate(res.periodEnd)}.` : "";
-    return `You've used all ${limit} publishes for this billing period.${reset} Upgrade to Scale for unlimited publishes.`;
-  }
-  return res.error || "Publish limit reached.";
-}
+import { getPublishFailurePresentation, type PublishFailureAction } from "@/lib/publishing/publish-error-messages";
 
 interface VersionEntry {
   version: number;
@@ -56,6 +42,7 @@ export function StorefrontStatusCard({
 }: StorefrontStatusCardProps) {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [upgradeAction, setUpgradeAction] = useState<PublishFailureAction | null>(null);
   const [showVersions, setShowVersions] = useState(false);
   const [restoringVersion, setRestoringVersion] = useState<number | null>(null);
   const [usage, setUsage] = useState<PublishUsage | null>(null);
@@ -78,15 +65,19 @@ export function StorefrontStatusCard({
   const handlePublish = async () => {
     setPublishing(true);
     setPublishError(null);
+    setUpgradeAction(null);
     try {
       const res = await publishWebsite();
       if (res.success) {
         window.location.reload();
       } else {
-        setPublishError(res.code === "PUBLISH_QUOTA_EXCEEDED" || res.code === "PUBLISH_TRIAL_EXPIRED" ? buildQuotaMessage(res) : res.error || "Publishing failed");
+        const presentation = getPublishFailurePresentation(res);
+        setPublishError(presentation.message);
+        setUpgradeAction(presentation.action ?? null);
       }
     } catch {
       setPublishError("Publishing failed");
+      setUpgradeAction(null);
     }
     setPublishing(false);
   };
@@ -95,6 +86,7 @@ export function StorefrontStatusCard({
     if (!window.confirm(`Restore draft to v${version}? The live site stays unchanged until you publish.`)) return;
     setRestoringVersion(version);
     setPublishError(null);
+    setUpgradeAction(null);
     try {
       const res = await rollbackWebsite(version);
       if (!res.success) {
@@ -220,6 +212,15 @@ export function StorefrontStatusCard({
             <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
             <p className="text-xs text-red-300">{publishError}</p>
           </div>
+        )}
+        {upgradeAction && (
+          <Link
+            href={upgradeAction.href}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-3 py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+          >
+            <ArrowUpRight className="h-4 w-4" />
+            {upgradeAction.label}
+          </Link>
         )}
       </div>
 

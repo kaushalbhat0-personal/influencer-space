@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
     return () => clearPolling();
   }, [clearPolling]);
 
-  // RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery â€” resume the latest in-flight
+  // RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery — resume the latest in-flight
   // session so progress continues after a refresh (never restarts from stage 1).
   useEffect(() => {
     let cancelled = false;
@@ -217,7 +217,7 @@ export default function OnboardingPage() {
       setCategoryOverride(res.category || "general");
       setWorkspaceName(res.creatorName || "My Storefront");
 
-      // RCCF-INTEGRATION-01 Phase 2: intelligence-first onboarding â€” compute the
+      // RCCF-INTEGRATION-01 Phase 2: intelligence-first onboarding — compute the
       // knowledge score, recommended goal profile and top recommendations from
       // the imported profile before generation.
       const previewResult = await getOnboardingPreview({
@@ -317,7 +317,7 @@ export default function OnboardingPage() {
         await markOnboardingComplete(res.result.tenantId);
 
         // RCCF-INTEGRATION-01 Phase 2: seed the accepted goal profile + quick
-        // answers once the tenant exists (best-effort â€” never blocks generation).
+        // answers once the tenant exists (best-effort — never blocks generation).
         try {
           if (useGoals && preview) {
             const answers = Object.entries(questionAnswers)
@@ -368,10 +368,19 @@ export default function OnboardingPage() {
   }, [clearPolling]);
 
   // RCCF-19 P1-M: "Build Manually" provisions a truthful blank manual website
-  // (via createManualWebsite → canonical ProvisioningService + blueprint),
-  // refreshes the session so /admin becomes reachable, then lands on the
-  // dashboard. Previously it pushed /admin/dashboard, which the lifecycle
-  // bounced back to /onboarding (a dead-end).
+  // (via createManualWebsite → canonical ProvisioningService + blueprint) and
+  // refreshes the session so /admin becomes reachable.
+  //
+  // RCCF-71.4.1 P2: the continuation CTA ("Continue to Theme Selection") is now
+  // the SINGLE trigger for this action — the provider card no longer
+  // auto-provisions. Previously the card auto-fired provisioning AND the CTA
+  // navigated to /admin/create on its own, so a click during the in-flight
+  // provision hit the lifecycle before the session refresh (still
+  // AUTHENTICATED, no tenantId) and middleware silently bounced /admin/create
+  // back to /onboarding. Now the CTA is disabled while provisioning runs
+  // (visible spinner + errors), and on success it performs a FULL document
+  // navigation to /admin/create (Theme Selection) so the target route's
+  // on-demand compile never aborts a client-side soft navigation.
   const handleBuildManually = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -381,7 +390,7 @@ export default function OnboardingPage() {
         try {
           await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
         } catch { }
-        router.replace("/admin/dashboard");
+        window.location.href = "/admin/create";
       } else {
         setError(res.error || "We couldn't create your website. Please try again.");
       }
@@ -389,7 +398,7 @@ export default function OnboardingPage() {
       setError("We couldn't create your website. Please try again.");
     }
     setLoading(false);
-  }, [router]);
+  }, []);
 
   const handleRetryPublish = useCallback(async () => {
     if (!retryInfo) return;
@@ -452,7 +461,7 @@ export default function OnboardingPage() {
             <div>
               <h1 className="text-xl font-semibold text-white">Build your CreatorStore</h1>
               <p className="mt-1 text-sm text-zinc-400">
-                Choose how you&apos;d like to start. Nothing is permanent â€” you can always import more later.
+                Choose how you&apos;d like to start. Nothing is permanent — you can always import more later.
               </p>
             </div>
 
@@ -467,7 +476,6 @@ export default function OnboardingPage() {
                       key={p.id}
                       onClick={() => {
                         setSelectedProvider(p);
-                        if (p.inputType === "none") { void handleBuildManually(); }
                       }}
                       className={cn(
                         "flex items-start gap-3 rounded-lg border p-3 text-left w-full transition-all",
@@ -513,10 +521,17 @@ export default function OnboardingPage() {
                 <p className="text-sm text-zinc-400">{selectedProvider.subtitle}</p>
                 <p className="text-[11px] text-zinc-600">{selectedProvider.estimatedTime}</p>
                 <button
-                  onClick={() => router.push("/admin/create")}
-                  className="btn-primary w-full py-3"
+                  onClick={handleBuildManually}
+                  disabled={loading}
+                  className="btn-primary w-full py-3 disabled:opacity-60"
                 >
-                  Continue to Theme Selection
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Preparing your website…
+                    </span>
+                  ) : (
+                    "Continue to Theme Selection"
+                  )}
                 </button>
               </div>
             )}
@@ -598,7 +613,7 @@ export default function OnboardingPage() {
                   {profileData.categoryRequiresReview && (
                     <p className="mt-1.5 flex items-center gap-1 text-[10px] text-amber-400">
                       <AlertTriangle className="h-3 w-3 shrink-0" />
-                      Detection confidence was low â€” review the category above.
+                      Detection confidence was low — review the category above.
                     </p>
                   )}
                 </div>
@@ -652,7 +667,7 @@ export default function OnboardingPage() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building your storefrontâ€¦
+                  <Loader2 className="h-4 w-4 animate-spin" /> Building your storefront…
                 </span>
               ) : (
                 "Build My Storefront"

@@ -28,6 +28,8 @@ export interface PaymentAccountData {
   lastVerifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  providerAccountId: string | null;
+  isActive: boolean;
 }
 
 export type PaymentReadiness = "ready" | "warning" | "blocked";
@@ -53,5 +55,7 @@ export interface PaymentAccountInput {
   settlementMode?: SettlementMode;
   providerKeyId?: string;
   providerKeySecret?: string;
+  providerAccountId?: string;
+  isActive?: boolean;
   capabilities?: Record<string, boolean>;
 }

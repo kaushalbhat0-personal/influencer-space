@@ -121,10 +121,10 @@ export function BuilderToolbar({
                 key={d.id}
                 onClick={() => onDeviceChange(d.id)}
                 aria-pressed={device === d.id}
-                aria-label={`${d.label} preview`}
-                className={cn("rounded-md px-1.5 py-0.5 transition-colors", device === d.id ? "bg-indigo-500/20 text-indigo-300" : "text-zinc-600 hover:text-zinc-400")}
+                aria-label={`${d.label} preview — ${d.id === "mobile" ? "375 pixels" : d.id === "tablet" ? "768 pixels" : "1200 pixels"}`}
+                className={cn("rounded-md min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors", device === d.id ? "bg-indigo-500/20 text-indigo-300" : "text-zinc-600 hover:text-zinc-400")}
               >
-                <d.icon className="h-3 w-3" />
+                <d.icon className="h-3.5 w-3.5" />
               </button>
             ))}
           </div>
@@ -155,35 +155,22 @@ export function BuilderToolbar({
 }
 
 function PreviewDraftToggle({ status }: { status: PublishStatusValue }) {
-  const items = [
-    { id: "preview" as const, label: "Preview", hint: "Draft preview before publishing" },
-    { id: "live" as const, label: "Live", hint: "Published and visible to visitors" },
-    { id: "draft" as const, label: "Draft", hint: "Local changes not yet published" },
-  ];
-
   const current = status === "published" || status === "outdated" ? "live" : status === "preview" ? "preview" : "draft";
+  const label = current === "live" ? "Published — live to visitors" : current === "preview" ? "Preview — not yet published" : "Draft — save to keep changes";
+  const hint = current === "live" ? "Your changes are public" : "Save your draft, then publish from your dashboard to go live";
 
   return (
     <div
-      role="group"
-      aria-label={`Publish status: ${current}`}
-      className="flex items-center gap-0.5 rounded-lg bg-zinc-800/50 p-0.5"
+      role="status"
+      aria-live="polite"
+      aria-label={`Website status: ${label}`}
+      title={hint}
+      className={cn(
+        "rounded-md px-2 py-0.5 text-[10px] font-medium ring-1",
+        current === "live" ? "bg-emerald-500/20 text-emerald-400 ring-emerald-500/30" : current === "preview" ? "bg-indigo-500/20 text-indigo-300 ring-indigo-500/30" : "bg-zinc-700 text-zinc-200 ring-white/10"
+      )}
     >
-      {items.map((item) => (
-        <span
-          key={item.id}
-          aria-current={current === item.id ? "true" : undefined}
-          title={item.hint}
-          className={cn(
-            "rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors",
-            current === item.id
-              ? item.id === "live" ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30" : item.id === "preview" ? "bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/30" : "bg-zinc-700 text-zinc-200 ring-1 ring-white/10"
-              : "text-zinc-500"
-          )}
-        >
-          {item.label}
-        </span>
-      ))}
+      {current === "live" ? "Live" : current === "preview" ? "Preview" : "Draft"} <span className="hidden sm:inline font-normal opacity-80">— {current === "live" ? "public" : "save, then publish"}</span>
     </div>
   );
 }

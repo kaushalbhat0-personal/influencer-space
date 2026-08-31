@@ -5,9 +5,11 @@
 import type { PaymentProviderAdapter } from "./types";
 import { PAYMENT_PROVIDERS } from "./meta";
 import { RazorpayPaymentAdapter } from "./razorpay";
+import { StripePaymentAdapter } from "./stripe";
 
 const ADAPTERS: Record<string, PaymentProviderAdapter> = {
   razorpay: new RazorpayPaymentAdapter(),
+  stripe: new StripePaymentAdapter(),
 };
 
 export { PAYMENT_PROVIDERS } from "./meta";

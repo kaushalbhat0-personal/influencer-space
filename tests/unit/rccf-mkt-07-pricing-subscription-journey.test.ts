@@ -201,13 +201,15 @@ describe("MKT-07 — upgrade/downgrade surface truth", () => {
     expect(getCommercePlan("partner_free")?.razorpayPlanId ?? null).toBeNull();
   });
 
-  it("flags the known asymmetry: partner path enforces family, creator path does not (F1/P2)", () => {
+  it("both paths enforce the plan-family invariant (F1 closed in RCCF-RELEASE-02)", () => {
     const partner = read("src/actions/partner.actions.ts");
     expect(partner).toMatch(/family !== "partner"/);
     const creator = read("src/actions/billing.actions.ts");
+    // MODERNIZED in RCCF-RELEASE-02 (F1): the creator path now enforces family
+    // server-side before checkout creation — the former P2 asymmetry is fixed.
+    expect(creator).toMatch(/assertPlanFamilyForWorkspace/);
+    expect(creator).toMatch(/target\.family !== expectedFamily/);
     expect(creator).toMatch(/billingService\.changePlan\(workspaceId, planCode/);
-    // Documenting current behavior — a creator session may request any valid
-    // canonical code; family restriction is a pending product decision (P2).
   });
 });
 

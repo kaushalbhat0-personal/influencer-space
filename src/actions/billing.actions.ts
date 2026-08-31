@@ -12,7 +12,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { billingService } from "@/modules/billing/application/service";
 import { capabilityService } from "@/lib/capabilities";
-import { COMMERCE_PLANS } from "@/config/commerce/plans";
+import { COMMERCE_PLANS, getCommercePlan } from "@/config/commerce/plans";
 import type { CheckoutResult } from "@/modules/billing/domain/types";
 
 function requireAuth(tenantId: string): { ok: true } | { ok: false; error: string } {
@@ -26,7 +26,10 @@ function enabledFeatures(features: Record<string, number | boolean | string>): s
     .map(([k]) => k);
 }
 
-async function authorizeWorkspace(workspaceId: string, tenantId: string): Promise<{ session?: { user?: { id?: string; tenantId?: string | null } } }> {
+async function authorizeWorkspace(
+  workspaceId: string,
+  tenantId: string,
+): Promise<{ session?: { user?: { id?: string; tenantId?: string | null } }; workspaceType?: "TENANT" | "AGENCY" }> {
   const session = (await getServerSession(authOptions)) as { user?: { id?: string; tenantId?: string | null } } | null;
   if (!session?.user?.tenantId || session.user.tenantId !== tenantId) {
     return {};
@@ -35,10 +38,37 @@ async function authorizeWorkspace(workspaceId: string, tenantId: string): Promis
   // never operate on another workspace's subscription/invoices via a guessed id.
   const workspace = await prisma.workspace.findFirst({
     where: { id: workspaceId, tenantId },
-    select: { id: true },
+    select: { id: true, type: true },
   });
   if (!workspace) return {};
-  return { session };
+  return { session, workspaceType: workspace.type as "TENANT" | "AGENCY" };
+}
+
+/**
+ * RCCF-RELEASE-02 (F1) — plan-family invariant, enforced server-side before any
+ * checkout/provider interaction. The tenant's commercial family derives ONLY
+ * from the server-verified Workspace.type (TENANT = Creator, AGENCY = Partner);
+ * the client supplies a plan code and nothing else. The requested plan must
+ * belong to the tenant's own family (canonical registry — never a second list),
+ * so a Creator can never self-select a Partner plan and vice versa. Rejections
+ * happen here, before billingService.changePlan creates any checkout or
+ * touches subscriptions/entitlements.
+ */
+function assertPlanFamilyForWorkspace(
+  workspaceType: "TENANT" | "AGENCY" | undefined,
+  planCode: string,
+): { ok: true } | { ok: false; error: string } {
+  const target = getCommercePlan(planCode);
+  if (!target) return { ok: false, error: `Unknown plan: ${planCode}` };
+  const expectedFamily = workspaceType === "AGENCY" ? "partner" : "creator";
+  if (target.family !== expectedFamily) {
+    return {
+      ok: false,
+      // Existing error vocabulary (partner path / provisioning path).
+      error: expectedFamily === "creator" ? "Invalid Creator plan" : "Invalid partner plan",
+    };
+  }
+  return { ok: true };
 }
 
 export async function getBillingDashboard(workspaceId: string, tenantId: string) {
@@ -85,6 +115,11 @@ export async function changePlanAction(
   const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
 
+  // RCCF-RELEASE-02 (F1): family gate runs before checkout creation — no
+  // provider call, subscription mutation or entitlement change on mismatch.
+  const family = assertPlanFamilyForWorkspace(auth.workspaceType, planCode);
+  if (!family.ok) return { success: false, error: family.error };
+
   try {
     const checkout = await billingService.changePlan(workspaceId, planCode, email);
     if (!checkout.success) return { success: false, error: checkout.error ?? "Checkout failed" };
@@ -127,6 +162,11 @@ export async function resumeSubscriptionAction(workspaceId: string, tenantId: st
 export async function retryPaymentAction(workspaceId: string, tenantId: string, planCode: string, email?: string): Promise<{ success: boolean; checkout?: CheckoutResult & { keyId?: string }; error?: string }> {
   const auth = await authorizeWorkspace(workspaceId, tenantId);
   if (!auth.session) return { success: false, error: "Unauthorized" };
+
+  // RCCF-RELEASE-02 (F1): same family gate — retry is a changePlan checkout and
+  // must never become a cross-family selection vector.
+  const family = assertPlanFamilyForWorkspace(auth.workspaceType, planCode);
+  if (!family.ok) return { success: false, error: family.error };
 
   try {
     const checkout = await billingService.changePlan(workspaceId, planCode, email);

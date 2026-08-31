@@ -72,6 +72,11 @@ export async function completeProductOrder(
     // Unlimited plan: no usage row required.
     await prisma.productOrder.update({ where: { id: order.id }, data: completeData });
     await ensureFulfillment(order.id).catch(() => {});
+    // RCCF-LAUNCH-10: agency product commission (best-effort, post-commit, idempotent)
+    try {
+      const { computeAndPersistAgencyCommission } = await import("@/lib/agency-commission/service");
+      await computeAndPersistAgencyCommission(order.id);
+    } catch {}
     return { success: true };
   }
 
@@ -114,6 +119,11 @@ export async function completeProductOrder(
   }
 
   await ensureFulfillment(order.id).catch(() => {});
+  // RCCF-LAUNCH-10: agency product commission (best-effort, post-commit, idempotent)
+  try {
+    const { computeAndPersistAgencyCommission } = await import("@/lib/agency-commission/service");
+    await computeAndPersistAgencyCommission(order.id);
+  } catch {}
   return { success: true };
 }
 

@@ -12,13 +12,13 @@ export class SuperAdminDashboard {
   }
 
   async goto() {
-    await this.page.goto("/super-admin");
-    await this.page.waitForLoadState("networkidle");
+    await this.page.goto("/super-admin", { waitUntil: "domcontentloaded" });
+    await this.page.waitForSelector("h1", { timeout: 15000 });
   }
 
   async navigateTo(path: string) {
-    await this.page.goto(path);
-    await this.page.waitForLoadState("networkidle");
+    await this.page.goto(path, { waitUntil: "domcontentloaded" });
+    await this.page.waitForSelector("h1", { timeout: 15000 });
   }
 
   async getTenantCount(): Promise<number> {

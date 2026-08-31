@@ -7,9 +7,9 @@ export interface TestUser {
 }
 
 export const USERS = {
-  creator: { email: "test-creator@example.com", password: "Test1234!", role: "ADMIN" },
-  agency: { email: "test-agency@example.com", password: "Test1234!", role: "AGENCY_ADMIN" },
-  super_admin: { email: "admin@example.com", password: "Admin1234!", role: "SUPER_ADMIN" },
+  creator: { email: process.env.CREATOR_EMAIL ?? "testcreator4@gmail.com", password: process.env.CREATOR_PASSWORD ?? "admin123", role: "ADMIN" },
+  agency: { email: process.env.AGENCY_EMAIL ?? "agencyadmin@creatortest.com", password: process.env.AGENCY_PASSWORD ?? "admin123", role: "AGENCY_ADMIN" },
+  super_admin: { email: process.env.SUPERADMIN_EMAIL ?? "superadmin@influencer.space", password: process.env.SUPERADMIN_PASSWORD ?? "admin123", role: "SUPER_ADMIN" },
 } satisfies Record<string, TestUser>;
 
 export async function loginAs(page: Page, user: TestUser) {

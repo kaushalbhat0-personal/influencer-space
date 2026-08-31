@@ -621,6 +621,15 @@ export async function POST(req: Request) {
         } catch (error) {
           captureError(error, { service: "razorpay-webhook", operation: "productOrderRefundReconcile" });
         }
+        // RCCF-LAUNCH-10 — refresh agency product commission for ANY product order refund
+        // (PLATFORM_COLLECT and DIRECT_CREATOR). Best-effort, post-transaction.
+        try {
+          const anyOrder = await prisma.productOrder.findFirst({ where: { razorpayPaymentId: refundPaymentId }, select: { id: true } });
+          if (anyOrder) {
+            const { refreshAgencyCommissionForRefund } = await import("@/lib/agency-commission/service");
+            await refreshAgencyCommissionForRefund(anyOrder.id);
+          }
+        } catch {}
       }
       return NextResponse.json({ ok: true });
     }

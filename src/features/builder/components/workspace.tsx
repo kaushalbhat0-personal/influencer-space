@@ -85,6 +85,7 @@ export function BuilderWorkspace() {
   const [creatorName, setCreatorName] = useState("");
   const [completionPct, setCompletionPct] = useState(0);
   const [overviewData, setOverviewData] = useState<BuilderOverviewData | null>(null);
+  const [publishing, setPublishing] = useState(false);
   // RCCF-IMPLEMENTATION-74: the Website Aggregate fetched by the canvas
   // (getLivePreviewData) is shared here so the sidebar renders canonical item
   // counts from the SAME payload — zero extra queries, always in sync.
@@ -411,6 +412,31 @@ export function BuilderWorkspace() {
     [performSave, currentThemeId, overviewData, refreshPublishStatus],
   );
 
+  const handlePublish = useCallback(async () => {
+    if (publishing) return;
+    if (isBuilderDirty) {
+      const saved = await handleSaveDraft();
+      if (!saved) return;
+    }
+    setPublishing(true);
+    setStatusMsg("Publishing…");
+    try {
+      const mod = await import("@/actions/publish.actions");
+      const res = await mod.publishWebsite();
+      if (res.success) {
+        setPublishStatus("published");
+        setStatusMsg("Published successfully");
+        refreshPublishStatus();
+      } else {
+        setStatusMsg(res.error || "Publish failed");
+      }
+    } catch (e) {
+      setStatusMsg(e instanceof Error ? e.message : "Publish failed");
+    } finally {
+      setPublishing(false);
+    }
+  }, [publishing, isBuilderDirty, handleSaveDraft, refreshPublishStatus]);
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-zinc-950">
@@ -548,17 +574,28 @@ export function BuilderWorkspace() {
           {statusMsg && <span className={cn("truncate", statusMsg === "Changes saved" || statusMsg === "Saved" || statusMsg === "All changes saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-zinc-700 hidden md:inline">v{builderStore.publish.version}</span>
+          <span className="text-zinc-600 hidden md:inline" title="Changes are saved locally until you publish">Draft</span>
           <span className="text-zinc-800 hidden md:inline">|</span>
           <button
             onClick={handleSaveDraft}
             disabled={!isBuilderDirty || saveStatus === "SAVING"}
             data-testid="builder-save-draft"
-            aria-label="Save draft"
+            aria-label="Save draft — save without publishing"
             className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
             {saveStatus === "SAVING" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             Save Draft
+          </button>
+          <span className="text-zinc-800 hidden md:inline">|</span>
+          <button
+            onClick={handlePublish}
+            disabled={publishing || saveStatus === "SAVING"}
+            data-testid="builder-publish"
+            aria-label="Publish — make changes live"
+            className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          >
+            {publishing ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+            Publish
           </button>
           <span className="text-zinc-800 hidden md:inline">|</span>
           <a href={storefrontUrl} target="_blank" rel="noopener noreferrer"

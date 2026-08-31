@@ -3,7 +3,10 @@ export { PAYMENT_PROVIDERS, getPaymentProviderAdapter, getPaymentProviderLabel }
 export type { PaymentProviderAdapter, PaymentCheckoutInput, PaymentCheckoutResult, PaymentVerificationInput, PaymentVerificationResult, PaymentRefundInput, PaymentRefundResult, PaymentAccountStatusResult } from "./providers/types";
 export {
   getPaymentAccount,
+  getAllPaymentAccounts,
+  getActivePaymentAccount,
   savePaymentAccount,
+  setActiveProvider,
   verifyPaymentAccount,
   disconnectPaymentAccount,
   computePaymentReadiness,

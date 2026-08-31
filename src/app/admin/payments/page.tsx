@@ -1,19 +1,19 @@
 import { ContentContainer, PageHeader } from "@/components/layout";
-import { getMyPaymentAccount } from "@/actions/payment-account.actions";
-import { PaymentsClient } from "./_components/payments-client";
+import { getMyPaymentAccounts } from "@/actions/payment-account.actions";
+import { PaymentsMultiproviderClient } from "./_components/payments-client.multiprovider";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaymentsPage() {
-  const data = await getMyPaymentAccount();
+  const data = await getMyPaymentAccounts();
   return (
     <ContentContainer>
       <PageHeader
         title="Payments"
-        description="Connect your payment account to receive product revenue directly — CreatorStore never takes a transaction fee."
+        description="Choose how customers will pay you — funds land directly in your account."
         breadcrumbs={[{ label: "Settings", href: "/admin/settings" }, { label: "Payments" }]}
       />
-      <PaymentsClient account={data.account ?? null} readiness={data.readiness ?? null} error={data.ok ? undefined : data.error} />
+      {data.ok ? <PaymentsMultiproviderClient initialAccounts={data.accounts ?? []} initialActive={data.activeProvider ?? null} initialReadiness={data.readiness ?? null} /> : <p className="text-sm text-red-400">{data.error}</p>}
     </ContentContainer>
   );
 }

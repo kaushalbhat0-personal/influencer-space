@@ -240,6 +240,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "agency-commissions", title: "Agency Commissions", group: "commerce",
+    href: "/super-admin/agency-commissions", icon: Percent, permission: "super_admin",
+    searchable: true, keywords: ["agency commission", "partner commission", "product commission", "manual payout", "outstanding", "ledger"],
+    auditCategory: "finance", analyticsKey: "agency-commissions:viewed",
+    productionReady: true,
+  },
+  {
     id: "customer-success", title: "Customer Success", group: "creators",
     href: "/super-admin/customer-success", icon: HeartPulse, permission: "super_admin",
     searchable: true, keywords: ["customer success", "at risk", "churn", "journey", "success score", "needs help"],

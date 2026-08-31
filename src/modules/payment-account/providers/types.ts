@@ -11,6 +11,7 @@ export interface PaymentCheckoutInput {
     provider: PaymentProviderId;
     providerKeyId?: string | null;
     providerKeySecret?: string | null;
+    providerAccountId?: string | null;
   };
   order: {
     referenceId: string;
@@ -104,5 +105,5 @@ export interface PaymentProviderAdapter {
   /** Refund a payment. May be unimplemented for a provider. */
   refundPayment?(input: PaymentRefundInput): Promise<PaymentRefundResult>;
   /** Probe the merchant account status (keys valid? verified?). */
-  getAccountStatus(input: { providerKeyId?: string | null; providerKeySecret?: string | null }): Promise<PaymentAccountStatusResult>;
+  getAccountStatus(input: { providerKeyId?: string | null; providerKeySecret?: string | null; providerAccountId?: string | null }): Promise<PaymentAccountStatusResult>;
 }

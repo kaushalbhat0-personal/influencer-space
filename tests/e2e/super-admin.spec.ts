@@ -18,39 +18,39 @@ test.describe("Super Admin — Core Pages", () => {
   });
 
   test("Revenue page loads", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/revenue");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin/revenue", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     await expect(superAdminPage.locator("h1")).toContainText(/Revenue/);
   });
 
   test("Tenants page shows data", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/tenants");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin/tenants", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     const rows = await new SuperAdminDashboard(superAdminPage).getTenantCount();
     expect(rows).toBeGreaterThan(0);
   });
 
   test("Agencies page loads", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/agencies");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin/agencies", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     await expect(superAdminPage.locator("h1")).toContainText(/Agencies/);
   });
 
   test("Audit log page loads", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/audit");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin/audit", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     await expect(superAdminPage.locator("h1")).toContainText(/Audit/);
   });
 
   test("Health monitoring page loads", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/health");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin/health", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     await expect(superAdminPage.locator("h1")).toContainText(/Health/);
   });
 
   test("Feature flags page loads", async ({ superAdminPage }) => {
-    await superAdminPage.goto("/super-admin/features");
-    await superAdminPage.waitForLoadState("networkidle");
+    await superAdminPage.goto("/super-admin/features", { waitUntil: "domcontentloaded" });
+    await expect(superAdminPage.locator("h1").first()).toBeVisible({ timeout: 15000 });
     await expect(superAdminPage.locator("h1")).toBeVisible();
   });
 });

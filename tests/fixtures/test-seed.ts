@@ -11,26 +11,96 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { loadEnvConfig } from "@next/env";
 import bcrypt from "bcryptjs";
 
+import { createHash } from "crypto";
+
 loadEnvConfig(process.cwd());
 const DATABASE_URL = process.env.DATABASE_URL!;
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
 
+// Canonical E2E test password. Documented repo-wide (prisma/seed.ts,
+// tests/reset-pw.ts, docs/recovery-03-certification.md). Overridable for CI.
+const PASSWORD = process.env.E2E_TEST_PASSWORD ?? "admin123";
+
 async function hashPassword() {
-  return bcrypt.hash("TestPass123!", 12);
+  return bcrypt.hash(PASSWORD, 12);
+}
+
+// Deterministic v5 UUIDs so the fixed IDs are valid for @db.Uuid columns AND
+// repeatable across runs (the seed's stated purpose).
+const NAMESPACE_UUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+function uuidv5(name: string): string {
+  const hash = createHash("sha1").update(NAMESPACE_UUID + name, "utf8").digest();
+  const b = Buffer.from(hash.subarray(0, 16));
+  b[6] = (b[6] & 0x0f) | 0x50;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = b.toString("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
 export const TEST_IDS = {
-  superAdmin: "test-super-admin",
-  agency: "test-agency-001",
-  creatorTenant: "test-tenant-creator",
-  product1: "test-product-001",
-  product2: "test-product-002",
-  order1: "test-order-001",
+  superAdmin: uuidv5("test-super-admin"),
+  agency: uuidv5("test-agency-001"),
+  creatorTenant: uuidv5("test-tenant-creator"),
+  product1: uuidv5("test-product-001"),
+  product2: uuidv5("test-product-002"),
+  order1: uuidv5("test-order-001"),
   coupon: "LAUNCH10",
 } as const;
 
+const TEST_GALLERY_ID = uuidv5("test-gallery-001");
+
+const NAMESPACE_EMAILS = [
+  "admin@creatorstore.test",
+  "agency@creatorstore.test",
+  "creator@creatorstore.test",
+];
+
+/**
+ * Reset pass — removes ONLY the deterministic E2E namespace (fixed IDs +
+ * @creatorstore.test identities). Never touches records outside the namespace.
+ * Idempotent: safe to run before every seed.
+ */
+async function resetNamespace() {
+  const tenant = await prisma.tenant.findUnique({ where: { id: TEST_IDS.creatorTenant } });
+  const tenantId = tenant?.id ?? null;
+
+  // Children of the namespace tenant (deleted explicitly before the tenant so
+  // FK constraints are satisfied regardless of per-model onDelete settings).
+  if (tenantId) {
+    await prisma.analyticsEvent.deleteMany({ where: { tenantId } });
+    await prisma.assetReference.deleteMany({ where: { tenantId } });
+    await prisma.asset.deleteMany({ where: { tenantId } });
+    await prisma.booking.deleteMany({ where: { tenantId } });
+    await prisma.purchase.deleteMany({ where: { tenantId } });
+    await prisma.offering.deleteMany({ where: { tenantId } });
+    await prisma.setting.deleteMany({ where: { tenantId } });
+    await prisma.subscription.deleteMany({ where: { tenantId } });
+    await prisma.galleryImage.deleteMany({ where: { tenantId } });
+    await prisma.productOrder.deleteMany({ where: { tenantId } });
+    await prisma.product.deleteMany({ where: { tenantId } });
+    await prisma.clientAssignment.deleteMany({ where: { tenantId } });
+    // Website cascades Brand, PublishStatus, PublishSnapshot, Page -> Section -> Block.
+    await prisma.website.deleteMany({ where: { tenantId } });
+  }
+
+  // Agency namespace (Workspace cascades WorkspaceMember; invitations deleted
+  // explicitly). ClientAssignments were already removed by tenantId above.
+  await prisma.workspace.deleteMany({ where: { agencyId: TEST_IDS.agency } });
+  await prisma.agencyTeamInvitation.deleteMany({ where: { agencyId: TEST_IDS.agency } });
+  await prisma.websiteAgency.deleteMany({ where: { id: TEST_IDS.agency } });
+
+  // Namespace users last.
+  await prisma.user.deleteMany({ where: { email: { in: NAMESPACE_EMAILS } } });
+
+  // Namespace tenant last (children already removed).
+  await prisma.tenant.deleteMany({ where: { id: TEST_IDS.creatorTenant } });
+
+  console.log(`   Reset: removed namespace (users, tenant ${TEST_IDS.creatorTenant}, agency ${TEST_IDS.agency})`);
+}
+
 async function main() {
   console.log("🌱 Seeding test database...");
+  await resetNamespace();
 
   // ── Super Admin ──────────────────────────────────────────────────────
   await prisma.user.upsert({
@@ -121,10 +191,10 @@ async function main() {
 
   // ── Gallery ──────────────────────────────────────────────────────────
   await prisma.galleryImage.upsert({
-    where: { id: "test-gallery-001" },
+    where: { id: TEST_GALLERY_ID },
     update: {},
     create: {
-      id: "test-gallery-001",
+      id: TEST_GALLERY_ID,
       tenantId: TEST_IDS.creatorTenant,
       title: "Hero Shot",
       imageUrl: "https://placehold.co/800x600/09090b/00f5ff?text=Hero",
@@ -149,12 +219,15 @@ async function main() {
   });
 
   // ── Subscription ─────────────────────────────────────────────────────
+  // R2.3: canonical QA plan is creator_grow (Growth) so resolveActivePlan
+  // yields advanced_builder + premium theme caps via existing entitlement
+  // architecture (no bypass). Using canonical code, not legacy PRO.
   await prisma.subscription.upsert({
     where: { tenantId: TEST_IDS.creatorTenant },
-    update: {},
+    update: { plan: "creator_grow", status: "ACTIVE" },
     create: {
       tenantId: TEST_IDS.creatorTenant,
-      plan: "PRO",
+      plan: "creator_grow",
       status: "ACTIVE",
     },
   });
@@ -171,9 +244,9 @@ async function main() {
   });
 
   console.log("✅ Test database seeded successfully");
-  console.log("   Super Admin: admin@creatorstore.test / TestPass123!");
-  console.log("   Agency:      agency@creatorstore.test / TestPass123!");
-  console.log("   Creator:     creator@creatorstore.test / TestPass123!");
+  console.log("   Super Admin: admin@creatorstore.test");
+  console.log("   Agency:      agency@creatorstore.test");
+  console.log("   Creator:     creator@creatorstore.test");
 }
 
 main()

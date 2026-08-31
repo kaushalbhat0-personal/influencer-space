@@ -21,7 +21,8 @@ describe("Experience Runtime — resolution (IMPLEMENTATION-45)", () => {
 
   it("theme-id mapping takes precedence over category", () => {
     const exp = experienceRegistry.resolve({ id: "com.creatos.fitness-energy", category: "health", premium: true });
-    expect(exp.name).toBe("Arena");
+    // R2.1: catalog maps fitness-energy → brutalist (family brutalist) not arena velocity — precedence still holds
+    expect(exp.name).toBe("Brutalist");
   });
 
   it("returns the Minimal experience deterministically for unknown themes", () => {

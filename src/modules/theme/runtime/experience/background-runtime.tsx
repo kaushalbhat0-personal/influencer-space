@@ -12,7 +12,9 @@ export function ExperienceBackground({ background }: { background: BackgroundCon
   // of a fixed indigo. Experience-declared colors still win.
   // Presets are intentionally restrained, but must remain perceptible against
   // the dark storefront root. Launch solid backgrounds never reach this path.
-  const fallback = "color-mix(in srgb, var(--brand-primary,#6366F1) 14%, transparent)";
+  // BUILDER-14: increased from 14% to remain subordinate but visible after
+  // decoration opacity uplift.
+  const fallback = "color-mix(in srgb, var(--brand-primary,#6366F1) 16%, transparent)";
 
   if (kind === "none" || kind === "solid") {
     return <Layers glow={background.glow} pattern={background.pattern} />;
@@ -131,10 +133,10 @@ function Layers({ glow, pattern }: { glow?: string | null; pattern?: string | nu
     <>
       {glow && (
         <div aria-hidden className="pointer-events-none absolute inset-0"
-           style={{ background: `radial-gradient(ellipse 48% 34% at 50% ${glow === "top" ? "0%" : glow === "bottom" ? "100%" : "50%"}, color-mix(in srgb, var(--brand-primary,#6366F1) 12%, transparent), transparent)` }} />
+           style={{ background: `radial-gradient(ellipse 48% 34% at 50% ${glow === "top" ? "0%" : glow === "bottom" ? "100%" : "50%"}, color-mix(in srgb, var(--brand-primary,#6366F1) 16%, transparent), transparent)` }} />
       )}
 {asset && (
-        <svg aria-hidden className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.05]"
+        <svg aria-hidden className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.12]"
            dangerouslySetInnerHTML={{ __html: asset.body }} />
       )}
     </>
