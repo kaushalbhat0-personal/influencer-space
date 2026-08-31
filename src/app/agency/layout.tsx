@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Lock } from "lucide-react";
+import { GuidanceShell } from "@/components/guidance/GuidanceShell";
 
 /**
  * IMPLEMENTATION-41: canonical agency console shell. Previously the AGENCY_NAV
@@ -51,6 +52,7 @@ export default async function AgencyLayout({ children }: { children: React.React
           </ErrorBoundary>
         </main>
       </div>
+      <GuidanceShell audience="agency" helpContext="Clients" />
     </div>
   );
 }

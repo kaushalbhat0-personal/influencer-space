@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { GuidanceShell } from "@/components/guidance/GuidanceShell";
 
 const BuilderWorkspace = dynamic(
   () => import("./workspace").then((m) => m.BuilderWorkspace),
@@ -23,5 +24,10 @@ const BuilderWorkspace = dynamic(
 );
 
 export default function BuilderLoader() {
-  return <BuilderWorkspace />;
+  return (
+    <>
+      <BuilderWorkspace />
+      <GuidanceShell audience="creator" helpContext="Builder" />
+    </>
+  );
 }

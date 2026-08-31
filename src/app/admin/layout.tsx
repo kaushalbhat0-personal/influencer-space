@@ -7,6 +7,7 @@ import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { filterNavForPlan, toNavWire, ADMIN_NAV } from "@/lib/capabilities/nav-visibility";
 import { DEFAULT_PLAN_CODE } from "@/lib/capabilities/constants";
+import { GuidanceShell } from "@/components/guidance/GuidanceShell";
 
 export default async function AdminLayout({
   children,
@@ -61,5 +62,10 @@ export default async function AdminLayout({
     else publishStatus = "draft";
   }
 
-  return <AdminLayoutClient siteUrl={siteUrl} publishStatus={publishStatus} nav={visibleNav}>{children}</AdminLayoutClient>;
+  return (
+    <>
+      <AdminLayoutClient siteUrl={siteUrl} publishStatus={publishStatus} nav={visibleNav}>{children}</AdminLayoutClient>
+      <GuidanceShell audience="creator" helpContext="Dashboard" />
+    </>
+  );
 }
