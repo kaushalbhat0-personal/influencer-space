@@ -31,61 +31,51 @@ test.describe("Level 1 — Smoke: Super Admin", () => {
 
   test("themes page loads from registry", async ({ page }) => {
     await page.goto("/super-admin/themes");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Themes").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("templates page loads from registry", async ({ page }) => {
     await page.goto("/super-admin/templates");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Website Templates").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("activity page loads", async ({ page }) => {
     await page.goto("/super-admin/activity");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Platform Activity").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("insights page loads", async ({ page }) => {
     await page.goto("/super-admin/insights");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Platform Insights").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("revenue management loads", async ({ page }) => {
     await page.goto("/super-admin/revenue-management");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Revenue Management").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("commission center loads", async ({ page }) => {
     await page.goto("/super-admin/revenue-management/commissions");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Commission Center").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("audit page loads", async ({ page }) => {
     await page.goto("/super-admin/audit");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Audit Log").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("health page loads", async ({ page }) => {
     await page.goto("/super-admin/health");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=System Health").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("websites page loads", async ({ page }) => {
     await page.goto("/super-admin/websites");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Websites").first()).toBeVisible({ timeout: 15000 });
   });
 
   test("revenue management settings loads", async ({ page }) => {
     await page.goto("/super-admin/revenue-management/settings");
-    await page.waitForLoadState("networkidle");
     await expect(page.locator("text=Billing Settings").first()).toBeVisible({ timeout: 15000 });
   });
 });

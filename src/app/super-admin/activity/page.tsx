@@ -17,7 +17,7 @@ function getEventMeta(action: string): { icon: React.ElementType; color: string 
 
 export default async function ActivityPage() {
   const unified = await getUnifiedActivity({ limit: 150 }).catch(() => ({ rows: [], total: 0 }));
-  const [recentEvents, recentPublishes, allTenants] = await Promise.all([
+  const [recentEvents, recentPublishes] = await Promise.all([
     prisma.auditLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 200,
@@ -28,8 +28,11 @@ export default async function ActivityPage() {
       take: 10,
       select: { id: true, state: true, version: true, createdAt: true, websiteId: true },
     }),
-    prisma.tenant.findMany({ select: { id: true, name: true } }),
   ]);
+  const neededTenantIds = Array.from(new Set(recentEvents.map((e) => e.tenantId).filter(Boolean) as string[]));
+  const allTenants = neededTenantIds.length
+    ? await prisma.tenant.findMany({ where: { id: { in: neededTenantIds } }, select: { id: true, name: true } })
+    : [];
 
   const tenantMap = new Map(allTenants.map((t) => [t.id, t.name]));
 

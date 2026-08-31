@@ -224,10 +224,10 @@ export async function getUnifiedActivity(input: { kind?: string; search?: string
   const limit = input.limit ?? 100;
 
   const [audit, billingEvents, generations, provisions] = await Promise.all([
-    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 300, select: { id: true, action: true, tenantId: true, createdAt: true, metadata: true } }),
-    prisma.billingEvent.findMany({ orderBy: { createdAt: "desc" }, take: 300, select: { id: true, type: true, createdAt: true, workspaceId: true } }),
-    prisma.generationSession.findMany({ orderBy: { startedAt: "desc" }, take: 300, select: { id: true, creatorName: true, status: true, startedAt: true } }),
-    prisma.creatorProvisionRun.findMany({ orderBy: { startedAt: "desc" }, take: 300, select: { id: true, creatorName: true, status: true, startedAt: true } }),
+    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 150, select: { id: true, action: true, tenantId: true, createdAt: true, metadata: true } }),
+    prisma.billingEvent.findMany({ orderBy: { createdAt: "desc" }, take: 150, select: { id: true, type: true, createdAt: true, workspaceId: true } }),
+    prisma.generationSession.findMany({ orderBy: { startedAt: "desc" }, take: 150, select: { id: true, creatorName: true, status: true, startedAt: true } }),
+    prisma.creatorProvisionRun.findMany({ orderBy: { startedAt: "desc" }, take: 150, select: { id: true, creatorName: true, status: true, startedAt: true } }),
   ]);
 
   type Row = { id: string; kind: string; type: string; detail: string; createdAt: string };

@@ -21,8 +21,12 @@ async function safeMetric<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 
 export const dashboardService = {
   getMetrics: requestCache(async (tenantId: string): Promise<DashboardMetrics> => {
-    const [products, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website, bookings, offerings, orders] = await Promise.all([
-      prisma.product.findMany({ where: { tenantId }, select: { id: true, isActive: true, status: true } }),
+    const [productCounts, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website, bookings, offerings, orders] = await Promise.all([
+      Promise.all([
+        prisma.product.count({ where: { tenantId } }),
+        prisma.product.count({ where: { tenantId, status: "PUBLISHED" } }),
+        prisma.product.count({ where: { tenantId, isActive: true } }),
+      ]),
       prisma.productOrder.aggregate({
         // RCCF-72.18D.6.4 — dead "PAID" predicate removed (D.5.2-A established
         // COMPLETED as the only written paid state; no writer creates PAID).
@@ -44,9 +48,8 @@ export const dashboardService = {
       safeMetric(() => prisma.offering.count({ where: { tenantId } }), 0),
       prisma.productOrder.count({ where: { tenantId, status: "COMPLETED" } }),
     ]);
+    const [totalProducts, publishedCount, activeProductCount] = productCounts as [number, number, number];
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
-
-    const publishedCount = products.filter((p: { status: string }) => p.status === "PUBLISHED").length;
 
     const hasProducts = publishedCount > 0;
     const hasGallery = gallery > 0;
@@ -69,10 +72,10 @@ export const dashboardService = {
       }
     }
 
-    const activeProductCount = products.filter((p: { isActive: boolean }) => p.isActive).length;
+
 
     return {
-      productCount: products.length,
+      productCount: totalProducts,
       activeProductCount,
       publishedProductCount: publishedCount,
       orderCount: orders,
