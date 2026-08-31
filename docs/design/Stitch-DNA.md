@@ -1,8 +1,8 @@
 # Stitch-DNA — Creator-Store Design Mapping Artifact
 
 **RCCF:** 70.2 — Stitch Design-System Bootstrap & Canonical Screen Generation
-**Status:** PARTIAL — design system CREATED (platform-evolved, +2 auto-generated alternates); canonical screens BLOCKED by Stitch MCP timeout
-**Date:** 2026-08-15
+**Status:** COMPLETE — design system CREATED (platform-evolved, +2 auto-generated alternates); canonical screen set CREATED and truth-validated (RCCF-70.3)
+**Date:** 2026-08-15 (updated 2026-08-16)
 
 ---
 
@@ -184,16 +184,35 @@ the Stitch design system encodes the target direction.
 
 ## 6. Screen Mapping
 
-**Status note:** The four canonical screens were **not successfully created** in
-Stitch (see §10). The mapping below is the intended, validated mapping ready for a
-retry; it does not claim screens exist.
+**Status note:** All four canonical screens now exist in Stitch (created and
+truth-validated under RCCF-70.3, 2026-08-16). Real server screen IDs are
+recorded below. Duplicate generation attempts and the non-canonical residue
+screens are catalogued in the RCCF-70.3 report (§5, §11).
 
-| Stitch Screen | Repository Route | Repository Component | Purpose |
+| Stitch Screen | Repository Route | Repository Component | Stitch Screen ID |
 |---|---|---|---|
-| Creator Dashboard | `/admin/dashboard` | dashboard features, `DashboardWidget`, `MetricCard`, `BusinessHealthHero` | Primary Admin design reference |
-| Creator Products / CRUD | `/admin/products` | `src/features/products/`, `products-page.tsx`, `EditEntityDrawer`, `CrudTable` | Canonical CRUD design language |
-| Creator Builder | `/builder` | `src/features/builder/components/` (`workspace.tsx`, `toolbar.tsx`, `sidebar.tsx`, `properties.tsx`, `mobile-panel.tsx`, `InteractiveCanvas`) | Builder workspace (Sections / Canvas / Properties) |
-| Creator Storefront | `/[domain]` | `src/components/storefront/StorefrontPage.tsx`, `src/lib/registry/components/renderers.tsx` | Public site, distinct but same system |
+| Creator Dashboard | `/admin/dashboard` | dashboard features, `DashboardWidget`, `MetricCard`, `BusinessHealthHero` | `ab7028fa9f924830b7a623089f8e0789` |
+| Creator Products / CRUD | `/admin/products` | `src/features/products/`, `products-page.tsx`, `EditEntityDrawer`, `CrudTable` | `316007766d09424ea5c3899ad6089da9` |
+| Creator Builder | `/builder` | `src/features/builder/components/` (`workspace.tsx`, `toolbar.tsx`, `sidebar.tsx`, `properties.tsx`, `mobile-panel.tsx`, `InteractiveCanvas`) | `8f47c0820077419eadccfca5c9cf195a` |
+| Creator Storefront | `/[domain]` | `src/components/storefront/StorefrontPage.tsx`, `src/lib/registry/components/renderers.tsx` | `a11fd81adf414039a37b6fe351e7a1f2` |
+
+**Rejected / non-canonical screens (must NOT be used as visual direction):**
+
+- `735f886cd48c4800b260172af1f5ea16` "Premium Creator OS - Dashboard" — contains
+  fabricated business data (Revenue `$42,920.50`, Total Orders `1,284`, Order
+  `#9021`, storage `82% 4.1TB/5TB`); rejected and regenerated.
+- `52c5009f5b1c4ffba72994f3d0ca9f7f` "Your Studio - Dashboard Overview" — clean
+  of analytics but contains an unsupported "Stripe integration" help-text
+  reference (the repository uses Razorpay); not selected.
+- Four pre-existing "Creator Admin Dashboard" residue screens
+  (`10c052f5f81b453bbca74c3c2bca8a43`, `ea0706b18dad4392a2caba2965f62e4f`,
+  `9e2e4d1b23d44411893533ab85459fc4`, `c0758b55ae4f455d922ab3fdf4eda4f8`) from
+  RCCF-70.2 timed-out attempts — fabricated commerce data, non-canonical.
+
+Platform auto-generated responsive pairs exist for Builder Mobile
+(`921e065c4e344f63a0e0877b1432664f`) and Storefront Mobile
+(`0facf59ffd064567a6104ee93d8fdabb`); these are responsive variants of the
+canonical screens, not additional screens.
 
 ### Commerce truth for the storefront screen
 
@@ -288,24 +307,30 @@ The Stitch design system was created successfully
 auto-generated "Forge Creator OS" design systems exist as platform artifacts
 (see §3) and are not part of the canonical design language.
 
-**Screen generation is BLOCKED.** Four consecutive `generate_screen_from_text`
-attempts (2× GEMINI_3_1_PRO, 2× GEMINI_3_FLASH, including a minimal prompt) failed
-at the MCP layer with:
+**RCCF-70.2 screen generation was BLOCKED** by the Stitch MCP timeout
+(`MCP error -32001: Request timed out`); no screens were fabricated then.
 
-```
-MCP error -32001: Request timed out
-```
+**RCCF-70.3 (2026-08-16) generated and validated all four canonical screens.**
+Observed Stitch MCP behavior: a `generate_screen_from_text` call that times out
+at the MCP layer frequently **completes server-side minutes later**; the reliable
+pattern was to wait ~2–5 minutes after a timeout and poll
+`stitch_list_screens`/`stitch_get_project` rather than retry immediately.
+"Invalid argument" rejections create no screen and may be transient. Because the
+Stitch MCP server exposes no deletion tool, non-canonical and duplicate screens
+remain in the project and are catalogued in §6 and the RCCF-70.3 report.
 
-`stitch_list_screens` returned `{}` (zero screens) after each attempt, polled for
-~6 minutes total. No screen was created server-side. Per RCCF rules, screens are
-NOT fabricated. A subsequent RCCF must retry screen generation against the
-existing design system once the Stitch MCP timeout is resolved (or generation is
-invoked via a channel that tolerates the multi-minute duration).
+Canonical screens (real IDs): Dashboard `ab7028fa9f924830b7a623089f8e0789`,
+Products `316007766d09424ea5c3899ad6089da9`, Builder
+`8f47c0820077419eadccfca5c9cf195a`, Storefront
+`a11fd81adf414039a37b6fe351e7a1f2`. Full attempt logs, truth audit, and the
+rejected fabricated-data Dashboard are documented in
+`docs/rccf-70.3-stitch-screen-generation-validation.md`.
 
 This file therefore records:
 
-- the durable design-system asset (retained across retries), and
-- the complete token/component/screen mapping so the retry is deterministic.
+- the durable design-system asset (retained across retries),
+- the complete token/component/screen mapping (now backed by real screens), and
+- the exact state of the canonical screen set.
 
 ---
 
@@ -332,4 +357,4 @@ Future RCCF implementation MUST preserve:
 
 ---
 
-*End of Stitch-DNA.md — RCCF-70.2*
+*End of Stitch-DNA.md — RCCF-70.2, updated by RCCF-70.3*
