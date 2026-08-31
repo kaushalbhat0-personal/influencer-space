@@ -150,15 +150,15 @@ export async function confirmProvision(params: {
     }
     const creatorPlan = { planCode: billingPlan.code, planId: billingPlan.id };
 
-    const sourcePlatform = params.sourcePlatform || detectPlatform(params.sourceUrl);
+    const sourcePlatform = params.sourcePlatform || (params.sourceUrl ? detectPlatform(params.sourceUrl) : "manual");
 
     const runId = await provisioningService.createRun({
       creatorName: params.creatorName,
-      sourceUrl: params.sourceUrl,
+      sourceUrl: params.sourceUrl || undefined,
       sourcePlatform,
     });
 
-    const source = buildContentSource(params.sourceUrl, sourcePlatform, params.creatorName);
+    const source = buildContentSource(params.sourceUrl || "", sourcePlatform, params.creatorName);
     const pipelineResult = await runProvisionPipeline(
       { sourceUrl: params.sourceUrl, creatorId: session.user.id, creatorName: params.creatorName, idempotencyPrefix: "provision", strategy: params.strategyId === "fast" ? "free" : "pro" },
       source,

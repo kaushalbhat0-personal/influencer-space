@@ -10,6 +10,23 @@ import { revalidatePath } from "next/cache";
 import { entitlement } from "@/modules/billing/application/entitlements";
 import { billingService } from "@/modules/billing/application/service";
 import { workspaceService } from "@/modules/workspace/application/service";
+import { getPlatformDomains } from "@/lib/platform/domains";
+
+function normalizeDomain(raw: string): string {
+  return raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "").replace(/^www\./, "").split("/")[0]!.split("?")[0]!.split("#")[0]!.trim();
+}
+
+function isValidDomain(domain: string): boolean {
+  if (!domain || domain.length > 253) return false;
+  if (domain.includes(" ") || domain.includes("..") || domain.startsWith("-") || domain.startsWith(".") || domain.endsWith("-") || domain.endsWith(".")) return false;
+  // Must contain at least one dot and a TLD of 2+ letters
+  const parts = domain.split(".");
+  if (parts.length < 2) return false;
+  if (parts.some((p) => p.length === 0 || p.length > 63 || !/^[a-z0-9-]+$/.test(p))) return false;
+  const tld = parts[parts.length - 1]!;
+  if (!/^[a-z]{2,}$/.test(tld)) return false;
+  return true;
+}
 
 export type DomainActionState = {
   success: boolean;
@@ -35,10 +52,25 @@ export async function attachCustomDomain(
     return { success: false, error: "Domain is required" };
   }
 
-  const domain = raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  const domain = normalizeDomain(raw);
+  if (!isValidDomain(domain)) {
+    return { success: false, error: "Invalid domain format. Use example.com (without www or path)" };
+  }
+  const platformHosts = getPlatformDomains().map((d) => d.split(":")[0]!.toLowerCase().replace(/^www\./, ""));
+  if (platformHosts.includes(domain) || platformHosts.some((p) => domain === p || domain.endsWith(`.${p}`))) {
+    return { success: false, error: "Custom domain cannot be a platform domain" };
+  }
 
   try {
     const tenantId = await requireAuth();
+
+    const duplicate = await prisma.tenant.findFirst({
+      where: { customDomain: domain, NOT: { id: tenantId } },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return { success: false, error: "Domain is already assigned to another tenant" };
+    }
 
     const ws = await workspaceService.resolveTenantId().then(() => workspaceService.getCurrent());
     const sub = ws ? await billingService.getSubscriptionStatus(ws.id) : null;

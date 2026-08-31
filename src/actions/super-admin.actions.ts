@@ -260,10 +260,12 @@ export async function attachCustomDomain(
     return { success: false, error: "Unauthorized" };
   }
 
-  const cleaned = customDomain
-    .replace(/^https?:\/\//, "")
-    .replace(/\/+$/, "")
-    .toLowerCase();
+  const cleaned = customDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "").replace(/^www\./, "").split("/")[0]!.split("?")[0]!.split("#")[0]!.trim();
+  if (!cleaned || cleaned.length > 253 || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(cleaned) || cleaned.includes("..") || cleaned.startsWith("-") || cleaned.startsWith(".") ) {
+    return { success: false, error: "Invalid domain format" };
+  }
+  const dupe = await prisma.tenant.findFirst({ where: { customDomain: cleaned, NOT: { id: tenantId } }, select: { id: true } });
+  if (dupe) return { success: false, error: "Domain is already assigned to another tenant" };
 
   const result = await VercelService.addDomain(cleaned);
 

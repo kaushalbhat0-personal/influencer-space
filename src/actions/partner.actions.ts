@@ -56,9 +56,14 @@ export async function importCreatorViaAgency(input: {
     //    confirmProvision) — Creator Intelligence + generation + workspace.
     //    The "fast" (free) strategy uses the deterministic blueprint+composition
     //    pipeline (no AI-provider dependency); acquisition degrades gracefully.
+    // RCCF-LAUNCH-01: never synthesize a fake example.com URL when sourceUrl
+    // is absent — provisioningService omits sourceLink when sourceUrl is empty
+    // (provisioning-service.ts:198), so the storefront never shows a placeholder
+    // social link for agency-provisioned clients created without a URL.
     const { confirmProvision } = await import("./super-admin-provision.actions");
+    const effectiveSourceUrl = input.sourceUrl?.trim() || "";
     const result = await confirmProvision({
-      sourceUrl: input.sourceUrl ?? `https://example.com/${input.creatorName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      sourceUrl: effectiveSourceUrl,
       creatorName: input.creatorName,
       planCode: input.planCode,
       sourcePlatform: input.sourcePlatform ?? "youtube",

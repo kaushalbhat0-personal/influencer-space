@@ -33,7 +33,9 @@ export const VercelService = {
     const cleaned = domain
       .replace(/^https?:\/\//, "")
       .replace(/\/+$/, "")
-      .toLowerCase();
+      .toLowerCase()
+      .replace(/^www\./, "")
+      .split("/")[0]!.split("?")[0]!.split("#")[0]!.trim();
 
     try {
       const { token, projectId } = await withCredentials();

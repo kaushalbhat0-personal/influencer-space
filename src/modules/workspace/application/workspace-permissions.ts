@@ -1,12 +1,14 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { workspaceService } from "@/modules/workspace/application/service";
 
 export async function requireAuth(tenantId: string): Promise<void> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
-  const resolvedTenantId = await workspaceService.resolveTenantId();
-  const effectiveTenantId = resolvedTenantId ?? session.user.tenantId;
+  // RCCF-LAUNCH-01: strict creator isolation — always compare against the
+  // server-authoritative session tenantId. The previous workspace-cookie
+  // derived effectiveTenantId introduced a second trust root; creator content
+  // (Gallery, etc.) must remain strictly tenant-bound via JWT.
+  const effectiveTenantId = session.user.tenantId;
   if (session.user.role !== "SUPER_ADMIN" && effectiveTenantId !== tenantId) {
     throw new Error("Forbidden");
   }
