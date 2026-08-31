@@ -42,7 +42,7 @@ export function HelpPanel({ open, onClose, context }: { open: boolean; onClose: 
                 <p className="mt-1 text-xs leading-relaxed text-zinc-400">{a.description}</p>
               </li>
             ))}
-            {filtered.length === 0 && <p className="text-sm text-zinc-500">No results. Try “google”, “privacy” or “website address”.</p>}
+            {filtered.length === 0 && <p className="text-sm text-zinc-500">We couldn&apos;t find that. Try “domain”, “Google”, “privacy” or “publish”.</p>}
           </ul>
         </div>
         <div className="border-t border-white/10 p-4">

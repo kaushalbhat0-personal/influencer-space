@@ -8,6 +8,7 @@ import { builderCommands } from "@/lib/builder/commands";
 import { builderQuery } from "@/lib/builder/query";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import { CompletionBadge } from "./completion-badge";
+import { ContextualHelp } from "@/components/guidance/ContextualHelp";
 
 interface Props {
   device: BuilderCanvas["device"];
@@ -146,6 +147,7 @@ export function BuilderToolbar({
             )}
             {saving ? "Saving..." : "Save Draft"}
           </button>
+          <ContextualHelp text="Save your latest changes without making them public." label="About Save Draft" />
         </div>
       </div>
     </div>

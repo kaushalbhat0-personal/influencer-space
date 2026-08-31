@@ -38,15 +38,15 @@ export const AGENCY_GUIDANCE: GuidanceDefinition = {
 
 export const HELP_ARTICLES: HelpArticle[] = [
   { id: "getting-started", title: "Getting started", description: "Create your first website and understand the dashboard.", keywords: ["start", "begin", "first", "dashboard"] },
-  { id: "build", title: "Build my website", description: "Add, remove or rearrange sections visitors see. Click a section to edit.", keywords: ["build", "builder", "sections", "content"] },
-  { id: "design", title: "Change my design", description: "Choose a starting design, colors and fonts for your website.", keywords: ["design", "theme", "colors", "fonts", "appearance"] },
+  { id: "build", title: "Build my website", description: "Add, remove or rearrange sections visitors see. Click a section to edit.", keywords: ["build", "builder", "sections", "content", "add section", "reorder"] },
+  { id: "design", title: "Change my design", description: "Choose the overall look and feel of your website.", keywords: ["design", "theme", "colors", "fonts", "appearance"] },
   { id: "products", title: "Add products", description: "Add products or services so visitors can discover what you offer.", keywords: ["product", "service", "store", "sell"] },
   { id: "social", title: "Add social media", description: "Add links to Instagram, YouTube, X and other profiles.", keywords: ["social", "instagram", "youtube", "x", "twitter", "linkedin"] },
-  { id: "google", title: "Get found on Google", description: "Add your website name and description so Google can understand your site.", keywords: ["google", "search", "seo", "found", "description"] },
+  { id: "google", title: "Get found on Google", description: "Add your website name and description so Google can understand your site.", keywords: ["google", "search", "appear on google", "get found", "seo", "found", "description"] },
   { id: "legal", title: "Legal pages", description: "Edit your Privacy Policy, Terms, Refund Policy and Disclaimer.", keywords: ["legal", "privacy", "terms", "refund", "disclaimer"] },
-  { id: "domain", title: "Connect a domain", description: "Choose the web address people use to visit your website. Example: yourname.com.", keywords: ["domain", "website address", "url", "custom domain"] },
-  { id: "preview", title: "Preview my website", description: "See your website as visitors will see it before publishing.", keywords: ["preview", "see", "draft"] },
-  { id: "publish", title: "Publish my website", description: "Make your saved changes visible to visitors. Your website is ready to go live.", keywords: ["publish", "live", "go live"] },
-  { id: "clients", title: "Manage clients", description: "Add, open and manage websites for your clients. The client's website remains their website.", keywords: ["client", "manage", "agency", "freelancer"] },
+  { id: "domain", title: "Connect your domain", description: "Choose the web address people use to visit your website. Example: yourname.com.", keywords: ["domain", "website address", "web address", "custom domain", "url"] },
+  { id: "preview", title: "Preview my website", description: "See your website as visitors will see it before publishing.", keywords: ["preview", "see website", "see", "draft"] },
+  { id: "publish", title: "Publish my website", description: "Make your saved changes visible to visitors. Your website is ready to go live.", keywords: ["publish", "make live", "go live", "live"] },
+  { id: "clients", title: "Manage clients", description: "Add, open and manage websites for your clients. The client's website remains their website.", keywords: ["client", "customer", "client website", "manage", "agency", "freelancer"] },
   { id: "handoff", title: "Hand over to client", description: "Your client can log in anytime. You can revoke access when they are ready to manage it themselves.", keywords: ["handoff", "revoke", "access", "owner"] },
 ];

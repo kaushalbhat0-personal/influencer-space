@@ -75,10 +75,10 @@ export function SEOPage({ initialData, brandName, domainPreview }: SEOPageProps)
         <div className="space-y-6">
           <GlassCard className="p-6">
             <h3 className="text-sm font-semibold text-white">Search preview</h3>
-            <div className="mt-3 rounded border border-white/10 bg-zinc-900 p-3">
-              <p className="text-sm font-medium text-[#8ab4f8] truncate">{data.title || brandName || "Northstar Studio"}</p>
-              <p className="text-xs text-[#006621] truncate">{domainPreview || "northstar.example.com"}</p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-300">{data.description || "Premium 3D design and digital products for modern creators and businesses."}</p>
+            <div className="mt-3 rounded border border-white/10 bg-zinc-900 p-3 min-w-0">
+              <p className="text-sm font-medium text-[#8ab4f8] break-words">{data.title || brandName || "Northstar Studio"}</p>
+              <p className="text-xs text-[#006621] break-all">{domainPreview || "northstar.example.com"}</p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-300 break-words">{data.description || "Premium 3D design and digital products for modern creators and businesses."}</p>
             </div>
           </GlassCard>
 

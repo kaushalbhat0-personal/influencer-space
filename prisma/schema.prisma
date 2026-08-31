@@ -297,6 +297,8 @@ model Workspace {
   locale              String          @default("en-IN")
   timezone            String          @default("Asia/Kolkata")
   currency            String          @default("INR")
+  /// @deprecated legacy — use Setting `onboarding_completed` / `guidance_*` localStorage (RCCF-LAUNCH-05).
+  /// Retained for migration safety; no new code should read/write this field.
   onboardingCompleted Boolean         @default(false)
   metadata            Json            @default("{}")
   tenantId            String?         @unique @db.Uuid
