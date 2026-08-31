@@ -113,10 +113,16 @@ export async function middleware(request: NextRequest) {
     const extractedTenant = parseTenantHost(host);
     if (extractedTenant) {
       headers.set("x-tenant-host", extractedTenant);
-      // VALIDATION-01 V-032: platform legal pages must not be rewritten to the
-      // tenant storefront route (which would 404 them).
-      const LEGAL_PATHS = ["/terms", "/privacy", "/refund"];
+      const LEGAL_PATHS = ["/terms", "/privacy", "/refund", "/disclaimer"];
       const segments = pathname.split("/").filter(Boolean);
+      const isLegal = LEGAL_PATHS.includes(pathname);
+      if (isLegal) {
+        const url = new URL(`/${extractedTenant}${pathname}`, request.url);
+        return NextResponse.rewrite(url);
+      }
+      // VALIDATION-01 V-032: platform legal pages must not be rewritten to the
+      // tenant storefront route (which would 404 them) when on platform host.
+      // On a tenant host (custom domain) legal IS tenant-owned and must rewrite.
       if (!LEGAL_PATHS.includes(pathname) && (segments.length === 0 || segments[0] !== extractedTenant)) {
         const url = new URL(`/${extractedTenant}${pathname}`, request.url);
         return NextResponse.rewrite(url);

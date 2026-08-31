@@ -143,7 +143,8 @@ export const ADMIN_NAV: NavConfig = {
       label: "Settings", collapsible: true,
       items: [
         { href: "/admin/profile", label: "Account", icon: User },
-        { href: "/admin/seo", label: "SEO", icon: Search, requiredCapability: "seo" },
+        { href: "/admin/seo", label: "Get Found on Google", icon: Search },
+        { href: "/admin/legal", label: "Legal", icon: BookOpen },
         { href: "/admin/settings/domain", label: "Domain", icon: Globe, requiredCapability: "custom_domain" },
         { href: "/admin/billing", label: "Billing", icon: CreditCard },
         { href: "/admin/notifications", label: "Notifications", icon: Bell },

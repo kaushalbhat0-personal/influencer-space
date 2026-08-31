@@ -21,7 +21,7 @@ import { ViewAllLink } from "@/components/storefront/ViewAllLink";
 import { safeUrl } from "./safe-url";
 import { normalizeCommerceMode } from "@/config/commerce/commerce-mode";
 import { buildWhatsAppMessage, buildWaMeLink } from "@/lib/commerce/whatsapp";
-import { getPlatformConfig } from "@/lib/config/platform";
+// getPlatformConfig no longer needed for creator legal (tenant-relative)
 
 
 interface RendererProps {
@@ -567,12 +567,10 @@ export function FooterRenderer({ props }: RendererProps) {
   const footerDescription = String(p.footerDescription || p.bio || p.tagline || "Design that moves your business forward. Digital experiences, visual systems, and products for ambitious modern brands.");
   const copyright = String(p.copyright || `© ${new Date().getFullYear()} ${brandName} — All rights reserved.`);
 
-  // RCCF-08: legal links must be platform-absolute (not tenant-relative) so they
-  // never resolve to `https://tenant-domain/terms` → 404. Use the canonical
-  // platform URL authority (NEXT_PUBLIC_APP_URL via getPlatformConfig) so the
-  // same code works for localhost, preview and production.
-  const platformUrl = getPlatformConfig().appUrl;
-  const platformLegal = (path: string) => `${platformUrl}${path}`;
+  // RCCF-LAUNCH-04: creator legal links are tenant-relative (same host) so they
+  // resolve to the creator's own legal pages ( /privacy on custom domain →
+  // tenant privacy). Platform legal remains at the platform URL (marketing footer).
+  const creatorLegal = (path: string) => path;
 
   // RCCF-07: realistic footer columns — navigation-consistent anchors + legal.
   // Admin can override via section config `footerColumns` (array of {title, links:[{label,href}]}).
@@ -581,7 +579,7 @@ export function FooterRenderer({ props }: RendererProps) {
     { title: "Products", links: [{ label: "Templates", href: "#products" }, { label: "Design Assets", href: "#products" }, { label: "Brand Kits", href: "#products" }, { label: "All Products", href: "#products" }] },
     { title: "Services", links: [{ label: "Brand Strategy", href: "#services" }, { label: "Web Design", href: "#services" }, { label: "Product Design", href: "#services" }, { label: "Creative Direction", href: "#services" }] },
     { title: "Company", links: [{ label: "About", href: "#timeline" }, { label: "Gallery / Work", href: "#gallery" }, { label: "Testimonials", href: "#testimonials" }, { label: "Contact", href: "#contact" }] },
-    { title: "Support", links: [{ label: "FAQ", href: "#faq" }, { label: "Privacy", href: platformLegal("/privacy") }, { label: "Terms", href: platformLegal("/terms") }, { label: "Refunds", href: platformLegal("/refund") }] },
+    { title: "Support", links: [{ label: "FAQ", href: "#faq" }, { label: "Privacy", href: creatorLegal("/privacy") }, { label: "Terms", href: creatorLegal("/terms") }, { label: "Refunds", href: creatorLegal("/refund") }] },
   ];
   const columns = (p.footerColumns as typeof defaultColumns) ?? defaultColumns;
 
@@ -627,13 +625,13 @@ export function FooterRenderer({ props }: RendererProps) {
           ))}
         </div>
       </div>
-      {/* Bottom bar — RCCF-08: platform-absolute legal URLs (not tenant-relative). */}
+      {/* Bottom bar — creator legal (tenant-relative) */}
       <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-[var(--border,rgba(255,255,255,0.08))] pt-6 text-[11px] sm:flex-row">
         <span>{copyright}</span>
         <div className="flex items-center gap-4">
-          <a href={platformLegal("/privacy")} className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Privacy</a>
-          <a href={platformLegal("/terms")} className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Terms</a>
-          <a href={platformLegal("/refund")} className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Refunds</a>
+          <a href={creatorLegal("/privacy")} className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Privacy</a>
+          <a href={creatorLegal("/terms")} className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Terms</a>
+          <a href={creatorLegal("/refund")} className="transition-colors hover:text-[var(--text-primary,#FAFAFA)]">Refunds</a>
         </div>
       </div>
     </div>
