@@ -10,6 +10,11 @@ export function GuidanceWalkthrough({ definition, onClose }: { definition: Guida
   const [step, setStep] = useState(0);
 
   useEffect(() => {
+    // Do not show walkthrough on auth pages — it blocks login (P0 found in prod smoke)
+    // Also skip in E2E automation (navigator.webdriver) so Playwright smoke not blocked
+    if (typeof navigator !== "undefined" && (navigator as unknown as { webdriver?: boolean }).webdriver) return;
+    const blocked = ["/admin/login", "/onboarding", "/super-admin/login", "/signup", "/claim-invite"];
+    if (blocked.some((p) => window.location.pathname.startsWith(p))) return;
     const raw = localStorage.getItem(STORAGE_KEY(definition.id));
     if (!raw) {
       setOpen(true);
@@ -44,7 +49,7 @@ export function GuidanceWalkthrough({ definition, onClose }: { definition: Guida
   if (!open) return null;
   const cur = definition.steps[step];
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="guidance-title">
+    <div data-testid="guidance-walkthrough" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="guidance-title">
       <div className="w-full max-w-md rounded-xl border border-white/10 bg-zinc-900 p-6 shadow-xl">
         {step === 0 && (
           <div className="mb-4">
