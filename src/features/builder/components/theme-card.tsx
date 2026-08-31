@@ -178,7 +178,9 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
                   ? "border-indigo-400/40 bg-indigo-500/5 ring-1 ring-indigo-500/20"
                   : "border-white/5 bg-zinc-900/50 hover:border-white/10 hover:bg-zinc-900",
               )}
-              data-testid={`builder-theme-${theme.slug}`}
+              data-testid="theme-card"
+              data-theme-slug={theme.slug}
+              data-theme-id={theme.id}
             >
               <button
                 onClick={(e) => { e.stopPropagation(); toggleFav(theme.id); }}

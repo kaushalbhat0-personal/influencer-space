@@ -23,6 +23,18 @@ export function SuccessJourneyCard({ initialData }: { initialData?: { success: C
   if (!data) return null;
   const { success: s, timeline } = data;
 
+  function formatDate(value: string | number | Date): string {
+    const d = new Date(value);
+    // Deterministic UTC, en-GB short month — same on server/client, no locale drift.
+    // Example: 30 Aug 2026
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(d);
+  }
+
   const riskTone = s.risk === "low" ? "text-emerald-400" : s.risk === "medium" ? "text-amber-400" : "text-red-400";
 
   return (
@@ -98,7 +110,7 @@ export function SuccessJourneyCard({ initialData }: { initialData?: { success: C
             {timeline.slice(0, 5).map((e) => (
               <div key={e.id} className="flex items-center justify-between text-xs text-zinc-500">
                 <span>{e.label}</span>
-                <span className="text-zinc-600">{new Date(e.timestamp).toLocaleDateString()}</span>
+                <span className="text-zinc-600">{formatDate(e.timestamp)}</span>
               </div>
             ))}
           </div>

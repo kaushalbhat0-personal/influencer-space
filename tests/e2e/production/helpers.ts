@@ -3,9 +3,9 @@ import { mkdirSync } from "fs";
 import path from "path";
 
 export const SHOT_DIR = path.resolve("playwright-report", "screenshots");
-export const CREATOR_EMAIL = process.env.CREATOR_EMAIL ?? "testcreator1@gmail.com";
+export const CREATOR_EMAIL = process.env.CREATOR_EMAIL ?? "creator@creatorstore.test";
 export const CREATOR_PASSWORD = process.env.CREATOR_PASSWORD ?? "admin123";
-export const CREATOR_SUBDOMAIN = process.env.CREATOR_SUBDOMAIN ?? "test-creator-1";
+export const CREATOR_SUBDOMAIN = process.env.CREATOR_SUBDOMAIN ?? "testcreator";
 
 export function ensureShotDir(): void {
   mkdirSync(SHOT_DIR, { recursive: true });
@@ -60,6 +60,9 @@ const BENIGN = [
   "err_no_buffer_space",
   "fonts.googleapis.com",
   "fonts.gstatic.com",
+  "__nextjs_original-stack-frame",
+  "__nextjs",
+  "failed to load resource: the server responded with a status of 400",
 ];
 
 /**

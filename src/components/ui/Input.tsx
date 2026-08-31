@@ -20,6 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={id}
+          suppressHydrationWarning
           className={cn(
             "admin-input",
             error && "border-red-500/50 focus:border-red-500 focus:ring-red-500/30",

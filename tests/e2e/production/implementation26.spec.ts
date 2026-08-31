@@ -31,11 +31,11 @@ test("Q1 - Builder shows ALL 50 themes; locked themes are visible", async ({ pag
   await page.waitForSelector('[data-testid="builder-canvas"]', { timeout: 30000 });
   await page.waitForTimeout(6000);
 
-  const cards = await page.locator('[data-testid^="builder-theme-"]').count();
+  const cards = await page.locator('[data-testid="theme-card"]').count();
   expect(cards).toBe(50);
   await expect(page.locator('text=/of 50 themes/')).toHaveCount(1);
   // Locked business themes are present.
-  const locked = await page.locator('[data-testid^="builder-theme-"]').filter({ has: page.locator('span:has-text("Business")') }).count();
+  const locked = await page.locator('[data-testid="theme-card"]').filter({ has: page.locator('span:has-text("Business")') }).count();
   expect(locked).toBeGreaterThan(0);
   await shot(page, "q1-builder-all-themes");
   errors.assertClean();
@@ -55,7 +55,7 @@ test("Q2 - Locked theme previews in Builder WITHOUT persisting (upgrade to apply
 
   // Capture the current canvas theme var, then preview a locked theme.
   const frameBefore = await page.locator('[data-testid="builder-canvas"] [style*="--brand"]').last().getAttribute("style").catch(() => "");
-  const lockedCard = page.locator('[data-testid^="builder-theme-"]').filter({ has: page.locator('span:has-text("Business")') }).first();
+  const lockedCard = page.locator('[data-testid="theme-card"]').filter({ has: page.locator('span:has-text("Business")') }).first();
   await lockedCard.click();
   await page.waitForTimeout(2000);
 
@@ -87,11 +87,11 @@ test("Q3 - Applying an unlocked theme persists + moves Current; preview leaves n
   await page.waitForTimeout(6000);
 
   // Pick a FREE theme that is NOT the current one (unlocked + non-current).
-  const freeCards = page.locator('[data-testid^="builder-theme-"]').filter({ has: page.locator('span:has-text("Free")') });
+  const freeCards = page.locator('[data-testid="theme-card"]').filter({ has: page.locator('span:has-text("Free")') });
   const unlockedCard = freeCards.filter({ hasNot: page.locator('span:has-text("Current")') }).first();
   await unlockedCard.click();
   await page.waitForTimeout(1000);
-  const slug = (await unlockedCard.getAttribute("data-testid"))?.replace("builder-theme-", "") ?? "";
+  const slug = (await unlockedCard.getAttribute("data-theme-slug")) ?? "";
   await expect(page.locator('[data-testid="preview-banner"]')).toBeVisible();
 
   // Apply → persists the theme (DB changes) + Current badge moves to the card.
@@ -107,7 +107,7 @@ test("Q3 - Applying an unlocked theme persists + moves Current; preview leaves n
   }
   expect(applied).toContain(slug);
 
-  const card = page.locator(`[data-testid="builder-theme-${slug}"]`);
+  const card = page.locator(`[data-testid="theme-card"][data-theme-slug="${slug}"]`);
   const currentCount = await card.locator('span:has-text("Current")').count();
   expect(currentCount).toBeGreaterThan(0);
   await shot(page, "q3-applied");
@@ -127,7 +127,7 @@ test("Q4 - Preview is temporary; leaving preview restores the current theme in t
   const frameOriginal = await page.locator('[data-testid="builder-canvas"] [style*="--brand"]').last().getAttribute("style").catch(() => "");
 
   // Preview a locked theme, then restore via the revert button.
-  const lockedCard = page.locator('[data-testid^="builder-theme-"]').filter({ has: page.locator('span:has-text("Business")') }).first();
+  const lockedCard = page.locator('[data-testid="theme-card"]').filter({ has: page.locator('span:has-text("Business")') }).first();
   await lockedCard.click();
   await page.waitForTimeout(1500);
   const framePreview = await page.locator('[data-testid="builder-canvas"] [style*="--brand"]').last().getAttribute("style").catch(() => "");
