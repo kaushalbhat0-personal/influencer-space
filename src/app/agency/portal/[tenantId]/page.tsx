@@ -6,6 +6,7 @@ import { clientHealthEngine } from "@/lib/client/health";
 import { agencyBranding } from "@/lib/client/branding";
 import { themeRegistry } from "@/lib/theme/registry-new";
 import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorization";
+import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { Globe, Palette, CheckCircle, Activity, ShoppingBag, Building2 } from "lucide-react";
 import Link from "next/link";
 
@@ -134,7 +135,7 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
             <h3 className="text-sm font-semibold text-white mb-2">Domain</h3>
-            <p className="text-lg font-mono text-zinc-300">{tenant.customDomain ?? `${tenant.subdomain}.localhost`}</p>
+            <p className="text-lg font-mono text-zinc-300">{tenant.customDomain ?? buildStorefrontUrlWithTenant(null, tenant.subdomain)}</p>
             <p className="text-xs text-zinc-500 mt-1">{tenant.customDomain ? "Custom domain" : "Platform subdomain"}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">

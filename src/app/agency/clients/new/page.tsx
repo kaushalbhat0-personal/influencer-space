@@ -10,8 +10,7 @@ export default async function NewClientPage() {
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">Unauthorized</p></ContentContainer>;
 
-  // For now, redirect to the existing Provision Modal or generation flow
-  redirect("/agency/clients");
+  redirect("/agency/generate");
 
   return (
     <ContentContainer>
