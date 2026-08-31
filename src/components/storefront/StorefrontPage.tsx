@@ -16,6 +16,7 @@ import { getPageHref } from "@/lib/storefront/storefront-root";
 import { serializeJsonLd } from "@/lib/storefront/json-ld";
 import type { GoalProfile } from "@/modules/goals-runtime";
 import type { ThemeExperience } from "@/modules/theme/runtime/experience";
+import { footerService } from "@/lib/footer/service";
 
 /**
  * RCCF-02: the published storefront reads gates ONLY from the baked snapshot.
@@ -227,8 +228,45 @@ export async function StorefrontPage({
                 })}
               </PageExperience>
               {/* 06E-FIX: dedicated footer — semantic <footer>, centered, deliberate separation from Contact */}
+              {/* RCCF-LAUNCH-18: footer is data-driven + tenant-local. Anchor links (#products etc) are
+                  filtered against actually visible sections; legal links are tenant-prefixed. */}
               {footerSections.map((section) => {
-                const config = section.config;
+                const rawConfig = section.config as Record<string, unknown>;
+                // Visible section ids for filtering (e.g., "products" from "products.grid")
+                const visibleIds = new Set(
+                  filteredSections.map((s) => (s.moduleId?.split(".")[0] ?? s.id ?? "").toLowerCase())
+                );
+                const tenantPrefix = `/${domain}`;
+                function isSectionVisible(anchorId: string): boolean {
+                  return visibleIds.has(anchorId.toLowerCase());
+                }
+                // Transform footerColumns: tenant-local legal + drop dead anchors
+                const rawColumns = (rawConfig.footerColumns as Array<{ title: string; links: Array<{ label: string; href: string }> }> | undefined);
+                const sourceCols = Array.isArray(rawColumns) && rawColumns.length > 0 ? rawColumns : footerService.defaultColumns;
+                const transformedColumns = sourceCols
+                  .map((col) => ({
+                    ...col,
+                    links: col.links
+                      .map((l) => {
+                        // Legal: tenant-local
+                        if (l.href === "/privacy" || l.href === "/terms" || l.href === "/refund") {
+                          return { ...l, href: `${tenantPrefix}${l.href}` };
+                        }
+                        return l;
+                      })
+                      .filter((l) => {
+                        // Anchor: keep only if section visible
+                        if (l.href.startsWith("#")) {
+                          const anchorId = l.href.slice(1).toLowerCase();
+                          return isSectionVisible(anchorId);
+                        }
+                        // href "#" or empty is dead — remove
+                        if (l.href === "#" || l.href.trim() === "") return false;
+                        return true;
+                      }),
+                  }))
+                  .filter((col) => col.links.length > 0);
+                const config = { ...rawConfig, footerColumns: transformedColumns, tenantDomain: domain };
                 return (
                   <footer
                     key={`footer-${section.id}`}

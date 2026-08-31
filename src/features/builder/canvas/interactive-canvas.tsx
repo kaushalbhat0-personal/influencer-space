@@ -339,7 +339,7 @@ export function InteractiveCanvas({
 
   return (
     <div className="relative flex-1 overflow-auto bg-zinc-900/40" data-testid="builder-canvas" data-runtime-signature={signature}>
-      <div className="flex min-h-full min-w-max items-start justify-start p-8">
+      <div className="flex min-h-full items-start justify-center p-2 sm:p-4 md:p-6 lg:p-8">
         <div
           // RCCF-RESPONSIVE-02/03: the device frame is the named `@container/main`
           // boundary so container-query breakpoint variants (@sm/main:/@lg/main:)
@@ -368,7 +368,7 @@ export function InteractiveCanvas({
             <span className="ml-2 text-[10px] text-zinc-600">{DEVICE_WIDTHS[device] ?? 1200}px</span>
           </div>
 
-          <div className="relative min-h-[600px] p-4">
+          <div className="relative min-h-[600px]">
             {!dataReady && (
               <div className="flex flex-col items-center gap-4 pt-12 text-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
@@ -418,9 +418,16 @@ export function InteractiveCanvas({
                       <div
                         data-element-id={slotId}
                         data-module={section.moduleId}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Select ${section.moduleId} section`}
+                        aria-pressed={isSelected}
+                        onClick={() => builderStore.select(slotId)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); builderStore.select(slotId); } }}
                         className={cn(
-                          "relative rounded transition-shadow",
+                          "relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                           isSelected && "ring-2 ring-indigo-500/60",
+                          !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >
                         <ComponentErrorBoundary componentId={section.moduleId}>
@@ -452,9 +459,16 @@ export function InteractiveCanvas({
                       <div
                         data-element-id={slotId}
                         data-module={section.moduleId}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Select footer section"
+                        aria-pressed={isSelected}
+                        onClick={() => builderStore.select(slotId)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); builderStore.select(slotId); } }}
                         className={cn(
-                          "relative rounded transition-shadow",
+                          "relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                           isSelected && "ring-2 ring-indigo-500/60",
+                          !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >
                         <ComponentErrorBoundary componentId={section.moduleId}>

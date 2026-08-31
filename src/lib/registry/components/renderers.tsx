@@ -567,10 +567,11 @@ export function FooterRenderer({ props }: RendererProps) {
   const footerDescription = String(p.footerDescription || p.bio || p.tagline || "Design that moves your business forward. Digital experiences, visual systems, and products for ambitious modern brands.");
   const copyright = String(p.copyright || `© ${new Date().getFullYear()} ${brandName} — All rights reserved.`);
 
-  // RCCF-LAUNCH-04: creator legal links are tenant-relative (same host) so they
-  // resolve to the creator's own legal pages ( /privacy on custom domain →
-  // tenant privacy). Platform legal remains at the platform URL (marketing footer).
-  const creatorLegal = (path: string) => path;
+  // RCCF-LAUNCH-04 + RCCF-LAUNCH-18: creator legal links are tenant-relative (same host) so they
+  // resolve to the creator's own legal pages ( /testcreator/privacy → tenant privacy).
+  // When tenantDomain is provided (StorefrontPage injects it), prefix; otherwise use relative path.
+  const tenantDomain = typeof p.tenantDomain === "string" && p.tenantDomain ? String(p.tenantDomain) : "";
+  const creatorLegal = (path: string) => (tenantDomain ? `${tenantDomain}${path}` : path);
 
   // RCCF-07: realistic footer columns — navigation-consistent anchors + legal.
   // Admin can override via section config `footerColumns` (array of {title, links:[{label,href}]}).
