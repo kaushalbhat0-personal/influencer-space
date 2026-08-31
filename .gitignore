@@ -56,3 +56,23 @@ build_output.txt
 server-err.log
 server-output.log
 scripts/db-check.mjs
+
+# local-only: OpenCode agent, Playwright MCP, launch evidence
+.agents/WORKSPACE_CHECKPOINT.json
+.agents/skills/billing-plan-family/
+.agents/skills/dev-server-lifecycle/
+.agents/skills/improve/
+.agents/skills/mcp-tooling-usage/
+.agents/skills/media-asset-wiring/
+.agents/skills/rccf-closure/
+.agents/skills/rsc-wire-contract/
+.agents/skills/theme-capability-layer/
+.agents/skills/workspace-checkpoint/
+.playwright-mcp/
+screenshots/rccf-*.png
+screenshots/rccf-mkt-*.png
+*.log
+status_full.txt
+RCCF-RELEASE-04-PROD-SMOKE-01_report.md
+launch17_prod.log
+prod-start.log
