@@ -27,8 +27,8 @@ async function GalleryContent({ tenantId }: { tenantId: string }) {
 function GalleryFallback() {
   return (
     <div className="space-y-6">
-      <div className="h-8 w-48 rounded bg-white/5 animate-pulse" />
-      <div className="h-10 rounded bg-white/5 animate-pulse" />
+      <div className="h-8 w-48 rounded bg-[var(--surface-hover)] animate-pulse" />
+      <div className="h-10 rounded bg-[var(--surface-hover)] animate-pulse" />
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => <GalleryCardSkeleton key={i} />)}
       </div>

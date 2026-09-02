@@ -48,8 +48,8 @@ export default async function AdminGamesPage() {
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Games</h1>
-          <p className="text-sm text-gray-400">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Games</h1>
+          <p className="text-sm text-[var(--text-muted)]">
             Manage the games featured in the carousel
           </p>
         </div>

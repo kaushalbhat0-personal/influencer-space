@@ -47,15 +47,16 @@ export function EditDrawer({ open, onClose, title, children, isSaving }: EditDra
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative ml-auto flex h-full w-full max-w-lg flex-col bg-zinc-950 border-l border-white/10 shadow-2xl"
+        className="relative ml-auto flex h-full w-full max-w-lg flex-col bg-[var(--surface-card)] border-l border-[var(--border)] shadow-2xl"
+        style={{ boxShadow: "var(--shadow-elevation)" }}
       >
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-6 py-4">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
           <div className="flex items-center gap-2">
             {isSaving && <LoadingSpinner size="sm" />}
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-white"
+              className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
               aria-label="Close"
             >
               <X className="h-5 w-5" />

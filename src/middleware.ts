@@ -15,7 +15,16 @@ if (!secret && process.env.NODE_ENV === "production") {
 
 /** Loopback / localhost callers are the developer machine — never rate-limited. */
 function isLoopbackIp(ip: string): boolean {
-  return ip === "::1" || ip === "127.0.0.1" || ip === "localhost" || ip.startsWith("127.") || ip.startsWith("0:0:0:0:0:0:0:1");
+  const first = ip.split(",")[0].trim();
+  return (
+    first === "::1" ||
+    first === "127.0.0.1" ||
+    first === "localhost" ||
+    first.startsWith("127.") ||
+    first.startsWith("0:0:0:0:0:0:0:1") ||
+    first === "::ffff:127.0.0.1" ||
+    first.startsWith("::ffff:127.")
+  );
 }
 
 /**

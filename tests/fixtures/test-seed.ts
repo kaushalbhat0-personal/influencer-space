@@ -243,6 +243,19 @@ async function main() {
     },
   });
 
+  // ── Website (lifecycle READY) ────────────────────────────────────────────
+  // RCCF-LIFECYCLE-01B: testcreator must be READY (hasWebsite true) so
+  // DB lifecycle matches token lifecycle and /admin/dashboard does not
+  // bounce to /onboarding. Minimal singleton, idempotent via tenantId unique.
+  await prisma.website.upsert({
+    where: { tenantId: TEST_IDS.creatorTenant },
+    update: {},
+    create: {
+      tenantId: TEST_IDS.creatorTenant,
+      themePackageId: "neon-dark",
+    },
+  });
+
   console.log("✅ Test database seeded successfully");
   console.log("   Super Admin: admin@creatorstore.test");
   console.log("   Agency:      agency@creatorstore.test");

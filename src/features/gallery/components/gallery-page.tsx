@@ -43,6 +43,12 @@ export function GalleryManager({
   // Bulk selection
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  // Delete confirmation
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; caption: string } | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   // Editor
   const [editingItem, setEditingItem] = useState<GalleryItemData | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -126,8 +132,8 @@ export function GalleryManager({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white sm:text-2xl">Gallery</h1>
-          <p className="mt-1 text-sm text-zinc-500">Manage images and videos for your portfolio.</p>
+          <h1 className="text-xl font-bold text-[var(--text-primary)] sm:text-2xl">Gallery</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Manage images and videos for your portfolio.</p>
         </div>
         <button onClick={() => setAddOpen(true)} className="admin-btn-cyan flex items-center gap-2 px-4 py-2 text-xs">
           <Plus className="h-4 w-4" /> Add Media
@@ -143,7 +149,7 @@ export function GalleryManager({
         total={total} selectedCount={selected.size}
         onBulkPublish={withRefresh(() => bulkPublishGallery(Array.from(selected), tenantId))}
         onBulkArchive={withRefresh(() => bulkArchiveGallery(Array.from(selected), tenantId))}
-        onBulkDelete={withRefresh(() => { if (!window.confirm(`Delete ${selected.size} items?`)) throw new Error(); return bulkDeleteGallery(Array.from(selected), tenantId); })}
+        onBulkDelete={() => setConfirmBulkDelete(selected.size)}
         onBulkFeature={withRefresh(() => bulkFeatureGallery(Array.from(selected), tenantId, true))}
       />
 
@@ -151,8 +157,8 @@ export function GalleryManager({
       {items.length > 0 && (
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={selected.size === items.length && items.length > 0} onChange={handleSelectAll}
-            className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/30" />
-          <span className="text-xs text-zinc-500">{selected.size === items.length ? "Deselect all" : "Select all"}</span>
+            className="h-4 w-4 rounded border-[var(--border-strong)] bg-[var(--surface-hover)] text-s8ul-cyan focus:ring-s8ul-cyan/30" />
+          <span className="text-xs text-[var(--text-muted)]">{selected.size === items.length ? "Deselect all" : "Select all"}</span>
         </label>
       )}
 
@@ -163,8 +169,19 @@ export function GalleryManager({
         </div>
       )}
 
-      {/* Empty */}
-      {!loading && items.length === 0 && <GalleryCardEmpty onCreate={() => setAddOpen(true)} />}
+      {/* Empty / Filtered Empty */}
+      {!loading && items.length === 0 && (() => {
+        const hasActiveFilter = !!(search || statusFilter || mediaTypeFilter);
+        if (hasActiveFilter) {
+          return (
+            <GalleryCardEmpty
+              filtered
+              onCreate={() => { setSearch(""); setStatusFilter(""); setMediaTypeFilter(""); }}
+            />
+          );
+        }
+        return <GalleryCardEmpty onCreate={() => setAddOpen(true)} />;
+      })()}
 
       {/* Grid */}
       {!loading && items.length > 0 && (
@@ -179,7 +196,7 @@ export function GalleryManager({
                 onUnpublish={(id) => startTransition(async () => { await unpublishGalleryItem(id, tenantId); await refreshItems(); })}
                 onArchive={(id) => startTransition(async () => { await archiveGalleryItem(id, tenantId); await refreshItems(); })}
                 onRestore={(id) => startTransition(async () => { await restoreGalleryItem(id, tenantId); await refreshItems(); })}
-                onDelete={(id, caption) => { if (!window.confirm(`Delete "${caption || "this item"}"?`)) return; startTransition(async () => { await removeGalleryItem(id, tenantId); await refreshItems(); }); }}
+                onDelete={(id, caption) => setConfirmDelete({ id, caption })}
                 onToggleFeatured={(id, featured) => startTransition(async () => { await toggleFeatured(id, tenantId, featured); await refreshItems(); })}
                 onMoveLeft={(it) => handleMove(it, -1)}
                 onMoveRight={(it) => handleMove(it, 1)}
@@ -195,7 +212,7 @@ export function GalleryManager({
                 className="admin-btn-outline px-3 py-1.5 text-xs disabled:opacity-30">Previous</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button key={p} onClick={() => setPage(p)}
-                  className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${p === page ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"}`}
+                  className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${p === page ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"}`}
                 >{p}</button>
               ))}
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
@@ -221,6 +238,73 @@ export function GalleryManager({
         onClose={() => setLightboxOpen(false)}
         onNavigate={(i) => setLightboxIndex(i)}
       />
+
+      {/* Single Delete Confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Delete ${confirmDelete.caption || "gallery item"}`}>
+          <div className="absolute inset-0 bg-[rgba(24,24,27,0.20)] backdrop-blur-sm" onClick={() => !isDeleting && setConfirmDelete(null)} />
+          <div className="relative admin-card p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Delete &quot;{confirmDelete.caption || "this item"}&quot;?</h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">This will permanently delete the gallery item. This cannot be undone.</p>
+            {deleteError && <p className="mt-3 text-xs text-red-600" role="alert">{deleteError}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setConfirmDelete(null)} disabled={isDeleting} className="btn-secondary text-sm disabled:opacity-50">Cancel</button>
+              <button
+                onClick={async () => {
+                  setIsDeleting(true);
+                  setDeleteError(null);
+                  const res = await removeGalleryItem(confirmDelete.id, tenantId);
+                  if (res.success) {
+                    setConfirmDelete(null);
+                    await refreshItems();
+                  } else {
+                    setDeleteError(res.error ?? "Failed to delete");
+                  }
+                  setIsDeleting(false);
+                }}
+                disabled={isDeleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation */}
+      {confirmBulkDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Delete selected items">
+          <div className="absolute inset-0 bg-[rgba(24,24,27,0.20)] backdrop-blur-sm" onClick={() => !isDeleting && setConfirmBulkDelete(null)} />
+          <div className="relative admin-card p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Delete {confirmBulkDelete} items?</h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">This will permanently delete the selected items. This cannot be undone.</p>
+            {deleteError && <p className="mt-3 text-xs text-red-600" role="alert">{deleteError}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setConfirmBulkDelete(null)} disabled={isDeleting} className="btn-secondary text-sm disabled:opacity-50">Cancel</button>
+              <button
+                onClick={async () => {
+                  setIsDeleting(true);
+                  setDeleteError(null);
+                  const res = await bulkDeleteGallery(Array.from(selected), tenantId);
+                  if (res.success) {
+                    setConfirmBulkDelete(null);
+                    setSelected(new Set());
+                    await refreshItems();
+                  } else {
+                    setDeleteError(res.error ?? "Failed to delete");
+                  }
+                  setIsDeleting(false);
+                }}
+                disabled={isDeleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

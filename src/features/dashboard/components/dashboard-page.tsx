@@ -47,7 +47,7 @@ const QUICK_CARDS: QuickCardItem[] = [
   { label: "SEO", href: "/admin/seo", icon: Search, color: "text-amber-400" },
   { label: "Appearance", href: "/admin/appearance", icon: Palette, color: "text-purple-400" },
   { label: "Billing", href: "/admin/billing", icon: CreditCard, color: "text-rose-400" },
-  { label: "Settings", href: "/admin/settings", icon: Settings, color: "text-zinc-400" },
+  { label: "Settings", href: "/admin/settings", icon: Settings, color: "text-[var(--text-muted)]" },
 ];
 
 function commerceSurfaceOf(href: string): "products" | "bookings" | "courses" | "services" | null {
@@ -60,7 +60,7 @@ function commerceSurfaceOf(href: string): "products" | "bookings" | "courses" | 
 
 function SectionLabel({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
+    <h2 id={id} className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
       {children}
     </h2>
   );
@@ -103,7 +103,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       description="See how your store is performing and find your next action."
       actions={
         <div className="flex gap-2">
-          <Link href="/admin/website-ready" className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
+          <Link href="/admin/website-ready" className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             Website Status
           </Link>
           <Link href="/builder" className="btn-primary text-xs">
@@ -130,16 +130,16 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         {launch && (
           <section aria-labelledby="dashboard-launch-allowance" className="space-y-3">
             <SectionLabel id="dashboard-launch-allowance">Core Content Allowance</SectionLabel>
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-              <p className="text-sm text-zinc-300">
-                <span className="font-semibold text-white">{launch.used} / {launch.limit}</span> used
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-4">
+              <p className="text-sm text-[var(--text-secondary)]">
+                <span className="font-semibold text-[var(--text-primary)]">{launch.used} / {launch.limit}</span> used
                 {launch.remaining > 0 ? (
-                  <span className="text-zinc-400"> · {launch.remaining} remaining</span>
+                  <span className="text-[var(--text-muted)]"> · {launch.remaining} remaining</span>
                 ) : (
                   <span className="text-amber-400"> · limit reached</span>
                 )}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
                 Products, services, courses and games count toward one shared limit on your plan.
               </p>
             </div>
@@ -153,10 +153,10 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               <Link
                 key={card.label}
                 href={card.href}
-                className="flex flex-col items-center gap-1.5 rounded-xl bg-white/[0.03] border border-white/5 px-2 py-3 text-center hover:bg-white/[0.06] hover:border-white/10 transition-all group"
+                className="flex flex-col items-center gap-1.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--border)] px-2 py-3 text-center hover:bg-[var(--surface-card-hover)] hover:border-[var(--border-strong)] transition-all group"
               >
                 <card.icon className={cn("h-5 w-5", card.color)} />
-                <span className="text-[10px] font-medium text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                <span className="text-[10px] font-medium text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
                   {card.label}
                 </span>
               </Link>
@@ -176,22 +176,22 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         )}
 
         {emptyStore ? (
-          <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.04] p-6">
-            <h3 className="text-sm font-semibold text-white mb-1">Let&apos;s set up your store</h3>
-            <p className="text-xs text-zinc-400 mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
+          <div className="rounded-xl border border-indigo-500/20 bg-[var(--surface-card)] p-6">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Let&apos;s set up your store</h3>
+            <p className="text-xs text-[var(--text-muted)] mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
             {success?.nextTask && !success.nextTask.done ? (
               <Link
                 href={success.nextTask.href || "/admin/dashboard"}
-                className="flex items-center justify-between rounded-lg border border-white/10 bg-zinc-900/30 px-4 py-3 hover:bg-zinc-900/50 transition-colors group"
+                className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-4 py-3 hover:bg-[var(--surface-card-hover)] transition-colors group"
               >
                 <div className="flex items-center gap-3">
                   <span className="h-3 w-3 rounded-full border-2 border-indigo-500" />
-                  <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">{success.nextTask.label}</span>
+                  <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{success.nextTask.label}</span>
                 </div>
                 <span className="text-[10px] text-indigo-400">{success.nextTask.action} →</span>
               </Link>
             ) : (
-              <p className="text-xs text-zinc-500">Keep going — your next best step updates as you complete tasks.</p>
+              <p className="text-xs text-[var(--text-muted)]">Keep going — your next best step updates as you complete tasks.</p>
             )}
           </div>
         ) : (
@@ -223,10 +223,10 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               {activity.length > 0 ? (
                 <div className="space-y-1">
                   {activity.slice(0, 5).map((a) => (
-                    <div key={a.id} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-300">
+                    <div key={a.id} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)]">
                       <div className="h-2 w-2 rounded-full bg-s8ul-cyan" />
                       <span className="flex-1">{a.description}</span>
-                      <span className="text-xs text-zinc-600">
+                      <span className="text-xs text-[var(--text-muted)]">
                         {new Date(a.timestamp).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                       </span>
                     </div>
@@ -234,9 +234,9 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 py-8 text-center">
-                  <Activity className="h-6 w-6 text-zinc-700" />
-                  <p className="text-sm text-zinc-500">No recent activity</p>
-                  <p className="text-xs text-zinc-600">Your actions will appear here</p>
+                  <Activity className="h-6 w-6 text-[var(--text-muted)]" />
+                  <p className="text-sm text-[var(--text-muted)]">No recent activity</p>
+                  <p className="text-xs text-[var(--text-muted)]">Your actions will appear here</p>
                 </div>
               )}
             </DashboardWidget>
@@ -254,18 +254,18 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                   <Link
                     key={check.label}
                     href={check.href}
-                    className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-white/5 transition-colors"
+                    className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-[var(--surface-hover)] transition-colors"
                   >
-                    <div className={cn("h-2 w-2 rounded-full shrink-0 mt-1.5", check.done ? "bg-emerald-500" : "bg-zinc-600")} />
+                    <div className={cn("h-2 w-2 rounded-full shrink-0 mt-1.5", check.done ? "bg-emerald-500" : "bg-[var(--border-strong)]")} />
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-300">{check.label}</span>
-                        <span className={cn("text-xs font-medium ml-2", check.done ? "text-emerald-400" : "text-zinc-500")}>
+                        <span className="text-sm text-[var(--text-secondary)]">{check.label}</span>
+                        <span className={cn("text-xs font-medium ml-2", check.done ? "text-emerald-400" : "text-[var(--text-muted)]")}>
                           {check.score}%
                         </span>
                       </span>
                       {!check.done && check.description && (
-                        <span className="block text-[11px] text-zinc-600 mt-0.5">{check.description}</span>
+                        <span className="block text-[11px] text-[var(--text-muted)] mt-0.5">{check.description}</span>
                       )}
                     </span>
                   </Link>

@@ -8,6 +8,8 @@ import { EditDrawer } from "@/features/_shared/components/edit-drawer";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { PackageOpen } from "lucide-react";
 import { ImageManager } from "@/components/products/ImageManager";
 import type { Column } from "@/features/_shared/components/crud-table";
 import type { ProductData, ProductFormInput } from "../types";
@@ -26,7 +28,11 @@ export function ProductsPage({ initialData, tenantId }: ProductsPageProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<ProductData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ProductData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const [form, setForm] = useState<ProductFormInput>({
     name: "",
     price: 0,
@@ -88,9 +94,21 @@ const [saveError, setSaveError] = useState<string | null>(null);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    await deleteProduct(id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteProduct(confirmDelete.id);
+      setProducts((prev) => prev.filter((p) => p.id !== confirmDelete.id));
+      setDeleteSuccess(`"${confirmDelete.name}" deleted.`);
+      setTimeout(() => setDeleteSuccess(null), 3000);
+      setConfirmDelete(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const columns: Column<Record<string, unknown>>[] = [
@@ -119,7 +137,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
       header: "Type",
       render: (p: Record<string, unknown>) => {
         const d = p as unknown as ProductData;
-        return <span className="text-xs text-zinc-400">{getProductTypeLabel(d.type)}</span>;
+        return <span className="text-xs text-[var(--text-muted)]">{getProductTypeLabel(d.type)}</span>;
       },
     },
     {
@@ -138,10 +156,10 @@ const [saveError, setSaveError] = useState<string | null>(null);
         const d = p as unknown as ProductData;
         return (
           <div className="flex items-center gap-2">
-            <button onClick={() => openEdit(d)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-zinc-200" aria-label={`Edit ${d.name}`}>
+            <button onClick={() => openEdit(d)} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition-colors" aria-label={`Edit ${d.name}`}>
               <Pencil className="h-4 w-4" />
             </button>
-            <button onClick={() => handleDelete(d.id)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-red-500/10 hover:text-red-400" aria-label={`Delete ${d.name}`}>
+            <button onClick={() => setConfirmDelete(d)} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400 transition-colors" aria-label={`Delete ${d.name}`}>
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
@@ -160,14 +178,55 @@ const [saveError, setSaveError] = useState<string | null>(null);
         </button>
       }
     >
-      <CrudTable
-        columns={columns}
-        data={products as unknown as Record<string, unknown>[]}
-        keyExtractor={(p) => (p as unknown as ProductData).id}
-        searchable
-        searchKeys={["name", "type", "status"]}
-        emptyMessage="No products yet. Create your first product."
-      />
+      {deleteError && (
+        <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-600" role="alert">
+          {deleteError}
+        </div>
+      )}
+      {deleteSuccess && (
+        <div className="mb-4 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-sm text-green-700" role="status">
+          {deleteSuccess}
+        </div>
+      )}
+      {products.length === 0 ? (
+        <EmptyState
+          title="No products yet"
+          description="Create your first product to start selling to your audience."
+          icon={PackageOpen}
+          action={
+            <button onClick={openCreate} className="btn-primary text-sm">
+              <Plus className="h-4 w-4" /> Create Product
+            </button>
+          }
+        />
+      ) : (
+        <CrudTable
+          columns={columns}
+          data={products as unknown as Record<string, unknown>[]}
+          keyExtractor={(p) => (p as unknown as ProductData).id}
+          searchable
+          searchKeys={["name", "type", "status"]}
+          emptyMessage="No products yet. Create your first product."
+        />
+      )}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Delete ${confirmDelete.name}`}>
+          <div className="absolute inset-0 bg-[rgba(24,24,27,0.20)] backdrop-blur-sm" onClick={() => !isDeleting && setConfirmDelete(null)} />
+          <div className="relative admin-card p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Delete &quot;{confirmDelete.name}&quot;?</h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">This will permanently delete the product. This cannot be undone.</p>
+            {deleteError && <p className="mt-3 text-xs text-red-600" role="alert">{deleteError}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setConfirmDelete(null)} disabled={isDeleting} className="btn-secondary text-sm disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={handleDelete} disabled={isDeleting} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50" aria-label={`Confirm delete ${confirmDelete.name}`}>
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <EditDrawer
         open={drawerOpen}
@@ -178,11 +237,12 @@ const [saveError, setSaveError] = useState<string | null>(null);
         <div className="space-y-4">
           <Input label="Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           <Textarea label="Description" value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={4} />
-          <Input label="Price (₹)" type="number" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))} />
+          <Input label="Price (₹)" type="number" inputMode="decimal" step="0.01" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))} />
           <Input label="Slug" value={form.slug ?? ""} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
+          <p className="text-xs text-[var(--text-muted)]">Slug is auto-generated from the name if left empty. Use lowercase letters, numbers, and hyphens only.</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-zinc-400">Type</label>
+              <label className="block text-xs font-medium text-[var(--text-muted)]">Type</label>
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as ProductFormInput["type"] }))}
@@ -194,7 +254,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-zinc-400">Status</label>
+              <label className="block text-xs font-medium text-[var(--text-muted)]">Status</label>
               <select
                 value={form.status}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ProductFormInput["status"] }))}
@@ -207,7 +267,7 @@ const [saveError, setSaveError] = useState<string | null>(null);
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-zinc-400">How customers buy</label>
+            <label className="block text-xs font-medium text-[var(--text-muted)]">How customers buy</label>
             <select
               value={form.commerceMode}
               onChange={(e) => setForm((f) => ({ ...f, commerceMode: e.target.value as ProductFormInput["commerceMode"] }))}

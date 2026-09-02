@@ -37,9 +37,9 @@ export function MetricCard({
   if (loading) {
     return (
       <div className={cn("admin-card p-5", className)} role="status" aria-label={`Loading ${label}`}>
-        <div className="h-4 w-24 rounded bg-white/5 animate-pulse mb-2" />
-        <div className="h-8 w-16 rounded bg-white/5 animate-pulse mb-1" />
-        <div className="h-3 w-20 rounded bg-white/5 animate-pulse" />
+        <div className="h-4 w-24 rounded bg-[var(--surface-hover)] animate-pulse mb-2" />
+        <div className="h-8 w-16 rounded bg-[var(--surface-hover)] animate-pulse mb-1" />
+        <div className="h-3 w-20 rounded bg-[var(--surface-hover)] animate-pulse" />
         <span className="sr-only">Loading...</span>
       </div>
     );
@@ -48,7 +48,7 @@ export function MetricCard({
   if (error) {
     return (
       <div className={cn("admin-card p-5", className)} role="alert">
-        <p className="text-sm font-medium text-zinc-400">{label}</p>
+        <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
         <p className="mt-1 text-sm text-red-400">{error}</p>
       </div>
     );
@@ -57,32 +57,32 @@ export function MetricCard({
   if (empty) {
     return (
       <div className={cn("admin-card p-5", className)}>
-        <p className="text-sm font-medium text-zinc-400">{label}</p>
-        <p className="mt-1 text-xs text-zinc-600">{emptyMessage ?? "No data"}</p>
+        <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">{emptyMessage ?? "No data"}</p>
       </div>
     );
   }
 
   if (children) {
     return (
-      <div className={cn("admin-card p-5 transition-colors hover:bg-white/[0.02]", className)}>
+      <div className={cn("admin-card p-5 transition-colors hover:bg-[var(--surface-hover)]", className)}>
         {children}
       </div>
     );
   }
 
   return (
-    <div className={cn("admin-card p-5 transition-colors hover:bg-white/[0.02]", className)}>
+    <div className={cn("admin-card p-5 transition-colors hover:bg-[var(--surface-hover)]", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-400">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-white tabular-nums font-display">{value}</p>
+          <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
+          <p className="mt-1 text-2xl font-bold text-[var(--text-primary)] tabular-nums font-display">{value}</p>
           {trend && (
             <p className={cn(
               "mt-1 text-xs font-medium flex items-center gap-0.5",
               trend.direction === "up" && "text-green-400",
               trend.direction === "down" && "text-red-400",
-              trend.direction === "neutral" && "text-zinc-400",
+              trend.direction === "neutral" && "text-[var(--text-muted)]",
             )}>
               {trend.direction === "up" && "↑"}
               {trend.direction === "down" && "↓"}
@@ -90,7 +90,7 @@ export function MetricCard({
               {" "}{trend.value}
             </p>
           )}
-          {subtext && !trend && <p className="mt-1 text-xs text-zinc-500">{subtext}</p>}
+          {subtext && !trend && <p className="mt-1 text-xs text-[var(--text-muted)]">{subtext}</p>}
         </div>
         {Icon && (
           <div className="flex-shrink-0 rounded-xl bg-s8ul-cyan/10 p-3" aria-hidden="true">

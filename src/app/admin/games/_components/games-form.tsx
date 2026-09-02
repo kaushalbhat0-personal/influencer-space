@@ -79,7 +79,7 @@ export function GameForm({ mode, game }: Props) {
             onError={(e) => setState({ success: false, error: e })}
           />
 
-          {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+          {state.error && <p className="text-sm text-red-400" role="alert">{state.error}</p>}
 
           <div className="flex items-center gap-4 pt-2">
             <button type="submit" disabled={pending} className="admin-btn-cyan">

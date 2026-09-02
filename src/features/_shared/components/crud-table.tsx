@@ -5,7 +5,6 @@ import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import { Table, TableHead, TableBody, TableRow, TableCell, TableHeaderCell } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { GlassCard } from "@/components/ui/GlassCard";
 
 export interface Column<T> {
   key: string;
@@ -55,6 +54,13 @@ export function CrudTable<T extends Record<string, unknown>>({
     return [...filtered].sort((a, b) => {
       const aVal = a[sortKey] ?? "";
       const bVal = b[sortKey] ?? "";
+      // CP-009: numeric Price sorting (Products price is number, not string)
+      const aNum = typeof aVal === "number" ? aVal : Number(aVal);
+      const bNum = typeof bVal === "number" ? bVal : Number(bVal);
+      const bothNumeric = !Number.isNaN(aNum) && !Number.isNaN(bNum) && sortKey === "price";
+      if (bothNumeric) {
+        return sortDir === "asc" ? aNum - bNum : bNum - aNum;
+      }
       const cmp = String(aVal).localeCompare(String(bVal));
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -78,10 +84,10 @@ export function CrudTable<T extends Record<string, unknown>>({
   }
 
   return (
-    <GlassCard>
+    <div className="admin-card p-5">
       {searchable && (
         <div className="relative mb-4">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -91,7 +97,19 @@ export function CrudTable<T extends Record<string, unknown>>({
         </div>
       )}
       {sorted.length === 0 ? (
-        <p className="py-8 text-center text-sm text-zinc-500">{emptyMessage}</p>
+        data.length === 0 ? (
+          <p className="py-8 text-center text-sm text-[var(--text-muted)]">{emptyMessage}</p>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-sm text-[var(--text-muted)]">No products match your search.</p>
+            <button
+              onClick={() => setSearch("")}
+              className="mt-2 text-xs font-medium text-[var(--color-info)] hover:underline"
+            >
+              Clear search
+            </button>
+          </div>
+        )
       ) : (
         <div className="overflow-x-auto">
           <Table>
@@ -102,7 +120,7 @@ export function CrudTable<T extends Record<string, unknown>>({
                     {col.sortable ? (
                       <button
                         onClick={() => toggleSort(col.key)}
-                        className="flex items-center gap-1 hover:text-white transition-colors"
+                        className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors"
                       >
                         {col.header}
                         {sortKey === col.key ? (
@@ -125,7 +143,7 @@ export function CrudTable<T extends Record<string, unknown>>({
                 <TableRow
                   key={keyExtractor(item)}
                   onClick={onRowClick ? () => onRowClick(item) : undefined}
-                  className={onRowClick ? "cursor-pointer hover:bg-white/5" : ""}
+                  className={onRowClick ? "cursor-pointer hover:bg-[var(--surface-hover)]" : ""}
                 >
                   {columns.map((col) => (
                     <TableCell key={col.key}>{col.render(item)}</TableCell>
@@ -136,6 +154,6 @@ export function CrudTable<T extends Record<string, unknown>>({
           </Table>
         </div>
       )}
-    </GlassCard>
+    </div>
   );
 }
