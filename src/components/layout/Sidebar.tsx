@@ -36,7 +36,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
 
   const sidebarContent = (
     <>
-      <div className="flex h-14 items-center gap-3 px-4 border-b border-white/10">
+      <div className="flex h-14 items-center gap-3 px-4 border-b border-[var(--border)]">
         {collapsed ? (
           <span className="mx-auto bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-sm font-bold text-transparent font-display">
             CS
@@ -48,7 +48,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-4" aria-label="Main navigation">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-4 bg-[var(--surface-base)]" aria-label="Main navigation">
         {nav.groups.map((group) => (
           <SidebarGroup
             key={group.label}
@@ -61,7 +61,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
         ))}
       </nav>
 
-      {bottom && <div className="border-t border-white/10 p-3">{bottom}</div>}
+      {bottom && <div className="border-t border-[var(--border)] p-3 bg-[var(--surface-base)]">{bottom}</div>}
     </>
   );
 
@@ -70,7 +70,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-50 rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white lg:hidden"
+        className="fixed top-3 left-3 z-50 rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] lg:hidden"
         aria-label="Open sidebar"
       >
         <Menu className="h-5 w-5" />
@@ -79,13 +79,13 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-64 bg-[var(--surface-base)] border-r border-white/10 shadow-2xl">
-            <div className="flex h-14 items-center justify-between px-4 border-b border-white/10">
+          <div className="absolute inset-0 bg-[rgba(24,24,27,0.20)] backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-64 bg-[var(--surface-base)] border-r border-[var(--border)] shadow-2xl">
+            <div className="flex h-14 items-center justify-between px-4 border-b border-[var(--border)] bg-[var(--surface-base)]">
               <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-sm font-bold text-transparent font-display">
                 CreatorStore
               </span>
-              <button onClick={() => setMobileOpen(false)} className="text-zinc-400 hover:text-white" aria-label="Close sidebar">
+              <button onClick={() => setMobileOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]" aria-label="Close sidebar">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -97,7 +97,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0 border-r border-white/10 bg-[var(--surface-base)] transition-all duration-200",
+          "hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0 border-r border-[var(--border)] bg-[var(--surface-base)] transition-all duration-200",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -125,7 +125,7 @@ function SidebarGroup({
       <button
         onClick={onToggle}
         className={cn(
-          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors",
+          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors",
           collapsed && "justify-center"
         )}
         aria-expanded={expanded}
@@ -166,13 +166,13 @@ function SidebarItem({
   const Icon = item.icon;
 
   return (
-    <Link
+      <Link
       href={item.href}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 group",
         isActive
-          ? "bg-s8ul-cyan/10 text-s8ul-cyan"
-          : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200",
+          ? "bg-[var(--color-info-surface)] text-[var(--brand-primary)]"
+          : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]",
         collapsed && "justify-center px-2"
       )}
       target={item.external ? "_blank" : undefined}
@@ -185,11 +185,11 @@ function SidebarItem({
           {item.badge && (
             <span
               className={cn(
-                "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                item.badgeVariant === "cyan" && "bg-s8ul-cyan/20 text-s8ul-cyan",
-                item.badgeVariant === "gold" && "bg-amber-500/20 text-amber-400",
-                item.badgeVariant === "success" && "bg-green-500/20 text-green-400",
-                (!item.badgeVariant || item.badgeVariant === "default") && "bg-zinc-800 text-zinc-300"
+                "rounded-full px-1.5 py-0.5 text-[10px] font-bold border",
+                item.badgeVariant === "cyan" && "bg-[var(--color-info-surface)] text-[var(--color-info)] border-[var(--color-info)]",
+                item.badgeVariant === "gold" && "bg-[var(--color-warning-surface)] text-[var(--color-warning)] border-[var(--color-warning)]",
+                item.badgeVariant === "success" && "bg-[var(--color-success-surface)] text-[var(--color-success)] border-[var(--color-success)]",
+                (!item.badgeVariant || item.badgeVariant === "default") && "bg-[var(--surface-hover)] text-[var(--text-secondary)] border-[var(--border)]"
               )}
             >
               {item.badge}

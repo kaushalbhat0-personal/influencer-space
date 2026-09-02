@@ -16,7 +16,7 @@ export function Progress({ value, max = 100, className, showLabel = false }: Pro
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <div
-        className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"
+        className="flex-1 h-1.5 rounded-full bg-[var(--surface-hover)] overflow-hidden"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -31,7 +31,7 @@ export function Progress({ value, max = 100, className, showLabel = false }: Pro
         />
       </div>
       {showLabel && (
-        <span className="text-xs font-mono text-zinc-500 tabular-nums min-w-[3ch] text-right">
+        <span className="text-xs font-mono text-[var(--text-muted)] tabular-nums min-w-[3ch] text-right">
           {Math.round(percentage)}%
         </span>
       )}

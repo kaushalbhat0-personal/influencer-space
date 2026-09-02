@@ -21,7 +21,7 @@ export function LoadingSpinner({ size = "md", text }: LoadingSpinnerProps) {
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         className={`${sizeMap[size]} rounded-full border-s8ul-cyan/30 border-t-s8ul-cyan`}
       />
-      {text && <p className="text-sm text-zinc-400">{text}</p>}
+      {text && <p className="text-sm text-[var(--text-muted)]">{text}</p>}
       <span className="sr-only">{text ?? "Loading"}</span>
     </div>
   );

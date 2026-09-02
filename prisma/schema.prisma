@@ -56,7 +56,9 @@ model Tenant {
   name                  String
   subdomain             String    @unique
   customDomain          String?
+  /// @deprecated RCCF-PAYMENTS-UX-01C — dormant creator-sales linked account. Use PaymentAccount (isActive+verified+settlement) via computePaymentReadiness. Retained for migration safety; no active sales-readiness code reads this.
   razorpayAccountId     String?   @unique
+  /// @deprecated RCCF-PAYMENTS-UX-01C — dormant. Use PaymentAccount readiness. Retained for migration safety.
   razorpaySetupComplete Boolean   @default(false)
   youtubeChannelId      String?
   twitchChannelId       String?
@@ -213,7 +215,9 @@ model WebsiteAgency {
   name                  String
   subdomain             String       @unique
   customDomain          String?
+  /// @deprecated RCCF-PAYMENTS-UX-01C — dormant. Use PaymentAccount. Retained for migration safety.
   razorpayAccountId     String?      @unique
+  /// @deprecated RCCF-PAYMENTS-UX-01C — dormant. Retained for migration safety.
   razorpaySetupComplete Boolean      @default(false)
   defaultThemeId        String?      @db.Uuid
   platformFeePercent    Float        @default(0)

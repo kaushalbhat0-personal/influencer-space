@@ -46,8 +46,8 @@ async function AnalyticsShell({ tenantId }: { tenantId: string }) {
 
 function AnalyticsFallback() {
   return (
-    <div className="space-y-6">
-      <div className="h-8 w-full max-w-96 rounded bg-white/5 animate-pulse" />
+    <div className="space-y-6" role="status" aria-label="Loading analytics">
+      <div className="h-8 w-full max-w-96 rounded bg-[var(--surface-hover)] animate-pulse" />
       <DashboardGrid>
         <DashboardGridMain>
           <DashboardWidgetSkeleton rows={6} />

@@ -63,7 +63,7 @@ export function PaymentMethodManager({
 
   if (methods.length === 0 && !loading && !error) {
     return (
-      <DashboardWidget title="Payment Methods" icon={CreditCard} empty emptyMessage="No payment methods added yet." actions={
+      <DashboardWidget title="Billing payment methods" icon={CreditCard} empty emptyMessage="No billing payment methods added yet." actions={
         <Button size="sm" onClick={onAdd} aria-label="Add payment method">
           <Plus className="h-3.5 w-3.5 mr-1" /> Add Method
         </Button>
@@ -73,7 +73,7 @@ export function PaymentMethodManager({
 
   return (
     <DashboardWidget
-      title="Payment Methods"
+      title="Billing payment methods"
       icon={CreditCard}
       description={`${methods.length} method${methods.length !== 1 ? "s" : ""}`}
       loading={loading}
@@ -92,21 +92,21 @@ export function PaymentMethodManager({
           return (
             <div
               key={method.id}
-              className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
+              className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-card)] p-3 transition-colors hover:bg-[var(--surface-hover)]"
               role="listitem"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-zinc-800 p-2">
-                  <Icon className="h-4 w-4 text-zinc-400" aria-hidden="true" />
+                <div className="rounded-lg bg-[var(--surface-hover)] p-2 border border-[var(--border)]">
+                  <Icon className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
                       {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} &bull;&bull;&bull;&bull; {method.last4}
                     </p>
                     {method.isDefault && <Badge variant="cyan" size="sm">Default</Badge>}
                   </div>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-[var(--text-muted)]">
                     {method.type}
                     {method.expMonth && method.expYear && ` \u00b7 Exp ${String(method.expMonth).padStart(2, "0")}/${method.expYear}`}
                   </p>
@@ -115,7 +115,7 @@ export function PaymentMethodManager({
               <div className="flex items-center gap-1">
                 {!method.isDefault && (
                   <Button size="sm" variant="ghost" onClick={() => onSetDefault?.(method.id)} aria-label={`Set ${method.brand} ending in ${method.last4} as default`}>
-                    <Star className="h-3.5 w-3.5 text-zinc-500 hover:text-amber-400" />
+                    <Star className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-amber-400" />
                   </Button>
                 )}
                 {isConfirming ? (
@@ -129,7 +129,7 @@ export function PaymentMethodManager({
                   </div>
                 ) : (
                   <Button size="sm" variant="ghost" onClick={() => setConfirmRemove(method.id)} aria-label={`Remove ${method.brand} ending in ${method.last4}`}>
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-500 hover:text-red-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-red-400" />
                   </Button>
                 )}
               </div>

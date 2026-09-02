@@ -19,7 +19,10 @@ export async function getMyCommerceStrategy(): Promise<{ ok: boolean; strategy?:
   return { ok: true, strategy };
 }
 
-/** Readiness for a tenant's strategy (creator dashboard "Payments" page). */
+/**
+ * @deprecated RCCF-PAYMENTS-UX-01C — legacy wrapper now delegates to canonical PaymentAccount readiness.
+ * Use computePaymentReadiness directly for sales readiness. Kept for compatibility.
+ */
 export async function getMyStrategyReadiness(): Promise<{
   ok: boolean;
   readiness?: Awaited<ReturnType<typeof getCommerceStrategyReadiness>>;

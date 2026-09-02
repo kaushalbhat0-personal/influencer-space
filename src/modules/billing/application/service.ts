@@ -17,6 +17,9 @@ import { metricsService } from "@/lib/observability/metrics-service";
 import type { CheckoutResult } from "../domain/types";
 import type { BillingLineItem } from "@/lib/billing/types";
 
+// RCCF-BILLING-UX-02B: capability UNLIMITED (-1) → billing presentation Infinity.
+const toQuotaLimit = (value: number): number => (value === -1 ? Infinity : value);
+
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
     const start = Date.now();
@@ -780,10 +783,12 @@ export class BillingService {
       usage: [
         // VALIDATION-04: limits must derive from the canonical capability
         // registry — they were hardcoded (5 / 10) and lied on paid plans.
-        { metric: "max_products", label: "Products", used: products, limit: capabilityService.limit(planCode, "max_products"), unit: "" },
-        { metric: "max_gallery", label: "Gallery", used: gallery, limit: capabilityService.limit(planCode, "max_gallery"), unit: "" },
+        // RCCF-BILLING-UX-02B: normalize capability sentinel -1 (UNLIMITED) to Infinity for billing presentation.
+        // storage already does this; products/gallery/orders must as well.
+        { metric: "max_products", label: "Products", used: products, limit: toQuotaLimit(capabilityService.limit(planCode, "max_products")), unit: "" },
+        { metric: "max_gallery", label: "Gallery", used: gallery, limit: toQuotaLimit(capabilityService.limit(planCode, "max_gallery")), unit: "" },
         // RCCF-38: completed-orders allowance for the current calendar month.
-        { metric: "max_orders", label: "Orders (this month)", used: orderUsage.used, limit: orderUsage.limit, unit: "completed" },
+        { metric: "max_orders", label: "Orders (this month)", used: orderUsage.used, limit: toQuotaLimit(orderUsage.limit), unit: "completed" },
         // RCCF-59: canonical storage usage + limit in MB.
         { metric: "storage", label: "Storage", used: storageUsedMb, limit: storageLimitMb ?? Infinity, unit: "MB" },
       ],

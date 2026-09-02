@@ -27,8 +27,8 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         this.props.fallback ?? (
           <div className="admin-card p-6 text-center" role="alert">
-            <p className="text-lg font-semibold text-white">Something went wrong</p>
-            <p className="mt-1 text-sm text-zinc-400">{this.state.error?.message}</p>
+            <p className="text-lg font-semibold text-[var(--text-primary)]">Something went wrong</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{this.state.error?.message}</p>
             <button
               onClick={() => {
                 this.setState({ hasError: false, error: undefined });

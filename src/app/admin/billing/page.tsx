@@ -6,8 +6,25 @@ import { billingService } from "@/modules/billing/application/service";
 import { countStorageUsage, storageBytesToMb, resolveStorageCapability } from "@/modules/billing/application/storage.enforcement";
 import type { BillingDashboard, BillingPlan } from "@/lib/billing/types";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { resolveCommerceStrategy } from "@/modules/commerce-strategy";
+import { computePaymentReadiness, getActivePaymentAccount } from "@/modules/payment-account";
+import { getPaymentProviderLabel } from "@/modules/payment-account/providers/registry";
 
 export const dynamic = "force-dynamic";
+
+async function getPaymentStrategyProps(tenantId: string) {
+  const [strategy, readiness, active] = await Promise.all([
+    resolveCommerceStrategy(tenantId).catch(() => null),
+    computePaymentReadiness(tenantId).catch(() => null),
+    getActivePaymentAccount(tenantId).catch(() => null),
+  ]);
+  return {
+    strategy,
+    readiness,
+    activeProviderLabel: active ? getPaymentProviderLabel(active.provider) : null,
+    lastVerifiedAt: active?.lastVerifiedAt ?? null,
+  };
+}
 
 export default async function BillingPage() {
   const { tenantId } = await requireTenant();
@@ -20,15 +37,16 @@ export default async function BillingPage() {
   const workspace = await workspaceRepository.findByTenantId(tenant.id).catch(() => null);
 
   if (workspace) {
-    const [billingData, plans] = await Promise.all([
+    const [billingData, plans, paymentStrategy] = await Promise.all([
       billingService.getBillingInfo(workspace.id, tenant.id).catch(() => null) as Promise<BillingDashboard | null>,
       Promise.resolve(billingService.getPlans()).catch(() => []) as Promise<BillingPlan[]>,
+      getPaymentStrategyProps(tenant.id),
     ]);
     if (!billingData) {
       return <ContentContainer><p className="text-red-400">Failed to load billing data.</p></ContentContainer>;
     }
     return (
-      <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={workspace.id} tenantId={tenant.id} />
+      <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={workspace.id} tenantId={tenant.id} paymentStrategy={paymentStrategy} />
     );
   }
 
@@ -48,5 +66,6 @@ export default async function BillingPage() {
     activeProducts: productCount, activeGallery: 0, storageUsed: storageUsedMb, ordersProcessed: 0, messagesSent: 0,
   };
 
-  return <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={tenant.id} tenantId={tenant.id} />;
+  const paymentStrategy = await getPaymentStrategyProps(tenant.id);
+  return <BillingPageClient billingData={billingData} availablePlans={plans} workspaceId={tenant.id} tenantId={tenant.id} paymentStrategy={paymentStrategy} />;
 }

@@ -4,9 +4,9 @@ import type { WidgetProps } from "@/lib/dashboard/types";
 export function DashboardWidgetSkeleton({ rows = 3, className }: { rows?: number; className?: string }) {
   return (
     <div className={cn("admin-card p-5", className)} role="status" aria-label="Loading">
-      <div className="h-4 w-24 rounded bg-white/5 animate-pulse mb-4" />
+      <div className="h-4 w-24 rounded bg-[var(--surface-hover)] animate-pulse mb-4" />
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-8 rounded bg-white/5 animate-pulse mb-2 last:mb-0" />
+        <div key={i} className="h-8 rounded bg-[var(--surface-hover)] animate-pulse mb-2 last:mb-0" />
       ))}
       <span className="sr-only">Loading...</span>
     </div>
@@ -16,7 +16,7 @@ export function DashboardWidgetSkeleton({ rows = 3, className }: { rows?: number
 export function DashboardWidgetError({ message = "Something went wrong", onRetry }: { message?: string; onRetry?: () => void }) {
   return (
     <div className="admin-card p-6 text-center" role="alert">
-      <p className="text-sm font-semibold text-white">{message}</p>
+      <p className="text-sm font-semibold text-[var(--text-primary)]">{message}</p>
       {onRetry && (
         <button onClick={onRetry} className="admin-btn-outline mt-4 text-xs">
           Try Again
@@ -29,7 +29,7 @@ export function DashboardWidgetError({ message = "Something went wrong", onRetry
 export function DashboardWidgetEmpty({ message = "No data yet.", actions }: { message?: string; actions?: React.ReactNode }) {
   return (
     <div className="admin-card p-6 text-center">
-      <p className="text-sm text-zinc-500">{message}</p>
+      <p className="text-sm text-[var(--text-muted)]">{message}</p>
       {actions && <div className="mt-3">{actions}</div>}
     </div>
   );
@@ -59,20 +59,20 @@ export function DashboardWidget({
         <div className={cn("flex flex-wrap items-center justify-between gap-3", description ? "mb-2" : "mb-4")}>
           <div className="flex items-center gap-2">
             {Icon && (
-              <div className="rounded-lg bg-s8ul-cyan/10 p-1.5">
-                <Icon className="h-4 w-4 text-s8ul-cyan" aria-hidden="true" />
+              <div className="rounded-lg bg-[var(--color-info-surface)] p-1.5 border border-[var(--color-info)]/20">
+                <Icon className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
               </div>
             )}
             <div>
-              <h2 className="text-sm font-semibold text-white">{title}</h2>
-              {description && <p className="text-xs text-zinc-500">{description}</p>}
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
+              {description && <p className="text-xs text-[var(--text-muted)]">{description}</p>}
             </div>
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
       )}
       <div>{children}</div>
-      {footer && <div className="mt-4 pt-4 border-t border-white/5">{footer}</div>}
+      {footer && <div className="mt-4 pt-4 border-t border-[var(--border-subtle)]">{footer}</div>}
     </div>
   );
 }

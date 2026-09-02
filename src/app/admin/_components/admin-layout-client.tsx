@@ -45,10 +45,10 @@ export function AdminLayoutClient({
       />
 
       {/* Mobile header */}
-      <div className="fixed inset-x-0 top-0 z-20 flex h-14 items-center gap-3 border-b border-white/10 bg-zinc-950/80 px-4 backdrop-blur-xl lg:hidden">
+      <div className="fixed inset-x-0 top-0 z-20 flex h-14 items-center gap-3 border-b border-[var(--border)] bg-[var(--surface-base)]/80 px-4 backdrop-blur-xl lg:hidden" style={{ boxShadow: "var(--shadow-elevation)" }}>
         <button
           onClick={toggleSidebar}
-          className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white"
+          className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
           aria-label="Toggle sidebar"
         >
           <Menu className="h-5 w-5" />
@@ -60,7 +60,7 @@ export function AdminLayoutClient({
         <AdminPublishControl status={publishStatus} size="sm" />
         <button
           onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
-          className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white"
+          className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
           aria-label="Search (Cmd+K)"
         >
           <Search className="h-5 w-5" />
@@ -69,21 +69,21 @@ export function AdminLayoutClient({
       </div>
 
       {/* Desktop topbar */}
-      <div className="fixed inset-x-0 top-0 z-20 hidden h-14 items-center gap-4 border-b border-white/10 bg-zinc-950/80 px-6 backdrop-blur-xl lg:flex ml-64">
+      <div className="fixed inset-x-0 top-0 z-20 hidden h-14 items-center gap-4 border-b border-[var(--border)] bg-[var(--surface-base)]/80 px-6 backdrop-blur-xl lg:flex ml-64" style={{ boxShadow: "var(--shadow-elevation)" }}>
         <WorkspaceSwitcher />
         <button
           onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
-          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-500 hover:border-white/20 hover:text-zinc-300 transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-card)] px-3 py-1.5 text-xs text-[var(--text-muted)] hover:border-[var(--border-strong)] hover:text-[var(--text-secondary)] transition-colors"
         >
           <Search className="h-3.5 w-3.5" />
           <span>Search...</span>
-          <kbd className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+          <kbd className="ml-auto rounded bg-[var(--surface-hover)] px-1.5 py-0.5 text-[10px]">⌘K</kbd>
         </button>
         <div className="flex-1" />
         <AdminPublishControl status={publishStatus} size="md" />
         <Link
           href="/builder"
-          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition-colors"
         >
           <Layout className="h-3.5 w-3.5" />
           Builder
@@ -92,7 +92,7 @@ export function AdminLayoutClient({
           href={siteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] transition-colors"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           View site

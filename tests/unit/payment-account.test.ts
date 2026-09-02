@@ -17,18 +17,21 @@ vi.mock("razorpay", () => ({
 }));
 
 describe("RCCF-IMPLEMENTATION-74 — provider registry", () => {
-  it("launches Razorpay and reserves the future providers", () => {
+  it("launches Razorpay and Stripe and reserves the future providers", () => {
     const active = PAYMENT_PROVIDERS.filter((p) => p.status === "active").map((p) => p.id);
-    expect(active).toEqual(["razorpay"]);
-    for (const id of ["stripe", "phonepe", "cashfree", "payu", "manual"]) {
+    expect(active).toEqual(["razorpay", "stripe"]);
+    for (const id of ["phonepe", "cashfree", "payu", "manual"]) {
       expect(PAYMENT_PROVIDERS.some((p) => p.id === id)).toBe(true);
     }
+    // Stripe remains present as active but is not production-ready until E2E is proven (01A guard)
+    expect(PAYMENT_PROVIDERS.some((p) => p.id === "stripe")).toBe(true);
   });
 
   it("resolves the Razorpay adapter and labels", () => {
     expect(getPaymentProviderAdapter("razorpay")).not.toBeNull();
-    expect(getPaymentProviderAdapter("stripe")).toBeNull();
+    expect(getPaymentProviderAdapter("stripe")).not.toBeNull();
     expect(getPaymentProviderLabel("razorpay")).toBe("Razorpay");
+    expect(getPaymentProviderLabel("stripe")).toBe("Stripe");
   });
 });
 

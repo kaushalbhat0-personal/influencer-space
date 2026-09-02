@@ -89,22 +89,18 @@ function parseStrategyId(value: unknown): CommerceStrategyId | null {
 
 // ── Readiness (Phase 11) ─────────────────────────────────────
 
-/** Check a tenant's readiness for a strategy (e.g. DIRECT_CREATOR needs a linked Razorpay account). */
-export async function getCommerceStrategyReadiness(tenantId: string, strategy: CommerceStrategyId = DEFAULT_COMMERCE_STRATEGY_ID): Promise<StrategyReadinessReport> {
+/**
+ * @deprecated RCCF-PAYMENTS-UX-01C — dormant Tenant.razorpay* fields removed as sales-readiness authority.
+ * No active sales-readiness path should call this for creator payments — use computePaymentReadiness.
+ * Kept for compatibility: returns strategy-assignment readiness, not PaymentAccount readiness.
+ */
+export async function getCommerceStrategyReadiness(_tenantId: string, strategy: CommerceStrategyId = DEFAULT_COMMERCE_STRATEGY_ID): Promise<StrategyReadinessReport> {
   const definition = COMMERCE_STRATEGY_BY_ID[strategy] ?? COMMERCE_STRATEGY_BY_ID[DEFAULT_COMMERCE_STRATEGY_ID]!;
-
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: { razorpayAccountId: true, razorpaySetupComplete: true },
-  });
-
-  const requirements = [
-    { key: "linked_account", label: "Razorpay account linked", met: definition.requiresLinkedAccount ? !!tenant?.razorpayAccountId : true },
-    { key: "payout_account", label: "Payout/fund account configured", met: definition.requiresSettlement ? !!tenant?.razorpayAccountId && !!tenant?.razorpaySetupComplete : true },
+  // Do not query Tenant.razorpayAccountId — sales readiness is PaymentAccount authority.
+  const requirements: StrategyReadinessReport["requirements"] = [
+    { key: "strategy", label: "Commerce strategy", met: true },
   ];
-
-  const unmet = requirements.filter((r) => !r.met);
-  const readiness = unmet.length === 0 ? "ready" : definition.id === "PLATFORM_COLLECT" ? "ready" : "incomplete";
+  const readiness: StrategyReadinessReport["readiness"] = definition.id === "PLATFORM_COLLECT" ? "ready" : definition.status === "active" ? "ready" : "incomplete";
   return { strategy: definition.id, readiness, requirements };
 }
 
@@ -149,13 +145,20 @@ export async function getMigrationReadiness(): Promise<{
   directIncomplete: number;
   reason: string;
 }> {
-  const tenants = await prisma.tenant.findMany({ select: { razorpayAccountId: true } });
-  const directReady = tenants.filter((t) => t.razorpayAccountId).length;
+  // RCCF-PAYMENTS-UX-01C — canonical: directReady counts tenants with a verified+active PaymentAccount (PaymentAccount authority).
+  // Full canonical readiness (holder+settlement) is per-tenant via computePaymentReadiness; this aggregate uses the durable
+  // PaymentAccount signal without N×tenant queries. Super Admin detail view should use getPaymentHealth + per-tenant readiness.
+  const [tenants, verifiedActiveTenants] = await Promise.all([
+    prisma.tenant.findMany({ select: { id: true } }),
+    prisma.paymentAccount.findMany({ where: { verificationStatus: "verified", status: "active", isActive: true }, select: { tenantId: true } }).catch(() => [] as Array<{ tenantId: string }>),
+  ]);
+  const directReadySet = new Set(verifiedActiveTenants.map((r) => r.tenantId));
+  const directReady = directReadySet.size;
   return {
     total: tenants.length,
     directReady,
     directIncomplete: tenants.length - directReady,
-    reason: "DIRECT_CREATOR requires creator Razorpay linked accounts (next EPIC). PLATFORM_COLLECT remains the default.",
+    reason: "DIRECT_CREATOR ready = tenants with verified+active PaymentAccount (PaymentAccount authority; full readiness via computePaymentReadiness).",
   };
 }
 

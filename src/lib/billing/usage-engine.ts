@@ -56,20 +56,24 @@ export function computeUsage(
 
 export type UsageStatus = "ok" | "warning" | "over_limit";
 
+function isUnlimitedUsageLimit(limit: number): boolean {
+  return limit === Infinity || limit === -1;
+}
+
 export function getUsageStatus(used: number, limit: number, warningThreshold = 0.8): UsageStatus {
-  if (limit === Infinity) return "ok";
+  if (isUnlimitedUsageLimit(limit)) return "ok";
   if (used >= limit) return "over_limit";
   if (used >= limit * warningThreshold) return "warning";
   return "ok";
 }
 
 export function getUsagePercentage(used: number, limit: number): number {
-  if (limit === Infinity || limit === 0) return 0;
+  if (isUnlimitedUsageLimit(limit) || limit === 0) return 0;
   return Math.min(100, Math.round((used / limit) * 100));
 }
 
 export function isMetricOverLimit(quota: UsageQuota): boolean {
-  return quota.limit !== Infinity && quota.used >= quota.limit;
+  return !isUnlimitedUsageLimit(quota.limit) && quota.used >= quota.limit;
 }
 
 export function getMetricsOverLimit(quotas: UsageQuota[]): UsageQuota[] {
@@ -78,12 +82,12 @@ export function getMetricsOverLimit(quotas: UsageQuota[]): UsageQuota[] {
 
 export function getMetricsAtWarning(quotas: UsageQuota[], warningThreshold = 0.8): UsageQuota[] {
   return quotas.filter(
-    (q) => q.limit !== Infinity && q.used >= q.limit * warningThreshold && q.used < q.limit,
+    (q) => !isUnlimitedUsageLimit(q.limit) && q.used >= q.limit * warningThreshold && q.used < q.limit,
   );
 }
 
 export function formatUsageDisplay(used: number, limit: number, unit: string): string {
-  if (limit === Infinity) return `${used} ${unit}`;
+  if (isUnlimitedUsageLimit(limit)) return `${used} ${unit}`;
   return `${used} / ${limit} ${unit}`;
 }
 

@@ -31,17 +31,17 @@ function UsageBar({ used, limit, label, unit }: UsageQuota) {
 
   const textColor = status === "over_limit" ? "text-red-400"
     : status === "warning" ? "text-amber-400"
-    : "text-zinc-500";
+    : "text-[var(--text-muted)]";
 
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-zinc-300">{label}</span>
+        <span className="text-[var(--text-secondary)]">{label}</span>
         <span className={cn("text-xs", textColor)}>{displayText}</span>
       </div>
-      {limit !== Infinity && (
+      {(limit !== Infinity && limit !== -1) && (
         <div
-          className="h-2 rounded-full bg-white/5 overflow-hidden"
+          className="h-2 rounded-full bg-[var(--surface-hover)] overflow-hidden"
           role="progressbar"
           aria-valuenow={used}
           aria-valuemin={0}
@@ -75,8 +75,8 @@ export function UsageDashboard({ usage, loading, error }: UsageDashboardProps) {
           const Icon = METRIC_ICONS[item.metric] ?? Package;
           return (
             <div key={item.metric} className="flex items-start gap-3" role="listitem">
-              <div className="rounded-lg bg-white/5 p-2">
-                <Icon className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+              <div className="rounded-lg bg-[var(--surface-hover)] p-2 border border-[var(--border)]">
+                <Icon className="h-3.5 w-3.5 text-[var(--text-muted)]" aria-hidden="true" />
               </div>
               <div className="flex-1">
                 <UsageBar {...item} />

@@ -11,20 +11,21 @@ import { PaymentMethodManager } from "./PaymentMethodManager";
 import { UsageDashboard } from "./UsageDashboard";
 import { changePlanAction, cancelSubscriptionAction, resumeSubscriptionAction, retryPaymentAction, getBillingDashboard } from "@/actions/billing.actions";
 import type { BillingDashboard as BillingDashboardData, BillingPlan } from "@/lib/billing";
-import { PaymentStrategyCard } from "./PaymentStrategyCard";
+import { PaymentStrategyCard, type PaymentStrategyCardProps } from "./PaymentStrategyCard";
 
 interface BillingPageClientProps {
   billingData: BillingDashboardData;
   availablePlans: BillingPlan[];
   workspaceId: string;
   tenantId: string;
+  paymentStrategy?: PaymentStrategyCardProps;
 }
 
 const TABS = [
   { key: "overview", label: "Overview" },
   { key: "plans", label: "Plans" },
   { key: "invoices", label: "Invoices" },
-  { key: "payment", label: "Payment Methods" },
+  { key: "payment", label: "Billing payment methods" },
   { key: "usage", label: "Usage" },
 ] as const;
 
@@ -40,7 +41,7 @@ function loadRazorpayScript(): Promise<void> {
   });
 }
 
-export function BillingPageClient({ billingData, availablePlans, workspaceId, tenantId }: BillingPageClientProps) {
+export function BillingPageClient({ billingData, availablePlans, workspaceId, tenantId, paymentStrategy }: BillingPageClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState<string | null>(null);
@@ -205,9 +206,9 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
           {error}
         </div>
       )}
-      {/* RCCF-IMPLEMENTATION-73: read-only payment strategy */}
-      <PaymentStrategyCard />
-      <nav className="mb-6 flex gap-1 border-b border-white/10 overflow-x-auto" aria-label="Billing sections" role="tablist">
+      {/* RCCF-PAYMENTS-UX-01C: canonical sales-readiness card */}
+      <PaymentStrategyCard {...(paymentStrategy ?? { strategy: null, readiness: null })} />
+      <nav className="mb-6 flex gap-1 border-b border-[var(--border)] overflow-x-auto" aria-label="Billing sections" role="tablist">
         {TABS.map((tab, index) => (
           <button
             key={tab.key}
@@ -221,7 +222,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
               activeTab === tab.key
                 ? "border-s8ul-cyan text-s8ul-cyan"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             }`}
           >
             {tab.label}
@@ -247,12 +248,12 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
               {timeline.length > 0 && (
                 <PageSection>
                   <div className="admin-card p-5">
-                    <h3 className="text-sm font-semibold text-white mb-3">Billing Timeline</h3>
+                    <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Billing Timeline</h3>
                     <ol className="space-y-1.5 text-xs" data-testid="billing-timeline">
                       {timeline.map((e, i) => (
-                        <li key={`${e.type}-${i}`} className="flex items-center justify-between text-zinc-400">
+                        <li key={`${e.type}-${i}`} className="flex items-center justify-between text-[var(--text-secondary)]">
                           <span>{e.type}</span>
-                          <span className="text-zinc-600">{new Date(e.createdAt).toLocaleString()}</span>
+                          <span className="text-[var(--text-muted)]">{new Date(e.createdAt).toLocaleString()}</span>
                         </li>
                       ))}
                     </ol>
@@ -266,18 +267,18 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
               </PageSection>
               <PageSection>
                 <div className="admin-card p-5">
-                  <h3 className="text-sm font-semibold text-white mb-3">Quick Actions</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Quick Actions</h3>
                   <div className="space-y-2">
-                    <button onClick={() => setActiveTab("plans")} className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 text-left">
+                    <button onClick={() => setActiveTab("plans")} className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-card-hover)] text-left">
                       Change Plan
                     </button>
-                    <button onClick={() => setActiveTab("payment")} className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 text-left">
+                    <button onClick={() => setActiveTab("payment")} className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-card-hover)] text-left">
                       Manage Payment Methods
                     </button>
-                    <button onClick={() => setActiveTab("invoices")} className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10 text-left">
+                    <button onClick={() => setActiveTab("invoices")} className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-card-hover)] text-left">
                       View All Invoices
                     </button>
-                    <a href="/admin/settings" className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-s8ul-cyan hover:bg-white/10">
+                    <a href="/admin/settings" className="block rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-3 py-2 text-sm text-s8ul-cyan hover:bg-[var(--surface-card-hover)]">
                       Settings \u2192
                     </a>
                   </div>

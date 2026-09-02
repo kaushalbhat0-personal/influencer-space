@@ -12,7 +12,7 @@ interface BadgeProps {
 }
 
 const VARIANT_CLASSES = {
-  default: "bg-zinc-800 text-zinc-300",
+  default: "bg-[var(--surface-hover)] text-[var(--text-secondary)] border border-[var(--border)]",
   success: "bg-green-500/20 text-green-400",
   warning: "bg-amber-500/20 text-amber-400",
   danger: "bg-red-500/20 text-red-400",

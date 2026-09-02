@@ -83,7 +83,7 @@ export function SettingsForm({
     return (
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-zinc-500 mb-1.5">Desktop</label>
+          <label className="block text-xs text-[var(--text-muted)] mb-1.5">Desktop</label>
           <div className="flex gap-1">
             {(["top", "center", "bottom"] as const).map((a) => (
               <button
@@ -93,7 +93,7 @@ export function SettingsForm({
                 className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-all ${
                   desktopAlign === a
                     ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
-                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                    : "bg-[var(--surface-hover)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] border border-[var(--border)]"
                 }`}
               >
                 {a}
@@ -102,7 +102,7 @@ export function SettingsForm({
           </div>
         </div>
         <div>
-          <label className="block text-xs text-zinc-500 mb-1.5">Mobile</label>
+          <label className="block text-xs text-[var(--text-muted)] mb-1.5">Mobile</label>
           <div className="flex gap-1">
             {(["top", "center", "bottom"] as const).map((a) => (
               <button
@@ -112,7 +112,7 @@ export function SettingsForm({
                 className={`flex-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-all ${
                   mobileAlign === a
                     ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
-                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                    : "bg-[var(--surface-hover)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] border border-[var(--border)]"
                 }`}
               >
                 {a}
@@ -208,8 +208,8 @@ export function SettingsForm({
         <Card>
           <CardContent>
             <form ref={heroMediaFormRef} onSubmit={(e) => { e.preventDefault(); handleSaveMedia(); }} className="space-y-5">
-              <h3 className="text-lg font-semibold text-white">Hero Media</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Hero Media</h3>
+              <p className="text-sm text-[var(--text-muted)]">
                 The media renders first, full-width, behind your profile picture. Video takes priority over the poster.
               </p>
 
@@ -227,11 +227,11 @@ export function SettingsForm({
                 })}
                 onUploadComplete={(v) => handleSaveMedia({ videoUrl: v.url ?? "", videoAssetId: v.assetId ?? "" })}
               />
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
                 MP4 only · up to 15 seconds · max 12 MB. Hero videos count toward your plan&apos;s storage quota.
               </p>
               <div>
-                <h4 className="text-sm font-semibold text-white mb-3">Video Focal Point Alignment</h4>
+                <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Video Focal Point Alignment</h4>
                 {alignmentButtons(videoDesktopAlignment, videoMobileAlignment, setVideoDesktopAlignment, setVideoMobileAlignment)}
               </div>
 
@@ -250,7 +250,7 @@ export function SettingsForm({
                 onUploadComplete={(v) => handleSaveMedia({ posterUrl: v.url ?? "", posterAssetId: v.assetId ?? "" })}
               />
               <div>
-                <h4 className="text-sm font-semibold text-white mb-3">Poster Focal Point Alignment</h4>
+                <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Poster Focal Point Alignment</h4>
                 {alignmentButtons(imageDesktopAlignment, imageMobileAlignment, setImageDesktopAlignment, setImageMobileAlignment)}
               </div>
 
@@ -298,8 +298,8 @@ export function SettingsForm({
         <Card>
           <CardContent>
             <div className="space-y-5">
-              <h3 className="text-lg font-semibold text-white">Creator Identity</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Creator Identity</h3>
+              <p className="text-sm text-[var(--text-muted)]">
                 Your public identity — the profile picture, name, headline, tagline and bio shown in the Hero. Owned by Hero.
               </p>
               <MediaField
@@ -338,7 +338,7 @@ export function SettingsForm({
                 placeholder="Your tagline"
               />
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300" htmlFor="creatorBio">
+                <label className="block text-sm font-medium text-[var(--text-secondary)]" htmlFor="creatorBio">
                   Bio
                 </label>
                 <textarea
@@ -369,8 +369,8 @@ export function SettingsForm({
         <Card>
           <CardContent>
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Buttons</h3>
-              <p className="text-sm text-gray-500">Call-to-action buttons shown in the Hero.</p>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Buttons</h3>
+              <p className="text-sm text-[var(--text-muted)]">Call-to-action buttons shown in the Hero.</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input id="ctaText" label="Primary Button Text" value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="Subscribe" />
                 <Input id="ctaLink" label="Primary Button Link" value={ctaLink} onChange={(e) => setCtaLink(e.target.value)} placeholder="https://youtube.com/@..." />
@@ -396,8 +396,8 @@ export function SettingsForm({
         <Card>
           <CardContent>
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Live Badge</h3>
-              <p className="text-sm text-gray-500">A live/streaming indicator shown in the Hero.</p>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Live Badge</h3>
+              <p className="text-sm text-[var(--text-muted)]">A live/streaming indicator shown in the Hero.</p>
               <Input
                 id="liveBadgeText" label="Live Badge Text"
                 value={liveBadgeText} placeholder="Live on YouTube"
@@ -406,9 +406,9 @@ export function SettingsForm({
               <label className="flex items-center gap-3">
                 <input type="checkbox" checked={liveShowBadge}
                   onChange={(e) => setLiveShowBadge(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/20 bg-white/5 text-s8ul-cyan focus:ring-s8ul-cyan/50"
+                  className="h-4 w-4 rounded border-[var(--border)] bg-[var(--surface-hover)] text-s8ul-cyan focus:ring-s8ul-cyan/50"
                 />
-                <span className="text-sm text-gray-300">Show Live Badge</span>
+                <span className="text-sm text-[var(--text-secondary)]">Show Live Badge</span>
               </label>
               {liveBadgeSave.state.success && (
                 <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
@@ -427,8 +427,8 @@ export function SettingsForm({
       </div>
 
       <div className="sticky top-6 hidden xl:block">
-        <div className="rounded-xl border border-white/5 bg-zinc-900/30 p-4">
-          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-zinc-500">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-4" style={{ boxShadow: "var(--shadow-elevation)" }}>
+          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             Live Preview
           </p>
           <SettingsLivePreview
