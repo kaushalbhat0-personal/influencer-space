@@ -92,9 +92,16 @@ export function ContentFeedManager({
     });
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this content item?")) return;
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  async function handleDelete(id: string) {
+    setConfirmDelete(id);
+  }
+
+  async function confirmHandleDelete() {
+    if (!confirmDelete) return;
+    const id = confirmDelete;
+    setConfirmDelete(null);
     startTransition(async () => {
       const result = await deleteFeedItem(id, tenantId);
       if (result.success) {
@@ -108,10 +115,10 @@ export function ContentFeedManager({
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-16">
-        <Camera className="mb-3 h-10 w-10 text-zinc-600" />
-        <p className="text-sm text-zinc-500">No synced content yet.</p>
-        <p className="mt-1 text-xs text-zinc-600">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] py-16">
+        <Camera className="mb-3 h-10 w-10 text-[var(--text-muted)]" />
+        <p className="text-sm text-[var(--text-muted)]">No synced content yet.</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
           Content will appear here once the social sync cron job runs.
         </p>
       </div>
@@ -142,12 +149,12 @@ export function ContentFeedManager({
               key={item.id}
               className={`flex items-center gap-4 rounded-xl border px-4 py-3 transition-all ${
                 item.hidden
-                  ? "border-white/5 bg-zinc-900/30 opacity-50"
-                  : "border-white/10 bg-zinc-900"
+                  ? "border-[var(--border-subtle)] bg-[var(--surface-hover)] opacity-60"
+                  : "border-[var(--border)] bg-[var(--surface-card)]"
               }`}
             >
               {/* Thumbnail */}
-              <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+              <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--surface-hover)]">
                 {(item.thumbnailUrl || (item.mediaType === "image" && item.url)) ? (
                   <img
                     src={item.thumbnailUrl || item.url}
@@ -156,7 +163,7 @@ export function ContentFeedManager({
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <Icon className="h-5 w-5 text-zinc-600" />
+                    <Icon className="h-5 w-5 text-[var(--text-muted)]" />
                   </div>
                 )}
               </div>
@@ -165,7 +172,7 @@ export function ContentFeedManager({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <Icon className={`h-3.5 w-3.5 ${color}`} />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                     {item.platform}
                   </span>
                   {item.pinned && (
@@ -180,11 +187,11 @@ export function ContentFeedManager({
                   )}
                 </div>
                 {item.caption && (
-                  <p className="mt-0.5 truncate text-sm text-zinc-300">
+                  <p className="mt-0.5 truncate text-sm text-[var(--text-secondary)]">
                     {item.caption}
                   </p>
                 )}
-                <p className="mt-0.5 text-xs text-zinc-600">
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                   Synced {formatDate(item.syncedAt)}
                   {item.externalId && ` · ${item.externalId}`}
                 </p>
@@ -198,7 +205,7 @@ export function ContentFeedManager({
                   className={`rounded-lg p-2 transition-all ${
                     item.pinned
                       ? "text-amber-400 hover:bg-amber-500/10"
-                      : "text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
+                      : "text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)]"
                   }`}
                   title={item.pinned ? "Unpin" : "Pin to top"}
                 >
@@ -210,7 +217,7 @@ export function ContentFeedManager({
                   className={`rounded-lg p-2 transition-all ${
                     item.hidden
                       ? "text-emerald-400 hover:bg-emerald-500/10"
-                      : "text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
+                      : "text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)]"
                   }`}
                   title={item.hidden ? "Show" : "Hide"}
                 >
@@ -219,8 +226,9 @@ export function ContentFeedManager({
                 <button
                   onClick={() => handleDelete(item.id)}
                   disabled={pending}
-                  className="rounded-lg p-2 text-zinc-600 transition-all hover:bg-red-500/10 hover:text-red-400"
+                  className="rounded-lg p-2 text-[var(--text-muted)] transition-all hover:bg-red-500/10 hover:text-red-400"
                   title="Delete"
+                  aria-label="Delete content item"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -230,11 +238,29 @@ export function ContentFeedManager({
         })}
       </div>
 
-      <p className="mt-4 text-center text-xs text-zinc-600">
+      <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
         {items.length} item{items.length !== 1 && "s"} ·{" "}
         {items.filter((i) => i.pinned).length} pinned ·{" "}
         {items.filter((i) => i.hidden).length} hidden
       </p>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Delete content item">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)} />
+          <div className="relative bg-[var(--surface-card)] rounded-xl border border-[var(--border)] p-6 max-w-sm w-full mx-4 shadow-xl">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Delete this content item?</h3>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">This cannot be undone.</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setConfirmDelete(null)} className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]" disabled={pending}>
+                Cancel
+              </button>
+              <button onClick={confirmHandleDelete} className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50" disabled={pending}>
+                {pending ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

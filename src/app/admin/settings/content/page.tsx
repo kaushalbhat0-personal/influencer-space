@@ -14,7 +14,7 @@ export default async function ContentFeedSettingsPage() {
     return (
       <ContentContainer>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Content Feed</h1>
-        <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
+        <p className="mt-4 text-[var(--text-muted)]">No tenant configured. Please seed a tenant first.</p>
       </ContentContainer>
     );
   }
@@ -28,7 +28,7 @@ export default async function ContentFeedSettingsPage() {
     <ContentContainer>
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Content Feed</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Manage synced social media content. Pin important posts, hide irrelevant ones, or delete items.
         </p>
       </div>

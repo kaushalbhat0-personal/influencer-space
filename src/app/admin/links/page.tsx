@@ -25,9 +25,9 @@ export default async function AdminLinksPage() {
         description="Social, streaming and contact links — published by Hero. The Links section and footer render these automatically."
         breadcrumbs={[{ label: "Dashboard", href: "/admin/dashboard" }, { label: "Links" }]}
       />
-      <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
-        <h2 className="mb-1 text-sm font-semibold text-zinc-300">Hero Social Links</h2>
-        <p className="mb-4 text-xs text-zinc-500">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm" style={{ boxShadow: "var(--shadow-elevation)" }}>
+        <h2 className="mb-1 text-sm font-semibold text-[var(--text-primary)]">Hero Social Links</h2>
+        <p className="mb-4 text-xs text-[var(--text-muted)]">
           Stored once in Hero. Rendered on the Hero, the Links section and the Footer.
         </p>
         <SocialLinksEditor tenantId={tenantId} initialLinks={socialLinks} />

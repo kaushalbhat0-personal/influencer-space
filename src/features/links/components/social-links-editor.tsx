@@ -58,12 +58,12 @@ export function SocialLinksEditor({
     <div className="space-y-4">
       <div className="space-y-2">
         {links.length === 0 && (
-          <p className="rounded-lg border border-dashed border-white/10 p-4 text-center text-sm text-zinc-600">
+          <p className="rounded-lg border border-dashed border-[var(--border)] p-4 text-center text-sm text-[var(--text-muted)]">
             No social links yet. Add your first link below.
           </p>
         )}
         {links.map((link, index) => (
-          <div key={index} className="flex flex-col gap-2 rounded-lg border border-white/10 bg-zinc-900/50 p-3 sm:flex-row sm:items-center">
+          <div key={index} className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-card)] p-3 sm:flex-row sm:items-center" style={{ boxShadow: "var(--shadow-elevation)" }}>
             <select
               value={link.platform}
               onChange={(e) => update(index, { platform: e.target.value })}
@@ -105,7 +105,7 @@ export function SocialLinksEditor({
           type="button"
           onClick={add}
           disabled={pending}
-          className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-200"
+          className="rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-3 py-2 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-secondary)]"
         >
           + Add Link
         </button>

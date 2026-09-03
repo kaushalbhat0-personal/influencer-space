@@ -73,10 +73,13 @@ export function MilestonesManager({
     });
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    const { id, name } = confirmDelete;
     setMilestones((prev) => prev.filter((m) => m.id !== id));
+    setConfirmDelete(null);
 
     startTransition(async () => {
       const result = await removeMilestone(id, tenantId);
@@ -152,8 +155,8 @@ export function MilestonesManager({
       )}
 
       {/* ── Add Form ── */}
-      <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-300">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm" style={{ boxShadow: "var(--shadow-elevation)" }}>
+        <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
           Add Milestone
         </h2>
         <form onSubmit={handleAdd} className="space-y-3">
@@ -215,7 +218,7 @@ export function MilestonesManager({
 
       {/* ── Milestones Grid ── */}
       {milestones.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/5 p-10 text-center text-sm text-zinc-600">
+        <div className="rounded-xl border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--text-muted)]">
           No milestones yet. Add your first milestone above.
         </div>
       ) : (
@@ -223,7 +226,8 @@ export function MilestonesManager({
           {milestones.map((milestone) => (
             <div
               key={milestone.id}
-              className="group relative overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 backdrop-blur-sm transition-all hover:border-white/10"
+              className="group relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-card)] backdrop-blur-sm transition-all hover:border-[var(--border-strong)]"
+              style={{ boxShadow: "var(--shadow-elevation)" }}
             >
               {/* ── Year Badge ── */}
               <div className="absolute left-3 top-3 z-10">
@@ -234,7 +238,7 @@ export function MilestonesManager({
 
               {/* ── Image ── */}
               {milestone.imageUrl ? (
-                <div className="aspect-[16/9] w-full overflow-hidden bg-zinc-800">
+                <div className="aspect-[16/9] w-full overflow-hidden bg-[var(--surface-hover)]">
                   <img
                     src={milestone.imageUrl}
                     alt={milestone.title}
@@ -242,8 +246,8 @@ export function MilestonesManager({
                   />
                 </div>
               ) : (
-                <div className="flex aspect-[16/9] w-full items-center justify-center bg-zinc-800/50">
-                  <svg className="h-8 w-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex aspect-[16/9] w-full items-center justify-center bg-[var(--surface-hover)]">
+                  <svg className="h-8 w-8 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -253,10 +257,10 @@ export function MilestonesManager({
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold text-white">
+                    <h3 className="truncate text-sm font-semibold text-[var(--text-primary)]">
                       {milestone.title}
                     </h3>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">
+                    <p className="mt-0.5 line-clamp-2 text-xs text-[var(--text-muted)]">
                       {milestone.description}
                     </p>
                   </div>
@@ -268,11 +272,11 @@ export function MilestonesManager({
                 </div>
 
                 {/* ── Controls ── */}
-                <div className="mt-3 flex items-center justify-end gap-1 border-t border-white/5 pt-3">
+                <div className="mt-3 flex items-center justify-end gap-1 border-t border-[var(--border)] pt-3">
                   <button
                     onClick={() => openEdit(milestone)}
                     disabled={pending}
-                    className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                    className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
                     title="Edit milestone"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,10 +284,11 @@ export function MilestonesManager({
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(milestone.id, milestone.title)}
+                    onClick={() => setConfirmDelete({ id: milestone.id, name: milestone.title })}
                     disabled={pending}
-                    className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                    className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
                     title="Delete milestone"
+                    aria-label={`Delete ${milestone.title}`}
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -302,20 +307,20 @@ export function MilestonesManager({
       <form onSubmit={handleUpdate} className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-3">
-            <label className="block text-xs font-medium text-zinc-400">Year</label>
+            <label className="block text-xs font-medium text-[var(--text-muted)]">Year</label>
             <input value={editYear} onChange={(e) => setEditYear(e.target.value)} className="admin-input w-full" disabled={pending} required />
           </div>
           <div className="space-y-3">
-            <label className="block text-xs font-medium text-zinc-400">Stats Badge</label>
+            <label className="block text-xs font-medium text-[var(--text-muted)]">Stats Badge</label>
             <input value={editStats} onChange={(e) => setEditStats(e.target.value)} className="admin-input w-full" disabled={pending} placeholder="e.g. 100K Subscribers" />
           </div>
         </div>
         <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Title</label>
+          <label className="block text-xs font-medium text-[var(--text-muted)]">Title</label>
           <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="admin-input w-full" disabled={pending} required />
         </div>
         <div className="space-y-3">
-          <label className="block text-xs font-medium text-zinc-400">Description</label>
+          <label className="block text-xs font-medium text-[var(--text-muted)]">Description</label>
           <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="admin-input w-full min-h-[80px] resize-none" disabled={pending} rows={3} required />
         </div>
         <div className="space-y-3">
@@ -329,12 +334,30 @@ export function MilestonesManager({
             onChange={(v) => setEditImageUrl(v?.url ?? "")}
           />
         </div>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
         <button type="submit" disabled={pending || !editYear.trim() || !editTitle.trim()} className="admin-btn-cyan w-full py-2.5">
           {pending ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </EditEntityDrawer>
+
+    {confirmDelete && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Delete ${confirmDelete.name}`}>
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)} />
+        <div className="relative bg-[var(--surface-card)] rounded-xl border border-[var(--border)] p-6 max-w-sm w-full mx-4 shadow-xl">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Delete &quot;{confirmDelete.name}&quot;?</h3>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">This cannot be undone.</p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]">
+              Cancel
+            </button>
+            <button onClick={handleDelete} className="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50" disabled={pending}>
+              {pending ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 }
