@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import type { KnowledgeSnapshot } from "@/modules/knowledge-runtime";
 import type { GoalCounts } from "../domain/types";
+import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 
 export function countsFromSnapshot(snapshot: KnowledgeSnapshot, orders = 0): GoalCounts {
   return {
@@ -24,8 +25,6 @@ export function countsFromSnapshot(snapshot: KnowledgeSnapshot, orders = 0): Goa
 }
 
 export async function buildGoalCounts(tenantId: string, snapshot: KnowledgeSnapshot): Promise<GoalCounts> {
-  const orders = await prisma.productOrder.count({
-    where: { tenantId, status: { in: ["PAID", "COMPLETED"] } },
-  }).catch(() => 0);
+  const orders = await websiteAggregateService.getOrderCountPaidCompleted(tenantId).catch(() => 0);
   return countsFromSnapshot(snapshot, orders);
 }

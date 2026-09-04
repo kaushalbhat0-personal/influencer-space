@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ShoppingBag, Package, Link2, Image as ImageIcon, MessageSquare, UserCheck, Layout, Settings, BarChart3, Search, Palette, CreditCard, Activity, Calendar as CalendarIcon, Briefcase as BriefcaseIcon, BookOpen as BookOpenIcon } from "lucide-react";
@@ -19,11 +19,12 @@ import { BusinessHealthHero } from "@/modules/business-health/presentation/busin
 import { SuccessJourneyCard } from "@/modules/customer-success/presentation/success-journey-card";
 import { EvolutionFeedCard } from "@/modules/website-evolution/presentation/evolution-feed-card";
 import { SuccessMilestonesCard } from "@/components/dashboard/SuccessMilestonesCard";
-import type { DashboardData } from "../actions";
+import type { DashboardData, InitialDashboardData, DeferredDashboardData } from "../actions";
+import { getDeferredDashboardData } from "../actions";
 import { formatCurrency } from "@/lib/utils";
 
 interface DashboardPageProps {
-  initialData: DashboardData;
+  initialData: InitialDashboardData;
 }
 
 interface QuickCardItem {
@@ -66,9 +67,28 @@ function SectionLabel({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
+function DeferredSkeleton({ height = 120 }: { height?: number }) {
+  return <div className="animate-pulse rounded-xl border border-[var(--border)] bg-[var(--surface-card)]" style={{ height }} aria-hidden />;
+}
+
 export function DashboardPage({ initialData }: DashboardPageProps) {
-  const [data] = useState(initialData);
-  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success, successJourney, businessHealth, evolution, launchAllowance } = data;
+  const [deferred, setDeferred] = useState<DeferredDashboardData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [deferredError, setDeferredError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Only fetch deferred if initialData doesn't already contain it (backward compat for tests that pass full DashboardData)
+    if ((initialData as unknown as { health?: unknown }).health) return;
+    getDeferredDashboardData()
+      .then((d) => setDeferred(d))
+      .catch((e) => setDeferredError(e instanceof Error ? e.message : String(e)));
+  }, [initialData]);
+
+  // Merge initial + deferred; deferred overwrites where present, initial is critical path
+  const hasDeferredInInitial = !!(initialData as unknown as { health?: unknown }).health;
+  const isDeferredLoading = !deferred && !hasDeferredInInitial && !deferredError;
+  const data = { ...initialData, ...(deferred ?? {}) } as unknown as DashboardData & InitialDashboardData & DeferredDashboardData;
+  const { metrics, activity, health, overallScore, steps, creatorName, knowledge, goals, recommendations, success, successJourney, businessHealth, evolution, launchAllowance } = data as unknown as DashboardData;
 
   // RCCF-72.15B — Launch core-content allowance, displayed only for Launch and
   // only from the server-derived value (never a hardcoded UI counter).
@@ -164,12 +184,17 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           </div>
         </section>
 
-        {businessHealth && (
+        {isDeferredLoading ? (
+          <DeferredSkeleton height={120} />
+        ) : businessHealth ? (
           <BusinessHealthHero health={businessHealth.health} trend={businessHealth.trend} />
-        )}
+        ) : null}
 
-{/* RCCF-EPIC-09: Success Journey — stage, risk, opportunities, timeline */}
-         <SuccessJourneyCard initialData={{ success: successJourney.success, timeline: successJourney.timeline }} />
+        {isDeferredLoading ? (
+          <DeferredSkeleton height={220} />
+        ) : (
+          <SuccessJourneyCard initialData={{ success: successJourney!.success, timeline: successJourney!.timeline }} />
+        )}
 
         {!checklistComplete && (
           <OnboardingChecklist steps={checklistSteps} creatorName={creatorName} />
@@ -207,14 +232,20 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
 
         <DashboardGrid>
           <DashboardGridMain className="space-y-6">
-            {recommendations && (
+            {isDeferredLoading ? (
+              <DeferredSkeleton height={140} />
+            ) : recommendations ? (
               <NextBestStepCard
                 initialRecommendation={recommendations.top}
                 total={recommendations.total}
               />
-            )}
+            ) : null}
 
-            {evolution && <EvolutionFeedCard initial={evolution.opportunities} />}
+            {isDeferredLoading ? (
+              <DeferredSkeleton height={120} />
+            ) : evolution ? (
+              <EvolutionFeedCard initial={evolution.opportunities} />
+            ) : null}
 
             <DashboardWidget
               title="Recent Activity"
@@ -241,41 +272,47 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               )}
             </DashboardWidget>
 
-            <DashboardWidget
-              title="Website Health"
-              actions={
-                <span className="text-lg font-bold font-display text-s8ul-cyan">
-                  {overallScore}%
-                </span>
-              }
-            >
-              <div className="space-y-1">
-                {health.slice(0, 8).map((check) => (
-                  <Link
-                    key={check.label}
-                    href={check.href}
-                    className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-[var(--surface-hover)] transition-colors"
-                  >
-                    <div className={cn("h-2 w-2 rounded-full shrink-0 mt-1.5", check.done ? "bg-emerald-500" : "bg-[var(--border-strong)]")} />
-                    <span className="flex-1 min-w-0">
-                      <span className="flex items-center justify-between">
-                        <span className="text-sm text-[var(--text-secondary)]">{check.label}</span>
-                        <span className={cn("text-xs font-medium ml-2", check.done ? "text-emerald-400" : "text-[var(--text-muted)]")}>
-                          {check.score}%
+            {isDeferredLoading ? (
+              <DeferredSkeleton height={200} />
+            ) : (
+              <DashboardWidget
+                title="Website Health"
+                actions={
+                  <span className="text-lg font-bold font-display text-s8ul-cyan">
+                    {overallScore}%
+                  </span>
+                }
+              >
+                <div className="space-y-1">
+                  {health!.slice(0, 8).map((check) => (
+                    <Link
+                      key={check.label}
+                      href={check.href}
+                      className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-[var(--surface-hover)] transition-colors"
+                    >
+                      <div className={cn("h-2 w-2 rounded-full shrink-0 mt-1.5", check.done ? "bg-emerald-500" : "bg-[var(--border-strong)]")} />
+                      <span className="flex-1 min-w-0">
+                        <span className="flex items-center justify-between">
+                          <span className="text-sm text-[var(--text-secondary)]">{check.label}</span>
+                          <span className={cn("text-xs font-medium ml-2", check.done ? "text-emerald-400" : "text-[var(--text-muted)]")}>
+                            {check.score}%
+                          </span>
                         </span>
+                        {!check.done && check.description && (
+                          <span className="block text-[11px] text-[var(--text-muted)] mt-0.5">{check.description}</span>
+                        )}
                       </span>
-                      {!check.done && check.description && (
-                        <span className="block text-[11px] text-[var(--text-muted)] mt-0.5">{check.description}</span>
-                      )}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </DashboardWidget>
+                    </Link>
+                  ))}
+                </div>
+              </DashboardWidget>
+            )}
           </DashboardGridMain>
 
           <DashboardGridSide className="space-y-6">
-            {knowledge && (
+            {isDeferredLoading ? (
+              <DeferredSkeleton height={160} />
+            ) : knowledge ? (
               <KnowledgeScoreCard
                 overall={knowledge.overall}
                 confidence={knowledge.confidence}
@@ -283,9 +320,17 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                 missing={knowledge.missing}
                 compact
               />
-            )}
-            {goals && <GoalDashboardCard dashboard={goals.dashboard} />}
-            {success && <SuccessMilestonesCard success={success} />}
+            ) : null}
+            {isDeferredLoading ? (
+              <DeferredSkeleton height={120} />
+            ) : goals ? (
+              <GoalDashboardCard dashboard={goals.dashboard} />
+            ) : null}
+            {isDeferredLoading ? (
+              <DeferredSkeleton height={180} />
+            ) : success ? (
+              <SuccessMilestonesCard success={success} />
+            ) : null}
           </DashboardGridSide>
         </DashboardGrid>
       </div>

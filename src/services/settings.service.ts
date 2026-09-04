@@ -4,6 +4,18 @@ import { defaultHeroData } from "@/config/hero";
 import type { Prisma } from "@/generated/prisma/client";
 import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
+import { cache as reactCache } from "react";
+
+const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  typeof reactCache === "function" ? reactCache : ((fn: unknown) => fn as never);
+
+// P0: request-level dedup for setting reads (dashboard + knowledge + health share same keys)
+const getSettingByKeyCached = requestCache(async (tenantId: string, key: string): Promise<unknown> => {
+  const setting = await prisma.setting.findUnique({
+    where: { tenantId_key: { tenantId, key } },
+  });
+  return setting?.value ?? null;
+});
 
 type SqlExecutor = {
   $executeRawUnsafe: (query: string, ...params: unknown[]) => Promise<number>;
@@ -12,10 +24,7 @@ type SqlExecutor = {
 export const SettingsService = {
   async getSettingByKey(tenantId: string, key: string): Promise<unknown> {
     try {
-      const setting = await prisma.setting.findUnique({
-        where: { tenantId_key: { tenantId, key } },
-      });
-      return setting?.value ?? null;
+      return await getSettingByKeyCached(tenantId, key);
     } catch (error) {
       captureError(error, { service: "settings-service", operation: "getSettingByKey" });
       return null;

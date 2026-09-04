@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockProductFindMany, mockProductCount, mockOrderCount, mockOrderAggregate, mockGalleryCount, mockLinkCount, mockContactCount, mockPublishFindFirst, mockAuditFindMany, mockTenantFindUnique, mockSettingFindUnique } = vi.hoisted(() => ({
+const { mockProductFindMany, mockProductCount, mockOrderCount, mockOrderAggregate, mockGalleryCount, mockLinkCount, mockContactCount, mockPublishFindFirst, mockAuditFindMany, mockTenantFindUnique, mockSettingFindUnique, mockQueryRaw } = vi.hoisted(() => ({
   mockProductFindMany: vi.fn(),
   mockProductCount: vi.fn(),
   mockOrderCount: vi.fn(),
@@ -12,6 +12,7 @@ const { mockProductFindMany, mockProductCount, mockOrderCount, mockOrderAggregat
   mockAuditFindMany: vi.fn(),
   mockTenantFindUnique: vi.fn(),
   mockSettingFindUnique: vi.fn(),
+  mockQueryRaw: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -32,6 +33,7 @@ vi.mock("@/lib/prisma", () => ({
     publishSnapshot: { findMany: vi.fn().mockResolvedValue([]) },
     booking: { count: vi.fn().mockResolvedValue(0) },
     offering: { count: vi.fn().mockResolvedValue(0) },
+    $queryRaw: mockQueryRaw,
   },
 }));
 
@@ -42,6 +44,7 @@ beforeEach(() => { vi.clearAllMocks(); });
 describe("Dashboard service", () => {
   it("getMetrics returns all metrics", async () => {
     mockProductFindMany.mockResolvedValue([{ id: "1", isActive: true, status: "PUBLISHED" }, { id: "2", isActive: false, status: "DRAFT" }]);
+    mockQueryRaw.mockResolvedValue([{ total: 2, published: 1, active: 1 }]);
     mockOrderCount.mockResolvedValue(5);
     mockOrderAggregate.mockResolvedValue({ _sum: { amount: 10000 } });
     mockGalleryCount.mockResolvedValue(20);
@@ -62,6 +65,7 @@ describe("Dashboard service", () => {
 
   it("getMetrics handles zero data", async () => {
     mockProductFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([{ total: 0, published: 0, active: 0 }]);
     mockOrderCount.mockResolvedValue(0);
     mockOrderAggregate.mockResolvedValue({ _sum: { amount: null } });
     mockGalleryCount.mockResolvedValue(0);

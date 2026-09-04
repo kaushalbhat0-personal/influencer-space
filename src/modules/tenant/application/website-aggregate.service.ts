@@ -11,6 +11,10 @@ import { describeHeroMedia, resolveHeroMediaForRuntime } from "@/lib/media/hero-
 import { normalizeCommerceMode } from "@/config/commerce/commerce-mode";
 import { resolveWhatsAppDestination } from "@/lib/commerce/whatsapp";
 import type { WebsiteAggregate } from "@/types/snapshot";
+import { cache as reactCache } from "react";
+
+const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  typeof reactCache === "function" ? reactCache : ((fn: unknown) => fn as never);
 
 export interface AggregateDiagnostics {
   /** Asset ids rejected by the safe resolver (empty/malformed), with origin. */
@@ -203,12 +207,16 @@ export class WebsiteAggregateService {
         ...(homepage ? { take: this.limit("contentFeed") } : {}),
       })),
       safe("offerings", () => prisma.offering.findMany({
-        where: { tenantId, status: "published" },
+        where: { tenantId, status: "published", type: { in: ["course", "coaching"] } },
         orderBy: { createdAt: "desc" },
         select: { id: true, type: true, title: true, description: true, price: true, metadata: true, bookable: true },
         ...(homepage ? { take: this.limit("courses") + this.limit("services") } : {}),
       })),
     ]);
+
+    // P1: constrain openBookings to bookable offering IDs (or standalone bookings) — avoids broad scan
+    const bookableOfferingIds = new Set((offerings ?? []).filter((o: any) => o.bookable).map((o: any) => o.id));
+    const filteredOpenBookings = (openBookings as any[])?.filter((b: any) => !b.offeringId || bookableOfferingIds.has(b.offeringId)) ?? openBookings;
 
     // RCCF-INTEGRATION-01 Phase 7: creator-verified declared facts (achievements,
     // mission, languages, refund policy, community, newsletter) flow to the
@@ -405,7 +413,7 @@ export class WebsiteAggregateService {
             featured: (meta?.featured as boolean | undefined) ?? false,
             // RCCF-67.5 — explicit bookable state + its future open slots.
             bookable: o.bookable ?? false,
-            bookableSlots: (openBookings ?? [])
+            bookableSlots: (filteredOpenBookings ?? [])
               .filter((b) => b.offeringId === o.id)
               .map((b) => ({
                 id: b.id,
@@ -422,7 +430,7 @@ export class WebsiteAggregateService {
       // services[].bookableSlots. Only the public-facing subset is exposed:
       // title/description/price/duration/slot/approval-required. Customer data,
       // notes and approval internals stay out.
-      bookings: (openBookings ?? [])
+      bookings: (filteredOpenBookings ?? [])
         .filter((b) => !b.offeringId)
         .map((b) => ({
           id: b.id,
@@ -580,6 +588,64 @@ export class WebsiteAggregateService {
       siteSocialLinks: await use("siteSocialLinks", "siteSocialLinks", () => SettingsService.getSettingByKey(tenantId, "site_social_links")),
       footerConfig: await use("footerConfig", "footerConfig", () => SettingsService.getSettingByKey(tenantId, "footer_config")),
     };
+  }
+
+  // P0: request-level dedup — shared reads reused across Dashboard/Knowledge/Health within same request
+  getSharedReads = requestCache(async (tenantId: string): Promise<SharedReads> => {
+    return this.loadSharedReads(tenantId, null, null);
+  });
+
+  // P0: booking total count dedup (dashboard + knowledge)
+  getBookingCount = requestCache(async (tenantId: string): Promise<number> => {
+    return prisma.booking.count({ where: { tenantId } });
+  });
+
+  // P0: tenant subdomain/customDomain dedup
+  getTenantMeta = requestCache(async (tenantId: string) => {
+    return prisma.tenant.findUnique({ where: { id: tenantId }, select: { subdomain: true, customDomain: true } });
+  });
+
+  // P0: website id/theme dedup
+  getWebsite = requestCache(async (tenantId: string) => {
+    return prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } });
+  });
+
+  // P1: order counts dedup — same metric across dashboard/health/goal
+  getOrderCountCompleted = requestCache(async (tenantId: string) => {
+    return prisma.productOrder.count({ where: { tenantId, status: "COMPLETED" } });
+  });
+
+  getOrderCountPaidCompleted = requestCache(async (tenantId: string) => {
+    return prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } });
+  });
+
+  // P1: product counts consolidated — 3× count → 1× filtered aggregate
+  getProductCounts = requestCache(async (tenantId: string): Promise<{ total: number; published: number; active: number }> => {
+    try {
+      const result = await prisma.$queryRaw<{ total: number; published: number; active: number }[]>`
+        SELECT
+          COUNT(*)::int as total,
+          COUNT(*) FILTER (WHERE status = 'PUBLISHED')::int as published,
+          COUNT(*) FILTER (WHERE "isActive" = true)::int as active
+        FROM "Product" WHERE "tenantId" = ${tenantId}::uuid
+      `;
+      const row = result[0] as any;
+      return { total: Number(row.total), published: Number(row.published), active: Number(row.active) };
+    } catch {
+      // Fallback for test env where $queryRaw not mocked — preserve semantics
+      const [total, published, active] = await Promise.all([
+        prisma.product.count({ where: { tenantId } }),
+        prisma.product.count({ where: { tenantId, status: "PUBLISHED" } }),
+        prisma.product.count({ where: { tenantId, isActive: true } }),
+      ]);
+      return { total, published, active };
+    }
+  });
+
+  // P0: build with preloaded shared reads to avoid duplicate loadSharedReads
+  async buildWithSharedReads(tenantId: string, sharedReads: SharedReads): Promise<WebsiteAggregate> {
+    const { aggregate } = await this.buildWithCollector(tenantId, null, undefined, sharedReads);
+    return aggregate;
   }
 
   async buildWithTrace(tenantId: string): Promise<WebsiteAggregate> {

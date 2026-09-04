@@ -21,19 +21,19 @@ const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
 
 export class KnowledgeAggregateSource {
   async buildSnapshot(tenantId: string): Promise<KnowledgeSnapshot> {
-    const [aggregate, tenant, accountRecord, influencerRecord, completionRecord, website, bookingCount] =
+    // P0: reuse request-cached shared reads for knowledge_completion / website / booking
+    const sharedReadsPromise = websiteAggregateService.getSharedReads(tenantId).catch(() => null);
+    const [aggregate, tenant, accountRecord, influencerRecord, sharedReads, bookingCount] =
       await Promise.all([
         safe(() => websiteAggregateService.build(tenantId), null),
-        safe(() => prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { subdomain: true, customDomain: true },
-        }), null),
+        safe(() => websiteAggregateService.getTenantMeta(tenantId), null),
         safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "account_data" } } }), null),
         safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "influencer_data" } } }), null),
-        safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "knowledge_completion" } } }), null),
-        safe(() => prisma.website.findUnique({ where: { tenantId }, select: { themeColors: true } }), null),
-        safe(() => prisma.booking.count({ where: { tenantId } }), 0),
+        safe(() => sharedReadsPromise, null),
+        safe(() => websiteAggregateService.getBookingCount(tenantId), 0),
       ]);
+    const completionRecord = sharedReads?.knowledgeCompletion ? { value: sharedReads.knowledgeCompletion } as any : null;
+    const website = sharedReads?.website ? { themeColors: (sharedReads.website as any).themeColors } as any : null;
 
     return this.toSnapshot(aggregate, {
       subdomain: tenant?.subdomain ?? null,

@@ -3,6 +3,9 @@ import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { captureError } from "@/lib/observability/error-tracker";
 import { cache as reactCache } from "react";
 import type { DashboardMetrics, DashboardActivity, QuickStartStep } from "./types";
+import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
+import { SettingsService } from "@/services/settings.service";
+import { publishSnapshotService } from "@/lib/publishing/snapshot";
 
 // RCCF-LAUNCH-01: request-scoped memoization (same convention as the Runtime
 // Context builder / health engine) — getMetrics is read by the dashboard page
@@ -21,12 +24,11 @@ async function safeMetric<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 
 export const dashboardService = {
   getMetrics: requestCache(async (tenantId: string): Promise<DashboardMetrics> => {
-    const [productCounts, revenue, gallery, links, messages, publishStatus, tenant, testimonialSetting, seoSetting, website, bookings, offerings, orders] = await Promise.all([
-      Promise.all([
-        prisma.product.count({ where: { tenantId } }),
-        prisma.product.count({ where: { tenantId, status: "PUBLISHED" } }),
-        prisma.product.count({ where: { tenantId, isActive: true } }),
-      ]),
+    // P0: reuse request-cached Settings/tenant/website/booking reads (same keys as SharedReads)
+    // Keeps tenant isolation — cache key is tenantId (+ key for settings)
+    // P1: 3× product.count → 1× filtered aggregate (preserves total/published/active semantics)
+    const [productCounts, revenue, gallery, links, messages, publishStatus, tenant, testimonialValue, seoValue, website, bookings, offerings, orders] = await Promise.all([
+      websiteAggregateService.getProductCounts(tenantId).then(r => [r.total, r.published, r.active] as [number, number, number]),
       prisma.productOrder.aggregate({
         // RCCF-72.18D.6.4 — dead "PAID" predicate removed (D.5.2-A established
         // COMPLETED as the only written paid state; no writer creates PAID).
@@ -40,14 +42,17 @@ export const dashboardService = {
         where: { website: { tenantId } },
         select: { state: true, liveVersion: true, publishedAt: true },
       }),
-      prisma.tenant.findUnique({ where: { id: tenantId }, select: { subdomain: true, customDomain: true } }),
-      prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } }, select: { id: true, value: true } }),
-      prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } }, select: { id: true } }),
-      prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } }),
-      safeMetric(() => prisma.booking.count({ where: { tenantId } }), 0),
+      websiteAggregateService.getTenantMeta(tenantId).catch(() => prisma.tenant.findUnique({ where: { id: tenantId }, select: { subdomain: true, customDomain: true } })),
+      SettingsService.getSettingByKey(tenantId, "testimonials"),
+      SettingsService.getSettingByKey(tenantId, "seo"),
+      websiteAggregateService.getWebsite(tenantId).catch(() => prisma.website.findUnique({ where: { tenantId }, select: { id: true, themePackageId: true } })),
+      safeMetric(() => websiteAggregateService.getBookingCount(tenantId), 0),
       safeMetric(() => prisma.offering.count({ where: { tenantId } }), 0),
-      prisma.productOrder.count({ where: { tenantId, status: "COMPLETED" } }),
+      websiteAggregateService.getOrderCountCompleted(tenantId),
     ]);
+    // Adapt cached SettingsService values (which return `value` directly) to dashboard's expected shape
+    const testimonialSetting = testimonialValue ? ({ id: "testimonials", value: testimonialValue } as any) : null;
+    const seoSetting = seoValue ? ({ id: "seo", value: seoValue } as any) : null;
     const [totalProducts, publishedCount, activeProductCount] = productCounts as [number, number, number];
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 
@@ -59,9 +64,11 @@ export const dashboardService = {
     const completedItems = [hasProducts, hasGallery, hasCustomDomain, hasTestimonials].filter(Boolean).length;
     const profileCompletion = Math.round((completedItems / 4) * 100);
 
+    // P2: recent publish metadata is immutable per version — cache with publish tags
     const recentVersions: Array<{ version: number; createdAt: string }> = [];
     if (website && publishStatus?.liveVersion) {
-      const snapshots = await prisma.publishSnapshot.findMany({
+      const snaps = await publishSnapshotService.listCached(website.id, tenantId).catch(() => null);
+      const snapshots = snaps ?? await prisma.publishSnapshot.findMany({
         where: { websiteId: website.id, state: "live" },
         select: { version: true, createdAt: true },
         orderBy: { version: "desc" },

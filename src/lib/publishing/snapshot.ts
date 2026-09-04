@@ -2,6 +2,17 @@
 import { prisma } from "@/lib/prisma";
 import type { BuilderPage } from "@/lib/builder/types";
 
+// P2: try to use Next server cache when available, fallback to direct call in tests
+function getUnstableCache(): typeof import("next/cache").unstable_cache | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require("next/cache") as { unstable_cache?: typeof import("next/cache").unstable_cache };
+    return typeof mod.unstable_cache === "function" ? mod.unstable_cache : null;
+  } catch {
+    return null;
+  }
+}
+
 export type PublishSnapshotData = SnapshotData;
 
 export interface ArtifactSnapshotRecord {
@@ -98,6 +109,26 @@ export class PublishSnapshotService {
     }
   }
 
+  // P2: persistent cache for live snapshot — immutable until next publish, tenant-isolated
+  async getLiveCached(websiteId: string, tenantId: string): Promise<{ version: number; data: SnapshotData } | null> {
+    const uc = getUnstableCache();
+    if (!uc) return this.getLive(websiteId);
+    const cached = uc(
+      async (wid: string): Promise<{ version: number; data: SnapshotData } | null> => {
+        const status = await prisma.publishStatus.findUnique({ where: { websiteId: wid } });
+        if (!status?.liveVersion) return null;
+        const snap = await prisma.publishSnapshot.findUnique({
+          where: { websiteId_version: { websiteId: wid, version: status.liveVersion } },
+        });
+        if (!snap) return null;
+        return { version: status.liveVersion, data: snap.snapshot as unknown as SnapshotData };
+      },
+      ["publish-live", websiteId],
+      { tags: [`publish:${tenantId}`, `publish:${websiteId}`, `tenant:${tenantId}`] },
+    );
+    return cached(websiteId);
+  }
+
   async list(websiteId: string): Promise<{ version: number; state: string; createdAt: Date }[]> {
     const snaps = await prisma.publishSnapshot.findMany({
       where: { websiteId },
@@ -106,6 +137,26 @@ export class PublishSnapshotService {
       take: 50,
     });
     return snaps;
+  }
+
+  // P2: cached recent publish metadata (for dashboard Version History) — same tags as live
+  async listCached(websiteId: string, tenantId: string): Promise<{ version: number; state: string; createdAt: Date }[]> {
+    const uc = getUnstableCache();
+    if (!uc) return this.list(websiteId);
+    const cached = uc(
+      async (wid: string) => {
+        const snaps = await prisma.publishSnapshot.findMany({
+          where: { websiteId: wid },
+          select: { version: true, state: true, createdAt: true },
+          orderBy: { version: "desc" },
+          take: 10,
+        });
+        return snaps;
+      },
+      ["publish-list", websiteId],
+      { tags: [`publish:${tenantId}`, `publish:${websiteId}`, `tenant:${tenantId}`] },
+    );
+    return cached(websiteId);
   }
 }
 

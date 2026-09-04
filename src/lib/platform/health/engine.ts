@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { cache as reactCache } from "react";
+import { websiteAggregateService } from "@/modules/tenant/application/website-aggregate.service";
 
 // VALIDATION-05: request-scoped memoization — the same convention as the
 // Runtime Context builder. evaluate() is called by the tenant page, dashboard,
@@ -41,6 +42,8 @@ export class WebsiteHealthEngine {
   });
 
   private async runChecks(tenantId: string): Promise<HealthCheck[]> {
+    // P0: reuse request-cached SharedReads for brand/hero/links/seo/website/testimonials etc.
+    const sharedReads = await websiteAggregateService.getSharedReads(tenantId).catch(() => null);
     const [
       brand,
       productCount,
@@ -56,7 +59,7 @@ export class WebsiteHealthEngine {
       publishStatus,
       orderCount,
     ] = await Promise.all([
-      prisma.brand.findFirst({
+      sharedReads?.brand ? Promise.resolve(sharedReads.brand as any) : prisma.brand.findFirst({
         where: { website: { tenantId } },
         select: { name: true, tagline: true, bio: true, avatarUrl: true },
       }),
@@ -64,14 +67,20 @@ export class WebsiteHealthEngine {
       prisma.galleryImage.count({ where: { tenantId, status: "PUBLISHED", isActive: true } }),
       prisma.affiliateLink.count({ where: { tenantId, isActive: true } }),
       prisma.timelineEvent.count({ where: { tenantId } }),
-      prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } } }),
-      prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "faq" } } }),
+      sharedReads?.testimonialsData !== undefined && sharedReads?.testimonialsData !== null
+        ? Promise.resolve({ value: sharedReads.testimonialsData } as any)
+        : prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } } }),
+      sharedReads?.faqData !== undefined && sharedReads?.faqData !== null
+        ? Promise.resolve({ value: sharedReads.faqData } as any)
+        : prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "faq" } } }),
       prisma.contentFeedItem.count({ where: { tenantId, hidden: false } }),
       prisma.game.count({ where: { tenantId, isActive: true } }),
-      prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
-      prisma.website.findUnique({ where: { tenantId }, select: { id: true, themeColors: true } }),
+      sharedReads?.seoData !== undefined && sharedReads?.seoData !== null
+        ? Promise.resolve({ value: sharedReads.seoData } as any)
+        : prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
+      sharedReads?.website ? Promise.resolve(sharedReads.website as any) : prisma.website.findUnique({ where: { tenantId }, select: { id: true, themeColors: true } }),
       prisma.publishStatus.findFirst({ where: { website: { tenantId } } }),
-      prisma.productOrder.count({ where: { tenantId, status: { in: ["PAID", "COMPLETED"] } } }),
+      websiteAggregateService.getOrderCountPaidCompleted(tenantId),
     ]);
 
     const testimonialCount = testimonialSetting?.value && Array.isArray(testimonialSetting.value)
