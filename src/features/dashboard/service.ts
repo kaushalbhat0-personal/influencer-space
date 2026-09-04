@@ -77,7 +77,7 @@ export const dashboardService = {
         take: 10,
       });
       for (const snap of snapshots) {
-        recentVersions.push({ version: snap.version, createdAt: snap.createdAt.toISOString() });
+        recentVersions.push({ version: snap.version, createdAt: new Date(snap.createdAt).toISOString() });
       }
     }
 
