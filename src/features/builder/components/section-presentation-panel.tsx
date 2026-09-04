@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { builderStore } from "@/lib/builder/store";
 import { builderEvents } from "@/lib/builder/events";
 import type { SectionPresentation } from "@/modules/section-presentation";
+import { RegistryFieldInspector } from "./registry-field-inspector";
 
 const inputCls = "admin-input px-2.5 py-1.5 text-xs";
 
@@ -44,7 +45,9 @@ export function SectionPresentationPanel() {
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
+    <>
+      <RegistryFieldInspector />
+      <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Section Presentation</p>
@@ -91,5 +94,6 @@ export function SectionPresentationPanel() {
       </div>
       <p className="mt-2 text-[10px] text-zinc-600">Changes preview live in the canvas and appear after you publish. They never affect how your store is analysed.</p>
     </div>
+    </>
   );
 }

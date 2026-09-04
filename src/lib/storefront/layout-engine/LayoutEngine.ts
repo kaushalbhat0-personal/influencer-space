@@ -6,6 +6,8 @@
 import type { PublishedSnapshot, WebsiteAggregate } from "@/types/snapshot";
 import type { StorefrontDocument } from "@/types/storefront";
 import { resolveModuleId, isDeprecatedSection } from "@/lib/registry/resolve-module";
+import { componentRegistry } from "@/lib/registry/components";
+import { defaultPropsFromFields } from "@/lib/registry/components/fields";
 import {
   resolveSectionPresentation,
   sectionHasContent,
@@ -112,7 +114,7 @@ export class LayoutEngine {
       "--radius-2xl": px(2),
       "--radius-3xl": px(3),
       "--radius-full": "9999px",
-      "--section-spacing": layoutDensity === "compact" ? "2rem" : layoutDensity === "spacious" ? "5rem" : "3rem",
+      "--section-spacing": layoutDensity === "compact" ? "1.75rem" : layoutDensity === "spacious" ? "5.5rem" : "3.5rem",
     };
   }
 
@@ -232,6 +234,50 @@ export class LayoutEngine {
     content: WebsiteAggregate,
   ): Record<string, unknown> {
     const config = { ...layoutConfig };
+    // RCCF-VISUAL-02B-01: Puck-style contract — fields drive defaults + resolveData drives data.
+    // Preserve legacy switch for unmigrated components; migrated ones delegate to their registry entry.
+    const def = componentRegistry.get(moduleId);
+    if (def?.fields && def.fields.length > 0) {
+      const defaults = defaultPropsFromFields(def.fields);
+      for (const [k, v] of Object.entries(defaults)) {
+        if (config[k] === undefined) config[k as string] = v;
+      }
+    }
+    // If the registry declares a pure resolveData, use it as the single source for that type's data.
+    // This keeps PublishedSnapshot → LayoutEngine → renderer intact while removing duplicated switch logic
+    // for the migrated types (products.*, gallery.* are proof). Legacy fallback remains for others.
+    if (def?.resolveData) {
+      try {
+        const delegated = def.resolveData({ content, config });
+        const tracePrefixDelegated = "[RuntimeTrace] LayoutEngine.composeSectionConfig";
+        Object.assign(config, delegated);
+        debugLog(tracePrefixDelegated, moduleId, { delegatedKeys: Object.keys(delegated), via: "registry.resolveData" });
+      } catch (e) {
+        debugLog("[RuntimeTrace] LayoutEngine.resolveData error", moduleId, String(e));
+      }
+      // Delegated: skip legacy per-type data branches; continue to shared presentation/hasContent
+      {
+
+        // Skip legacy per-type data branches; continue to presentation composition
+        const presentation = (layoutConfig as Record<string, unknown>)?.["presentation"] as SectionPresentation | undefined;
+        if (presentation) {
+          const resolved = resolveSectionPresentation(presentation, (config.resolvedTitle ?? config.title) as string | null, moduleId);
+          if (resolved.title) { config.resolvedTitle = resolved.title; config.title = resolved.title; }
+          if (resolved.description) config.description = resolved.description;
+          if (resolved.hideTitle) config.hideTitle = true;
+          config.visibilityMode = resolved.visibilityMode;
+        } else {
+          const defaults = resolveSectionPresentation(undefined, (config.resolvedTitle ?? config.title) as string | null, moduleId);
+          config.visibilityMode = defaults.visibilityMode;
+        }
+        if (moduleId.startsWith("embed.")) config.hasContent = Boolean(config.url);
+        else if (moduleId.startsWith("social.")) config.hasContent = Boolean((config as Record<string, unknown>).serverId || (config as Record<string, unknown>).username);
+        else if (Array.isArray(config.resolvedData)) config.hasContent = (config.resolvedData as unknown[]).length > 0;
+        else config.hasContent = sectionHasContent(baseOf(moduleId), content as unknown as Record<string, unknown>);
+        return config;
+      }
+    }
+
     const tracePrefix = "[RuntimeTrace] LayoutEngine.composeSectionConfig";
 
     if (moduleId.startsWith("hero.")) {

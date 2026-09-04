@@ -1,14 +1,39 @@
 import { componentRegistry } from "./registry";
 import type { ComponentDefinition } from "./types";
+import type { RegistryFieldDefinition } from "./fields";
 import {
-  HeroRenderer, FooterRenderer,
-  GalleryRenderer, ProductsRenderer, TimelineRenderer,
-  LinksRenderer, TestimonialsRenderer, FaqRenderer,
+  HeroRenderer, HeroSplitRenderer, FooterRenderer,
+  GalleryRenderer, GalleryBentoRenderer, ProductsRenderer, TimelineRenderer,
+  LinksRenderer, TestimonialsRenderer, TestimonialsMarqueeRenderer, FaqRenderer,
   ContactRenderer, NewsletterRenderer,
-  CoursesRenderer, ServicesRenderer, SpotifyRenderer, YouTubeRenderer,
+  CoursesRenderer, ServicesRenderer, ServicesBentoRenderer, SpotifyRenderer, YouTubeRenderer,
   DiscordRenderer, InstagramRenderer,
   GamesRenderer, ContentFeedRenderer, AffiliateLinksRenderer, BookingsRenderer,
 } from "./renderers";
+
+// ── RCCF-VISUAL-02B-01: Puck-style proof — 2 representatives ─
+// Fields are serializable (no functions/icons), capability-aware via requiresCapability,
+// and single-source for Builder inspector + LayoutEngine defaultProps.
+// resolveData is pure (content + config → resolvedData) and keeps the
+// PublishedSnapshot → LayoutEngine → renderer path intact.
+
+const PRODUCTS_GRID_FIELDS: RegistryFieldDefinition[] = [
+  { name: "columns", label: "Columns", type: "number", group: "layout", defaultValue: 3, validation: { min: 1, max: 6 } },
+  { name: "title", label: "Section title", type: "text", group: "content", defaultValue: "", placeholder: "Leave empty for auto-title" },
+  { name: "showViewAll", label: "Show View All link", type: "boolean", group: "layout", defaultValue: true },
+  // Capability-aware premium field — demonstrates gating via capabilityService (advanced_builder)
+  { name: "highlightFeatured", label: "Highlight featured", type: "boolean", group: "layout", defaultValue: false, requiresCapability: "advanced_builder" },
+  // Non-persisted toggle for staggered animation control (maps to supportsAnimation)
+  { name: "animation", label: "Entrance animation", type: "select", group: "animation", defaultValue: "stagger", options: [{ label: "None", value: "none" }, { label: "Stagger", value: "stagger" }] },
+];
+
+const GALLERY_GRID_FIELDS: RegistryFieldDefinition[] = [
+  { name: "columns", label: "Columns", type: "number", group: "layout", defaultValue: 3, validation: { min: 1, max: 6 } },
+  { name: "layout", label: "Layout style", type: "select", group: "layout", defaultValue: "grid", options: [{ label: "Grid", value: "grid" }, { label: "Masonry", value: "masonry" }] },
+  { name: "lightbox", label: "Lightbox", type: "boolean", group: "layout", defaultValue: true },
+  // Media-adjacent capability demo — premium gallery density
+  { name: "density", label: "Density (premium)", type: "select", group: "layout", defaultValue: "comfortable", options: [{ label: "Comfortable", value: "comfortable" }, { label: "Compact", value: "compact" }], requiresCapability: "advanced_builder" },
+];
 
 const BUILTIN_COMPONENTS: ComponentDefinition[] = [
   // ── Heroes ───────────────────────────────────────────────
@@ -56,6 +81,17 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     defaultProps: { title: "Learn Something New", subtitle: "", cta: "Start Learning" },
     renderer: HeroRenderer,
   },
+  {
+    id: "hero.split", type: "hero", name: "Hero Split", category: "hero",
+    icon: "Columns2", description: "60/40 split hero — text + media side-by-side with stats/trust row",
+    version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: true,
+    animations: [{ id: "fade", name: "Fade In" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Welcome", subtitle: "", cta: "Get Started", ctaLink: "#", showStats: true },
+    renderer: HeroSplitRenderer,
+  },
 
   // ── Gallery ──────────────────────────────────────────────
   {
@@ -66,8 +102,33 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
-    defaultProps: { layout: "grid", columns: 3, images: [] },
+    defaultProps: { layout: "grid", columns: 3, lightbox: true, density: "comfortable" },
+    // RCCF-VISUAL-02B-01: fields + resolveData proof — same contract drives Builder + rendering
+    fields: GALLERY_GRID_FIELDS,
+    resolveData: ({ content }) => {
+      const imageEntries = content.gallery.map((g) => ({
+        id: g.id,
+        url: g.imageUrl,
+        caption: g.title || g.description || "",
+        description: g.description,
+        videoUrl: g.videoUrl,
+        altText: g.altText,
+        isVideo: g.mediaType === "video",
+      }));
+      return { resolvedData: imageEntries, resolvedTitle: "Gallery" };
+    },
     renderer: GalleryRenderer,
+  },
+  {
+    id: "gallery.bento", type: "gallery", name: "Gallery Bento", category: "gallery",
+    icon: "LayoutGrid", description: "Asymmetric bento — featured image + supporting tiles",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [{ id: "stagger", name: "Stagger" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { layout: "bento", images: [] },
+    renderer: GalleryBentoRenderer,
   },
   {
     id: "products.grid", type: "products", name: "Products", category: "products",
@@ -77,7 +138,24 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     animations: [{ id: "stagger", name: "Stagger" }],
     responsive: { mobile: true, tablet: true, desktop: true },
     validation: { schema: {} },
-    defaultProps: { layout: "grid", columns: 3 },
+    defaultProps: { layout: "grid", columns: 3, title: "", showViewAll: true, highlightFeatured: false, animation: "stagger" },
+    // RCCF-VISUAL-02B-01: fields + resolveData proof
+    fields: PRODUCTS_GRID_FIELDS,
+    resolveData: ({ content }) => {
+      const productEntries = content.products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        imageUrl: p.imageUrl,
+        slug: p.slug,
+        isFeatured: p.isFeatured,
+        commerceMode: p.commerceMode,
+        whatsappUrl: p.whatsappUrl,
+      }));
+      const resolvedTitle = content.identity.name ? `${content.identity.name}'s Products` : "Products";
+      return { resolvedData: productEntries, resolvedTitle };
+    },
     renderer: ProductsRenderer,
   },
   {
@@ -133,6 +211,17 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     renderer: TestimonialsRenderer,
   },
   {
+    id: "testimonials.marquee", type: "testimonials", name: "Testimonials Marquee", category: "testimonials",
+    icon: "GalleryHorizontal", description: "Horizontal marquee — auto-scroll, pause on hover, motion-gated",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [{ id: "marquee", name: "Marquee" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "What People Say", speed: "normal" },
+    renderer: TestimonialsMarqueeRenderer,
+  },
+  {
     id: "faq.default", type: "faq", name: "FAQ", category: "faq",
     icon: "HelpCircle", description: "Frequently asked questions accordion",
     version: "1.0.0", supportsAI: true, supportsTheme: true, supportsAnimation: false,
@@ -182,6 +271,17 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "Services" },
     renderer: ServicesRenderer,
+  },
+  {
+    id: "services.bento", type: "services", name: "Services Bento", category: "services",
+    icon: "LayoutGrid", description: "Bento — 1 featured + supporting cards",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: false,
+    animations: [{ id: "stagger", name: "Stagger" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Services" },
+    renderer: ServicesBentoRenderer,
   },
   {
     id: "bookings.default", type: "bookings", name: "Bookings", category: "bookings",

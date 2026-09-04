@@ -1,4 +1,18 @@
 import type { ComponentType } from "react";
+import type { RegistryFieldDefinition } from "./fields";
+import type { WebsiteAggregate } from "@/types/snapshot";
+
+/**
+ * Context passed to a component's resolveData — pure, serializable content.
+ * LayoutEngine is the only caller; no DB access allowed here.
+ */
+export interface ResolveDataContext {
+  content: WebsiteAggregate;
+  /** Current slot config (presentation props) — resolveData may read columns, title override etc. */
+  config: Record<string, unknown>;
+}
+
+export type ResolveDataFn = (ctx: ResolveDataContext) => Record<string, unknown>;
 
 export type ComponentCategory =
   | "hero" | "gallery" | "products" | "timeline" | "footer"
@@ -67,6 +81,12 @@ export interface ComponentDefinition {
   settingsPanel?: ComponentType<{ props: Record<string, unknown>; onChange: (props: Record<string, unknown>) => void }>;
   /** Builder toolbar actions (duplicate, delete, move up/down) */
   toolbarActions?: ComponentType<{ componentId: string }>;
+
+  // ── RCCF-VISUAL-02B-01: Puck-style contract ─────────────
+  /** Editable schema — drives Builder inspector + defaultProps + validation. Serialized & capability-aware. */
+  fields?: RegistryFieldDefinition[];
+  /** Optional server-pure data resolver: merges live aggregate → renderer props (resolvedData, resolvedTitle). */
+  resolveData?: ResolveDataFn;
 
   // ── Serialization ──────────────────────────────────────
   serializer?: (props: Record<string, unknown>) => Record<string, unknown>;

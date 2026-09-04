@@ -18,8 +18,9 @@ export const PRESENTATION_DEFAULTS: Record<string, Record<string, unknown>> = {
   "hero.gaming": { showLiveBadge: true, animation: "fade" },
   "hero.fitness": { animation: "fade" },
   "hero.education": { animation: "fade" },
-  "gallery.grid": { columns: 3, layout: "grid", lightbox: true, animation: "stagger" },
-  "products.grid": { columns: 3, animation: "stagger" },
+  // RCCF-VISUAL-02B-01: proof components — single-sourced via registry fields; PRESENTATION_DEFAULTS kept in sync for legacy insertion path
+  "gallery.grid": { columns: 3, layout: "grid", lightbox: true, density: "comfortable", animation: "stagger" },
+  "products.grid": { columns: 3, title: "", showViewAll: true, highlightFeatured: false, animation: "stagger" },
   "timeline.default": { animation: "slide" },
   "links.default": { layout: "horizontal" },
   "footer.default": { minimal: false },
@@ -48,6 +49,8 @@ const GLOBAL_PRESENTATION_KEYS = new Set([
   "showCalendar", "showHours", "showDescriptions", "showStats",
   "showSocialLinks", "showNewsletter", "showBackToTop", "minimal", "sorting",
   "showFilters", "showCaptions", "icon", "compact",
+  // RCCF-VISUAL-02B-01: registry-field keys for proof components (wire-safe, presentation-only)
+  "title", "highlightFeatured",
 ]);
 
 /** Whether a config key is a presentation key for the given component. */

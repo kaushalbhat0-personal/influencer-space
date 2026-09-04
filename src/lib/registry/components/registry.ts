@@ -48,6 +48,19 @@ export class ComponentRegistry {
   get size(): number {
     return this.entries.size;
   }
+
+  /** RCCF-VISUAL-02B-01: fields for a component (wire-safe, serializable). */
+  getFields(id: string): import("./fields").RegistryFieldDefinition[] | undefined {
+    return this.get(id)?.fields;
+  }
+
+  /** RCCF-VISUAL-02B-01: defaultProps derived from fields (single source). */
+  getFieldDefaults(id: string): Record<string, unknown> | undefined {
+    const fields = this.getFields(id);
+    if (!fields) return undefined;
+    const { defaultPropsFromFields } = require("./fields") as typeof import("./fields");
+    return defaultPropsFromFields(fields);
+  }
 }
 
 export const componentRegistry = new ComponentRegistry();
