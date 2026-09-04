@@ -25,7 +25,7 @@ export function GlassCard({
       whileHover={{ y: -6, scale: 1.01 }}
       whileTap={{ scale: 0.97 }}
       className={cn(
-        "rounded-2xl bg-white/10 p-4 backdrop-blur-md backdrop-saturate-150 sm:p-6",
+        "rounded-[var(--radius-card-elevated)] bg-white/10 p-4 backdrop-blur-md backdrop-saturate-150 sm:p-6",
         "shadow-[0_8px_32px_rgba(0,0,0,0.12)]",
         "border border-white/20",
         withGoldBorder && "border-amber-400/50 shadow-amber-400/20",

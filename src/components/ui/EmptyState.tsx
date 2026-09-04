@@ -10,7 +10,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, icon: Icon = PackageOpen, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] px-6 py-16 text-center">
+    <div className="platform-card-contextual flex flex-col items-center justify-center px-6 py-16 text-center">
       <div className="mb-4 rounded-full bg-[var(--surface-hover)] p-4">
         <Icon className="h-8 w-8 text-[var(--text-muted)]" aria-hidden="true" />
       </div>

@@ -75,7 +75,7 @@ export function AppearanceManager({
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
       <div className="min-w-0 flex-1 space-y-6">
         {/* ─── Color Presets ─── */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Color Presets</h2>
           <p className="mt-1 text-xs text-zinc-500">Pick a preset or customize individual colors below.</p>
           <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
@@ -86,7 +86,7 @@ export function AppearanceManager({
                   key={preset.label}
                   onClick={() => applyChange({ primary: preset.primary, secondary: preset.secondary, accent: preset.accent })}
                   disabled={pending}
-                  className={`flex flex-col items-center gap-2 rounded-lg border p-3 transition-all ${
+                  className={`flex flex-col items-center gap-2 rounded-[var(--radius-control)] border p-3 transition-all ${
                     isActive
                       ? "border-[var(--border-strong)] bg-[var(--surface-hover)] ring-1 ring-[var(--border)]"
                       : "border-[var(--border)] bg-[var(--surface-card)] hover:border-[var(--border-strong)]"
@@ -104,7 +104,7 @@ export function AppearanceManager({
         </div>
 
         {/* ─── Custom Colors ─── */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Custom Colors</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {(["primary", "secondary", "accent"] as const).map((key) => (
@@ -119,7 +119,7 @@ export function AppearanceManager({
                     value={theme[key]}
                     onChange={(e) => applyChange({ [key]: e.target.value })}
                     disabled={pending}
-                    className="h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface-input)] p-0.5"
+                    className="h-10 w-full cursor-pointer rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] p-0.5"
                   />
                 </div>
               </div>
@@ -128,7 +128,7 @@ export function AppearanceManager({
         </div>
 
         {/* ─── Font ─── */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Typography</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {FONTS.map((f) => (
@@ -136,7 +136,7 @@ export function AppearanceManager({
                 key={f.value}
                 onClick={() => applyChange({ font: f.value })}
                 disabled={pending}
-                className={`rounded-lg border px-4 py-2 text-xs font-medium transition-all ${
+                className={`rounded-[var(--radius-control)] border px-4 py-2 text-xs font-medium transition-all ${
                   theme.font === f.value
                     ? "border-[var(--border-strong)] bg-[var(--surface-hover)] text-white"
                     : "border-[var(--border)] bg-[var(--surface-card)] text-zinc-500 hover:border-[var(--border-strong)] hover:text-zinc-300"
@@ -149,7 +149,7 @@ export function AppearanceManager({
         </div>
 
         {/* ─── Border Radius ─── */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Border Radius ({theme.borderRadius}px)</h2>
           <input
             type="range"
@@ -163,7 +163,7 @@ export function AppearanceManager({
         </div>
 
         {/* ─── Layout Density ─── */}
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
           <h2 className="text-sm font-semibold text-zinc-300">Layout Density</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {(["compact", "comfortable", "spacious"] as const).map((d) => (
@@ -171,7 +171,7 @@ export function AppearanceManager({
                 key={d}
                 onClick={() => applyChange({ layoutDensity: d })}
                 disabled={pending}
-                className={`rounded-lg border px-4 py-2 text-xs font-medium capitalize transition-all ${
+                className={`rounded-[var(--radius-control)] border px-4 py-2 text-xs font-medium capitalize transition-all ${
                   theme.layoutDensity === d
                     ? "border-[var(--border-strong)] bg-[var(--surface-hover)] text-white"
                     : "border-[var(--border)] bg-[var(--surface-card)] text-zinc-500 hover:border-[var(--border-strong)] hover:text-zinc-300"
@@ -204,11 +204,11 @@ export function AppearanceManager({
             <p className="mt-1 text-xs text-zinc-500">Your tagline appears here</p>
           </div>
           <div className="space-y-2">
-            <div className="h-10 rounded-lg border border-[var(--border)] bg-[var(--surface-card)]" style={{ borderRadius: `${theme.borderRadius}px` }} />
-            <div className="h-10 rounded-lg border border-[var(--border)] bg-[var(--surface-card)]" style={{ borderRadius: `${theme.borderRadius}px` }} />
+            <div className="h-10 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)]" style={{ borderRadius: `${theme.borderRadius}px` }} />
+            <div className="h-10 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)]" style={{ borderRadius: `${theme.borderRadius}px` }} />
           </div>
           <button
-            className="w-full rounded-lg py-2.5 text-sm font-semibold text-black"
+            className="w-full rounded-[var(--radius-control)] py-2.5 text-sm font-semibold text-black"
             style={{ backgroundColor: theme.accent, borderRadius: `${theme.borderRadius}px` }}
           >
             Accent Button

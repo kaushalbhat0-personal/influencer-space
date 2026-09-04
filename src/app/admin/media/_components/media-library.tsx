@@ -224,12 +224,12 @@ export function MediaLibrary() {
             placeholder="Search assets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
+            className="flex-1 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
           />
           <select
             value={mimeFilter}
             onChange={(e) => setMimeFilter(e.target.value)}
-            className="rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none"
+            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none"
           >
             <option value="">All types</option>
             <option value="image">Images</option>
@@ -238,7 +238,7 @@ export function MediaLibrary() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "createdAt" | "filename" | "size")}
-            className="rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none"
+            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none"
           >
             <option value="createdAt">Newest</option>
             <option value="filename">Name</option>
@@ -246,11 +246,11 @@ export function MediaLibrary() {
           </select>
           <button
             onClick={() => setView(view === "grid" ? "list" : "grid")}
-            className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-zinc-400 hover:text-white transition-colors"
+            className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-xs text-zinc-400 hover:text-white transition-colors"
           >
             {view === "grid" ? "List" : "Grid"}
           </button>
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-s8ul-cyan px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
+          <label className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-control)] bg-s8ul-cyan px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
             <input
               ref={uploadInputRef}
               type="file"
@@ -263,7 +263,7 @@ export function MediaLibrary() {
         </div>
 
         {uploading && (
-          <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--surface-card)] p-3">
+          <div className="mb-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-3">
             <div className="mb-1 flex justify-between text-[10px] text-zinc-500">
               <span>Uploading…</span><span>{uploadProgress}%</span>
             </div>
@@ -275,7 +275,7 @@ export function MediaLibrary() {
 
         {/* Batch selection toolbar */}
         {selected.size > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-s8ul-cyan/30 bg-s8ul-cyan/5 px-3 py-2" data-testid="batch-toolbar">
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-s8ul-cyan/30 bg-s8ul-cyan/5 px-3 py-2" data-testid="batch-toolbar">
             <span className="text-xs font-semibold text-s8ul-cyan">{selected.size} Selected</span>
             <div className="mx-1 h-4 w-px bg-white/10" />
             <button
@@ -304,7 +304,7 @@ export function MediaLibrary() {
         )}
 
         {notice && (
-          <div className={`mb-4 rounded-lg border px-3 py-2 text-xs ${notice.kind === "ok" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-red-500/30 bg-red-500/10 text-red-300"}`}>
+          <div className={`mb-4 rounded-[var(--radius-card)] border px-3 py-2 text-xs ${notice.kind === "ok" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-red-500/30 bg-red-500/10 text-red-300"}`}>
             {notice.text}
           </div>
         )}
@@ -322,7 +322,7 @@ export function MediaLibrary() {
         ) : view === "grid" ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
             {loading && Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-square animate-pulse rounded-lg bg-[var(--surface-hover)]" />
+              <div key={i} className="aspect-square animate-pulse rounded-[var(--radius-card)] bg-[var(--surface-hover)]" />
             ))}
             {!loading && assets.map((asset) => (
               <MediaCard
@@ -343,7 +343,7 @@ export function MediaLibrary() {
               <button
                 key={asset.id}
                 onClick={() => { setSelectedId(asset.id); setDetail(asset); }}
-                className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-all ${selectedId === asset.id ? "border-s8ul-cyan bg-s8ul-cyan/5" : "border-[var(--border-subtle)] hover:border-[var(--border)]"}`}
+                className={`flex w-full items-center gap-3 rounded-[var(--radius-card)] border px-3 py-2 text-left transition-all ${selectedId === asset.id ? "border-s8ul-cyan bg-s8ul-cyan/5" : "border-[var(--border-subtle)] hover:border-[var(--border)]"}`}
               >
                 <input
                   type="checkbox"
@@ -412,7 +412,7 @@ export function MediaLibrary() {
 
 function EmptyState({ onUpload }: { onUpload: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] py-20 text-center" data-testid="media-empty-state">
+    <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--border)] py-20 text-center" data-testid="media-empty-state">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-hover)]">
         <svg className="h-8 w-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -420,7 +420,7 @@ function EmptyState({ onUpload }: { onUpload: () => void }) {
       </div>
       <h3 className="text-sm font-semibold text-zinc-300">No media yet</h3>
       <p className="mt-1 max-w-xs text-xs text-zinc-500">Upload images or videos to use across your hero, gallery and products. Drop files anywhere or use the upload button.</p>
-      <button onClick={onUpload} className="mt-4 rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
+      <button onClick={onUpload} className="mt-4 rounded-[var(--radius-control)] bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
         Upload Media
       </button>
     </div>
@@ -447,7 +447,7 @@ function MediaCard({
         if (e.key === "Enter" || e.key === " ") onSelect();
         else if (e.ctrlKey || e.metaKey) onToggleSelected();
       }}
-      className={`group relative aspect-square overflow-hidden rounded-lg border transition-all cursor-pointer ${
+      className={`group relative aspect-square overflow-hidden rounded-[var(--radius-card)] border transition-all cursor-pointer ${
         detailSelected || selected
           ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50"
           : "border-[var(--border)] hover:border-[var(--border-strong)]"
@@ -518,7 +518,7 @@ function BatchConfirmDialog({ count, videos, images, onCancel, onConfirm }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-2xl">
+      <div className="w-full max-w-sm rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-2xl">
         <h3 className="text-base font-semibold text-white">Delete {count} asset{count !== 1 ? "s" : ""}?</h3>
         <p className="mt-2 text-xs text-zinc-400">
           This action cannot be undone. {count} file{count !== 1 ? "s" : ""} will be removed:
@@ -529,8 +529,8 @@ function BatchConfirmDialog({ count, videos, images, onCancel, onConfirm }: {
         </div>
         <p className="mt-2 text-[10px] text-amber-500/80">Storage objects will also be removed.</p>
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-zinc-300 hover:bg-[var(--surface-hover)]">Cancel</button>
-          <button onClick={onConfirm} data-testid="batch-delete-confirm" className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500">Delete</button>
+          <button onClick={onCancel} className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-1.5 text-xs text-zinc-300 hover:bg-[var(--surface-hover)]">Cancel</button>
+          <button onClick={onConfirm} data-testid="batch-delete-confirm" className="rounded-[var(--radius-control)] bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500">Delete</button>
         </div>
       </div>
     </div>
@@ -543,12 +543,12 @@ function BlockedDialog({ assets, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-2xl">
+      <div className="w-full max-w-md rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-2xl">
         <h3 className="text-base font-semibold text-white">Cannot delete referenced assets</h3>
         <p className="mt-1 text-xs text-zinc-400">These assets are still in use. Remove them from their sections first, or replace them.</p>
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
           {assets.map((a) => (
-            <div key={a.assetId} className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+            <div key={a.assetId} className="rounded-[var(--radius-card)] border border-amber-500/20 bg-amber-500/5 p-3">
               <p className="text-xs font-medium text-zinc-200">{a.filename}</p>
               <p className="mt-1 text-[10px] text-zinc-500">Used in:</p>
               <div className="mt-0.5 flex flex-wrap gap-1">
@@ -562,7 +562,7 @@ function BlockedDialog({ assets, onClose }: {
           ))}
         </div>
         <div className="mt-4 flex justify-end">
-          <button onClick={onClose} className="rounded-lg bg-s8ul-cyan px-4 py-1.5 text-xs font-semibold text-black hover:opacity-90">OK</button>
+          <button onClick={onClose} className="rounded-[var(--radius-control)] bg-s8ul-cyan px-4 py-1.5 text-xs font-semibold text-black hover:opacity-90">OK</button>
         </div>
       </div>
     </div>
@@ -580,13 +580,13 @@ function AssetDetailPanel({
   const usages = asset.usages ?? [];
 
   return (
-    <div className="w-full flex-shrink-0 space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-4 lg:w-80">
+    <div className="w-full flex-shrink-0 space-y-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-4 lg:w-80">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">Asset Details</h3>
         <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-sm">&times;</button>
       </div>
 
-      <div className="aspect-video overflow-hidden rounded-lg bg-[var(--surface-hover)]">
+      <div className="aspect-video overflow-hidden rounded-[var(--radius-card)] bg-[var(--surface-hover)]">
         {asset.publicUrl && !isVideo ? (
           <CreatorImage src={asset.publicUrl} alt={asset.originalFilename} variant="card" className="h-full w-full" />
         ) : asset.publicUrl && isVideo ? (
@@ -633,23 +633,23 @@ function AssetDetailPanel({
       )}
 
       <div className="space-y-2">
-        <button onClick={onCopyUrl} className="w-full rounded-lg border border-[var(--border)] px-3 py-2 text-xs text-zinc-300 hover:bg-[var(--surface-hover)] transition-colors">Copy URL</button>
+        <button onClick={onCopyUrl} className="w-full rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-xs text-zinc-300 hover:bg-[var(--surface-hover)] transition-colors">Copy URL</button>
         {!isDeleted && (
           <>
             <ReplaceFileControl assetId={asset.id} onReplaced={onReplaced} isVideo={isVideo} />
             {!asset.used ? (
-              <button onClick={onDelete} className="w-full rounded-lg border border-red-500/30 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors">
+              <button onClick={onDelete} className="w-full rounded-[var(--radius-control)] border border-red-500/30 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors">
                 Delete Asset
               </button>
             ) : (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[10px] text-amber-400">
+              <div className="rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/5 p-2.5 text-[10px] text-amber-400">
                 This asset is in use. Replace it instead of deleting.
               </div>
             )}
           </>
         )}
         {isDeleted && (
-          <button onClick={onPurge} className="w-full rounded-lg bg-red-900/30 px-3 py-2 text-xs text-red-400 hover:bg-red-900/50 transition-colors">
+          <button onClick={onPurge} className="w-full rounded-[var(--radius-control)] bg-red-900/30 px-3 py-2 text-xs text-red-400 hover:bg-red-900/50 transition-colors">
             Purge from Storage
           </button>
         )}
@@ -691,11 +691,11 @@ function ReplaceFileControl({ assetId, onReplaced, isVideo }: {
     <div className="space-y-1.5">
       <label className="block text-xs font-medium text-zinc-400">Replace File</label>
       {uploading ? (
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-card)] p-2">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-2">
           <p className="text-center text-[10px] text-zinc-400">Replacing…</p>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-card)] px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-[var(--border-strong)] hover:text-zinc-300">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)] px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-[var(--border-strong)] hover:text-zinc-300">
           <input ref={inputRef} type="file" accept={isVideo ? "video/*" : "image/*"} onChange={handleFile} className="hidden" disabled={uploading} />
           Choose New File
         </label>

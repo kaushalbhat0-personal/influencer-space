@@ -83,7 +83,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="relative w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl backdrop-blur-xl"
+        className="relative w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-[var(--radius-card-elevated)] border border-white/10 bg-zinc-950 p-6 shadow-2xl backdrop-blur-xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
@@ -114,7 +114,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
                   const Icon = a.icon || Globe;
                   const active = source === a.id;
                   return (
-                    <button key={a.id} onClick={() => { setSource(a.id); setAnalysis(null); setImportResult(null); }} className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-center transition-all ${active ? "border-indigo-500/40 bg-indigo-500/10" : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"}`}>
+                    <button key={a.id} onClick={() => { setSource(a.id); setAnalysis(null); setImportResult(null); }} className={`flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] border px-3 py-3 text-center transition-all ${active ? "border-indigo-500/40 bg-indigo-500/10" : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"}`}>
                       <Icon className={`h-5 w-5 ${active ? "text-indigo-400" : "text-zinc-500"}`} />
                       <span className={`text-[10px] font-medium leading-tight ${active ? "text-indigo-300" : "text-zinc-400"}`}>{a.label}</span>
                     </button>
