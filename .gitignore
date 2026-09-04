@@ -76,3 +76,6 @@ status_full.txt
 RCCF-RELEASE-04-PROD-SMOKE-01_report.md
 launch17_prod.log
 prod-start.log
+
+# dev harness - local verification (Mystic/North Star storefront preview)
+src/app/dev-verify/
