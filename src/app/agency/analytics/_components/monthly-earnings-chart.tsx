@@ -28,7 +28,7 @@ export function MonthlyEarningsChart({ data }: { data: Point[] }) {
               <YAxis stroke="#71717a" tick={{ fontSize: 11 }} tickFormatter={(v: number) => `₹${v}`} />
               <Tooltip formatter={(value, name) => [formatCurrency(Number(value ?? 0)), String(name)]} />
               <Legend />
-              <Bar dataKey="gross" name="Gross" fill="#6366f1" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="gross" name="Gross" fill="var(--brand-primary)" radius={[3, 3, 0, 0]} />
               <Bar dataKey="refunds" name="Refunds" fill="#f43f5e" radius={[3, 3, 0, 0]} />
               <Bar dataKey="net" name="Net" fill="#34d399" radius={[3, 3, 0, 0]} />
             </BarChart>

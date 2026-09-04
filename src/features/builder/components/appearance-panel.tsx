@@ -313,7 +313,7 @@ export function AppearancePanel({
                 onChange={(event) => applyChange({ experienceBackgroundImageOpacity: event.target.value })}
                 disabled={false}
                 aria-label="Background image opacity"
-                className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full accent-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
           </div>
@@ -368,7 +368,7 @@ export function AppearancePanel({
           onChange={(event) => applyChange({ borderRadius: event.target.value })}
           disabled={locked}
           aria-label="Border radius"
-          className="w-full accent-indigo-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full accent-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
         />
         <div className="flex justify-between text-[10px] font-medium text-zinc-500"><span>Sharp</span><span>Soft</span></div>
       </Field>
@@ -553,7 +553,7 @@ const BACKGROUND_SWATCHES: Record<string, string> = {
   solid: "bg-zinc-700",
   none: "bg-transparent border border-dashed border-zinc-600",
   midnight: "bg-[radial-gradient(circle_at_50%_20%,#6366f1_0%,#18181b_65%)]",
-  gradient: "bg-gradient-to-b from-indigo-400/60 to-zinc-900",
+  gradient: "bg-gradient-to-b from-[var(--brand-primary)]/60 to-zinc-900",
   radial: "bg-[radial-gradient(circle_at_50%_0%,#818cf8_0%,#18181b_70%)]",
   mesh: "bg-[radial-gradient(circle_at_20%_0%,#818cf8_0%,transparent_55%),radial-gradient(circle_at_85%_100%,#3b82f6_0%,#18181b_65%)]",
   aurora: "bg-[radial-gradient(circle_at_20%_15%,#818cf8_0%,transparent_38%),radial-gradient(circle_at_80%_0%,#c084fc_0%,transparent_35%),linear-gradient(135deg,#18181b,#164e63)]",
@@ -567,10 +567,10 @@ const SURFACE_SWATCHES: Record<string, string> = {
   elevated: "bg-zinc-600 shadow-md shadow-black/40",
   glass: "bg-white/20 backdrop-blur-sm border border-white/30",
   "soft-glow": "bg-indigo-400/20 shadow-[0_0_12px_rgba(129,140,248,0.8)]",
-  "gradient-border": "bg-zinc-800 border border-indigo-400",
+  "gradient-border": "bg-zinc-800 border border-[var(--brand-primary)]",
   floating: "bg-zinc-700 shadow-lg shadow-black/60 -translate-y-px",
   luxury: "bg-gradient-to-br from-amber-200/60 via-amber-500/30 to-zinc-800",
-  neon: "bg-cyan-400/20 border border-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.8)]",
+  neon: "bg-[var(--color-info-surface)] border border-[var(--color-info-border)] shadow-[0_0_10px_rgba(34,211,238,0.8)]",
 };
 
 function clampedRadius(value: string): number {
@@ -617,7 +617,7 @@ function Chip({
       disabled={disabled}
       aria-describedby={locked ? "appearance-upgrade-explanation" : undefined}
       title={title}
-      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950 ${
+      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-950 ${
         active
           ? locked
             ? "border-amber-500/30 bg-amber-500/10 text-amber-200"

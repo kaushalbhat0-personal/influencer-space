@@ -81,15 +81,15 @@ export function SectionPresentationPanel() {
 
         <label className="flex items-center justify-between gap-2 text-[11px] text-zinc-400">
           <span className="flex items-center gap-2">Visible <ResetButton property="visible" show={p.visible !== undefined} /></span>
-          <input type="checkbox" checked={p.visible ?? true} onChange={(e) => set({ visible: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-indigo-500" />
+          <input type="checkbox" checked={p.visible ?? true} onChange={(e) => set({ visible: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-[var(--brand-primary)]" />
         </label>
         <label className="flex items-center justify-between gap-2 text-[11px] text-zinc-400">
           <span className="flex items-center gap-2">Hide title <ResetButton property="hideTitle" show={p.hideTitle !== undefined} /></span>
-          <input type="checkbox" checked={p.hideTitle ?? false} onChange={(e) => set({ hideTitle: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-indigo-500" />
+          <input type="checkbox" checked={p.hideTitle ?? false} onChange={(e) => set({ hideTitle: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-[var(--brand-primary)]" />
         </label>
         <label className="flex items-center justify-between gap-2 text-[11px] text-zinc-400">
           <span className="flex items-center gap-2">Hide when empty <ResetButton property="hideWhenEmpty" show={p.hideWhenEmpty !== undefined} /></span>
-          <input type="checkbox" checked={p.hideWhenEmpty ?? true} onChange={(e) => set({ hideWhenEmpty: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-indigo-500" />
+          <input type="checkbox" checked={p.hideWhenEmpty ?? true} onChange={(e) => set({ hideWhenEmpty: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-[var(--brand-primary)]" />
         </label>
       </div>
       <p className="mt-2 text-[10px] text-zinc-600">Changes preview live in the canvas and appear after you publish. They never affect how your store is analysed.</p>

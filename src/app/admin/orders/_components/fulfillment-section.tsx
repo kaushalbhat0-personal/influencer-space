@@ -62,7 +62,7 @@ export function FulfillmentSection() {
   return (
     <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-white"><Package className="h-4 w-4 text-cyan-400" /> Fulfillment</h2>
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-white"><Package className="h-4 w-4 text-[var(--color-info)]" /> Fulfillment</h2>
         <div className="flex items-center gap-2">
           <select className={inputCls} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); load(e.target.value); }}>
             <option value="">All statuses</option>
@@ -86,7 +86,7 @@ export function FulfillmentSection() {
           <div className="mt-2 space-y-2">
             {digital.map((i) => (
               <Row key={i.id} item={i}>
-                <button onClick={() => download(i.id)} disabled={busy === i.id} className="flex items-center gap-1 rounded-md bg-indigo-500 px-2 py-1 text-[10px] font-semibold text-white hover:bg-indigo-400 disabled:opacity-50"><Download className="h-3 w-3" /> Generate link</button>
+                <button onClick={() => download(i.id)} disabled={busy === i.id} className="flex items-center gap-1 rounded-md bg-[var(--brand-primary)] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"><Download className="h-3 w-3" /> Generate link</button>
               </Row>
             ))}
           </div>
@@ -99,7 +99,7 @@ export function FulfillmentSection() {
             {service.map((i) => (
               <Row key={i.id} item={i}>
                 {i.status === "pending" && <button onClick={() => setStatus(i.id, "accepted" as FulfillmentStatus)} disabled={busy === i.id} className="rounded-md bg-emerald-500 px-2 py-1 text-[10px] font-semibold text-black hover:bg-emerald-400">Accept</button>}
-                {(i.status === "accepted" || i.status === "confirmed") && <button onClick={() => setStatus(i.id, "completed" as FulfillmentStatus)} disabled={busy === i.id} className="rounded-md bg-indigo-500 px-2 py-1 text-[10px] font-semibold text-white hover:bg-indigo-400">Complete</button>}
+                {(i.status === "accepted" || i.status === "confirmed") && <button onClick={() => setStatus(i.id, "completed" as FulfillmentStatus)} disabled={busy === i.id} className="rounded-md bg-[var(--brand-primary)] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[var(--primary-hover)]">Complete</button>}
               </Row>
             ))}
           </div>
@@ -137,7 +137,7 @@ function Row({ item, children }: { item: Item; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-zinc-900/50 px-3 py-2 text-xs">
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 truncate text-zinc-200">{item.type === "physical" ? <Truck className="h-3.5 w-3.5 text-cyan-400" /> : <Package className="h-3.5 w-3.5 text-indigo-400" />} {item.productName} <span className="text-zinc-600">· {formatCurrency(item.amount)}</span></p>
+        <p className="flex items-center gap-1.5 truncate text-zinc-200">{item.type === "physical" ? <Truck className="h-3.5 w-3.5 text-[var(--color-info)]" /> : <Package className="h-3.5 w-3.5 text-[var(--brand-primary)]" />} {item.productName} <span className="text-zinc-600">· {formatCurrency(item.amount)}</span></p>
         <p className="text-[10px] text-zinc-500">
           <span className="capitalize">{statusLabel(item.status)}</span>
           {item.trackingNumber && <> · {item.courier} {item.trackingNumber}</>}

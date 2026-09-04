@@ -136,7 +136,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
             className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-[var(--border-focus)]"
           />
         </label>
-        <button onClick={buy} disabled={pending || quantity < 1} className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-40">
+        <button onClick={buy} disabled={pending || quantity < 1} className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--primary-hover)] disabled:opacity-40">
           {pending ? "Opening checkout…" : `Add another client — ${formatCurrency(quantity * unitPriceInr)} one-time`}
         </button>
       </div>

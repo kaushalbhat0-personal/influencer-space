@@ -196,9 +196,9 @@ export function StorefrontStatusCard({
         )}
 
         {neverPublished && hasProducts && (
-          <div className="flex items-start gap-2 rounded-lg bg-indigo-500/10 p-2.5">
-            <Clock className="h-3.5 w-3.5 text-indigo-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-indigo-300">Ready to publish — go live in one click</p>
+          <div className="flex items-start gap-2 rounded-lg bg-[var(--brand-primary)]/10 p-2.5">
+            <Clock className="h-3.5 w-3.5 text-[var(--brand-primary)] shrink-0 mt-0.5" />
+            <p className="text-xs text-[var(--brand-primary)]">Ready to publish — go live in one click</p>
           </div>
         )}
 

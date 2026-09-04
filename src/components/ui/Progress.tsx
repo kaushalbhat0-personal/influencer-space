@@ -27,7 +27,7 @@ export function Progress({ value, max = 100, className, showLabel = false }: Pro
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="h-full rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]"
+          className="h-full rounded-full bg-[var(--brand-primary)]"
         />
       </div>
       {showLabel && (

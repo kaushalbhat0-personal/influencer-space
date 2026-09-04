@@ -39,8 +39,8 @@ export function RegistryFieldInspector({ planCode }: { planCode?: string | null 
   };
 
   return (
-    <div className="rounded-xl border border-indigo-500/20 bg-zinc-900/50 p-3" data-testid="registry-field-inspector" data-component-id={slot.moduleId}>
-      <p className="text-[9px] font-medium text-indigo-300 uppercase tracking-wider">Registry Fields — {def?.name}</p>
+    <div className="rounded-xl border border-[var(--brand-primary)]/20 bg-zinc-900/50 p-3" data-testid="registry-field-inspector" data-component-id={slot.moduleId}>
+      <p className="text-[9px] font-medium text-[var(--brand-primary)] uppercase tracking-wider">Registry Fields — {def?.name}</p>
       <p className="mt-0.5 text-[10px] text-zinc-500">Same metadata drives Builder + LayoutEngine. Capability-aware, wire-safe.</p>
       <div className="mt-3 space-y-3">
         {fieldsWithState.map((field) => {
@@ -83,7 +83,7 @@ export function RegistryFieldInspector({ planCode }: { planCode?: string | null 
                   checked={Boolean(value)}
                   disabled={disabled}
                   onChange={(e) => updateField(field.name, e.target.checked)}
-                  className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-indigo-500 disabled:opacity-50"
+                  className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-[var(--brand-primary)] disabled:opacity-50"
                   data-testid={`field-${field.name}`}
                 />
               )}

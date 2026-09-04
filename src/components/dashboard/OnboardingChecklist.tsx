@@ -30,8 +30,8 @@ export function OnboardingChecklist({ steps, creatorName, className }: Onboardin
   return (
     <div className={cn("rounded-xl border border-white/10 bg-white/[0.03] p-5", className)}>
       <div className="flex items-start gap-3 mb-4">
-        <div className="rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-2 shrink-0">
-          <Sparkles className="h-5 w-5 text-indigo-400" />
+        <div className="rounded-full bg-gradient-to-br from-[var(--brand-primary)]/20 to-[var(--brand-secondary)]/20 p-2 shrink-0">
+          <Sparkles className="h-5 w-5 text-[var(--brand-primary)]" />
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-white">
@@ -45,7 +45,7 @@ export function OnboardingChecklist({ steps, creatorName, className }: Onboardin
           <span className="text-xs font-medium text-zinc-400">{percentComplete}%</span>
           <div className="w-16 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+              className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-500"
               style={{ width: `${percentComplete}%` }}
             />
           </div>
@@ -77,7 +77,7 @@ export function OnboardingChecklist({ steps, creatorName, className }: Onboardin
               <p className="text-[10px] text-zinc-600 mt-0.5">{step.description}</p>
             </div>
             {!step.done && (
-              <ArrowRight className="h-3.5 w-3.5 text-zinc-600 shrink-0 group-hover:text-indigo-400" />
+              <ArrowRight className="h-3.5 w-3.5 text-zinc-600 shrink-0 group-hover:text-[var(--brand-primary)]" />
             )}
             <span className="text-[10px] text-zinc-700 shrink-0">{step.estimatedMinutes} min</span>
           </Link>

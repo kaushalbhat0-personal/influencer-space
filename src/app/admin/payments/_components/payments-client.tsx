@@ -185,7 +185,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
 
         {form.provider === "razorpay" && (
           <div className="mt-4 rounded-lg border border-white/10 bg-zinc-900/50 p-4">
-            <button type="button" onClick={() => setShowKeys(!showKeys)} className="text-xs font-medium text-cyan-300 hover:underline">
+            <button type="button" onClick={() => setShowKeys(!showKeys)} className="text-xs font-medium text-[var(--color-info)] hover:underline">
               {showKeys ? "Hide" : account?.hasProviderKeys ? "Replace" : "Show"} your Razorpay API keys
             </button>
             <p className="mt-1 text-[11px] text-zinc-600">Use keys from a Razorpay account you own. Customers pay YOUR account directly; funds settle to your bank. Keys are encrypted.</p>
@@ -205,7 +205,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
         )}
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button onClick={save} disabled={busy === "save"} className="rounded-lg bg-indigo-500 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50">
+          <button onClick={save} disabled={busy === "save"} className="rounded-lg bg-[var(--brand-primary)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-50">
             {busy === "save" ? "Saving…" : account ? "Save changes" : "Connect account"}
           </button>
           {account?.status === "active" && (

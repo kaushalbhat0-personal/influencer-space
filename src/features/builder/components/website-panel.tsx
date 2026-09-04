@@ -92,7 +92,7 @@ export function WebsitePanel({
   if (collapsed) {
     return (
       <div className="flex h-full flex-col items-center gap-2 py-2">
-        <button onClick={onToggle} className="rounded p-1 text-zinc-600 hover:text-indigo-400 hover:bg-white/5" title="Expand Website panel" aria-label="Expand properties rail">
+        <button onClick={onToggle} className="rounded p-1 text-zinc-600 hover:text-[var(--brand-primary)] hover:bg-white/5" title="Expand Website panel" aria-label="Expand properties rail">
           <PanelRightClose className="h-4 w-4 rotate-180" />
         </button>
         {overview && (
@@ -117,7 +117,7 @@ export function WebsitePanel({
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Website</span>
-        <button onClick={onToggle} className="rounded p-0.5 text-zinc-600 hover:text-indigo-400 hover:bg-white/5" aria-label="Collapse properties rail">
+        <button onClick={onToggle} className="rounded p-0.5 text-zinc-600 hover:text-[var(--brand-primary)] hover:bg-white/5" aria-label="Collapse properties rail">
           <PanelRightClose className="h-3.5 w-3.5" />
         </button>
       </div>

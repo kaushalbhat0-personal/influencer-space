@@ -25,7 +25,7 @@ export function StrategyCard({
       className={cn(
         "relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 w-full",
         active
-          ? "border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.08)]"
+          ? "border-[var(--brand-primary)]/50 bg-[var(--brand-primary)]/10 shadow-[0_0_20px_rgba(99,102,241,0.08)]"
           : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]",
       )}
       aria-pressed={active}
@@ -33,7 +33,7 @@ export function StrategyCard({
       <div className="flex items-start gap-3">
         <div className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-          active ? "bg-indigo-500/20 text-indigo-400" : "bg-white/[0.04] text-zinc-500",
+          active ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]" : "bg-white/[0.04] text-zinc-500",
         )}>
           <Icon className="h-5 w-5" />
         </div>
@@ -62,7 +62,7 @@ export function StrategyCard({
           {adapter.typicalConfidence}% confidence
         </span>
         {isHighConfidence && (
-          <span className="inline-flex items-center gap-1 text-indigo-400">
+          <span className="inline-flex items-center gap-1 text-[var(--brand-primary)]">
             <Sparkles className="h-3 w-3" />
             Recommended
           </span>

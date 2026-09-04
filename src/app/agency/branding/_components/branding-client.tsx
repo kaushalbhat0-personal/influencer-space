@@ -51,7 +51,7 @@ export function BrandingClient({ agencyId, initial }: { agencyId: string; initia
         </div>
       </div>
 
-      <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-indigo-500 px-4 py-2 text-sm text-white hover:bg-indigo-600 disabled:opacity-50" data-testid="brand-save">
+      <button onClick={save} disabled={busy} className="mt-6 rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm text-white hover:bg-[var(--primary-hover)] disabled:opacity-50" data-testid="brand-save">
         {busy ? "Saving…" : "Save Branding"}
       </button>
       {notice && (

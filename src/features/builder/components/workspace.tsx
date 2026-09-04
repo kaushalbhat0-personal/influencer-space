@@ -603,7 +603,7 @@ export function BuilderWorkspace() {
             disabled={!isBuilderDirty || saveStatus === "SAVING"}
             data-testid="builder-save-draft"
             aria-label="Save draft — save without publishing"
-            className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             {saveStatus === "SAVING" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             Save Draft
@@ -653,7 +653,7 @@ function MobileBarButton({
       data-testid={testId}
       className={cn(
         "flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[9px] font-medium transition-colors",
-        active ? "text-indigo-400" : "text-zinc-500 hover:text-zinc-300",
+        active ? "text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300",
       )}
     >
       {children}

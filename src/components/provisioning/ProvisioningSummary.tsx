@@ -63,10 +63,10 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
 
         <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--surface-base)] px-4 py-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Globe className="h-4 w-4 shrink-0 text-indigo-400" />
+            <Globe className="h-4 w-4 shrink-0 text-[var(--brand-primary)]" />
             <div className="min-w-0">
               <p className="text-xs text-zinc-500">Storefront URL</p>
-              <p className="truncate text-sm font-medium text-indigo-400">{data.storefrontUrl}</p>
+              <p className="truncate text-sm font-medium text-[var(--brand-primary)]">{data.storefrontUrl}</p>
             </div>
           </div>
           <div className="flex shrink-0 gap-1 ml-3">
@@ -91,10 +91,10 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
 
         <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-[var(--surface-base)] px-4 py-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <LogIn className="h-4 w-4 shrink-0 text-cyan-400" />
+            <LogIn className="h-4 w-4 shrink-0 text-[var(--color-info)]" />
             <div className="min-w-0">
               <p className="text-xs text-zinc-500">Dashboard URL</p>
-              <p className="truncate text-sm font-medium text-cyan-400">{data.dashboardUrl}</p>
+              <p className="truncate text-sm font-medium text-[var(--color-info)]">{data.dashboardUrl}</p>
             </div>
           </div>
           <div className="flex shrink-0 gap-1 ml-3">

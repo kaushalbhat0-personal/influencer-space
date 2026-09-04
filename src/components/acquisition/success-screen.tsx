@@ -33,7 +33,7 @@ export function SuccessScreen({
           href={storefrontUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center justify-center gap-1.5"
+          className="text-[var(--brand-primary)] hover:text-[var(--brand-primary)] text-sm font-medium flex items-center justify-center gap-1.5"
         >
           {storefrontUrl}
           <ExternalLink className="h-3.5 w-3.5" />

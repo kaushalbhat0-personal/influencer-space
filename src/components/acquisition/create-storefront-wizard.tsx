@@ -151,12 +151,12 @@ export function CreateStorefrontWizard({ onClose }: { onClose?: () => void }) {
             <div key={s} className="flex items-center gap-2">
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-medium ${
-                  isActive ? "bg-indigo-500 text-white" : "bg-zinc-800 text-zinc-600"
+                  isActive ? "bg-[var(--brand-primary)] text-white" : "bg-zinc-800 text-zinc-600"
                 }`}
               >
                 {i + 1}
               </span>
-              {i < 4 && <span className={`h-px w-6 ${isActive ? "bg-indigo-500/40" : "bg-zinc-800"}`} />}
+              {i < 4 && <span className={`h-px w-6 ${isActive ? "bg-[var(--brand-primary)]/40" : "bg-zinc-800"}`} />}
             </div>
           );
         })}

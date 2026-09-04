@@ -372,7 +372,7 @@ export function InteractiveCanvas({
           <div className="relative min-h-[600px]">
             {!dataReady && (
               <div className="flex flex-col items-center gap-4 pt-12 text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-primary)] border-t-transparent" />
                 <p className="text-xs text-zinc-500">Loading live preview...</p>
               </div>
             )}
@@ -426,8 +426,8 @@ export function InteractiveCanvas({
                         onClick={() => builderStore.select(slotId)}
                         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); builderStore.select(slotId); } }}
                         className={cn(
-                          "group/section relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                          isSelected && "ring-2 ring-indigo-500/60",
+                          "group/section relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]",
+                          isSelected && "ring-2 ring-[var(--brand-primary)]/60",
                           !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >
@@ -488,8 +488,8 @@ export function InteractiveCanvas({
                         onClick={() => builderStore.select(slotId)}
                         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); builderStore.select(slotId); } }}
                         className={cn(
-                          "group/section relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                          isSelected && "ring-2 ring-indigo-500/60",
+                          "group/section relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]",
+                          isSelected && "ring-2 ring-[var(--brand-primary)]/60",
                           !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >

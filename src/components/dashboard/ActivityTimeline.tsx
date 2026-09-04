@@ -15,7 +15,7 @@ const ICONS: Record<ActivityItem["icon"], LucideIcon> = {
 
 const ICON_BG: Record<ActivityItem["icon"], string> = {
   published: "bg-emerald-500/10 text-emerald-400",
-  product: "bg-indigo-500/10 text-indigo-400",
+  product: "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]",
   theme: "bg-violet-500/10 text-violet-400",
   domain: "bg-amber-500/10 text-amber-400",
   order: "bg-emerald-500/10 text-emerald-400",

@@ -20,7 +20,7 @@ const STATUS_CONFIG: Record<PublishStatusValue, {
 }> = {
   draft: { label: "Draft", icon: Clock, color: "text-amber-400", bg: "bg-amber-500/20" },
   preview: { label: "Preview", icon: Eye, color: "text-blue-400", bg: "bg-blue-500/20" },
-  publishing: { label: "Publishing", icon: Loader2, color: "text-indigo-400", bg: "bg-indigo-500/20" },
+  publishing: { label: "Publishing", icon: Loader2, color: "text-[var(--brand-primary)]", bg: "bg-[var(--brand-primary)]/20" },
   published: { label: "Live", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/20" },
   outdated: { label: "Changes pending", icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/20" },
   unavailable: { label: "Not published", icon: Clock, color: "text-zinc-500", bg: "bg-zinc-800" },

@@ -113,7 +113,7 @@ export function PaymentsMultiproviderClient({ initialAccounts, initialActive, in
                   {p.id==="stripe" && <input placeholder="Stripe connected account acct_... (optional)" value={getForm(p.id).providerAccountId} onChange={(e)=>setForm(p.id,"providerAccountId",e.target.value)} className="w-full rounded bg-[var(--surface-input)] border border-[var(--border)] px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"/>}
                   <input placeholder="Account holder name" value={getForm(p.id).accountHolderName} onChange={(e)=>setForm(p.id,"accountHolderName",e.target.value)} className="w-full rounded bg-[var(--surface-input)] border border-[var(--border)] px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"/>
                   <input placeholder="UPI ID or leave blank" value={getForm(p.id).upiId} onChange={(e)=>setForm(p.id,"upiId",e.target.value)} className="w-full rounded bg-[var(--surface-input)] border border-[var(--border)] px-2 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"/>
-                  <button disabled={busy===p.id} onClick={()=>save(p.id)} className="rounded bg-indigo-500 px-3 py-1.5 text-xs text-white disabled:opacity-50">Connect {p.label}</button>
+                  <button disabled={busy===p.id} onClick={()=>save(p.id)} className="rounded bg-[var(--brand-primary)] px-3 py-1.5 text-xs text-white disabled:opacity-50">Connect {p.label}</button>
                 </div>
               ) : (
                 <div className="mt-3 space-y-2">
@@ -131,7 +131,7 @@ export function PaymentsMultiproviderClient({ initialAccounts, initialActive, in
           );
         })}
       </div>
-      {active && <p className="text-center"><button onClick={()=>setMsg("Choose another provider above and click Use to change")} className="text-xs text-cyan-300 hover:underline">Change payment method</button></p>}
+      {active && <p className="text-center"><button onClick={()=>setMsg("Choose another provider above and click Use to change")} className="text-xs text-[var(--color-info)] hover:underline">Change payment method</button></p>}
     </div>
   );
 }

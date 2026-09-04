@@ -59,7 +59,7 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
               {PLANS.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
             </select>
           </div>
-          <button onClick={submit} disabled={busy || !form.creatorName || !form.email} className="rounded-md bg-indigo-500 px-4 py-2 text-sm text-white hover:bg-indigo-600 disabled:opacity-50" data-testid="ci-submit">
+          <button onClick={submit} disabled={busy || !form.creatorName || !form.email} className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm text-white hover:bg-[var(--primary-hover)] disabled:opacity-50" data-testid="ci-submit">
             {busy ? "Provisioning…" : "Provision & Invite"}
           </button>
         </div>

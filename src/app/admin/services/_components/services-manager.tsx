@@ -167,7 +167,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
         return (
           <div className="flex items-center gap-2">
             {d.bookable && (
-              <button onClick={() => { setSlotForm((f) => ({ ...f, serviceId: d.id })); }} className="rounded-lg p-1.5 text-indigo-400 hover:bg-indigo-500/10" aria-label={`Add availability for ${d.title}`}>
+              <button onClick={() => { setSlotForm((f) => ({ ...f, serviceId: d.id })); }} className="rounded-lg p-1.5 text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10" aria-label={`Add availability for ${d.title}`}>
                 <CalendarPlus className="h-4 w-4" />
               </button>
             )}
@@ -238,7 +238,7 @@ export function ServicesManager({ initialData }: ServicesManagerProps) {
             </label>
           </div>
           <div className="mt-3 flex items-center gap-3">
-            <button onClick={handleCreateSlot} disabled={slotSaving} className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-50">
+            <button onClick={handleCreateSlot} disabled={slotSaving} className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-50">
               {slotSaving ? "Creating…" : "Create Slot"}
             </button>
             <button onClick={() => setSlotForm((f) => ({ ...f, serviceId: "" }))} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)]">Cancel</button>

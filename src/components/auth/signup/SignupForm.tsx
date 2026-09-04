@@ -123,7 +123,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
             <div className="flex items-center gap-2 mb-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={cn("h-1 flex-1 rounded-full transition-colors",
-                  i < currentIdx - 1 ? "bg-indigo-500" : "bg-white/[0.06]"
+                  i < currentIdx - 1 ? "bg-[var(--brand-primary)]" : "bg-white/[0.06]"
                 )} />
               ))}
             </div>
@@ -134,8 +134,8 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
         {/* Welcome */}
         {state.step === "welcome" && (
           <div className="text-center space-y-6">
-            <div className="rounded-full bg-indigo-500/20 p-4 w-fit mx-auto">
-              <Sparkles className="h-8 w-8 text-indigo-400" />
+            <div className="rounded-full bg-[var(--brand-primary)]/20 p-4 w-fit mx-auto">
+              <Sparkles className="h-8 w-8 text-[var(--brand-primary)]" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Welcome to CreatorStore</h1>
@@ -168,12 +168,12 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                   className={cn(
                     "flex items-start gap-4 rounded-xl border p-5 text-left transition-all",
                     state.persona === p.id
-                      ? "border-indigo-500/40 bg-indigo-500/[0.06]"
+                      ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/[0.06]"
                       : "border-white/[0.08] bg-[var(--surface-base)]/50 hover:border-white/[0.15]"
                   )}
                 >
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                    <p.icon className="h-5 w-5 text-indigo-400" />
+                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center">
+                    <p.icon className="h-5 w-5 text-[var(--brand-primary)]" />
                   </div>
                   <div>
                     <p className="font-medium text-white">{p.label}</p>
@@ -212,7 +212,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                   className={cn(
                     "w-full flex items-center justify-between rounded-xl border p-4 text-left transition-all",
                     state.selectedPlan === plan.code
-                      ? "border-indigo-500/40 bg-indigo-500/[0.06]"
+                      ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/[0.06]"
                       : "border-white/[0.08] bg-[var(--surface-base)]/50"
                   )}
                 >
@@ -221,7 +221,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                     <p className="text-xs text-zinc-500">{plan.description}</p>
                   </div>
                   <span className={cn("text-sm font-semibold",
-                    state.selectedPlan === plan.code ? "text-indigo-400" : "text-zinc-300"
+                    state.selectedPlan === plan.code ? "text-[var(--brand-primary)]" : "text-zinc-300"
                   )}>
                     {plan.ctaType === "contact" ? "Contact Sales" : (plan.price === 0 ? "Free" : `${formatCurrency(plan.price)}/mo`)}
                   </span>
@@ -273,7 +273,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
         {/* Provisioning */}
         {state.step === "provisioning" && (
           <div className="text-center space-y-5">
-            <div className="animate-spin h-8 w-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full mx-auto" />
+            <div className="animate-spin h-8 w-8 border-2 border-[var(--brand-primary)]/30 border-t-[var(--brand-primary)] rounded-full mx-auto" />
             <div>
               <h2 className="text-lg font-semibold text-white">Setting up your workspace</h2>
               <p className="text-sm text-zinc-500 mt-1">Creating account, provisioning billing, preparing dashboard...</p>

@@ -253,8 +253,8 @@ function OrderDetailBody({ order, onOrderRefreshed }: { order: CreatorOrderDetai
 // action re-validates role, tenant, and legality on every call. Tracking stays
 // OPTIONAL exactly as the existing architecture defines it. Every outcome —
 // success, rejection, or lost race — ends in a server-truth refresh.
-const inputCls = "w-full rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:border-cyan-400/40 focus:outline-none";
-const buttonCls = "rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50";
+const inputCls = "w-full rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20";
+const buttonCls = "rounded-lg border border-[var(--color-info-border)] bg-[var(--color-info-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-info)] transition hover:bg-[var(--color-info-surface)] disabled:cursor-not-allowed disabled:opacity-50";
 
 function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetailView; onRefreshed: () => Promise<void> }) {
   const fulfillment = order.fulfillment;
@@ -352,7 +352,7 @@ function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetail
 // Nothing here is authoritative: every invalid/stale request is rejected by
 // the existing D.3/D.4 guards and surfaced as a mapped safe message.
 
-const REFUND_INPUT_CLS = "mt-1 w-full max-w-[16rem] rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-cyan-400/40 focus:outline-none";
+const REFUND_INPUT_CLS = "mt-1 w-full max-w-[16rem] rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-2.5 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20";
 
 const REFUND_VALIDATION_MESSAGES: Record<string, string> = {
   empty: "Enter an amount.",

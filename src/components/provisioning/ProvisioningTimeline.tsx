@@ -91,7 +91,7 @@ export function ProvisioningTimeline({ runId, onComplete, onError }: Provisionin
     <div className="w-full max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        {isRunning && <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />}
+        {isRunning && <Loader2 className="h-5 w-5 animate-spin text-[var(--brand-primary)]" />}
         {isCompleted && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
         {isFailed && <XCircle className="h-5 w-5 text-red-400" />}
         <div>
@@ -121,12 +121,12 @@ export function ProvisioningTimeline({ runId, onComplete, onError }: Provisionin
                   "h-5 w-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-all",
                   completed && "border-emerald-500 bg-emerald-500/20",
                   failed && "border-red-500 bg-red-500/20",
-                  isActive && "border-indigo-500 bg-indigo-500/20",
+                  isActive && "border-[var(--brand-primary)] bg-[var(--brand-primary)]/20",
                   isPending && "border-zinc-700 bg-zinc-800/50",
                 )}>
                   {completed && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
                   {failed && <XCircle className="h-3 w-3 text-red-400" />}
-                  {isActive && <Loader2 className="h-3 w-3 animate-spin text-indigo-400" />}
+                  {isActive && <Loader2 className="h-3 w-3 animate-spin text-[var(--brand-primary)]" />}
                   {isPending && <Clock className="h-3 w-3 text-zinc-600" />}
                 </div>
                 {i < allSteps.length - 1 && (
@@ -144,7 +144,7 @@ export function ProvisioningTimeline({ runId, onComplete, onError }: Provisionin
                     "text-sm font-medium",
                     completed && "text-emerald-300",
                     failed && "text-red-400",
-                    isActive && "text-indigo-300",
+                    isActive && "text-[var(--brand-primary)]",
                     isPending && "text-zinc-600",
                   )}>
                     {stepLabel(step)}

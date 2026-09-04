@@ -113,7 +113,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
         <div
           className={cn(
             "rounded-lg border px-2 py-1.5 text-[9px] font-medium",
-            previewingLocked ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-indigo-400/40 bg-indigo-500/10 text-indigo-300",
+            previewingLocked ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]",
           )}
           data-testid="preview-banner"
         >
@@ -175,7 +175,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
               className={cn(
                 "group relative cursor-pointer rounded-lg border p-1.5 text-left transition-all",
                 isActive
-                  ? "border-indigo-400/40 bg-indigo-500/5 ring-1 ring-indigo-500/20"
+                  ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/5 ring-1 ring-[var(--brand-primary)]/20"
                   : "border-white/5 bg-zinc-900/50 hover:border-white/10 hover:bg-zinc-900",
               )}
               data-testid="theme-card"
@@ -199,7 +199,7 @@ export function ThemeCard({ currentThemeId, planCode, onThemePreview, previewThe
 
               <div className="flex items-center gap-1">
                 <p className="flex-1 truncate text-[10px] font-medium text-zinc-300">{theme.name}</p>
-                {isCurrent && <span className="rounded bg-indigo-500 px-1 py-0.5 text-[7px] font-bold text-white">Current</span>}
+                {isCurrent && <span className="rounded bg-[var(--brand-primary)] px-1 py-0.5 text-[7px] font-bold text-white">Current</span>}
                 {isPreview && <span className="rounded bg-purple-500/20 px-1 py-0.5 text-[7px] font-bold text-purple-300">Preview</span>}
               </div>
 

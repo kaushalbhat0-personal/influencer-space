@@ -122,7 +122,7 @@ function SectionCard({
         className={cn(
           "group flex items-center gap-1.5 rounded-lg px-2 py-2 cursor-pointer transition-colors",
           isSelected
-            ? "bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/30"
+            ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] ring-1 ring-[var(--brand-primary)]/30"
             : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
         )}
       >
@@ -139,7 +139,7 @@ function SectionCard({
             aria-pressed={isSelected}
             aria-label={`Select ${section.name} section`}
             data-testid={`builder-section-select-${tid}`}
-            className="text-left text-[11px] font-medium truncate rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-0"
+            className="text-left text-[11px] font-medium truncate rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-0"
           >
             {section.name}
           </button>
@@ -180,24 +180,24 @@ function SectionCard({
           data-testid={`section-${tid}-up`}
           aria-label={`Move ${section.name} up`}
           disabled={index === 0}
-          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-20 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] disabled:opacity-20 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <ArrowUp className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onMoveDown(section.id); }}
           data-testid={`section-${tid}-down`}
           aria-label={`Move ${section.name} down`}
           disabled={index === total - 1}
-          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-20 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] disabled:opacity-20 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <ArrowDown className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(section.id); }}
           data-testid={`section-${tid}-toggle`}
           aria-label={section.visible ? `Hide ${section.name}` : `Show ${section.name}`}
-          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           {section.visible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </button>
         {editHref && (
-          <Link href={editHref} className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1"
+          <Link href={editHref} className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1"
             onClick={(e) => e.stopPropagation()}>
             <ExternalLink className="h-3 w-3" />
           </Link>
@@ -205,7 +205,7 @@ function SectionCard({
         <button onClick={(e) => { e.stopPropagation(); onDuplicate(section.id); }}
           data-testid={`section-${tid}-duplicate`}
           aria-label={`Duplicate ${section.name}`}
-          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
+          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           <Copy className="h-3 w-3" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${section.name}"?`)) onDelete(section.id); }}
@@ -320,7 +320,7 @@ export function SectionManager({
       ) : (
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[var(--text-muted)]">
               <Layout className="h-5 w-5" />
             </div>
             <p className="text-xs text-zinc-600">No sections yet.<br />Add one below.</p>
@@ -336,7 +336,7 @@ export function SectionManager({
             return (
               <button key={entry.componentId} onClick={() => addSection(entry)}
                 data-testid={`add-section-${entry.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-3 py-2.5 text-[11px] text-zinc-500 hover:bg-indigo-500/10 hover:text-indigo-300 hover:ring-1 hover:ring-indigo-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors lg:px-2 lg:py-1.5 lg:text-[10px]">
+                className="flex items-center gap-1.5 rounded-md bg-zinc-800/50 px-3 py-2.5 text-[11px] text-zinc-500 hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)] hover:ring-1 hover:ring-[var(--brand-primary)]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] transition-colors lg:px-2 lg:py-1.5 lg:text-[10px]">
                 <Icon className="h-3 w-3 shrink-0" />
                 {entry.name}
               </button>

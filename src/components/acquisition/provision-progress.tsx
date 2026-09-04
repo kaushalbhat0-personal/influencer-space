@@ -31,7 +31,7 @@ export function ProvisionProgress({
 
       <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out"
+          className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-500 ease-out"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -50,7 +50,7 @@ export function ProvisionProgress({
             {stage.status === "completed" ? (
               <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
             ) : stage.status === "running" ? (
-              <Loader2 className="h-4 w-4 text-indigo-400 animate-spin shrink-0" />
+              <Loader2 className="h-4 w-4 text-[var(--brand-primary)] animate-spin shrink-0" />
             ) : stage.status === "failed" ? (
               <span className="h-4 w-4 rounded-full bg-red-500/20 shrink-0" />
             ) : (

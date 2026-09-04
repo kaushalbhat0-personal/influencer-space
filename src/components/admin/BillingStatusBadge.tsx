@@ -6,7 +6,7 @@ const STATUS_MAP: Record<string, string> = {
   SUCCEEDED: "bg-emerald-500/15 text-emerald-400",
   COMPLETED: "bg-emerald-500/15 text-emerald-400",
   PENDING: "bg-amber-500/15 text-amber-400",
-  TRIALING: "bg-indigo-500/15 text-indigo-400",
+  TRIALING: "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]",
   PAST_DUE: "bg-red-500/15 text-red-400",
   FAILED: "bg-red-500/15 text-red-400",
   CANCELLED: "bg-zinc-800 text-zinc-400",

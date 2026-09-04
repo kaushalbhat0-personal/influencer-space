@@ -54,7 +54,7 @@ export function BuilderToolbar({
           </Link>
           <Link
             href="/admin/dashboard"
-            className="hidden sm:inline shrink-0 text-sm font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent font-display hover:opacity-80 transition-opacity"
+            className="hidden sm:inline shrink-0 text-sm font-bold text-[var(--text-primary)] font-display hover:text-[var(--text-secondary)] transition-colors"
           >
             CreatorStore
           </Link>
@@ -74,7 +74,7 @@ export function BuilderToolbar({
                 onClick={onOpenSections}
                 aria-pressed={mobilePanel === "sections"}
                 aria-label="Toggle sections panel"
-                className={cn("rounded p-1 transition-colors", mobilePanel === "sections" ? "text-indigo-400 bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
+                className={cn("rounded p-1 transition-colors", mobilePanel === "sections" ? "text-[var(--text-primary)] bg-[var(--surface-hover)]" : "text-zinc-500 hover:text-zinc-300")}
               >
                 <Layers className="h-3.5 w-3.5" />
               </button>
@@ -82,7 +82,7 @@ export function BuilderToolbar({
                 onClick={onOpenProperties}
                 aria-pressed={mobilePanel === "properties"}
                 aria-label="Toggle properties panel"
-                className={cn("rounded p-1 transition-colors", mobilePanel === "properties" ? "text-indigo-400 bg-white/5" : "text-zinc-500 hover:text-zinc-300")}
+                className={cn("rounded p-1 transition-colors", mobilePanel === "properties" ? "text-[var(--text-primary)] bg-[var(--surface-hover)]" : "text-zinc-500 hover:text-zinc-300")}
               >
                 <Settings2 className="h-3.5 w-3.5" />
               </button>
@@ -122,7 +122,7 @@ export function BuilderToolbar({
                 onClick={() => onDeviceChange(d.id)}
                 aria-pressed={device === d.id}
                 aria-label={`${d.label} preview — ${d.id === "mobile" ? "375 pixels" : d.id === "tablet" ? "768 pixels" : "1200 pixels"}`}
-                className={cn("rounded-md min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors", device === d.id ? "bg-indigo-500/20 text-indigo-300" : "text-zinc-600 hover:text-zinc-400")}
+                className={cn("rounded-md min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors border", device === d.id ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border)]" : "text-zinc-600 hover:text-zinc-400 border-transparent")}
               >
                 <d.icon className="h-3.5 w-3.5" />
               </button>
@@ -138,7 +138,7 @@ export function BuilderToolbar({
             disabled={saving}
             data-testid="toolbar-save-draft"
             aria-label="Save draft"
-            className="flex items-center gap-1 rounded-md bg-indigo-500/10 px-2.5 py-1 text-[10px] font-medium text-indigo-400 hover:bg-indigo-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="flex items-center gap-1 rounded-md bg-[var(--surface-hover)] border border-[var(--border)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             {saving ? (
               <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
@@ -167,7 +167,7 @@ function PreviewDraftToggle({ status }: { status: PublishStatusValue }) {
       title={hint}
       className={cn(
         "rounded-md px-2 py-0.5 text-[10px] font-medium ring-1",
-        current === "live" ? "bg-emerald-500/20 text-emerald-400 ring-emerald-500/30" : current === "preview" ? "bg-indigo-500/20 text-indigo-300 ring-indigo-500/30" : "bg-zinc-700 text-zinc-200 ring-white/10"
+        current === "live" ? "bg-emerald-500/20 text-emerald-400 ring-emerald-500/30" : current === "preview" ? "bg-[var(--surface-hover)] text-[var(--text-secondary)] ring-[var(--border)]" : "bg-zinc-700 text-zinc-200 ring-white/10"
       )}
     >
       {current === "live" ? "Live" : current === "preview" ? "Preview" : "Draft"} <span className="hidden sm:inline font-normal opacity-80">— {current === "live" ? "public" : "save, then publish"}</span>

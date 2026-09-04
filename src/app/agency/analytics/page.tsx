@@ -135,7 +135,7 @@ export default async function AgencyAnalytics() {
                             t.reserved ? "bg-amber-500/15 text-amber-300" :
                             t.status === "cleared" ? "bg-emerald-500/15 text-emerald-300" :
                             t.status === "reversed" ? "bg-zinc-500/15 text-zinc-400" :
-                            "bg-indigo-500/15 text-indigo-300"
+                            "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]"
                           }`}>
                             {t.reserved ? "reserved" : t.status}
                           </span>

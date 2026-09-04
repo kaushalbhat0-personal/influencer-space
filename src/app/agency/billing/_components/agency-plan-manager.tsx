@@ -82,7 +82,7 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
         {trialActive && trialEndsAt && (
           <div className="flex items-center justify-between">
             <span className="text-zinc-400">Trial</span>
-            <span className="font-medium text-indigo-300">ends {new Date(trialEndsAt).toISOString().slice(0, 10)}</span>
+            <span className="font-medium text-[var(--brand-primary)]">ends {new Date(trialEndsAt).toISOString().slice(0, 10)}</span>
           </div>
         )}
         <div className="flex items-center justify-between">
@@ -101,7 +101,7 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
             key={t.code}
             onClick={() => upgrade(t.code)}
             disabled={busy}
-            className="rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-400 disabled:opacity-50"
+            className="rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-50"
           >
             {busy ? "Starting…" : t.label}
           </button>

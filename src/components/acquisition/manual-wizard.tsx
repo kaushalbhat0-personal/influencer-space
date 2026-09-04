@@ -113,9 +113,9 @@ export function ManualWizard() {
                   const Icon = cat.icon;
                   const active = profile.category === cat.id;
                   return (
-                    <button key={cat.id} type="button" onClick={() => { update({ category: cat.id, pages: cat.suggestedPages }); }} className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-all ${active ? "border-indigo-500/40 bg-indigo-500/10" : "border-white/[0.06] hover:border-white/[0.15]"}`}>
-                      <Icon className={`h-5 w-5 ${active ? "text-indigo-400" : "text-zinc-500"}`} />
-                      <span className={`text-[10px] font-medium ${active ? "text-indigo-300" : "text-zinc-400"}`}>{cat.label}</span>
+                    <button key={cat.id} type="button" onClick={() => { update({ category: cat.id, pages: cat.suggestedPages }); }} className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-all ${active ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/10" : "border-white/[0.06] hover:border-white/[0.15]"}`}>
+                      <Icon className={`h-5 w-5 ${active ? "text-[var(--brand-primary)]" : "text-zinc-500"}`} />
+                      <span className={`text-[10px] font-medium ${active ? "text-[var(--brand-primary)]" : "text-zinc-400"}`}>{cat.label}</span>
                     </button>
                   );
                 })}
@@ -223,7 +223,7 @@ export function ManualWizard() {
                 <button onClick={() => removeSocial(i)} className="text-zinc-600 hover:text-red-400 text-xs">Remove</button>
               </div>
             ))}
-            <button onClick={addSocial} className="text-xs text-indigo-400 hover:text-indigo-300">+ Add Link</button>
+            <button onClick={addSocial} className="text-xs text-[var(--brand-primary)] hover:text-[var(--brand-primary)]">+ Add Link</button>
 
             {/* Completeness */}
             <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
@@ -272,10 +272,10 @@ export function ManualWizard() {
           const completed = i < currentIdx;
           return (
             <div key={s} className="flex items-center gap-1 shrink-0">
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-medium ${completed ? "bg-indigo-500 text-white" : s === step ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/40" : "bg-zinc-800 text-zinc-600"}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-medium ${completed ? "bg-[var(--brand-primary)] text-white" : s === step ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] border border-[var(--brand-primary)]/40" : "bg-zinc-800 text-zinc-600"}`}>
                 {i + 1}
               </span>
-              {i < 4 && <span className={`h-px w-4 ${completed ? "bg-indigo-500/40" : "bg-zinc-800"}`} />}
+              {i < 4 && <span className={`h-px w-4 ${completed ? "bg-[var(--brand-primary)]/40" : "bg-zinc-800"}`} />}
             </div>
           );
         })}

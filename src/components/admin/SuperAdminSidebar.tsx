@@ -42,7 +42,7 @@ export function SuperAdminSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-white/[0.06] bg-[var(--surface-base)]">
       <div className="flex h-14 items-center px-4 border-b border-white/[0.06]">
-        <Link href="/super-admin" className="text-sm font-bold text-indigo-400 tracking-tight">
+        <Link href="/super-admin" className="text-sm font-bold text-[var(--brand-primary)] tracking-tight">
           CreatorStore
         </Link>
       </div>
@@ -72,7 +72,7 @@ export function SuperAdminSidebar() {
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                           active
-                            ? "bg-indigo-500/10 text-indigo-400"
+                            ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
                             : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200"
                         )}
                         aria-current={active ? "page" : undefined}
@@ -80,7 +80,7 @@ export function SuperAdminSidebar() {
                         <Icon className="h-4 w-4 flex-shrink-0" />
                         <span className="flex-1 truncate">{mod.title}</span>
                         {mod.badge && (
-                          <span className="rounded-full bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400">
+                          <span className="rounded-full bg-[var(--brand-primary)]/10 px-1.5 py-0.5 text-[10px] font-medium text-[var(--brand-primary)]">
                             {mod.badge}
                           </span>
                         )}

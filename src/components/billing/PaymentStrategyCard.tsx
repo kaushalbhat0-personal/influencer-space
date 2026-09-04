@@ -32,7 +32,7 @@ export function PaymentStrategyCard({ strategy, readiness, activeProviderLabel, 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
-            <Landmark className="h-3.5 w-3.5 text-cyan-400" />
+            <Landmark className="h-3.5 w-3.5 text-[var(--color-info)]" />
             Payment Strategy
           </p>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">

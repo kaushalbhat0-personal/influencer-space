@@ -15,7 +15,7 @@ const TIER_COLORS: Record<string, string> = {
   free: "bg-emerald-900/60 text-emerald-300",
   starter: "bg-blue-900/60 text-blue-300",
   pro: "bg-amber-900/60 text-amber-300",
-  business: "bg-indigo-900/60 text-indigo-300",
+  business: "bg-indigo-900/60 text-[var(--brand-primary)]",
   enterprise: "bg-purple-900/60 text-purple-300",
 };
 
@@ -192,7 +192,7 @@ export function ThemeMarketplaceClient({
           placeholder="Search themes..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[180px] rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-zinc-600"
+          className="flex-1 min-w-[180px] rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
         />
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
           <option value="">All categories</option>
