@@ -1,4 +1,5 @@
 import type { ComponentDefinition, ComponentCategory, RegistryEntry } from "./types";
+import { defaultPropsFromFields } from "./fields";
 
 export class ComponentRegistry {
   private entries = new Map<string, RegistryEntry>();
@@ -58,7 +59,6 @@ export class ComponentRegistry {
   getFieldDefaults(id: string): Record<string, unknown> | undefined {
     const fields = this.getFields(id);
     if (!fields) return undefined;
-    const { defaultPropsFromFields } = require("./fields") as typeof import("./fields");
     return defaultPropsFromFields(fields);
   }
 }

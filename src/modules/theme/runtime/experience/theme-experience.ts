@@ -332,6 +332,89 @@ const BASE: Record<string, ThemeExperience> = {
     surface: "flat",
     defaultFlow: "isolated",
   },
+  // ── RCCF-VISUAL-01C — 5 approved visual directions, wired via CSS-token pipeline. ──
+  // Each pack is hex/RGBA only (Tailwind 3.4.1), honors prefers-reduced-motion,
+  // and uses existing pipeline (no alternate renderers).
+  "visual-nocturne": {
+    id: "visual-nocturne",
+    name: "Visual Nocturne",
+    premium: true,
+    background: { kind: "pattern", pattern: "lines", glow: "top" },
+    decoration: "grid",
+    motion: "static",
+    divider: "fade",
+    surface: "flat",
+    defaultFlow: "shared",
+    sections: {
+      hero: { divider: "none", heroBlend: true, surface: "flat" },
+      footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
+      gallery: { decoration: "dots", divider: "fade", reducedDecorations: true },
+    },
+  },
+  "visual-signal": {
+    id: "visual-signal",
+    name: "Visual Signal",
+    premium: true,
+    background: { kind: "mesh", colors: ["rgba(6,182,214,0.14)", "rgba(139,92,246,0.10)"], glow: "top", pattern: "grid" },
+    decoration: "hexagons",
+    motion: "static",
+    divider: "glow",
+    surface: "gradient-border",
+    defaultFlow: "bleed",
+    sections: {
+      hero: { background: { glow: "center", colors: ["rgba(6,182,214,0.20)", "rgba(139,92,246,0.14)"] }, divider: "none", heroBlend: true, surface: "flat" },
+      footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
+      commerce: { decoration: "dots", divider: "glow" },
+    },
+  },
+  "visual-atelier": {
+    id: "visual-atelier",
+    name: "Visual Atelier",
+    premium: true,
+    background: { kind: "mesh", colors: ["rgba(212,165,116,0.10)", "rgba(167,139,250,0.08)", "rgba(253,230,138,0.06)"], glow: "center", pattern: "noise" },
+    decoration: "glow",
+    motion: "glow-pulse",
+    divider: "glow",
+    surface: "luxury",
+    defaultFlow: "bleed",
+    sections: {
+      hero: { background: { glow: "center", colors: ["rgba(212,165,116,0.14)", "rgba(167,139,250,0.10)"] }, divider: "none", heroBlend: true, surface: "minimal" },
+      footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
+      cta: { background: { glow: "bottom" }, surface: "soft-glow" },
+    },
+  },
+  "visual-field": {
+    id: "visual-field",
+    name: "Visual Field",
+    premium: true,
+    background: { kind: "mesh", colors: ["rgba(249,115,22,0.12)", "rgba(132,204,22,0.08)", "rgba(251,146,60,0.06)"], glow: "center" },
+    decoration: "waves",
+    motion: "particle-drift",
+    divider: "organic",
+    surface: "soft-glow",
+    defaultFlow: "shared",
+    sections: {
+      hero: { background: { glow: "center", colors: ["rgba(249,115,22,0.16)", "rgba(132,204,22,0.10)"] }, divider: "none", heroBlend: true, surface: "flat" },
+      footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
+      gallery: { decoration: "dots", divider: "organic", reducedDecorations: true },
+    },
+  },
+  "visual-system": {
+    id: "visual-system",
+    name: "Visual System",
+    premium: true,
+    background: { kind: "solid", glow: "top" },
+    decoration: "dots",
+    motion: "static",
+    divider: "fade",
+    surface: "elevated",
+    defaultFlow: "shared",
+    sections: {
+      hero: { divider: "none", heroBlend: true, surface: "flat" },
+      footer: { decoration: "minimal", divider: "fade", reducedDecorations: true },
+      gallery: { decoration: "dots", divider: "fade", reducedDecorations: true },
+    },
+  },
 };
 
 export const THEME_EXPERIENCES: Record<string, ThemeExperience> = BASE;
@@ -390,6 +473,12 @@ export const THEME_TO_EXPERIENCE: Record<string, string> = {
   "com.creatos.startup": "glass",
   "com.creatos.professional": "minimal",
   "com.creatos.corporate-blue": "executive",
+  // RCCF-VISUAL-01C — 5 visual foundation themes → new packs
+  "com.creatos.visual-nocturne-editorial": "visual-nocturne",
+  "com.creatos.visual-signal": "visual-signal",
+  "com.creatos.visual-atelier": "visual-atelier",
+  "com.creatos.visual-field": "visual-field",
+  "com.creatos.visual-system": "visual-system",
 };
 
 export { BASE as EXPERIENCE_PACKS };
@@ -416,6 +505,12 @@ export const EXPERIENCE_MIN_PLAN: Record<string, string> = {
   executive: "creator_scale",
   arena: "creator_scale",
   brutalist: "creator_scale",
+  // RCCF-VISUAL-01C — new packs (required caps: pattern/mesh→noise/gradient + decoration→particles)
+  "visual-nocturne": "creator_grow",
+  "visual-signal": "creator_grow",
+  "visual-atelier": "creator_scale",
+  "visual-field": "creator_grow",
+  "visual-system": "creator_grow",
 };
 
 /**

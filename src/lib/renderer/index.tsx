@@ -20,6 +20,13 @@ export function ComponentRenderer({
 }) {
   const def = componentRegistry.get(componentId);
   if (!def) {
+    // RCCF-VISUAL-01L: unknown moduleIds in a published snapshot (stale content)
+    // must not render a red error block on the public storefront. Log for
+    // trace (server) and render a muted placeholder in prod.
+    if (process.env.NODE_ENV === "production") {
+      console.error(`[Renderer] Unknown component: ${componentId}`);
+      return null;
+    }
     return (
       <div className="rounded border border-dashed border-red-500/30 p-4 text-center text-xs text-red-400">
         Unknown component: {componentId}

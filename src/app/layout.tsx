@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Literata, Space_Grotesk, Playfair_Display, Outfit } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getPlatformConfig } from "@/lib/config/platform";
@@ -14,6 +15,31 @@ const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+});
+
+// RCCF-VISUAL-01D — display fonts for the 5 visual themes. Loaded with
+// next/font (automatic @font-face, display:swap, no layout shift). Each
+// exposes a CSS variable that visual-foundation heading tokens reference via
+// var(--font-*). Body remains Inter (via globals.css @import) — no change.
+const literata = Literata({
+  subsets: ["latin"],
+  variable: "--font-literata",
+  display: "swap",
+});
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -60,7 +86,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${spaceGrotesk.variable} ${playfair.variable} ${outfit.variable} antialiased`}
       >
         {children}
         <Analytics />

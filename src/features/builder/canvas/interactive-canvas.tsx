@@ -15,6 +15,7 @@
 
 import { useEffect, useState, useReducer, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { Pencil } from "lucide-react";
 import { builderEvents } from "@/lib/builder/events";
 import { ComponentRenderer } from "@/lib/renderer";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
@@ -425,11 +426,32 @@ export function InteractiveCanvas({
                         onClick={() => builderStore.select(slotId)}
                         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); builderStore.select(slotId); } }}
                         className={cn(
-                          "relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                          "group/section relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                           isSelected && "ring-2 ring-indigo-500/60",
                           !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >
+                        {/* RCCF-VISUAL-01G — obvious inline Edit for section heading */}
+                        <button
+                          type="button"
+                          aria-label={`Edit ${section.moduleId} heading`}
+                          title="Edit section heading"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            builderStore.select(slotId);
+                            setTimeout(() => {
+                              const input = document.querySelector<HTMLInputElement>('input[placeholder*="Courses, Portfolio"]');
+                              input?.focus();
+                              input?.select();
+                              input?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }, 120);
+                          }}
+                          className="absolute right-2 top-2 z-10 inline-flex h-7 items-center gap-1 rounded-full border border-[rgba(99,102,241,0.35)] bg-[var(--surface-card,#18181B)] px-2.5 py-1 text-xs font-medium text-[var(--brand-primary,#6366F1)] shadow-sm transition-colors hover:bg-[var(--brand-primary,#6366F1)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] opacity-90 hover:opacity-100"
+                          data-testid={`edit-section-${slotId}`}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Edit
+                        </button>
                         <ComponentErrorBoundary componentId={section.moduleId}>
                           <ComponentRenderer
                             componentId={section.moduleId}
@@ -466,11 +488,30 @@ export function InteractiveCanvas({
                         onClick={() => builderStore.select(slotId)}
                         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); builderStore.select(slotId); } }}
                         className={cn(
-                          "relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                          "group/section relative rounded transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                           isSelected && "ring-2 ring-indigo-500/60",
                           !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >
+                        <button
+                          type="button"
+                          aria-label="Edit footer heading"
+                          title="Edit footer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            builderStore.select(slotId);
+                            setTimeout(() => {
+                              const input = document.querySelector<HTMLInputElement>('input[placeholder*="Courses, Portfolio"]');
+                              input?.focus();
+                              input?.select();
+                            }, 120);
+                          }}
+                          className="absolute right-2 top-2 z-10 inline-flex h-7 items-center gap-1 rounded-full border border-[rgba(99,102,241,0.35)] bg-[var(--surface-card,#18181B)] px-2.5 py-1 text-xs font-medium text-[var(--brand-primary,#6366F1)] shadow-sm transition-colors hover:bg-[var(--brand-primary,#6366F1)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] opacity-90"
+                          data-testid={`edit-section-${slotId}`}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Edit
+                        </button>
                         <ComponentErrorBoundary componentId={section.moduleId}>
                           <ComponentRenderer
                             componentId={section.moduleId}

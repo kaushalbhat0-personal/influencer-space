@@ -33,13 +33,15 @@ function getIcon(sectionName: string) {
 const EDIT_LINKS: Record<string, string> = {
   "hero.default": "/admin/settings", "hero.gaming": "/admin/settings",
   "hero.fitness": "/admin/settings", "hero.education": "/admin/settings",
+  "hero.split": "/admin/settings",
   "products.grid": "/admin/products",
-  "gallery.grid": "/admin/gallery", "testimonials.default": "/admin/testimonials",
+  "gallery.grid": "/admin/gallery", "gallery.bento": "/admin/gallery",
+  "testimonials.default": "/admin/testimonials", "testimonials.marquee": "/admin/testimonials",
   "faq.default": "/admin/faq", "timeline.default": "/admin/milestones",
   "games.default": "/admin/games", "links.default": "/admin/links",
   "contentFeed.default": "/admin/settings/content",
   "courses.default": "/admin/courses",
-  "services.default": "/admin/services",
+  "services.default": "/admin/services", "services.bento": "/admin/services",
   "footer.default": "/admin/footer",
 };
 
@@ -60,13 +62,17 @@ const CONTENT_LABELS: Record<string, string> = {
  */
 const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId: string }[] = [
   { name: "Hero", category: "hero", componentId: "hero.default" },
+  { name: "Hero Split", category: "hero", componentId: "hero.split" },
   { name: "Products", category: "products", componentId: "products.grid" },
   { name: "Gallery", category: "gallery", componentId: "gallery.grid" },
+  { name: "Gallery Bento", category: "gallery", componentId: "gallery.bento" },
   { name: "Timeline", category: "timeline", componentId: "timeline.default" },
   { name: "Testimonials", category: "testimonials", componentId: "testimonials.default" },
+  { name: "Testimonials Marquee", category: "testimonials", componentId: "testimonials.marquee" },
   { name: "FAQ", category: "faq", componentId: "faq.default" },
   { name: "Courses", category: "courses", componentId: "courses.default" },
   { name: "Services", category: "services", componentId: "services.default" },
+  { name: "Services Bento", category: "services", componentId: "services.bento" },
   { name: "Games", category: "games", componentId: "games.default" },
   { name: "ContentFeed", category: "contentFeed", componentId: "contentFeed.default" },
   { name: "Newsletter", category: "newsletter", componentId: "newsletter.default" },

@@ -1,20 +1,19 @@
 "use client";
-
+// force rebuild 01N
 import { useState, useEffect, type JSX } from "react";
-import { Home, ShoppingBag, Image as ImageIcon, User, Mail, ExternalLink, Gamepad2, MessageSquare, HelpCircle, Trophy, Rss, Link2 } from "lucide-react";
 
-const NAV_ICON: Record<string, JSX.Element> = {
-  hero: <Home className="h-4 w-4" />,
-  about: <User className="h-4 w-4" />,
-  products: <ShoppingBag className="h-4 w-4" />,
-  gallery: <ImageIcon className="h-4 w-4" />,
-  links: <Link2 className="h-4 w-4" />,
-  contact: <Mail className="h-4 w-4" />,
-  testimonials: <MessageSquare className="h-4 w-4" />,
-  faq: <HelpCircle className="h-4 w-4" />,
-  timeline: <Trophy className="h-4 w-4" />,
-  games: <Gamepad2 className="h-4 w-4" />,
-  contentFeed: <Rss className="h-4 w-4" />,
+const NAV_ICON: Record<string, JSX.Element | null> = {
+  hero: null,
+  about: null,
+  products: null,
+  gallery: null,
+  links: null,
+  contact: null,
+  testimonials: null,
+  faq: null,
+  timeline: null,
+  games: null,
+  contentFeed: null,
 };
 
 interface NavItem {
@@ -75,39 +74,91 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
       window.location.href = item.href;
     }
   }
+  // Desktop overflow mirrors mobile: cap to 6, excess in More dropdown (editorial density).
+  const DESKTOP_MAX = 6;
+  const desktopNeedsOverflow = visibleSections.length > DESKTOP_MAX;
+  const desktopPrimary = desktopNeedsOverflow ? visibleSections.slice(0, DESKTOP_MAX - 1) : visibleSections;
+  const desktopOverflow = desktopNeedsOverflow ? visibleSections.slice(DESKTOP_MAX - 1) : [];
+
   return (
     <>
-      {/* Desktop sticky nav */}
-      <nav className="sticky top-0 z-40 hidden md:block border-b border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-2xl items-center justify-center gap-1 px-4 py-2">
-          {visibleSections.map((s) => {
-            const isExternal = s.type === "external";
-            const isAnchor = s.type === "anchor";
-            const anchorId = isAnchor ? s.href.replace("#", "") : "";
-            return (
-              <a
-                key={s.id}
-                href={s.href}
-                target={isExternal ? s.target || "_blank" : undefined}
-                rel={isExternal ? "noopener noreferrer" : undefined}
-                onClick={(e) => {
-                  if (isAnchor) { e.preventDefault(); handleClick(s); }
-                }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  !isAnchor && activeSection === anchorId ? "bg-[var(--brand-primary,#6366F1)]/10 text-[var(--text-primary,#FAFAFA)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"
-                }`}
-              >
-                {NAV_ICON[s.id] || null}
-                {s.label}
-                {isExternal && <ExternalLink className="h-3 w-3 opacity-50" />}
-              </a>
-            );
-          })}
+      {/* Desktop sticky nav — premium density: capped to 6 with More, search affordance via ⌘K hint */}
+      <nav suppressHydrationWarning className="sticky top-0 z-40 hidden md:block border-b border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2">
+          <div className="flex flex-1 items-center justify-center gap-0.5">
+            {desktopPrimary.map((s) => {
+              const isExternal = s.type === "external";
+              const isAnchor = s.type === "anchor";
+              const anchorId = isAnchor ? s.href.replace("#", "") : "";
+              return (
+                <a
+                  key={s.id}
+                  href={s.href}
+                  suppressHydrationWarning
+                  target={isExternal ? s.target || "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
+                  onClick={(e) => {
+                    if (isAnchor) { e.preventDefault(); handleClick(s); }
+                  }}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    !isAnchor && activeSection === anchorId ? "bg-[var(--brand-primary,#6366F1)]/10 text-[var(--text-primary,#FAFAFA)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"
+                  }`}
+                >
+                  {NAV_ICON[s.id] || null}
+                  {s.label}
+                  
+                </a>
+              );
+            })}
+            {desktopNeedsOverflow && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen((v) => !v)}
+                  aria-expanded={moreOpen}
+                  aria-haspopup="true"
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${moreOpen ? "bg-[var(--surface-card,#18181B)] text-[var(--text-primary,#FAFAFA)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"}`}
+                >
+                  More
+                  <span className="text-[10px] leading-none">{moreOpen ? "×" : "…"}</span>
+                </button>
+                {moreOpen && (
+                  <div className="absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 rounded-xl border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] p-1.5 shadow-xl">
+                    <div className="flex flex-col gap-1">
+                      {desktopOverflow.map((s) => {
+                        const isExternal = s.type === "external";
+                        const isAnchor = s.type === "anchor";
+                        return (
+                          <a
+                            key={s.id}
+                            href={s.href}
+                            suppressHydrationWarning
+                            target={isExternal ? s.target || "_blank" : undefined}
+                            rel={isExternal ? "noopener noreferrer" : undefined}
+                            onClick={(e) => {
+                              if (isAnchor) { e.preventDefault(); handleClick(s); }
+                            }}
+                            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text-secondary,#A1A1AA)] hover:bg-[var(--surface-card-hover,#27272A)] hover:text-[var(--text-primary,#FAFAFA)]"
+                          >
+                            {NAV_ICON[s.id] ? <span suppressHydrationWarning>{NAV_ICON[s.id]}</span> : null}
+                            {s.label}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <span className="hidden shrink-0 items-center gap-1.5 rounded-full border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-2.5 py-1 text-[10px] font-medium tracking-wide text-[var(--text-muted,#71717A)] lg:inline-flex" aria-hidden>
+            ⌘K
+          </span>
         </div>
       </nav>
 
       {/* Mobile bottom nav — RCCF-07C: fixed, derived from canonical navigation, More affordance, safe-area */}
-      <nav aria-label="Mobile navigation" className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/95 backdrop-blur-xl" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav aria-label="Mobile navigation" suppressHydrationWarning className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/95 backdrop-blur-xl shadow-[0_-8px_24px_rgba(0,0,0,0.35)]" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {moreOpen && overflowSections.length > 0 && (
           <div className="border-b border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)] px-2 py-2">
             <div className="flex flex-wrap gap-1.5 justify-center">
@@ -120,6 +171,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
                   <a
                     key={s.id}
                     href={s.href}
+                    suppressHydrationWarning
                     target={isExternal ? s.target || "_blank" : undefined}
                     rel={isExternal ? "noopener noreferrer" : undefined}
                     onClick={(e) => {
@@ -128,9 +180,9 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
                     aria-current={isActive ? "page" : undefined}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus,#6366F1)] ${isActive ? "bg-[var(--brand-primary,#6366F1)] text-white" : "bg-[var(--surface-card,#18181B)] text-[var(--text-secondary,#A1A1AA)] hover:text-[var(--text-primary,#FAFAFA)]"}`}
                   >
-                    {NAV_ICON[s.id] || <Link2 className="h-3.5 w-3.5" />}
+                    {NAV_ICON[s.id] ? <span suppressHydrationWarning>{NAV_ICON[s.id]}</span> : null}
                     {s.label}
-                    {isExternal && <ExternalLink className="h-3 w-3 opacity-50" />}
+                    
                   </a>
                 );
               })}
@@ -147,6 +199,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
               <a
                 key={s.id}
                 href={s.href}
+                suppressHydrationWarning
                 target={isExternal ? s.target || "_blank" : undefined}
                 rel={isExternal ? "noopener noreferrer" : undefined}
                 onClick={(e) => {
@@ -156,7 +209,7 @@ export function StorefrontNav({ sections }: { sections: NavItem[] }) {
                 aria-current={isActive ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 min-w-[44px] min-h-[44px] justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus,#6366F1)] ${isActive ? "text-[var(--brand-primary,#6366F1)]" : "text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#D4D4D8)]"}`}
               >
-                {NAV_ICON[s.id] || <Link2 className="h-4 w-4" />}
+                {NAV_ICON[s.id] ? <span suppressHydrationWarning>{NAV_ICON[s.id]}</span> : null}
                 <span className="text-[10px] font-medium leading-tight">{s.label}</span>
               </a>
             );

@@ -4,6 +4,8 @@ import { layoutEngine } from "@/lib/storefront/layout-engine";
 import { DataBoundRenderer } from "@/lib/renderer/data-bound";
 import { ComponentErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { StorefrontNav } from "@/components/storefront/StorefrontNav";
+import { StorefrontBreadcrumbs } from "@/components/storefront/StorefrontBreadcrumbs";
+import { StorefrontCommand } from "@/components/storefront/StorefrontCommand";
 import { TrustIndicators } from "@/components/storefront/TrustIndicators";
 import { themeRegistry } from "@/lib/theme/registry-new";
 import { experienceRegistry, ExperienceSection, PageExperience, resolveExperienceForCapabilities } from "@/modules/theme/runtime/experience";
@@ -164,10 +166,30 @@ export async function StorefrontPage({
           : null,
       );
 
+  // Commerce items for command palette (products/courses/services)
+  const commerceItems = [
+    ...((renderAggregate as unknown as { products?: Array<{ id: string; name: string }> }).products ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      type: "product" as const,
+    })),
+    ...((renderAggregate as unknown as { courses?: Array<{ id: string; title: string }> }).courses ?? []).map((c) => ({
+      id: c.id,
+      name: c.title,
+      type: "course" as const,
+    })),
+    ...((renderAggregate as unknown as { services?: Array<{ id: string; title: string }> }).services ?? []).map((s) => ({
+      id: s.id,
+      name: s.title,
+      type: "service" as const,
+    })),
+  ];
+
   return (
     <>
       <SkipLink />
       <StorefrontNav sections={navigation} />
+      <StorefrontCommand navigation={navigation} commerceItems={commerceItems} />
       {isPreview && (
         <div
           className="sticky top-0 z-50 bg-amber-900/80 backdrop-blur-sm text-center py-1.5 text-[10px] font-semibold uppercase tracking-widest text-amber-200"
@@ -181,10 +203,13 @@ export async function StorefrontPage({
           renderers — on live the container width equals the viewport, so they
           behave exactly like sm:/lg:. The Builder canvas uses the same named
           container with its device frame. */}
-      <main id="main-content" className="@container/main theme-root min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-[calc(var(--mobile-nav-height,3.75rem)+env(safe-area-inset-bottom))] md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
+      <main suppressHydrationWarning id="main-content" className="@container/main theme-root min-h-screen bg-[var(--surface-root,#0A0A0B)] text-[var(--text-primary,#FAFAFA)] pb-[calc(var(--mobile-nav-height,3.75rem)+env(safe-area-inset-bottom))] md:pb-0" style={theme as React.CSSProperties} data-runtime-signature={runtimeSignature}>
         {jsonLd.map((ld: Record<string, unknown>, i: number) => (
           <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }} />
         ))}
+        {pageSlug && target && (
+          <StorefrontBreadcrumbs domain={domain} pageSlug={pageSlug} pageName={target.name} getPageHref={getPageHref} />
+        )}
         {(() => {
           // 06E-FIX: dedicated footer composition — footer is not a generic section
           const bodySections = sections.filter((s) => !s.moduleId.startsWith("footer."));
@@ -227,6 +252,8 @@ export async function StorefrontPage({
                   );
                 })}
               </PageExperience>
+              {/* Premium editorial: trust/social proof sits BEFORE the footer (social proof → footer hierarchy), not after */}
+              <TrustIndicators declaredFacts={snap.content?.declaredFacts} />
               {/* 06E-FIX: dedicated footer — semantic <footer>, centered, deliberate separation from Contact */}
               {/* RCCF-LAUNCH-18: footer is data-driven + tenant-local. Anchor links (#products etc) are
                   filtered against actually visible sections; legal links are tenant-prefixed. */}
@@ -291,7 +318,6 @@ export async function StorefrontPage({
             </>
           );
         })()}
-        <TrustIndicators declaredFacts={snap.content?.declaredFacts} />
       </main>
     </>
   );

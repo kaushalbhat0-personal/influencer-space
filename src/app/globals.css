@@ -145,6 +145,13 @@ html[data-theme="light"] {
   to { background-position: 0 240px; }
 }
 
+/* RCCF-VISUAL-01I — marquee (testimonials.marquee) — motion-gated via prefers-reduced-motion */
+.animate-marquee { animation: marquee 30s linear infinite; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 .xp-surface-glass {
   --surface-card: rgba(255, 255, 255, 0.12);
   --surface-card-hover: rgba(255, 255, 255, 0.18);
@@ -184,6 +191,15 @@ html[data-theme="light"] {
   background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(120, 53, 15, 0.08));
   border: 1px solid rgba(250, 204, 21, 0.38);
   box-shadow: 0 10px 36px rgba(234, 179, 8, 0.14);
+}
+/* RCCF-VISUAL-01G — Atelier light: improve luxury surface contrast on warm paper (#FFFBEB) */
+html[data-theme="light"] .xp-surface-luxury {
+  --surface-card: rgba(255, 255, 255, 0.88);
+  --surface-card-hover: rgba(254, 243, 199, 0.92);
+  --border: rgba(180, 83, 9, 0.22);
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.14), rgba(255, 251, 235, 0.72));
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  box-shadow: 0 4px 16px rgba(180, 83, 9, 0.08);
 }
 .xp-surface-neon {
   --surface-card: rgba(8, 145, 178, 0.26);

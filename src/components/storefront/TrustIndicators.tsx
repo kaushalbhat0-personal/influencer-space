@@ -35,19 +35,20 @@ export function TrustIndicators({ declaredFacts }: { declaredFacts?: Record<stri
 
   return (
     <div
-      className="border-t border-white/5 bg-white/[0.02]"
+      className="border-y border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-card,#18181B)]/40 backdrop-blur-sm"
       data-testid="trust-indicators"
     >
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <p className="mb-5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted,#71717A)]">Creator-verified</p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <div key={item.label} className="flex items-start gap-3">
-              <span className="mt-0.5 rounded-lg bg-s8ul-cyan/10 p-1.5 text-s8ul-cyan">
+            <div key={item.label} className="flex items-start gap-3 rounded-xl border border-[var(--border,rgba(255,255,255,0.06))] bg-[var(--surface-root,#09090b)]/40 px-4 py-3">
+              <span className="mt-0.5 rounded-lg bg-[var(--brand-primary,#6366F1)]/10 p-1.5 text-[var(--brand-primary,#6366F1)]">
                 {item.icon}
               </span>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{item.label}</p>
-                <p className="mt-0.5 text-sm text-zinc-300">{item.value}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted,#71717A)]">{item.label}</p>
+                <p className="mt-0.5 text-sm leading-snug text-[var(--text-secondary,#A1A1AA)] line-clamp-2">{item.value}</p>
               </div>
             </div>
           ))}

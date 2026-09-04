@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useSyncExternalStore, useMemo } from "react";
 import { builderStore } from "@/lib/builder/store";
 import { builderEvents } from "@/lib/builder/events";
@@ -21,14 +22,13 @@ import { capabilityService } from "@/lib/capabilities";
 export function RegistryFieldInspector({ planCode }: { planCode?: string | null }) {
   const subscribe = (cb: () => void) => builderEvents.subscribe("store:changed", () => cb());
   useSyncExternalStore(subscribe, () => builderStore.getSelectedSlot()?.id ?? "");
+  const can = React.useCallback((cap: string) => capabilityService.can(planCode ?? "creator_free", cap).allowed, [planCode]);
   const slot = builderStore.getSelectedSlot();
-  if (!slot) return null;
-  const def = componentRegistry.get(slot.moduleId);
+  const def = slot ? componentRegistry.get(slot.moduleId) : undefined;
   const fields = def?.fields;
+  const fieldsWithState = useMemo(() => (fields ? withCapabilityState(fields, can) : []), [fields, can]);
+  if (!slot) return null;
   if (!fields || fields.length === 0) return null;
-
-  const can = (cap: string) => capabilityService.can(planCode ?? "creator_free", cap).allowed;
-  const fieldsWithState = useMemo(() => withCapabilityState(fields, can), [fields, planCode]);
 
   const currentConfig = slot.config as Record<string, unknown>;
 

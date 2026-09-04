@@ -30,11 +30,7 @@ function useSheetContext() {
   return ctx;
 }
 
-function useIsomorphicLayoutEffect(effect: React.EffectCallback, deps?: React.DependencyList) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const isBrowser = typeof window !== "undefined";
-  return isBrowser ? React.useLayoutEffect(effect, deps) : React.useEffect(effect, deps);
-}
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
 
 export function Sheet({
   open,

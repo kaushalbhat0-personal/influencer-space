@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import type { ComponentDefinition } from "./types";
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useFormState } from "react-dom";
 import {
   submitStorefrontContact,
@@ -14,10 +14,11 @@ import { HeroMedia, responsiveAlignmentClass } from "@/components/shared/HeroMed
 import type { HeroMediaKind } from "@/lib/media/hero-media";
 import { heroTextAlignClass, heroContentWidthClass, heroOverlayClass } from "@/lib/hero/presentation-options";
 import { BuyNowButton } from "@/app/[domain]/_components/buy-now-button";
-import { Star } from "lucide-react";
+import { Star, Quote, ChevronDown, ArrowRight, Search, Eye, X } from "lucide-react";
 import { shouldRenderSection } from "@/modules/section-presentation";
 import { formatCurrency } from "@/lib/utils";
 import { ViewAllLink } from "@/components/storefront/ViewAllLink";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { safeUrl } from "./safe-url";
 import { normalizeCommerceMode } from "@/config/commerce/commerce-mode";
 import { buildWhatsAppMessage, buildWaMeLink } from "@/lib/commerce/whatsapp";
@@ -55,16 +56,17 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
   );
 }
 
-// RCCF-LAUNCH-TRACK-04: shared section heading â€” honors presentation
+// RCCF-LAUNCH-TRACK-04: shared section heading — honors presentation
 // (hideTitle, descriptionOverride). Every data-driven renderer uses it; no
 // duplicated title logic.
-function SectionHeading({ p, title }: { p: Record<string, unknown>; title: string }) {
+function SectionHeading({ p, title, elementId, previewMode }: { p: Record<string, unknown>; title: string; elementId?: string; previewMode?: boolean }) {
   if (p.hideTitle) return null;
   const description = p.description ? String(p.description) : null;
   return (
-    <div className="mb-6 text-center">
-      <h2 className="text-2xl font-[var(--brand-font-weight-heading,700)] text-[var(--text-primary,#FAFAFA)]">{title}</h2>
-      {description && <p className="mx-auto mt-2 max-w-2xl text-sm text-[var(--text-secondary,#A1A1AA)]">{description}</p>}
+    <div className="mb-8 text-center">
+      <div className="mx-auto mb-3 h-0.5 w-8 rounded-full bg-[var(--brand-primary,#6366F1)] opacity-60" aria-hidden />
+      <h2 className="text-2xl font-[var(--brand-font-weight-heading,700)] tracking-tight text-[var(--text-primary,#FAFAFA)] md:text-3xl">{title}</h2>
+      {description && <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary,#A1A1AA)]">{description}</p>}
     </div>
   );
 }
@@ -148,7 +150,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
   const alignment = resolvedMedia === "video" ? videoAlign : imageAlign;
 
   return (
-    <div className="relative overflow-hidden bg-[var(--surface-root,#09090B)]" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
+    <div suppressHydrationWarning className="relative overflow-hidden bg-[var(--surface-root,#09090B)]" data-resolved-media={resolvedMedia} data-renderer-decision={String(p.rendererDecision || "")}>
       {/* â”€â”€ Hero media â€” ALWAYS renders first; avatar never replaces it â”€â”€ */}
       {/* RCCF-RESPONSIVE-02: breakpoints are CONTAINER-query variants (@sm/@lg)
           so the Builder device frame (a 375px-scaled div inside a wide window)
@@ -157,7 +159,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
           overlap (avatar 112px + 8px pt - 20px bridge) so the avatar bridges
           the hero media bottom across the whole 320-480px range; the old
           percentage overlap (-mt-[35%]) only bridged below ~343px. */}
-      <div className="relative aspect-[16/9] w-full @sm/main:aspect-[16/8]">
+      <div className="relative aspect-[16/8] w-full @sm/main:aspect-[16/7]">
         {showVideo && mediaUrl ? (
           <HeroMedia
             type="video"
@@ -203,10 +205,10 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
       </div>
 
       {/* â”€â”€ Overlapping profile picture + identity (never above the media) â”€â”€ */}
-      <div className="-mt-[100px] @sm/main:-mt-[24%] relative z-10">
-        <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-16 pt-6 @sm/main:pb-24 @sm/main:pt-8`}>
+      <div className="-mt-[72px] @sm/main:-mt-[18%] relative z-10">
+        <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-10 pt-4 @sm/main:pb-16 @sm/main:pt-6`}>
           {profilePictureUrl && (
-            <div className="relative mx-auto mb-8 h-28 w-28 overflow-hidden rounded-full border-4 border-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 @sm/main:h-36 @sm/main:w-36">
+            <div className="relative mx-auto mb-5 h-32 w-32 overflow-hidden rounded-full border-4 border-[var(--surface-root,#09090B)] shadow-2xl shadow-black/50 ring-2 ring-white/10 @sm/main:h-36 @sm/main:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
             </div>
           )}
@@ -231,14 +233,14 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
           {title && title !== name && (
             <h2 className="mt-2 text-xl font-semibold text-[var(--text-primary,#FAFAFA)] break-words @sm/main:text-2xl">{title}</h2>
           )}
-          {tagline && <p className="mt-3 text-base text-[var(--text-secondary,#A1A1AA)]">{tagline}</p>}
-          {bio && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--text-secondary,#A1A1AA)]">{bio}</p>}
-          {!bio && subtitle && <p className="mt-1 text-sm text-[var(--text-secondary,#A1A1AA)]">{subtitle}</p>}
+          {tagline && <p className="mt-2 text-base font-medium text-[var(--text-secondary,#A1A1AA)]">{tagline}</p>}
+          {bio && <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-[var(--text-muted,#71717A)]">{bio}</p>}
+          {!bio && subtitle && <p className="mt-1.5 text-sm text-[var(--text-secondary,#A1A1AA)]">{subtitle}</p>}
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
             {cta && (
               ctaLink && !previewMode ? (
-                <a href={ctaLink} className="inline-flex items-center gap-2 rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-5 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">
+                <a suppressHydrationWarning href={ctaLink} className="group inline-flex items-center gap-2 rounded-full bg-[var(--button-primary-bg,#6366F1)] px-6 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#FAFAFA)] shadow-md transition-all hover:bg-[var(--button-primary-hover)] hover:shadow-lg hover:-translate-y-0.5">
                   {cta}
                 </a>
               ) : (
@@ -249,7 +251,7 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
             )}
             {ctaSecondaryText && (
               ctaSecondaryLink && !previewMode ? (
-                <a href={ctaSecondaryLink} className="inline-flex items-center gap-2 rounded-[var(--radius-lg,0.5rem)] border border-[var(--button-secondary-border,rgba(255,255,255,0.2))] px-5 py-2.5 text-sm font-semibold text-[var(--button-secondary-fg,#D4D4D8)] transition-colors hover:border-[var(--button-secondary-hover-fg,#FAFAFA)] hover:text-[var(--button-secondary-hover-fg,#FAFAFA)]">
+                <a suppressHydrationWarning href={ctaSecondaryLink} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border,rgba(255,255,255,0.14))] bg-[var(--surface-card,#18181B)]/60 px-4 py-2 text-xs font-medium text-[var(--text-secondary,#A1A1AA)] transition-colors hover:border-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   {ctaSecondaryText}
                 </a>
               ) : (
@@ -261,26 +263,23 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
           </div>
 
           {socialLinks.length > 0 && (
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 text-xs">
               {socialLinks.map((l, i) => (
-                previewMode ? (
-                  <span
-                    key={i}
-                    className="rounded-full border border-[var(--border,rgba(255,255,255,0.08))] px-3 py-1 text-xs text-[var(--text-muted,#71717A)]"
-                  >
-                    {l.label || platformLabel(l.platform || "Link")}
-                  </span>
-                ) : (
-                  <a
-                    key={i}
-                    href={l.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-[var(--border,rgba(255,255,255,0.08))] px-3 py-1 text-xs text-[var(--text-muted,#71717A)] transition-colors hover:border-[var(--border,rgba(0,0,0,0.12))] hover:text-[var(--text-primary,#FAFAFA)]"
-                  >
-                    {l.label || platformLabel(l.platform || "Link")}
-                  </a>
-                )
+                <span key={i} className="inline-flex items-center gap-1.5">
+                  {i > 0 && <span className="text-[var(--text-muted)] opacity-40" aria-hidden>·</span>}
+                  {previewMode ? (
+                    <span className="text-[var(--text-muted,#71717A)]">{l.label || platformLabel(l.platform || "Link")}</span>
+                  ) : (
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--text-muted,#71717A)] underline-offset-2 hover:text-[var(--text-secondary)] hover:underline"
+                    >
+                      {l.label || platformLabel(l.platform || "Link")}
+                    </a>
+                  )}
+                </span>
               ))}
             </div>
           )}
@@ -292,46 +291,93 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
 
 /* â”€â”€â”€ Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-export function GalleryRenderer({ props }: RendererProps) {
+export function GalleryRenderer({ props, elementId, previewMode }: RendererProps) {
   const p = props as Record<string, unknown>;
   const images = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || "Gallery";
   const columns = Math.min(Math.max(Number(p.columns) || 3, 1), 6);
   if (!useVisibility(props)) return null;
 
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const hasFeatured = Boolean(images[0]?.isFeatured);
+  const featuredClass = hasFeatured && images.length >= 3 ? " @sm/main:col-span-2 @sm/main:row-span-2 @sm/main:aspect-auto aspect-square" : " aspect-square";
+
   if (images.length > 0) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
-        <SectionHeading p={p} title={title} />
-        {/* RCCF-68.3.2: container-aware grid — mobile 1 col, medium 2, desktop = configured columns. */}
+      <div suppressHydrationWarning className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
+        <SectionHeading p={p} title={title} elementId={elementId} previewMode={previewMode} />
         <div className={responsiveGridClass(columns)}>
-          {images.map((img: Record<string, unknown>, i: number) => (
-            <div key={i} className="aspect-square overflow-hidden rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)]">
-              {img.isVideo && img.videoUrl ? (
+          {images.map((img: Record<string, unknown>, i: number) => {
+            const isFeaturedFirst = hasFeatured && i === 0;
+            return (
+            <div
+              key={i}
+              role="button"
+              tabIndex={0}
+              onClick={() => setLightbox(i)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(i); } }}
+              className={`group relative overflow-hidden rounded-[var(--radius-xl,0.75rem)] border bg-[var(--surface-card,#18181B)]/60 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] cursor-pointer ${isFeaturedFirst ? "border-[var(--brand-primary)]/20 shadow-md" + featuredClass : "border-[var(--border,rgba(255,255,255,0.08))] hover:border-[var(--border)] aspect-square"}`}>
+              {Boolean(img.isVideo) && img.videoUrl ? (
                 <video
                   src={img.videoUrl as string}
                   poster={(img.url as string) || undefined}
                   muted
                   loop
                   playsInline
-                  controls
-                  className="h-full w-full object-cover"
+                  controls={false}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none"
                 />
               ) : img.url ? (
                 <CreatorImage
                   src={img.url as string}
                   alt={String(img.altText || img.caption || "")}
                   variant="gallery"
-                  className="h-full w-full"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-[var(--text-muted,#71717A)]">
-                  {img.isVideo ? "Video" : "Image"}
+                  {Boolean(img.isVideo) ? "Video" : "Image"}
                 </div>
               )}
+              {Boolean(img.isVideo) && (
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm ring-1 ring-white/20 transition-transform group-hover:scale-105 motion-reduce:transition-none">
+                    <svg suppressHydrationWarning className="ml-0.5 h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7z"/></svg>
+                  </span>
+                </span>
+              )}
+              {Boolean(String(img.caption || img.description || "").trim()) && (
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent p-3 pt-8 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                  <span className="line-clamp-1 text-xs font-medium text-white">{String(img.caption || img.description)}</span>
+                </span>
+              )}
+              <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/55 px-2 py-1 text-[10px] font-medium text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">View</span>
             </div>
-          ))}
+          )})}
         </div>
+        {lightbox !== null && images[lightbox] && (
+          <Sheet open={lightbox !== null} onOpenChange={(o) => { if (!o) setLightbox(null); }}>
+            <SheetContent side="right" className="w-full max-w-2xl overflow-y-auto bg-[var(--surface-card)]">
+              <SheetHeader>
+                <SheetTitle className="pr-8 text-left">{String((images[lightbox] as any).caption || (images[lightbox] as any).title || "Gallery image")}</SheetTitle>
+                {Boolean((images[lightbox] as any).isVideo) && <span className="inline-flex w-fit rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">Video</span>}
+              </SheetHeader>
+              <div className="mt-4">
+                {Boolean((images[lightbox] as any).isVideo) && (images[lightbox] as any).videoUrl ? (
+                  <video src={(images[lightbox] as any).videoUrl as string} poster={(images[lightbox] as any).url as string || undefined} controls autoPlay className="max-h-[60vh] w-full rounded-xl object-contain bg-black" />
+                ) : (images[lightbox] as any).url ? (
+                  <img src={(images[lightbox] as any).url as string} alt={String((images[lightbox] as any).altText || (images[lightbox] as any).caption || "")} className="max-h-[60vh] w-full rounded-xl object-contain bg-black" />
+                ) : null}
+                {String((images[lightbox] as any).caption || (images[lightbox] as any).description || "").trim() && (
+                  <p className="mt-3 text-sm text-[var(--text-secondary)]">{String((images[lightbox] as any).caption || (images[lightbox] as any).description)}</p>
+                )}
+                {(images[lightbox] as any).altText && String((images[lightbox] as any).altText).trim() && String((images[lightbox] as any).caption) !== String((images[lightbox] as any).altText) && (
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">{String((images[lightbox] as any).altText)}</p>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
         <ViewAllLink href={p.viewAllHref} />
       </div>
     );
@@ -340,7 +386,81 @@ export function GalleryRenderer({ props }: RendererProps) {
   return <EmptyState label="Add images to your gallery" />;
 }
 
-/* â”€â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Gallery Bento ─────────────────────────────────────────────── */
+
+export function GalleryBentoRenderer({ props, elementId, previewMode }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const images = (p.resolvedData as Record<string, unknown>[]) || [];
+  const title = (p.resolvedTitle as string) || "Gallery";
+  if (!useVisibility(props)) return null;
+  if (images.length === 0) return <EmptyState label="Add images to your gallery" />;
+  const featured = images[0]!;
+  const rest = images.slice(1);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const lb = lightbox !== null ? images[lightbox] : null;
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
+      <SectionHeading p={p} title={title} elementId={elementId} previewMode={previewMode} />
+      <div className="grid gap-4 @sm/main:grid-cols-3">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setLightbox(0)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(0); } }}
+          className="group relative overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--brand-primary)]/15 bg-[var(--surface-card)]/60 shadow-sm transition-all duration-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] @sm/main:col-span-2 @sm/main:row-span-2 @sm/main:aspect-auto aspect-square cursor-pointer text-left">
+          {Boolean(featured.isVideo) && featured.videoUrl ? (
+            <video src={featured.videoUrl as string} poster={(featured.url as string) || undefined} muted loop playsInline controls={false} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none" />
+          ) : featured.url ? (
+            <CreatorImage src={featured.url as string} alt={String(featured.altText || featured.caption || "")} variant="gallery" className="h-full w-full transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-[var(--text-muted)]">Image</div>
+          )}
+          {Boolean(featured.isVideo) && <span className="pointer-events-none absolute inset-0 flex items-center justify-center"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm ring-1 ring-white/20"><svg suppressHydrationWarning className="ml-0.5 h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></span>}
+          {Boolean(String(featured.caption || featured.description || "").trim()) && (
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8 opacity-0 transition-opacity group-hover:opacity-100 motion-reduce:transition-none">
+              <span className="line-clamp-1 text-xs font-medium text-white">{String(featured.caption || featured.description)}</span>
+            </span>
+          )}
+          <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black shadow-sm">Featured</span>
+        </div>
+        {rest.map((img: Record<string, unknown>, i: number) => (
+          <div
+            key={i}
+            role="button"
+            tabIndex={0}
+            onClick={() => setLightbox(i+1)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLightbox(i+1); } }}
+            className="group relative aspect-square overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card)]/60 shadow-sm transition-all duration-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] cursor-pointer text-left">
+            {Boolean(img.isVideo) && img.videoUrl ? (
+              <video src={img.videoUrl as string} poster={(img.url as string) || undefined} muted loop playsInline controls={false} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none" />
+            ) : img.url ? (
+              <CreatorImage src={img.url as string} alt={String(img.altText || img.caption || "")} variant="gallery" className="h-full w-full transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-[var(--text-muted)]">{Boolean(img.isVideo) ? "Video" : "Image"}</div>
+            )}
+            {Boolean(img.isVideo) && <span className="pointer-events-none absolute inset-0 flex items-center justify-center"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm ring-1 ring-white/20"><svg suppressHydrationWarning className="ml-0.5 h-3.5 w-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></span>}
+          </div>
+        ))}
+      </div>
+      {lb && (
+        <Sheet open={lightbox !== null} onOpenChange={(o) => { if (!o) setLightbox(null); }}>
+          <SheetContent side="right" className="w-full max-w-2xl overflow-y-auto bg-[var(--surface-card)]">
+            <SheetHeader>
+              <SheetTitle className="pr-8 text-left">{String((lb as any).caption || (lb as any).title || "Gallery image")}</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4">
+              {Boolean((lb as any).isVideo) && (lb as any).videoUrl ? <video src={(lb as any).videoUrl as string} poster={(lb as any).url as string || undefined} controls autoPlay className="max-h-[60vh] w-full rounded-xl object-contain bg-black" /> : (lb as any).url ? <img src={(lb as any).url as string} alt={String((lb as any).altText || (lb as any).caption || "")} className="max-h-[60vh] w-full rounded-xl object-contain bg-black" /> : null}
+              {String((lb as any).caption || (lb as any).description || "").trim() && <p className="mt-3 text-sm text-[var(--text-secondary)]">{String((lb as any).caption || (lb as any).description)}</p>}
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+      <ViewAllLink href={p.viewAllHref} />
+    </div>
+  );
+}
+
+/* ─── Products ─────────────────────────────────────────────── */
 
 // RCCF-66.2 — per-product commerce-mode CTA. ONLINE → Buy Now only; WHATSAPP →
 // Order on WhatsApp only; BOTH → both. The WhatsApp destination is the
@@ -712,7 +832,7 @@ export function FaqRenderer({ props }: RendererProps) {
             <details key={i} className="group rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60">
               <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">
                 {item.question || item.q}
-                <svg className="h-4 w-4 text-[var(--text-muted,#71717A)] transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                <svg suppressHydrationWarning className="h-4 w-4 text-[var(--text-muted,#71717A)] transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </summary>
               <div className="border-t border-white/5 px-4 py-3 text-xs text-[var(--text-muted,#71717A)]">{item.answer || item.a}</div>
             </details>
@@ -1373,26 +1493,30 @@ export function GamesRenderer({ props }: RendererProps) {
 
 /* â”€â”€â”€ Content Feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-export function ContentFeedRenderer({ props }: RendererProps) {
+export function ContentFeedRenderer({ props, elementId, previewMode }: RendererProps) {
   const p = props as Record<string, unknown>;
   const items = (p.resolvedData as Record<string, string>[]) || [];
   const title = (p.resolvedTitle as string) || "Latest Content";
   if (!useVisibility(props)) return null;
 
   if (items.length > 0) {
+    const isPinned = (idx: number) => idx < 2 && items.length > 4;
     return (
       <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
-        <SectionHeading p={p} title={title} />
+        <SectionHeading p={p} title={title} elementId={elementId} previewMode={previewMode} />
         <div className="grid grid-cols-2 gap-3 @sm/main:grid-cols-3 @lg/main:grid-cols-4">
           {items.map((item: Record<string, string>, i: number) => {
             const isVideo = item.mediaType === "video";
+            const pinned = isPinned(i);
+            const platformLabel = (item.platform || "social").toLowerCase();
+            const badgeTone = platformLabel.includes("youtube") ? "bg-red-500/90 text-white" : platformLabel.includes("instagram") ? "bg-gradient-to-tr from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white" : "bg-black/60 text-white/90";
             return (
               <a
                 key={i}
                 href={item.permalink || "#"}
                 target={item.permalink ? "_blank" : undefined}
                 rel={item.permalink ? "noopener noreferrer" : undefined}
-                className="group relative overflow-hidden rounded-[var(--radius-xl,0.75rem)] bg-[var(--surface-card,#18181B)] ring-1 ring-white/[0.06] transition-all hover:ring-white/20"
+                className={`group relative overflow-hidden rounded-[var(--radius-xl,0.75rem)] bg-[var(--surface-card,#18181B)] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] ${pinned ? "ring-1 ring-[var(--brand-primary)]/30 border border-[var(--brand-primary)]/20" : "ring-1 ring-white/[0.06] hover:ring-white/15 border border-transparent"}`}
                 style={{ aspectRatio: isVideo ? "9 / 16" : "1 / 1" }}
               >
                 {(item.thumbnailUrl || item.url) ? (
@@ -1400,37 +1524,45 @@ export function ContentFeedRenderer({ props }: RendererProps) {
                     src={item.thumbnailUrl || item.url}
                     alt={item.caption ?? ""}
                     variant="gallery"
-                    className="h-full w-full transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-[var(--surface-card-hover,#27272A)]">
                     <span className="text-xs text-[var(--text-muted,#71717A)]">No media</span>
                   </div>
                 )}
+                <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100 motion-reduce:transition-none" aria-hidden />
                 {isVideo && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm transition-transform group-hover:scale-110">
-                      <svg className="ml-0.5 h-5 w-5 text-[var(--text-primary,#FAFAFA)]" fill="currentColor" viewBox="0 0 24 24">
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm ring-1 ring-white/20 shadow-lg transition-transform duration-300 group-hover:scale-110 motion-reduce:transition-none">
+                      <svg suppressHydrationWarning className="ml-0.5 h-5 w-5 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
-                    </div>
-                  </div>
+                    </span>
+                  </span>
                 )}
-                {item.caption && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 opacity-0 transition-opacity group-hover:opacity-100">
-                    <p className="line-clamp-2 text-xs leading-relaxed text-[var(--text-primary,#FAFAFA)]/90">{item.caption}</p>
-                  </div>
+                {item.caption && String(item.caption).trim() && (
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3 pt-8 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                    <span className="line-clamp-2 text-xs font-medium leading-relaxed text-white/95">{item.caption}</span>
+                  </span>
                 )}
-                <div className="absolute left-2 top-2 rounded-[var(--radius-md,0.375rem)] bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-primary,#FAFAFA)]/80 backdrop-blur-sm">
-                  {item.platform || "social"}
-                </div>
+                <span className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm ${badgeTone} ${pinned ? "ring-1 ring-amber-300/40" : ""}`}>
+                  {platformLabel === "youtube" ? "▶" : platformLabel === "instagram" ? "◈" : "●"}
+                  <span>{item.platform || "social"}</span>
+                </span>
+                {pinned && <span className="absolute right-2 top-2 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black shadow-sm">Pinned</span>}
               </a>
             );
           })}
         </div>
+        <ViewAllLink href={p.viewAllHref} />
       </div>
     );
   }
 
   return <EmptyState label="No content feed items" />;
 }
+
+export function HeroSplitRenderer(props: RendererProps) { return HeroRenderer(props); }
+export function TestimonialsMarqueeRenderer(props: RendererProps) { return TestimonialsRenderer(props as any); }
+export function ServicesBentoRenderer(props: RendererProps) { return ServicesRenderer(props as any); }

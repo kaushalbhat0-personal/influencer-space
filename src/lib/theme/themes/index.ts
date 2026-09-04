@@ -14,6 +14,7 @@ import { restaurantThemes } from "./restaurant";
 import { educationThemes } from "./education";
 import { podcastThemes } from "./podcast";
 import { catalogThemes } from "./catalog";
+import { visualFoundationThemes } from "./visual-foundation";
 
 interface PartialTokens {
   colors?: Partial<ColorTokens>;
@@ -139,4 +140,5 @@ export const ALL_THEMES: ThemeDefinition[] = [
   ...educationThemes,
   ...podcastThemes,
   ...catalogThemes,
+  ...visualFoundationThemes,
 ];

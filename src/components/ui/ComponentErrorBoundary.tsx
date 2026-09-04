@@ -35,6 +35,16 @@ export class ComponentErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
+      // RCCF-VISUAL-01L: production storefront must never show a jarring red
+      // error block. Log for diagnostics (componentDidCatch) and render a
+      // theme-aware, muted placeholder instead. Dev keeps the red hint.
+      if (process.env.NODE_ENV === "production") {
+        return (
+          <div className="mx-auto max-w-5xl px-4 py-6 text-center">
+            <p className="text-xs text-[var(--text-muted,#71717A)]">Content temporarily unavailable</p>
+          </div>
+        );
+      }
       return (
         <div className="rounded border border-dashed border-red-500/20 bg-red-500/5 p-3 text-center">
           <p className="text-xs text-red-400">Component error</p>

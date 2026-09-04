@@ -3,7 +3,7 @@
 // data-slot, respects prefers-reduced-motion via globals.css.
 import { cn } from "@/lib/utils";
 
-export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
