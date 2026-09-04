@@ -6,16 +6,13 @@ import { HeroInput } from "./HeroInput";
  * home online (website, portfolio, links, storefront, business), not just a
  * checkout page. CTA architecture (HeroInput → /signup) is unchanged.
  *
- * RCCF-MKT-03: the preview uses the certified SPower Gaming capture
- * (RCCF-MKT-02/R2/R3) as product demonstration — no endorsement framing.
+ * RCCF-VISUAL-03B-CORRECTION: preview now showcases canonical creators
+ * Mystic Minutes and North Star (real published storefronts) — Spower Gaming
+ * remains legitimate showcase data but is no longer the marketing hero visual.
  *
  * RCCF-MKT-04-R1: imagery RESTORED after the MKT-04 removal was reversed.
- * Breakpoint-aware asset selection via <picture> (CSS-only, no JS viewport
- * detection): the 390×844 phone capture serves <md; the 1440×900 desktop
- * capture serves md+. Only the selected resource downloads. The column is
- * min-w-0 so intrinsic image dimensions can never force grid overflow, and
- * the phone capture is height-capped so it reads as a deliberate device
- * preview instead of a shrunken desktop screenshot.
+ * Breakpoint-aware preview via CSS (no JS viewport detection): <md shows a
+ * compact Mystic Minutes preview, md+ shows North Star desktop preview alongside.
  */
 export function Hero() {
   return (
@@ -77,7 +74,7 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right — Site preview (RCCF-MKT-04-R1: restored certified captures) */}
+          {/* Right — Site preview (RCCF-VISUAL-03B-CORRECTION: Mystic Minutes / North Star) */}
           <div className="relative min-w-0">
             <div className="relative rounded-2xl border border-white/[0.08] bg-[var(--surface-base)] p-4 shadow-2xl">
               <div className="mb-3 flex items-center gap-1.5 border-b border-white/[0.06] pb-3">
@@ -85,30 +82,41 @@ export function Hero() {
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500/60" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
                 <span className="ml-3 text-[10px] font-medium text-zinc-600">
-                  Your home on the web
+                  Your home on the web — Mystic Minutes · North Star
                 </span>
               </div>
-              {/* Certified example capture (RCCF-MKT-02/R2) — demonstration only.
-                  md+ renders the 1440×900 desktop capture; below md the 390×844
-                  phone capture is height-capped as a device preview. */}
-              <picture>
-                <source
-                  media="(min-width: 768px)"
-                  srcSet="/marketing-assets/storefront/01-desktop.png"
-                  width={1440}
-                  height={900}
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/marketing-assets/storefront/02-mobile.png"
-                  alt="A CreatorStore site generated from a creator's profile, shown on a phone"
-                  width={390}
-                  height={844}
-                  loading="eager"
-                  decoding="async"
-                  className="mx-auto h-auto w-auto max-h-[420px] max-w-full rounded-lg md:max-h-none md:w-full"
-                />
-              </picture>
+              {/* Canonical creator previews — demonstration only, no Spower Gaming imagery */}
+              <div className="grid gap-3 md:grid-cols-[1.4fr_0.9fr]">
+                <div className="rounded-xl border border-white/[0.06] bg-[var(--surface-hover)] p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-card)] border border-[var(--border)] text-xs font-bold text-[var(--text-primary)]">MM</span>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Mystic Minutes</p>
+                      <p className="text-[11px] text-zinc-500">Spirituality · Daily Shorts</p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg bg-[var(--surface-card)] border border-[var(--border-subtle)] p-3">
+                    <p className="text-xs font-medium text-zinc-300">Discover the deeper meaning of life in just one minute ⏳</p>
+                    <p className="text-[11px] text-zinc-500 mt-1">Real published storefront — mysticminutes17</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-[var(--surface-hover)] p-4 hidden md:flex flex-col">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--surface-card)] border border-[var(--border)] text-[10px] font-bold text-[var(--text-primary)]">NS</span>
+                    <p className="text-xs font-semibold text-white">Northstar Studio</p>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-zinc-400 flex-1">We build visual identities for ambitious creators — strategy, design, and code.</p>
+                  <p className="text-[10px] text-zinc-600 mt-2">northstar · Lifestyle</p>
+                </div>
+              </div>
+              {/* Mobile fallback single card */}
+              <div className="mt-3 md:hidden rounded-xl border border-white/[0.06] bg-[var(--surface-hover)] p-3 flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-card)] border border-[var(--border)] text-xs font-bold text-[var(--text-primary)]">NS</span>
+                <div>
+                  <p className="text-xs font-semibold text-white">Northstar Studio</p>
+                  <p className="text-[10px] text-zinc-500">northstar — Lifestyle</p>
+                </div>
+              </div>
             </div>
             {/* Soft glow behind the frame — contained, non-scrolling */}
             <div

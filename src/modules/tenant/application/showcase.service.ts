@@ -15,17 +15,6 @@ const CATEGORIES = ["Gaming", "Fitness", "Music", "Food", "Education",
                     "Technology", "Lifestyle", "Fashion", "Art", "Business"];
 
 export class ShowcaseService {
-  // RCCF-VISUAL-03B: Spower Gaming is NOT a canonical showcase reference.
-  // Canonical references are Mystic Minutes and North Star. Spower is excluded
-  // from the active showcase experience even if published.
-  private static readonly BLOCKED_SUBDOMAINS = new Set(["spower-gaming", "spower_gaming"]);
-  private static readonly BLOCKED_NAME_FRAGMENT = "spower";
-
-  private isBlocked(site: { id: string; name: string }): boolean {
-    if (ShowcaseService.BLOCKED_SUBDOMAINS.has(site.id.toLowerCase())) return true;
-    if (site.name.toLowerCase().includes(ShowcaseService.BLOCKED_NAME_FRAGMENT)) return true;
-    return false;
-  }
   /**
    * RCCF-MKT-10 P3-C: /showcase claims "Every site is a real, published
    * creator storefront" — so this service returns ONLY real published sites.
@@ -33,20 +22,21 @@ export class ShowcaseService {
    * dead URLs as if they were customer sites; it is removed. With zero
    * published sites the page renders an honest empty state.
    * RCCF-VISUAL-03B: single DB round-trip; categories derived from same data
-   * to avoid the ~2s double-query bottleneck. Spower Gaming filtered out.
+   * to avoid the ~2s double-query bottleneck.
+   * RCCF-VISUAL-03B-CORRECTION: Spower Gaming remains legitimate showcase data
+   * and is NOT filtered — only marketing screenshots were Spower, now replaced
+   * with Mystic Minutes / North Star visuals.
    */
   async getPublished(filters?: { category?: string; search?: string }): Promise<ShowcaseSite[]> {
     const published = await websiteRepository.listPublished();
-    let sites: ShowcaseSite[] = published
-      .map((ps) => ({
-        id: ps.tenant.subdomain,
-        name: ps.brand?.name || ps.tenant.name,
-        category: this.inferCategory(ps.brand?.name || ""),
-        description: ps.brand?.bio || ps.brand?.tagline || "Creator storefront",
-        storefrontUrl: buildStorefrontUrl(ps.tenant.subdomain),
-        products: [],
-      }))
-      .filter((s) => !this.isBlocked(s));
+    let sites: ShowcaseSite[] = published.map((ps) => ({
+      id: ps.tenant.subdomain,
+      name: ps.brand?.name || ps.tenant.name,
+      category: this.inferCategory(ps.brand?.name || ""),
+      description: ps.brand?.bio || ps.brand?.tagline || "Creator storefront",
+      storefrontUrl: buildStorefrontUrl(ps.tenant.subdomain),
+      products: [],
+    }));
     if (filters?.category) sites = sites.filter((s) => s.category === filters.category);
     if (filters?.search) {
       const q = filters.search.toLowerCase();
@@ -61,16 +51,14 @@ export class ShowcaseService {
    */
   async getPublishedWithCategories(filters?: { category?: string; search?: string }): Promise<{ sites: ShowcaseSite[]; categories: string[] }> {
     const published = await websiteRepository.listPublished();
-    const allSites: ShowcaseSite[] = published
-      .map((ps) => ({
-        id: ps.tenant.subdomain,
-        name: ps.brand?.name || ps.tenant.name,
-        category: this.inferCategory(ps.brand?.name || ""),
-        description: ps.brand?.bio || ps.brand?.tagline || "Creator storefront",
-        storefrontUrl: buildStorefrontUrl(ps.tenant.subdomain),
-        products: [],
-      }))
-      .filter((s) => !this.isBlocked(s));
+    const allSites: ShowcaseSite[] = published.map((ps) => ({
+      id: ps.tenant.subdomain,
+      name: ps.brand?.name || ps.tenant.name,
+      category: this.inferCategory(ps.brand?.name || ""),
+      description: ps.brand?.bio || ps.brand?.tagline || "Creator storefront",
+      storefrontUrl: buildStorefrontUrl(ps.tenant.subdomain),
+      products: [],
+    }));
 
     const categories = allSites.length === 0 ? [] : CATEGORIES.filter((c) => new Set(allSites.map((s) => s.category)).has(c));
 
