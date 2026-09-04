@@ -1,5 +1,7 @@
 ﻿"use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import type { ComponentDefinition } from "./types";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useFormState } from "react-dom";
@@ -296,9 +298,9 @@ export function GalleryRenderer({ props, elementId, previewMode }: RendererProps
   const images = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || "Gallery";
   const columns = Math.min(Math.max(Number(p.columns) || 3, 1), 6);
-  if (!useVisibility(props)) return null;
-
+  const visible = useVisibility(props);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  if (!visible) return null;
   const hasFeatured = Boolean(images[0]?.isFeatured);
   const featuredClass = hasFeatured && images.length >= 3 ? " @sm/main:col-span-2 @sm/main:row-span-2 @sm/main:aspect-auto aspect-square" : " aspect-square";
 
@@ -392,11 +394,12 @@ export function GalleryBentoRenderer({ props, elementId, previewMode }: Renderer
   const p = props as Record<string, unknown>;
   const images = (p.resolvedData as Record<string, unknown>[]) || [];
   const title = (p.resolvedTitle as string) || "Gallery";
-  if (!useVisibility(props)) return null;
+  const visible = useVisibility(props);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  if (!visible) return null;
   if (images.length === 0) return <EmptyState label="Add images to your gallery" />;
   const featured = images[0]!;
   const rest = images.slice(1);
-  const [lightbox, setLightbox] = useState<number | null>(null);
   const lb = lightbox !== null ? images[lightbox] : null;
   return (
     <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
