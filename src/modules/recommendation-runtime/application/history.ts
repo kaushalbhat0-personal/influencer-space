@@ -5,12 +5,16 @@
 // the scores at completion so Phase 12 analytics can report lifts.
 
 import { prisma } from "@/lib/prisma";
+import { cache as reactCache } from "react";
 import type { RecommendationHistory as HistoryMap, RecommendationHistoryEntry } from "../domain/types";
+
+const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
+  typeof reactCache === "function" ? reactCache : ((fn: unknown) => fn as never);
 
 export const HISTORY_SETTING_KEY = "recommendation_history" as const;
 
 export class RecommendationHistory {
-  async get(tenantId: string): Promise<HistoryMap> {
+  get = requestCache(async (tenantId: string): Promise<HistoryMap> => {
     const setting = await prisma.setting.findUnique({
       where: { tenantId_key: { tenantId, key: HISTORY_SETTING_KEY } },
       select: { value: true },
@@ -20,7 +24,7 @@ export class RecommendationHistory {
       return value as unknown as HistoryMap;
     }
     return {};
-  }
+  });
 
   private async persist(tenantId: string, history: HistoryMap): Promise<void> {
     await prisma.setting.upsert({

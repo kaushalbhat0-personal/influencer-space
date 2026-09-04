@@ -142,9 +142,13 @@ export async function getDeferredDashboardData() {
     success: { completionPercent: number; completedMilestones: number; totalMilestones: number; milestones: unknown[]; nextTask: unknown } | null;
     storefrontScore: { overall: number };
   };
+  const [signals, timeline] = await Promise.all([
+    loadSignals(tenantId, context as unknown as Parameters<typeof loadSignals>[1]),
+    getCustomerTimeline(tenantId, 20),
+  ]);
   const successJourney = {
-    success: computeFromSignals(await loadSignals(tenantId, context as unknown as Parameters<typeof loadSignals>[1])),
-    timeline: await getCustomerTimeline(tenantId, 20),
+    success: computeFromSignals(signals),
+    timeline,
   };
   const plan = await resolveActivePlan(undefined, tenantId);
   const launchAllowance = isLaunchPlan(plan.code ?? null)

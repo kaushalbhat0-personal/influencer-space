@@ -35,8 +35,10 @@ const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
 const buildCached = requestCache(async (tenantId: string, markShown = true): Promise<RuntimeContext> => {
   // Single aggregate build — this is the ONLY place the WebsiteAggregate is
   // constructed per request. Every runtime evaluates from this snapshot.
-  const snapshot = await knowledgeAggregateSource.buildSnapshot(tenantId);
-  const profile = await goalProfileService.getProfile(tenantId);
+  const [snapshot, profile] = await Promise.all([
+    knowledgeAggregateSource.buildSnapshot(tenantId),
+    goalProfileService.getProfile(tenantId),
+  ]);
 
   const [success, metrics, health, knowledge, goals] = await Promise.all([
     getCreatorSuccess(tenantId).catch(() => null),
