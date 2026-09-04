@@ -93,7 +93,7 @@ export function SEOScoreCard({ score, loading, error }: SEOScoreCardProps) {
             <div>
               <p className="text-zinc-300">{check.recommendation}</p>
               {check.cta && (
-                <a href={check.cta.href} className="text-s8ul-cyan hover:underline">{check.cta.label}</a>
+                <a href={check.cta.href} className="text-[var(--brand-primary)] hover:underline">{check.cta.label}</a>
               )}
             </div>
           </div>

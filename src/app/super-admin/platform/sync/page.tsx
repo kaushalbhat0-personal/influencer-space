@@ -107,7 +107,7 @@ export default async function PlatformSyncPage() {
           )}
 
           <div className="text-sm text-zinc-400">
-            <p>Run <code className="text-s8ul-cyan bg-zinc-900 px-1.5 py-0.5 rounded">scripts/sql/platform-registry-runtime.sql</code> in Supabase SQL Editor, then refresh.</p>
+            <p>Run <code className="text-[var(--brand-primary)] bg-zinc-900 px-1.5 py-0.5 rounded">scripts/sql/platform-registry-runtime.sql</code> in Supabase SQL Editor, then refresh.</p>
           </div>
         </div>
       )}

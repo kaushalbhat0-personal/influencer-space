@@ -18,7 +18,7 @@ export function CreatorInsights({ insights, loading }: CreatorInsightsProps) {
     return (
       <div className="admin-card p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Lightbulb className="h-4 w-4 text-s8ul-cyan" aria-hidden="true" />
+          <Lightbulb className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
           <h2 className="text-sm font-semibold text-white">Insights</h2>
         </div>
         <p className="text-sm text-zinc-500">No insights yet. Add more data to get actionable recommendations.</p>
@@ -42,7 +42,7 @@ export function CreatorInsights({ insights, loading }: CreatorInsightsProps) {
               "text-zinc-300"
             )}
           >
-            <span className="flex-shrink-0 h-1.5 w-1.5 rounded-full bg-s8ul-cyan mt-1.5" aria-hidden="true" />
+            <span className="flex-shrink-0 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary)] mt-1.5" aria-hidden="true" />
             <p className="flex-1 leading-relaxed">{insight}</p>
           </div>
         ))}

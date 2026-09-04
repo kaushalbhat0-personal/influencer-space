@@ -27,7 +27,7 @@ function UsageBar({ used, limit, label, unit }: UsageQuota) {
 
   const barColor = status === "over_limit" ? "bg-red-500"
     : status === "warning" ? "bg-amber-500"
-    : "bg-s8ul-cyan";
+    : "bg-[var(--brand-primary)]";
 
   const textColor = status === "over_limit" ? "text-red-400"
     : status === "warning" ? "text-amber-400"

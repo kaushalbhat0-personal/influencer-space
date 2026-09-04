@@ -40,7 +40,7 @@ export function RuntimeNotificationBell() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <h3 className="text-sm font-semibold text-white">Notifications</h3>
               <div className="flex items-center gap-3">
-                {unread > 0 && <button onClick={async () => { await markAllRead(); load(); }} className="text-xs text-s8ul-cyan hover:underline">Mark all read</button>}
+                {unread > 0 && <button onClick={async () => { await markAllRead(); load(); }} className="text-xs text-[var(--brand-primary)] hover:underline">Mark all read</button>}
                 <Link href="/admin/notifications" onClick={() => setOpen(false)} className="text-xs text-zinc-400 hover:text-white">View all →</Link>
               </div>
             </div>
@@ -53,7 +53,7 @@ export function RuntimeNotificationBell() {
                 (items ?? []).slice(0, 12).map((n) => (
                   <div key={n.id} className="flex flex-col gap-1 px-4 py-3 text-left border-b border-white/5">
                     <div className="flex items-start gap-2">
-                      {!n.read && <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-s8ul-cyan" />}
+                      {!n.read && <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--brand-primary)]" />}
                       <div>
                         <p className="text-sm font-medium text-white">{n.title}</p>
                         {n.body && <p className="text-xs text-zinc-400 mt-0.5 line-clamp-2">{n.body}</p>}

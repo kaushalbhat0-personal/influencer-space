@@ -142,7 +142,7 @@ export function PageSEOSettingsForm({ initial, global, onSave }: PageSEOSettings
                 type="checkbox"
                 checked={settings.robotsNoIndex}
                 onChange={(e) => update("robotsNoIndex", e.target.checked)}
-                className="rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan"
+                className="rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               />
               No Index (hide from search engines)
             </label>
@@ -151,7 +151,7 @@ export function PageSEOSettingsForm({ initial, global, onSave }: PageSEOSettings
                 type="checkbox"
                 checked={settings.robotsNoFollow}
                 onChange={(e) => update("robotsNoFollow", e.target.checked)}
-                className="rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan"
+                className="rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
               />
               No Follow (don&apos;t follow links on this page)
             </label>

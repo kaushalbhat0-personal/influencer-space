@@ -182,7 +182,7 @@ export function ThemeMarketplaceClient({
           </span>
           <span className="text-xs text-zinc-400">{unlockedCount} of {themes.length} themes unlocked</span>
         </div>
-        <Link href="/admin/billing" className="text-xs text-s8ul-cyan hover:underline">Upgrade plan →</Link>
+        <Link href="/admin/billing" className="text-xs text-[var(--brand-primary)] hover:underline">Upgrade plan →</Link>
       </div>
 
       {/* Filters */}
@@ -216,7 +216,7 @@ export function ThemeMarketplaceClient({
         </select>
         <button
           onClick={() => setOnlyUnlocked((v) => !v)}
-          className={`rounded-lg border px-3 py-2 text-xs transition-colors ${onlyUnlocked ? "border-s8ul-cyan/50 text-s8ul-cyan" : "border-white/10 text-zinc-400 hover:text-zinc-200"}`}
+          className={`rounded-lg border px-3 py-2 text-xs transition-colors ${onlyUnlocked ? "border-[var(--brand-primary)]/50 text-[var(--brand-primary)]" : "border-white/10 text-zinc-400 hover:text-zinc-200"}`}
         >
           {onlyUnlocked ? "Unlocked only ✓" : "Unlocked only"}
         </button>
@@ -365,7 +365,7 @@ export function ThemeMarketplaceClient({
                           <button
                             onClick={(e) => { e.stopPropagation(); openInBuilder(theme.id); }}
                             data-testid={`open-in-builder-${theme.slug}`}
-                            className="mt-1 w-full rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
+                            className="mt-1 w-full rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
                           >
                             Open in Builder
                           </button>
@@ -395,7 +395,7 @@ export function ThemeMarketplaceClient({
           {(search || categoryFilter || tierFilter || experienceFilter || onlyUnlocked || onlyFavorites) && (
             <button
               onClick={() => { setSearch(""); setCategoryFilter(""); setTierFilter(""); setExperienceFilter(""); setOnlyUnlocked(false); setOnlyFavorites(false); }}
-              className="mt-2 text-xs text-s8ul-cyan hover:underline"
+              className="mt-2 text-xs text-[var(--brand-primary)] hover:underline"
             >
               Clear filters
             </button>
@@ -483,7 +483,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName: _planTierName, onOpen
         {!unlocked && (
           <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-400">
             This theme requires the <b>{TIER_LABELS[tier]}</b> plan. Upgrade to unlock its full color system, typography and preview.
-            <Link href="/admin/billing" className="ml-1 text-s8ul-cyan underline">Upgrade now →</Link>
+            <Link href="/admin/billing" className="ml-1 text-[var(--brand-primary)] underline">Upgrade now →</Link>
           </div>
         )}
 
@@ -493,7 +493,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName: _planTierName, onOpen
             <button
               onClick={onOpenInBuilder}
               data-testid="theme-detail-open-builder"
-              className="rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90"
+              className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-black hover:opacity-90"
             >
               Open in Builder
             </button>

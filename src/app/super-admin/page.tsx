@@ -61,7 +61,7 @@ export default async function SuperAdminPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Creators" value={stats.totalTenants} accent="bg-s8ul-cyan/10 text-s8ul-cyan" icon={<Building2 className="h-5 w-5" />} />
+        <StatCard label="Creators" value={stats.totalTenants} accent="bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" icon={<Building2 className="h-5 w-5" />} />
         <StatCard label="Users" value={stats.totalUsers} accent="bg-blue-500/20 text-blue-400" icon={<Users className="h-5 w-5" />} />
         <StatCard label="Agencies" value={stats.totalAgencies} accent="bg-purple-500/20 text-purple-400" icon={<Building2 className="h-5 w-5" />} />
         <StatCard label="Products" value={stats.totalProducts} accent="bg-emerald-500/20 text-emerald-400" icon={<Package className="h-5 w-5" />} />
@@ -86,7 +86,7 @@ export default async function SuperAdminPage() {
         <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold text-white">Active Alerts</h2>
-            <Link href="/super-admin/alerts" className="text-xs text-s8ul-cyan hover:underline">View All →</Link>
+            <Link href="/super-admin/alerts" className="text-xs text-[var(--brand-primary)] hover:underline">View All →</Link>
           </div>
           <div className="flex items-center gap-4 text-xs text-zinc-500">
             <span className="text-red-400">{alertReport.criticalCount} critical</span>
@@ -131,11 +131,11 @@ export default async function SuperAdminPage() {
           </div>
         </div>
         <div className="mt-3 flex gap-3">
-          <Link href="/super-admin/insights" className="text-xs text-s8ul-cyan hover:underline">View Insights →</Link>
+          <Link href="/super-admin/insights" className="text-xs text-[var(--brand-primary)] hover:underline">View Insights →</Link>
           <Link href="/super-admin/activity" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">View Activity →</Link>
           <Link href="/super-admin/health" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Platform Health →</Link>
           <Link href="/super-admin/alerts" className="text-xs text-red-400 hover:underline">Alert Center →</Link>
-          <Link href="/super-admin/runbooks" className="text-xs text-s8ul-cyan hover:underline">Runbooks →</Link>
+          <Link href="/super-admin/runbooks" className="text-xs text-[var(--brand-primary)] hover:underline">Runbooks →</Link>
         </div>
       </div>
 

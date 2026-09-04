@@ -138,7 +138,7 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
                 onMouseEnter={() => setSelectedIndex(i)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-left",
-                  i === selectedIndex ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-300 hover:bg-white/5"
+                  i === selectedIndex ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-300 hover:bg-white/5"
                 )}
                 role="option"
                 aria-selected={i === selectedIndex}
@@ -147,7 +147,7 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
                   className={cn(
                     "text-[10px] font-medium uppercase rounded px-1.5 py-0.5 flex-shrink-0",
                     item.category === "page" && "bg-blue-500/20 text-blue-400",
-                    item.category === "action" && "bg-s8ul-cyan/20 text-s8ul-cyan"
+                    item.category === "action" && "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]"
                   )}
                 >
                   {item.category}

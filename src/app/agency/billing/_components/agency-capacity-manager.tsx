@@ -133,7 +133,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
             type="number" min={1} max={100}
             value={quantity}
             onChange={(e) => setQuantity(Number(e.target.value))}
-            className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-s8ul-cyan/60"
+            className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-[var(--border-focus)]"
           />
         </label>
         <button onClick={buy} disabled={pending || quantity < 1} className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-40">

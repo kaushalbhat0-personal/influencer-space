@@ -20,7 +20,7 @@ export function ClientsTable({ data }: { data: ClientRow[] }) {
     {
       key: "name", header: "Client", sortable: true,
       cell: (r) => (
-        <Link href={`/agency/clients/${r.id}`} className="text-white hover:text-s8ul-cyan text-sm transition-colors">
+        <Link href={`/agency/clients/${r.id}`} className="text-white hover:text-[var(--brand-primary)] text-sm transition-colors">
           {r.name}
         </Link>
       ),

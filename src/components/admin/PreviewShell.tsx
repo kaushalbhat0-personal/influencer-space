@@ -59,7 +59,7 @@ export function PreviewShell({
               onClick={() => setDevice(key)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                 active
-                  ? "bg-s8ul-cyan/10 text-s8ul-cyan shadow-sm"
+                  ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] shadow-sm"
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >

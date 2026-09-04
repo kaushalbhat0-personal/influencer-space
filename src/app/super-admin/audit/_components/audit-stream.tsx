@@ -77,7 +77,7 @@ export function AuditStream({
                   {log.tenant?.name || log.agency?.name || (log.tenantId ? log.tenantId.slice(0, 8) : "agency")}
                 </td>
                 <td>
-                  <span className="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[11px] text-s8ul-cyan">
+                  <span className="rounded bg-zinc-800 px-2 py-0.5 font-mono text-[11px] text-[var(--brand-primary)]">
                     {log.action}
                   </span>
                 </td>

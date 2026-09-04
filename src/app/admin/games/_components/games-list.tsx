@@ -100,7 +100,7 @@ export function GamesList({ games }: { games: GameData[] }) {
                   </td>
                   <td>
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`${GAMES_ROUTE}/${game.id}/edit`} aria-label={`Edit ${game.name}`} className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-s8ul-cyan" title="Edit game">
+                      <Link href={`${GAMES_ROUTE}/${game.id}/edit`} aria-label={`Edit ${game.name}`} className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--brand-primary)]" title="Edit game">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>

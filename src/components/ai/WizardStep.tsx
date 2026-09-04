@@ -31,7 +31,7 @@ export function WizardStep({
     >
       <div className="mb-6">
         {stepNumber && totalSteps && (
-          <p className="text-xs font-medium text-s8ul-cyan mb-1">
+          <p className="text-xs font-medium text-[var(--brand-primary)] mb-1">
             Step {stepNumber} of {totalSteps}
           </p>
         )}

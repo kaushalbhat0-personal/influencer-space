@@ -158,7 +158,7 @@ export function AppearanceManager({
             value={theme.borderRadius}
             onChange={(e) => applyChange({ borderRadius: e.target.value })}
             disabled={pending}
-            className="mt-4 w-full accent-s8ul-cyan"
+            className="mt-4 w-full accent-[var(--brand-primary)]"
           />
         </div>
 

@@ -132,7 +132,7 @@ export function GlobalSEOSettingsForm({ initial, onSave }: GlobalSEOSettingsForm
               type="checkbox"
               checked={settings.robotsIndex}
               onChange={(e) => update("robotsIndex", e.target.checked)}
-              className="rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan"
+              className="rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
             />
             Allow search engines to index the site
           </label>
@@ -141,7 +141,7 @@ export function GlobalSEOSettingsForm({ initial, onSave }: GlobalSEOSettingsForm
               type="checkbox"
               checked={settings.sitemapEnabled}
               onChange={(e) => update("sitemapEnabled", e.target.checked)}
-              className="rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan"
+              className="rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
             />
             Enable sitemap generation
           </label>

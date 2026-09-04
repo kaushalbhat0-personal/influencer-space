@@ -80,7 +80,7 @@ export default async function SuperAdminDomainsPage() {
                   <tr><td colSpan={4} className="px-4 py-8 text-center text-zinc-500">No custom domains configured.</td></tr>
                 ) : tenants.map((t) => (
                   <tr key={t.id} className="border-b border-white/5 text-zinc-300 hover:bg-white/[0.02]">
-                    <td className="px-4 py-3"><Link href={`/super-admin/tenants/${t.id}`} className="text-s8ul-cyan hover:underline">{t.name || t.id.slice(0, 8)}</Link></td>
+                    <td className="px-4 py-3"><Link href={`/super-admin/tenants/${t.id}`} className="text-[var(--brand-primary)] hover:underline">{t.name || t.id.slice(0, 8)}</Link></td>
                     <td className="px-4 py-3 font-mono text-xs">{t.customDomain}</td>
                     <td className="px-4 py-3 font-mono text-xs text-zinc-500">{t.subdomain}</td>
                     <td className="px-4 py-3 text-zinc-500">{t.createdAt.toLocaleDateString()}</td>

@@ -41,7 +41,7 @@ export function NotificationsClient() {
         </div>
         <div className="flex items-center gap-3 text-xs text-zinc-400">
           <span>{unread} unread</span>
-          {unread > 0 && <button onClick={markAll} className="text-s8ul-cyan hover:underline">Mark all read</button>}
+          {unread > 0 && <button onClick={markAll} className="text-[var(--brand-primary)] hover:underline">Mark all read</button>}
         </div>
       </div>
 
@@ -52,10 +52,10 @@ export function NotificationsClient() {
       ) : (
         <div className="space-y-2">
           {items.map((n) => (
-            <div key={n.id} className={`flex items-start justify-between gap-3 rounded-xl border border-white/[0.04] px-4 py-3 ${n.read ? "bg-white/[0.01]" : "bg-s8ul-cyan/5"}`}>
+            <div key={n.id} className={`flex items-start justify-between gap-3 rounded-xl border border-white/[0.04] px-4 py-3 ${n.read ? "bg-white/[0.01]" : "bg-[var(--brand-primary)]/5"}`}>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-s8ul-cyan" />}
+                  {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-primary)]" />}
                   <p className="text-sm font-medium text-white">{n.title}</p>
                 </div>
                 {n.body && <p className="mt-0.5 text-xs text-zinc-400">{n.body}</p>}

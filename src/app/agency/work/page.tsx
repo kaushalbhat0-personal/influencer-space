@@ -91,7 +91,7 @@ export default async function MyWorkPage() {
             <div className="rounded-xl border border-white/10 bg-zinc-900/50 divide-y divide-white/5">
               {myActivity.length > 0 ? myActivity.map((ev) => (
                 <div key={ev.id} className="flex items-start gap-3 px-4 py-2.5">
-                  <div className="h-2 w-2 rounded-full bg-s8ul-cyan mt-1.5 shrink-0" />
+                  <div className="h-2 w-2 rounded-full bg-[var(--brand-primary)] mt-1.5 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-zinc-300 truncate">{ev.action.replace(/_/g, " ")}</p>
                     <p className="text-[10px] text-zinc-600">

@@ -225,7 +225,7 @@ export function StorefrontStatusCard({
         {upgradeAction && (
           <Link
             href={upgradeAction.href}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-3 py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-3 py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
           >
             <ArrowUpRight className="h-4 w-4" />
             {upgradeAction.label}

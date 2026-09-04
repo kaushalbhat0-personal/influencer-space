@@ -93,8 +93,8 @@ export function MetricCard({
           {subtext && !trend && <p className="mt-1 text-xs text-[var(--text-muted)]">{subtext}</p>}
         </div>
         {Icon && (
-          <div className="flex-shrink-0 rounded-xl bg-s8ul-cyan/10 p-3" aria-hidden="true">
-            <Icon className="h-5 w-5 text-s8ul-cyan" />
+          <div className="flex-shrink-0 rounded-xl bg-[var(--brand-primary)]/10 p-3" aria-hidden="true">
+            <Icon className="h-5 w-5 text-[var(--brand-primary)]" />
           </div>
         )}
       </div>

@@ -35,7 +35,7 @@ export default function RunbooksPage() {
             <div className="flex items-center gap-2 mb-3">
               <SeverityBadge severity={runbook.severity} />
               {runbook.alertRule && (
-                <span className="text-xs text-s8ul-cyan">{runbook.alertRule}</span>
+                <span className="text-xs text-[var(--brand-primary)]">{runbook.alertRule}</span>
               )}
             </div>
             <h3 className="text-sm font-medium text-white">{runbook.title}</h3>

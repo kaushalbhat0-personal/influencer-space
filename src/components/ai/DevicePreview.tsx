@@ -40,7 +40,7 @@ export function DevicePreview({
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                 device === key
-                  ? "bg-s8ul-cyan/20 text-s8ul-cyan"
+                  ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]"
                   : "text-zinc-500 hover:text-zinc-300"
               )}
               aria-pressed={device === key}

@@ -44,7 +44,7 @@ export function ConversionFunnel({ data, loading, error }: ConversionFunnelProps
                     <div
                       className={cn(
                         "h-full rounded-lg transition-all duration-500",
-                        i === data.funnel.length - 1 ? "bg-s8ul-cyan" : "bg-s8ul-cyan/30",
+                        i === data.funnel.length - 1 ? "bg-[var(--brand-primary)]" : "bg-[var(--brand-primary)]/30",
                       )}
                       style={{ width: `${Math.max(widthPct, 4)}%` }}
                     />

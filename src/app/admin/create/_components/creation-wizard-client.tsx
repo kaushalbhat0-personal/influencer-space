@@ -74,7 +74,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
               key={ind.id}
               onClick={() => { setSelectedIndustry(ind.id); setStep("style"); }}
               className={`rounded-xl border p-4 text-left transition-all hover:border-white/30 ${
-                selectedIndustry === ind.id ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50" : "border-white/10"
+                selectedIndustry === ind.id ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/50" : "border-white/10"
               }`}
             >
               <p className="text-sm font-semibold text-white">{ind.displayName}</p>
@@ -111,7 +111,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                 key={st.id}
                 onClick={() => { setSelectedStyle(st.id); setStep("review"); }}
                 className={`rounded-xl border p-4 text-left transition-all hover:border-white/30 ${
-                  selectedStyle === st.id ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50" : "border-white/10"
+                  selectedStyle === st.id ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/50" : "border-white/10"
                 }`}
               >
                 <p className="text-sm font-semibold text-white">{st.displayName}</p>
@@ -161,7 +161,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                     <button
                       onClick={() => setSelectedBlueprint(alt.blueprintId)}
                       className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-                        selectedBlueprint === alt.blueprintId ? "bg-s8ul-cyan text-black" : "border border-white/10 text-zinc-400 hover:text-white"
+                        selectedBlueprint === alt.blueprintId ? "bg-[var(--brand-primary)] text-white" : "border border-white/10 text-zinc-400 hover:text-white"
                       }`}
                     >
                       Select
@@ -189,7 +189,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                     key={t.id}
                     onClick={() => { setSelectedTheme(t.id); setPreviewTheme(t.id); }}
                     className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-all ${
-                      (previewTheme ?? selectedTheme) === t.id ? "border-s8ul-cyan bg-s8ul-cyan/10" : "border-white/10 hover:border-white/30"
+                      (previewTheme ?? selectedTheme) === t.id ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10" : "border-white/10 hover:border-white/30"
                     }`}
                   >
                     <span className="h-3 w-3 rounded-full" style={{ backgroundColor: t.variants[0]?.tokens.colors.primary }} />
@@ -309,7 +309,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
           <button onClick={() => setStep("style")} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors">
             Back
           </button>
-          <button onClick={handleGenerate} className="rounded-lg bg-s8ul-cyan px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
+          <button onClick={handleGenerate} className="rounded-lg bg-[var(--brand-primary)] px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
             Build Website
           </button>
         </div>
@@ -320,7 +320,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
   if (step === "generating") {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-s8ul-cyan border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-primary)] border-t-transparent" />
         <p className="mt-4 text-sm text-zinc-400">Building your website — analyzing your profile, composing your storefront, and writing your content.</p>
       </div>
     );
@@ -334,7 +334,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
       <h2 className="mt-4 text-xl font-bold text-white">Website Created!</h2>
       <p className="mt-2 text-sm text-zinc-400">Your website has been generated. You can now customize it in the Builder.</p>
       <div className="mt-6 flex gap-3">
-        <a href="/builder" className="rounded-lg bg-s8ul-cyan px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
+        <a href="/builder" className="rounded-lg bg-[var(--brand-primary)] px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
           Open Builder
         </a>
         <a href={`/${industryObj?.slug ?? "demo"}`} className="rounded-lg border border-white/10 px-6 py-2 text-sm text-zinc-400 hover:text-white transition-colors">

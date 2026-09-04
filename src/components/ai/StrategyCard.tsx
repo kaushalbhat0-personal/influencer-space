@@ -39,9 +39,9 @@ export const StrategyCard = forwardRef<HTMLButtonElement, StrategyCardProps>(
         }}
         className={cn(
           "w-full text-left rounded-xl border p-5 transition-all duration-200",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-s8ul-cyan/50",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/50",
           selected
-            ? "border-s8ul-cyan bg-s8ul-cyan/10 shadow-[0_0_20px_rgba(0,245,255,0.1)]"
+            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 shadow-[0_0_20px_rgba(0,245,255,0.1)]"
             : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10",
           disabled && "opacity-40 cursor-not-allowed",
           className
@@ -56,15 +56,15 @@ export const StrategyCard = forwardRef<HTMLButtonElement, StrategyCardProps>(
               <span
                 className={cn(
                   "h-4 w-4 rounded-full border-2 flex items-center justify-center transition-colors",
-                  selected ? "border-s8ul-cyan" : "border-zinc-600"
+                  selected ? "border-[var(--brand-primary)]" : "border-zinc-600"
                 )}
               >
-                {selected && <span className="h-2 w-2 rounded-full bg-s8ul-cyan" />}
+                {selected && <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />}
               </span>
               <span
                 className={cn(
                   "text-base font-semibold",
-                  selected ? "text-s8ul-cyan" : "text-white"
+                  selected ? "text-[var(--brand-primary)]" : "text-white"
                 )}
               >
                 {option.label}
@@ -110,7 +110,7 @@ export const StrategyCard = forwardRef<HTMLButtonElement, StrategyCardProps>(
             <span
               className={cn(
                 "text-xs font-mono",
-                selected ? "text-s8ul-cyan" : "text-zinc-500"
+                selected ? "text-[var(--brand-primary)]" : "text-zinc-500"
               )}
             >
               {option.timeEstimate}

@@ -32,7 +32,7 @@ export default async function AgencyDashboard() {
         title="Agency Dashboard"
         description="Manage your clients and their websites."
         actions={
-          <Link href="/agency/clients/new" className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90 transition-opacity">
+          <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90 transition-opacity">
             + New Client
           </Link>
         }
@@ -95,7 +95,7 @@ export default async function AgencyDashboard() {
               title="No clients yet"
               description="Create your first client to start managing their website."
               action={
-                <Link href="/agency/clients/new" className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+                <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
                   Create Client
                 </Link>
               }
@@ -124,7 +124,7 @@ export default async function AgencyDashboard() {
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 divide-y divide-white/5">
             {recentActivity.length > 0 ? recentActivity.slice(0, 8).map((ev) => (
               <div key={ev.id} className="flex items-start gap-3 px-4 py-2.5">
-                <div className="h-2 w-2 rounded-full bg-s8ul-cyan mt-1.5 shrink-0" />
+                <div className="h-2 w-2 rounded-full bg-[var(--brand-primary)] mt-1.5 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-zinc-300 truncate">{ev.action.replace(/_/g, " ")}</p>
                   <p className="text-[10px] text-zinc-600">

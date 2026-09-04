@@ -231,7 +231,7 @@ export function MilestonesManager({
             >
               {/* ── Year Badge ── */}
               <div className="absolute left-3 top-3 z-10">
-                <span className="inline-flex items-center rounded-md bg-s8ul-cyan/20 px-2.5 py-0.5 font-display text-xs font-bold text-s8ul-cyan ring-1 ring-inset ring-s8ul-cyan/30">
+                <span className="inline-flex items-center rounded-md bg-[var(--brand-primary)]/20 px-2.5 py-0.5 font-display text-xs font-bold text-[var(--brand-primary)] ring-1 ring-inset ring-[var(--brand-primary)]/30">
                   {milestone.year}
                 </span>
               </div>
@@ -276,7 +276,7 @@ export function MilestonesManager({
                   <button
                     onClick={() => openEdit(milestone)}
                     disabled={pending}
-                    className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                    className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]"
                     title="Edit milestone"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

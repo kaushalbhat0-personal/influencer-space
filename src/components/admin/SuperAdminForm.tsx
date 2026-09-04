@@ -77,7 +77,7 @@ export function SuperAdminForm() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-[var(--text-muted)]">Subdomain</span>
-                  <code className="text-s8ul-cyan">{state.subdomain}</code>
+                  <code className="text-[var(--brand-primary)]">{state.subdomain}</code>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[var(--text-muted)]">Email</span>
@@ -91,7 +91,7 @@ export function SuperAdminForm() {
 
               <div className="rounded-lg bg-[var(--surface-hover)] border border-[var(--border)] p-3">
                 <p className="text-xs text-[var(--text-muted)]">Demo URL</p>
-                <code className="break-all text-sm text-s8ul-cyan">{state.demoUrl}</code>
+                <code className="break-all text-sm text-[var(--brand-primary)]">{state.demoUrl}</code>
               </div>
 
               <div className="rounded-lg bg-amber-500/10 p-3">

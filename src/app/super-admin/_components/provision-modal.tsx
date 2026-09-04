@@ -97,9 +97,9 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
 
         {/* Tabs */}
         <div className="flex gap-1 rounded-lg border border-white/10 bg-zinc-900 p-1 mb-5">
-          <button onClick={() => { setTab("import"); setAnalysis(null); setImportResult(null); }} className={`flex-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${tab === "import" ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300"}`}>Import</button>
-          <button onClick={() => setTab("history")} className={`flex-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${tab === "history" ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300"}`}>History</button>
-          <button onClick={() => setTab("domains")} className={`flex-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${tab === "domains" ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300"}`}>Domains</button>
+          <button onClick={() => { setTab("import"); setAnalysis(null); setImportResult(null); }} className={`flex-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${tab === "import" ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300"}`}>Import</button>
+          <button onClick={() => setTab("history")} className={`flex-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${tab === "history" ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300"}`}>History</button>
+          <button onClick={() => setTab("domains")} className={`flex-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${tab === "domains" ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300"}`}>Domains</button>
         </div>
 
         {/* ── Import Tab ── */}
@@ -182,7 +182,7 @@ export function ProvisionModal({ open, onClose, tenants }: { open: boolean; onCl
                 {importResult.success && (
                   <div className="grid grid-cols-2 gap-2 text-zinc-300">
                     <span>Creator:</span>
-                    <code className="text-s8ul-cyan">{importResult.creatorName}</code>
+                    <code className="text-[var(--brand-primary)]">{importResult.creatorName}</code>
                     <span>Storefront:</span>
                     <code className="text-white">{importResult.storefrontUrl}</code>
                   </div>

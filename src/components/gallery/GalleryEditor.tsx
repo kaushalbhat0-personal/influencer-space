@@ -155,7 +155,7 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
                   </div>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)}
-                      className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/30" />
+                      className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]/30" />
                     <span className="text-xs text-zinc-400">Featured media (shown first on storefront)</span>
                   </label>
                 </div>

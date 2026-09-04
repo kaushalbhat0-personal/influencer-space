@@ -119,7 +119,7 @@ export default async function OperationsPage() {
             {centers.map((c) => (
               <div key={c.title} className="admin-card p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-s8ul-cyan">{c.icon}</span>
+                  <span className="text-[var(--brand-primary)]">{c.icon}</span>
                   <h3 className="text-sm font-medium text-white">{c.title}</h3>
                 </div>
                 <div className="space-y-1.5">
@@ -207,7 +207,7 @@ export default async function OperationsPage() {
                   <td><span className="text-xs text-zinc-500">{job.intervalMs >= 86400000 ? "Daily" : job.intervalMs >= 3600000 ? "Hourly" : `${job.intervalMs}ms`}</span></td>
                   <td>
                     <form action={async () => { "use server"; /* handled by client */ }}>
-                      <button className="text-xs text-s8ul-cyan hover:underline">Run Now</button>
+                      <button className="text-xs text-[var(--brand-primary)] hover:underline">Run Now</button>
                     </form>
                   </td>
                 </tr>
@@ -229,7 +229,7 @@ export default async function OperationsPage() {
           <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Diagnostics</h2>
           <div className="admin-card p-4">
             <details>
-              <summary className="text-sm text-s8ul-cyan cursor-pointer hover:underline">View Full Diagnostics JSON</summary>
+              <summary className="text-sm text-[var(--brand-primary)] cursor-pointer hover:underline">View Full Diagnostics JSON</summary>
               <pre className="mt-3 text-xs text-zinc-400 overflow-auto max-h-96 whitespace-pre-wrap font-mono">
                 {JSON.stringify(diagnostics, null, 2)}
               </pre>
@@ -244,7 +244,7 @@ export default async function OperationsPage() {
           <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Platform Status (operations snapshot)</h2>
           <div className="admin-card p-4">
             <details>
-              <summary className="text-sm text-s8ul-cyan cursor-pointer hover:underline" data-testid="ops-snapshot-summary">View Platform Status Snapshot</summary>
+              <summary className="text-sm text-[var(--brand-primary)] cursor-pointer hover:underline" data-testid="ops-snapshot-summary">View Platform Status Snapshot</summary>
               <pre className="mt-3 text-xs text-zinc-400 overflow-auto max-h-96 whitespace-pre-wrap font-mono">
                 {JSON.stringify({
                   timestamp: snapshot.timestamp,

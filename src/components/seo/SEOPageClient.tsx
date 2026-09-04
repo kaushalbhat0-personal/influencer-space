@@ -79,7 +79,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
             className={cn(
               "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
               activeTab === tab.key
-                ? "border-s8ul-cyan text-s8ul-cyan"
+                ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
                 : "border-transparent text-zinc-500 hover:text-zinc-300"
             )}
           >
@@ -110,7 +110,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
                   <a href="#structured" onClick={(e) => { e.preventDefault(); setActiveTab("structured"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10">
                     Generate Structured Data
                   </a>
-                  <a href={storefrontUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-s8ul-cyan hover:bg-white/10">
+                  <a href={storefrontUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-[var(--brand-primary)] hover:bg-white/10">
                     View Storefront →
                   </a>
                 </div>
@@ -132,7 +132,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
                 key={type}
                 onClick={() => setSelectedPage(type)}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedPage === type ? "bg-s8ul-cyan text-black" : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                  selectedPage === type ? "bg-[var(--brand-primary)] text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"
                 }`}
               >
                 {type.charAt(0).toUpperCase() + type.slice(1)}

@@ -64,9 +64,9 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
   }
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--surface-root)] via-s8ul-purple/40 to-[var(--surface-root)] px-4">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--neon-cyan)_15%,transparent_70%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,var(--neon-gold)_8%,transparent_70%)]" />
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--surface-root)] via-[var(--brand-secondary)]/40 to-[var(--surface-root)] px-4">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--brand-primary)_15%,transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,var(--brand-primary)_8%,transparent_70%)]" />
 
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.95 }}

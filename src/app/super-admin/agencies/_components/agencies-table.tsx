@@ -7,7 +7,7 @@ export interface AgencyRow { id: string; name: string; subdomain: string | null;
 
 const columns: Column<AgencyRow>[] = [
   { key: "name", header: "Name", sortable: true, cell: (r) => (
-    <a href={`/super-admin/agencies/${r.id}`} className="text-s8ul-cyan hover:underline text-sm">{r.name}</a>
+    <a href={`/super-admin/agencies/${r.id}`} className="text-[var(--brand-primary)] hover:underline text-sm">{r.name}</a>
   )},
   { key: "subdomain", header: "Subdomain", sortable: true, cell: (r) => <span className="text-zinc-300 text-sm font-mono">{r.subdomain ?? "—"}</span> },
   { key: "tenantCount", header: "Clients", sortable: true, cell: (r) => <span className="text-white font-medium">{r.tenantCount}</span> },

@@ -22,7 +22,7 @@ function SeverityBadge({ severity }: { severity: Insight["severity"] }) {
   const colors = {
     critical: "bg-red-500/10 text-red-400 border-red-500/20",
     warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    info: "bg-s8ul-cyan/10 text-s8ul-cyan border-s8ul-cyan/20",
+    info: "bg-[var(--color-info-surface)] text-[var(--color-info)] border-[var(--color-info-border)]",
     success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   };
   return (
@@ -39,7 +39,7 @@ function InsightCard({ insight }: { insight: Insight }) {
   const Icon = icons[insight.severity];
   const borderColors = {
     critical: "border-l-red-500/50", warning: "border-l-amber-500/50",
-    info: "border-l-s8ul-cyan/50", success: "border-l-emerald-500/50",
+    info: "border-l-[var(--color-info)]/50", success: "border-l-emerald-500/50",
   };
 
   return (
@@ -48,7 +48,7 @@ function InsightCard({ insight }: { insight: Insight }) {
         <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${
           insight.severity === "critical" ? "text-red-400" :
           insight.severity === "warning" ? "text-amber-400" :
-          insight.severity === "info" ? "text-s8ul-cyan" : "text-emerald-400"
+          insight.severity === "info" ? "text-[var(--color-info)]" : "text-emerald-400"
         }`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -189,7 +189,7 @@ export default async function InsightsPage() {
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: "Total Creators", value: tenants.length, icon: Activity, color: "text-s8ul-cyan" },
+          { label: "Total Creators", value: tenants.length, icon: Activity, color: "text-[var(--brand-primary)]" },
           { label: "Live Websites", value: liveCount, icon: Globe, color: "text-emerald-400" },
           { label: "Total Products", value: productCount, icon: CreditCard, color: "text-amber-400" },
           { label: "Total Orders", value: orderCount, icon: Target, color: "text-purple-400" },

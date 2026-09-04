@@ -120,7 +120,7 @@ export function MediaField({
       <div className="space-y-1">
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
           <div
-            className="h-full rounded-full bg-s8ul-cyan transition-all duration-200"
+            className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-200"
             style={{ width: `${Math.max(progress, 6)}%` }}
           />
         </div>

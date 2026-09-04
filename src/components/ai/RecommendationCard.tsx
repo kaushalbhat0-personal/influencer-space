@@ -13,7 +13,7 @@ interface RecommendationCardProps {
 
 const PRIORITY_COLORS = {
   high: "border-amber-500/30 bg-amber-500/10",
-  medium: "border-s8ul-cyan/30 bg-s8ul-cyan/5",
+  medium: "border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/5",
   low: "border-white/10 bg-white/5",
 };
 
@@ -38,7 +38,7 @@ export function RecommendationCard({
           className={cn(
             "h-5 w-5 flex-shrink-0 mt-0.5",
             priority === "high" && "text-amber-400",
-            priority === "medium" && "text-s8ul-cyan",
+            priority === "medium" && "text-[var(--brand-primary)]",
             priority === "low" && "text-zinc-400"
           )}
           aria-hidden="true"

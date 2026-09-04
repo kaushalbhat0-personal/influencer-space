@@ -62,7 +62,7 @@ export function DeploymentCard({
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
               step.status === "completed" && "text-green-300",
-              step.status === "running" && "bg-s8ul-cyan/10 text-s8ul-cyan",
+              step.status === "running" && "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]",
               step.status === "failed" && "bg-red-500/10 text-red-300",
               step.status === "pending" && "text-zinc-600"
             )}
@@ -71,7 +71,7 @@ export function DeploymentCard({
               <Check className="h-4 w-4 text-green-400 flex-shrink-0" aria-hidden="true" />
             )}
             {step.status === "running" && (
-              <Loader2 className="h-4 w-4 text-s8ul-cyan animate-spin flex-shrink-0" aria-hidden="true" />
+              <Loader2 className="h-4 w-4 text-[var(--brand-primary)] animate-spin flex-shrink-0" aria-hidden="true" />
             )}
             {step.status === "failed" && (
               <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" aria-hidden="true" />

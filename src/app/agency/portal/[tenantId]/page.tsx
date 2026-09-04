@@ -103,7 +103,7 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
             href={`/${tenant.subdomain}`}
             className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/50 p-6 hover:border-white/20 transition-all text-center"
           >
-            <Globe className="h-6 w-6 text-s8ul-cyan" />
+            <Globe className="h-6 w-6 text-[var(--brand-primary)]" />
             <span className="text-sm font-medium text-white">View Website</span>
             <span className="text-xs text-zinc-500">See your live site</span>
           </Link>
@@ -111,7 +111,7 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
             href="/builder"
             className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/50 p-6 hover:border-white/20 transition-all text-center"
           >
-            <Activity className="h-6 w-6 text-s8ul-cyan" />
+            <Activity className="h-6 w-6 text-[var(--brand-primary)]" />
             <span className="text-sm font-medium text-white">Open Builder</span>
             <span className="text-xs text-zinc-500">Edit your layout</span>
           </Link>

@@ -16,7 +16,7 @@ export default function RunbookPage({ params }: { params: { id: string } }) {
   return (
     <div>
       <div className="mb-6">
-        <Link href="/super-admin/runbooks" className="text-xs text-s8ul-cyan hover:underline mb-2 inline-block">
+        <Link href="/super-admin/runbooks" className="text-xs text-[var(--brand-primary)] hover:underline mb-2 inline-block">
           ← Back to Runbooks
         </Link>
         <div className="flex items-center gap-3 mb-2">
@@ -27,7 +27,7 @@ export default function RunbookPage({ params }: { params: { id: string } }) {
         </div>
         <p className="text-sm text-zinc-400">{runbook.description}</p>
         {runbook.alertRule && (
-          <p className="mt-1 text-xs text-s8ul-cyan">Linked alert rule: {runbook.alertRule}</p>
+          <p className="mt-1 text-xs text-[var(--brand-primary)]">Linked alert rule: {runbook.alertRule}</p>
         )}
       </div>
 
@@ -35,7 +35,7 @@ export default function RunbookPage({ params }: { params: { id: string } }) {
         {runbook.steps.map((step) => (
           <div key={step.order} className="rounded-xl border border-white/5 bg-zinc-900/50 p-4">
             <div className="flex items-start gap-4">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-s8ul-cyan/10 text-xs font-medium text-s8ul-cyan">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)]/10 text-xs font-medium text-[var(--brand-primary)]">
                 {step.order}
               </span>
               <div className="min-w-0">
@@ -60,7 +60,7 @@ export default function RunbookPage({ params }: { params: { id: string } }) {
               <Link
                 key={link}
                 href={link}
-                className="text-xs text-s8ul-cyan hover:underline bg-s8ul-cyan/5 px-3 py-1.5 rounded-lg border border-s8ul-cyan/10"
+                className="text-xs text-[var(--brand-primary)] hover:underline bg-[var(--brand-primary)]/5 px-3 py-1.5 rounded-lg border border-[var(--brand-primary)]/10"
               >
                 {link}
               </Link>

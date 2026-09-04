@@ -36,9 +36,9 @@ export const TemplateCard = forwardRef<HTMLButtonElement, TemplateCardProps>(
         }}
         className={cn(
           "flex flex-col items-center gap-2 rounded-xl border p-4 transition-all duration-200 text-center",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-s8ul-cyan/50",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/50",
           selected
-            ? "border-s8ul-cyan bg-s8ul-cyan/10 shadow-[0_0_20px_rgba(0,245,255,0.1)]"
+            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 shadow-[0_0_20px_rgba(0,245,255,0.1)]"
             : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10",
           disabled && "opacity-40 cursor-not-allowed",
           loading && "animate-pulse",
@@ -52,14 +52,14 @@ export const TemplateCard = forwardRef<HTMLButtonElement, TemplateCardProps>(
           transition={{ duration: 0.4 }}
           className={cn(
             "rounded-lg p-3 transition-colors",
-            selected ? "bg-s8ul-cyan/20" : "bg-white/5"
+            selected ? "bg-[var(--brand-primary)]/20" : "bg-white/5"
           )}
         >
           {loading ? (
             <div className="h-6 w-6 rounded bg-white/10 animate-pulse" />
           ) : (
             <Icon
-              className={cn("h-6 w-6", selected ? "text-s8ul-cyan" : "text-zinc-400")}
+              className={cn("h-6 w-6", selected ? "text-[var(--brand-primary)]" : "text-zinc-400")}
               aria-hidden="true"
             />
           )}
@@ -68,7 +68,7 @@ export const TemplateCard = forwardRef<HTMLButtonElement, TemplateCardProps>(
           <p
             className={cn(
               "text-sm font-semibold",
-              selected ? "text-s8ul-cyan" : "text-white"
+              selected ? "text-[var(--brand-primary)]" : "text-white"
             )}
           >
             {label}

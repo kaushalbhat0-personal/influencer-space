@@ -55,7 +55,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
               View Website
             </Link>
-            <Link href={`/builder`} className="rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90">
+            <Link href={`/builder`} className="rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90">
               Open Builder
             </Link>
           </div>
@@ -134,7 +134,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         <div className="divide-y divide-white/5">
           {activity.length > 0 ? activity.map((ev) => (
             <div key={ev.id} className="flex items-start gap-3 py-2">
-              <div className="h-2 w-2 rounded-full bg-s8ul-cyan mt-1.5 shrink-0" />
+              <div className="h-2 w-2 rounded-full bg-[var(--brand-primary)] mt-1.5 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-zinc-300">{ev.action.replace(/_/g, " ")}</p>
                 <p className="text-[10px] text-zinc-600">{new Date(ev.timestamp).toLocaleString()}</p>

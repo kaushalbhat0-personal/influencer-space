@@ -73,11 +73,11 @@ export function WebsiteReadyClient({
       <div className="mb-8 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
         <div className="mb-4 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Website Health</p>
-          <span className="text-2xl font-bold text-s8ul-cyan">{healthScore}%</span>
+          <span className="text-2xl font-bold text-[var(--brand-primary)]">{healthScore}%</span>
         </div>
         <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-800">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-s8ul-cyan to-emerald-400 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-emerald-400 transition-all"
             style={{ width: `${healthScore}%` }}
           />
         </div>
@@ -106,7 +106,7 @@ export function WebsiteReadyClient({
             href={storefrontUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+            className="flex items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
           >
             <ExternalLink className="h-4 w-4" />
             Visit Live Site
@@ -116,7 +116,7 @@ export function WebsiteReadyClient({
             type="button"
             onClick={handlePublish}
             disabled={publishing}
-            className="flex items-center justify-center gap-2 rounded-lg bg-s8ul-cyan px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="flex items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 py-3 text-sm font-semibold text-black hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             <Sparkles className="h-4 w-4" />
             {publishing ? "Publishing..." : "Publish Website"}

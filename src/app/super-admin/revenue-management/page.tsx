@@ -35,7 +35,7 @@ export default async function RevenueManagementPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mb-8">
         <MetricCard label="MRR" value={formatCurrency(data.mrr)} accent="bg-emerald-500/10 text-emerald-400" icon={<TrendingUp className="h-4 w-4" />} />
         <MetricCard label="ARR" value={formatCurrency(data.arr)} accent="bg-emerald-500/10 text-emerald-400" icon={<IndianRupee className="h-4 w-4" />} />
-        <MetricCard label="Creator Subs" value={data.activeCreatorSubs} accent="bg-s8ul-cyan/10 text-s8ul-cyan" icon={<Users className="h-4 w-4" />} />
+        <MetricCard label="Creator Subs" value={data.activeCreatorSubs} accent="bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" icon={<Users className="h-4 w-4" />} />
         <MetricCard label="Agency Subs" value={data.activeAgencySubs} accent="bg-purple-500/10 text-purple-400" icon={<Users className="h-4 w-4" />} />
         <MetricCard label="Trial Users" value={data.trialUsers} accent="bg-amber-500/10 text-amber-400" icon={<Clock className="h-4 w-4" />} />
         <MetricCard label="Monthly Revenue" value={formatCurrency(data.monthlyRevenue)} accent="bg-emerald-500/10 text-emerald-400" icon={<IndianRupee className="h-4 w-4" />} />

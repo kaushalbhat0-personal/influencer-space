@@ -140,7 +140,7 @@ export function AlertsClient({ initial }: { initial: { rows: AlertRow[]; total: 
                   <td className="px-3 py-2 text-zinc-500 text-xs">{fmtDate(a.createdAt)}</td>
                   <td className="px-3 py-2">
                     {runbookId ? (
-                      <a href={`/super-admin/runbooks/${runbookId}`} className="text-xs text-s8ul-cyan hover:underline" data-testid={`runbook-${runbookId}`}>Runbook</a>
+                      <a href={`/super-admin/runbooks/${runbookId}`} className="text-xs text-[var(--brand-primary)] hover:underline" data-testid={`runbook-${runbookId}`}>Runbook</a>
                     ) : (
                       <span className="text-xs text-zinc-600">—</span>
                     )}

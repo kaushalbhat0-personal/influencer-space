@@ -18,7 +18,7 @@ export function WorkspaceSwitcher() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white transition-colors"
       >
-        <Icon className="h-4 w-4 shrink-0 text-s8ul-cyan" />
+        <Icon className="h-4 w-4 shrink-0 text-[var(--brand-primary)]" />
         <span className="truncate max-w-[120px]">{workspace.name || workspace.slug}</span>
         <ChevronDown className="h-3 w-3 text-zinc-500" />
       </button>
@@ -33,9 +33,9 @@ export function WorkspaceSwitcher() {
                 onClick={() => { switchWorkspace(ws.id); setOpen(false); }}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
               >
-                {ws.type === "AGENCY" ? <Building2 className="h-4 w-4 text-s8ul-cyan" /> : <User className="h-4 w-4 text-s8ul-cyan" />}
+                {ws.type === "AGENCY" ? <Building2 className="h-4 w-4 text-[var(--brand-primary)]" /> : <User className="h-4 w-4 text-[var(--brand-primary)]" />}
                 <span className="flex-1 text-left truncate">{ws.name || ws.slug}</span>
-                {ws.id === workspace.id && <Check className="h-4 w-4 text-s8ul-cyan" />}
+                {ws.id === workspace.id && <Check className="h-4 w-4 text-[var(--brand-primary)]" />}
               </button>
             ))}
           </div>

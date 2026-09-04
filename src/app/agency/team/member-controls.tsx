@@ -34,7 +34,7 @@ export function TeamMemberControls({ userId, currentRole, isOwner }: { userId: s
       <select
         value={selected}
         onChange={(e) => setSelected(e.target.value)}
-        className="rounded-md border border-white/10 bg-zinc-950 px-2 py-1 text-xs text-white outline-none focus:border-s8ul-cyan/60"
+        className="rounded-md border border-white/10 bg-zinc-950 px-2 py-1 text-xs text-white outline-none focus:border-[var(--border-focus)]"
       >
         {ROLE_OPTIONS.map((r) => (
           <option key={r} value={r}>{r}</option>

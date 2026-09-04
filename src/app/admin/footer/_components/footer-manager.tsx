@@ -101,7 +101,7 @@ export function FooterManager({
       <section className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">Footer Columns</h2>
-          <button onClick={addColumn} className="flex items-center gap-1.5 rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black"><Plus className="h-3 w-3"/>Add Column</button>
+          <button onClick={addColumn} className="flex items-center gap-1.5 rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black"><Plus className="h-3 w-3"/>Add Column</button>
         </div>
         <p className="text-xs text-zinc-500">Each column is a group of footer navigation links. These are independent from Hero CTAs and header Navigation.</p>
         <div className="space-y-4">
@@ -119,7 +119,7 @@ export function FooterManager({
                     <button onClick={()=>removeLink(ci, li)} className="rounded p-1.5 text-zinc-500 hover:text-red-400"><Trash2 className="h-3 w-3"/></button>
                   </div>
                 ))}
-                <button onClick={()=>addLink(ci)} className="text-xs text-s8ul-cyan hover:underline flex items-center gap-1"><Plus className="h-3 w-3"/>Add Footer Link</button>
+                <button onClick={()=>addLink(ci)} className="text-xs text-[var(--brand-primary)] hover:underline flex items-center gap-1"><Plus className="h-3 w-3"/>Add Footer Link</button>
               </div>
             </div>
           ))}

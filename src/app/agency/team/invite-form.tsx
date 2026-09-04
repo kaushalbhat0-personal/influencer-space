@@ -62,7 +62,7 @@ export function TeamInviteForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="staff@example.com"
-            className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-s8ul-cyan/60"
+            className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-[var(--border-focus)]"
           />
         </label>
         <label className="min-w-[160px]">
@@ -70,7 +70,7 @@ export function TeamInviteForm() {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-s8ul-cyan/60"
+            className="w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-[var(--border-focus)]"
           >
             {INVITE_ROLES.map((r) => (
               <option key={r} value={r}>{r}</option>
@@ -80,7 +80,7 @@ export function TeamInviteForm() {
         <button
           onClick={submit}
           disabled={pending || !email.trim()}
-          className="rounded-md bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-zinc-950 hover:opacity-90 disabled:opacity-40"
+          className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
         >
           {pending ? "Sending…" : "Send invitation"}
         </button>
@@ -96,7 +96,7 @@ export function TeamInviteForm() {
           <p className="mt-1 text-xs text-zinc-400">
             The invitation is still pending. Share this link manually or retry delivery:
           </p>
-          <p className="mt-2 break-all rounded bg-zinc-950 px-2 py-1 font-mono text-xs text-s8ul-300">{state.acceptUrl}</p>
+          <p className="mt-2 break-all rounded bg-zinc-950 px-2 py-1 font-mono text-xs text-[var(--brand-primary)]">{state.acceptUrl}</p>
           <button
             onClick={resend}
             disabled={pending}

@@ -55,7 +55,7 @@ export function SyncClient({ dryRun: initialDryRun, schemaMissing: initialMissin
             <a
               href="/sql/platform-registry-runtime.sql"
               download
-              className="inline-flex items-center gap-2 rounded-lg bg-s8ul-cyan/10 border border-s8ul-cyan/30 px-4 py-2 text-sm text-s8ul-cyan hover:bg-s8ul-cyan/20 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 px-4 py-2 text-sm text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/20 transition-colors"
             >
               <Download className="h-4 w-4" />
               Download SQL
@@ -90,7 +90,7 @@ export function SyncClient({ dryRun: initialDryRun, schemaMissing: initialMissin
         <h2 className="text-sm font-semibold text-zinc-300">Execute Sync</h2>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)}
-            className="rounded border-white/20 bg-zinc-800 text-s8ul-cyan focus:ring-s8ul-cyan/50" />
+            className="rounded border-white/20 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]/50" />
           <span className="text-xs text-zinc-400">Dry Run</span>
         </label>
       </div>
@@ -98,7 +98,7 @@ export function SyncClient({ dryRun: initialDryRun, schemaMissing: initialMissin
       <button
         onClick={run}
         disabled={loading}
-        className="inline-flex items-center gap-2 rounded-lg bg-s8ul-cyan/10 border border-s8ul-cyan/30 px-4 py-2 text-sm text-s8ul-cyan hover:bg-s8ul-cyan/20 disabled:opacity-50 transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/30 px-4 py-2 text-sm text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/20 disabled:opacity-50 transition-colors"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : dryRun ? <Eye className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         {loading ? "Running..." : dryRun ? "Validate Only" : "Apply Changes"}

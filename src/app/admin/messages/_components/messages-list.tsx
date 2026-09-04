@@ -61,7 +61,7 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
                   <motion.tr
                     key={message.id}
                     variants={rowVariants}
-                    className={`group ${!message.isRead ? "bg-s8ul-cyan/[0.02]" : ""}`}
+                    className={`group ${!message.isRead ? "bg-[var(--brand-primary)]/[0.02]" : ""}`}
                   >
                     <td className="font-medium text-white">{message.name}</td>
                     <td className="hidden sm:table-cell">

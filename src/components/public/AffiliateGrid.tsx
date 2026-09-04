@@ -57,7 +57,7 @@ export function AffiliateGrid({ affiliates, previewMode = false }: AffiliateGrid
         >
           <TiltCard tiltDegree={4} className="h-full">
           <GlassCard
-            className="group w-full cursor-pointer border-neon-purple/30 transition-all hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+            className="group w-full cursor-pointer border-[var(--brand-secondary)]/30 transition-all hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
             onClick={() => handleClick(affiliate.id, affiliate.url)}
           >
             <div className="flex flex-col items-center text-center">
@@ -73,7 +73,7 @@ export function AffiliateGrid({ affiliates, previewMode = false }: AffiliateGrid
               <h3 className="text-base font-semibold text-white sm:text-lg">
                 {affiliate.title}
               </h3>
-              <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-neon-purple/30 bg-neon-purple/10 px-4 py-2 font-display text-xs uppercase tracking-wider text-neon-purple backdrop-blur-sm sm:w-auto">
+              <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-secondary)]/30 bg-[var(--brand-secondary)]/10 px-4 py-2 font-display text-xs uppercase tracking-wider text-[var(--brand-secondary)] backdrop-blur-sm sm:w-auto">
                 <span>Get Gear</span>
                 <span className="text-xl">→</span>
               </div>

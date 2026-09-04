@@ -36,7 +36,7 @@ export default async function ThemesPage() {
                         <span key={v.mode} className="rounded bg-zinc-700/50 px-1.5 py-0.5 text-[9px] text-zinc-500">{v.mode}</span>
                       ))}
                       {t.premium && <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] text-amber-400">PRO</span>}
-                      {t.featured && <span className="rounded bg-s8ul-cyan/10 px-1.5 py-0.5 text-[9px] text-s8ul-cyan">Featured</span>}
+                      {t.featured && <span className="rounded bg-[var(--brand-primary)]/10 px-1.5 py-0.5 text-[9px] text-[var(--brand-primary)]">Featured</span>}
                     </div>
                   </div>
                 ))}

@@ -15,7 +15,7 @@ interface Props {
 
 const ROLE_BADGES: Record<string, string> = {
   OWNER: "bg-purple-500/10 text-purple-400",
-  ADMIN: "bg-s8ul-cyan/10 text-s8ul-cyan",
+  ADMIN: "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]",
   MEMBER: "bg-blue-500/10 text-blue-400",
   VIEWER: "bg-zinc-500/10 text-zinc-400",
 };

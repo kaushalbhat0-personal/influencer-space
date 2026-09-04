@@ -92,7 +92,7 @@ export default async function WebsitesPage({
               return (
                 <tr key={w.id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="px-4 py-3">
-                    <Link href={`/super-admin/tenants/${w.tenant.id}`} className="text-white hover:text-s8ul-cyan transition-colors">
+                    <Link href={`/super-admin/tenants/${w.tenant.id}`} className="text-white hover:text-[var(--brand-primary)] transition-colors">
                       {w.tenant.name}
                     </Link>
                   </td>
@@ -155,7 +155,7 @@ export default async function WebsitesPage({
               key={p}
               href={`/super-admin/websites?page=${p}${query ? `&q=${query}` : ""}${statusFilter ? `&status=${statusFilter}` : ""}`}
               className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                p === page ? "bg-s8ul-cyan text-black" : "text-zinc-400 hover:text-white border border-white/10"
+                p === page ? "bg-[var(--brand-primary)] text-white" : "text-zinc-400 hover:text-white border border-white/10"
               }`}
             >
               {p}

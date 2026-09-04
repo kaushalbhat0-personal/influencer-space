@@ -39,7 +39,7 @@ export default async function AgencyClientsPage({
         description="All your managed creator clients."
         breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Clients" }]}
         actions={
-          <Link href="/agency/clients/new" className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+          <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
             + New Client
           </Link>
         }
@@ -60,7 +60,7 @@ export default async function AgencyClientsPage({
           description={query ? "Try a different search term." : "Create your first client to get started."}
           action={
             !query ? (
-              <Link href="/agency/clients/new" className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+              <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
                 Create Client
               </Link>
             ) : undefined

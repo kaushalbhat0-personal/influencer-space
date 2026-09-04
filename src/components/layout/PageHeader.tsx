@@ -52,7 +52,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, status, t
               className={cn(
                 "whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
                 tab.active
-                  ? "border-s8ul-cyan text-s8ul-cyan"
+                  ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
                   : "border-transparent text-zinc-500 hover:text-zinc-300"
               )}
             >

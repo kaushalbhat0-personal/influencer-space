@@ -123,8 +123,8 @@ export function MediaFieldMulti({
       <label className="block text-xs font-medium text-zinc-400">{label}</label>
 
       {dragging && (
-        <div className="rounded-lg border-2 border-dashed border-s8ul-cyan/60 bg-s8ul-cyan/5 p-6 text-center">
-          <p className="text-xs font-medium text-s8ul-cyan">Drop files to upload</p>
+        <div className="rounded-lg border-2 border-dashed border-[var(--brand-primary)]/60 bg-[var(--brand-primary)]/5 p-6 text-center">
+          <p className="text-xs font-medium text-[var(--brand-primary)]">Drop files to upload</p>
         </div>
       )}
 

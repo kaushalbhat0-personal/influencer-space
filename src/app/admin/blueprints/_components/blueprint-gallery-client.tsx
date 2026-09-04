@@ -49,7 +49,7 @@ export function BlueprintGalleryClient({
             key={bp.id}
             onClick={() => setSelectedBp(bp)}
             className={`group rounded-[var(--radius-card)] border p-5 text-left transition-all ${
-              selectedBp?.id === bp.id ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50" : "border-[var(--border)] hover:border-[var(--border-strong)]"
+              selectedBp?.id === bp.id ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/50" : "border-[var(--border)] hover:border-[var(--border-strong)]"
             }`}
           >
             <div className="mb-2 flex items-center justify-between">
@@ -123,7 +123,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
                   <p className="text-xs text-zinc-300">{page.name}</p>
                   <p className="text-[10px] text-zinc-600">{page.sections.length} sections &middot; /{page.slug}</p>
                 </div>
-                {page.isHome && <span className="rounded bg-s8ul-cyan/20 px-1.5 py-0.5 text-[9px] text-s8ul-300">Home</span>}
+                {page.isHome && <span className="rounded bg-[var(--brand-primary)]/20 px-1.5 py-0.5 text-[9px] text-[var(--brand-primary)]">Home</span>}
               </div>
             ))}
           </div>
@@ -157,7 +157,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
         )}
 
         <div className="mt-6 flex justify-end">
-          <button onClick={() => { router.push(`/admin/create?blueprint=${encodeURIComponent(blueprint.id)}`); }} className="rounded-[var(--radius-control)] bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
+          <button onClick={() => { router.push(`/admin/create?blueprint=${encodeURIComponent(blueprint.id)}`); }} className="rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
             Select Template
           </button>
         </div>

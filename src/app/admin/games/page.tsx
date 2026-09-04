@@ -55,7 +55,7 @@ export default async function AdminGamesPage() {
         </div>
         <Link
           href={`${GAMES_ROUTE}/new`}
-          className="inline-flex items-center justify-center rounded-lg bg-s8ul-cyan px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-s8ul-cyan/80"
+          className="inline-flex items-center justify-center rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-[var(--brand-primary)]/80"
         >
           + New Game
         </Link>

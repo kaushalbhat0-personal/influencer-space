@@ -296,7 +296,7 @@ export default function GeneratePage() {
           {/* STEP 4: Analyzing */}
           {step === "analyzing" && (
             <MotionDiv key="analyzing" className="flex flex-col items-center justify-center py-24">
-              <Sparkles className="h-8 w-8 text-s8ul-cyan animate-pulse mb-4" />
+              <Sparkles className="h-8 w-8 text-[var(--brand-primary)] animate-pulse mb-4" />
               <h2 className="text-xl font-semibold text-white">Analyzing Creator Profile</h2>
               <p className="text-sm text-zinc-500 mt-2">Detecting platform, extracting data, generating content...</p>
               <div className="mt-8">
@@ -347,8 +347,8 @@ export default function GeneratePage() {
               <WizardStep title="Website Preview" description="See how your site looks before deploying." stepNumber={6} totalSteps={8}>
                 <DevicePreview defaultDevice="mobile">
                   <div className="p-6 space-y-4">
-                    <div className="h-8 rounded bg-s8ul-cyan/20 flex items-center px-3">
-                      <span className="text-xs text-s8ul-cyan">{result.generatedContent?.heroTitle ?? "Welcome"}</span>
+                    <div className="h-8 rounded bg-[var(--brand-primary)]/20 flex items-center px-3">
+                      <span className="text-xs text-[var(--brand-primary)]">{result.generatedContent?.heroTitle ?? "Welcome"}</span>
                     </div>
                     <div className="h-24 rounded bg-white/5" />
                     <div className="grid grid-cols-2 gap-2">

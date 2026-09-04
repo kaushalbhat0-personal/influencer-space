@@ -33,10 +33,10 @@ export function WebsiteFilters({ totalCount, stateCounts, currentQuery, currentS
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
             placeholder="Search by creator, domain, or theme..."
-            className="w-full rounded-lg border border-white/10 bg-zinc-900 pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-s8ul-cyan"
+            className="w-full rounded-lg border border-white/10 bg-zinc-900 pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[var(--border-focus)]"
           />
         </div>
-        <button onClick={() => applyFilters()} className="rounded-lg bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black hover:opacity-90 transition-opacity">
+        <button onClick={() => applyFilters()} className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90 transition-opacity">
           Search
         </button>
 
@@ -49,7 +49,7 @@ export function WebsiteFilters({ totalCount, stateCounts, currentQuery, currentS
                 key={s}
                 onClick={() => applyFilters(s === "all" ? undefined : s)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  active ? "bg-s8ul-cyan/10 text-s8ul-cyan border border-s8ul-cyan/30" : "text-zinc-500 border border-white/10 hover:text-zinc-300"
+                  active ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30" : "text-zinc-500 border border-white/10 hover:text-zinc-300"
                 }`}
               >
                 {s.charAt(0).toUpperCase() + s.slice(1)}

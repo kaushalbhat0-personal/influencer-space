@@ -19,7 +19,7 @@ export function LoadingSpinner({ size = "md", text }: LoadingSpinnerProps) {
       <MotionDiv
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        className={`${sizeMap[size]} rounded-full border-s8ul-cyan/30 border-t-s8ul-cyan`}
+        className={`${sizeMap[size]} rounded-full border-[var(--brand-primary)]/30 border-t-[var(--brand-primary)]`}
       />
       {text && <p className="text-sm text-[var(--text-muted)]">{text}</p>}
       <span className="sr-only">{text ?? "Loading"}</span>

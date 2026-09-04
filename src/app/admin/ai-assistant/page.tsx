@@ -17,8 +17,8 @@ export default async function AIAssistantPage() {
       />
       <div className="admin-card p-6 max-w-2xl">
         <div className="flex items-start gap-3">
-          <div className="rounded-full bg-s8ul-cyan/20 p-2">
-            <Bot className="h-5 w-5 text-s8ul-cyan" />
+          <div className="rounded-full bg-[var(--brand-primary)]/20 p-2">
+            <Bot className="h-5 w-5 text-[var(--brand-primary)]" />
           </div>
           <div>
             <p className="text-sm text-white">
@@ -32,7 +32,7 @@ export default async function AIAssistantPage() {
                 "\"Change my theme to something darker\"",
               ].map((q) => (
                 <li key={q}>
-                  <button className="text-sm text-s8ul-cyan hover:underline text-left">{q}</button>
+                  <button className="text-sm text-[var(--brand-primary)] hover:underline text-left">{q}</button>
                 </li>
               ))}
             </ul>

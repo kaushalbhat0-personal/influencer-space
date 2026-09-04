@@ -84,7 +84,7 @@ export default async function ImportHistoryPage() {
                   <td className="p-3">
                     {imp.tenantId && (
                       <div className="flex gap-2">
-                        <Link href={`/super-admin/tenants/${imp.tenantId}`} className="text-xs text-s8ul-cyan hover:underline">
+                        <Link href={`/super-admin/tenants/${imp.tenantId}`} className="text-xs text-[var(--brand-primary)] hover:underline">
                           View
                         </Link>
                         {imp.status === "FAILED" && errors.length > 0 && (

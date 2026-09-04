@@ -63,7 +63,7 @@ export function GalleryToolbar({
               role="tab" aria-selected={statusFilter === f.value}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                statusFilter === f.value ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5",
+                statusFilter === f.value ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5",
               )}
             >
               {f.label}
@@ -76,7 +76,7 @@ export function GalleryToolbar({
             <button key={f.value} onClick={() => onMediaTypeFilterChange(f.value)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                mediaTypeFilter === f.value ? "bg-s8ul-cyan/10 text-s8ul-cyan" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5",
+                mediaTypeFilter === f.value ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5",
               )}
             >
               {f.label}
@@ -88,7 +88,7 @@ export function GalleryToolbar({
 
       {/* Bulk actions */}
       {selectedCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg bg-s8ul-cyan/5 border border-s8ul-cyan/10 px-4 py-2">
+        <div className="flex items-center gap-2 rounded-lg bg-[var(--brand-primary)]/5 border border-[var(--brand-primary)]/10 px-4 py-2">
           <span className="text-xs text-zinc-400 tabular-nums">{selectedCount} selected</span>
           <div className="flex-1" />
           {onBulkPublish && <button onClick={onBulkPublish} className="text-xs text-green-400 hover:text-green-300 font-medium">Publish</button>}

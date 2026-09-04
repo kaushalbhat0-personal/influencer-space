@@ -82,7 +82,7 @@ export function GalleryCard({
     <div
       className={cn(
         "group relative rounded-xl border bg-[var(--surface-card)] backdrop-blur-sm transition-all overflow-hidden cursor-pointer",
-        selected ? "border-s8ul-cyan/50 ring-1 ring-s8ul-cyan/20" : "border-[var(--border)] hover:border-[var(--border-strong)]",
+        selected ? "border-[var(--brand-primary)]/50 ring-1 ring-[var(--brand-primary)]/20" : "border-[var(--border)] hover:border-[var(--border-strong)]",
       )}
       onClick={() => onPreview?.(item)}
       role="button" tabIndex={0} aria-label={`View ${item.caption || "gallery item"}`}
@@ -90,7 +90,7 @@ export function GalleryCard({
     >
       {loading && (
         <div className="absolute inset-0 z-10 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="h-5 w-5 rounded-full border-2 border-s8ul-cyan border-t-transparent animate-spin" />
+          <div className="h-5 w-5 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
         </div>
       )}
 
@@ -99,7 +99,7 @@ export function GalleryCard({
           onClick={(e) => { e.stopPropagation(); onSelect(item.id, !selected); }}
           className={cn(
             "absolute top-2 left-2 z-20 w-5 h-5 rounded border transition-colors flex items-center justify-center",
-            selected ? "bg-s8ul-cyan border-s8ul-cyan" : "bg-zinc-800/80 border-zinc-600 hover:border-zinc-400",
+            selected ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "bg-zinc-800/80 border-zinc-600 hover:border-zinc-400",
           )}
           aria-label={selected ? "Deselect" : "Select"}
         >
@@ -171,7 +171,7 @@ export function GalleryCard({
           <div className="flex items-center gap-1">
             {onMoveLeft && (
               <button onClick={(e) => { e.stopPropagation(); onMoveLeft(item); }}
-                className="rounded-lg p-1 text-[var(--text-muted)] hover:text-s8ul-cyan hover:bg-s8ul-cyan/10"
+                className="rounded-lg p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
                 title="Move left" aria-label="Move left"
               >
                 <ChevronLeft className="h-3 w-3" />
@@ -179,7 +179,7 @@ export function GalleryCard({
             )}
             {onMoveRight && (
               <button onClick={(e) => { e.stopPropagation(); onMoveRight(item); }}
-                className="rounded-lg p-1 text-[var(--text-muted)] hover:text-s8ul-cyan hover:bg-s8ul-cyan/10"
+                className="rounded-lg p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
                 title="Move right" aria-label="Move right"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -187,7 +187,7 @@ export function GalleryCard({
             )}
             {onEdit && !isArchived && (
               <button onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-                className="rounded-lg p-1 text-[var(--text-muted)] hover:text-s8ul-cyan hover:bg-s8ul-cyan/10"
+                className="rounded-lg p-1 text-[var(--text-muted)] hover:text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10"
                 title="Edit" aria-label="Edit"
               >
                 <Edit3 className="h-3 w-3" />

@@ -99,7 +99,7 @@ export function SubscriptionManager({
               <tr className="border-b border-white/10">
                 <th scope="col" className="text-left py-2 px-2 text-xs text-zinc-500 font-medium">Feature</th>
                 {availablePlans.map((plan) => (
-                  <th key={plan.code} scope="col" className={cn("text-center py-2 px-2 text-xs font-medium", plan.code === currentPlan.code ? "text-s8ul-cyan" : "text-zinc-500")}>
+                  <th key={plan.code} scope="col" className={cn("text-center py-2 px-2 text-xs font-medium", plan.code === currentPlan.code ? "text-[var(--brand-primary)]" : "text-zinc-500")}>
                     {plan.name}
                     {plan.recommended && <Badge variant="cyan" size="sm" className="ml-1">Popular</Badge>}
                   </th>

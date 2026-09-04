@@ -62,7 +62,7 @@ export default async function SettlementsPage({ searchParams }: { searchParams: 
                 <tr><td colSpan={8} className="px-4 py-8 text-center text-zinc-500">No settlements found.</td></tr>
               ) : items.map((s) => (
                 <tr key={s.id} className="border-b border-white/5 text-zinc-300 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-mono text-zinc-500"><Link href={`/super-admin/settlements/${s.id}`} className="text-s8ul-cyan hover:underline">{s.settlementRef}</Link></td>
+                  <td className="px-4 py-3 font-mono text-zinc-500"><Link href={`/super-admin/settlements/${s.id}`} className="text-[var(--brand-primary)] hover:underline">{s.settlementRef}</Link></td>
                   <td className="px-4 py-3">{s.partnerName || s.partnerId.slice(0, 8)}</td>
                   <td className="px-4 py-3">{formatCurrency(s.netAmount)}</td>
                   <td className="px-4 py-3">{s.entryCount}</td>
@@ -70,7 +70,7 @@ export default async function SettlementsPage({ searchParams }: { searchParams: 
                   <td className="px-4 py-3 font-mono text-xs text-zinc-500">{s.transferRef ?? "—"}</td>
                   <td className="px-4 py-3 text-zinc-500">{s.createdAt.toLocaleDateString()}</td>
                   <td className="px-4 py-3">
-                    <Link href={`/super-admin/settlements/${s.id}`} className="text-s8ul-cyan hover:underline text-xs">View →</Link>
+                    <Link href={`/super-admin/settlements/${s.id}`} className="text-[var(--brand-primary)] hover:underline text-xs">View →</Link>
                   </td>
                 </tr>
               ))}

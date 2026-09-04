@@ -250,7 +250,7 @@ export function MediaLibrary() {
           >
             {view === "grid" ? "List" : "Grid"}
           </button>
-          <label className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-control)] bg-s8ul-cyan px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
+          <label className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-3 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
             <input
               ref={uploadInputRef}
               type="file"
@@ -268,15 +268,15 @@ export function MediaLibrary() {
               <span>Uploading…</span><span>{uploadProgress}%</span>
             </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-hover)]">
-              <div className="h-full rounded-full bg-s8ul-cyan transition-all duration-200" style={{ width: `${Math.max(uploadProgress, 4)}%` }} />
+              <div className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-200" style={{ width: `${Math.max(uploadProgress, 4)}%` }} />
             </div>
           </div>
         )}
 
         {/* Batch selection toolbar */}
         {selected.size > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-s8ul-cyan/30 bg-s8ul-cyan/5 px-3 py-2" data-testid="batch-toolbar">
-            <span className="text-xs font-semibold text-s8ul-cyan">{selected.size} Selected</span>
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/5 px-3 py-2" data-testid="batch-toolbar">
+            <span className="text-xs font-semibold text-[var(--brand-primary)]">{selected.size} Selected</span>
             <div className="mx-1 h-4 w-px bg-white/10" />
             <button
               onClick={() => setConfirmOpen(true)}
@@ -312,7 +312,7 @@ export function MediaLibrary() {
         <div className="mb-2 flex items-center gap-3 text-xs text-zinc-500">
           <span>{total} asset{total !== 1 ? "s" : ""}</span>
           <label className="flex cursor-pointer items-center gap-1.5">
-            <input type="checkbox" checked={selected.size === assets.length && assets.length > 0} onChange={() => (selected.size === assets.length ? setSelected(new Set()) : selectAllFiltered())} className="h-3.5 w-3.5 accent-s8ul-cyan" />
+            <input type="checkbox" checked={selected.size === assets.length && assets.length > 0} onChange={() => (selected.size === assets.length ? setSelected(new Set()) : selectAllFiltered())} className="h-3.5 w-3.5 accent-[var(--brand-primary)]" />
             Select all
           </label>
         </div>
@@ -343,14 +343,14 @@ export function MediaLibrary() {
               <button
                 key={asset.id}
                 onClick={() => { setSelectedId(asset.id); setDetail(asset); }}
-                className={`flex w-full items-center gap-3 rounded-[var(--radius-card)] border px-3 py-2 text-left transition-all ${selectedId === asset.id ? "border-s8ul-cyan bg-s8ul-cyan/5" : "border-[var(--border-subtle)] hover:border-[var(--border)]"}`}
+                className={`flex w-full items-center gap-3 rounded-[var(--radius-card)] border px-3 py-2 text-left transition-all ${selectedId === asset.id ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5" : "border-[var(--border-subtle)] hover:border-[var(--border)]"}`}
               >
                 <input
                   type="checkbox"
                   checked={selected.has(asset.id)}
                   onClick={(e) => { e.stopPropagation(); toggleSelect(asset.id, true); }}
                   onChange={() => {}}
-                  className="h-3.5 w-3.5 accent-s8ul-cyan"
+                  className="h-3.5 w-3.5 accent-[var(--brand-primary)]"
                 />
                 <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-[var(--surface-hover)]">
                   {asset.publicUrl ? (
@@ -420,7 +420,7 @@ function EmptyState({ onUpload }: { onUpload: () => void }) {
       </div>
       <h3 className="text-sm font-semibold text-zinc-300">No media yet</h3>
       <p className="mt-1 max-w-xs text-xs text-zinc-500">Upload images or videos to use across your hero, gallery and products. Drop files anywhere or use the upload button.</p>
-      <button onClick={onUpload} className="mt-4 rounded-[var(--radius-control)] bg-s8ul-cyan px-4 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
+      <button onClick={onUpload} className="mt-4 rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
         Upload Media
       </button>
     </div>
@@ -449,7 +449,7 @@ function MediaCard({
       }}
       className={`group relative aspect-square overflow-hidden rounded-[var(--radius-card)] border transition-all cursor-pointer ${
         detailSelected || selected
-          ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50"
+          ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/50"
           : "border-[var(--border)] hover:border-[var(--border-strong)]"
       }`}
     >
@@ -485,7 +485,7 @@ function MediaCard({
           if (e.shiftKey) onRangeSelect();
           else onToggleSelected();
         }}
-        className="absolute left-1.5 top-1.5 z-10 h-3.5 w-3.5 accent-s8ul-cyan"
+        className="absolute left-1.5 top-1.5 z-10 h-3.5 w-3.5 accent-[var(--brand-primary)]"
       />
 
       {/* status + usage */}
@@ -553,7 +553,7 @@ function BlockedDialog({ assets, onClose }: {
               <p className="mt-1 text-[10px] text-zinc-500">Used in:</p>
               <div className="mt-0.5 flex flex-wrap gap-1">
                 {a.usages.map((u, i) => (
-                  <Link key={i} href={u.href} className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 text-[10px] text-s8ul-cyan hover:bg-[var(--surface-hover)]">
+                  <Link key={i} href={u.href} className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 text-[10px] text-[var(--brand-primary)] hover:bg-[var(--surface-hover)]">
                     {u.label}
                   </Link>
                 ))}
@@ -562,7 +562,7 @@ function BlockedDialog({ assets, onClose }: {
           ))}
         </div>
         <div className="mt-4 flex justify-end">
-          <button onClick={onClose} className="rounded-[var(--radius-control)] bg-s8ul-cyan px-4 py-1.5 text-xs font-semibold text-black hover:opacity-90">OK</button>
+          <button onClick={onClose} className="rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-4 py-1.5 text-xs font-semibold text-black hover:opacity-90">OK</button>
         </div>
       </div>
     </div>
@@ -624,7 +624,7 @@ function AssetDetailPanel({
           <h4 className="mb-1 text-xs font-semibold text-zinc-400">Used In</h4>
           <div className="space-y-1">
             {usages.map((u, i) => (
-              <Link key={i} href={u.href} className="block truncate rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] text-s8ul-cyan transition-colors hover:bg-[var(--surface-hover)]">
+              <Link key={i} href={u.href} className="block truncate rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] text-[var(--brand-primary)] transition-colors hover:bg-[var(--surface-hover)]">
                 {u.label} →
               </Link>
             ))}

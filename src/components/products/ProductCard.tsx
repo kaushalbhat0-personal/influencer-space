@@ -56,12 +56,12 @@ export function ProductCard({
     <div
       className={cn(
         "group relative rounded-xl border bg-zinc-900/50 backdrop-blur-sm transition-all overflow-hidden",
-        selected ? "border-s8ul-cyan/50 ring-1 ring-s8ul-cyan/20" : "border-white/5 hover:border-white/10",
+        selected ? "border-[var(--brand-primary)]/50 ring-1 ring-[var(--brand-primary)]/20" : "border-white/5 hover:border-white/10",
       )}
     >
       {loading && (
         <div className="absolute inset-0 z-10 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="h-5 w-5 rounded-full border-2 border-s8ul-cyan border-t-transparent animate-spin" />
+          <div className="h-5 w-5 rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
         </div>
       )}
 
@@ -70,7 +70,7 @@ export function ProductCard({
           onClick={() => onSelect(product.id, !selected)}
           className={cn(
             "absolute top-2 left-2 z-20 w-5 h-5 rounded border transition-colors flex items-center justify-center",
-            selected ? "bg-s8ul-cyan border-s8ul-cyan" : "bg-zinc-800/80 border-zinc-600 hover:border-zinc-400",
+            selected ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]" : "bg-zinc-800/80 border-zinc-600 hover:border-zinc-400",
           )}
           aria-label={selected ? `Deselect ${product.name}` : `Select ${product.name}`}
         >
@@ -110,7 +110,7 @@ export function ProductCard({
               <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">{product.description}</p>
             )}
           </div>
-          <span className="shrink-0 font-display text-sm font-bold text-s8ul-cyan tabular-nums">
+          <span className="shrink-0 font-display text-sm font-bold text-[var(--brand-primary)] tabular-nums">
             {formatCurrency(product.price)}
           </span>
         </div>
@@ -143,7 +143,7 @@ export function ProductCard({
           <div className="flex items-center gap-1 relative">
             {onEdit && status !== "ARCHIVED" && (
               <button onClick={() => onEdit(product)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-s8ul-cyan/10 hover:text-s8ul-cyan"
+                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]"
                 title="Edit product" aria-label={`Edit ${product.name}`}
               >
                 <Edit3 className="h-3.5 w-3.5" />

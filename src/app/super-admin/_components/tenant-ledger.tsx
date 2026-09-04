@@ -201,13 +201,13 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
                   </td>
                   <td><span className="text-zinc-400 text-xs">{adminEmail}</span></td>
                   <td>
-                    <a href={domain} target="_blank" rel="noopener noreferrer" className="text-xs text-s8ul-cyan hover:text-indigo-400 transition-colors underline underline-offset-2 decoration-white/10 hover:decoration-indigo-400/30">
+                    <a href={domain} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--brand-primary)] hover:text-indigo-400 transition-colors underline underline-offset-2 decoration-white/10 hover:decoration-indigo-400/30">
                       {domain}
                     </a>
                   </td>
                   <td>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      isPaid ? "bg-[var(--brand-primary,#6366F1)]/20 text-[var(--brand-primary,#818CF8)]" : "bg-s8ul-cyan/10 text-s8ul-cyan"
+                      isPaid ? "bg-[var(--brand-primary,#6366F1)]/20 text-[var(--brand-primary,#818CF8)]" : "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
                     }`}>
                       {planLabel}
                     </span>

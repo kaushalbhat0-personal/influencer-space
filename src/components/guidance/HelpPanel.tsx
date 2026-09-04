@@ -47,7 +47,7 @@ export function HelpPanel({ open, onClose, context }: { open: boolean; onClose: 
         </div>
         <div className="border-t border-white/10 p-4">
           <p className="text-sm font-medium text-white">Still need help?</p>
-          <a href="/contact" className="mt-2 inline-flex text-sm text-s8ul-cyan hover:underline">Contact Support</a>
+          <a href="/contact" className="mt-2 inline-flex text-sm text-[var(--brand-primary)] hover:underline">Contact Support</a>
           <div className="mt-3 text-xs text-zinc-500">
             <button onClick={() => { localStorage.removeItem("guidance_creator-walkthrough"); localStorage.removeItem("guidance_agency-walkthrough"); window.location.reload(); }} className="underline hover:text-zinc-300">Replay walkthrough</button>
           </div>

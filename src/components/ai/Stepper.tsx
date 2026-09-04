@@ -52,7 +52,7 @@ export function Stepper({
                 className={cn(
                   "text-sm font-medium",
                   step.status === "completed" && "text-green-400",
-                  step.status === "active" && "text-s8ul-cyan",
+                  step.status === "active" && "text-[var(--brand-primary)]",
                   step.status === "error" && "text-red-400",
                   step.status === "pending" && "text-zinc-500"
                 )}
@@ -83,7 +83,7 @@ export function Stepper({
                 className={cn(
                   "text-xs font-medium whitespace-nowrap max-w-[80px] text-center",
                   step.status === "completed" && "text-green-400",
-                  step.status === "active" && "text-s8ul-cyan",
+                  step.status === "active" && "text-[var(--brand-primary)]",
                   step.status === "error" && "text-red-400",
                   step.status === "pending" && "text-zinc-500"
                 )}
@@ -130,7 +130,7 @@ function StepIcon({
         dims,
         "rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-200",
         step.status === "completed" && "bg-green-500 text-white",
-        step.status === "active" && "bg-s8ul-cyan text-black ring-2 ring-s8ul-cyan/40",
+        step.status === "active" && "bg-[var(--brand-primary)] text-white ring-2 ring-[var(--brand-primary)]/40",
         step.status === "error" && "bg-red-500 text-white",
         step.status === "pending" && "bg-white/10 text-zinc-500"
       )}

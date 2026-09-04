@@ -141,7 +141,7 @@ export function NavigationManager({
           )}
           <button
             onClick={addExternalLink}
-            className="flex items-center gap-1.5 rounded-lg bg-s8ul-cyan px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90 transition-opacity"
           >
             <Plus className="h-3 w-3" />
             Add External Link
@@ -235,7 +235,7 @@ export function NavigationManager({
           <p className="text-sm text-zinc-600">No navigation items yet.</p>
           <button
             onClick={addExternalLink}
-            className="mt-3 text-xs text-s8ul-cyan hover:underline"
+            className="mt-3 text-xs text-[var(--brand-primary)] hover:underline"
           >
             Add your first link
           </button>

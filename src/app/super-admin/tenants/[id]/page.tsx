@@ -190,7 +190,7 @@ export default async function TenantDetailPage({ params }: { params: { id: strin
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 divide-y divide-white/5">
           {recentActivity.length > 0 ? recentActivity.map((a) => (
             <div key={a.id} className="flex items-center gap-3 px-4 py-2.5">
-              <div className="h-2 w-2 rounded-full bg-s8ul-cyan shrink-0" />
+              <div className="h-2 w-2 rounded-full bg-[var(--brand-primary)] shrink-0" />
               <span className="flex-1 text-sm text-zinc-300">{a.action.replace(/_/g, " ")}</span>
               <span className="text-xs text-zinc-600">{new Date(a.createdAt).toLocaleString()}</span>
             </div>

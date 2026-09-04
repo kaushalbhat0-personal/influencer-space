@@ -50,7 +50,7 @@ export default function AcceptInvitationPage() {
         {state.status === "ok" && (
           <>
             <p className="mb-4 text-sm text-emerald-400">{state.message}</p>
-            <Link href="/agency/team" className="rounded-md bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-zinc-950">
+            <Link href="/agency/team" className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white">
               Go to team
             </Link>
           </>
@@ -59,7 +59,7 @@ export default function AcceptInvitationPage() {
           <>
             <p className="mb-4 text-sm text-zinc-300">You&apos;ve been invited to join a Partner workspace.</p>
             <p className="mb-4 text-sm text-zinc-400">Sign in with the invited email to continue.</p>
-            <Link href="/admin/login" className="rounded-md bg-s8ul-cyan px-4 py-2 text-sm font-semibold text-zinc-950">
+            <Link href="/admin/login" className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white">
               Sign in
             </Link>
           </>

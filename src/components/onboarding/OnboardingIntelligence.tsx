@@ -22,10 +22,10 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
       <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Profile Knowledge</p>
-          <span className="text-xl font-bold text-s8ul-cyan">{knowledgeScore.overall}%</span>
+          <span className="text-xl font-bold text-[var(--brand-primary)]">{knowledgeScore.overall}%</span>
         </div>
         <div className="mt-2 h-1.5 rounded-full bg-zinc-800">
-          <div className="h-full rounded-full bg-gradient-to-r from-s8ul-cyan to-emerald-400" style={{ width: `${knowledgeScore.overall}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-emerald-400" style={{ width: `${knowledgeScore.overall}%` }} />
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {knowledgeScore.categories.slice(0, 3).map((category) => (
@@ -46,7 +46,7 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
       <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
         <div className="flex items-center justify-between">
           <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-            <Target className="h-3.5 w-3.5 text-s8ul-cyan" /> Recommended goals
+            <Target className="h-3.5 w-3.5 text-[var(--brand-primary)]" /> Recommended goals
           </p>
           <label className="flex items-center gap-1.5 text-[11px] text-zinc-400">
             <input
@@ -63,10 +63,10 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
             <div key={weight.goalId}>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-zinc-300">{weight.goalId.replace(/_/g, " ")}</span>
-                <span className="text-s8ul-cyan font-semibold">{weight.weight}%</span>
+                <span className="text-[var(--brand-primary)] font-semibold">{weight.weight}%</span>
               </div>
               <div className="mt-1 h-1 rounded-full bg-zinc-800">
-                <div className="h-full rounded-full bg-s8ul-cyan/70" style={{ width: `${weight.weight}%` }} />
+                <div className="h-full rounded-full bg-[var(--brand-primary)]/70" style={{ width: `${weight.weight}%` }} />
               </div>
             </div>
           ))}
@@ -114,7 +114,7 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
                         onClick={() => onAnswer(question.fieldId, option.value)}
                         className={`rounded-lg border px-2.5 py-1 text-[11px] transition-colors ${
                           questionAnswers[question.fieldId] === option.value
-                            ? "border-s8ul-cyan bg-s8ul-cyan/10 text-s8ul-cyan"
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
                             : "border-white/10 text-zinc-400 hover:border-white/25"
                         }`}
                       >

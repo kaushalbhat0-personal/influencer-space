@@ -20,7 +20,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           className={cn(
             "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
             value === preset.value
-              ? "bg-s8ul-cyan/10 text-s8ul-cyan"
+              ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
               : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5",
           )}
         >

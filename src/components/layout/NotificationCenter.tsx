@@ -57,7 +57,7 @@ export function NotificationCenter({ notifications = [], className }: Notificati
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <h3 className="text-sm font-semibold text-white">Notifications</h3>
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} className="text-xs text-s8ul-cyan hover:underline">
+                  <button onClick={markAllRead} className="text-xs text-[var(--brand-primary)] hover:underline">
                     Mark all read
                   </button>
                 )}
@@ -75,18 +75,18 @@ export function NotificationCenter({ notifications = [], className }: Notificati
                       key={n.id}
                       className={cn(
                         "flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-white/5 border-b border-white/5",
-                        !n.read && "bg-s8ul-cyan/5"
+                        !n.read && "bg-[var(--brand-primary)]/5"
                       )}
                     >
                       <div className="flex items-start gap-2">
-                        {!n.read && <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-s8ul-cyan" />}
+                        {!n.read && <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--brand-primary)]" />}
                         <div>
                           <p className="text-sm font-medium text-white">{n.title}</p>
                           <p className="text-xs text-zinc-400 mt-0.5">{n.description}</p>
                         </div>
                       </div>
                       {n.action && (
-                        <a href={n.action.href} className="text-xs text-s8ul-cyan mt-1 hover:underline">
+                        <a href={n.action.href} className="text-xs text-[var(--brand-primary)] mt-1 hover:underline">
                           {n.action.label} →
                         </a>
                       )}

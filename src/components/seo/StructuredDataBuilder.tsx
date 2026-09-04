@@ -48,7 +48,7 @@ export function StructuredDataBuilder() {
                 key={t}
                 onClick={() => setType(t)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  type === t ? "bg-s8ul-cyan text-black" : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                  type === t ? "bg-[var(--brand-primary)] text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"
                 }`}
               >
                 {t}

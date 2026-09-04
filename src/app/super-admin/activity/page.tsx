@@ -7,7 +7,7 @@ import { UnifiedFeed } from "./_components/unified-feed";
 export const dynamic = "force-dynamic";
 
 function getEventMeta(action: string): { icon: React.ElementType; color: string } {
-  if (action.includes("provision") || action.includes("import")) return { icon: UserPlus, color: "text-s8ul-cyan" };
+  if (action.includes("provision") || action.includes("import")) return { icon: UserPlus, color: "text-[var(--brand-primary)]" };
   if (action.includes("publish")) return { icon: Globe, color: "text-emerald-400" };
   if (action.includes("subscription") || action.includes("plan")) return { icon: CreditCard, color: "text-amber-400" };
   if (action.includes("upload") || action.includes("media") || action.includes("image")) return { icon: Upload, color: "text-pink-400" };
@@ -93,7 +93,7 @@ export default async function ActivityPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-zinc-300 truncate">{ev.action.replace(/_/g, " ")}</p>
                           {tenantName && (
-                            <Link href={`/super-admin/tenants/${ev.tenantId}`} className="text-xs text-s8ul-cyan hover:underline">
+                            <Link href={`/super-admin/tenants/${ev.tenantId}`} className="text-xs text-[var(--brand-primary)] hover:underline">
                               {tenantName}
                             </Link>
                           )}

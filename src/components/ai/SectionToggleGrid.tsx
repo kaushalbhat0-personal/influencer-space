@@ -48,9 +48,9 @@ export function SectionToggleGrid({
             key={section.id}
             className={cn(
               "flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer transition-all duration-200",
-              "focus-within:ring-2 focus-within:ring-s8ul-cyan/50",
+              "focus-within:ring-2 focus-within:ring-[var(--brand-primary)]/50",
               section.enabled
-                ? "border-s8ul-cyan/50 bg-s8ul-cyan/10 text-s8ul-cyan"
+                ? "border-[var(--brand-primary)]/50 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
                 : "border-white/10 bg-white/5 text-zinc-500 hover:border-white/20"
             )}
           >
@@ -64,7 +64,7 @@ export function SectionToggleGrid({
               className={cn(
                 "flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center transition-colors",
                 section.enabled
-                  ? "border-s8ul-cyan bg-s8ul-cyan"
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]"
                   : "border-zinc-600 bg-transparent"
               )}
               aria-hidden="true"
