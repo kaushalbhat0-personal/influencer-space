@@ -461,17 +461,17 @@ export function BuilderWorkspace() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
+      <div className="flex h-screen items-center justify-center bg-[var(--surface-root)]">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
-          <p className="text-sm text-zinc-400">Loading your editor…</p>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-primary)] border-t-transparent" />
+          <p className="text-sm text-[var(--text-muted)]">Loading your editor…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-dvh flex-col bg-zinc-950">
+    <div className="flex h-dvh flex-col bg-[var(--surface-root)]">
       <BuilderToolbar
         device={device}
         themeName={themeName}
@@ -520,7 +520,7 @@ export function BuilderWorkspace() {
       </div>
 
       {/* Persistent mobile bottom control bar — Canvas is the default workspace. */}
-      <div className="flex h-12 shrink-0 items-center border-t border-white/10 bg-zinc-950 lg:hidden" data-testid="builder-mobile-bar">
+      <div className="flex h-12 shrink-0 items-center border-t border-[var(--border)] bg-[var(--surface-base)] lg:hidden" data-testid="builder-mobile-bar">
         <MobileBarButton
           active={mobilePanel === "sections"}
           onClick={() => setMobilePanel((p) => (p === "sections" ? null : "sections"))}
@@ -578,7 +578,7 @@ export function BuilderWorkspace() {
       </BuilderMobilePanel>
 
       {/* Status bar — 06B unified save status */}
-      <div className="flex h-8 items-center justify-between border-t border-white/5 bg-zinc-950 px-3 text-[10px] text-zinc-600 shrink-0">
+      <div className="flex h-8 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 text-[10px] text-zinc-600 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <span
             role="status"

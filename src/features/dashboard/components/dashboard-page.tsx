@@ -61,14 +61,14 @@ function commerceSurfaceOf(href: string): "products" | "bookings" | "courses" | 
 
 function SectionLabel({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+    <h2 id={id} className="platform-section-label">
       {children}
     </h2>
   );
 }
 
 function DeferredSkeleton({ height = 120 }: { height?: number }) {
-  return <div className="animate-pulse rounded-xl border border-[var(--border)] bg-[var(--surface-card)]" style={{ height }} aria-hidden />;
+  return <div className="animate-pulse rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)]" style={{ height }} aria-hidden />;
 }
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
@@ -150,16 +150,16 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         {launch && (
           <section aria-labelledby="dashboard-launch-allowance" className="space-y-3">
             <SectionLabel id="dashboard-launch-allowance">Core Content Allowance</SectionLabel>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-4">
+            <div className="platform-card-secondary p-4">
               <p className="text-sm text-[var(--text-secondary)]">
                 <span className="font-semibold text-[var(--text-primary)]">{launch.used} / {launch.limit}</span> used
                 {launch.remaining > 0 ? (
                   <span className="text-[var(--text-muted)]"> · {launch.remaining} remaining</span>
                 ) : (
-                  <span className="text-amber-400"> · limit reached</span>
+                  <span className="text-[var(--color-warning)]"> · limit reached</span>
                 )}
               </p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
+              <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
                 Products, services, courses and games count toward one shared limit on your plan.
               </p>
             </div>
@@ -173,10 +173,10 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               <Link
                 key={card.label}
                 href={card.href}
-                className="flex flex-col items-center gap-1.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--border)] px-2 py-3 text-center hover:bg-[var(--surface-card-hover)] hover:border-[var(--border-strong)] transition-all group"
+                className="flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] bg-[var(--surface-card)] border border-[var(--border-subtle)] px-2 py-3 text-center hover:bg-[var(--surface-hover)] hover:border-[var(--border)] transition-colors group"
               >
                 <card.icon className={cn("h-5 w-5", card.color)} />
-                <span className="text-[10px] font-medium text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                <span className="text-[11px] font-medium tracking-wide text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
                   {card.label}
                 </span>
               </Link>
@@ -201,19 +201,19 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         )}
 
         {emptyStore ? (
-          <div className="rounded-xl border border-indigo-500/20 bg-[var(--surface-card)] p-6">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Let&apos;s set up your store</h3>
-            <p className="text-xs text-[var(--text-muted)] mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
+          <div className="platform-card-contextual p-6">
+            <h3 className="font-display text-sm font-semibold tracking-tight text-[var(--text-primary)] mb-1">Let&apos;s set up your store</h3>
+            <p className="text-xs leading-relaxed text-[var(--text-muted)] mb-4">Here&apos;s your next task — your best next step is at the top of the page.</p>
             {success?.nextTask && !success.nextTask.done ? (
               <Link
                 href={success.nextTask.href || "/admin/dashboard"}
-                className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-4 py-3 hover:bg-[var(--surface-card-hover)] transition-colors group"
+                className="flex items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)] px-4 py-3 hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <span className="h-3 w-3 rounded-full border-2 border-indigo-500" />
+                  <span className="h-3 w-3 rounded-full border-2 border-[var(--brand-primary)]" />
                   <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{success.nextTask.label}</span>
                 </div>
-                <span className="text-[10px] text-indigo-400">{success.nextTask.action} →</span>
+                <span className="text-[11px] font-medium text-[var(--brand-primary)]">{success.nextTask.action} →</span>
               </Link>
             ) : (
               <p className="text-xs text-[var(--text-muted)]">Keep going — your next best step updates as you complete tasks.</p>
@@ -254,8 +254,8 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               {activity.length > 0 ? (
                 <div className="space-y-1">
                   {activity.slice(0, 5).map((a) => (
-                    <div key={a.id} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)]">
-                      <div className="h-2 w-2 rounded-full bg-s8ul-cyan" />
+                    <div key={a.id} className="flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+                      <div className="h-2 w-2 rounded-full bg-[var(--border-strong)]" />
                       <span className="flex-1">{a.description}</span>
                       <span className="text-xs text-[var(--text-muted)]">
                         {new Date(a.timestamp).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
@@ -278,7 +278,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               <DashboardWidget
                 title="Website Health"
                 actions={
-                  <span className="text-lg font-bold font-display text-s8ul-cyan">
+                  <span className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)]">
                     {overallScore}%
                   </span>
                 }

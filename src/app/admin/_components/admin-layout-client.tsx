@@ -53,7 +53,7 @@ export function AdminLayoutClient({
         >
           <Menu className="h-5 w-5" />
         </button>
-        <span className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-sm font-bold text-transparent font-display">
+        <span className="font-display text-sm font-bold tracking-tight text-[var(--text-primary)]">
           CreatorStore
         </span>
         <div className="flex-1" />

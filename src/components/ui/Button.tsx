@@ -15,10 +15,11 @@ const variantStyles = {
   ghost: "btn-ghost",
 };
 
+// VISUAL-03A: refined sizes — tighter vertical rhythm, role-based radius via globals
 const sizeStyles = {
-  sm: "px-3 py-1.5 text-xs",
-  md: "px-4 py-2 text-sm",
-  lg: "px-6 py-3 text-base",
+  sm: "px-3 py-1.5 text-xs gap-1.5",
+  md: "px-4 py-2 text-sm gap-2",
+  lg: "px-5 py-2.5 text-sm gap-2",
 };
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {

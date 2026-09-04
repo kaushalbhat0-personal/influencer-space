@@ -115,16 +115,18 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
         role={open ? "dialog" : "navigation"}
         {...(open ? { "aria-modal": true } : {})}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-zinc-950/90 backdrop-blur-xl transition-transform duration-300 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-[var(--surface-base)] transition-transform duration-300 lg:static lg:translate-x-0",
+          "border-[var(--border)] lg:border-r",
           open ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{ boxShadow: "var(--shadow-card)" }}
       >
-        {/* Header */}
-        <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
+        {/* Header — intentional, not gradient-dependent */}
+        <div className="flex h-16 items-center justify-between border-b border-[var(--border)] px-5">
           <Link
             href="/admin/dashboard"
             onClick={onClose}
-            className="bg-gradient-to-r from-s8ul-cyan to-s8ul-pink bg-clip-text text-lg font-bold text-transparent font-display"
+            className="font-display text-[1.05rem] font-bold tracking-tight text-[var(--text-primary)]"
           >
             CreatorStore
           </Link>
@@ -145,10 +147,10 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
                 <button
                   onClick={() => toggleGroup(group.label!)}
                   className={cn(
-                    "flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
+                    "flex w-full items-center gap-1 rounded-[var(--radius-md)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest transition-colors",
                     isGroupActive(group)
-                      ? "text-s8ul-cyan"
-                      : "text-zinc-600 hover:text-zinc-400"
+                      ? "text-[var(--text-primary)]"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                   )}
                   aria-expanded={!isGroupCollapsed(group)}
                 >
@@ -174,10 +176,10 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
                       href={item.href}
                       onClick={onClose}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
+                        "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-[13px] font-medium transition-colors",
                         active
-                          ? "bg-s8ul-cyan/10 text-s8ul-cyan shadow-[0_0_12px_rgba(0,245,255,0.06)]"
-                          : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+                          ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border border-[var(--border)]"
+                          : "text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] border border-transparent"
                       )}
                       aria-current={active ? "page" : undefined}
                     >
@@ -197,7 +199,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
                         </span>
                       )}
                       {active && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-s8ul-cyan" />
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--brand-primary)]" aria-hidden />
                       )}
                     </Link>
                   );
@@ -207,23 +209,23 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-white/10 px-3 py-3 space-y-1">
-          <div className="flex items-center justify-between px-4 py-2">
+        {/* Footer — neutral, not indigo */}
+        <div className="border-t border-[var(--border)] px-3 py-3 space-y-1">
+          <div className="flex items-center justify-between px-3 py-2">
             <PublishStatusBadge status={publishStatus} size="sm" />
           </div>
           <a
             href={siteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-200"
+            className="flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-[13px] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
           >
             <ExternalLink className="h-4 w-4 shrink-0" />
             View Website
           </a>
           <button
             onClick={() => signOut({ callbackUrl: "/admin/login" })}
-            className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
+            className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-[13px] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--color-danger-surface)] hover:text-[var(--color-danger)]"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             Sign Out

@@ -54,18 +54,18 @@ export function DashboardWidget({
   if (empty) return <DashboardWidgetEmpty message={emptyMessage} />;
 
   return (
-    <div className={cn("admin-card", variant === "compact" ? "p-4" : "p-5", className)}>
+    <div className={cn("platform-card-primary", variant === "compact" ? "p-4" : "p-5", className)}>
       {(title || actions) && (
         <div className={cn("flex flex-wrap items-center justify-between gap-3", description ? "mb-2" : "mb-4")}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {Icon && (
-              <div className="rounded-lg bg-[var(--color-info-surface)] p-1.5 border border-[var(--color-info)]/20">
-                <Icon className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
+              <div className="rounded-[var(--radius-md)] bg-[var(--surface-hover)] p-1.5 border border-[var(--border)]">
+                <Icon className="h-4 w-4 text-[var(--text-secondary)]" aria-hidden="true" />
               </div>
             )}
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
-              {description && <p className="text-xs text-[var(--text-muted)]">{description}</p>}
+              <h2 className="font-display text-sm font-semibold tracking-tight text-[var(--text-primary)]">{title}</h2>
+              {description && <p className="text-xs leading-relaxed text-[var(--text-muted)]">{description}</p>}
             </div>
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}

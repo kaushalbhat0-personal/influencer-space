@@ -83,8 +83,10 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Inter", "system-ui", "sans-serif"],
-        mono: ['"JetBrains Mono"', "monospace"],
+        // RCCF-VISUAL-03A: platform display/title use Geist Sans (already loaded via next/font local)
+        // Body/metadata stay Inter. Storefront themes keep their own heading vars via .theme-root
+        display: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
+        mono: ['"JetBrains Mono"', "var(--font-geist-mono)", "monospace"],
       },
       animation: {
         "fade-in": "fadeIn 200ms ease-out",

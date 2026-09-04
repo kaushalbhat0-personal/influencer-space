@@ -21,11 +21,11 @@ interface FeaturePageProps {
 export function FeaturePage({ title, description, children, actions, isEmpty, emptyTitle, emptyDescription, emptyAction, loading }: FeaturePageProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white sm:text-2xl">{title}</h1>
+          <h1 className="platform-display sm:text-[2rem]">{title}</h1>
           {description && (
-            <p className="mt-1 text-sm text-zinc-500">{description}</p>
+            <p className="platform-body mt-1.5 max-w-[65ch]">{description}</p>
           )}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

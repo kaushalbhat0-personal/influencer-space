@@ -4,7 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── DESIGN TOKENS (CSS Custom Properties) ─────────────────────────── */
+/* ── DESIGN TOKENS (CSS Custom Properties) ───────────────────────────
+   RCCF-VISUAL-03A: Global Platform Visual Foundation
+   - Dark remains near-black but shadows are restrained (no glow = premium)
+   - Light is intentionally designed: stronger ink, subtle surfaces, clean borders
+   - Typography roles: display/title use Geist Sans, body/metadata stay Inter
+   - Radius/shadow/border are role-based (control / card / overlay)
+   - Brand indigo is reserved for primary CTA + focus, not universal decoration
+*/
 
 :root {
   color-scheme: dark;
@@ -18,14 +25,16 @@
   --surface-input: #1A1A1E;
   --surface-disabled: #27272A;
   --surface-glass: rgba(10, 10, 11, 0.88);
+  --surface-subtle: #1E1E22;
   --border: rgba(255, 255, 255, 0.08);
   --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-focus: rgba(99, 102, 241, 0.5);
   --text-primary: #FAFAFA;
   --text-secondary: #A1A1AA;
   --text-muted: #71717A;
-  --text-disabled: #A1A1AA;
-  --text-inverse: #FAFAFA;
+  --text-disabled: #52525B;
+  --text-inverse: #0A0A0B;
   --on-primary: #ffffff;
   --primary-hover: #4f46e5;
   --live: #ef4444;
@@ -33,65 +42,93 @@
   --brand-secondary: #8B5CF6;
   --brand-accent: #F59E0B;
   --color-success: #22C55E;
-  --color-success-surface: rgba(34, 197, 94, 0.12);
+  --color-success-surface: rgba(34, 197, 94, 0.10);
+  --color-success-border: rgba(34, 197, 94, 0.18);
   --color-warning: #F59E0B;
-  --color-warning-surface: rgba(245, 158, 11, 0.12);
+  --color-warning-surface: rgba(245, 158, 11, 0.10);
+  --color-warning-border: rgba(245, 158, 11, 0.18);
   --color-danger: #EF4444;
-  --color-danger-surface: rgba(239, 68, 68, 0.12);
+  --color-danger-surface: rgba(239, 68, 68, 0.10);
+  --color-danger-border: rgba(239, 68, 68, 0.18);
   --color-info: #3B82F6;
-  --color-info-surface: rgba(59, 130, 246, 0.12);
-  --radius-sm: 0.25rem;
+  --color-info-surface: rgba(59, 130, 246, 0.10);
+  --color-info-border: rgba(59, 130, 246, 0.18);
+  /* Role-based radius / shadow / motion */
+  --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-card-elevated: 1rem;
   --duration-instant: 100ms;
   --duration-fast: 200ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
-  --shadow-elevation: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.25);
-  --shadow-elevation-hover: 0 2px 4px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.35);
-  --focus-ring: 0 0 0 2px var(--surface-root), 0 0 0 4px var(--brand-primary);
+  /* Restrained shadows — no glow stacking */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.32), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-elevation: var(--shadow-card);
+  --shadow-elevation-hover: var(--shadow-card-hover);
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.35);
+  --focus-ring: 0 0 0 2px var(--surface-root), 0 0 0 3px var(--brand-primary);
+  --focus-ring-offset: var(--surface-root);
+  /* Platform typography roles */
+  --font-platform-display: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  --font-platform-body: Inter, system-ui, sans-serif;
+  --font-platform-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
 }
 
-/* ── LIGHT THEME TOKENS ──────────────────────────────────────────── */
+/* ── LIGHT THEME TOKENS — intentionally designed, not inverted dark ─────
+   Stronger ink hierarchy, subtle surfaces, cleaner borders, better focus */
 html[data-theme="light"] {
   color-scheme: light;
   --surface-root: #F8FAFC;
   --surface-base: #FFFFFF;
   --surface-card: #FFFFFF;
-  --surface-card-hover: #F4F4F5;
-  --surface-hover: #F4F4F5;
+  --surface-card-hover: #F1F5F9;
+  --surface-hover: #F1F5F9;
   --surface-raised: #FFFFFF;
   --surface-overlay: #FFFFFF;
   --surface-input: #FFFFFF;
-  --surface-disabled: #F4F4F5;
-  --surface-glass: rgba(255, 255, 255, 0.85);
-  --border: #E4E4E7;
-  --border-subtle: #F4F4F5;
-  --border-strong: #D4D4D8;
-  --text-primary: #18181B;
-  --text-secondary: #52525B;
-  --text-muted: #767676;
-  --text-disabled: #A1A1AA;
-  --text-inverse: #FAFAFA;
+  --surface-disabled: #F1F5F9;
+  --surface-glass: rgba(248, 250, 252, 0.82);
+  --surface-subtle: #F1F5F9;
+  --border: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --border-strong: #CBD5E1;
+  --border-focus: rgba(99, 102, 241, 0.35);
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --text-disabled: #94A3B8;
+  --text-inverse: #FFFFFF;
   --on-primary: #FFFFFF;
   --primary-hover: #4f46e5;
-  --live: #EF4444;
+  --live: #DC2626;
   --brand-primary: #6366F1;
-  --brand-secondary: #8B5CF6;
-  --brand-accent: #F59E0B;
+  --brand-secondary: #7C3AED;
+  --brand-accent: #D97706;
   --color-success: #15803D;
-  --color-success-surface: #DCFCE7;
-  --color-warning: #B45309;
-  --color-warning-surface: #FEF3C7;
+  --color-success-surface: #F0FDF4;
+  --color-success-border: #BBF7D0;
+  --color-warning: #92400E;
+  --color-warning-surface: #FFFBEB;
+  --color-warning-border: #FDE68A;
   --color-danger: #DC2626;
-  --color-danger-surface: #FEE2E2;
-  --color-info: #2563EB;
-  --color-info-surface: #DBEAFE;
-  --shadow-elevation: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-elevation-hover: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06);
-  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px #6366F1;
+  --color-danger-surface: #FEF2F2;
+  --color-danger-border: #FECACA;
+  --color-info: #1D4ED8;
+  --color-info-surface: #EFF6FF;
+  --color-info-border: #BFDBFE;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
+  --shadow-card-hover: 0 2px 8px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-elevation: var(--shadow-card);
+  --shadow-elevation-hover: var(--shadow-card-hover);
+  --shadow-overlay: 0 8px 24px rgba(15, 23, 42, 0.12), 0 16px 48px rgba(15, 23, 42, 0.10);
+  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 3px #6366F1;
+  --focus-ring-offset: #FFFFFF;
 }
 
 /* ── ACCESSIBILITY ──────────────────────────────────────────────────── */
@@ -243,7 +280,7 @@ html[data-theme="light"] .xp-surface-luxury {
 }
 
 
-/* ── FOCUS RING ─────────────────────────────────────────────────────── */
+/* ── FOCUS RING — role-based, offset-aware ─────────────────────────── */
 
 *:focus-visible {
   outline: none;
@@ -251,18 +288,90 @@ html[data-theme="light"] .xp-surface-luxury {
   border-radius: var(--radius-sm);
 }
 
+/* Remove double ring inside cards/inputs that already show focus via border */
+.admin-input:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  outline: none;
+}
+
 /* ── BODY ───────────────────────────────────────────────────────────── */
 
 body {
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-platform-body, "Inter", system-ui, sans-serif);
   background-color: var(--surface-root);
   color: var(--text-primary);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── PLATFORM TYPOGRAPHY HIERARCHY (VISUAL-03A) ───────────────────────
+   Platform (admin/builder/dashboard) uses Geist Sans for display/title
+   to separate from Inter body/metadata. Storefront keeps its own
+   heading/body via .theme-root — untouched.
+   Note: var(--font-geist-sans) is defined on <body> by next/font, so
+   we reference it directly (not via :root) to ensure inheritance.
+*/
+.platform-display {
+  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  font-size: 1.875rem; /* 30px */
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+.platform-title {
+  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.platform-section-label {
+  font-family: var(--font-platform-body);
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.platform-body {
+  font-family: var(--font-platform-body);
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--text-secondary);
+  max-width: 65ch;
+}
+.platform-body-strong {
+  font-family: var(--font-platform-body);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.platform-metadata {
+  font-family: var(--font-platform-body);
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.33;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.platform-caption {
+  font-family: var(--font-platform-body);
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1.27;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 /* RCCF-71.1: the canonical theme runtime root consumes the resolved heading/
    body fonts. Both the storefront <main> and the Builder canvas frame apply
    the LayoutEngine theme vars inline and carry `.theme-root`. Admin surfaces
-   (no .theme-root) keep the Inter default. */
+   (no .theme-root) keep Inter default, but platform headings now use Geist. */
 .theme-root {
   font-family: var(--brand-font-body, "Inter", system-ui, sans-serif);
 }
@@ -278,21 +387,60 @@ body {
 /* ── COMPONENT LAYER ────────────────────────────────────────────────── */
 
 @layer components {
+  /* VISUAL-03A: Card hierarchy — primary / secondary / contextual */
   .admin-card {
-    @apply rounded-xl backdrop-blur-sm;
+    @apply backdrop-blur-sm;
     background: var(--surface-card);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-elevation);
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-card-elevated);
+  }
+  /* Primary: main content, metrics, storefront status — elevated */
+  .platform-card-primary {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-card-elevated);
+  }
+  /* Secondary: launch allowance, side widgets, contextual panels — quiet */
+  .platform-card-secondary {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    box-shadow: none;
+    border-radius: var(--radius-card);
+  }
+  html[data-theme="light"] .platform-card-secondary {
+    background: var(--surface-card);
+    border-color: var(--border);
+  }
+  /* Contextual: empty states, allowances when constrained — dashed/subtle */
+  .platform-card-contextual {
+    background: var(--surface-subtle);
+    border: 1px dashed var(--border);
+    box-shadow: none;
+    border-radius: var(--radius-card);
+  }
+  html[data-theme="light"] .platform-card-contextual {
+    background: #F8FAFC;
+    border-color: var(--border-strong);
   }
 
   .admin-card-hover {
-    @apply admin-card transition-all duration-300 hover:border-indigo-400/30;
+    @apply transition-all duration-200;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-card-elevated);
     transition-property: border-color, box-shadow, transform;
     transition-duration: var(--duration-normal);
   }
-
   .admin-card-hover:hover {
-    box-shadow: var(--shadow-elevation-hover);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-card-hover);
+  }
+  /* Light: hover is border-based, not glow */
+  html[data-theme="light"] .admin-card-hover:hover {
+    border-color: var(--border-strong);
   }
 
   .admin-table {
@@ -328,17 +476,25 @@ body {
     background: #EEF2FF;
   }
 
-  /* Gradient utilities */
+  /* Gradient utilities — restrained use only (VISUAL-03A: indigo reserved for primary CTA/focus) */
   .admin-gradient {
     @apply bg-gradient-to-br from-indigo-500 to-violet-500;
   }
-
+  /* Platform heading accent — use sparingly, not universal */
   .admin-gradient-text {
-    @apply bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent;
+  }
+  html[data-theme="light"] .admin-gradient-text {
+    @apply from-indigo-600 to-violet-600;
   }
 
-  /* Badges */
+  /* Badges — VISUAL-03A: hierarchy without excessive pills */
   .admin-badge {
+    @apply inline-flex items-center px-2 py-0.5 text-[11px] font-semibold tracking-wide;
+    border-radius: var(--radius-md);
+  }
+  /* Status badges keep subtle pill via rounded-full where counts appear; default uses md */
+  .admin-badge-pill {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
 
@@ -346,7 +502,7 @@ body {
     @apply admin-badge;
     background: var(--color-success-surface);
     color: var(--color-success);
-    border: 1px solid var(--color-success);
+    border: 1px solid var(--color-success-border);
   }
 
   .admin-badge-inactive {
@@ -360,66 +516,80 @@ body {
     @apply admin-badge;
     background: var(--color-warning-surface);
     color: var(--color-warning);
-    border: 1px solid var(--color-warning);
+    border: 1px solid var(--color-warning-border);
   }
 
   .admin-badge-cyan {
     @apply admin-badge;
     background: var(--color-info-surface);
     color: var(--color-info);
-    border: 1px solid var(--color-info);
+    border: 1px solid var(--color-info-border);
   }
 
-  /* Buttons — RCCF-LAUNCH-TRACK-05 (Button Runtime): every button consumes the
-     resolved theme tokens (--brand-primary / --brand-secondary / --text-* /
-     --border / --on-primary). Fallbacks preserve the previous indigo/white look
-     so an unthemed surface still renders correctly. No hardcoded indigo. */
+  /* Buttons — VISUAL-03A: restrained indigo (primary only), no glow stacking,
+     role-based radius (control), tighter hierarchy */
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50;
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
     background-color: var(--brand-primary, #6366f1);
     color: var(--on-primary, #ffffff);
+    border-radius: var(--radius-control);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
   }
-
   .btn-primary:hover {
     background-color: var(--primary-hover, #4f46e5);
-    box-shadow: 0 0 30px var(--color-focus, rgba(99, 102, 241, 0.25));
+    box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+  }
+  .btn-primary:active {
+    transform: translateY(0.5px);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200;
-    background: transparent;
-    border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
-    color: var(--text-primary, #ffffff);
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-semibold transition-all duration-150;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: var(--radius-control);
   }
-
   .btn-secondary:hover {
-    background: var(--surface-base, rgba(255, 255, 255, 0.05));
-    border-color: var(--brand-primary, #818cf8);
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+  }
+  html[data-theme="light"] .btn-secondary {
+    background: #FFFFFF;
+  }
+  html[data-theme="light"] .btn-secondary:hover {
+    background: var(--surface-hover);
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200;
+    @apply inline-flex items-center justify-center px-3 py-2 text-sm font-medium transition-all duration-150;
     background: transparent;
-    color: var(--text-secondary, #a1a1aa);
+    color: var(--text-secondary);
+    border-radius: var(--radius-control);
   }
-
   .btn-ghost:hover {
-    background: var(--surface-base, rgba(255, 255, 255, 0.05));
-    color: var(--text-primary, #ffffff);
+    background: var(--surface-hover);
+    color: var(--text-primary);
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50;
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-semibold transition-all duration-150 disabled:opacity-50;
     background: var(--color-danger-surface);
     color: var(--color-danger);
-    border: 1px solid var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+    border-radius: var(--radius-control);
   }
   .btn-danger:hover {
-    filter: brightness(0.95);
+    filter: brightness(0.98);
+    border-color: var(--color-danger);
   }
 
   .btn-ai {
-    @apply inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-amber-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:shadow-[0_0_30px_rgba(245,158,11,0.2)] disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-amber-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-150 disabled:opacity-50;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  }
+  .btn-ai:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.14);
   }
 
   /* Legacy button aliases — maps old class names to new design */
@@ -442,21 +612,27 @@ body {
     border: 1px solid var(--color-warning);
   }
 
-  /* Inputs — theme-token focus */
+  /* Inputs — VISUAL-03A: cleaner borders, subtle light surface, role-based radius */
   .admin-input {
-    @apply block w-full rounded-lg px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-2;
+    @apply block w-full px-4 py-2.5 text-sm transition-all duration-150 focus:outline-none;
     background: var(--surface-input);
     border: 1px solid var(--border);
     color: var(--text-primary);
+    border-radius: var(--radius-control);
   }
-
   .admin-input::placeholder {
     color: var(--text-muted);
   }
-
   .admin-input:focus {
-    border-color: var(--brand-primary);
+    border-color: var(--border-focus);
     box-shadow: var(--focus-ring);
+  }
+  html[data-theme="light"] .admin-input {
+    background: #FFFFFF;
+    border-color: var(--border);
+  }
+  html[data-theme="light"] .admin-input:focus {
+    border-color: var(--brand-primary);
   }
 
   .admin-select {
@@ -467,20 +643,19 @@ body {
 /* ── UTILITY LAYER ──────────────────────────────────────────────────── */
 
 @layer utilities {
-  /* Glow utilities — only 2 variants allowed */
+  /* VISUAL-03A: glow is restrained — brand glow is single layer, no stacking */
   .glow-brand {
-    box-shadow: 0 0 15px rgba(99, 102, 241, 0.2), 0 0 40px rgba(99, 102, 241, 0.08);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(99, 102, 241, 0.12);
   }
-
   .glow-ai {
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2), 0 0 40px rgba(245, 158, 11, 0.08);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(245, 158, 11, 0.12);
   }
 
-  /* Legacy glow aliases — maps old class names to new design */
-  .glow-cyan { box-shadow: 0 0 15px rgba(99, 102, 241, 0.2), 0 0 30px rgba(99, 102, 241, 0.08); }
-  .glow-pink { box-shadow: 0 0 15px rgba(139, 92, 246, 0.2), 0 0 30px rgba(139, 92, 246, 0.08); }
-  .glow-gold { box-shadow: 0 0 15px rgba(245, 158, 11, 0.2), 0 0 30px rgba(245, 158, 11, 0.08); }
-  .glow-purple { box-shadow: 0 0 15px rgba(139, 92, 246, 0.2), 0 0 30px rgba(139, 92, 246, 0.08); }
+  /* Legacy glow aliases — now map to restrained shadow */
+  .glow-cyan { box-shadow: var(--shadow-card); }
+  .glow-pink { box-shadow: var(--shadow-card); }
+  .glow-gold { box-shadow: var(--shadow-card); }
+  .glow-purple { box-shadow: var(--shadow-card); }
 
   /* Neon text shadows — preserved as no-op aliases for legacy classes.
      The gaming neon text-shadow aesthetic is deprecated but classes remain
