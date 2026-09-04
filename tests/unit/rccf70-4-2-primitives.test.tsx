@@ -141,15 +141,15 @@ describe("RCCF-70.4.2 — Badge primitive stays intact", () => {
   it("still renders pill badges with token-backed variant classes", () => {
     render(<Badge variant="success">Live</Badge>);
     const badge = screen.getByText("Live");
-    expect(badge.className).toContain("rounded-full");
-    expect(badge.className).toContain("bg-green-500/20");
-    expect(badge.className).toContain("text-green-400");
+    expect(badge.className).toContain("rounded-[var(--radius-md)]");
+    expect(badge.className).toContain("bg-[var(--color-success-surface)]");
+    expect(badge.className).toContain("text-[var(--color-success)]");
   });
 
   it("renders the default variant unchanged", () => {
     render(<Badge>Label</Badge>);
     const badge = screen.getByText("Label");
-    expect(badge.className).toContain("bg-zinc-800");
-    expect(badge.className).toContain("text-zinc-300");
+    expect(badge.className).toContain("bg-[var(--surface-hover)]");
+    expect(badge.className).toContain("text-[var(--text-secondary)]");
   });
 });

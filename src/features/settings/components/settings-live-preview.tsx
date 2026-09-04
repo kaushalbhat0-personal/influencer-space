@@ -132,7 +132,7 @@ export function SettingsLivePreview({
           onClick={() => setPreviewDevice("mobile")}
           className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
             isMobile
-              ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
+              ? "bg-[var(--color-info-surface)] text-[var(--color-info)] ring-1 ring-[var(--color-info-border)]"
               : "text-zinc-500 hover:text-zinc-300"
           }`}
         >
@@ -146,7 +146,7 @@ export function SettingsLivePreview({
           onClick={() => setPreviewDevice("desktop")}
           className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
             !isMobile
-              ? "bg-s8ul-cyan/20 text-s8ul-cyan ring-1 ring-s8ul-cyan/30"
+              ? "bg-[var(--color-info-surface)] text-[var(--color-info)] ring-1 ring-[var(--color-info-border)]"
               : "text-zinc-500 hover:text-zinc-300"
           }`}
         >

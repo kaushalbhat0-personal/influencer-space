@@ -70,9 +70,9 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-[var(--text-muted)]">Confirmed</p><p className="text-xl font-bold text-emerald-400">{confirmed}</p></div>
-        <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-[var(--text-muted)]">Pending</p><p className="text-xl font-bold text-amber-400">{pending}</p></div>
-        <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4"><p className="text-xs text-[var(--text-muted)]">Revenue</p><p className="text-xl font-bold text-white">{formatCurrency(revenue)}</p></div>
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-4"><p className="text-xs text-[var(--text-muted)]">Confirmed</p><p className="text-xl font-bold text-emerald-400">{confirmed}</p></div>
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-4"><p className="text-xs text-[var(--text-muted)]">Pending</p><p className="text-xl font-bold text-amber-400">{pending}</p></div>
+        <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-4"><p className="text-xs text-[var(--text-muted)]">Revenue</p><p className="text-xl font-bold text-white">{formatCurrency(revenue)}</p></div>
       </div>
 
       {showForm && (
