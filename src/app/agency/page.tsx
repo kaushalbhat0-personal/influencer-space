@@ -84,7 +84,7 @@ export default async function AgencyDashboard() {
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Clients</h2>
-            <Link href="/agency/clients" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Link href="/agency/clients" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
               View all →
             </Link>
           </div>
@@ -118,7 +118,7 @@ export default async function AgencyDashboard() {
         {/* Recent Activity */}
         <div>
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-zinc-500" />
+            <Activity className="h-4 w-4 text-[var(--text-muted)]" />
             Recent Activity
           </h2>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 divide-y divide-white/5">
@@ -126,15 +126,15 @@ export default async function AgencyDashboard() {
               <div key={ev.id} className="flex items-start gap-3 px-4 py-2.5">
                 <div className="h-2 w-2 rounded-full bg-[var(--brand-primary)] mt-1.5 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-zinc-300 truncate">{ev.action.replace(/_/g, " ")}</p>
-                  <p className="text-[10px] text-zinc-600">
+                  <p className="text-xs text-[var(--text-primary)] truncate">{ev.action.replace(/_/g, " ")}</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">
                     {tenantNames.get(ev.tenantId) ?? "Unknown"}
                     <span className="ml-2">{new Date(ev.timestamp).toLocaleDateString()}</span>
                   </p>
                 </div>
               </div>
             )) : (
-              <div className="px-4 py-6 text-center text-sm text-zinc-600">No recent activity</div>
+              <div className="px-4 py-6 text-center text-sm text-[var(--text-muted)]">No recent activity</div>
             )}
           </div>
         </div>

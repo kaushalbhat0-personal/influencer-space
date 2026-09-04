@@ -11,7 +11,7 @@ export function ProductPricingSection({ price, onPriceChange, disabled }: Props)
     <fieldset>
       <legend className="text-sm font-semibold text-white mb-3">Pricing</legend>
       <div>
-        <label htmlFor="product-price" className="block text-xs font-medium text-zinc-400 mb-1.5">
+        <label htmlFor="product-price" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
           Price (₹) <span className="text-red-400">*</span>
         </label>
         <input

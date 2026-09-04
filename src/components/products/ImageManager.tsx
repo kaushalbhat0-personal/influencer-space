@@ -121,7 +121,7 @@ export function ImageManager({
               </button>
             </div>
             {i === 0 && (
-              <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-zinc-300">
+              <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-[var(--text-primary)]">
                 Primary
               </span>
             )}
@@ -132,7 +132,7 @@ export function ImageManager({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-white/10 bg-zinc-900/50 text-zinc-600 transition-colors hover:border-white/20 hover:text-zinc-300 disabled:opacity-50"
+            className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-white/10 bg-zinc-900/50 text-[var(--text-muted)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)] disabled:opacity-50"
             aria-label="Add image"
           >
             {uploading ? (
@@ -156,12 +156,12 @@ export function ImageManager({
           type="button"
           onClick={() => setPickerOpen(true)}
           disabled={uploading || images.length >= maxImages}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)] disabled:opacity-50"
         >
           <Library className="h-3.5 w-3.5" />
           Choose from Library
         </button>
-        <p className="text-[11px] text-zinc-600">
+        <p className="text-[11px] text-[var(--text-muted)]">
           {images.length}/{maxImages} images · First image is primary
         </p>
       </div>

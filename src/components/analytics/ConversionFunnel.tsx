@@ -27,7 +27,7 @@ export function ConversionFunnel({ data, loading, error }: ConversionFunnelProps
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-white font-display">{data.overall}%</span>
-            <span className="text-xs text-zinc-500">overall conversion rate</span>
+            <span className="text-xs text-[var(--text-muted)]">overall conversion rate</span>
           </div>
 
           <div className="space-y-2" role="img" aria-label={`Conversion funnel: ${data.overall}% overall rate`}>
@@ -37,8 +37,8 @@ export function ConversionFunnel({ data, loading, error }: ConversionFunnelProps
               return (
                 <div key={stage.label} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-400">{stage.label}</span>
-                    <span className="text-zinc-200 font-medium tabular-nums">{stage.count}</span>
+                    <span className="text-[var(--text-secondary)]">{stage.label}</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">{stage.count}</span>
                   </div>
                   <div className="relative h-8 rounded-lg bg-white/5 overflow-hidden">
                     <div
@@ -59,7 +59,7 @@ export function ConversionFunnel({ data, loading, error }: ConversionFunnelProps
             })}
           </div>
 
-          <p className="text-[11px] text-zinc-600 text-center">
+          <p className="text-[11px] text-[var(--text-muted)] text-center">
             {data.funnel[data.funnel.length - 1]?.count} completed purchases out of {data.funnel[0]?.count} visitors
           </p>
         </div>

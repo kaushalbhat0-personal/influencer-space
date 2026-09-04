@@ -103,12 +103,12 @@ export function ScoreRing({
             {displayValue}
           </span>
           {showPercent && (
-            <span className="text-xs text-zinc-500 font-display">%</span>
+            <span className="text-xs text-[var(--text-muted)] font-display">%</span>
           )}
         </div>
       </div>
       {label && (
-        <p className="mt-3 text-sm font-medium text-zinc-400 text-center">{label}</p>
+        <p className="mt-3 text-sm font-medium text-[var(--text-secondary)] text-center">{label}</p>
       )}
     </div>
   );

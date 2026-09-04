@@ -23,9 +23,9 @@ export function ChartLegend({ items, className }: ChartLegendProps) {
             style={{ backgroundColor: item.color }}
             aria-hidden="true"
           />
-          <span className="text-zinc-400">{item.label}</span>
+          <span className="text-[var(--text-secondary)]">{item.label}</span>
           {item.value !== undefined && (
-            <span className="text-zinc-200 font-medium tabular-nums">{item.value}</span>
+            <span className="text-[var(--text-primary)] font-medium tabular-nums">{item.value}</span>
           )}
         </div>
       ))}

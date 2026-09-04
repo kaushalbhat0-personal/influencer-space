@@ -22,13 +22,13 @@ export function SuccessScreen({
 
       <div>
         <h2 className="text-xl font-bold text-white">Storefront Created!</h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           {creatorName}&apos;s storefront is live.
         </p>
       </div>
 
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-        <p className="text-xs text-zinc-500 mb-1">Storefront URL</p>
+        <p className="text-xs text-[var(--text-muted)] mb-1">Storefront URL</p>
         <a
           href={storefrontUrl}
           target="_blank"

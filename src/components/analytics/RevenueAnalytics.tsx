@@ -38,11 +38,11 @@ export function RevenueAnalytics({ data, loading, error }: RevenueAnalyticsProps
                 {data.changePercent >= 0 ? "↑" : "↓"} {Math.abs(data.changePercent)}%
               </span>
             )}
-            <span className="text-xs text-zinc-600">vs previous period</span>
+            <span className="text-xs text-[var(--text-muted)]">vs previous period</span>
           </div>
 
           <div>
-            <p className="text-xs font-medium text-zinc-400 mb-3">Revenue by Day</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Revenue by Day</p>
             <div className="h-48" role="img" aria-label={`Revenue chart: ${data.byDay.length} days, total ${formatCurrency(data.total)}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.byDay.map((d) => ({ ...d, displayDate: formatXAxisDate(d.date) }))}>
@@ -58,7 +58,7 @@ export function RevenueAnalytics({ data, loading, error }: RevenueAnalyticsProps
 
           {data.byProduct.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-zinc-400 mb-3">Revenue by Product</p>
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Revenue by Product</p>
               <div className="h-56" role="img" aria-label="Revenue breakdown by product">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

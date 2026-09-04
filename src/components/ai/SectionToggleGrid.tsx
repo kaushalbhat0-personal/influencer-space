@@ -28,9 +28,9 @@ export function SectionToggleGrid({
   return (
     <div className={className}>
       <div className="mb-3 flex items-center gap-2">
-        <Layers className="h-4 w-4 text-zinc-400" aria-hidden="true" />
-        <h4 className="text-sm font-medium text-zinc-300">{title}</h4>
-        <span className="text-xs text-zinc-600 ml-auto">
+        <Layers className="h-4 w-4 text-[var(--text-secondary)]" aria-hidden="true" />
+        <h4 className="text-sm font-medium text-[var(--text-primary)]">{title}</h4>
+        <span className="text-xs text-[var(--text-muted)] ml-auto">
           {sections.filter((s) => s.enabled).length}/{sections.length}
         </span>
       </div>
@@ -51,7 +51,7 @@ export function SectionToggleGrid({
               "focus-within:ring-2 focus-within:ring-[var(--brand-primary)]/50",
               section.enabled
                 ? "border-[var(--brand-primary)]/50 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
-                : "border-white/10 bg-white/5 text-zinc-500 hover:border-white/20"
+                : "border-white/10 bg-white/5 text-[var(--text-muted)] hover:border-white/20"
             )}
           >
             <input

@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<PublishStatusValue, {
   publishing: { label: "Publishing", icon: Loader2, color: "text-[var(--brand-primary)]", bg: "bg-[var(--brand-primary)]/20" },
   published: { label: "Live", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/20" },
   outdated: { label: "Changes pending", icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/20" },
-  unavailable: { label: "Not published", icon: Clock, color: "text-zinc-500", bg: "bg-zinc-800" },
+  unavailable: { label: "Not published", icon: Clock, color: "text-[var(--text-muted)]", bg: "bg-zinc-800" },
 };
 
 export function PublishStatusBadge({ status, size = "md", showLabel = true, className }: PublishStatusBadgeProps) {

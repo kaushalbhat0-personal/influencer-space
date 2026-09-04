@@ -34,7 +34,7 @@ export function MonthlyEarningsChart({ data }: { data: Point[] }) {
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-600">No financial activity in the last 6 months.</div>
+          <div className="flex h-full items-center justify-center text-sm text-[var(--text-muted)]">No financial activity in the last 6 months.</div>
         )}
       </div>
       {/* Numeric table so values are never conveyed by color alone. */}
@@ -50,8 +50,8 @@ export function MonthlyEarningsChart({ data }: { data: Point[] }) {
         <tbody>
           {data.map((d) => (
             <tr key={d.month}>
-              <td className="text-zinc-400 text-xs">{d.month}</td>
-              <td className="text-right text-zinc-300">{formatCurrency(d.gross)}</td>
+              <td className="text-[var(--text-secondary)] text-xs">{d.month}</td>
+              <td className="text-right text-[var(--text-primary)]">{formatCurrency(d.gross)}</td>
               <td className="text-right text-red-400/90">{formatCurrency(d.refunds)}</td>
               <td className="text-right text-white font-medium">{formatCurrency(d.net)}</td>
             </tr>

@@ -48,7 +48,7 @@ export function StrategyInputHost({
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-white">{adapter.label}</h2>
-        <p className="mt-1 text-sm text-zinc-400">{adapter.description}</p>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">{adapter.description}</p>
       </div>
 
       {isSelectInput ? (
@@ -60,7 +60,7 @@ export function StrategyInputHost({
         </select>
       ) : (
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
             {isUrlInput ? "YouTube URL or Handle" : "Creator Name"}
           </label>
           <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={isUrlInput ? "https://youtube.com/@creator" : "e.g. Priya Sharma"} className="admin-input w-full text-sm" onKeyDown={(e) => e.key === "Enter" && handleSubmit()} autoFocus />

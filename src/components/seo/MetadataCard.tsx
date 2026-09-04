@@ -20,7 +20,7 @@ export function MetadataCard({ preview, loading, error, showAll = true }: Metada
       <div className="space-y-4">
         {renderers.map((renderer) => (
           <div key={renderer.type}>
-            <p className="text-[10px] uppercase text-zinc-500 tracking-wider mb-1.5">
+            <p className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider mb-1.5">
               {renderer.label}
             </p>
             {renderer.render(preview)}

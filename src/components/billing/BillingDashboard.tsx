@@ -38,7 +38,7 @@ export function BillingDashboard({ data, loading, error }: BillingDashboardProps
       loading={loading}
       error={error}
       actions={
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
           <span>Renews {formatDate(data.subscription.renewsAt)}</span>
         </div>
       }
@@ -46,9 +46,9 @@ export function BillingDashboard({ data, loading, error }: BillingDashboardProps
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {metricCards.map((card) => (
           <div key={card.label} className="rounded-lg bg-white/5 p-3 text-center">
-            <card.icon className="h-4 w-4 text-zinc-400 mx-auto mb-1" aria-hidden="true" />
+            <card.icon className="h-4 w-4 text-[var(--text-secondary)] mx-auto mb-1" aria-hidden="true" />
             <p className="text-lg font-bold text-white">{card.value}</p>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{card.label}</p>
+            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">{card.label}</p>
           </div>
         ))}
       </div>
@@ -57,19 +57,19 @@ export function BillingDashboard({ data, loading, error }: BillingDashboardProps
         <h3 className="text-sm font-semibold text-white mb-3">Plan Details</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-xs text-zinc-500">Plan</p>
+            <p className="text-xs text-[var(--text-muted)]">Plan</p>
             <p className="text-white font-medium">{data.plan.name}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500">Price</p>
-            <p className="text-white font-medium">{formatCurrency(data.plan.price, data.plan.currency)}<span className="text-xs text-zinc-500">/{data.plan.cycle}</span></p>
+            <p className="text-xs text-[var(--text-muted)]">Price</p>
+            <p className="text-white font-medium">{formatCurrency(data.plan.price, data.plan.currency)}<span className="text-xs text-[var(--text-muted)]">/{data.plan.cycle}</span></p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500">Status</p>
+            <p className="text-xs text-[var(--text-muted)]">Status</p>
             <p className="text-white font-medium">{statusInfo.label}</p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500">Renewal</p>
+            <p className="text-xs text-[var(--text-muted)]">Renewal</p>
             <p className="text-white font-medium">{formatDate(data.subscription.renewsAt) || "\u2014"}</p>
           </div>
         </div>

@@ -90,7 +90,7 @@ export function DataTable<T>({
   if (data.length === 0) {
     return (
       <div className={cn("admin-card p-12 text-center", className)}>
-        <p className="text-zinc-500 text-sm">{emptyMessage}</p>
+        <p className="text-[var(--text-muted)] text-sm">{emptyMessage}</p>
       </div>
     );
   }
@@ -119,7 +119,7 @@ export function DataTable<T>({
                   key={col.key}
                   className={cn(
                     "select-none",
-                    col.sortable && "cursor-pointer hover:text-white",
+                    col.sortable && "cursor-pointer hover:text-[var(--text-primary)]",
                     col.className
                   )}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -159,23 +159,23 @@ export function DataTable<T>({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-white/10 px-4 py-3">
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-[var(--text-muted)]">
             Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sorted.length)} of {sorted.length}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded p-1 text-zinc-500 hover:text-white disabled:opacity-30"
+              className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-30"
               aria-label="Previous page"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-xs text-zinc-400 px-2">{page} / {totalPages}</span>
+            <span className="text-xs text-[var(--text-secondary)] px-2">{page} / {totalPages}</span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded p-1 text-zinc-500 hover:text-white disabled:opacity-30"
+              className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-30"
               aria-label="Next page"
             >
               <ChevronRight className="h-4 w-4" />

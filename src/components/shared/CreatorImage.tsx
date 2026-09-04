@@ -42,7 +42,7 @@ export function CreatorImage({
         role="img"
         aria-label={alt || "Placeholder image"}
       >
-        <span className="text-xs text-zinc-600">
+        <span className="text-xs text-[var(--text-muted)]">
           {fallback || alt?.[0] || "?"}
         </span>
       </div>

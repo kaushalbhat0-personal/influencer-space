@@ -83,7 +83,7 @@ export function GalleryAddDrawer({ tenantId, open, onClose, onAdded }: GalleryAd
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-zinc-950/95 px-6 py-4 backdrop-blur-sm">
               <h2 className="text-base font-semibold text-white">Add Media</h2>
-              <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/10 hover:text-white" aria-label="Close">
+              <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-white/10 hover:text-[var(--text-primary)]" aria-label="Close">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -100,8 +100,8 @@ export function GalleryAddDrawer({ tenantId, open, onClose, onAdded }: GalleryAd
               />
 
               <div>
-                <label htmlFor="gallery-add-caption" className="block text-xs font-medium text-zinc-400 mb-1.5">
-                  Caption <span className="text-zinc-600">(applied to all)</span>
+                <label htmlFor="gallery-add-caption" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
+                  Caption <span className="text-[var(--text-muted)]">(applied to all)</span>
                 </label>
                 <input
                   id="gallery-add-caption"
@@ -115,7 +115,7 @@ export function GalleryAddDrawer({ tenantId, open, onClose, onAdded }: GalleryAd
 
               <div className="flex flex-wrap items-center gap-4">
                 <div>
-                  <label htmlFor="gallery-add-status" className="block text-xs font-medium text-zinc-400 mb-1.5">Status</label>
+                  <label htmlFor="gallery-add-status" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Status</label>
                   <select
                     id="gallery-add-status"
                     value={status}
@@ -135,7 +135,7 @@ export function GalleryAddDrawer({ tenantId, open, onClose, onAdded }: GalleryAd
                     className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]/30"
                     disabled={saving}
                   />
-                  <span className="text-xs text-zinc-400">Featured</span>
+                  <span className="text-xs text-[var(--text-secondary)]">Featured</span>
                 </label>
               </div>
 

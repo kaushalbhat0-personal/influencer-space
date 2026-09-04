@@ -38,9 +38,9 @@ export function AgencySuccessSection({ agencyId }: { agencyId: string }) {
           <p className="flex items-center gap-1.5 text-xs font-semibold text-red-400"><AlertTriangle className="h-3.5 w-3.5" /> Clients needing attention</p>
           <div className="mt-2 space-y-1.5">
             {atRisk.map((c) => (
-              <Link key={c.tenantId} href={`/agency/clients/${c.tenantId}`} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-zinc-900/40 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-900/70">
+              <Link key={c.tenantId} href={`/agency/clients/${c.tenantId}`} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-zinc-900/40 px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-zinc-900/70">
                 <span className="font-mono">{c.tenantId.slice(0, 12)}</span>
-                <span className="text-zinc-400">{c.reasons.slice(0, 2).join(" · ")} · {c.score}/100</span>
+                <span className="text-[var(--text-secondary)]">{c.reasons.slice(0, 2).join(" · ")} · {c.score}/100</span>
               </Link>
             ))}
           </div>
@@ -52,7 +52,7 @@ export function AgencySuccessSection({ agencyId }: { agencyId: string }) {
           <p className="text-xs font-semibold text-white">Top-performing clients</p>
           <div className="mt-2 space-y-1.5">
             {top.map((c) => (
-              <div key={c.tenantId} className="flex items-center justify-between text-xs text-zinc-400">
+              <div key={c.tenantId} className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
                 <span className="font-mono">{c.tenantId.slice(0, 12)}</span>
                 <span className="text-emerald-400">{c.score}/100</span>
               </div>
@@ -67,7 +67,7 @@ export function AgencySuccessSection({ agencyId }: { agencyId: string }) {
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-500">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
       <p className={`mt-1 text-lg font-bold ${tone ?? "text-white"}`}>{value}</p>
     </div>
   );

@@ -41,7 +41,7 @@ export function DevicePreview({
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
                 device === key
                   ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               )}
               aria-pressed={device === key}
               aria-label={cfg.label}

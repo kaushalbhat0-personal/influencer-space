@@ -27,7 +27,7 @@ export function RuntimeNotificationBell() {
 
   return (
     <div className="relative">
-      <button onClick={openAndRead} aria-label={`Notifications${unread > 0 ? `: ${unread} unread` : ""}`} className="relative rounded-lg p-2 text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors">
+      <button onClick={openAndRead} aria-label={`Notifications${unread > 0 ? `: ${unread} unread` : ""}`} className="relative rounded-lg p-2 text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors">
         <Bell className="h-5 w-5" aria-hidden="true" />
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">{unread > 9 ? "9+" : unread}</span>
@@ -41,13 +41,13 @@ export function RuntimeNotificationBell() {
               <h3 className="text-sm font-semibold text-white">Notifications</h3>
               <div className="flex items-center gap-3">
                 {unread > 0 && <button onClick={async () => { await markAllRead(); load(); }} className="text-xs text-[var(--brand-primary)] hover:underline">Mark all read</button>}
-                <Link href="/admin/notifications" onClick={() => setOpen(false)} className="text-xs text-zinc-400 hover:text-white">View all →</Link>
+                <Link href="/admin/notifications" onClick={() => setOpen(false)} className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]">View all →</Link>
               </div>
             </div>
             <div className="max-h-80 overflow-y-auto">
               {(items ?? []).length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-zinc-500">
-                  <Bell className="h-6 w-6 mx-auto mb-2 text-zinc-600" /> No notifications yet
+                <div className="px-4 py-8 text-center text-sm text-[var(--text-muted)]">
+                  <Bell className="h-6 w-6 mx-auto mb-2 text-[var(--text-muted)]" /> No notifications yet
                 </div>
               ) : (
                 (items ?? []).slice(0, 12).map((n) => (
@@ -56,8 +56,8 @@ export function RuntimeNotificationBell() {
                       {!n.read && <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--brand-primary)]" />}
                       <div>
                         <p className="text-sm font-medium text-white">{n.title}</p>
-                        {n.body && <p className="text-xs text-zinc-400 mt-0.5 line-clamp-2">{n.body}</p>}
-                        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-zinc-600">{n.category}</p>
+                        {n.body && <p className="text-xs text-[var(--text-secondary)] mt-0.5 line-clamp-2">{n.body}</p>}
+                        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">{n.category}</p>
                       </div>
                     </div>
                   </div>

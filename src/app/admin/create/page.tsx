@@ -24,7 +24,7 @@ export default async function CreatePage({ searchParams }: { searchParams: { blu
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Create Your Website</h1>
-        <p className="mt-1 text-sm text-gray-400">Answer a few questions and we&apos;ll build your website.</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Answer a few questions and we&apos;ll build your website.</p>
       </div>
       <CreationWizardClient
         industries={industries}

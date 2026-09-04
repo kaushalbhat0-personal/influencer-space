@@ -75,21 +75,21 @@ export function Lightbox({ items, currentIndex, open, onClose, onNavigate, allow
         >
           {/* Top bar */}
           <div className="flex items-center justify-between px-4 py-3 z-10">
-            <span className="text-sm text-zinc-400 tabular-nums" aria-live="polite">
+            <span className="text-sm text-[var(--text-secondary)] tabular-nums" aria-live="polite">
               {currentIndex + 1} / {items.length}
             </span>
             <div className="flex items-center gap-2">
               {!item.isVideo && (
                 <>
                   <button onClick={() => setZoomed(!zoomed)}
-                    className="rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                    className="rounded-lg p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/10 transition-colors"
                     aria-label={zoomed ? "Zoom out" : "Zoom in"}
                   >
                     {zoomed ? <ZoomOut className="h-5 w-5" /> : <ZoomIn className="h-5 w-5" />}
                   </button>
                   {allowDownload && (
                     <a href={item.url} download
-                      className="rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                      className="rounded-lg p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/10 transition-colors"
                       aria-label="Download image"
                     >
                       <Download className="h-5 w-5" />
@@ -98,7 +98,7 @@ export function Lightbox({ items, currentIndex, open, onClose, onNavigate, allow
                 </>
               )}
               <button ref={closeRef} onClick={onClose} autoFocus
-                className="rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="rounded-lg p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/10 transition-colors"
                 aria-label="Close lightbox"
               >
                 <X className="h-5 w-5" />
@@ -147,8 +147,8 @@ export function Lightbox({ items, currentIndex, open, onClose, onNavigate, allow
           {/* Caption */}
           {item.caption && (
             <div className="px-6 py-4 text-center border-t border-white/5" aria-live="polite">
-              <p className="text-sm text-zinc-300">{item.caption}</p>
-              {item.altText && <p className="text-xs text-zinc-600 mt-1">{item.altText}</p>}
+              <p className="text-sm text-[var(--text-primary)]">{item.caption}</p>
+              {item.altText && <p className="text-xs text-[var(--text-muted)] mt-1">{item.altText}</p>}
             </div>
           )}
         </motion.div>

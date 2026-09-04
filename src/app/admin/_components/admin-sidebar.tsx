@@ -132,7 +132,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
           </Link>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-white lg:hidden"
+            className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-white/5 hover:text-[var(--text-primary)] lg:hidden"
             aria-label="Close navigation"
           >
             <X className="h-5 w-5" />
@@ -194,7 +194,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
                         </span>
                       )}
                       {item.badge === "soon" && (
-                        <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
+                        <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
                           Soon
                         </span>
                       )}

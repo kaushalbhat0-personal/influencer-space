@@ -21,7 +21,7 @@ export function CreatorInsights({ insights, loading }: CreatorInsightsProps) {
           <Lightbulb className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden="true" />
           <h2 className="text-sm font-semibold text-white">Insights</h2>
         </div>
-        <p className="text-sm text-zinc-500">No insights yet. Add more data to get actionable recommendations.</p>
+        <p className="text-sm text-[var(--text-muted)]">No insights yet. Add more data to get actionable recommendations.</p>
       </div>
     );
   }
@@ -31,7 +31,7 @@ export function CreatorInsights({ insights, loading }: CreatorInsightsProps) {
       <div className="flex items-center gap-2 mb-4">
         <Lightbulb className="h-4 w-4 text-amber-400" aria-hidden="true" />
         <h2 className="text-sm font-semibold text-white">Insights</h2>
-        <span className="text-[10px] text-zinc-600 ml-auto">{insights.length} suggestions</span>
+        <span className="text-[10px] text-[var(--text-muted)] ml-auto">{insights.length} suggestions</span>
       </div>
       <div className="space-y-2">
         {insights.map((insight, i) => (
@@ -39,7 +39,7 @@ export function CreatorInsights({ insights, loading }: CreatorInsightsProps) {
             key={i}
             className={cn(
               "flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-              "text-zinc-300"
+              "text-[var(--text-primary)]"
             )}
           >
             <span className="flex-shrink-0 h-1.5 w-1.5 rounded-full bg-[var(--brand-primary)] mt-1.5" aria-hidden="true" />

@@ -27,7 +27,7 @@ export function ProductsToolbar({
     <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" aria-hidden="true" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -38,7 +38,7 @@ export function ProductsToolbar({
           {search && (
             <button
               onClick={() => onSearchChange("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-500 hover:text-zinc-300"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" />
@@ -69,21 +69,21 @@ export function ProductsToolbar({
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                 statusFilter === f.value
                   ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5",
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5",
               )}
             >
               {f.label}
             </button>
           ))}
         </div>
-        <span className="text-xs text-zinc-600 tabular-nums">
+        <span className="text-xs text-[var(--text-muted)] tabular-nums">
           {total} product{total !== 1 ? "s" : ""}
         </span>
       </div>
 
       {selectedCount > 0 && (
         <div className="flex items-center gap-2 rounded-lg bg-[var(--brand-primary)]/5 border border-[var(--brand-primary)]/10 px-4 py-2">
-          <span className="text-xs text-zinc-400 tabular-nums">{selectedCount} selected</span>
+          <span className="text-xs text-[var(--text-secondary)] tabular-nums">{selectedCount} selected</span>
           <div className="flex-1" />
           {onBulkPublish && (
             <button onClick={onBulkPublish} className="text-xs text-green-400 hover:text-green-300 font-medium transition-colors">

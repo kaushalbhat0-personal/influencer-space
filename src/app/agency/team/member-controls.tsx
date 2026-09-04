@@ -11,7 +11,7 @@ export function TeamMemberControls({ userId, currentRole, isOwner }: { userId: s
   const [pending, startTransition] = useTransition();
 
   if (isOwner) {
-    return <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-400">Owner</span>;
+    return <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">Owner</span>;
   }
 
   const changeRole = () => {
@@ -43,7 +43,7 @@ export function TeamMemberControls({ userId, currentRole, isOwner }: { userId: s
       <button
         onClick={changeRole}
         disabled={pending || selected === currentRole}
-        className="rounded-md border border-white/10 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+        className="rounded-md border border-white/10 px-2 py-1 text-xs text-[var(--text-primary)] hover:bg-zinc-800 disabled:opacity-40"
       >
         Change
       </button>
@@ -54,7 +54,7 @@ export function TeamMemberControls({ userId, currentRole, isOwner }: { userId: s
       >
         Remove
       </button>
-      {msg && <span className="text-xs text-zinc-400">{msg}</span>}
+      {msg && <span className="text-xs text-[var(--text-secondary)]">{msg}</span>}
     </div>
   );
 }

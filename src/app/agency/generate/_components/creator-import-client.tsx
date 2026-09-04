@@ -42,19 +42,19 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
         <h3 className="text-sm font-semibold text-white mb-4">New Creator</h3>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Creator Name</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Creator Name</label>
             <input className={input} value={form.creatorName} onChange={(e) => setForm({ ...form, creatorName: e.target.value })} aria-label="Creator name" data-testid="ci-name" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Creator Email</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Creator Email</label>
             <input className={input} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} aria-label="Creator email" data-testid="ci-email" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Source URL (optional — YouTube / Instagram)</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Source URL (optional — YouTube / Instagram)</label>
             <input className={input} value={form.sourceUrl} onChange={(e) => setForm({ ...form, sourceUrl: e.target.value })} aria-label="Source URL" data-testid="ci-source" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-zinc-400">Plan</label>
+            <label className="mb-1 block text-xs text-[var(--text-secondary)]">Plan</label>
             <select className={input} value={form.planCode} onChange={(e) => setForm({ ...form, planCode: e.target.value })} aria-label="Plan" data-testid="ci-plan">
               {PLANS.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
             </select>
@@ -76,7 +76,7 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
         )}
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 text-xs text-zinc-500 space-y-3">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 text-xs text-[var(--text-muted)] space-y-3">
         <h3 className="text-sm font-semibold text-white">How it works</h3>
         <ol className="list-decimal space-y-1 pl-4">
           <li>We analyze the creator&apos;s public profile from their URL.</li>
@@ -85,7 +85,7 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
           <li>A passwordless invitation is sent — the creator sets their own password.</li>
           <li>The creator becomes the owner of their workspace; you remain the manager.</li>
         </ol>
-        <p className="text-zinc-600">No passwords are generated or shared by the agency.</p>
+        <p className="text-[var(--text-muted)]">No passwords are generated or shared by the agency.</p>
       </div>
     </div>
   );

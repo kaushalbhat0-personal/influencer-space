@@ -54,14 +54,14 @@ export function GuidanceWalkthrough({ definition, onClose }: { definition: Guida
         {step === 0 && (
           <div className="mb-4">
             <h2 id="guidance-title" className="text-lg font-semibold text-white">{definition.title} 👋</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-400">{definition.description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{definition.description}</p>
           </div>
         )}
         <div className="rounded-lg border border-white/10 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-widest text-zinc-500">Step {step + 1} of {definition.steps.length}</p>
+          <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]">Step {step + 1} of {definition.steps.length}</p>
           <h3 className="mt-1 text-base font-semibold text-white">{cur.title}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-300">{cur.description}</p>
-          {cur.hint && <p className="mt-2 text-xs text-zinc-500">{cur.hint}</p>}
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-primary)]">{cur.description}</p>
+          {cur.hint && <p className="mt-2 text-xs text-[var(--text-muted)]">{cur.hint}</p>}
         </div>
         <div className="mt-4 flex items-center justify-between">
           <Button variant="ghost" onClick={() => close(true, false)}>Skip</Button>

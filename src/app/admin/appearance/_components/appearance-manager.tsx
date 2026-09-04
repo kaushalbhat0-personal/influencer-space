@@ -76,8 +76,8 @@ export function AppearanceManager({
       <div className="min-w-0 flex-1 space-y-6">
         {/* ─── Color Presets ─── */}
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
-          <h2 className="text-sm font-semibold text-zinc-300">Color Presets</h2>
-          <p className="mt-1 text-xs text-zinc-500">Pick a preset or customize individual colors below.</p>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Color Presets</h2>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Pick a preset or customize individual colors below.</p>
           <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {COLOR_PRESETS.map((preset) => {
               const isActive = theme.accent === preset.accent;
@@ -96,7 +96,7 @@ export function AppearanceManager({
                     className="h-8 w-8 rounded-full border-2 border-[var(--border-subtle)] shadow-[var(--shadow-card)]"
                     style={{ backgroundColor: preset.accent }}
                   />
-                  <span className="text-[10px] font-medium text-zinc-400">{preset.label}</span>
+                  <span className="text-[10px] font-medium text-[var(--text-muted)]">{preset.label}</span>
                 </button>
               );
             })}
@@ -105,13 +105,13 @@ export function AppearanceManager({
 
         {/* ─── Custom Colors ─── */}
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
-          <h2 className="text-sm font-semibold text-zinc-300">Custom Colors</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Custom Colors</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {(["primary", "secondary", "accent"] as const).map((key) => (
               <div key={key} className="space-y-2">
-                <label className="flex items-center justify-between text-xs text-zinc-500">
+                <label className="flex items-center justify-between text-xs text-[var(--text-muted)]">
                   <span className="capitalize">{key}</span>
-                  <span className="font-mono text-zinc-600">{theme[key]}</span>
+                  <span className="font-mono text-[var(--text-muted)]">{theme[key]}</span>
                 </label>
                 <div className="relative">
                   <input
@@ -129,7 +129,7 @@ export function AppearanceManager({
 
         {/* ─── Font ─── */}
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
-          <h2 className="text-sm font-semibold text-zinc-300">Typography</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Typography</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {FONTS.map((f) => (
               <button
@@ -139,7 +139,7 @@ export function AppearanceManager({
                 className={`rounded-[var(--radius-control)] border px-4 py-2 text-xs font-medium transition-all ${
                   theme.font === f.value
                     ? "border-[var(--border-strong)] bg-[var(--surface-hover)] text-white"
-                    : "border-[var(--border)] bg-[var(--surface-card)] text-zinc-500 hover:border-[var(--border-strong)] hover:text-zinc-300"
+                    : "border-[var(--border)] bg-[var(--surface-card)] text-[var(--text-muted)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {f.label}
@@ -150,7 +150,7 @@ export function AppearanceManager({
 
         {/* ─── Border Radius ─── */}
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
-          <h2 className="text-sm font-semibold text-zinc-300">Border Radius ({theme.borderRadius}px)</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Border Radius ({theme.borderRadius}px)</h2>
           <input
             type="range"
             min="0"
@@ -164,7 +164,7 @@ export function AppearanceManager({
 
         {/* ─── Layout Density ─── */}
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 backdrop-blur-sm">
-          <h2 className="text-sm font-semibold text-zinc-300">Layout Density</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Layout Density</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {(["compact", "comfortable", "spacious"] as const).map((d) => (
               <button
@@ -174,7 +174,7 @@ export function AppearanceManager({
                 className={`rounded-[var(--radius-control)] border px-4 py-2 text-xs font-medium capitalize transition-all ${
                   theme.layoutDensity === d
                     ? "border-[var(--border-strong)] bg-[var(--surface-hover)] text-white"
-                    : "border-[var(--border)] bg-[var(--surface-card)] text-zinc-500 hover:border-[var(--border-strong)] hover:text-zinc-300"
+                    : "border-[var(--border)] bg-[var(--surface-card)] text-[var(--text-muted)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {d}
@@ -186,11 +186,11 @@ export function AppearanceManager({
         {/* ─── Save Indicator ─── */}
         <div className="text-center">
           {pending ? (
-            <span className="text-xs text-zinc-500">Saving...</span>
+            <span className="text-xs text-[var(--text-muted)]">Saving...</span>
           ) : saved ? (
             <span className="text-xs text-emerald-400">Saved</span>
           ) : (
-            <span className="text-xs text-zinc-600">Auto-saving on change</span>
+            <span className="text-xs text-[var(--text-muted)]">Auto-saving on change</span>
           )}
         </div>
       </div>
@@ -201,7 +201,7 @@ export function AppearanceManager({
           <div className="flex flex-col items-center text-center">
             <div className="mb-3 h-16 w-16 rounded-full border-2 border-[var(--border)] bg-[var(--surface-hover)]" />
             <h1 className="font-bold text-white" style={{ color: theme.accent }}>Your Brand</h1>
-            <p className="mt-1 text-xs text-zinc-500">Your tagline appears here</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">Your tagline appears here</p>
           </div>
           <div className="space-y-2">
             <div className="h-10 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)]" style={{ borderRadius: `${theme.borderRadius}px` }} />

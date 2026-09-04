@@ -41,14 +41,14 @@ export function StructuredDataBuilder() {
     <DashboardWidget title="Structured Data Builder" icon={Shield} description="Generate JSON-LD for search engines">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1.5">Schema Type</label>
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Schema Type</label>
           <div className="flex flex-wrap gap-2">
             {STRUCTURED_DATA_TYPES.map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  type === t ? "bg-[var(--brand-primary)] text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                  type === t ? "bg-[var(--brand-primary)] text-white" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
                 }`}
               >
                 {t}
@@ -64,7 +64,7 @@ export function StructuredDataBuilder() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Badge variant={result.valid ? "success" : "danger"}>{result.valid ? "Valid" : "Invalid"}</Badge>
-                <span className="text-xs text-zinc-500">{result.type}</span>
+                <span className="text-xs text-[var(--text-muted)]">{result.type}</span>
               </div>
               {result.valid && (
                 <Button size="sm" variant="ghost" onClick={handleCopy}>
@@ -80,7 +80,7 @@ export function StructuredDataBuilder() {
                 ))}
               </div>
             )}
-            <pre className="rounded-lg bg-zinc-900 p-4 text-xs text-zinc-300 overflow-x-auto max-h-64 overflow-y-auto">
+            <pre className="rounded-lg bg-zinc-900 p-4 text-xs text-[var(--text-primary)] overflow-x-auto max-h-64 overflow-y-auto">
               {JSON.stringify(result.jsonLd, null, 2)}
             </pre>
           </div>

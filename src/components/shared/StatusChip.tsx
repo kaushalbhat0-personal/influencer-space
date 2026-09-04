@@ -4,10 +4,10 @@ export type StatusType = "PUBLISHED" | "DRAFT" | "ARCHIVED" | "ACTIVE" | "INACTI
 
 const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }> = {
   PUBLISHED: { dot: "bg-green-500", text: "text-green-400", label: "Published" },
-  DRAFT: { dot: "bg-zinc-500", text: "text-zinc-400", label: "Draft" },
+  DRAFT: { dot: "bg-zinc-500", text: "text-[var(--text-secondary)]", label: "Draft" },
   ARCHIVED: { dot: "bg-amber-500", text: "text-amber-400", label: "Archived" },
   ACTIVE: { dot: "bg-green-500", text: "text-green-400", label: "Active" },
-  INACTIVE: { dot: "bg-zinc-500", text: "text-zinc-400", label: "Inactive" },
+  INACTIVE: { dot: "bg-zinc-500", text: "text-[var(--text-secondary)]", label: "Inactive" },
 };
 
 interface StatusChipProps {
@@ -17,7 +17,7 @@ interface StatusChipProps {
 }
 
 export function StatusChip({ status, dot = true, className }: StatusChipProps) {
-  const style = STATUS_STYLES[status] ?? { dot: "bg-zinc-500", text: "text-zinc-400", label: status };
+  const style = STATUS_STYLES[status] ?? { dot: "bg-zinc-500", text: "text-[var(--text-secondary)]", label: status };
 
   return (
     <span className={cn("inline-flex items-center gap-1.5", style.text, className)}>

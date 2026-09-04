@@ -25,7 +25,7 @@ interface SubscriptionManagerProps {
 function FeatureCheck({ included }: { included: boolean }) {
   return included
     ? <Check className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-    : <X className="h-4 w-4 text-zinc-600" aria-hidden="true" />;
+    : <X className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />;
 }
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -75,19 +75,19 @@ export function SubscriptionManager({
         <div className="rounded-lg bg-white/5 p-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
-              <p className="text-zinc-500 text-xs">Plan</p>
+              <p className="text-[var(--text-muted)] text-xs">Plan</p>
               <p className="text-white font-semibold mt-0.5">{currentPlan.name}</p>
             </div>
             <div>
-              <p className="text-zinc-500 text-xs">Price</p>
-              <p className="text-white font-semibold mt-0.5">{formatCurrency(currentPlan.price, currentPlan.currency)}<span className="text-xs text-zinc-500">/{currentPlan.cycle}</span></p>
+              <p className="text-[var(--text-muted)] text-xs">Price</p>
+              <p className="text-white font-semibold mt-0.5">{formatCurrency(currentPlan.price, currentPlan.currency)}<span className="text-xs text-[var(--text-muted)]">/{currentPlan.cycle}</span></p>
             </div>
             <div>
-              <p className="text-zinc-500 text-xs">Renewal</p>
+              <p className="text-[var(--text-muted)] text-xs">Renewal</p>
               <p className="text-white font-semibold mt-0.5">{formatDate(subscription.renewsAt)}</p>
             </div>
             <div>
-              <p className="text-zinc-500 text-xs">Status</p>
+              <p className="text-[var(--text-muted)] text-xs">Status</p>
               <p className="text-white font-semibold mt-0.5">{statusInfo.label}</p>
             </div>
           </div>
@@ -97,9 +97,9 @@ export function SubscriptionManager({
           <table className="w-full text-sm" role="grid" aria-label="Plan comparison">
             <thead>
               <tr className="border-b border-white/10">
-                <th scope="col" className="text-left py-2 px-2 text-xs text-zinc-500 font-medium">Feature</th>
+                <th scope="col" className="text-left py-2 px-2 text-xs text-[var(--text-muted)] font-medium">Feature</th>
                 {availablePlans.map((plan) => (
-                  <th key={plan.code} scope="col" className={cn("text-center py-2 px-2 text-xs font-medium", plan.code === currentPlan.code ? "text-[var(--brand-primary)]" : "text-zinc-500")}>
+                  <th key={plan.code} scope="col" className={cn("text-center py-2 px-2 text-xs font-medium", plan.code === currentPlan.code ? "text-[var(--brand-primary)]" : "text-[var(--text-muted)]")}>
                     {plan.name}
                     {plan.recommended && <Badge variant="cyan" size="sm" className="ml-1">Popular</Badge>}
                   </th>
@@ -109,7 +109,7 @@ export function SubscriptionManager({
             <tbody>
               {allFeatures.map((feature) => (
                 <tr key={feature} className="border-b border-white/5">
-                  <td className="py-2 px-2 text-zinc-300 text-xs">{FEATURE_LABELS[feature] ?? feature}</td>
+                  <td className="py-2 px-2 text-[var(--text-primary)] text-xs">{FEATURE_LABELS[feature] ?? feature}</td>
                   {availablePlans.map((plan) => {
                     const val = plan.features[feature];
                     const currentVal = currentPlan.features[feature];
@@ -171,10 +171,10 @@ export function SubscriptionManager({
 
         {capabilities && capabilities.length > 0 && (
           <div className="rounded-lg bg-white/[0.03] p-4">
-            <p className="text-xs text-zinc-400 font-medium mb-2">Capabilities Granted</p>
+            <p className="text-xs text-[var(--text-secondary)] font-medium mb-2">Capabilities Granted</p>
             <div className="flex flex-wrap gap-1.5" data-testid="billing-capabilities">
               {capabilities.map((cap) => (
-                <span key={cap} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-zinc-300">
+                <span key={cap} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-[var(--text-primary)]">
                   {cap}
                 </span>
               ))}

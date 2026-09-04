@@ -45,8 +45,8 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
           <CheckCircle2 className="h-8 w-8 text-emerald-400" />
         </div>
         <h2 className="mt-4 text-xl font-bold text-white">Provisioning Complete</h2>
-        <p className="mt-1 text-sm text-zinc-400">
-          All resources created successfully for <span className="font-medium text-zinc-200">{data.tenantSlug}</span>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          All resources created successfully for <span className="font-medium text-[var(--text-primary)]">{data.tenantSlug}</span>
         </p>
       </div>
 
@@ -55,7 +55,7 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
           <div className="flex items-center gap-3">
             <FileCheck className="h-4 w-4 text-emerald-400" />
             <div>
-              <p className="text-xs text-zinc-500">Tenant</p>
+              <p className="text-xs text-[var(--text-muted)]">Tenant</p>
               <p className="text-sm font-medium text-white">{data.tenantSlug}</p>
             </div>
           </div>
@@ -65,14 +65,14 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Globe className="h-4 w-4 shrink-0 text-[var(--brand-primary)]" />
             <div className="min-w-0">
-              <p className="text-xs text-zinc-500">Storefront URL</p>
+              <p className="text-xs text-[var(--text-muted)]">Storefront URL</p>
               <p className="truncate text-sm font-medium text-[var(--brand-primary)]">{data.storefrontUrl}</p>
             </div>
           </div>
           <div className="flex shrink-0 gap-1 ml-3">
             <button
               onClick={() => handleCopyField(data.storefrontUrl)}
-              className="rounded p-1.5 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 transition-colors"
+              className="rounded p-1.5 text-[var(--text-muted)] hover:bg-white/[0.06] hover:text-[var(--text-primary)] transition-colors"
               title="Copy URL"
             >
               <Copy className="h-3.5 w-3.5" />
@@ -81,7 +81,7 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
               href={data.storefrontUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded p-1.5 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 transition-colors"
+              className="rounded p-1.5 text-[var(--text-muted)] hover:bg-white/[0.06] hover:text-[var(--text-primary)] transition-colors"
               title="Open website"
             >
               <ExternalLink className="h-3.5 w-3.5" />
@@ -93,14 +93,14 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <LogIn className="h-4 w-4 shrink-0 text-[var(--color-info)]" />
             <div className="min-w-0">
-              <p className="text-xs text-zinc-500">Dashboard URL</p>
+              <p className="text-xs text-[var(--text-muted)]">Dashboard URL</p>
               <p className="truncate text-sm font-medium text-[var(--color-info)]">{data.dashboardUrl}</p>
             </div>
           </div>
           <div className="flex shrink-0 gap-1 ml-3">
             <button
               onClick={() => handleCopyField(data.dashboardUrl)}
-              className="rounded p-1.5 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 transition-colors"
+              className="rounded p-1.5 text-[var(--text-muted)] hover:bg-white/[0.06] hover:text-[var(--text-primary)] transition-colors"
               title="Copy URL"
             >
               <Copy className="h-3.5 w-3.5" />
@@ -109,7 +109,7 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
               href={data.dashboardUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded p-1.5 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 transition-colors"
+              className="rounded p-1.5 text-[var(--text-muted)] hover:bg-white/[0.06] hover:text-[var(--text-primary)] transition-colors"
               title="Open dashboard"
             >
               <ExternalLink className="h-3.5 w-3.5" />
@@ -121,13 +121,13 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
           <div className="flex items-center gap-3">
             <User className="h-4 w-4 shrink-0 text-amber-400" />
             <div>
-              <p className="text-xs text-zinc-500">Admin Email</p>
+              <p className="text-xs text-[var(--text-muted)]">Admin Email</p>
               <p className="text-sm font-medium text-white">{data.adminEmail}</p>
             </div>
           </div>
           <button
             onClick={() => handleCopyField(data.adminEmail)}
-            className="rounded p-1.5 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 transition-colors"
+            className="rounded p-1.5 text-[var(--text-muted)] hover:bg-white/[0.06] hover:text-[var(--text-primary)] transition-colors"
             title="Copy email"
           >
             <Copy className="h-3.5 w-3.5" />
@@ -138,13 +138,13 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
           <div className="flex items-center gap-3">
             <Key className="h-4 w-4 shrink-0 text-amber-400" />
             <div>
-              <p className="text-xs text-zinc-500">Temporary Password</p>
+              <p className="text-xs text-[var(--text-muted)]">Temporary Password</p>
               <p className="font-mono text-sm font-bold text-amber-300">{data.temporaryPassword}</p>
             </div>
           </div>
           <button
             onClick={() => handleCopyField(data.temporaryPassword)}
-            className="rounded p-1.5 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300 transition-colors"
+            className="rounded p-1.5 text-[var(--text-muted)] hover:bg-white/[0.06] hover:text-[var(--text-primary)] transition-colors"
             title="Copy password"
           >
             <Copy className="h-3.5 w-3.5" />
@@ -175,7 +175,7 @@ export function ProvisioningSummary({ data }: ProvisioningSummaryProps) {
         </Button>
       </div>
 
-      <p className="text-center text-xs text-zinc-600">
+      <p className="text-center text-xs text-[var(--text-muted)]">
         Save the temporary password now. It will not be shown again.
       </p>
     </div>

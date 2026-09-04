@@ -55,7 +55,7 @@ export function SuperAdminSidebar() {
             <div key={group}>
               <button
                 onClick={() => toggle(group)}
-                className="flex w-full items-center gap-1.5 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-300"
+                className="flex w-full items-center gap-1.5 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <span className="flex-1 text-left">{GROUP_LABELS[group]}</span>
                 <ChevronDown className={cn("h-3 w-3 transition-transform", expanded.has(group) && "rotate-180")} />
@@ -73,7 +73,7 @@ export function SuperAdminSidebar() {
                           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                           active
                             ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
-                            : "text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200"
+                            : "text-[var(--text-secondary)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]"
                         )}
                         aria-current={active ? "page" : undefined}
                       >
@@ -95,10 +95,10 @@ export function SuperAdminSidebar() {
       </nav>
 
       <div className="border-t border-white/[0.06] p-2 space-y-1">
-        <Link href="/admin/dashboard" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300">
+        <Link href="/admin/dashboard" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]">
           <ArrowLeft className="h-4 w-4" /> Creator View
         </Link>
-        <button onClick={() => signOut({ callbackUrl: "/admin/login" })} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 hover:bg-white/[0.04] hover:text-red-400">
+        <button onClick={() => signOut({ callbackUrl: "/admin/login" })} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] hover:bg-white/[0.04] hover:text-red-400">
           <LogOut className="h-4 w-4" /> Sign Out
         </button>
       </div>

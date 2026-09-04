@@ -33,7 +33,7 @@ export function StrategyCard({
       <div className="flex items-start gap-3">
         <div className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-          active ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]" : "bg-white/[0.04] text-zinc-500",
+          active ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]" : "bg-white/[0.04] text-[var(--text-muted)]",
         )}>
           <Icon className="h-5 w-5" />
         </div>
@@ -47,16 +47,16 @@ export function StrategyCard({
               </span>
             )}
           </div>
-          <p className="mt-0.5 text-xs text-zinc-500 line-clamp-2">{adapter.description}</p>
+          <p className="mt-0.5 text-xs text-[var(--text-muted)] line-clamp-2">{adapter.description}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-[11px] text-zinc-600">
+      <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
         <span className={cn(
           "inline-flex items-center gap-1",
           isHighConfidence && "text-emerald-400",
           isMediumConfidence && !isHighConfidence && "text-amber-400",
-          !isMediumConfidence && "text-zinc-500",
+          !isMediumConfidence && "text-[var(--text-muted)]",
         )}>
           <ShieldCheck className="h-3 w-3" />
           {adapter.typicalConfidence}% confidence

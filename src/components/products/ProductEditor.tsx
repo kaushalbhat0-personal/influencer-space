@@ -120,7 +120,7 @@ export function ProductEditor({ product, tenantId, open, onClose, onSave, saving
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-white/10 hover:text-[var(--text-primary)]"
                 aria-label="Close editor"
               >
                 <X className="h-5 w-5" />

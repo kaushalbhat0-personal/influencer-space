@@ -11,9 +11,9 @@ export function WebsitesTable({ data }: { data: WebsiteRow[] }) {
     { key: "url", header: "URL", sortable: true, cell: (r) => (
       <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-primary)] hover:underline text-xs font-mono">{r.url}</a>
     )},
-    { key: "products", header: "Products", sortable: true, cell: (r) => <span className="text-zinc-300">{r.products}</span> },
+    { key: "products", header: "Products", sortable: true, cell: (r) => <span className="text-[var(--text-primary)]">{r.products}</span> },
     { key: "isActive", header: "Active", sortable: true, cell: (r) => (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${r.isActive ? "bg-green-500/20 text-green-400" : "bg-zinc-800 text-zinc-400"}`}>{r.isActive ? "Active" : "Inactive"}</span>
+      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${r.isActive ? "bg-green-500/20 text-green-400" : "bg-zinc-800 text-[var(--text-secondary)]"}`}>{r.isActive ? "Active" : "Inactive"}</span>
     )},
   ];
 

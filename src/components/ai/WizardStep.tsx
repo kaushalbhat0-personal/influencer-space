@@ -37,7 +37,7 @@ export function WizardStep({
         )}
         <h2 className="text-xl font-semibold text-white">{title}</h2>
         {description && (
-          <p className="mt-1 text-sm text-zinc-400 max-w-lg">{description}</p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)] max-w-lg">{description}</p>
         )}
       </div>
 

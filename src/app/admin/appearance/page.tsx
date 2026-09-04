@@ -23,7 +23,7 @@ export default async function AppearancePage() {
     return (
       <div>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance</h1>
-        <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
+        <p className="mt-4 text-[var(--text-muted)]">No tenant configured. Please seed a tenant first.</p>
       </div>
     );
   }
@@ -66,7 +66,7 @@ export default async function AppearancePage() {
     <div>
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Appearance & Theme</h1>
-        <p className="mt-1 text-sm text-gray-400">Customize colors, fonts, and layout. Changes appear in the live preview instantly.</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Customize colors, fonts, and layout. Changes appear in the live preview instantly.</p>
       </div>
       <AppearanceManager tenantId={tenantId} initialTheme={initialTheme} />
     </div>

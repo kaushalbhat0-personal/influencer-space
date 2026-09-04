@@ -80,7 +80,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
               "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
               activeTab === tab.key
                 ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             )}
           >
             {tab.label}
@@ -101,13 +101,13 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
               <div className="admin-card p-5">
                 <h3 className="text-sm font-semibold text-white mb-3">Quick Links</h3>
                 <div className="space-y-2">
-                  <a href="#global" onClick={(e) => { e.preventDefault(); setActiveTab("global"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                  <a href="#global" onClick={(e) => { e.preventDefault(); setActiveTab("global"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-white/10">
                     Configure Global Settings
                   </a>
-                  <a href="#pages" onClick={(e) => { e.preventDefault(); setActiveTab("pages"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                  <a href="#pages" onClick={(e) => { e.preventDefault(); setActiveTab("pages"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-white/10">
                     Edit Page-Level SEO
                   </a>
-                  <a href="#structured" onClick={(e) => { e.preventDefault(); setActiveTab("structured"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/10">
+                  <a href="#structured" onClick={(e) => { e.preventDefault(); setActiveTab("structured"); }} className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-white/10">
                     Generate Structured Data
                   </a>
                   <a href={storefrontUrl} target="_blank" rel="noopener noreferrer" className="block rounded-lg bg-white/5 px-3 py-2 text-sm text-[var(--brand-primary)] hover:bg-white/10">
@@ -132,7 +132,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
                 key={type}
                 onClick={() => setSelectedPage(type)}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedPage === type ? "bg-[var(--brand-primary)] text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                  selectedPage === type ? "bg-[var(--brand-primary)] text-white" : "bg-white/5 text-[var(--text-secondary)] hover:bg-white/10"
                 }`}
               >
                 {type.charAt(0).toUpperCase() + type.slice(1)}

@@ -14,7 +14,7 @@ export function ProductGeneralSection({ name, onNameChange, description, onDescr
       <legend className="text-sm font-semibold text-white mb-3">Basic Information</legend>
       <div className="space-y-4">
         <div>
-          <label htmlFor="product-name" className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label htmlFor="product-name" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
             Name <span className="text-red-400">*</span>
           </label>
           <input
@@ -28,7 +28,7 @@ export function ProductGeneralSection({ name, onNameChange, description, onDescr
           />
         </div>
         <div>
-          <label htmlFor="product-description" className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label htmlFor="product-description" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
             Description
           </label>
           <textarea

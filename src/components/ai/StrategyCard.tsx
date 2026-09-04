@@ -75,7 +75,7 @@ export const StrategyCard = forwardRef<HTMLButtonElement, StrategyCardProps>(
                 </Badge>
               )}
             </div>
-            <p className="mt-1 text-sm text-zinc-400">{option.description}</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{option.description}</p>
 
             {selected && (
               <MotionDiv
@@ -88,16 +88,16 @@ export const StrategyCard = forwardRef<HTMLButtonElement, StrategyCardProps>(
                   <div>
                     <p className="text-xs font-medium text-green-400 mb-1">Includes</p>
                     {option.includes.map((item) => (
-                      <p key={item} className="text-xs text-zinc-400 flex items-center gap-1">
+                      <p key={item} className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
                         <span className="text-green-400">✓</span> {item}
                       </p>
                     ))}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Excludes</p>
+                    <p className="text-xs font-medium text-[var(--text-muted)] mb-1">Excludes</p>
                     {option.excludes.map((item) => (
-                      <p key={item} className="text-xs text-zinc-600 flex items-center gap-1">
-                        <span className="text-zinc-600">—</span> {item}
+                      <p key={item} className="text-xs text-[var(--text-muted)] flex items-center gap-1">
+                        <span className="text-[var(--text-muted)]">—</span> {item}
                       </p>
                     ))}
                   </div>
@@ -110,7 +110,7 @@ export const StrategyCard = forwardRef<HTMLButtonElement, StrategyCardProps>(
             <span
               className={cn(
                 "text-xs font-mono",
-                selected ? "text-[var(--brand-primary)]" : "text-zinc-500"
+                selected ? "text-[var(--brand-primary)]" : "text-[var(--text-muted)]"
               )}
             >
               {option.timeEstimate}

@@ -35,14 +35,14 @@ export function ProductPerformance({ data, loading, error }: ProductPerformanceP
 
           {data.topPerformers.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-zinc-400 mb-2">Top Performers</p>
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-2">Top Performers</p>
               <div className="space-y-1">
                 {data.topPerformers.map((p, i) => (
                   <div key={p.name} className="flex items-center gap-3 text-sm py-1.5 border-b border-white/5 last:border-0">
-                    <span className="text-xs text-zinc-600 w-4 shrink-0">{i + 1}</span>
-                    <span className="flex-1 text-zinc-300 truncate">{p.name}</span>
-                    <span className="text-zinc-400 text-xs">{p.sales} sold</span>
-                    <span className="text-zinc-200 font-medium tabular-nums">{formatCurrency(p.revenue)}</span>
+                    <span className="text-xs text-[var(--text-muted)] w-4 shrink-0">{i + 1}</span>
+                    <span className="flex-1 text-[var(--text-primary)] truncate">{p.name}</span>
+                    <span className="text-[var(--text-secondary)] text-xs">{p.sales} sold</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">{formatCurrency(p.revenue)}</span>
                   </div>
                 ))}
               </div>
@@ -51,13 +51,13 @@ export function ProductPerformance({ data, loading, error }: ProductPerformanceP
 
           {data.lowestPerformers.length > 0 && data.topPerformers.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-zinc-400 mb-2">Needs Attention</p>
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-2">Needs Attention</p>
               <div className="space-y-1">
                 {data.lowestPerformers.map((p, i) => (
                   <div key={p.name} className="flex items-center gap-3 text-sm py-1.5">
                     <span className="text-xs text-red-400 w-4 shrink-0">{i + 1}</span>
-                    <span className="flex-1 text-zinc-300 truncate">{p.name}</span>
-                    <span className="text-xs text-zinc-600">No sales</span>
+                    <span className="flex-1 text-[var(--text-primary)] truncate">{p.name}</span>
+                    <span className="text-xs text-[var(--text-muted)]">No sales</span>
                   </div>
                 ))}
               </div>

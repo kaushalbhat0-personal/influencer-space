@@ -111,14 +111,14 @@ export function NavigationManager({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-zinc-500">{items.length} item{items.length !== 1 ? "s" : ""}</span>
-          {saving && <span className="text-xs text-zinc-500">Saving...</span>}
+          <span className="text-xs text-[var(--text-muted)]">{items.length} item{items.length !== 1 ? "s" : ""}</span>
+          {saving && <span className="text-xs text-[var(--text-muted)]">Saving...</span>}
           {saved && <span className="text-xs text-emerald-400">Saved</span>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             <RotateCcw className="h-3 w-3" />
             Reset to Defaults
@@ -131,7 +131,7 @@ export function NavigationManager({
                 const page = availablePages.find((p) => p.slug === slug);
                 if (slug && page) addPageLink(slug, page.name);
               }}
-              className="rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300"
+              className="rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-xs text-[var(--text-primary)]"
             >
               <option value="">Add Page…</option>
               {availablePages.map((p) => (
@@ -160,7 +160,7 @@ export function NavigationManager({
                 onClick={() => moveItem(index, -1)}
                 disabled={index === 0}
                 aria-label={`Move ${item.label} up`}
-                className="rounded p-1 text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <MoveUp className="h-3 w-3" />
               </button>
@@ -168,7 +168,7 @@ export function NavigationManager({
                 onClick={() => moveItem(index, 1)}
                 disabled={index === items.length - 1}
                 aria-label={`Move ${item.label} down`}
-                className="rounded p-1 text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <MoveDown className="h-3 w-3" />
               </button>
@@ -179,7 +179,7 @@ export function NavigationManager({
                 ? "bg-amber-900/30 text-amber-400"
                 : item.type === "anchor"
                 ? "bg-blue-900/30 text-blue-400"
-                : "bg-zinc-800 text-zinc-400"
+                : "bg-zinc-800 text-[var(--text-secondary)]"
             }`}>
               {TYPE_LABELS[item.type]}
             </span>
@@ -190,17 +190,17 @@ export function NavigationManager({
                 value={item.label}
                 onChange={(e) => updateLabel(index, e.target.value)}
                 aria-label={`Label for ${item.label}`}
-                className="w-full min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder-zinc-600 sm:max-w-[12rem]"
+                className="w-full min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[var(--text-muted)] sm:max-w-[12rem]"
               />
 
               {item.type === "external" && (
-                <span className="flex min-w-0 items-center gap-1 truncate text-xs text-zinc-600" title={item.href}>
+                <span className="flex min-w-0 items-center gap-1 truncate text-xs text-[var(--text-muted)]" title={item.href}>
                   <ExternalLink className="h-3 w-3 shrink-0" />
                   <span className="truncate">{item.href}</span>
                 </span>
               )}
               {item.type === "page" && (
-                <span className="flex min-w-0 items-center gap-1 truncate text-xs text-zinc-600" title={`/${item.href.replace(/^\/+/, "")}`}>
+                <span className="flex min-w-0 items-center gap-1 truncate text-xs text-[var(--text-muted)]" title={`/${item.href.replace(/^\/+/, "")}`}>
                   <span className="truncate">/{item.href.replace(/^\/+/, "")}</span>
                 </span>
               )}
@@ -210,7 +210,7 @@ export function NavigationManager({
               <button
                 onClick={() => toggleVisibility(index)}
                 aria-label={item.visible ? `Hide ${item.label}` : `Show ${item.label}`}
-                className="rounded p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
+                className="rounded p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                 title={item.visible ? "Visible" : "Hidden"}
               >
                 {item.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -220,7 +220,7 @@ export function NavigationManager({
                 <button
                   onClick={() => removeItem(index)}
                   aria-label={`Remove ${item.label}`}
-                  className="rounded p-1 text-zinc-600 hover:text-red-400 transition-colors"
+                  className="rounded p-1 text-[var(--text-muted)] hover:text-red-400 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -232,7 +232,7 @@ export function NavigationManager({
 
       {items.length === 0 && (
         <div className="rounded-xl border border-dashed border-white/10 p-8 text-center">
-          <p className="text-sm text-zinc-600">No navigation items yet.</p>
+          <p className="text-sm text-[var(--text-muted)]">No navigation items yet.</p>
           <button
             onClick={addExternalLink}
             className="mt-3 text-xs text-[var(--brand-primary)] hover:underline"
@@ -243,7 +243,7 @@ export function NavigationManager({
       )}
 
       <div className="rounded-lg border border-white/5 bg-zinc-900/30 p-4">
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-[var(--text-muted)]">
           Navigation changes are saved immediately. Publish your website to apply them to the storefront.
         </p>
       </div>

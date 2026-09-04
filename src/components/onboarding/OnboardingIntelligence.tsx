@@ -21,7 +21,7 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
       {/* Knowledge Score */}
       <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Profile Knowledge</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Profile Knowledge</p>
           <span className="text-xl font-bold text-[var(--brand-primary)]">{knowledgeScore.overall}%</span>
         </div>
         <div className="mt-2 h-1.5 rounded-full bg-zinc-800">
@@ -30,13 +30,13 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
         <div className="mt-3 grid grid-cols-3 gap-2">
           {knowledgeScore.categories.slice(0, 3).map((category) => (
             <div key={category.id}>
-              <p className="text-[10px] text-zinc-500">{category.label}</p>
-              <p className="text-xs font-medium text-zinc-300">{category.percent}%</p>
+              <p className="text-[10px] text-[var(--text-muted)]">{category.label}</p>
+              <p className="text-xs font-medium text-[var(--text-primary)]">{category.percent}%</p>
             </div>
           ))}
         </div>
         {knowledgeScore.missingFields.length > 0 && (
-          <p className="mt-2 text-[10px] text-zinc-600">
+          <p className="mt-2 text-[10px] text-[var(--text-muted)]">
             We&apos;ll help you complete: {knowledgeScore.missingFields.slice(0, 3).map((m) => m.label).join(", ")}
           </p>
         )}
@@ -45,10 +45,10 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
       {/* Recommended goals */}
       <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
         <div className="flex items-center justify-between">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
             <Target className="h-3.5 w-3.5 text-[var(--brand-primary)]" /> Recommended goals
           </p>
-          <label className="flex items-center gap-1.5 text-[11px] text-zinc-400">
+          <label className="flex items-center gap-1.5 text-[11px] text-[var(--text-secondary)]">
             <input
               type="checkbox"
               checked={useGoals}
@@ -62,7 +62,7 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
           {goalProfile.weights.map((weight) => (
             <div key={weight.goalId}>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-300">{weight.goalId.replace(/_/g, " ")}</span>
+                <span className="text-[var(--text-primary)]">{weight.goalId.replace(/_/g, " ")}</span>
                 <span className="text-[var(--brand-primary)] font-semibold">{weight.weight}%</span>
               </div>
               <div className="mt-1 h-1 rounded-full bg-zinc-800">
@@ -76,7 +76,7 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
       {/* Top recommendations */}
       {topRecommendations.length > 0 && (
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
             <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Recommended first steps
           </p>
           <div className="mt-3 space-y-2">
@@ -84,10 +84,10 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
               <div key={rec.id} className="flex items-start gap-2 rounded-lg border border-white/5 bg-zinc-900/40 px-3 py-2">
                 <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-zinc-200">{rec.title}</p>
-                  <p className="mt-0.5 text-[10px] text-zinc-500">{rec.description}</p>
+                  <p className="text-xs font-medium text-[var(--text-primary)]">{rec.title}</p>
+                  <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">{rec.description}</p>
                 </div>
-                <span className="flex items-center gap-1 shrink-0 text-[10px] text-zinc-500">
+                <span className="flex items-center gap-1 shrink-0 text-[10px] text-[var(--text-muted)]">
                   <Clock className="h-3 w-3" /> {rec.estimatedTime}m
                 </span>
               </div>
@@ -99,12 +99,12 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
       {/* Adaptive questions */}
       {answerable.length > 0 && (
         <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Quick answers (optional)</p>
-          <p className="mt-0.5 text-[10px] text-zinc-600">Answer these and we&apos;ll include them in your generated profile.</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Quick answers (optional)</p>
+          <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">Answer these and we&apos;ll include them in your generated profile.</p>
           <div className="mt-3 space-y-3">
             {answerable.map((question) => (
               <div key={question.id}>
-                <p className="mb-1 text-xs text-zinc-300">{question.prompt}</p>
+                <p className="mb-1 text-xs text-[var(--text-primary)]">{question.prompt}</p>
                 {question.type === "choice" ? (
                   <div className="flex flex-wrap gap-1.5">
                     {question.options?.map((option) => (
@@ -115,7 +115,7 @@ export function OnboardingIntelligence({ preview, useGoals, onToggleGoals, quest
                         className={`rounded-lg border px-2.5 py-1 text-[11px] transition-colors ${
                           questionAnswers[question.fieldId] === option.value
                             ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]"
-                            : "border-white/10 text-zinc-400 hover:border-white/25"
+                            : "border-white/10 text-[var(--text-secondary)] hover:border-white/25"
                         }`}
                       >
                         {option.label}

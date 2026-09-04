@@ -75,21 +75,21 @@ export default async function AgencyTeamPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                      <span className="text-sm font-medium text-zinc-400">
+                      <span className="text-sm font-medium text-[var(--text-secondary)]">
                         {(m.name ?? m.email)[0].toUpperCase()}
                       </span>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">{m.name || m.email}</p>
-                      <p className="text-xs text-zinc-500">{m.email}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{m.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-400">
+                    <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                       {m.applicationRole ?? m.role}
                     </span>
-                    <span className={`text-xs ${m.status === "ACTIVE" ? "text-emerald-400" : "text-zinc-600"}`}>{m.status}</span>
-                    <span className="text-xs text-zinc-500">
+                    <span className={`text-xs ${m.status === "ACTIVE" ? "text-emerald-400" : "text-[var(--text-muted)]"}`}>{m.status}</span>
+                    <span className="text-xs text-[var(--text-muted)]">
                       {m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : "—"}
                     </span>
                     {isAdmin && m.status === "ACTIVE" && m.userId !== currentUserId && (
@@ -107,7 +107,7 @@ export default async function AgencyTeamPage() {
                       <Link
                         key={c.tenantId}
                         href={`/agency/clients/${c.tenantId}`}
-                        className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400 hover:text-white transition-colors"
+                        className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                       >
                         {c.businessName}
                       </Link>

@@ -101,7 +101,7 @@ export function OrderDetailDrawer({ orderId, open, onClose }: OrderDetailDrawerP
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className="mt-5 first:mt-0">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{label}</h3>
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">{label}</h3>
       <div className="mt-2">{children}</div>
     </section>
   );
@@ -110,8 +110,8 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] text-zinc-500">{label}</dt>
-      <dd className="truncate text-sm text-zinc-200">{value}</dd>
+      <dt className="text-[11px] text-[var(--text-muted)]">{label}</dt>
+      <dd className="truncate text-sm text-[var(--text-primary)]">{value}</dd>
     </div>
   );
 }
@@ -131,7 +131,7 @@ function OrderDetailBody({ order, onOrderRefreshed }: { order: CreatorOrderDetai
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge variant={orderStatus.badgeVariant} size="sm">{orderStatus.label}</Badge>
         <Badge variant="default" size="sm" className="capitalize">{order.productType}</Badge>
-        <span className="text-xs text-zinc-500">· {formatOrderDate(order.createdAt)}</span>
+        <span className="text-xs text-[var(--text-muted)]">· {formatOrderDate(order.createdAt)}</span>
       </div>
 
       <Section label="Order">
@@ -193,13 +193,13 @@ function OrderDetailBody({ order, onOrderRefreshed }: { order: CreatorOrderDetai
               <Badge variant={order.fulfillment.status === "delivered" || order.fulfillment.status === "completed" ? "success" : "info"} size="sm">
                 {statusLabel(order.fulfillment.status)}
               </Badge>
-              <span className="text-xs capitalize text-zinc-500">{order.fulfillment.type}</span>
+              <span className="text-xs capitalize text-[var(--text-muted)]">{order.fulfillment.type}</span>
             </div>
             {order.fulfillment.type === "physical" && (
               <FulfillmentControls order={order} onRefreshed={onOrderRefreshed} />
             )}
             {(order.fulfillment.trackingNumber || order.fulfillment.courier) && (
-              <p className="mt-2 text-sm text-zinc-300">
+              <p className="mt-2 text-sm text-[var(--text-primary)]">
                 {order.fulfillment.courier ?? "Courier"} · <span className="font-mono text-xs">{order.fulfillment.trackingNumber ?? "—"}</span>
               </p>
             )}
@@ -210,16 +210,16 @@ function OrderDetailBody({ order, onOrderRefreshed }: { order: CreatorOrderDetai
             {order.fulfillment.timeline.length > 0 && (
               <ol className="mt-3 space-y-1.5 border-l border-white/10 pl-3">
                 {order.fulfillment.timeline.map((t, i) => (
-                  <li key={`${t.status}-${i}`} className="text-xs text-zinc-400">
-                    <span className="text-zinc-200">{statusLabel(t.status)}</span> · {formatOrderDate(t.at)}
-                    {t.by && <span className="text-zinc-600"> · {t.by}</span>}
+                  <li key={`${t.status}-${i}`} className="text-xs text-[var(--text-secondary)]">
+                    <span className="text-[var(--text-primary)]">{statusLabel(t.status)}</span> · {formatOrderDate(t.at)}
+                    {t.by && <span className="text-[var(--text-muted)]"> · {t.by}</span>}
                   </li>
                 ))}
               </ol>
             )}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">Fulfillment starts once payment completes.</p>
+          <p className="text-sm text-[var(--text-muted)]">Fulfillment starts once payment completes.</p>
         )}
       </Section>
 
@@ -228,19 +228,19 @@ function OrderDetailBody({ order, onOrderRefreshed }: { order: CreatorOrderDetai
       {order.productType === "physical" && (
         <Section label="Shipping address">
           {address ? (
-            <address className="not-italic text-sm leading-relaxed text-zinc-300">
+            <address className="not-italic text-sm leading-relaxed text-[var(--text-primary)]">
               {address.name && <p>{address.name}</p>}
-              {address.phone && <p className="text-zinc-400">{address.phone}</p>}
+              {address.phone && <p className="text-[var(--text-secondary)]">{address.phone}</p>}
               {address.line1 && <p>{address.line1}</p>}
               {address.line2 && <p>{address.line2}</p>}
               <p>
                 {[address.city, address.state, address.pin].filter(Boolean).join(", ")}
               </p>
               {address.country && <p>{address.country}</p>}
-              {address.instructions && <p className="mt-1 text-xs text-zinc-500">“{address.instructions}”</p>}
+              {address.instructions && <p className="mt-1 text-xs text-[var(--text-muted)]">“{address.instructions}”</p>}
             </address>
           ) : (
-            <p className="text-sm text-zinc-500">No shipping address submitted yet.</p>
+            <p className="text-sm text-[var(--text-muted)]">No shipping address submitted yet.</p>
           )}
         </Section>
       )}
@@ -253,7 +253,7 @@ function OrderDetailBody({ order, onOrderRefreshed }: { order: CreatorOrderDetai
 // action re-validates role, tenant, and legality on every call. Tracking stays
 // OPTIONAL exactly as the existing architecture defines it. Every outcome —
 // success, rejection, or lost race — ends in a server-truth refresh.
-const inputCls = "w-full rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20";
+const inputCls = "w-full rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20";
 const buttonCls = "rounded-lg border border-[var(--color-info-border)] bg-[var(--color-info-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-info)] transition hover:bg-[var(--color-info-surface)] disabled:cursor-not-allowed disabled:opacity-50";
 
 function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetailView; onRefreshed: () => Promise<void> }) {
@@ -296,11 +296,11 @@ function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetail
     <div aria-busy={busy} data-testid="fulfillment-controls" className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-3">
       {controls.length > 0 && (
         <>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Manage fulfillment</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Manage fulfillment</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <label className="block min-w-0 text-[11px] text-zinc-500">
+            <label className="block min-w-0 text-[11px] text-[var(--text-muted)]">
               Tracking number{" "}
-              <span className="text-zinc-600">(optional)</span>
+              <span className="text-[var(--text-muted)]">(optional)</span>
               <input
                 className={`mt-1 ${inputCls}`}
                 placeholder="e.g. AWB 123456"
@@ -309,7 +309,7 @@ function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetail
                 onChange={(e) => setTrackingNumber(e.target.value)}
               />
             </label>
-            <label className="block min-w-0 text-[11px] text-zinc-500">
+            <label className="block min-w-0 text-[11px] text-[var(--text-muted)]">
               Courier
               <input
                 className={`mt-1 ${inputCls}`}
@@ -330,7 +330,7 @@ function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetail
         </>
       )}
       {busy && (
-        <p role="status" className="mt-2 flex items-center gap-2 text-xs text-zinc-400">
+        <p role="status" className="mt-2 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
           <LoadingSpinner size="sm" /> Updating…
         </p>
       )}
@@ -352,7 +352,7 @@ function FulfillmentControls({ order, onRefreshed }: { order: CreatorOrderDetail
 // Nothing here is authoritative: every invalid/stale request is rejected by
 // the existing D.3/D.4 guards and surfaced as a mapped safe message.
 
-const REFUND_INPUT_CLS = "mt-1 w-full max-w-[16rem] rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-2.5 py-1.5 text-sm text-zinc-100 placeholder-zinc-600 focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20";
+const REFUND_INPUT_CLS = "mt-1 w-full max-w-[16rem] rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-2.5 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20";
 
 const REFUND_VALIDATION_MESSAGES: Record<string, string> = {
   empty: "Enter an amount.",
@@ -428,8 +428,8 @@ function RefundInitiator({ order, onRefreshed, onNotice }: RefundInitiatorProps)
 
   return (
     <div aria-busy={busy} data-testid="refund-initiator" className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Request a refund</p>
-      <label className="mt-2 block text-[11px] text-zinc-500">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Request a refund</p>
+      <label className="mt-2 block text-[11px] text-[var(--text-muted)]">
         Amount to refund (₹) — up to {formatPaise(remaining)}
         <input
           type="text"
@@ -449,8 +449,8 @@ function RefundInitiator({ order, onRefreshed, onNotice }: RefundInitiatorProps)
       )}
 
       {phase.step === "confirm" && (
-        <div data-testid="refund-confirm" className="mt-3 rounded-lg border border-white/10 bg-zinc-900/60 p-3 text-xs text-zinc-300">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Confirm refund</p>
+        <div data-testid="refund-confirm" className="mt-3 rounded-lg border border-white/10 bg-zinc-900/60 p-3 text-xs text-[var(--text-primary)]">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Confirm refund</p>
           <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
             <Fact label="Order" value={<span className="font-mono">{order.id}</span>} />
             <Fact label="Refund amount" value={formatPaise(phase.amountPaise)} />
@@ -470,10 +470,10 @@ function RefundInitiator({ order, onRefreshed, onNotice }: RefundInitiatorProps)
       )}
 
       {alreadyMovingNote && (
-        <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">{alreadyMovingNote}</p>
+        <p className="mt-2 text-[11px] leading-relaxed text-[var(--text-muted)]">{alreadyMovingNote}</p>
       )}
       {busy && (
-        <p role="status" className="mt-2 flex items-center gap-2 text-xs text-zinc-400">
+        <p role="status" className="mt-2 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
           <LoadingSpinner size="sm" /> Processing refund…
         </p>
       )}

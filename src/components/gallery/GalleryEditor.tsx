@@ -92,7 +92,7 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-zinc-950/95 px-6 py-4 backdrop-blur-sm">
               <h2 className="text-base font-semibold text-white">Edit Media</h2>
-              <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/10 hover:text-white" aria-label="Close editor">
+              <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-white/10 hover:text-[var(--text-primary)]" aria-label="Close editor">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -127,15 +127,15 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
                 <legend className="text-sm font-semibold text-white mb-3">Details</legend>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="gallery-caption" className="block text-xs font-medium text-zinc-400 mb-1.5">Caption</label>
+                    <label htmlFor="gallery-caption" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Caption</label>
                     <input id="gallery-caption" value={caption} onChange={(e) => setCaption(e.target.value)}
                       className="admin-input w-full" disabled={saving} placeholder="A brief description..." />
                   </div>
                   <div>
-                    <label htmlFor="gallery-alt" className="block text-xs font-medium text-zinc-400 mb-1.5">Alt Text (SEO)</label>
+                    <label htmlFor="gallery-alt" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Alt Text (SEO)</label>
                     <input id="gallery-alt" value={altText} onChange={(e) => setAltText(e.target.value)}
                       className="admin-input w-full" disabled={saving} placeholder="Describe the image for screen readers..." />
-                    <p className="mt-1 text-[11px] text-zinc-600">Helps with accessibility and search engine rankings.</p>
+                    <p className="mt-1 text-[11px] text-[var(--text-muted)]">Helps with accessibility and search engine rankings.</p>
                   </div>
                 </div>
               </fieldset>
@@ -145,7 +145,7 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
                 <legend className="text-sm font-semibold text-white mb-3">Visibility</legend>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="gallery-status" className="block text-xs font-medium text-zinc-400 mb-1.5">Status</label>
+                    <label htmlFor="gallery-status" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Status</label>
                     <select id="gallery-status" value={status} onChange={(e) => setStatus(e.target.value)}
                       className="admin-input w-full sm:w-48" disabled={saving}>
                       <option value="PUBLISHED">Published</option>
@@ -156,7 +156,7 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)}
                       className="h-4 w-4 rounded border-zinc-600 bg-zinc-800 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]/30" />
-                    <span className="text-xs text-zinc-400">Featured media (shown first on storefront)</span>
+                    <span className="text-xs text-[var(--text-secondary)]">Featured media (shown first on storefront)</span>
                   </label>
                 </div>
               </fieldset>
@@ -166,12 +166,12 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
                 <legend className="text-sm font-semibold text-white mb-3">Categorization</legend>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="gallery-category" className="block text-xs font-medium text-zinc-400 mb-1.5">Category</label>
+                    <label htmlFor="gallery-category" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Category</label>
                     <input id="gallery-category" value={category} onChange={(e) => setCategory(e.target.value)}
                       className="admin-input w-full" disabled={saving} placeholder="e.g. Events, Products, Lifestyle" />
                   </div>
                   <div>
-                    <label htmlFor="gallery-tags" className="block text-xs font-medium text-zinc-400 mb-1.5">Tags</label>
+                    <label htmlFor="gallery-tags" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Tags</label>
                     <input id="gallery-tags" value={tags} onChange={(e) => setTags(e.target.value)}
                       className="admin-input w-full" disabled={saving} placeholder="Comma-separated: launch, event, behind-the-scenes" />
                   </div>

@@ -8,15 +8,15 @@ export function ImportHistoryTable({ records }: { records: AcquisitionRecord[] }
   if (records.length === 0) {
     return (
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-8 text-center">
-        <Clock className="h-6 w-6 text-zinc-700 mx-auto mb-2" />
-        <p className="text-sm text-zinc-500">No imports yet. Create your first creator import above.</p>
+        <Clock className="h-6 w-6 text-[var(--text-muted)] mx-auto mb-2" />
+        <p className="text-sm text-[var(--text-muted)]">No imports yet. Create your first creator import above.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Recent Imports</h4>
+      <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Recent Imports</h4>
       <div className="space-y-2">
         {records.map((r, i) => (
           <motion.div
@@ -37,7 +37,7 @@ export function ImportHistoryTable({ records }: { records: AcquisitionRecord[] }
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white truncate">{r.creatorName}</p>
-              <p className="text-[10px] text-zinc-500">
+              <p className="text-[10px] text-[var(--text-muted)]">
                 {r.strategy} · {Math.round(r.duration / 1000)}s · {r.confidence}% confidence
               </p>
             </div>
@@ -45,7 +45,7 @@ export function ImportHistoryTable({ records }: { records: AcquisitionRecord[] }
               <span className={`text-[10px] font-medium ${r.status === "completed" ? "text-emerald-400" : r.status === "started" ? "text-amber-400" : "text-red-400"}`}>
                 {r.status}
               </span>
-              {r.storefrontUrl && <p className="text-[10px] text-zinc-600">{r.storefrontUrl}</p>}
+              {r.storefrontUrl && <p className="text-[10px] text-[var(--text-muted)]">{r.storefrontUrl}</p>}
             </div>
           </motion.div>
         ))}

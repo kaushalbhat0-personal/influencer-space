@@ -12,8 +12,8 @@ export async function ActivityFeed({ tenantId }: { tenantId: string }) {
             <div className={`flex-shrink-0 rounded-lg ${a.iconBg} p-2`}>
               <a.icon className={`h-4 w-4 ${a.iconColor}`} aria-hidden="true" />
             </div>
-            <p className="flex-1 text-sm text-zinc-300 truncate">{a.title}</p>
-            <span className="text-xs text-zinc-600 shrink-0">{a.time}</span>
+            <p className="flex-1 text-sm text-[var(--text-primary)] truncate">{a.title}</p>
+            <span className="text-xs text-[var(--text-muted)] shrink-0">{a.time}</span>
           </div>
         ))}
       </div>

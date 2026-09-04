@@ -56,7 +56,7 @@ export function EditEntityDrawer({ open, onClose, title, children }: EditEntityD
               <h2 className="text-base font-semibold text-white">{title}</h2>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-white/10 hover:text-[var(--text-primary)]"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

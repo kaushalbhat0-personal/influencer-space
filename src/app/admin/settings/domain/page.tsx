@@ -18,7 +18,7 @@ export default async function DomainPage() {
     return (
       <ContentContainer>
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
-        <p className="mt-4 text-gray-400">No tenant configured. Please seed a tenant first.</p>
+        <p className="mt-4 text-[var(--text-muted)]">No tenant configured. Please seed a tenant first.</p>
       </ContentContainer>
     );
   }
@@ -55,7 +55,7 @@ export default async function DomainPage() {
     <ContentContainer>
       <div className="mb-6">
         <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Attach your own custom domain to replace the default subdomain.
         </p>
       </div>

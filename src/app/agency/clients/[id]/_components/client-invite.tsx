@@ -33,12 +33,12 @@ export function ClientInvite({ tenantId, tenantName }: { tenantId: string; tenan
   return (
     <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
       <label className="mb-1 block text-[11px] text-emerald-300">Creator email</label>
-      <input value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-zinc-200" aria-label="Creator email" data-testid="client-invite-email" />
+      <input value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-[var(--text-primary)]" aria-label="Creator email" data-testid="client-invite-email" />
       <div className="mt-2 flex gap-2">
         <button onClick={send} disabled={busy} className="rounded-md bg-emerald-500 px-2 py-1 text-[11px] text-black hover:bg-emerald-600 disabled:opacity-50" data-testid="client-invite-send">
           {busy ? "Sending…" : "Send"}
         </button>
-        <button onClick={() => setOpen(false)} className="rounded-md bg-white/5 px-2 py-1 text-[11px] text-zinc-300">Close</button>
+        <button onClick={() => setOpen(false)} className="rounded-md bg-white/5 px-2 py-1 text-[11px] text-[var(--text-primary)]">Close</button>
       </div>
       {result && (
         <div className={`mt-2 text-[11px] ${result.ok ? "text-emerald-300" : "text-red-300"}`} data-testid="client-invite-result">

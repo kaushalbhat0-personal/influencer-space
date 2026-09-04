@@ -127,7 +127,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                 )} />
               ))}
             </div>
-            <p className="text-xs text-zinc-500">Step {currentIdx - 1} of 4</p>
+            <p className="text-xs text-[var(--text-muted)]">Step {currentIdx - 1} of 4</p>
           </div>
         )}
 
@@ -139,7 +139,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Welcome to CreatorStore</h1>
-              <p className="mt-2 text-zinc-400">Let&apos;s build your creator business.</p>
+              <p className="mt-2 text-[var(--text-secondary)]">Let&apos;s build your creator business.</p>
             </div>
             <button onClick={next} className="btn-primary w-full py-3">
               Continue
@@ -151,11 +151,11 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
         {state.step === "persona" && (
           <div className="space-y-6">
             <div>
-              <button onClick={back} className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1 mb-4">
+              <button onClick={back} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-4">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
               <h2 className="text-xl font-semibold text-white">Who are you?</h2>
-              <p className="mt-1 text-sm text-zinc-400">This helps us set up your workspace.</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">This helps us set up your workspace.</p>
             </div>
             <div className="grid gap-3">
               {([
@@ -177,7 +177,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                   </div>
                   <div>
                     <p className="font-medium text-white">{p.label}</p>
-                    <p className="text-sm text-zinc-500 mt-0.5">{p.desc}</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-0.5">{p.desc}</p>
                   </div>
                 </button>
               ))}
@@ -189,11 +189,11 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
         {state.step === "plan" && (
           <div className="space-y-6">
             <div>
-              <button onClick={back} className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1 mb-4">
+              <button onClick={back} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-4">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
               <h2 className="text-xl font-semibold text-white">Choose your plan</h2>
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 {isFreePlan ? "Start free. Upgrade anytime." : "You selected a paid plan."}
               </p>
             </div>
@@ -218,10 +218,10 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                 >
                   <div>
                     <p className="font-medium text-white">{plan.name}</p>
-                    <p className="text-xs text-zinc-500">{plan.description}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{plan.description}</p>
                   </div>
                   <span className={cn("text-sm font-semibold",
-                    state.selectedPlan === plan.code ? "text-[var(--brand-primary)]" : "text-zinc-300"
+                    state.selectedPlan === plan.code ? "text-[var(--brand-primary)]" : "text-[var(--text-primary)]"
                   )}>
                     {plan.ctaType === "contact" ? "Contact Sales" : (plan.price === 0 ? "Free" : `${formatCurrency(plan.price)}/mo`)}
                   </span>
@@ -236,24 +236,24 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
         {state.step === "account" && (
           <div className="space-y-5">
             <div>
-              <button onClick={back} className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1 mb-4">
+              <button onClick={back} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-4">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
               <h2 className="text-xl font-semibold text-white">Create your account</h2>
-              <p className="mt-1 text-sm text-zinc-400">You&apos;re joining as a {state.persona}. {isFreePlan ? "Free forever." : ""}</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">You&apos;re joining as a {state.persona}. {isFreePlan ? "Free forever." : ""}</p>
             </div>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-zinc-300 mb-1.5">Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Name</label>
               <input id="name" type="text" value={state.name} onChange={(e) => update({ name: e.target.value })}
                 className="admin-input" placeholder="Your name" autoComplete="name" />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Email</label>
               <input id="email" type="email" value={state.email} onChange={(e) => update({ email: e.target.value })}
                 className="admin-input" placeholder="you@example.com" autoComplete="email" />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Password</label>
               <input id="password" type="password" value={state.password} onChange={(e) => update({ password: e.target.value })}
                 className="admin-input" placeholder="Min 8 characters" autoComplete="new-password" />
             </div>
@@ -276,7 +276,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
             <div className="animate-spin h-8 w-8 border-2 border-[var(--brand-primary)]/30 border-t-[var(--brand-primary)] rounded-full mx-auto" />
             <div>
               <h2 className="text-lg font-semibold text-white">Setting up your workspace</h2>
-              <p className="text-sm text-zinc-500 mt-1">Creating account, provisioning billing, preparing dashboard...</p>
+              <p className="text-sm text-[var(--text-muted)] mt-1">Creating account, provisioning billing, preparing dashboard...</p>
             </div>
           </div>
         )}
@@ -294,7 +294,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               {/* RCCF-MKT-11: the plan name is derived from the selected plan so a
                   Partner on Partner Launch is never told they are on "the Creator
                   Launch plan" (wrong-persona claim on the conversion journey). */}
-              <p className="text-sm text-zinc-500 mt-2">
+              <p className="text-sm text-[var(--text-muted)] mt-2">
                 Your account is ready. {!isEnterprise && selectedPlanDef && selectedPlanDef.price === 0 ? `You're on the ${selectedPlanDef.name} plan.` : ""}
               </p>
             </div>

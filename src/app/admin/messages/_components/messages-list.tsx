@@ -25,7 +25,7 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="admin-gradient-text text-2xl font-bold font-display">Messages</h1>
-          <p className="mt-1 text-sm text-gray-400">Contact form submissions</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Contact form submissions</p>
         </div>
         {unreadCount > 0 && (
           <span className="admin-badge-cyan">{unreadCount} unread</span>
@@ -52,7 +52,7 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
             <tbody>
               {messages.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">
                     No messages yet.
                   </td>
                 </tr>
@@ -65,17 +65,17 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
                   >
                     <td className="font-medium text-white">{message.name}</td>
                     <td className="hidden sm:table-cell">
-                      <span className="break-all text-gray-400">{message.email}</span>
+                      <span className="break-all text-[var(--text-muted)]">{message.email}</span>
                     </td>
                     <td className="max-w-[12rem] sm:max-w-none">
-                      <span className="line-clamp-2 break-words text-sm text-gray-400">{message.message}</span>
+                      <span className="line-clamp-2 break-words text-sm text-[var(--text-muted)]">{message.message}</span>
                     </td>
                     <td className="hidden sm:table-cell">
                       <span className={message.isRead ? "admin-badge-inactive" : "admin-badge-cyan"}>
                         {message.isRead ? "Read" : "Unread"}
                       </span>
                     </td>
-                    <td className="hidden text-gray-400 lg:table-cell">
+                    <td className="hidden text-[var(--text-muted)] lg:table-cell">
                       {formatDate(message.createdAt)}
                     </td>
                     <td>

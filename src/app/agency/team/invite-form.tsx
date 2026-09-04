@@ -56,7 +56,7 @@ export function TeamInviteForm() {
       <h3 className="mb-3 text-sm font-semibold text-white">Invite team member</h3>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex-1 min-w-[220px]">
-          <span className="mb-1 block text-xs text-zinc-400">Email</span>
+          <span className="mb-1 block text-xs text-[var(--text-secondary)]">Email</span>
           <input
             type="email"
             value={email}
@@ -66,7 +66,7 @@ export function TeamInviteForm() {
           />
         </label>
         <label className="min-w-[160px]">
-          <span className="mb-1 block text-xs text-zinc-400">Role</span>
+          <span className="mb-1 block text-xs text-[var(--text-secondary)]">Role</span>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -93,14 +93,14 @@ export function TeamInviteForm() {
       {state.status === "created-not-delivered" && (
         <div className="mt-3">
           <p className="text-sm text-amber-400">Invitation created, but the email could not be sent.</p>
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
             The invitation is still pending. Share this link manually or retry delivery:
           </p>
           <p className="mt-2 break-all rounded bg-zinc-950 px-2 py-1 font-mono text-xs text-[var(--brand-primary)]">{state.acceptUrl}</p>
           <button
             onClick={resend}
             disabled={pending}
-            className="mt-2 rounded-md border border-white/10 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+            className="mt-2 rounded-md border border-white/10 px-3 py-1 text-xs text-[var(--text-primary)] hover:bg-zinc-800 disabled:opacity-40"
           >
             Retry email delivery
           </button>
@@ -113,7 +113,7 @@ export function TeamInviteForm() {
           <button
             onClick={resend}
             disabled={pending}
-            className="mt-2 rounded-md border border-white/10 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+            className="mt-2 rounded-md border border-white/10 px-3 py-1 text-xs text-[var(--text-primary)] hover:bg-zinc-800 disabled:opacity-40"
           >
             Resend invitation
           </button>

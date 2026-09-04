@@ -77,7 +77,7 @@ const TONE_CLASS: Record<FriendlyTone, string> = {
   green: "bg-emerald-900/70 text-emerald-300",
   amber: "bg-amber-900/70 text-amber-300",
   red: "bg-red-900/70 text-red-300",
-  zinc: "bg-zinc-800/80 text-zinc-400",
+  zinc: "bg-zinc-800/80 text-[var(--text-secondary)]",
 };
 
 export function MediaLibrary() {
@@ -224,12 +224,12 @@ export function MediaLibrary() {
             placeholder="Search assets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
+            className="flex-1 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--border-focus)]"
           />
           <select
             value={mimeFilter}
             onChange={(e) => setMimeFilter(e.target.value)}
-            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none"
+            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-secondary)] outline-none"
           >
             <option value="">All types</option>
             <option value="image">Images</option>
@@ -238,7 +238,7 @@ export function MediaLibrary() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "createdAt" | "filename" | "size")}
-            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none"
+            className="rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-secondary)] outline-none"
           >
             <option value="createdAt">Newest</option>
             <option value="filename">Name</option>
@@ -246,7 +246,7 @@ export function MediaLibrary() {
           </select>
           <button
             onClick={() => setView(view === "grid" ? "list" : "grid")}
-            className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-xs text-zinc-400 hover:text-white transition-colors"
+            className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             {view === "grid" ? "List" : "Grid"}
           </button>
@@ -264,7 +264,7 @@ export function MediaLibrary() {
 
         {uploading && (
           <div className="mb-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-3">
-            <div className="mb-1 flex justify-between text-[10px] text-zinc-500">
+            <div className="mb-1 flex justify-between text-[10px] text-[var(--text-muted)]">
               <span>Uploading…</span><span>{uploadProgress}%</span>
             </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-hover)]">
@@ -289,14 +289,14 @@ export function MediaLibrary() {
             <button
               onClick={() => setSelected(new Set())}
               disabled={busy}
-              className="rounded-md border border-[var(--border)] px-2.5 py-1 text-xs text-zinc-300 transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-50"
+              className="rounded-md border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-50"
             >
               Deselect
             </button>
             <span className="mx-1 h-4 w-px bg-white/10" />
             <button
               onClick={selectAllFiltered}
-              className="rounded-md border border-[var(--border)] px-2.5 py-1 text-xs text-zinc-300 transition-colors hover:bg-[var(--surface-hover)]"
+              className="rounded-md border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)]"
             >
               Select all filtered ({assets.length})
             </button>
@@ -309,7 +309,7 @@ export function MediaLibrary() {
           </div>
         )}
 
-        <div className="mb-2 flex items-center gap-3 text-xs text-zinc-500">
+        <div className="mb-2 flex items-center gap-3 text-xs text-[var(--text-muted)]">
           <span>{total} asset{total !== 1 ? "s" : ""}</span>
           <label className="flex cursor-pointer items-center gap-1.5">
             <input type="checkbox" checked={selected.size === assets.length && assets.length > 0} onChange={() => (selected.size === assets.length ? setSelected(new Set()) : selectAllFiltered())} className="h-3.5 w-3.5 accent-[var(--brand-primary)]" />
@@ -360,12 +360,12 @@ export function MediaLibrary() {
                       <CreatorImage src={asset.publicUrl} alt="" variant="thumbnail" className="h-full w-full" />
                     )
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-zinc-600">N/A</div>
+                    <div className="flex h-full items-center justify-center text-xs text-[var(--text-muted)]">N/A</div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-zinc-300">{asset.originalFilename}</p>
-                  <p className="text-[10px] text-zinc-600">
+                  <p className="truncate text-sm text-[var(--text-primary)]">{asset.originalFilename}</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">
                     {asset.mimeType} · {formatSize(asset.size)}
                     {asset.mimeType?.startsWith("video/") && asset.duration ? ` · ${formatDuration(asset.duration)}` : ""}
                   </p>
@@ -414,12 +414,12 @@ function EmptyState({ onUpload }: { onUpload: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--border)] py-20 text-center" data-testid="media-empty-state">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-hover)]">
-        <svg className="h-8 w-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-8 w-8 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
-      <h3 className="text-sm font-semibold text-zinc-300">No media yet</h3>
-      <p className="mt-1 max-w-xs text-xs text-zinc-500">Upload images or videos to use across your hero, gallery and products. Drop files anywhere or use the upload button.</p>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)]">No media yet</h3>
+      <p className="mt-1 max-w-xs text-xs text-[var(--text-muted)]">Upload images or videos to use across your hero, gallery and products. Drop files anywhere or use the upload button.</p>
       <button onClick={onUpload} className="mt-4 rounded-[var(--radius-control)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black transition-opacity hover:opacity-90">
         Upload Media
       </button>
@@ -429,7 +429,7 @@ function EmptyState({ onUpload }: { onUpload: () => void }) {
 
 function UsageBadge({ used }: { used: boolean }) {
   if (used) return <span className="rounded-full bg-emerald-900/70 px-2 py-0.5 text-[9px] font-medium text-emerald-300">Used</span>;
-  return <span className="rounded-full bg-[var(--surface-hover)] px-2 py-0.5 text-[9px] font-medium text-zinc-400">Unused</span>;
+  return <span className="rounded-full bg-[var(--surface-hover)] px-2 py-0.5 text-[9px] font-medium text-[var(--text-secondary)]">Unused</span>;
 }
 
 function MediaCard({
@@ -461,7 +461,7 @@ function MediaCard({
         )
       ) : (
         <div className="flex h-full items-center justify-center bg-[var(--surface-hover)]">
-          <span className="text-xs text-zinc-600">No preview</span>
+          <span className="text-xs text-[var(--text-muted)]">No preview</span>
         </div>
       )}
 
@@ -499,7 +499,7 @@ function MediaCard({
       {/* meta — always visible on touch/mobile, hover-revealed on desktop */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2 lg:opacity-0 lg:transition-opacity lg:group-hover:opacity-100">
         <p className="truncate text-[10px] text-white/85">{asset.originalFilename}</p>
-        <p className="text-[9px] text-zinc-400">
+        <p className="text-[9px] text-[var(--text-secondary)]">
           {formatSize(asset.size)}
           {asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ""}
           {isVideo && asset.duration ? ` · ${formatDuration(asset.duration)}` : ""}
@@ -520,16 +520,16 @@ function BatchConfirmDialog({ count, videos, images, onCancel, onConfirm }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-sm rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-[var(--shadow-overlay)]">
         <h3 className="text-base font-semibold text-white">Delete {count} asset{count !== 1 ? "s" : ""}?</h3>
-        <p className="mt-2 text-xs text-zinc-400">
+        <p className="mt-2 text-xs text-[var(--text-secondary)]">
           This action cannot be undone. {count} file{count !== 1 ? "s" : ""} will be removed:
         </p>
         <div className="mt-2 flex gap-2 text-[10px]">
-          <span className="rounded bg-[var(--surface-hover)] px-2 py-1 text-zinc-300">{videos} video{videos !== 1 ? "s" : ""}</span>
-          <span className="rounded bg-[var(--surface-hover)] px-2 py-1 text-zinc-300">{images} image{images !== 1 ? "s" : ""}</span>
+          <span className="rounded bg-[var(--surface-hover)] px-2 py-1 text-[var(--text-primary)]">{videos} video{videos !== 1 ? "s" : ""}</span>
+          <span className="rounded bg-[var(--surface-hover)] px-2 py-1 text-[var(--text-primary)]">{images} image{images !== 1 ? "s" : ""}</span>
         </div>
         <p className="mt-2 text-[10px] text-amber-500/80">Storage objects will also be removed.</p>
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-1.5 text-xs text-zinc-300 hover:bg-[var(--surface-hover)]">Cancel</button>
+          <button onClick={onCancel} className="rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">Cancel</button>
           <button onClick={onConfirm} data-testid="batch-delete-confirm" className="rounded-[var(--radius-control)] bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500">Delete</button>
         </div>
       </div>
@@ -545,12 +545,12 @@ function BlockedDialog({ assets, onClose }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-md rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-[var(--shadow-overlay)]">
         <h3 className="text-base font-semibold text-white">Cannot delete referenced assets</h3>
-        <p className="mt-1 text-xs text-zinc-400">These assets are still in use. Remove them from their sections first, or replace them.</p>
+        <p className="mt-1 text-xs text-[var(--text-secondary)]">These assets are still in use. Remove them from their sections first, or replace them.</p>
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
           {assets.map((a) => (
             <div key={a.assetId} className="rounded-[var(--radius-card)] border border-amber-500/20 bg-amber-500/5 p-3">
-              <p className="text-xs font-medium text-zinc-200">{a.filename}</p>
-              <p className="mt-1 text-[10px] text-zinc-500">Used in:</p>
+              <p className="text-xs font-medium text-[var(--text-primary)]">{a.filename}</p>
+              <p className="mt-1 text-[10px] text-[var(--text-muted)]">Used in:</p>
               <div className="mt-0.5 flex flex-wrap gap-1">
                 {a.usages.map((u, i) => (
                   <Link key={i} href={u.href} className="rounded bg-[var(--surface-hover)] px-1.5 py-0.5 text-[10px] text-[var(--brand-primary)] hover:bg-[var(--surface-hover)]">
@@ -583,7 +583,7 @@ function AssetDetailPanel({
     <div className="w-full flex-shrink-0 space-y-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-4 lg:w-80">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">Asset Details</h3>
-        <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-sm">&times;</button>
+        <button onClick={onClose} aria-label="Close dialog" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm">&times;</button>
       </div>
 
       <div className="aspect-video overflow-hidden rounded-[var(--radius-card)] bg-[var(--surface-hover)]">
@@ -592,36 +592,36 @@ function AssetDetailPanel({
         ) : asset.publicUrl && isVideo ? (
           <video src={asset.publicUrl} controls className="h-full w-full object-contain" />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-zinc-600">No preview</div>
+          <div className="flex h-full items-center justify-center text-xs text-[var(--text-muted)]">No preview</div>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <div className="flex justify-between"><span className="text-zinc-500">Name</span><span className="max-w-[180px] truncate text-zinc-300">{asset.originalFilename}</span></div>
-        <div className="flex justify-between"><span className="text-zinc-500">Type</span><span className="text-zinc-300">{asset.mimeType}</span></div>
-        <div className="flex justify-between"><span className="text-zinc-500">Size</span><span className="text-zinc-300">{formatSize(asset.size)}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Name</span><span className="max-w-[180px] truncate text-[var(--text-primary)]">{asset.originalFilename}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Type</span><span className="text-[var(--text-primary)]">{asset.mimeType}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Size</span><span className="text-[var(--text-primary)]">{formatSize(asset.size)}</span></div>
         {asset.width && asset.height && (
-          <div className="flex justify-between"><span className="text-zinc-500">Resolution</span><span className="text-zinc-300">{asset.width}&times;{asset.height}</span></div>
+          <div className="flex justify-between"><span className="text-[var(--text-muted)]">Resolution</span><span className="text-[var(--text-primary)]">{asset.width}&times;{asset.height}</span></div>
         )}
         {isVideo && (
-          <div className="flex justify-between"><span className="text-zinc-500">Duration</span><span className="text-zinc-300">{formatDuration(asset.duration) || "—"}</span></div>
+          <div className="flex justify-between"><span className="text-[var(--text-muted)]">Duration</span><span className="text-[var(--text-primary)]">{formatDuration(asset.duration) || "—"}</span></div>
         )}
-        <div className="flex justify-between"><span className="text-zinc-500">Storage Provider</span><span className="text-zinc-300">{asset.storageProvider}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Storage Provider</span><span className="text-[var(--text-primary)]">{asset.storageProvider}</span></div>
         <div className="flex justify-between">
-          <span className="text-zinc-500">Status</span>
+          <span className="text-[var(--text-muted)]">Status</span>
           <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${TONE_CLASS[status.tone]}`}>{status.label}</span>
         </div>
-        <div className="flex justify-between"><span className="text-zinc-500">Used</span><span className={asset.used ? "text-emerald-400" : "text-zinc-500"}>{asset.used ? "Used" : "Unused"}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Used</span><span className={asset.used ? "text-emerald-400" : "text-[var(--text-muted)]"}>{asset.used ? "Used" : "Unused"}</span></div>
         {asset.processingError && (
-          <div className="flex justify-between"><span className="text-zinc-500">Error</span><span className="max-w-[180px] truncate text-[10px] text-red-400" title={asset.processingError}>{asset.processingError}</span></div>
+          <div className="flex justify-between"><span className="text-[var(--text-muted)]">Error</span><span className="max-w-[180px] truncate text-[10px] text-red-400" title={asset.processingError}>{asset.processingError}</span></div>
         )}
-        <div className="flex justify-between"><span className="text-zinc-500">Created</span><span className="text-zinc-300">{formatDate(asset.createdAt)}</span></div>
-        <div className="flex justify-between"><span className="text-zinc-500">Last Updated</span><span className="text-zinc-300">{formatDate(asset.updatedAt)}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Created</span><span className="text-[var(--text-primary)]">{formatDate(asset.createdAt)}</span></div>
+        <div className="flex justify-between"><span className="text-[var(--text-muted)]">Last Updated</span><span className="text-[var(--text-primary)]">{formatDate(asset.updatedAt)}</span></div>
       </div>
 
       {usages.length > 0 && (
         <div>
-          <h4 className="mb-1 text-xs font-semibold text-zinc-400">Used In</h4>
+          <h4 className="mb-1 text-xs font-semibold text-[var(--text-secondary)]">Used In</h4>
           <div className="space-y-1">
             {usages.map((u, i) => (
               <Link key={i} href={u.href} className="block truncate rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] text-[var(--brand-primary)] transition-colors hover:bg-[var(--surface-hover)]">
@@ -633,7 +633,7 @@ function AssetDetailPanel({
       )}
 
       <div className="space-y-2">
-        <button onClick={onCopyUrl} className="w-full rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-xs text-zinc-300 hover:bg-[var(--surface-hover)] transition-colors">Copy URL</button>
+        <button onClick={onCopyUrl} className="w-full rounded-[var(--radius-control)] border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-colors">Copy URL</button>
         {!isDeleted && (
           <>
             <ReplaceFileControl assetId={asset.id} onReplaced={onReplaced} isVideo={isVideo} />
@@ -689,13 +689,13 @@ function ReplaceFileControl({ assetId, onReplaced, isVideo }: {
 
   return (
     <div className="space-y-1.5">
-      <label className="block text-xs font-medium text-zinc-400">Replace File</label>
+      <label className="block text-xs font-medium text-[var(--text-secondary)]">Replace File</label>
       {uploading ? (
         <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-2">
-          <p className="text-center text-[10px] text-zinc-400">Replacing…</p>
+          <p className="text-center text-[10px] text-[var(--text-secondary)]">Replacing…</p>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)] px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-[var(--border-strong)] hover:text-zinc-300">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)] px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]">
           <input ref={inputRef} type="file" accept={isVideo ? "video/*" : "image/*"} onChange={handleFile} className="hidden" disabled={uploading} />
           Choose New File
         </label>

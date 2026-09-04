@@ -19,7 +19,7 @@ interface Item {
   courier: string | null;
 }
 
-const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-white placeholder-zinc-600";
+const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-white placeholder:text-[var(--text-muted)]";
 
 /** RCCF-TRACK-01 Phase 3/8 — creator fulfillment dashboard. */
 export function FulfillmentSection() {
@@ -73,11 +73,11 @@ export function FulfillmentSection() {
             <option value="delivered">Delivered</option>
             <option value="ready">Ready to download</option>
           </select>
-          <button onClick={() => load()} className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-xs text-zinc-300 hover:bg-white/5"><RefreshCw className="h-3 w-3" /> Refresh</button>
+          <button onClick={() => load()} className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-xs text-[var(--text-primary)] hover:bg-white/5"><RefreshCw className="h-3 w-3" /> Refresh</button>
         </div>
       </div>
       {msg && <div className="mb-3 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-300">{msg}</div>}
-      {items.length === 0 && <p className="text-xs text-zinc-500">No orders to fulfill yet.</p>}
+      {items.length === 0 && <p className="text-xs text-[var(--text-muted)]">No orders to fulfill yet.</p>}
 
       {physical.length > 0 && <Queue title="Physical orders" items={physical} statuses={["preparing", "packed", "shipped", "delivered"]} tracking={tracking} setTracking={setTracking} setStatus={setStatus} busy={busy} />}
       {digital.length > 0 && (
@@ -124,7 +124,7 @@ function Queue({ title, items, statuses, tracking, setTracking, setStatus, busy 
             <input className={inputCls + " w-28"} placeholder="Tracking" value={tracking[i.id]?.number ?? ""} onChange={(e) => setTracking((t) => ({ ...t, [i.id]: { ...(t[i.id] ?? {}), number: e.target.value } }))} />
             <input className={inputCls + " w-24"} placeholder="Courier" value={tracking[i.id]?.courier ?? ""} onChange={(e) => setTracking((t) => ({ ...t, [i.id]: { ...(t[i.id] ?? {}), courier: e.target.value } }))} />
             {statuses.map((s) => (
-              <button key={s} onClick={() => setStatus(i.id, s as FulfillmentStatus)} disabled={busy === i.id} className="rounded-md border border-white/10 px-2 py-1 text-[10px] text-zinc-300 hover:bg-white/5 disabled:opacity-50">{s}</button>
+              <button key={s} onClick={() => setStatus(i.id, s as FulfillmentStatus)} disabled={busy === i.id} className="rounded-md border border-white/10 px-2 py-1 text-[10px] text-[var(--text-primary)] hover:bg-white/5 disabled:opacity-50">{s}</button>
             ))}
           </Row>
         ))}
@@ -137,8 +137,8 @@ function Row({ item, children }: { item: Item; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-zinc-900/50 px-3 py-2 text-xs">
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 truncate text-zinc-200">{item.type === "physical" ? <Truck className="h-3.5 w-3.5 text-[var(--color-info)]" /> : <Package className="h-3.5 w-3.5 text-[var(--brand-primary)]" />} {item.productName} <span className="text-zinc-600">· {formatCurrency(item.amount)}</span></p>
-        <p className="text-[10px] text-zinc-500">
+        <p className="flex items-center gap-1.5 truncate text-[var(--text-primary)]">{item.type === "physical" ? <Truck className="h-3.5 w-3.5 text-[var(--color-info)]" /> : <Package className="h-3.5 w-3.5 text-[var(--brand-primary)]" />} {item.productName} <span className="text-[var(--text-muted)]">· {formatCurrency(item.amount)}</span></p>
+        <p className="text-[10px] text-[var(--text-muted)]">
           <span className="capitalize">{statusLabel(item.status)}</span>
           {item.trackingNumber && <> · {item.courier} {item.trackingNumber}</>}
           {item.type !== "physical" && <> · {item.customer ?? "guest"}</>}

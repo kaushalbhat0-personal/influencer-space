@@ -24,7 +24,7 @@ export function ProvisionProgress({
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-white">Creating Your Storefront</h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           {currentLabel || `${percent}% complete`}
         </p>
       </div>
@@ -42,7 +42,7 @@ export function ProvisionProgress({
             key={stage.id}
             className={cn(
               "flex items-center gap-3 rounded-lg px-4 py-3 transition-all",
-              stage.status === "completed" && "text-zinc-300",
+              stage.status === "completed" && "text-[var(--text-primary)]",
               stage.status === "running" && "bg-white/[0.03]",
               stage.status === "failed" && "bg-red-500/5",
             )}

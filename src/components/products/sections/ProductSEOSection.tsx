@@ -16,7 +16,7 @@ export function ProductSEOSection({ slug, onSlugChange, seoTitle, onSeoTitleChan
       <legend className="text-sm font-semibold text-white mb-3">Search Engine Optimization</legend>
       <div className="space-y-4">
         <div>
-          <label htmlFor="product-slug" className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label htmlFor="product-slug" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
             URL Slug
           </label>
           <input
@@ -27,10 +27,10 @@ export function ProductSEOSection({ slug, onSlugChange, seoTitle, onSeoTitleChan
             disabled={disabled}
             placeholder="my-product-name"
           />
-          <p className="mt-1 text-[11px] text-zinc-600">Leave empty to auto-generate from name.</p>
+          <p className="mt-1 text-[11px] text-[var(--text-muted)]">Leave empty to auto-generate from name.</p>
         </div>
         <div>
-          <label htmlFor="product-seo-title" className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label htmlFor="product-seo-title" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
             SEO Title
           </label>
           <input
@@ -44,7 +44,7 @@ export function ProductSEOSection({ slug, onSlugChange, seoTitle, onSeoTitleChan
           />
         </div>
         <div>
-          <label htmlFor="product-seo-desc" className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label htmlFor="product-seo-desc" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
             SEO Description
           </label>
           <textarea

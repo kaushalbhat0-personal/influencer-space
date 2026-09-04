@@ -42,7 +42,7 @@ export function CreatorVideo({
         role="img"
         aria-label={alt ?? "Video placeholder"}
       >
-        <span className="text-xs text-zinc-600">{fallback ?? "Video unavailable"}</span>
+        <span className="text-xs text-[var(--text-muted)]">{fallback ?? "Video unavailable"}</span>
       </div>
     );
   }

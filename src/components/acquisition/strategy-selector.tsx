@@ -16,7 +16,7 @@ export function StrategySelector({
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-white">Choose Acquisition Strategy</h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">
           How would you like to create this storefront?
         </p>
       </div>

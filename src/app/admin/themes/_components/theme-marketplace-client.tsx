@@ -177,10 +177,10 @@ export function ThemeMarketplaceClient({
       {/* Plan banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-900/40 px-4 py-3">
         <div className="flex items-center gap-3">
-          <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${TIER_COLORS[planTierName] ?? "bg-zinc-800 text-zinc-300"}`}>
+          <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${TIER_COLORS[planTierName] ?? "bg-zinc-800 text-[var(--text-secondary)]"}`}>
             {planTierName}
           </span>
-          <span className="text-xs text-zinc-400">{unlockedCount} of {themes.length} themes unlocked</span>
+          <span className="text-xs text-[var(--text-secondary)]">{unlockedCount} of {themes.length} themes unlocked</span>
         </div>
         <Link href="/admin/billing" className="text-xs text-[var(--brand-primary)] hover:underline">Upgrade plan →</Link>
       </div>
@@ -192,23 +192,23 @@ export function ThemeMarketplaceClient({
           placeholder="Search themes..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[180px] rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
+          className="flex-1 min-w-[180px] rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-secondary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--border-focus)]"
         />
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-secondary)] outline-none">
           <option value="">All categories</option>
           {categories.map((cat) => <option key={cat} value={cat}>{CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] || cat}</option>)}
         </select>
-        <select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
+        <select value={tierFilter} onChange={(e) => setTierFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-secondary)] outline-none">
           <option value="">All tiers</option>
           {THEME_TIERS.map((tier) => <option key={tier} value={tier}>{TIER_LABELS[tier]}</option>)}
         </select>
-        <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
+        <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-secondary)] outline-none">
           <option value="">All experiences</option>
           {Object.values(EXPERIENCE_PACKS).map((exp) => (
             <option key={exp.id} value={exp.id}>{exp.name}{exp.premium ? " ★" : ""}</option>
           ))}
         </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
+        <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-secondary)] outline-none">
           <option value="featured">Featured</option>
           <option value="tier">Tier</option>
           <option value="name">Name A–Z</option>
@@ -216,14 +216,14 @@ export function ThemeMarketplaceClient({
         </select>
         <button
           onClick={() => setOnlyUnlocked((v) => !v)}
-          className={`rounded-lg border px-3 py-2 text-xs transition-colors ${onlyUnlocked ? "border-[var(--brand-primary)]/50 text-[var(--brand-primary)]" : "border-white/10 text-zinc-400 hover:text-zinc-200"}`}
+          className={`rounded-lg border px-3 py-2 text-xs transition-colors ${onlyUnlocked ? "border-[var(--brand-primary)]/50 text-[var(--brand-primary)]" : "border-white/10 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
         >
           {onlyUnlocked ? "Unlocked only ✓" : "Unlocked only"}
         </button>
         {favorites.length > 0 && (
           <button
             onClick={() => setOnlyFavorites((v) => !v)}
-            className={`rounded-lg border px-3 py-2 text-xs transition-colors ${onlyFavorites ? "border-amber-500/50 text-amber-300" : "border-white/10 text-zinc-400 hover:text-zinc-200"}`}
+            className={`rounded-lg border px-3 py-2 text-xs transition-colors ${onlyFavorites ? "border-amber-500/50 text-amber-300" : "border-white/10 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"}`}
           >
             ⭐ Favorites {onlyFavorites ? "✓" : ""}
           </button>
@@ -248,12 +248,12 @@ export function ThemeMarketplaceClient({
             <section key={familyKey} data-testid={`family-group-${familyKey}`} className="space-y-3">
               <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/5 pb-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-300">{label}</h2>
-                  <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">{label}</h2>
+                  <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]">
                     {familyThemes.length} theme{familyThemes.length === 1 ? "" : "s"}
                   </span>
                   {actualLightCount > 0 && (
-                    <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-zinc-400" title={`${actualLightCount} theme(s) declare a light variant (source)`}>
+                    <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-[var(--text-secondary)]" title={`${actualLightCount} theme(s) declare a light variant (source)`}>
                       {actualLightCount} light variant{actualLightCount === 1 ? "" : "s"}
                     </span>
                   )}
@@ -278,7 +278,7 @@ export function ThemeMarketplaceClient({
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
                   {Array.from(variantCounts.entries()).map(([vg, count]) => (
-                    <span key={vg} className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-zinc-500" title={`variantGroup ${vg}`}>
+                    <span key={vg} className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]" title={`variantGroup ${vg}`}>
                       {vg} ×{count}
                     </span>
                   ))}
@@ -329,36 +329,36 @@ export function ThemeMarketplaceClient({
                           <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{theme.name}</p>
                           <div className="flex shrink-0 items-center gap-1">
                             {theme.premium && <span className="rounded bg-amber-900/60 px-1 py-0.5 text-[8px] font-bold text-amber-300">PREMIUM</span>}
-                            <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
+                            <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-[var(--text-secondary)]"}`}>
                               {TIER_LABELS[tier]}
                             </span>
                           </div>
                         </div>
                         <p className="text-[10px] text-[var(--text-muted,#71717A)]">{CATEGORY_LABELS[theme.category] || theme.category} &middot; v{theme.version}</p>
                         <div className="flex flex-wrap items-center gap-1">
-                          <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-300" title={`family ${familyKey}`}>
+                          <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-[var(--text-secondary)]" title={`family ${familyKey}`}>
                             {label}
                           </span>
                           {theme.variantGroup && (
-                            <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-zinc-400" title={`variantGroup ${theme.variantGroup}`}>
+                            <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-[var(--text-secondary)]" title={`variantGroup ${theme.variantGroup}`}>
                               {theme.variantGroup}
                             </span>
                           )}
                           {!theme.variantGroup && isLegacy && (
-                            <span className="rounded bg-zinc-900 px-1 py-0.5 text-[9px] text-zinc-600">unclassified</span>
+                            <span className="rounded bg-zinc-900 px-1 py-0.5 text-[9px] text-[var(--text-muted)]">unclassified</span>
                           )}
                         </div>
                         <p className="text-[10px] text-[var(--text-muted,#71717A)]">
-                          <span className="text-zinc-500">Exp:</span> {exp.name}
+                          <span className="text-[var(--text-muted)]">Exp:</span> {exp.name}
                           {exp.premium && !expAvailable && <span className="ml-1 text-amber-500">(requires upgrade)</span>}
                         </p>
-                        <p className="text-[10px] text-zinc-500" title={headingFont}>
-                          <span className="text-zinc-600">Font:</span> {truncatedFont || "Inter"}
+                        <p className="text-[10px] text-[var(--text-muted)]" title={headingFont}>
+                          <span className="text-[var(--text-muted)]">Font:</span> {truncatedFont || "Inter"}
                         </p>
                         <p className="line-clamp-2 text-[11px] text-[var(--text-secondary,#A1A1AA)]">{theme.description}</p>
                         <div className="flex flex-wrap gap-1 pt-1">
                           {theme.variants.map((v) => (
-                            <span key={v.mode} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">{v.mode}</span>
+                            <span key={v.mode} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">{v.mode}</span>
                           ))}
                         </div>
                         {isUnlocked && (
@@ -391,7 +391,7 @@ export function ThemeMarketplaceClient({
 
       {filtered.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-sm text-zinc-500">No themes found matching your criteria.</p>
+          <p className="text-sm text-[var(--text-muted)]">No themes found matching your criteria.</p>
           {(search || categoryFilter || tierFilter || experienceFilter || onlyUnlocked || onlyFavorites) && (
             <button
               onClick={() => { setSearch(""); setCategoryFilter(""); setTierFilter(""); setExperienceFilter(""); setOnlyUnlocked(false); setOnlyFavorites(false); }}
@@ -438,37 +438,37 @@ function ThemeDetailPanel({ theme, unlocked, planTierName: _planTierName, onOpen
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-white">{theme.name}</h2>
-              <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-zinc-300"}`}>
+              <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${TIER_COLORS[tier] ?? "bg-zinc-800 text-[var(--text-secondary)]"}`}>
                 {TIER_LABELS[tier]}
               </span>
-              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-300" title={`family ${familyKey}`}>{family}</span>
-              {theme.variantGroup && <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-zinc-400">{theme.variantGroup}</span>}
-              {!theme.variantGroup && familyKey === "legacy" && <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-zinc-600">unclassified legacy</span>}
+              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-[var(--text-secondary)]" title={`family ${familyKey}`}>{family}</span>
+              {theme.variantGroup && <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-[var(--text-secondary)]">{theme.variantGroup}</span>}
+              {!theme.variantGroup && familyKey === "legacy" && <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">unclassified legacy</span>}
             </div>
-            <p className="text-xs text-zinc-500">by {theme.author.name} &middot; v{theme.version} &middot; {theme.category} &middot; {exp.name}</p>
+            <p className="text-xs text-[var(--text-muted)]">by {theme.author.name} &middot; v{theme.version} &middot; {theme.category} &middot; {exp.name}</p>
           </div>
-          <button onClick={onClose} aria-label="Close dialog" className="text-zinc-500 hover:text-white text-lg">&times;</button>
+          <button onClick={onClose} aria-label="Close dialog" className="text-[var(--text-muted)] hover:text-white text-lg">&times;</button>
         </div>
 
         <div className="mt-4 h-40 rounded-lg" style={{ background: `linear-gradient(135deg, ${cv?.primary} 0%, ${cv?.secondary} 50%, ${cv?.accent} 100%)` }} />
 
-        <p className="mt-4 text-sm text-zinc-400">{theme.description}</p>
+        <p className="mt-4 text-sm text-[var(--text-secondary)]">{theme.description}</p>
 
         <div className="mt-4">
-          <h3 className="mb-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Colors</h3>
+          <h3 className="mb-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Colors</h3>
           <div className="flex flex-wrap gap-2">
             {cv && Object.entries(cv).filter(([k]) => ["primary", "secondary", "accent", "background", "surface"].includes(k)).map(([name, hex]) => (
               <div key={name} className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-2 py-1">
                 <span className="h-3 w-3 rounded-full border border-white/10" style={{ backgroundColor: hex }} />
-                <span className="text-[10px] text-zinc-400">{name}</span>
+                <span className="text-[10px] text-[var(--text-secondary)]">{name}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="mt-4">
-          <h3 className="mb-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Typography</h3>
-          <div className="space-y-1 text-xs text-zinc-500">
+          <h3 className="mb-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Typography</h3>
+          <div className="space-y-1 text-xs text-[var(--text-muted)]">
             <p>Heading: {theme.variants[0]?.tokens.typography.headingFont}</p>
             <p>Body: {theme.variants[0]?.tokens.typography.bodyFont}</p>
           </div>
@@ -476,7 +476,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName: _planTierName, onOpen
 
         <div className="mt-4 flex flex-wrap gap-1">
           {theme.tags.map((tag) => (
-            <span key={tag} className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">{tag}</span>
+            <span key={tag} className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{tag}</span>
           ))}
         </div>
 
@@ -488,7 +488,7 @@ function ThemeDetailPanel({ theme, unlocked, planTierName: _planTierName, onOpen
         )}
 
         <div className="mt-6 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/5">Cancel</button>
+          <button onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/5">Cancel</button>
           {unlocked ? (
             <button
               onClick={onOpenInBuilder}

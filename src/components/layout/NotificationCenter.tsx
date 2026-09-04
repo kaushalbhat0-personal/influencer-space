@@ -32,7 +32,7 @@ export function NotificationCenter({ notifications = [], className }: Notificati
     <div className={cn("relative", className)}>
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-2 text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+        className="relative rounded-lg p-2 text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
         aria-label={`Notifications${unreadCount > 0 ? `: ${unreadCount} unread` : ""}`}
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
@@ -65,8 +65,8 @@ export function NotificationCenter({ notifications = [], className }: Notificati
 
               <div className="max-h-80 overflow-y-auto">
                 {items.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-sm text-zinc-500">
-                    <Bell className="h-6 w-6 mx-auto mb-2 text-zinc-600" />
+                  <div className="px-4 py-8 text-center text-sm text-[var(--text-muted)]">
+                    <Bell className="h-6 w-6 mx-auto mb-2 text-[var(--text-muted)]" />
                     No notifications yet
                   </div>
                 ) : (
@@ -82,7 +82,7 @@ export function NotificationCenter({ notifications = [], className }: Notificati
                         {!n.read && <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--brand-primary)]" />}
                         <div>
                           <p className="text-sm font-medium text-white">{n.title}</p>
-                          <p className="text-xs text-zinc-400 mt-0.5">{n.description}</p>
+                          <p className="text-xs text-[var(--text-secondary)] mt-0.5">{n.description}</p>
                         </div>
                       </div>
                       {n.action && (

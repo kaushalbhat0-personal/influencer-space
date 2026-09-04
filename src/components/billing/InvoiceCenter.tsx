@@ -62,7 +62,7 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
       actions={
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" aria-hidden="true" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-muted)]" aria-hidden="true" />
             <input
               type="search"
               placeholder="Search invoices..."
@@ -92,16 +92,16 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
         <table className="w-full text-sm" role="table" aria-label="Invoice list">
           <thead>
             <tr className="border-b border-white/10">
-              <th scope="col" className="text-left py-2.5 px-2 text-xs text-zinc-500 font-medium">
-                <button onClick={toggleSort} className="flex items-center gap-1 hover:text-zinc-300" aria-label={`Sort by date ${sortAsc ? "descending" : "ascending"}`}>
+              <th scope="col" className="text-left py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">
+                <button onClick={toggleSort} className="flex items-center gap-1 hover:text-[var(--text-primary)]" aria-label={`Sort by date ${sortAsc ? "descending" : "ascending"}`}>
                   Date <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th scope="col" className="text-left py-2.5 px-2 text-xs text-zinc-500 font-medium">Invoice</th>
-              <th scope="col" className="text-left py-2.5 px-2 text-xs text-zinc-500 font-medium">Plan</th>
-              <th scope="col" className="text-right py-2.5 px-2 text-xs text-zinc-500 font-medium">Amount</th>
-              <th scope="col" className="text-center py-2.5 px-2 text-xs text-zinc-500 font-medium">Status</th>
-              <th scope="col" className="text-right py-2.5 px-2 text-xs text-zinc-500 font-medium">Action</th>
+              <th scope="col" className="text-left py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">Invoice</th>
+              <th scope="col" className="text-left py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">Plan</th>
+              <th scope="col" className="text-right py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">Amount</th>
+              <th scope="col" className="text-center py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">Status</th>
+              <th scope="col" className="text-right py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -109,10 +109,10 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
               const st = formatInvoiceStatus(inv.status);
               return (
                 <tr key={inv.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="py-2.5 px-2 text-xs text-zinc-400 whitespace-nowrap">{formatDate(inv.issuedAt)}</td>
-                  <td className="py-2.5 px-2 text-xs text-zinc-300 font-mono">{inv.id.slice(0, 8)}...</td>
-                  <td className="py-2.5 px-2 text-xs text-zinc-300">{inv.planCode.replace(/_/g, " ")}</td>
-                  <td className="py-2.5 px-2 text-xs text-zinc-300 text-right">{formatCurrency(inv.total, inv.currency)}</td>
+                  <td className="py-2.5 px-2 text-xs text-[var(--text-secondary)] whitespace-nowrap">{formatDate(inv.issuedAt)}</td>
+                  <td className="py-2.5 px-2 text-xs text-[var(--text-primary)] font-mono">{inv.id.slice(0, 8)}...</td>
+                  <td className="py-2.5 px-2 text-xs text-[var(--text-primary)]">{inv.planCode.replace(/_/g, " ")}</td>
+                  <td className="py-2.5 px-2 text-xs text-[var(--text-primary)] text-right">{formatCurrency(inv.total, inv.currency)}</td>
                   <td className="py-2.5 px-2 text-center">
                     <Badge variant={st.variant} size="sm">{st.label}</Badge>
                   </td>
@@ -130,7 +130,7 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
         </table>
       </div>
       {filtered.length === 0 && (
-        <p className="text-sm text-zinc-500 text-center py-4">No invoices match your filter criteria.</p>
+        <p className="text-sm text-[var(--text-muted)] text-center py-4">No invoices match your filter criteria.</p>
       )}
     </DashboardWidget>
   );

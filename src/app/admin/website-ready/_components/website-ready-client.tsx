@@ -54,25 +54,25 @@ export function WebsiteReadyClient({
           <CheckCircle className="h-10 w-10 text-emerald-400" />
         </div>
         <h1 className="text-3xl font-bold text-white">Your Website is Ready!</h1>
-        <p className="mt-2 text-zinc-400">
+        <p className="mt-2 text-[var(--text-secondary)]">
           Hi {creatorName}, your site is ready to go.
         </p>
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Template</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Template</p>
           <p className="mt-1 text-lg font-semibold text-white">{templateName}</p>
         </div>
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Theme</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Theme</p>
           <p className="mt-1 text-lg font-semibold text-white">{themeName}</p>
         </div>
       </div>
 
       <div className="mb-8 rounded-xl border border-white/10 bg-zinc-900/50 p-4">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Website Health</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Website Health</p>
           <span className="text-2xl font-bold text-[var(--brand-primary)]">{healthScore}%</span>
         </div>
         <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-800">
@@ -81,7 +81,7 @@ export function WebsiteReadyClient({
             style={{ width: `${healthScore}%` }}
           />
         </div>
-        <p className="text-xs text-zinc-500">{doneCount} of {totalCount} checks complete</p>
+        <p className="text-xs text-[var(--text-muted)]">{doneCount} of {totalCount} checks complete</p>
       </div>
 
       <div className="mb-8 grid gap-3 sm:grid-cols-3">
@@ -89,14 +89,14 @@ export function WebsiteReadyClient({
           href={storefrontUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-3 text-sm font-medium text-zinc-300 hover:border-white/30 hover:text-white transition-colors"
+          className="flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-3 text-sm font-medium text-[var(--text-primary)] hover:border-white/30 hover:text-[var(--text-primary)] transition-colors"
         >
           <ExternalLink className="h-4 w-4" />
           View Website
         </Link>
         <Link
           href="/builder"
-          className="flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-3 text-sm font-medium text-zinc-300 hover:border-white/30 hover:text-white transition-colors"
+          className="flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-3 text-sm font-medium text-[var(--text-primary)] hover:border-white/30 hover:text-[var(--text-primary)] transition-colors"
         >
           <Layout className="h-4 w-4" />
           Open Builder
@@ -133,8 +133,8 @@ export function WebsiteReadyClient({
 
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Improvement Suggestions</p>
-          <ArrowRight className="h-3.5 w-3.5 text-zinc-600" />
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Improvement Suggestions</p>
+          <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)]" />
         </div>
         <div className="space-y-1">
           {healthChecks.filter((c) => !c.done).slice(0, 5).map((check) => (
@@ -144,8 +144,8 @@ export function WebsiteReadyClient({
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/5 transition-colors"
             >
               <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-              <span className="flex-1 text-zinc-300">{check.label}</span>
-              <span className="text-xs text-zinc-500">{check.description}</span>
+              <span className="flex-1 text-[var(--text-primary)]">{check.label}</span>
+              <span className="text-xs text-[var(--text-muted)]">{check.description}</span>
             </Link>
           ))}
           {healthChecks.filter((c) => !c.done).length === 0 && (
@@ -157,7 +157,7 @@ export function WebsiteReadyClient({
       </div>
 
       <div className="mt-8 text-center">
-        <Link href="/admin/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+        <Link href="/admin/dashboard" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
           Go to Dashboard &rarr;
         </Link>
       </div>

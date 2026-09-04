@@ -76,22 +76,22 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
       <h2 className="text-sm font-semibold text-white">Your Partner Plan</h2>
       <div className="mt-3 space-y-1.5 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-zinc-400">Plan</span>
+          <span className="text-[var(--text-secondary)]">Plan</span>
           <span className="font-medium text-white">{currentPlanName}</span>
         </div>
         {trialActive && trialEndsAt && (
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400">Trial</span>
+            <span className="text-[var(--text-secondary)]">Trial</span>
             <span className="font-medium text-[var(--brand-primary)]">ends {new Date(trialEndsAt).toISOString().slice(0, 10)}</span>
           </div>
         )}
         <div className="flex items-center justify-between">
-          <span className="text-zinc-400">Clients</span>
-          <span className="text-zinc-300">{clientUsed} / {limitLabel}</span>
+          <span className="text-[var(--text-secondary)]">Clients</span>
+          <span className="text-[var(--text-primary)]">{clientUsed} / {limitLabel}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-zinc-400">Remaining</span>
-          <span className="text-zinc-300">{clientLimit === -1 ? "Unlimited" : Math.max(0, clientLimit - clientUsed)}</span>
+          <span className="text-[var(--text-secondary)]">Remaining</span>
+          <span className="text-[var(--text-primary)]">{clientLimit === -1 ? "Unlimited" : Math.max(0, clientLimit - clientUsed)}</span>
         </div>
       </div>
       {msg && <p className="mt-2 text-xs text-red-400">{msg}</p>}
@@ -106,7 +106,7 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
             {busy ? "Starting…" : t.label}
           </button>
         ))}
-        <span className="text-xs text-zinc-500">Enterprise: contact sales</span>
+        <span className="text-xs text-[var(--text-muted)]">Enterprise: contact sales</span>
       </div>
     </div>
   );

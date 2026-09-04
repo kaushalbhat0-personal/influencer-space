@@ -42,7 +42,7 @@ function ScoreRing({ value, label, color }: { value: number; label: string; colo
         color === "amber" && "text-amber-400",
         color === "red" && "text-red-400",
       )}>{value}</span>
-      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">{label}</span>
     </div>
   );
 }
@@ -69,14 +69,14 @@ export function SEOScoreCard({ score, loading, error }: SEOScoreCardProps) {
           const catLabel = scoreEngine.getScoreLabel(catScore);
           return (
             <div key={key} className="flex flex-col items-center gap-1 rounded-lg bg-white/5 p-2">
-              <Icon className="h-3.5 w-3.5 text-zinc-400" />
+              <Icon className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
               <span className={cn(
                 "text-sm font-semibold",
                 catLabel.color === "emerald" && "text-emerald-400",
                 catLabel.color === "amber" && "text-amber-400",
                 catLabel.color === "red" && "text-red-400",
               )}>{catScore}</span>
-              <span className="text-[10px] text-zinc-500">{label}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">{label}</span>
             </div>
           );
         })}
@@ -91,7 +91,7 @@ export function SEOScoreCard({ score, loading, error }: SEOScoreCardProps) {
               check.severity === "info" && "bg-zinc-500",
             )} />
             <div>
-              <p className="text-zinc-300">{check.recommendation}</p>
+              <p className="text-[var(--text-primary)]">{check.recommendation}</p>
               {check.cta && (
                 <a href={check.cta.href} className="text-[var(--brand-primary)] hover:underline">{check.cta.label}</a>
               )}

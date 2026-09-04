@@ -13,7 +13,7 @@ interface Props {
   error?: string;
 }
 
-const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600";
+const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-[var(--text-muted)]";
 
 export function PaymentsClient({ account, readiness, error }: Props) {
   const [form, setForm] = useState(() => ({
@@ -97,8 +97,8 @@ export function PaymentsClient({ account, readiness, error }: Props) {
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Payment readiness</p>
-            <p className="mt-1 text-sm text-zinc-300">You keep <span className="font-semibold text-emerald-400">100% of every sale</span>. CreatorStore never takes a transaction fee.</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Payment readiness</p>
+            <p className="mt-1 text-sm text-[var(--text-primary)]">You keep <span className="font-semibold text-emerald-400">100% of every sale</span>. CreatorStore never takes a transaction fee.</p>
           </div>
           <div className="flex items-center gap-2">
             {readiness && <CommerceStrategyBadge strategy={readiness.strategy as never} />}
@@ -128,7 +128,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
           {/* RCCF-72.18D.6.3 — operational visibility only. Safe timestamp of
               the last successful provider probe; never credentials/responses. */}
           {account.lastVerifiedAt && (
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-[var(--text-muted)]">
               Last verified: {new Date(account.lastVerifiedAt).toLocaleString()}
             </p>
           )}
@@ -139,21 +139,21 @@ export function PaymentsClient({ account, readiness, error }: Props) {
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
         <h2 className="mb-4 text-sm font-semibold text-white">{account ? "Edit payment account" : "Connect your payment account"}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-xs text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
             Provider
             <select className={inputCls} value={form.provider} onChange={(e) => set("provider", e.target.value)}>
               {PAYMENT_PROVIDERS.filter((p) => p.status === "active").map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
             Account holder name
             <input className={inputCls} value={form.accountHolderName} onChange={(e) => set("accountHolderName", e.target.value)} placeholder="Your legal name" />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
             Merchant name (shown on payments)
             <input className={inputCls} value={form.merchantName} onChange={(e) => set("merchantName", e.target.value)} placeholder="Your brand" />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-zinc-400">
+          <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
             Settlement mode
             <select className={inputCls} value={form.settlementMode} onChange={(e) => set("settlementMode", e.target.value)}>
               <option value="upi">UPI</option>
@@ -161,21 +161,21 @@ export function PaymentsClient({ account, readiness, error }: Props) {
             </select>
           </label>
           {form.settlementMode === "upi" ? (
-            <label className="flex flex-col gap-1 text-xs text-zinc-400">
+            <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
               UPI ID
               <input className={inputCls} value={form.upiId} onChange={(e) => set("upiId", e.target.value)} placeholder="name@upi" />
             </label>
           ) : (
             <>
-              <label className="flex flex-col gap-1 text-xs text-zinc-400">
+              <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
                 Bank account name
                 <input className={inputCls} value={form.bankAccountName} onChange={(e) => set("bankAccountName", e.target.value)} />
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-400">
+              <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
                 Bank account number
                 <input className={inputCls} value={form.bankAccountNumber} onChange={(e) => set("bankAccountNumber", e.target.value)} placeholder="encrypted at rest" />
               </label>
-              <label className="flex flex-col gap-1 text-xs text-zinc-400">
+              <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
                 IFSC
                 <input className={inputCls} value={form.ifsc} onChange={(e) => set("ifsc", e.target.value)} />
               </label>
@@ -188,14 +188,14 @@ export function PaymentsClient({ account, readiness, error }: Props) {
             <button type="button" onClick={() => setShowKeys(!showKeys)} className="text-xs font-medium text-[var(--color-info)] hover:underline">
               {showKeys ? "Hide" : account?.hasProviderKeys ? "Replace" : "Show"} your Razorpay API keys
             </button>
-            <p className="mt-1 text-[11px] text-zinc-600">Use keys from a Razorpay account you own. Customers pay YOUR account directly; funds settle to your bank. Keys are encrypted.</p>
+            <p className="mt-1 text-[11px] text-[var(--text-muted)]">Use keys from a Razorpay account you own. Customers pay YOUR account directly; funds settle to your bank. Keys are encrypted.</p>
             {showKeys && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="flex flex-col gap-1 text-xs text-zinc-400">
+                <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
                   Key ID
                   <input className={inputCls} value={form.providerKeyId} onChange={(e) => set("providerKeyId", e.target.value)} placeholder="rzp_live_..." />
                 </label>
-                <label className="flex flex-col gap-1 text-xs text-zinc-400">
+                <label className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
                   Key Secret
                   <input type="password" className={inputCls} value={form.providerKeySecret} onChange={(e) => set("providerKeySecret", e.target.value)} placeholder="••••••••" />
                 </label>
@@ -209,7 +209,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
             {busy === "save" ? "Saving…" : account ? "Save changes" : "Connect account"}
           </button>
           {account?.status === "active" && (
-            <button onClick={verify} disabled={busy === "verify"} className="flex items-center gap-1.5 rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 disabled:opacity-50">
+            <button onClick={verify} disabled={busy === "verify"} className="flex items-center gap-1.5 rounded-lg border border-white/10 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-white/5 disabled:opacity-50">
               <ShieldCheck className="h-4 w-4 text-emerald-400" /> Verify
             </button>
           )}
@@ -222,7 +222,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
       </div>
 
       {account && (
-        <p className="flex items-center gap-2 text-[11px] text-zinc-500">
+        <p className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
           Sensitive fields (bank number, Razorpay secret) are encrypted at rest. Every change is audited.
         </p>
@@ -234,7 +234,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
 function StatusCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-500">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</p>
       <p className="mt-1 text-sm font-semibold text-white capitalize">{value}</p>
     </div>
   );

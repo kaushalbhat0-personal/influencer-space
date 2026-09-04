@@ -103,19 +103,19 @@ export function ManualWizard() {
       case "identity":
         return (
           <div className="space-y-5">
-            <div><h2 className="text-lg font-semibold text-white">Business Identity</h2><p className="mt-1 text-sm text-zinc-400">Tell us about your business.</p></div>
+            <div><h2 className="text-lg font-semibold text-white">Business Identity</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">Tell us about your business.</p></div>
             <Field label="Business Name" value={profile.businessName} onChange={(v) => update({ businessName: v })} required />
             <Field label="Owner Name" value={profile.ownerName} onChange={(v) => update({ ownerName: v })} />
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Category</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {BUSINESS_CATEGORIES.map((cat) => {
                   const Icon = cat.icon;
                   const active = profile.category === cat.id;
                   return (
                     <button key={cat.id} type="button" onClick={() => { update({ category: cat.id, pages: cat.suggestedPages }); }} className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-all ${active ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/10" : "border-white/[0.06] hover:border-white/[0.15]"}`}>
-                      <Icon className={`h-5 w-5 ${active ? "text-[var(--brand-primary)]" : "text-zinc-500"}`} />
-                      <span className={`text-[10px] font-medium ${active ? "text-[var(--brand-primary)]" : "text-zinc-400"}`}>{cat.label}</span>
+                      <Icon className={`h-5 w-5 ${active ? "text-[var(--brand-primary)]" : "text-[var(--text-muted)]"}`} />
+                      <span className={`text-[10px] font-medium ${active ? "text-[var(--brand-primary)]" : "text-[var(--text-secondary)]"}`}>{cat.label}</span>
                     </button>
                   );
                 })}
@@ -130,7 +130,7 @@ export function ManualWizard() {
       case "details":
         return (
           <div className="space-y-5">
-            <div><h2 className="text-lg font-semibold text-white">Business Details</h2><p className="mt-1 text-sm text-zinc-400">Help customers understand what you do.</p></div>
+            <div><h2 className="text-lg font-semibold text-white">Business Details</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">Help customers understand what you do.</p></div>
             <Field label="Description" value={profile.description} onChange={(v) => update({ description: v })} multiline placeholder="Describe your business in detail..." />
             <Field label="Target Audience" value={profile.audience} onChange={(v) => update({ audience: v })} placeholder="e.g. Gamers, entrepreneurs, fitness enthusiasts" />
             <Field label="Brand Voice / Tone" value={profile.tone} onChange={(v) => update({ tone: v })} placeholder="e.g. Professional, friendly, edgy, minimal" />
@@ -142,13 +142,13 @@ export function ManualWizard() {
       case "offers":
         return (
           <div className="space-y-5">
-            <div><h2 className="text-lg font-semibold text-white">Products & Services</h2><p className="mt-1 text-sm text-zinc-400">What do you sell? Add your offerings below.</p></div>
+            <div><h2 className="text-lg font-semibold text-white">Products & Services</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">What do you sell? Add your offerings below.</p></div>
 
             {profile.offers.map((offer) => (
               <div key={offer.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-zinc-500 uppercase">{offer.type.replace(/_/g, " ")}</span>
-                  <button onClick={() => removeOffer(offer.id)} className="text-xs text-zinc-600 hover:text-red-400">Remove</button>
+                  <span className="text-xs font-medium text-[var(--text-muted)] uppercase">{offer.type.replace(/_/g, " ")}</span>
+                  <button onClick={() => removeOffer(offer.id)} className="text-xs text-[var(--text-muted)] hover:text-red-400">Remove</button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <input value={offer.name} onChange={(e) => updateOffer(offer.id, { name: e.target.value })} placeholder="Offer name" className="admin-input text-sm sm:col-span-2" />
@@ -159,13 +159,13 @@ export function ManualWizard() {
             ))}
 
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-2">Add an offer type</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Add an offer type</label>
               <div className="flex flex-wrap gap-2">
                 {OFFER_TYPES.map((ot) => {
                   const Icon = ot.icon;
                   const alreadyAdded = profile.offers.some((o) => o.type === ot.id);
                   return (
-                    <button key={ot.id} type="button" onClick={() => addOffer(ot.id)} disabled={alreadyAdded} className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 py-2 text-xs text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                    <button key={ot.id} type="button" onClick={() => addOffer(ot.id)} disabled={alreadyAdded} className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 py-2 text-xs text-[var(--text-secondary)] hover:border-white/[0.15] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                       <Icon className="h-3.5 w-3.5" />
                       {ot.label}
                     </button>
@@ -181,16 +181,16 @@ export function ManualWizard() {
       case "branding":
         return (
           <div className="space-y-5">
-            <div><h2 className="text-lg font-semibold text-white">Branding</h2><p className="mt-1 text-sm text-zinc-400">Customize your storefront look.</p></div>
+            <div><h2 className="text-lg font-semibold text-white">Branding</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">Customize your storefront look.</p></div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Brand Colors</label>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Brand Colors</label>
               <div className="flex items-center gap-4">
                 <div>
-                  <p className="text-[10px] text-zinc-500 mb-1">Primary</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mb-1">Primary</p>
                   <input type="color" value={profile.palette.primary} onChange={(e) => update({ palette: { ...profile.palette, primary: e.target.value } })} className="h-10 w-20 rounded-lg cursor-pointer bg-transparent border border-white/[0.06]" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-zinc-500 mb-1">Secondary</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mb-1">Secondary</p>
                   <input type="color" value={profile.palette.secondary} onChange={(e) => update({ palette: { ...profile.palette, secondary: e.target.value } })} className="h-10 w-20 rounded-lg cursor-pointer bg-transparent border border-white/[0.06]" />
                 </div>
               </div>
@@ -202,7 +202,7 @@ export function ManualWizard() {
       case "links":
         return (
           <div className="space-y-5">
-            <div><h2 className="text-lg font-semibold text-white">Social Links</h2><p className="mt-1 text-sm text-zinc-400">Connect your social profiles.</p></div>
+            <div><h2 className="text-lg font-semibold text-white">Social Links</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">Connect your social profiles.</p></div>
             {profile.socialLinks.map((link, i) => (
               <div key={i} className="flex items-center gap-2">
                 <select value={link.platform} onChange={(e) => updateSocial(i, { platform: e.target.value })} className="admin-input text-sm w-32">
@@ -220,7 +220,7 @@ export function ManualWizard() {
                   <option value="twitch">Twitch</option>
                 </select>
                 <input value={link.url} onChange={(e) => updateSocial(i, { url: e.target.value })} placeholder="URL" className="admin-input text-sm flex-1" />
-                <button onClick={() => removeSocial(i)} className="text-zinc-600 hover:text-red-400 text-xs">Remove</button>
+                <button onClick={() => removeSocial(i)} className="text-[var(--text-muted)] hover:text-red-400 text-xs">Remove</button>
               </div>
             ))}
             <button onClick={addSocial} className="text-xs text-[var(--brand-primary)] hover:text-[var(--brand-primary)]">+ Add Link</button>
@@ -236,7 +236,7 @@ export function ManualWizard() {
               </div>
               {completeness.missing.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-[10px] text-zinc-500 uppercase">Missing</p>
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase">Missing</p>
                   {completeness.missing.map((m, i) => <p key={i} className="text-xs text-amber-400">• {m}</p>)}
                 </div>
               )}
@@ -272,7 +272,7 @@ export function ManualWizard() {
           const completed = i < currentIdx;
           return (
             <div key={s} className="flex items-center gap-1 shrink-0">
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-medium ${completed ? "bg-[var(--brand-primary)] text-white" : s === step ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] border border-[var(--brand-primary)]/40" : "bg-zinc-800 text-zinc-600"}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-medium ${completed ? "bg-[var(--brand-primary)] text-white" : s === step ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] border border-[var(--brand-primary)]/40" : "bg-zinc-800 text-[var(--text-muted)]"}`}>
                 {i + 1}
               </span>
               {i < 4 && <span className={`h-px w-4 ${completed ? "bg-[var(--brand-primary)]/40" : "bg-zinc-800"}`} />}
@@ -288,7 +288,7 @@ export function ManualWizard() {
 function Field({ label, value, onChange, placeholder, multiline, required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean; required?: boolean }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-zinc-400 mb-1">{label}{required && <span className="text-red-400 ml-0.5">*</span>}</label>
+      <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}{required && <span className="text-red-400 ml-0.5">*</span>}</label>
       {multiline ? (
         <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={3} className="admin-input w-full text-sm resize-none" />
       ) : (

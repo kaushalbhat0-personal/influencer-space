@@ -22,7 +22,7 @@ const COLORS = {
 
 export function ValidationList({ results }: ValidationListProps) {
   if (results.length === 0) {
-    return <p className="text-sm text-zinc-500">No validation results.</p>;
+    return <p className="text-sm text-[var(--text-muted)]">No validation results.</p>;
   }
 
   return (
@@ -43,7 +43,7 @@ export function ValidationList({ results }: ValidationListProps) {
             <div className="flex-1 min-w-0">
               <p className={cn("font-medium", COLORS[result.severity])}>{result.message}</p>
               {result.recommendation && (
-                <p className="mt-0.5 text-xs text-zinc-400">{result.recommendation}</p>
+                <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{result.recommendation}</p>
               )}
             </div>
           </div>

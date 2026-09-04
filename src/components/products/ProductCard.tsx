@@ -88,7 +88,7 @@ export function ProductCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <svg className="h-8 w-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-8 w-8 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
@@ -107,7 +107,7 @@ export function ProductCard({
             <StatusChip status={status} className="mb-1" />
             <h3 className="truncate text-sm font-semibold text-white">{product.name}</h3>
             {product.description && (
-              <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">{product.description}</p>
+              <p className="mt-0.5 line-clamp-2 text-xs text-[var(--text-muted)]">{product.description}</p>
             )}
           </div>
           <span className="shrink-0 font-display text-sm font-bold text-[var(--brand-primary)] tabular-nums">
@@ -118,13 +118,13 @@ export function ProductCard({
         <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
           <div className="flex items-center gap-1">
             {dragHandle && (
-              <span className="cursor-grab rounded-lg p-1.5 text-zinc-600 hover:text-zinc-400">
+              <span className="cursor-grab rounded-lg p-1.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)]">
                 <GripVertical className="h-3.5 w-3.5" />
               </span>
             )}
             {status === "DRAFT" && onPublish && (
               <button onClick={() => onPublish(product.id)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-green-500/10 hover:text-green-400"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-green-500/10 hover:text-green-400"
                 title="Publish" aria-label={`Publish ${product.name}`}
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -132,7 +132,7 @@ export function ProductCard({
             )}
             {status === "PUBLISHED" && onUnpublish && (
               <button onClick={() => onUnpublish(product.id)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-amber-500/10 hover:text-amber-400"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-amber-500/10 hover:text-amber-400"
                 title="Unpublish" aria-label={`Unpublish ${product.name}`}
               >
                 <EyeOff className="h-3.5 w-3.5" />
@@ -143,7 +143,7 @@ export function ProductCard({
           <div className="flex items-center gap-1 relative">
             {onEdit && status !== "ARCHIVED" && (
               <button onClick={() => onEdit(product)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-[var(--brand-primary)]/10 hover:text-[var(--brand-primary)]"
                 title="Edit product" aria-label={`Edit ${product.name}`}
               >
                 <Edit3 className="h-3.5 w-3.5" />
@@ -151,7 +151,7 @@ export function ProductCard({
             )}
             {onDuplicate && (
               <button onClick={() => onDuplicate(product.id)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-purple-500/10 hover:text-purple-400"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-purple-500/10 hover:text-purple-400"
                 title="Duplicate product" aria-label={`Duplicate ${product.name}`}
               >
                 <Copy className="h-3.5 w-3.5" />
@@ -159,14 +159,14 @@ export function ProductCard({
             )}
             {status !== "ARCHIVED" && onArchive ? (
               <button onClick={() => onArchive(product.id)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-amber-500/10 hover:text-amber-400"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-amber-500/10 hover:text-amber-400"
                 title="Archive product" aria-label={`Archive ${product.name}`}
               >
                 <Archive className="h-3.5 w-3.5" />
               </button>
             ) : status === "ARCHIVED" && onRestore ? (
               <button onClick={() => onRestore(product.id)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-green-500/10 hover:text-green-400"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-green-500/10 hover:text-green-400"
                 title="Restore product" aria-label={`Restore ${product.name}`}
               >
                 <Archive className="h-3.5 w-3.5" />
@@ -174,7 +174,7 @@ export function ProductCard({
             ) : null}
             {onDelete && (
               <button onClick={() => onDelete(product.id, product.name)}
-                className="rounded-lg p-1.5 text-zinc-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                className="rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
                 title="Delete product" aria-label={`Delete ${product.name}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -190,11 +190,11 @@ export function ProductCard({
 export function ProductCardEmpty({ onCreate }: { onCreate?: () => void }) {
   return (
     <div className="col-span-full flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-800 py-16">
-      <svg className="mb-3 h-12 w-12 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="mb-3 h-12 w-12 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
       </svg>
-      <p className="text-sm font-medium text-zinc-500">No products yet</p>
-      <p className="mt-1 text-xs text-zinc-600">Add your first product to start selling.</p>
+      <p className="text-sm font-medium text-[var(--text-muted)]">No products yet</p>
+      <p className="mt-1 text-xs text-[var(--text-muted)]">Add your first product to start selling.</p>
       {onCreate && (
         <button onClick={onCreate} className="admin-btn-cyan mt-4 px-4 py-2 text-xs">
           Add Product

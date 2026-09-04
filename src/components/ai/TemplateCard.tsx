@@ -59,7 +59,7 @@ export const TemplateCard = forwardRef<HTMLButtonElement, TemplateCardProps>(
             <div className="h-6 w-6 rounded bg-white/10 animate-pulse" />
           ) : (
             <Icon
-              className={cn("h-6 w-6", selected ? "text-[var(--brand-primary)]" : "text-zinc-400")}
+              className={cn("h-6 w-6", selected ? "text-[var(--brand-primary)]" : "text-[var(--text-secondary)]")}
               aria-hidden="true"
             />
           )}
@@ -73,7 +73,7 @@ export const TemplateCard = forwardRef<HTMLButtonElement, TemplateCardProps>(
           >
             {label}
           </p>
-          <p className="mt-0.5 text-xs text-zinc-500 line-clamp-2">{description}</p>
+          <p className="mt-0.5 text-xs text-[var(--text-muted)] line-clamp-2">{description}</p>
         </div>
       </button>
     );

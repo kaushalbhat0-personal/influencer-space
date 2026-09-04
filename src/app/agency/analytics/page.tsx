@@ -35,7 +35,7 @@ export default async function AgencyAnalytics() {
 
       <div className="space-y-6">
         <PageSection>
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Earnings Summary</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Earnings Summary</h2>
           <MetricGrid>
             <MetricCard label="Gross Commission" value={formatRupees(o?.summary.grossCommission ?? 0)} icon={TrendingUp} />
             <MetricCard label="Refund Adjustments" value={formatRupees(o?.summary.refundReversals ?? 0)} icon={RotateCcw} />
@@ -45,23 +45,23 @@ export default async function AgencyAnalytics() {
             <MetricCard label="Clawback Due" value={formatRupees(o?.summary.clawbackDue ?? 0)} icon={RotateCcw} />
             <MetricCard label="Available" value={formatRupees(o?.summary.available ?? 0)} icon={Wallet} />
           </MetricGrid>
-          <p className="mt-3 text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-[var(--text-muted)]">
             Net Earnings = Gross Commission − Refund Adjustments · Clawback Due = refunds of already-settled commission ·
             Available = Net Earnings − Paid − Clawback Due. Active clients: {o?.summary.activeClients ?? 0} · Upcoming renewals: {o?.summary.upcomingRenewals ?? 0}.
           </p>
         </PageSection>
 
         <PageSection>
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Monthly Earnings</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Monthly Earnings</h2>
           <div className="admin-card p-5">
             <MonthlyEarningsChart data={o?.monthly ?? []} />
-            <p className="mt-3 text-[10px] text-zinc-600">Last 6 months, UTC calendar months. Net = Gross − Refunds; refunds are recorded in the month the reversal occurred.</p>
+            <p className="mt-3 text-[10px] text-[var(--text-muted)]">Last 6 months, UTC calendar months. Net = Gross − Refunds; refunds are recorded in the month the reversal occurred.</p>
           </div>
         </PageSection>
 
         {o && o.clients.length > 0 ? (
           <PageSection>
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Earnings by Client</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Earnings by Client</h2>
             <div className="admin-card overflow-hidden">
               <table className="admin-table">
                 <thead>
@@ -78,10 +78,10 @@ export default async function AgencyAnalytics() {
                     <tr key={c.name}>
                       <td>
                         <span className="text-white text-sm">{c.name}</span>
-                        <span className="ml-2 text-[10px] text-zinc-500">{c.subdomain}</span>
+                        <span className="ml-2 text-[10px] text-[var(--text-muted)]">{c.subdomain}</span>
                       </td>
-                      <td><span className="text-zinc-400 text-xs font-mono">{c.planCode ?? "—"}</span></td>
-                      <td className="text-right text-zinc-300">{formatRupees(c.grossCommission)}</td>
+                      <td><span className="text-[var(--text-secondary)] text-xs font-mono">{c.planCode ?? "—"}</span></td>
+                      <td className="text-right text-[var(--text-primary)]">{formatRupees(c.grossCommission)}</td>
                       <td className="text-right text-red-400/90">{formatRupees(c.refundReversals)}</td>
                       <td className="text-right text-white font-medium">{formatRupees(c.netCommission)}</td>
                     </tr>
@@ -93,15 +93,15 @@ export default async function AgencyAnalytics() {
         ) : (
           <PageSection>
             <div className="admin-card p-8 text-center">
-              <Users className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">No managed clients yet. Earnings appear once you onboard creators.</p>
+              <Users className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" />
+              <p className="text-sm text-[var(--text-muted)]">No managed clients yet. Earnings appear once you onboard creators.</p>
             </div>
           </PageSection>
         )}
 
         {o && o.transactions.length > 0 ? (
           <PageSection>
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Recent Transactions</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Recent Transactions</h2>
             <div className="admin-card overflow-hidden">
               <table className="admin-table">
                 <thead>
@@ -123,18 +123,18 @@ export default async function AgencyAnalytics() {
                     const net = isReversal ? t.partnerShare : t.partnerShare + (t.refundId ? 0 : 0);
                     return (
                       <tr key={t.id}>
-                        <td className="text-zinc-400 text-xs">{fmtDate(t.createdAt)}</td>
-                        <td><span className="text-zinc-300 text-xs font-mono">{t.planCode}</span></td>
-                        <td className="text-right text-zinc-300">{formatRupees(t.grossAmount)}</td>
-                        <td className="text-right text-zinc-400 text-xs">{isReversal ? "—" : `${t.partnerPercent}%`}</td>
-                        <td className="text-right text-zinc-300">{isReversal ? "—" : formatRupees(t.partnerShare)}</td>
+                        <td className="text-[var(--text-secondary)] text-xs">{fmtDate(t.createdAt)}</td>
+                        <td><span className="text-[var(--text-primary)] text-xs font-mono">{t.planCode}</span></td>
+                        <td className="text-right text-[var(--text-primary)]">{formatRupees(t.grossAmount)}</td>
+                        <td className="text-right text-[var(--text-secondary)] text-xs">{isReversal ? "—" : `${t.partnerPercent}%`}</td>
+                        <td className="text-right text-[var(--text-primary)]">{isReversal ? "—" : formatRupees(t.partnerShare)}</td>
                         <td className="text-right text-red-400/90">{isReversal ? formatRupees(refund) : "—"}</td>
                         <td className="text-right text-white font-medium">{formatRupees(net)}</td>
                         <td className="text-right">
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                             t.reserved ? "bg-amber-500/15 text-amber-300" :
                             t.status === "cleared" ? "bg-emerald-500/15 text-emerald-300" :
-                            t.status === "reversed" ? "bg-zinc-500/15 text-zinc-400" :
+                            t.status === "reversed" ? "bg-zinc-500/15 text-[var(--text-secondary)]" :
                             "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]"
                           }`}>
                             {t.reserved ? "reserved" : t.status}
@@ -145,21 +145,21 @@ export default async function AgencyAnalytics() {
                   })}
                 </tbody>
               </table>
-              <p className="px-4 py-2 text-[10px] text-zinc-600">Refund adjustments are shown as negative values; the net for each entry equals its commission less any refund adjustment.</p>
+              <p className="px-4 py-2 text-[10px] text-[var(--text-muted)]">Refund adjustments are shown as negative values; the net for each entry equals its commission less any refund adjustment.</p>
             </div>
           </PageSection>
         ) : (
           <PageSection>
             <div className="admin-card p-8 text-center">
-              <Receipt className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">No financial transactions yet.</p>
+              <Receipt className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" />
+              <p className="text-sm text-[var(--text-muted)]">No financial transactions yet.</p>
             </div>
           </PageSection>
         )}
 
         {o && o.settlements.length > 0 && (
           <PageSection>
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Settlements</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Settlements</h2>
             <div className="admin-card overflow-hidden">
               <table className="admin-table">
                 <thead>
@@ -173,10 +173,10 @@ export default async function AgencyAnalytics() {
                 <tbody>
                   {o.settlements.map((s) => (
                     <tr key={s.id}>
-                      <td className="text-zinc-400 text-xs">{fmtDate(s.createdAt)}</td>
-                      <td><span className="text-zinc-300 text-xs font-mono">{s.id.slice(0, 8)}</span></td>
-                      <td className="text-right text-zinc-300">{formatRupees(s.netAmount)}</td>
-                      <td className="text-right"><span className="text-xs text-zinc-400 capitalize">{s.status.toLowerCase()}</span></td>
+                      <td className="text-[var(--text-secondary)] text-xs">{fmtDate(s.createdAt)}</td>
+                      <td><span className="text-[var(--text-primary)] text-xs font-mono">{s.id.slice(0, 8)}</span></td>
+                      <td className="text-right text-[var(--text-primary)]">{formatRupees(s.netAmount)}</td>
+                      <td className="text-right"><span className="text-xs text-[var(--text-secondary)] capitalize">{s.status.toLowerCase()}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -187,41 +187,41 @@ export default async function AgencyAnalytics() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="admin-card p-5">
-            <h3 className="text-sm font-semibold text-zinc-300 mb-3">Payout Summary</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Payout Summary</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Payout Eligibility</span>
+                <span className="text-[var(--text-muted)]">Payout Eligibility</span>
                 <span className={p?.eligible ? "text-emerald-400" : "text-amber-400"}>{p?.eligible ? "Eligible" : "Below threshold"}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Available Balance</span>
-                <span className="text-zinc-300">{formatRupees(p?.availableBalance ?? 0)}</span>
+                <span className="text-[var(--text-muted)]">Available Balance</span>
+                <span className="text-[var(--text-primary)]">{formatRupees(p?.availableBalance ?? 0)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Minimum Threshold</span>
-                <span className="text-zinc-300">{formatRupees(p?.minimumThreshold ?? 0)}</span>
+                <span className="text-[var(--text-muted)]">Minimum Threshold</span>
+                <span className="text-[var(--text-primary)]">{formatRupees(p?.minimumThreshold ?? 0)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Total Paid</span>
-                <span className="text-zinc-300">{formatRupees(p?.totalPaid ?? 0)}</span>
+                <span className="text-[var(--text-muted)]">Total Paid</span>
+                <span className="text-[var(--text-primary)]">{formatRupees(p?.totalPaid ?? 0)}</span>
               </div>
             </div>
           </div>
 
           <div className="admin-card p-5">
-            <h3 className="text-sm font-semibold text-zinc-300 mb-3">Partner Overview</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Partner Overview</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Active Clients</span>
-                <span className="text-zinc-300">{o?.summary.activeClients ?? 0}</span>
+                <span className="text-[var(--text-muted)]">Active Clients</span>
+                <span className="text-[var(--text-primary)]">{o?.summary.activeClients ?? 0}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Upcoming Renewals</span>
-                <span className="text-zinc-300">{o?.summary.upcomingRenewals ?? 0}</span>
+                <span className="text-[var(--text-muted)]">Upcoming Renewals</span>
+                <span className="text-[var(--text-primary)]">{o?.summary.upcomingRenewals ?? 0}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Commission Entries</span>
-                <span className="text-zinc-300">{o?.summary.entryCount ?? 0}</span>
+                <span className="text-[var(--text-muted)]">Commission Entries</span>
+                <span className="text-[var(--text-primary)]">{o?.summary.entryCount ?? 0}</span>
               </div>
             </div>
           </div>

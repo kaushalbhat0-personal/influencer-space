@@ -14,10 +14,10 @@ interface CustomerRow {
 const columns: Column<CustomerRow>[] = [
   { key: "email", header: "Email", sortable: true, cell: (r) => <span className="break-all text-white text-sm">{r.email}</span> },
   { key: "totalSpent", header: "Total Spent", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">{formatCurrency(r.totalSpent)}</span> },
-  { key: "orderCount", header: "Orders", sortable: true, cell: (r) => <span className="text-zinc-400">{r.orderCount}</span> },
+  { key: "orderCount", header: "Orders", sortable: true, cell: (r) => <span className="text-[var(--text-secondary)]">{r.orderCount}</span> },
   {
     key: "lastOrder", header: "Last Order", sortable: true, cell: (r) => (
-      <span className="text-zinc-500 text-xs">{new Date(r.lastOrder).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+      <span className="text-[var(--text-muted)] text-xs">{new Date(r.lastOrder).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
     ),
   },
 ];

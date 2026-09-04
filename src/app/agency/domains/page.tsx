@@ -43,13 +43,13 @@ export default async function AgencyDomainsPage() {
           </thead>
           <tbody>
             {links.length === 0 && (
-              <tr><td colSpan={3} className="p-4 text-center text-xs text-zinc-600">No managed creators yet.</td></tr>
+              <tr><td colSpan={3} className="p-4 text-center text-xs text-[var(--text-muted)]">No managed creators yet.</td></tr>
             )}
             {links.map((l) => (
               <tr key={l.id} data-tenant={l.tenantId}>
                 <td className="text-sm text-white">{l.tenant.name}</td>
-                <td className="text-xs text-zinc-500">{l.tenant.subdomain}</td>
-                <td className="text-xs text-zinc-500">{l.tenant.customDomain ?? "—"}</td>
+                <td className="text-xs text-[var(--text-muted)]">{l.tenant.subdomain}</td>
+                <td className="text-xs text-[var(--text-muted)]">{l.tenant.customDomain ?? "—"}</td>
               </tr>
             ))}
           </tbody>

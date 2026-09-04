@@ -39,14 +39,14 @@ export function RecommendationCard({
             "h-5 w-5 flex-shrink-0 mt-0.5",
             priority === "high" && "text-amber-400",
             priority === "medium" && "text-[var(--brand-primary)]",
-            priority === "low" && "text-zinc-400"
+            priority === "low" && "text-[var(--text-secondary)]"
           )}
           aria-hidden="true"
         />
         <div className="flex-1">
           <p className="text-sm text-white">{message}</p>
           {estimatedMinutes !== undefined && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-zinc-500">
+            <p className="mt-1.5 flex items-center gap-1 text-xs text-[var(--text-muted)]">
               <Clock className="h-3 w-3" aria-hidden="true" />
               Estimated setup time: ~{estimatedMinutes} minute{estimatedMinutes !== 1 ? "s" : ""}
             </p>

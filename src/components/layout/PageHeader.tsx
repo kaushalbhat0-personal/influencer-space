@@ -32,14 +32,14 @@ export function PageHeader({ title, description, breadcrumbs, actions, status, t
                   status.variant === "success" && "bg-green-500/20 text-green-400",
                   status.variant === "warning" && "bg-amber-500/20 text-amber-400",
                   status.variant === "danger" && "bg-red-500/20 text-red-400",
-                  (!status.variant || status.variant === "default") && "bg-zinc-800 text-zinc-300"
+                  (!status.variant || status.variant === "default") && "bg-zinc-800 text-[var(--text-primary)]"
                 )}
               >
                 {status.label}
               </span>
             )}
           </div>
-          {description && <p className="mt-1 text-sm text-zinc-400">{description}</p>}
+          {description && <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
       </div>
@@ -53,7 +53,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, status, t
                 "whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
                 tab.active
                   ? "border-[var(--brand-primary)] text-[var(--brand-primary)]"
-                  : "border-transparent text-zinc-500 hover:text-zinc-300"
+                  : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               )}
             >
               {tab.label}

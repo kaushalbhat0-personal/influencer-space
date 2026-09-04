@@ -26,15 +26,15 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "default
 
 const columns: Column<OrderRow>[] = [
   { key: "productName", header: "Product", sortable: true, cell: (r) => <span className="text-white text-sm">{r.productName}</span> },
-  { key: "fanEmail", header: "Customer", sortable: true, cell: (r) => <span className="break-all text-zinc-400 text-sm">{r.fanEmail ?? "—"}</span> },
+  { key: "fanEmail", header: "Customer", sortable: true, cell: (r) => <span className="break-all text-[var(--text-secondary)] text-sm">{r.fanEmail ?? "—"}</span> },
   { key: "amount", header: "Amount", sortable: true, cell: (r) => <span className="text-white font-medium tabular-nums">{formatINR(r.amount)}</span> },
   {
     key: "status", header: "Status", sortable: true, cell: (r) => (
       <Badge variant={STATUS_VARIANT[r.status] ?? "default"} size="sm">{r.status}</Badge>
     ),
   },
-  { key: "createdAt", header: "Date", sortable: true, cell: (r) => <span className="text-zinc-500 text-xs">{formatDate(r.createdAt)}</span> },
-  { key: "razorpayOrderId", header: "Order ID", cell: (r) => <span className="text-zinc-500 text-xs font-mono">{r.razorpayOrderId.slice(0, 12)}...</span> },
+  { key: "createdAt", header: "Date", sortable: true, cell: (r) => <span className="text-[var(--text-muted)] text-xs">{formatDate(r.createdAt)}</span> },
+  { key: "razorpayOrderId", header: "Order ID", cell: (r) => <span className="text-[var(--text-muted)] text-xs font-mono">{r.razorpayOrderId.slice(0, 12)}...</span> },
 ];
 
 export function OrdersTable({ orders }: { orders: OrderRow[] }) {

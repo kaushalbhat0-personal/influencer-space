@@ -66,8 +66,8 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
   if (step === "industry") {
     return (
       <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-white">What do you do?</h2>
-        <p className="text-sm text-zinc-400">Choose your industry or profession. We&apos;ll recommend the best starting point.</p>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">What do you do?</h2>
+        <p className="text-sm text-[var(--text-secondary)]">Choose your industry or profession. We&apos;ll recommend the best starting point.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {industries.map((ind) => (
             <button
@@ -77,12 +77,12 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                 selectedIndustry === ind.id ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/50" : "border-white/10"
               }`}
             >
-              <p className="text-sm font-semibold text-white">{ind.displayName}</p>
-              <p className="mt-1 text-[11px] text-zinc-500">{ind.description}</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{ind.displayName}</p>
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">{ind.description}</p>
               {ind.recommendedModules.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {ind.recommendedModules.slice(0, 3).map((m) => (
-                    <span key={m} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">{m}</span>
+                    <span key={m} className="rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">{m}</span>
                   ))}
                 </div>
               )}
@@ -97,12 +97,12 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2">
-          <button onClick={() => setStep("industry")} className="text-xs text-zinc-500 hover:text-white transition-colors">&larr; Back</button>
-          <span className="text-xs text-zinc-700">|</span>
-          <span className="text-xs text-zinc-500">{industryObj?.displayName}</span>
+          <button onClick={() => setStep("industry")} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">&larr; Back</button>
+          <span className="text-xs text-[var(--text-muted)]">|</span>
+          <span className="text-xs text-[var(--text-muted)]">{industryObj?.displayName}</span>
         </div>
-        <h2 className="text-lg font-semibold text-white">Choose your style</h2>
-        <p className="text-sm text-zinc-400">Pick a visual style for your website.</p>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Choose your style</h2>
+        <p className="text-sm text-[var(--text-secondary)]">Pick a visual style for your website.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {styles.map((st) => {
             const compatibleTheme = st.compatibleThemeIds.length > 0 ? themes.find((t) => t.id === st.compatibleThemeIds[0]) : null;
@@ -114,12 +114,12 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                   selectedStyle === st.id ? "border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/50" : "border-white/10"
                 }`}
               >
-                <p className="text-sm font-semibold text-white">{st.displayName}</p>
-                <p className="mt-1 text-[11px] text-zinc-500">{st.description}</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">{st.displayName}</p>
+                <p className="mt-1 text-[11px] text-[var(--text-muted)]">{st.description}</p>
                 {compatibleTheme && (
                   <div className="mt-3 flex items-center gap-2">
                     <div className="h-4 w-4 rounded-full" style={{ backgroundColor: compatibleTheme.variants[0]?.tokens.colors.primary }} />
-                    <span className="text-[10px] text-zinc-500">{compatibleTheme.name}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">{compatibleTheme.name}</span>
                   </div>
                 )}
               </button>
@@ -133,25 +133,25 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
   if (step === "review") {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
-          <button onClick={() => setStep("style")} className="hover:text-white transition-colors">&larr; Back</button>
-          <span className="text-zinc-700">|</span>
+        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+          <button onClick={() => setStep("style")} className="hover:text-[var(--text-primary)] transition-colors">&larr; Back</button>
+          <span className="text-[var(--text-muted)]">|</span>
           <span>{industryObj?.displayName}</span>
-          <span className="text-zinc-700">/</span>
+          <span className="text-[var(--text-muted)]">/</span>
           <span>{styleObj?.displayName}</span>
         </div>
 
-        <h2 className="text-lg font-semibold text-white">Review your website</h2>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Review your website</h2>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
             {recommendation && (
               <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Recommended Template</h3>
+                <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Recommended Template</h3>
                 {recommendation.alternativeBlueprints.slice(0, 3).map((alt) => (
                   <div key={alt.blueprintId} className="mt-2 flex items-center justify-between rounded-lg bg-zinc-800/50 px-3 py-2">
                     <div>
-                      <p className="text-sm text-white">{alt.blueprintName}</p>
+                      <p className="text-sm text-[var(--text-primary)]">{alt.blueprintName}</p>
                       <div className="flex gap-2 mt-0.5">
                         {alt.reasons.slice(0, 2).map((r, i) => (
                           <span key={i} className="text-[10px] text-emerald-400">&#10003; {r}</span>
@@ -161,7 +161,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                     <button
                       onClick={() => setSelectedBlueprint(alt.blueprintId)}
                       className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-                        selectedBlueprint === alt.blueprintId ? "bg-[var(--brand-primary)] text-white" : "border border-white/10 text-zinc-400 hover:text-white"
+                        selectedBlueprint === alt.blueprintId ? "bg-[var(--brand-primary)] text-[var(--text-primary)]" : "border border-white/10 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       }`}
                     >
                       Select
@@ -173,16 +173,16 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
 
             {bpObj && (
               <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{bpObj.name}</h3>
-                <p className="mt-1 text-xs text-zinc-500">{bpObj.pages.length} pages &middot; {bpObj.pages.reduce((s, p) => s + p.sections.length, 0)} sections</p>
+                <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{bpObj.name}</h3>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">{bpObj.pages.length} pages &middot; {bpObj.pages.reduce((s, p) => s + p.sections.length, 0)} sections</p>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {bpObj.pages.map((p) => <span key={p.id} className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">{p.name}</span>)}
+                  {bpObj.pages.map((p) => <span key={p.id} className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">{p.name}</span>)}
                 </div>
               </div>
             )}
 
             <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Theme</h3>
+              <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Theme</h3>
               <div className="mt-3 flex flex-wrap gap-2">
                 {themes.slice(0, 6).map((t) => (
                   <button
@@ -203,7 +203,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                   {Object.entries(themeObj.variants[0]?.tokens.colors ?? {}).filter(([k]) => !["overlay"].includes(k)).map(([name, hex]) => (
                     <div key={name} className="flex flex-col items-center gap-0.5">
                       <span className="h-6 w-6 rounded border border-white/10" style={{ backgroundColor: hex }} />
-                      <span className="text-[8px] text-zinc-600">{name}</span>
+                      <span className="text-[8px] text-[var(--text-muted)]">{name}</span>
                     </div>
                   ))}
                 </div>
@@ -212,14 +212,14 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
           </div>
 
                 <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Live Preview</h3>
+            <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Live Preview</h3>
             {themeObj && resolvedTokens && (
               <>
                 <div className="mb-3 flex gap-2">
                   <button
                     onClick={() => setDevice("desktop")}
                     className={`rounded px-2 py-1 text-[10px] font-medium transition-colors ${
-                      device === "desktop" ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                      device === "desktop" ? "bg-[var(--surface-hover)] text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     Desktop
@@ -227,7 +227,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                   <button
                     onClick={() => setDevice("tablet")}
                     className={`rounded px-2 py-1 text-[10px] font-medium transition-colors ${
-                      device === "tablet" ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                      device === "tablet" ? "bg-[var(--surface-hover)] text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     Tablet
@@ -235,7 +235,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                   <button
                     onClick={() => setDevice("mobile")}
                     className={`rounded px-2 py-1 text-[10px] font-medium transition-colors ${
-                      device === "mobile" ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                      device === "mobile" ? "bg-[var(--surface-hover)] text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     Mobile
@@ -243,7 +243,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                   <button
                     onClick={() => setVariant("light")}
                     className={`rounded px-2 py-1 text-[10px] font-medium transition-colors ${
-                      variant === "light" ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                      variant === "light" ? "bg-[var(--surface-hover)] text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     Light
@@ -251,7 +251,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                   <button
                     onClick={() => setVariant("dark")}
                     className={`rounded px-2 py-1 text-[10px] font-medium transition-colors ${
-                      variant === "dark" ? "bg-zinc-700 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                      variant === "dark" ? "bg-[var(--surface-hover)] text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     Dark
@@ -282,7 +282,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
                       {bpObj?.pages.length ?? 0} pages &middot; {bpObj?.pages.reduce((s, p) => s + p.sections.length, 0) ?? 0} sections
                     </p>
                     <div className="mt-4 flex gap-3">
-                      <span className="rounded px-3 py-1.5 text-sm font-medium text-white" style={{ backgroundColor: resolvedTokens.colors.primary }}>
+                      <span className="rounded px-3 py-1.5 text-sm font-medium text-[var(--text-primary)]" style={{ backgroundColor: resolvedTokens.colors.primary }}>
                         Get Started
                       </span>
                       <span className="rounded border px-3 py-1.5 text-sm font-medium" style={{ borderColor: resolvedTokens.colors.border, color: resolvedTokens.colors.textSecondary }}>
@@ -306,7 +306,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
         </div>
 
         <div className="flex justify-end gap-3">
-          <button onClick={() => setStep("style")} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors">
+          <button onClick={() => setStep("style")} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             Back
           </button>
           <button onClick={handleGenerate} className="rounded-lg bg-[var(--brand-primary)] px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
@@ -321,7 +321,7 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--brand-primary)] border-t-transparent" />
-        <p className="mt-4 text-sm text-zinc-400">Building your website — analyzing your profile, composing your storefront, and writing your content.</p>
+        <p className="mt-4 text-sm text-[var(--text-secondary)]">Building your website — analyzing your profile, composing your storefront, and writing your content.</p>
       </div>
     );
   }
@@ -331,13 +331,13 @@ export function CreationWizardClient({ industries, styles, blueprints, themes, i
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-900/30">
         <span className="text-2xl text-emerald-400">&#10003;</span>
       </div>
-      <h2 className="mt-4 text-xl font-bold text-white">Website Created!</h2>
-      <p className="mt-2 text-sm text-zinc-400">Your website has been generated. You can now customize it in the Builder.</p>
+      <h2 className="mt-4 text-xl font-bold text-[var(--text-primary)]">Website Created!</h2>
+      <p className="mt-2 text-sm text-[var(--text-secondary)]">Your website has been generated. You can now customize it in the Builder.</p>
       <div className="mt-6 flex gap-3">
         <a href="/builder" className="rounded-lg bg-[var(--brand-primary)] px-6 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity">
           Open Builder
         </a>
-        <a href={`/${industryObj?.slug ?? "demo"}`} className="rounded-lg border border-white/10 px-6 py-2 text-sm text-zinc-400 hover:text-white transition-colors">
+        <a href={`/${industryObj?.slug ?? "demo"}`} className="rounded-lg border border-white/10 px-6 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
           View Website
         </a>
       </div>

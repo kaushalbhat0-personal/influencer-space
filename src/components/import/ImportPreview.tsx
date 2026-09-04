@@ -69,14 +69,14 @@ export function ImportPreview({
 
       {/* Palette */}
       <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-2">Brand Palette</label>
+        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Brand Palette</label>
         <div className="flex gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-zinc-500">Primary</span>
+            <span className="text-[10px] text-[var(--text-muted)]">Primary</span>
             <input type="color" value={profile.palette.primary} onChange={(e) => setProfile((p) => ({ ...p, palette: { ...p.palette, primary: e.target.value } }))} className="h-8 w-14 rounded cursor-pointer bg-transparent border border-white/10" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-zinc-500">Secondary</span>
+            <span className="text-[10px] text-[var(--text-muted)]">Secondary</span>
             <input type="color" value={profile.palette.secondary} onChange={(e) => setProfile((p) => ({ ...p, palette: { ...p.palette, secondary: e.target.value } }))} className="h-8 w-14 rounded cursor-pointer bg-transparent border border-white/10" />
           </div>
         </div>
@@ -84,13 +84,13 @@ export function ImportPreview({
 
       {/* Offers */}
       <div>
-        <label className="block text-xs font-medium text-zinc-400 mb-2">Offers ({profile.offers.length})</label>
+        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Offers ({profile.offers.length})</label>
         <div className="space-y-2 mb-3">
           {profile.offers.map((o) => (
             <div key={o.id} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
               <span className="flex-1 text-sm text-white truncate">{o.name}</span>
-              <span className="text-xs text-zinc-500">{formatCurrency(o.price)}</span>
-              <button onClick={() => removeOffer(o.id)} className="text-zinc-600 hover:text-red-400 transition-colors">
+              <span className="text-xs text-[var(--text-muted)]">{formatCurrency(o.price)}</span>
+              <button onClick={() => removeOffer(o.id)} className="text-[var(--text-muted)] hover:text-red-400 transition-colors">
                 <Trash2 className="h-3 w-3" />
               </button>
             </div>
@@ -122,7 +122,7 @@ function Field({ label, value, onChange, textarea, className }: { label: string;
   const id = `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
     <div className={className}>
-      <label htmlFor={id} className="block text-xs font-medium text-zinc-400 mb-1">{label}</label>
+      <label htmlFor={id} className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}</label>
       {textarea ? (
         <textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} rows={3} className="admin-input w-full text-sm resize-none" />
       ) : (

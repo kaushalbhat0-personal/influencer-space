@@ -31,7 +31,7 @@ export function AgencyClientsTable({ data }: { data: ClientRow[] }) {
           <span className={`text-xs font-medium ${r.healthScore >= 80 ? "text-emerald-400" : r.healthScore >= 50 ? "text-amber-400" : "text-red-400"}`}>
             {r.healthScore}%
           </span>
-        ) : <span className="text-zinc-600">—</span>
+        ) : <span className="text-[var(--text-muted)]">—</span>
       ),
     },
     {
@@ -40,7 +40,7 @@ export function AgencyClientsTable({ data }: { data: ClientRow[] }) {
         <span className={`text-xs font-medium px-2 py-0.5 rounded ${
           r.publishState === "live" ? "bg-emerald-500/10 text-emerald-400" :
           r.publishState === "preview" ? "bg-blue-500/10 text-blue-400" :
-          "bg-zinc-800 text-zinc-500"
+          "bg-zinc-800 text-[var(--text-muted)]"
         }`}>
           {r.publishState ?? "draft"}
         </span>
@@ -53,7 +53,7 @@ export function AgencyClientsTable({ data }: { data: ClientRow[] }) {
           r.status === "active" ? "bg-emerald-500/10 text-emerald-400" :
           r.status === "lead" ? "bg-blue-500/10 text-blue-400" :
           r.status === "paused" ? "bg-amber-500/10 text-amber-400" :
-          "bg-zinc-800 text-zinc-400"
+          "bg-zinc-800 text-[var(--text-secondary)]"
         }`}>
           {r.status}
         </span>

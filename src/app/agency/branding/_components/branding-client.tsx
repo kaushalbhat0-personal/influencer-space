@@ -23,30 +23,30 @@ export function BrandingClient({ agencyId, initial }: { agencyId: string; initia
     setBusy(false);
   }
 
-  const input = "w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-200";
+  const input = "w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-primary)]";
 
   return (
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-6">
       <h3 className="text-sm font-semibold text-white mb-4">Brand Settings</h3>
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Primary Color</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Primary Color</label>
           <input className={input} value={form.primaryColor} onChange={(e) => setForm({ ...form, primaryColor: e.target.value })} data-testid="brand-primary" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Accent Color</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Accent Color</label>
           <input className={input} value={form.accentColor} onChange={(e) => setForm({ ...form, accentColor: e.target.value })} data-testid="brand-accent" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Support Email</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Support Email</label>
           <input className={input} value={form.supportEmail ?? ""} onChange={(e) => setForm({ ...form, supportEmail: e.target.value })} data-testid="brand-email" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Support Phone</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Support Phone</label>
           <input className={input} value={form.supportPhone ?? ""} onChange={(e) => setForm({ ...form, supportPhone: e.target.value })} data-testid="brand-phone" />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-zinc-400 mb-1">Footer Text</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Footer Text</label>
           <input className={input} value={form.footerText ?? ""} onChange={(e) => setForm({ ...form, footerText: e.target.value })} data-testid="brand-footer" />
         </div>
       </div>

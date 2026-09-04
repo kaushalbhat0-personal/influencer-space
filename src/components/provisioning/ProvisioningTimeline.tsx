@@ -127,7 +127,7 @@ export function ProvisioningTimeline({ runId, onComplete, onError }: Provisionin
                   {completed && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
                   {failed && <XCircle className="h-3 w-3 text-red-400" />}
                   {isActive && <Loader2 className="h-3 w-3 animate-spin text-[var(--brand-primary)]" />}
-                  {isPending && <Clock className="h-3 w-3 text-zinc-600" />}
+                  {isPending && <Clock className="h-3 w-3 text-[var(--text-muted)]" />}
                 </div>
                 {i < allSteps.length - 1 && (
                   <div className={cn(
@@ -145,11 +145,11 @@ export function ProvisioningTimeline({ runId, onComplete, onError }: Provisionin
                     completed && "text-emerald-300",
                     failed && "text-red-400",
                     isActive && "text-[var(--brand-primary)]",
-                    isPending && "text-zinc-600",
+                    isPending && "text-[var(--text-muted)]",
                   )}>
                     {stepLabel(step)}
                   </span>
-                  <span className="text-[10px] text-zinc-600 shrink-0 font-mono">
+                  <span className="text-[10px] text-[var(--text-muted)] shrink-0 font-mono">
                     {completed || failed
                       ? formatTime(stepEvents[stepEvents.length - 1]?.timestamp || "")
                       : isActive
@@ -159,7 +159,7 @@ export function ProvisioningTimeline({ runId, onComplete, onError }: Provisionin
                   </span>
                 </div>
                 {stepEvents.length > 0 && stepEvents[stepEvents.length - 1]?.message && (
-                  <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5 truncate">
                     {stepEvents[stepEvents.length - 1].message}
                   </p>
                 )}

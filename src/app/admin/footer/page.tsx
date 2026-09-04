@@ -19,7 +19,7 @@ export default async function FooterAdminPage() {
     <div className="p-6 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Footer</h1>
-        <p className="mt-1 text-sm text-zinc-400">Manage footer columns, footer links, legal links, social links, and copyright. Footer is independent from Hero and header Navigation.</p>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">Manage footer columns, footer links, legal links, social links, and copyright. Footer is independent from Hero and header Navigation.</p>
       </div>
       <FooterManager initialDescription={data.description} initialCopyright={data.copyright} initialColumns={columns} initialSocialLinks={data.socialLinks} />
     </div>

@@ -47,7 +47,7 @@ export function DeploymentCard({
         <h3 className="text-lg font-semibold text-white">
           {allDone ? "✨ Complete!" : hasFailed ? "⚠️ Issues Detected" : `🚀 ${title}`}
         </h3>
-        {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>}
       </div>
 
       <Progress value={progress} className="mb-4" />
@@ -64,7 +64,7 @@ export function DeploymentCard({
               step.status === "completed" && "text-green-300",
               step.status === "running" && "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]",
               step.status === "failed" && "bg-red-500/10 text-red-300",
-              step.status === "pending" && "text-zinc-600"
+              step.status === "pending" && "text-[var(--text-muted)]"
             )}
           >
             {step.status === "completed" && (
@@ -88,7 +88,7 @@ export function DeploymentCard({
               {step.label}
             </span>
             {step.durationMs && step.status === "completed" && (
-              <span className="text-xs text-zinc-600 font-mono">{(step.durationMs / 1000).toFixed(1)}s</span>
+              <span className="text-xs text-[var(--text-muted)] font-mono">{(step.durationMs / 1000).toFixed(1)}s</span>
             )}
             {step.status === "failed" && step.error && (
               <span className="text-xs text-red-400/70 max-w-[200px] truncate">{step.error}</span>
@@ -98,7 +98,7 @@ export function DeploymentCard({
       </div>
 
       {elapsedSeconds !== undefined && (
-        <p className="mt-4 text-center text-xs text-zinc-600">
+        <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
           Elapsed: {elapsedSeconds.toFixed(1)}s
         </p>
       )}

@@ -47,7 +47,7 @@ export function OrderAnalytics({ data, loading, error }: OrderAnalyticsProps) {
           </div>
 
           <div>
-            <p className="text-xs font-medium text-zinc-400 mb-3">Orders by Day</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Orders by Day</p>
             <div className="h-40" role="img" aria-label={`${data.byDay.length} days of order data`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.byDay.map((d) => ({ ...d, displayDate: formatXAxisDate(d.date) }))}>
@@ -79,8 +79,8 @@ export function OrderAnalytics({ data, loading, error }: OrderAnalyticsProps) {
                 {statusData.map((s) => (
                   <div key={s.name} className="flex items-center gap-2 text-xs">
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: ORDER_STATUS_COLORS[s.name.toLowerCase()] || "#6366f1" }} aria-hidden="true" />
-                    <span className="text-zinc-400">{s.name}</span>
-                    <span className="text-zinc-200 font-medium">{s.value}</span>
+                    <span className="text-[var(--text-secondary)]">{s.name}</span>
+                    <span className="text-[var(--text-primary)] font-medium">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -89,14 +89,14 @@ export function OrderAnalytics({ data, loading, error }: OrderAnalyticsProps) {
 
           {data.topProducts.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-zinc-400 mb-2">Top Selling Products</p>
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-2">Top Selling Products</p>
               <div className="space-y-1">
                 {data.topProducts.slice(0, 5).map((p, i) => (
                   <div key={p.name} className="flex items-center gap-3 text-sm">
-                    <span className="text-xs text-zinc-600 w-4 shrink-0">{i + 1}</span>
-                    <span className="flex-1 text-zinc-300 truncate">{p.name}</span>
-                    <span className="text-zinc-400 tabular-nums">{p.count} sold</span>
-                    <span className="text-zinc-200 font-medium tabular-nums">{formatCurrency(p.revenue)}</span>
+                    <span className="text-xs text-[var(--text-muted)] w-4 shrink-0">{i + 1}</span>
+                    <span className="flex-1 text-[var(--text-primary)] truncate">{p.name}</span>
+                    <span className="text-[var(--text-secondary)] tabular-nums">{p.count} sold</span>
+                    <span className="text-[var(--text-primary)] font-medium tabular-nums">{formatCurrency(p.revenue)}</span>
                   </div>
                 ))}
               </div>

@@ -54,13 +54,13 @@ export function Stepper({
                   step.status === "completed" && "text-green-400",
                   step.status === "active" && "text-[var(--brand-primary)]",
                   step.status === "error" && "text-red-400",
-                  step.status === "pending" && "text-zinc-500"
+                  step.status === "pending" && "text-[var(--text-muted)]"
                 )}
               >
                 {step.label}
               </p>
               {step.description && size !== "compact" && (
-                <p className="mt-0.5 text-xs text-zinc-500">{step.description}</p>
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">{step.description}</p>
               )}
             </div>
           </div>
@@ -85,7 +85,7 @@ export function Stepper({
                   step.status === "completed" && "text-green-400",
                   step.status === "active" && "text-[var(--brand-primary)]",
                   step.status === "error" && "text-red-400",
-                  step.status === "pending" && "text-zinc-500"
+                  step.status === "pending" && "text-[var(--text-muted)]"
                 )}
               >
                 {step.label}
@@ -132,7 +132,7 @@ function StepIcon({
         step.status === "completed" && "bg-green-500 text-white",
         step.status === "active" && "bg-[var(--brand-primary)] text-white ring-2 ring-[var(--brand-primary)]/40",
         step.status === "error" && "bg-red-500 text-white",
-        step.status === "pending" && "bg-white/10 text-zinc-500"
+        step.status === "pending" && "bg-white/10 text-[var(--text-muted)]"
       )}
       role="presentation"
     >

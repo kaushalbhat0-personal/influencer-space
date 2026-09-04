@@ -120,13 +120,13 @@ export function StorefrontStatusCard({
   return (
     <div className={cn("rounded-xl border border-white/10 bg-white/[0.03] p-5", className)}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Storefront</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Storefront</h3>
         <PublishStatusBadge status={status} size="sm" />
       </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-zinc-400">Status</span>
+          <span className="text-[var(--text-secondary)]">Status</span>
           <span className={cn(
             "font-medium",
             isLive ? "text-emerald-400" : hasUnpublishedChanges ? "text-amber-400" : publishState === "preview" ? "text-blue-400" : "text-amber-400",
@@ -147,36 +147,36 @@ export function StorefrontStatusCard({
 
         {publishedVersion && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Last published</span>
-            <span className="text-zinc-300 font-mono">v{publishedVersion}</span>
+            <span className="text-[var(--text-secondary)]">Last published</span>
+            <span className="text-[var(--text-primary)] font-mono">v{publishedVersion}</span>
           </div>
         )}
 
         {currentTheme && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Current theme</span>
-            <span className="text-zinc-400 text-xs">{currentTheme}</span>
+            <span className="text-[var(--text-secondary)]">Current theme</span>
+            <span className="text-[var(--text-secondary)] text-xs">{currentTheme}</span>
           </div>
         )}
 
         {publishedAt && isLive && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Published at</span>
-            <span className="text-zinc-400 text-xs">{fmtDateTime(publishedAt)}</span>
+            <span className="text-[var(--text-secondary)]">Published at</span>
+            <span className="text-[var(--text-secondary)] text-xs">{fmtDateTime(publishedAt)}</span>
           </div>
         )}
 
         {usage && usage.mode === "unlimited" && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Publish allowance</span>
-            <span className="text-zinc-300 text-xs">Unlimited</span>
+            <span className="text-[var(--text-secondary)]">Publish allowance</span>
+            <span className="text-[var(--text-primary)] text-xs">Unlimited</span>
           </div>
         )}
 
         {usage && usage.mode !== "unlimited" && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Publish allowance</span>
-            <span className="text-zinc-300 text-xs">
+            <span className="text-[var(--text-secondary)]">Publish allowance</span>
+            <span className="text-[var(--text-primary)] text-xs">
               {usage.used} of {usage.limit} used
               {usage.mode === "monthly"
                 ? ` · resets ${fmtDate(usage.periodEnd)}`
@@ -253,51 +253,51 @@ export function StorefrontStatusCard({
             href={storefrontUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
           >
             <ExternalLink className="h-4 w-4" />
             <span className="flex-1">Visit website</span>
-            <span className="text-[10px] text-zinc-600">new tab</span>
+            <span className="text-[10px] text-[var(--text-muted)]">new tab</span>
           </Link>
         )}
         <Link
           href="/builder"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
         >
           <Layout className="h-4 w-4" />
           <span className="flex-1">Open builder</span>
-          <span className="text-[10px] text-zinc-600">{isLive ? "edit" : "design"}</span>
+          <span className="text-[10px] text-[var(--text-muted)]">{isLive ? "edit" : "design"}</span>
         </Link>
         {(hasLiveVersion || publishState === "preview") && (
           <button
             onClick={handlePreview}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
           >
             <Globe className="h-4 w-4" />
             <span className="flex-1">Preview Draft</span>
-            <span className="text-[10px] text-zinc-600">new tab</span>
+            <span className="text-[10px] text-[var(--text-muted)]">new tab</span>
           </button>
         )}
         {recentVersions.length > 0 && (
           <>
             <button
               onClick={() => setShowVersions(!showVersions)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
             >
               <History className="h-4 w-4" />
               <span className="flex-1">Version History</span>
-              <span className="text-[10px] text-zinc-600">{showVersions ? "hide" : `${recentVersions.length} versions`}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">{showVersions ? "hide" : `${recentVersions.length} versions`}</span>
             </button>
             {showVersions && (
               <div className="rounded-lg bg-white/[0.02] border border-white/5 p-2 space-y-1">
                 {recentVersions.map((v) => (
                   <div key={v.version} className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
-                    <span className="text-zinc-300 font-mono">v{v.version}</span>
-                    <span className="flex-1 text-right text-zinc-500">{fmtDateTime(v.createdAt)}</span>
+                    <span className="text-[var(--text-primary)] font-mono">v{v.version}</span>
+                    <span className="flex-1 text-right text-[var(--text-muted)]">{fmtDateTime(v.createdAt)}</span>
                     <button
                       onClick={() => handleRestoreVersion(v.version)}
                       disabled={restoringVersion === v.version}
-                      className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 text-[9px] text-zinc-400 hover:border-white/20 hover:text-white transition-colors disabled:opacity-50"
+                      className="shrink-0 rounded border border-white/10 px-1.5 py-0.5 text-[9px] text-[var(--text-secondary)] hover:border-white/20 hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
                     >
                       {restoringVersion === v.version ? "Restoring..." : "Restore"}
                     </button>

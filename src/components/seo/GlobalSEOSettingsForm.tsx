@@ -127,7 +127,7 @@ export function GlobalSEOSettingsForm({ initial, onSave }: GlobalSEOSettingsForm
         </div>
 
         <div className="mt-6 space-y-3">
-          <label className="flex items-center gap-2 text-sm text-zinc-300">
+          <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
             <input
               type="checkbox"
               checked={settings.robotsIndex}
@@ -136,7 +136,7 @@ export function GlobalSEOSettingsForm({ initial, onSave }: GlobalSEOSettingsForm
             />
             Allow search engines to index the site
           </label>
-          <label className="flex items-center gap-2 text-sm text-zinc-300">
+          <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
             <input
               type="checkbox"
               checked={settings.sitemapEnabled}

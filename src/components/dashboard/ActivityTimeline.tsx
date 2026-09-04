@@ -28,7 +28,7 @@ interface ActivityTimelineProps {
 export function ActivityTimeline({ items }: ActivityTimelineProps) {
   if (items.length === 0) return (
     <div className="admin-card p-5 text-center">
-      <p className="text-sm text-zinc-500">No recent activity. Your updates will appear here.</p>
+      <p className="text-sm text-[var(--text-muted)]">No recent activity. Your updates will appear here.</p>
     </div>
   );
 
@@ -43,8 +43,8 @@ export function ActivityTimeline({ items }: ActivityTimelineProps) {
               <div className={cn("flex-shrink-0 h-7 w-7 rounded-lg flex items-center justify-center", ICON_BG[item.icon])}>
                 <Icon className="h-3.5 w-3.5" />
               </div>
-              <span className="text-sm text-zinc-300 flex-1">{item.title}</span>
-              <span className="text-xs text-zinc-600">{item.time}</span>
+              <span className="text-sm text-[var(--text-primary)] flex-1">{item.title}</span>
+              <span className="text-xs text-[var(--text-muted)]">{item.time}</span>
             </div>
           );
         })}

@@ -97,13 +97,13 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
           aria-label="Command palette"
         >
           <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
-            <Search className="h-4 w-4 text-zinc-500" aria-hidden="true" />
+            <Search className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search pages, products, orders..."
-              className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
+              className="flex-1 bg-transparent text-sm text-white placeholder:text-[var(--text-muted)] outline-none"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown") {
@@ -122,14 +122,14 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
               aria-expanded
               aria-controls="command-list"
             />
-            <kbd className="hidden sm:inline-flex items-center rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-zinc-500">
+            <kbd className="hidden sm:inline-flex items-center rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]">
               ESC
             </kbd>
           </div>
 
           <div className="max-h-80 overflow-y-auto p-2" id="command-list" role="listbox">
             {filtered.length === 0 && (
-              <p className="p-4 text-sm text-zinc-500 text-center">No results found.</p>
+              <p className="p-4 text-sm text-[var(--text-muted)] text-center">No results found.</p>
             )}
             {filtered.map((item, i) => (
               <button
@@ -138,7 +138,7 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
                 onMouseEnter={() => setSelectedIndex(i)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors text-left",
-                  i === selectedIndex ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-zinc-300 hover:bg-white/5"
+                  i === selectedIndex ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]" : "text-[var(--text-primary)] hover:bg-white/5"
                 )}
                 role="option"
                 aria-selected={i === selectedIndex}
@@ -153,7 +153,7 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
                   {item.category}
                 </span>
                 <span className="flex-1">{item.label}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-zinc-600" aria-hidden="true" />
+                <ArrowRight className="h-3.5 w-3.5 text-[var(--text-muted)]" aria-hidden="true" />
               </button>
             ))}
           </div>

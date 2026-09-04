@@ -52,7 +52,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         actions={
           <div className="flex gap-2">
             <ClientInvite tenantId={tenant.id} tenantName={tenant.name} />
-            <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
+            <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               View Website
             </Link>
             <Link href={`/builder`} className="rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90">
@@ -81,8 +81,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               { label: "SEO", value: health.seoScore },
             ].map((s) => (
               <div key={s.label} className="rounded-lg bg-zinc-800/50 px-3 py-2">
-                <p className="text-[10px] text-zinc-500">{s.label}</p>
-                <p className={`text-sm font-bold ${s.value != null && s.value >= 80 ? "text-emerald-400" : s.value != null && s.value >= 50 ? "text-amber-400" : "text-zinc-400"}`}>
+                <p className="text-[10px] text-[var(--text-muted)]">{s.label}</p>
+                <p className={`text-sm font-bold ${s.value != null && s.value >= 80 ? "text-emerald-400" : s.value != null && s.value >= 50 ? "text-amber-400" : "text-[var(--text-secondary)]"}`}>
                   {s.value != null ? `${s.value}%` : "—"}
                 </p>
               </div>
@@ -104,20 +104,20 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CheckCircle className={`h-5 w-5 ${publishStatus.state === "live" ? "text-emerald-400" : "text-zinc-500"}`} />
+              <CheckCircle className={`h-5 w-5 ${publishStatus.state === "live" ? "text-emerald-400" : "text-[var(--text-muted)]"}`} />
               <div>
                 <p className="text-sm text-white">
                   {publishStatus.state === "live" ? "Published" : "Not Published"}
                 </p>
                 {publishStatus.publishedAt && (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-[var(--text-muted)]">
                     v{publishStatus.liveVersion} · {new Date(publishStatus.publishedAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
             </div>
             <div className="flex gap-2">
-              <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
+              <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 View Live
               </Link>
             </div>
@@ -128,7 +128,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       {/* Activity Timeline */}
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-4">
         <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-          <Clock className="h-4 w-4 text-zinc-500" />
+          <Clock className="h-4 w-4 text-[var(--text-muted)]" />
           Activity Timeline
         </h3>
         <div className="divide-y divide-white/5">
@@ -136,12 +136,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <div key={ev.id} className="flex items-start gap-3 py-2">
               <div className="h-2 w-2 rounded-full bg-[var(--brand-primary)] mt-1.5 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-zinc-300">{ev.action.replace(/_/g, " ")}</p>
-                <p className="text-[10px] text-zinc-600">{new Date(ev.timestamp).toLocaleString()}</p>
+                <p className="text-xs text-[var(--text-primary)]">{ev.action.replace(/_/g, " ")}</p>
+                <p className="text-[10px] text-[var(--text-muted)]">{new Date(ev.timestamp).toLocaleString()}</p>
               </div>
             </div>
           )) : (
-            <p className="text-sm text-zinc-600 py-4 text-center">No activity recorded</p>
+            <p className="text-sm text-[var(--text-muted)] py-4 text-center">No activity recorded</p>
           )}
         </div>
       </div>

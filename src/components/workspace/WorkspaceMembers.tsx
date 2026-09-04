@@ -17,7 +17,7 @@ const ROLE_BADGES: Record<string, string> = {
   OWNER: "bg-purple-500/10 text-purple-400",
   ADMIN: "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]",
   MEMBER: "bg-blue-500/10 text-blue-400",
-  VIEWER: "bg-zinc-500/10 text-zinc-400",
+  VIEWER: "bg-zinc-500/10 text-[var(--text-secondary)]",
 };
 
 const ROLE_ICONS: Record<string, React.ElementType> = {
@@ -52,11 +52,11 @@ export function WorkspaceMembers({ workspaceId, members, currentUserId, isOwner,
             <div key={m.id} className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <Icon className="h-4 w-4 text-zinc-400" />
+                  <Icon className="h-4 w-4 text-[var(--text-secondary)]" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-white">{m.name || m.email}</p>
-                  <p className="text-xs text-zinc-500">{m.email}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{m.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -64,14 +64,14 @@ export function WorkspaceMembers({ workspaceId, members, currentUserId, isOwner,
                   {m.role}
                 </span>
                 {m.status !== "ACTIVE" && (
-                  <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">{m.status}</span>
+                  <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{m.status}</span>
                 )}
                 {isOwner && m.userId !== currentUserId && (
                   <select
                     value={m.role}
                     onChange={(e) => handleRoleChange(m.userId, e.target.value)}
                     disabled={loading === m.userId}
-                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-400 border border-white/10"
+                    className="rounded bg-zinc-800 px-2 py-1 text-xs text-[var(--text-secondary)] border border-white/10"
                   >
                     <option value="OWNER">Owner</option>
                     <option value="ADMIN">Admin</option>

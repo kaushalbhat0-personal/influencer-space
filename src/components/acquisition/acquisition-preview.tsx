@@ -44,7 +44,7 @@ export function AcquisitionPreview({
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-white">Review Storefront</h2>
-        <p className="mt-1 text-sm text-zinc-400">Review and edit the acquired data before provisioning.</p>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">Review and edit the acquired data before provisioning.</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -77,9 +77,9 @@ export function AcquisitionPreview({
           <div className="space-y-2 mb-3">
             {profile.offers.map((o) => (
               <div key={o.id} className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                <span className="flex-1 text-sm text-zinc-300 truncate">{o.name}</span>
-                <span className="text-sm text-zinc-400">{formatCurrency(o.price)}</span>
-                <button onClick={() => removeOffer(o.id)} className="text-zinc-600 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
+                <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{o.name}</span>
+                <span className="text-sm text-[var(--text-secondary)]">{formatCurrency(o.price)}</span>
+                <button onClick={() => removeOffer(o.id)} className="text-[var(--text-muted)] hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             ))}
           </div>
@@ -87,7 +87,7 @@ export function AcquisitionPreview({
         <div className="flex items-center gap-2">
           <input value={newOffer.name} onChange={(e) => setNewOffer((o) => ({ ...o, name: e.target.value }))} placeholder="Offer name" className="admin-input flex-1 text-sm" />
           <input type="number" value={newOffer.price || ""} onChange={(e) => setNewOffer((o) => ({ ...o, price: Number(e.target.value) }))} placeholder="Price" className="admin-input w-24 text-sm" />
-          <button onClick={addOffer} className="btn-ghost p-2 text-zinc-400 hover:text-white"><Plus className="h-4 w-4" /></button>
+          <button onClick={addOffer} className="btn-ghost p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><Plus className="h-4 w-4" /></button>
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export function AcquisitionPreview({
 function Field({ label, value, onChange, multiline, className }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; className?: string }) {
   return (
     <div className={className}>
-      <label className="block text-xs font-medium text-zinc-400 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}</label>
       {multiline ? <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className="admin-input w-full text-sm resize-none" />
         : <input value={value} onChange={(e) => onChange(e.target.value)} className="admin-input w-full text-sm" />}
     </div>

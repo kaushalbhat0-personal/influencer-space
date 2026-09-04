@@ -137,7 +137,7 @@ export function PageSEOSettingsForm({ initial, global, onSave }: PageSEOSettings
             />
           </div>
           <div className="space-y-4">
-            <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
               <input
                 type="checkbox"
                 checked={settings.robotsNoIndex}
@@ -146,7 +146,7 @@ export function PageSEOSettingsForm({ initial, global, onSave }: PageSEOSettings
               />
               No Index (hide from search engines)
             </label>
-            <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
               <input
                 type="checkbox"
                 checked={settings.robotsNoFollow}

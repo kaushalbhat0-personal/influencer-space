@@ -120,7 +120,7 @@ export function MediaFieldMulti({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <label className="block text-xs font-medium text-zinc-400">{label}</label>
+      <label className="block text-xs font-medium text-[var(--text-secondary)]">{label}</label>
 
       {dragging && (
         <div className="rounded-lg border-2 border-dashed border-[var(--brand-primary)]/60 bg-[var(--brand-primary)]/5 p-6 text-center">
@@ -137,7 +137,7 @@ export function MediaFieldMulti({
                 <img src={item.url} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center bg-zinc-800">
-                  <span className="text-[10px] text-zinc-600">No preview</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">No preview</span>
                 </div>
               )}
               <button
@@ -155,7 +155,7 @@ export function MediaFieldMulti({
 
       {canAdd ? (
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]">
             <input
               ref={inputRef}
               type="file"
@@ -171,14 +171,14 @@ export function MediaFieldMulti({
             type="button"
             onClick={() => setPickerOpen(true)}
             disabled={uploading}
-            className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300"
+            className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]"
           >
             Choose from Library
           </button>
         </div>
       ) : (
         max && value.length >= max && (
-          <p className="text-[10px] text-zinc-600">Maximum {max} items reached.</p>
+          <p className="text-[10px] text-[var(--text-muted)]">Maximum {max} items reached.</p>
         )
       )}
 

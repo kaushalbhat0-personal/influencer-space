@@ -56,10 +56,10 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
             )}
             <div>
               <p className="text-sm font-semibold text-white">{tenant.name}</p>
-              {brand?.footerText && <p className="text-[10px] text-zinc-500">{brand.footerText}</p>}
+              {brand?.footerText && <p className="text-[10px] text-[var(--text-muted)]">{brand.footerText}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs text-zinc-500">
+          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
             <span>Powered by {brand?.footerText ?? "Creatos"}</span>
           </div>
         </div>
@@ -85,9 +85,9 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
                 { label: "SEO", value: health.seoScore },
               ].map((s) => (
                 <div key={s.label} className="rounded-lg bg-zinc-800/50 px-4 py-3">
-                  <p className="text-xs text-zinc-500">{s.label}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{s.label}</p>
                   <p className={`text-lg font-bold ${
-                    s.value != null && s.value >= 80 ? "text-emerald-400" : s.value != null && s.value >= 50 ? "text-amber-400" : "text-zinc-400"
+                    s.value != null && s.value >= 80 ? "text-emerald-400" : s.value != null && s.value >= 50 ? "text-amber-400" : "text-[var(--text-secondary)]"
                   }`}>
                     {s.value != null ? `${s.value}%` : "—"}
                   </p>
@@ -105,7 +105,7 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
           >
             <Globe className="h-6 w-6 text-[var(--brand-primary)]" />
             <span className="text-sm font-medium text-white">View Website</span>
-            <span className="text-xs text-zinc-500">See your live site</span>
+            <span className="text-xs text-[var(--text-muted)]">See your live site</span>
           </Link>
           <Link
             href="/builder"
@@ -113,19 +113,19 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
           >
             <Activity className="h-6 w-6 text-[var(--brand-primary)]" />
             <span className="text-sm font-medium text-white">Open Builder</span>
-            <span className="text-xs text-zinc-500">Edit your layout</span>
+            <span className="text-xs text-[var(--text-muted)]">Edit your layout</span>
           </Link>
           <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/50 p-6 text-center">
-            <Palette className="h-6 w-6 text-zinc-500" />
+            <Palette className="h-6 w-6 text-[var(--text-muted)]" />
             <span className="text-sm font-medium text-white">{themeName}</span>
-            <span className="text-xs text-zinc-500">Current theme</span>
+            <span className="text-xs text-[var(--text-muted)]">Current theme</span>
           </div>
           <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/50 p-6 text-center">
-            <CheckCircle className={`h-6 w-6 ${publishStatus?.state === "live" ? "text-emerald-400" : "text-zinc-500"}`} />
+            <CheckCircle className={`h-6 w-6 ${publishStatus?.state === "live" ? "text-emerald-400" : "text-[var(--text-muted)]"}`} />
             <span className="text-sm font-medium text-white">
               {publishStatus?.state === "live" ? "Published" : "Draft"}
             </span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-[var(--text-muted)]">
               {publishStatus?.liveVersion ? `v${publishStatus.liveVersion}` : "Not yet published"}
             </span>
           </div>
@@ -135,24 +135,24 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
             <h3 className="text-sm font-semibold text-white mb-2">Domain</h3>
-            <p className="text-lg font-mono text-zinc-300">{tenant.customDomain ?? buildStorefrontUrlWithTenant(null, tenant.subdomain)}</p>
-            <p className="text-xs text-zinc-500 mt-1">{tenant.customDomain ? "Custom domain" : "Platform subdomain"}</p>
+            <p className="text-lg font-mono text-[var(--text-primary)]">{tenant.customDomain ?? buildStorefrontUrlWithTenant(null, tenant.subdomain)}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">{tenant.customDomain ? "Custom domain" : "Platform subdomain"}</p>
           </div>
           <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
             <h3 className="text-sm font-semibold text-white mb-2">Support</h3>
             {brand?.supportEmail ? (
-              <p className="text-sm text-zinc-300">{brand.supportEmail}</p>
+              <p className="text-sm text-[var(--text-primary)]">{brand.supportEmail}</p>
             ) : (
-              <p className="text-sm text-zinc-500">Contact your agency for support</p>
+              <p className="text-sm text-[var(--text-muted)]">Contact your agency for support</p>
             )}
-            {brand?.supportPhone && <p className="text-xs text-zinc-500 mt-1">{brand.supportPhone}</p>}
+            {brand?.supportPhone && <p className="text-xs text-[var(--text-muted)] mt-1">{brand.supportPhone}</p>}
           </div>
         </div>
       </main>
 
       {/* Branded Footer */}
       <footer className="border-t border-white/5 py-6 text-center">
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-[var(--text-muted)]">
           {brand?.footerText ?? "Powered by Creatos"}
         </p>
       </footer>

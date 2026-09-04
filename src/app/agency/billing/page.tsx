@@ -76,7 +76,7 @@ export default async function AgencyBilling() {
         </div>
       )}
       {trialActive && (
-        <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-zinc-300" data-testid="trial-active">
+        <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-[var(--text-primary)]" data-testid="trial-active">
           Partner Launch trial — {PARTNER_TRIAL_DAYS}-day free trial with 1 client website. {trialEndsAt ? `Trial ends ${new Date(trialEndsAt).toLocaleDateString()}.` : ""} Choose a paid plan to continue after the trial.
         </div>
       )}
@@ -100,9 +100,9 @@ export default async function AgencyBilling() {
       </PageSection>
 
       {/* Honest policy — creators pay CreatorStore directly (Phase 5) */}
-      <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-zinc-400" data-testid="partner-subscription-policy">
-        <p className="font-medium text-zinc-200">Creator Subscription Policy</p>
-        <ul className="mt-2 space-y-1.5 text-xs text-zinc-500" role="list">
+      <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-[var(--text-secondary)]" data-testid="partner-subscription-policy">
+        <p className="font-medium text-[var(--text-primary)]">Creator Subscription Policy</p>
+        <ul className="mt-2 space-y-1.5 text-xs text-[var(--text-muted)]" role="list">
           <li>Every creator pays CreatorStore directly for their own Creator plan (Creator Grow minimum for partner-onboarded creators).</li>
           <li>The invoices below are the creators&apos; subscriptions billed by CreatorStore — they are not your revenue.</li>
           <li>You may charge clients separately for setup, migration, training, branding, consulting and maintenance.</li>
@@ -111,7 +111,7 @@ export default async function AgencyBilling() {
 
       {invoiceData.length > 0 && (
         <PageSection>
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Creator Subscriptions (billed to CreatorStore)</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Creator Subscriptions (billed to CreatorStore)</h2>
           <div className="admin-card overflow-hidden">
             <table className="admin-table">
               <thead>
@@ -126,7 +126,7 @@ export default async function AgencyBilling() {
                 {invoiceData.map((inv) => (
                   <tr key={inv.id}>
                     <td><span className="text-white text-sm">{inv.planCode}</span></td>
-                    <td><span className="text-zinc-300">{formatRupees(inv.amount)}</span></td>
+                    <td><span className="text-[var(--text-primary)]">{formatRupees(inv.amount)}</span></td>
                     <td>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         inv.status === "PAID" ? "bg-emerald-500/20 text-emerald-400" :
@@ -134,7 +134,7 @@ export default async function AgencyBilling() {
                         "bg-red-500/20 text-red-400"
                       }`}>{inv.status}</span>
                     </td>
-                    <td><span className="text-xs text-zinc-500">{new Date(inv.createdAt).toISOString().slice(0, 10)}</span></td>
+                    <td><span className="text-xs text-[var(--text-muted)]">{new Date(inv.createdAt).toISOString().slice(0, 10)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -145,14 +145,14 @@ export default async function AgencyBilling() {
 
       {invoiceData.length === 0 && (
         <div className="admin-card p-8 text-center">
-          <CreditCard className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500">No creator subscriptions yet. They appear when your managed creators subscribe.</p>
+          <CreditCard className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" />
+          <p className="text-sm text-[var(--text-muted)]">No creator subscriptions yet. They appear when your managed creators subscribe.</p>
         </div>
       )}
 
       <PageSection>
-        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">Recurring Revenue</h2>
-        <div className="admin-card p-5 text-sm text-zinc-500" data-testid="partner-rewards">
+        <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Recurring Revenue</h2>
+        <div className="admin-card p-5 text-sm text-[var(--text-muted)]" data-testid="partner-rewards">
           You earn a recurring share of every creator subscription you onboard. Your clients pay CreatorStore directly for
           their own Creator plan; the platform shares a percentage of that subscription with you — no transaction fees, no
           manual invoicing. See your earnings on the Agency Dashboard.

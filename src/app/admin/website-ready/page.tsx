@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function WebsiteReadyPage() {
   const session = await getServerSession(authOptions);
   const tenantId = session?.user?.tenantId;
-  if (!tenantId) return <div className="p-6 text-zinc-400">Please log in.</div>;
+  if (!tenantId) return <div className="p-6 text-[var(--text-secondary)]">Please log in.</div>;
 
   const [tenant, website, brand, publishStatus, health] = await Promise.all([
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true, subdomain: true, customDomain: true } }),

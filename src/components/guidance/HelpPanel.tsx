@@ -34,22 +34,22 @@ export function HelpPanel({ open, onClose, context }: { open: boolean; onClose: 
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-xs uppercase tracking-widest text-zinc-500">Popular</p>
+          <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]">Popular</p>
           <ul className="mt-3 space-y-3">
             {filtered.map((a) => (
               <li key={a.id} className="rounded-lg border border-white/10 bg-zinc-900 p-3">
                 <p className="text-sm font-medium text-white">{a.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-zinc-400">{a.description}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{a.description}</p>
               </li>
             ))}
-            {filtered.length === 0 && <p className="text-sm text-zinc-500">We couldn&apos;t find that. Try “domain”, “Google”, “privacy” or “publish”.</p>}
+            {filtered.length === 0 && <p className="text-sm text-[var(--text-muted)]">We couldn&apos;t find that. Try “domain”, “Google”, “privacy” or “publish”.</p>}
           </ul>
         </div>
         <div className="border-t border-white/10 p-4">
           <p className="text-sm font-medium text-white">Still need help?</p>
           <a href="/contact" className="mt-2 inline-flex text-sm text-[var(--brand-primary)] hover:underline">Contact Support</a>
-          <div className="mt-3 text-xs text-zinc-500">
-            <button onClick={() => { localStorage.removeItem("guidance_creator-walkthrough"); localStorage.removeItem("guidance_agency-walkthrough"); window.location.reload(); }} className="underline hover:text-zinc-300">Replay walkthrough</button>
+          <div className="mt-3 text-xs text-[var(--text-muted)]">
+            <button onClick={() => { localStorage.removeItem("guidance_creator-walkthrough"); localStorage.removeItem("guidance_agency-walkthrough"); window.location.reload(); }} className="underline hover:text-[var(--text-primary)]">Replay walkthrough</button>
           </div>
         </div>
       </div>

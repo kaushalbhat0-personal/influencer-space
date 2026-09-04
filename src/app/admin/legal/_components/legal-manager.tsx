@@ -31,7 +31,7 @@ export function LegalManager({ initial }: { initial: Record<LegalPageKey, { titl
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Legal</h1>
-        <p className="mt-1 text-sm text-zinc-400">Your website includes standard legal pages to help you get started. These are general templates and should be reviewed and customized for your business and local requirements.</p>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">Your website includes standard legal pages to help you get started. These are general templates and should be reviewed and customized for your business and local requirements.</p>
       </div>
       {PAGES.map((p) => (
         <GlassCard key={p.key} className="p-6">
@@ -52,9 +52,9 @@ export function LegalManager({ initial }: { initial: Record<LegalPageKey, { titl
               <Textarea label="Content" value={data[p.key].content} onChange={(e) => setData((d) => ({ ...d, [p.key]: { ...d[p.key], content: e.target.value } }))} rows={12} />
             </div>
           ) : (
-            <div className="mt-3 max-h-32 overflow-hidden text-xs leading-relaxed text-zinc-400 whitespace-pre-wrap">{data[p.key].content.slice(0, 300)}…</div>
+            <div className="mt-3 max-h-32 overflow-hidden text-xs leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">{data[p.key].content.slice(0, 300)}…</div>
           )}
-          <p className="mt-2 text-[11px] text-zinc-500">Shown at <code>/{p.key === "refund" ? "refund" : p.key}</code> on your storefront.</p>
+          <p className="mt-2 text-[11px] text-[var(--text-muted)]">Shown at <code>/{p.key === "refund" ? "refund" : p.key}</code> on your storefront.</p>
         </GlassCard>
       ))}
     </div>

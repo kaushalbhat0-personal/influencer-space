@@ -26,8 +26,8 @@ export function SuccessMilestonesCard({ success }: Props) {
   if (!success) {
     return (
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Progress</p>
-        <p className="mt-2 text-xs text-zinc-500">Loading your milestones…</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Progress</p>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">Loading your milestones…</p>
       </div>
     );
   }
@@ -37,11 +37,11 @@ export function SuccessMilestonesCard({ success }: Props) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4 text-amber-400" />
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Progress</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Progress</p>
         </div>
         <span className="text-2xl font-bold font-display text-amber-400">{success.completionPercent}%</span>
       </div>
-      <p className="mt-0.5 text-[11px] text-zinc-600">
+      <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
         {success.completedMilestones} of {success.totalMilestones} milestones
       </p>
 
@@ -62,10 +62,10 @@ export function SuccessMilestonesCard({ success }: Props) {
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${milestone.done ? "bg-emerald-500" : "border border-zinc-600"}`}
             />
-            <span className={`flex-1 truncate ${milestone.done ? "text-zinc-500 line-through" : "text-zinc-300"}`}>
+            <span className={`flex-1 truncate ${milestone.done ? "text-[var(--text-muted)] line-through" : "text-[var(--text-primary)]"}`}>
               {milestone.label}
             </span>
-            {!milestone.done && <ArrowUpRight className="h-3 w-3 text-zinc-600 group-hover:text-amber-400" />}
+            {!milestone.done && <ArrowUpRight className="h-3 w-3 text-[var(--text-muted)] group-hover:text-amber-400" />}
           </Link>
         ))}
       </div>

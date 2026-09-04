@@ -124,14 +124,14 @@ export function MediaField({
             style={{ width: `${Math.max(progress, 6)}%` }}
           />
         </div>
-        <p className="text-[10px] text-zinc-500">Uploading… {progress}%</p>
+        <p className="text-[10px] text-[var(--text-muted)]">Uploading… {progress}%</p>
       </div>
     );
   }
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <label className="block text-xs font-medium text-zinc-400">{label}</label>
+      <label className="block text-xs font-medium text-[var(--text-secondary)]">{label}</label>
 
       {url ? (
         <div className="space-y-2">
@@ -154,7 +154,7 @@ export function MediaField({
             <ProgressBar />
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]">
                 <input
                   ref={replaceRef}
                   type="file"
@@ -169,7 +169,7 @@ export function MediaField({
                 type="button"
                 onClick={() => setPickerOpen(true)}
                 disabled={uploading}
-                className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300"
+                className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]"
               >
                 Choose from Library
               </button>
@@ -194,7 +194,7 @@ export function MediaField({
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]">
                 <input
                   ref={inputRef}
                   type="file"
@@ -209,13 +209,13 @@ export function MediaField({
                 type="button"
                 onClick={() => setPickerOpen(true)}
                 disabled={uploading}
-                className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300"
+                className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]"
               >
                 Choose from Library
               </button>
             </div>
           )}
-          <p className="text-[10px] text-zinc-600">No media selected yet.</p>
+          <p className="text-[10px] text-[var(--text-muted)]">No media selected yet.</p>
         </div>
       )}
 

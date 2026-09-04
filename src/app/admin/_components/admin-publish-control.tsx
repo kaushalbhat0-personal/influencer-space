@@ -71,7 +71,7 @@ export function AdminPublishControl({ status, size = "md" }: AdminPublishControl
             "flex items-center justify-center rounded-lg transition-colors",
             size === "md"
               ? "gap-1.5 bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90 disabled:opacity-60"
-              : "p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white disabled:opacity-60",
+              : "p-1.5 text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)] disabled:opacity-60",
           )}
         >
           {publishing ? (
@@ -91,7 +91,7 @@ export function AdminPublishControl({ status, size = "md" }: AdminPublishControl
             "flex items-center justify-center rounded-lg transition-colors",
             size === "md"
               ? "gap-1.5 bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90"
-              : "p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white",
+              : "p-1.5 text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]",
           )}
         >
           <ArrowUpRight className={cn(size === "md" ? "h-3.5 w-3.5" : "h-5 w-5")} aria-hidden="true" />

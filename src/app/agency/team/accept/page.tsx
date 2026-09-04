@@ -46,7 +46,7 @@ export default function AcceptInvitationPage() {
     <ContentContainer>
       <div className="mx-auto mt-10 max-w-md rounded-xl border border-white/10 bg-zinc-900/50 p-6 text-center">
         <h1 className="mb-2 text-lg font-semibold text-white">Accept team invitation</h1>
-        {state.status === "loading" && <p className="text-sm text-zinc-400">Accepting invitation…</p>}
+        {state.status === "loading" && <p className="text-sm text-[var(--text-secondary)]">Accepting invitation…</p>}
         {state.status === "ok" && (
           <>
             <p className="mb-4 text-sm text-emerald-400">{state.message}</p>
@@ -57,8 +57,8 @@ export default function AcceptInvitationPage() {
         )}
         {state.status === "signin" && (
           <>
-            <p className="mb-4 text-sm text-zinc-300">You&apos;ve been invited to join a Partner workspace.</p>
-            <p className="mb-4 text-sm text-zinc-400">Sign in with the invited email to continue.</p>
+            <p className="mb-4 text-sm text-[var(--text-primary)]">You&apos;ve been invited to join a Partner workspace.</p>
+            <p className="mb-4 text-sm text-[var(--text-secondary)]">Sign in with the invited email to continue.</p>
             <Link href="/admin/login" className="rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white">
               Sign in
             </Link>

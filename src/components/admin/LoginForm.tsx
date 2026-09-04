@@ -88,7 +88,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35, duration: 0.5 }}
-              className="mt-2 text-sm text-gray-400"
+              className="mt-2 text-sm text-[var(--text-muted)]"
             >
               Sign in to manage your CreatorBrand
             </motion.p>
@@ -116,7 +116,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Email
               </label>
               <input
@@ -133,7 +133,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-[var(--text-secondary)]">
                 Password
               </label>
               <input

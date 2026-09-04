@@ -151,7 +151,7 @@ export function CreateStorefrontWizard({ onClose }: { onClose?: () => void }) {
             <div key={s} className="flex items-center gap-2">
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-medium ${
-                  isActive ? "bg-[var(--brand-primary)] text-white" : "bg-zinc-800 text-zinc-600"
+                  isActive ? "bg-[var(--brand-primary)] text-white" : "bg-zinc-800 text-[var(--text-muted)]"
                 }`}
               >
                 {i + 1}

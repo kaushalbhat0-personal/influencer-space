@@ -91,7 +91,7 @@ export function MediaPickerDialog({
       <div className="flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl border border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
           <h3 className="text-sm font-semibold text-white">Media Library</h3>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white" aria-label="Close">
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]" aria-label="Close">
             &times;
           </button>
         </div>
@@ -102,18 +102,18 @@ export function MediaPickerDialog({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search media..."
-            className="flex-1 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
+            className="flex-1 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--border-focus)]"
           />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-            className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none"
+            className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-[var(--text-secondary)] outline-none"
           >
             <option value="all">All types</option>
             <option value="image">Images</option>
             <option value="video">Videos</option>
           </select>
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-300">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:border-white/20 hover:text-[var(--text-primary)]">
             <input
               type="file"
               accept={accept}
@@ -167,7 +167,7 @@ export function MediaPickerDialog({
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center bg-zinc-800">
-                        <span className="px-2 text-center text-[10px] text-zinc-500">{isVideo ? "Video" : "No preview"}</span>
+                        <span className="px-2 text-center text-[10px] text-[var(--text-muted)]">{isVideo ? "Video" : "No preview"}</span>
                       </div>
                     )}
                     <div className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/80 to-transparent px-2 pb-1 pt-4 text-left text-[9px] text-white/80">
@@ -178,8 +178,8 @@ export function MediaPickerDialog({
               })}
           {!loading && assets.length === 0 && (
             <div className="col-span-full py-12 text-center">
-              <p className="text-sm text-zinc-500">No media found.</p>
-              <p className="mt-1 text-xs text-zinc-600">Upload a new asset above.</p>
+              <p className="text-sm text-[var(--text-muted)]">No media found.</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Upload a new asset above.</p>
             </div>
           )}
         </div>
