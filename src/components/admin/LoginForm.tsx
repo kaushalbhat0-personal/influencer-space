@@ -2,20 +2,34 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 export function LoginForm({ tenantId }: { tenantId: string | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  const [authError, setAuthError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Clear stale ?error on fresh mount so hard refresh never shows a stuck banner.
+  useEffect(() => {
+    if (searchParams.get("error")) {
+      (router as unknown as { replace?: (href: string) => void }).replace?.("/admin/login");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function clearAuthError() {
+    if (authError) setAuthError(null);
+    if (searchParams.get("error")) (router as unknown as { replace?: (href: string) => void }).replace?.("/admin/login");
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
+    clearAuthError();
     setLoading(true);
     const result = await signIn("credentials", {
       email,
@@ -26,6 +40,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
     setLoading(false);
 
     if (result?.error) {
+      setAuthError(result.error);
       router.push("/admin/login?error=CredentialsSignin");
       return;
     }
@@ -79,7 +94,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
             </motion.p>
           </div>
 
-          {error === "CredentialsSignin" && (
+          {authError === "CredentialsSignin" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -89,7 +104,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
             </motion.div>
           )}
 
-          {error === "Configuration" && (
+          {authError === "Configuration" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -109,7 +124,10 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  clearAuthError();
+                  setEmail(e.target.value);
+                }}
                 className="admin-input mt-1.5"
                 placeholder="admin@snaxgaming.com"
               />
@@ -123,7 +141,10 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  clearAuthError();
+                  setPassword(e.target.value);
+                }}
                 className="admin-input mt-1.5"
                 placeholder="••••••••"
               />

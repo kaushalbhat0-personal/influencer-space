@@ -23,35 +23,37 @@ export const authOptions: NextAuthOptions = {
         tenantId: { label: "Tenant ID", type: "text" },
       },
       async authorize(credentials) {
-        logger.info("Login attempt", "auth", { operation: "authorize", metadata: { email: credentials?.email } as Record<string, unknown> });
-        if (!credentials?.email || !credentials?.password) return null;
+        const rawEmail = credentials?.email ?? "";
+        const normalizedEmail = rawEmail.trim().toLowerCase();
+        logger.info("Login attempt", "auth", { operation: "authorize", metadata: { email: normalizedEmail } as Record<string, unknown> });
+        if (!normalizedEmail || !credentials?.password) return null;
 
         try {
           const user = await prisma.user.findFirst({
-            where: { email: credentials.email },
+            where: { email: normalizedEmail },
             include: { tenant: { select: { id: true, subdomain: true } } },
           });
           if (!user) {
-            logger.info("Login failed: user not found", "auth", { operation: "authorize", metadata: { email: credentials.email } as Record<string, unknown> });
+            logger.info("Login failed: user not found", "auth", { operation: "authorize", metadata: { email: normalizedEmail } as Record<string, unknown> });
             metricsService.recordOutcome("publish", false);
             return null;
           }
 
           const passwordMatch = await bcrypt.compare(credentials.password, user.password);
           if (!passwordMatch) {
-            logger.info("Login failed: invalid password", "auth", { operation: "authorize", metadata: { email: credentials.email } as Record<string, unknown> });
+            logger.info("Login failed: invalid password", "auth", { operation: "authorize", metadata: { email: normalizedEmail } as Record<string, unknown> });
             metricsService.recordOutcome("publish", false);
             return null;
           }
 
           if (user.role === "SUPER_ADMIN") {
-            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: normalizedEmail, role: user.role } as Record<string, unknown> });
             metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: null, role: user.role, workspaceId: null, workspaceType: null, workspaceRole: null };
           }
 
           if (user.role === "AGENCY_ADMIN" || user.role === "AGENCY_STAFF") {
-            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: normalizedEmail, role: user.role } as Record<string, unknown> });
             metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: user.agencyId, role: user.role };
           }
@@ -59,26 +61,30 @@ export const authOptions: NextAuthOptions = {
           // IMPLEMENTATION-41: view-only roles (SUPPORT / READ_ONLY) — no tenant
           // or agency scope; every mutation is additionally gated server-side.
           if (user.role === "SUPPORT" || user.role === "READ_ONLY") {
-            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: normalizedEmail, role: user.role } as Record<string, unknown> });
             metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: null, agencyId: null, role: user.role, workspaceId: null, workspaceType: null, workspaceRole: null };
           }
 
           if (user.role === "ADMIN") {
-            if (credentials.tenantId && user.tenant) {
-              const match = user.tenant.id === credentials.tenantId || user.tenant.subdomain === credentials.tenantId;
+            const rawTenantId = typeof credentials.tenantId === "string" ? credentials.tenantId.trim() : "";
+            const normalizedTenantId = rawTenantId.toLowerCase();
+            if (normalizedTenantId && user.tenant) {
+              const tenantIdLower = user.tenant.id.toLowerCase();
+              const subdomainLower = user.tenant.subdomain.toLowerCase();
+              const match = tenantIdLower === normalizedTenantId || subdomainLower === normalizedTenantId;
               if (!match) {
-                logger.info("Login failed: tenant mismatch", "auth", { operation: "authorize", metadata: { email: credentials.email } as Record<string, unknown> });
+                logger.info("Login failed: tenant mismatch", "auth", { operation: "authorize", metadata: { email: normalizedEmail } as Record<string, unknown> });
                 metricsService.recordOutcome("publish", false);
                 return null;
               }
             }
-            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+            logger.info("Login successful", "auth", { operation: "authorize", metadata: { email: normalizedEmail, role: user.role } as Record<string, unknown> });
             metricsService.recordOutcome("publish", true);
             return { id: user.id, email: user.email, name: user.name, tenantId: user.tenantId, agencyId: user.agencyId, role: user.role };
           }
 
-          logger.info("Login failed: unknown role", "auth", { operation: "authorize", metadata: { email: credentials.email, role: user.role } as Record<string, unknown> });
+          logger.info("Login failed: unknown role", "auth", { operation: "authorize", metadata: { email: normalizedEmail, role: user.role } as Record<string, unknown> });
           metricsService.recordOutcome("publish", false);
           return null;
         } catch (error) {
