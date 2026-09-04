@@ -17,7 +17,7 @@ export default async function DomainPage() {
   if (!tenantId) {
     return (
       <ContentContainer>
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
+        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Domain Settings</h1>
         <p className="mt-4 text-[var(--text-muted)]">No tenant configured. Please seed a tenant first.</p>
       </ContentContainer>
     );
@@ -28,7 +28,7 @@ export default async function DomainPage() {
   if (!canCustomDomain) {
     return (
       <ContentContainer>
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
+        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Domain Settings</h1>
         <div className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
           <p className="text-sm text-amber-400">Custom domains require a <span className="font-semibold">Creator Scale</span> subscription or higher.</p>
           <Link href="/admin/billing" className="mt-4 inline-block admin-btn-cyan px-6 py-2.5 text-sm">Upgrade Plan</Link>
@@ -54,7 +54,7 @@ export default async function DomainPage() {
   return (
     <ContentContainer>
       <div className="mb-6">
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Domain Settings</h1>
+        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Domain Settings</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
           Attach your own custom domain to replace the default subdomain.
         </p>

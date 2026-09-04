@@ -30,7 +30,7 @@ export default async function SettingsPage() {
   return (
     <ContentContainer>
       <div className="mb-6">
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Hero</h1>
+        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Hero</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
           Customize your hero section.
         </p>

@@ -13,7 +13,7 @@ export default async function ContentFeedSettingsPage() {
   if (!tenantId) {
     return (
       <ContentContainer>
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Content Feed</h1>
+        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Content Feed</h1>
         <p className="mt-4 text-[var(--text-muted)]">No tenant configured. Please seed a tenant first.</p>
       </ContentContainer>
     );
@@ -27,7 +27,7 @@ export default async function ContentFeedSettingsPage() {
   return (
     <ContentContainer>
       <div className="mb-6">
-        <h1 className="admin-gradient-text text-2xl font-bold font-display">Content Feed</h1>
+        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Content Feed</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
           Manage synced social media content. Pin important posts, hide irrelevant ones, or delete items.
         </p>

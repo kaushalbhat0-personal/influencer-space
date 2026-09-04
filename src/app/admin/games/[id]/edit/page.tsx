@@ -27,7 +27,7 @@ export default async function EditGamePage({
 
   return (
     <div>
-      <h1 className="admin-gradient-text mb-6 text-2xl font-bold font-display">Edit Game</h1>
+      <h1 className="text-[var(--text-primary)] mb-6 text-2xl font-bold font-display">Edit Game</h1>
       <div className="max-w-2xl">
         <GameForm
           mode="edit"

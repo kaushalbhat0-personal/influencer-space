@@ -30,7 +30,7 @@ export function OnboardingChecklist({ steps, creatorName, className }: Onboardin
   return (
     <div className={cn("rounded-xl border border-white/10 bg-white/[0.03] p-5", className)}>
       <div className="flex items-start gap-3 mb-4">
-        <div className="rounded-full bg-gradient-to-br from-[var(--brand-primary)]/20 to-[var(--brand-secondary)]/20 p-2 shrink-0">
+        <div className="rounded-full bg-[var(--surface-hover)] p-2 shrink-0">
           <Sparkles className="h-5 w-5 text-[var(--brand-primary)]" />
         </div>
         <div className="flex-1">

@@ -38,11 +38,11 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
     <>
       <div className="flex h-14 items-center gap-3 px-4 border-b border-[var(--border)]">
         {collapsed ? (
-          <span className="mx-auto bg-gradient-to-r from-[var(--brand-primary)] to-[var(--color-danger)] bg-clip-text text-sm font-bold text-transparent font-display">
+          <span className="mx-auto text-sm font-bold text-[var(--text-primary)] font-display">
             CS
           </span>
         ) : (
-          <span className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--color-danger)] bg-clip-text text-sm font-bold text-transparent font-display">
+          <span className="text-sm font-bold text-[var(--text-primary)] font-display">
             CreatorStore
           </span>
         )}
@@ -82,7 +82,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
           <div className="absolute inset-0 bg-[rgba(24,24,27,0.20)] backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-y-0 left-0 w-64 bg-[var(--surface-base)] border-r border-[var(--border)] shadow-[var(--shadow-overlay)]">
             <div className="flex h-14 items-center justify-between px-4 border-b border-[var(--border)] bg-[var(--surface-base)]">
-              <span className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--color-danger)] bg-clip-text text-sm font-bold text-transparent font-display">
+              <span className="text-sm font-bold text-[var(--text-primary)] font-display">
                 CreatorStore
               </span>
               <button onClick={() => setMobileOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]" aria-label="Close sidebar">
