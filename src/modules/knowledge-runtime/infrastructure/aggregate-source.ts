@@ -32,8 +32,10 @@ export class KnowledgeAggregateSource {
         safe(() => sharedReadsPromise, null),
         safe(() => websiteAggregateService.getBookingCount(tenantId), 0),
       ]);
-    const completionRecord = sharedReads?.knowledgeCompletion ? { value: sharedReads.knowledgeCompletion } as any : null;
-    const website = sharedReads?.website ? { themeColors: (sharedReads.website as any).themeColors } as any : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const completionRecord = sharedReads?.knowledgeCompletion ? { value: sharedReads.knowledgeCompletion } as unknown as { value: unknown } : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const website = sharedReads?.website ? { themeColors: (sharedReads.website as unknown as { themeColors: unknown }).themeColors } as unknown as { themeColors: unknown } : null;
 
     return this.toSnapshot(aggregate, {
       subdomain: tenant?.subdomain ?? null,

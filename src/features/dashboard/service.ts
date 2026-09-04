@@ -51,8 +51,10 @@ export const dashboardService = {
       websiteAggregateService.getOrderCountCompleted(tenantId),
     ]);
     // Adapt cached SettingsService values (which return `value` directly) to dashboard's expected shape
-    const testimonialSetting = testimonialValue ? ({ id: "testimonials", value: testimonialValue } as any) : null;
-    const seoSetting = seoValue ? ({ id: "seo", value: seoValue } as any) : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const testimonialSetting = testimonialValue ? ({ id: "testimonials", value: testimonialValue } as unknown as { id: string; value: unknown }) : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const seoSetting = seoValue ? ({ id: "seo", value: seoValue } as unknown as { id: string; value: unknown }) : null;
     const [totalProducts, publishedCount, activeProductCount] = productCounts as [number, number, number];
     const testimonialCount = testimonialSetting?.value ? (Array.isArray(testimonialSetting.value as Record<string, unknown>) ? (testimonialSetting.value as Record<string, unknown>[]).length : 0) : 0;
 

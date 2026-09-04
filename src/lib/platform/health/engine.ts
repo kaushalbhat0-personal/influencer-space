@@ -59,7 +59,8 @@ export class WebsiteHealthEngine {
       publishStatus,
       orderCount,
     ] = await Promise.all([
-      sharedReads?.brand ? Promise.resolve(sharedReads.brand as any) : prisma.brand.findFirst({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sharedReads?.brand ? Promise.resolve(sharedReads.brand as unknown as { name: string | null; tagline: string | null; bio: string | null; avatarUrl: string | null }) : prisma.brand.findFirst({
         where: { website: { tenantId } },
         select: { name: true, tagline: true, bio: true, avatarUrl: true },
       }),
@@ -68,17 +69,21 @@ export class WebsiteHealthEngine {
       prisma.affiliateLink.count({ where: { tenantId, isActive: true } }),
       prisma.timelineEvent.count({ where: { tenantId } }),
       sharedReads?.testimonialsData !== undefined && sharedReads?.testimonialsData !== null
-        ? Promise.resolve({ value: sharedReads.testimonialsData } as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? Promise.resolve({ value: sharedReads.testimonialsData } as unknown as { value: unknown })
         : prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "testimonials" } } }),
       sharedReads?.faqData !== undefined && sharedReads?.faqData !== null
-        ? Promise.resolve({ value: sharedReads.faqData } as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? Promise.resolve({ value: sharedReads.faqData } as unknown as { value: unknown })
         : prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "faq" } } }),
       prisma.contentFeedItem.count({ where: { tenantId, hidden: false } }),
       prisma.game.count({ where: { tenantId, isActive: true } }),
       sharedReads?.seoData !== undefined && sharedReads?.seoData !== null
-        ? Promise.resolve({ value: sharedReads.seoData } as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? Promise.resolve({ value: sharedReads.seoData } as unknown as { value: unknown })
         : prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "seo" } } }),
-      sharedReads?.website ? Promise.resolve(sharedReads.website as any) : prisma.website.findUnique({ where: { tenantId }, select: { id: true, themeColors: true } }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sharedReads?.website ? Promise.resolve(sharedReads.website as unknown as { id: string; themeColors: unknown }) : prisma.website.findUnique({ where: { tenantId }, select: { id: true, themeColors: true } }),
       prisma.publishStatus.findFirst({ where: { website: { tenantId } } }),
       websiteAggregateService.getOrderCountPaidCompleted(tenantId),
     ]);

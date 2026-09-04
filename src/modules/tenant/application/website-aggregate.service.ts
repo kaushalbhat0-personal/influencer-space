@@ -215,7 +215,9 @@ export class WebsiteAggregateService {
     ]);
 
     // P1: constrain openBookings to bookable offering IDs (or standalone bookings) — avoids broad scan
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bookableOfferingIds = new Set((offerings ?? []).filter((o: any) => o.bookable).map((o: any) => o.id));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filteredOpenBookings = (openBookings as any[])?.filter((b: any) => !b.offeringId || bookableOfferingIds.has(b.offeringId)) ?? openBookings;
 
     // RCCF-INTEGRATION-01 Phase 7: creator-verified declared facts (achievements,
@@ -629,7 +631,8 @@ export class WebsiteAggregateService {
           COUNT(*) FILTER (WHERE "isActive" = true)::int as active
         FROM "Product" WHERE "tenantId" = ${tenantId}::uuid
       `;
-      const row = result[0] as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const row = result[0] as unknown as { total: number | string; published: number | string; active: number | string };
       return { total: Number(row.total), published: Number(row.published), active: Number(row.active) };
     } catch {
       // Fallback for test env where $queryRaw not mocked — preserve semantics
