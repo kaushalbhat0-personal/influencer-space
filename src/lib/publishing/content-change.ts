@@ -15,7 +15,7 @@
  * same snapshot); the authoritative gate is the pending flag + republish.
  */
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/observability/logger";
 import { publishingService } from "./service";
@@ -48,6 +48,12 @@ export async function afterContentChange(
       } catch {
         // cache invalidation is best-effort; pending flag is authoritative
       }
+    }
+
+    try {
+      revalidateTag(`tenant-aggregate:${tenantId}`);
+    } catch {
+      // best-effort — tenant-aggregate tag is dedicated to knowledge aggregate, never publish:{tenantId}
     }
 
     if (options?.revalidateDashboard) {

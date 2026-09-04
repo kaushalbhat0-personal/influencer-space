@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { mediaService } from "@/lib/media/service";
+import { afterContentChange } from "@/lib/publishing/content-change";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -61,6 +62,9 @@ export async function POST(request: NextRequest) {
       duration: typeof body.duration === "number" ? body.duration : undefined,
       altText: typeof body.altText === "string" ? body.altText : undefined,
     });
+
+    // 01G-01F-A: same tenant-aggregate contract
+    await afterContentChange(tenantId);
 
     return ok({ success: true, assetId: result.assetId, url: result.url, deduplicated: false });
   } catch (error) {

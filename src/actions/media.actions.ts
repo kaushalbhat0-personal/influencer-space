@@ -47,6 +47,9 @@ export async function uploadAsset(formData: FormData): Promise<{
       altText,
     });
 
+    // 01G-01F-A: same tenant-aggregate contract as all creator CMS writes
+    await afterContentChange(tenantId);
+
     return { success: true, assetId: result.assetId, url: result.url };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Upload failed" };

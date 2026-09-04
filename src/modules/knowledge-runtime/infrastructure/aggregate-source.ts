@@ -11,6 +11,16 @@ import type { WebsiteAggregate } from "@/types/snapshot";
 import { resolvePack } from "../domain/category-packs";
 import type { KnowledgeSnapshot } from "../domain/types";
 
+function getUnstableCache(): typeof import("next/cache").unstable_cache | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require("next/cache") as { unstable_cache?: typeof import("next/cache").unstable_cache };
+    return typeof mod.unstable_cache === "function" ? mod.unstable_cache : null;
+  } catch {
+    return null;
+  }
+}
+
 const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
   try {
     return await fn();
@@ -21,33 +31,81 @@ const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
 
 export class KnowledgeAggregateSource {
   async buildSnapshot(tenantId: string): Promise<KnowledgeSnapshot> {
-    // P0: reuse request-cached shared reads for knowledge_completion / website / booking
-    const sharedReadsPromise = websiteAggregateService.getSharedReads(tenantId).catch(() => null);
-    const [aggregate, tenant, accountRecord, influencerRecord, sharedReads, bookingCount] =
-      await Promise.all([
-        safe(() => websiteAggregateService.build(tenantId), null),
-        safe(() => websiteAggregateService.getTenantMeta(tenantId), null),
-        safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "account_data" } } }), null),
-        safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "influencer_data" } } }), null),
-        safe(() => sharedReadsPromise, null),
-        safe(() => websiteAggregateService.getBookingCount(tenantId), 0),
-      ]);
+    // 01G-01F-A: persistent tenant-aggregate cache for the safe core (aggregate + tenant + settings).
+    // bookingCount stays request-fresh (customer-driven, not via afterContentChange) and billing is outside.
+    const core = await this.getCachedCore(tenantId);
+    const bookingCount = await safe(() => websiteAggregateService.getBookingCount(tenantId), 0);
+    // Handle serialized Date values safely (unstable_cache JSON stringifies Dates)
+    const aggregate = core.aggregate as unknown as WebsiteAggregate | null;
+    // Revive any stringified Dates in sharedReads openBookings if present (defensive)
+    if (core.sharedReads?.openBookings) {
+      for (const b of core.sharedReads.openBookings as unknown as Array<{ slotDate?: unknown }>) {
+        if (typeof b.slotDate === "string") {
+          try {
+            (b as unknown as { slotDate: Date }).slotDate = new Date(b.slotDate as string);
+          } catch {
+            // keep string, toSnapshot handles via new Date
+          }
+        }
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const completionRecord = sharedReads?.knowledgeCompletion ? { value: sharedReads.knowledgeCompletion } as unknown as { value: unknown } : null;
+    const completionRecord = core.sharedReads?.knowledgeCompletion ? { value: core.sharedReads.knowledgeCompletion } as unknown as { value: unknown } : null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const website = sharedReads?.website ? { themeColors: (sharedReads.website as unknown as { themeColors: unknown }).themeColors } as unknown as { themeColors: unknown } : null;
+    const website = core.sharedReads?.website ? { themeColors: (core.sharedReads.website as unknown as { themeColors: unknown }).themeColors } as unknown as { themeColors: unknown } : null;
 
     return this.toSnapshot(aggregate, {
-      subdomain: tenant?.subdomain ?? null,
-      customDomain: tenant?.customDomain ?? null,
-      account: (accountRecord?.value ?? {}) as Record<string, unknown>,
-      influencer: (influencerRecord?.value ?? {}) as Record<string, unknown>,
+      subdomain: core.tenant?.subdomain ?? null,
+      customDomain: core.tenant?.customDomain ?? null,
+      account: (core.accountRecord?.value ?? {}) as Record<string, unknown>,
+      influencer: (core.influencerRecord?.value ?? {}) as Record<string, unknown>,
       completion: (completionRecord?.value ?? {}) as Record<string, unknown>,
       customTheme: Boolean(
         website?.themeColors && Object.keys(website.themeColors as Record<string, unknown>).length > 0,
       ),
       bookingCount: bookingCount ?? 0,
     });
+  }
+
+  private async getCachedCore(tenantId: string): Promise<{
+    aggregate: WebsiteAggregate | null;
+    tenant: { subdomain: string | null; customDomain: string | null } | null;
+    accountRecord: { value: unknown } | null;
+    influencerRecord: { value: unknown } | null;
+    sharedReads: Awaited<ReturnType<typeof websiteAggregateService.getSharedReads>> | null;
+  }> {
+    const uc = getUnstableCache();
+    if (!uc) {
+      return this.buildCoreUncached(tenantId);
+    }
+    try {
+      const cached = uc(
+        async (tid: string) => this.buildCoreUncached(tid),
+        ["tenant-aggregate-knowledge-core", tenantId],
+        { tags: [`tenant-aggregate:${tenantId}`] },
+      );
+      return await cached(tenantId);
+    } catch {
+      return this.buildCoreUncached(tenantId);
+    }
+  }
+
+  private async buildCoreUncached(tenantId: string): Promise<{
+    aggregate: WebsiteAggregate | null;
+    tenant: { subdomain: string | null; customDomain: string | null } | null;
+    accountRecord: { value: unknown } | null;
+    influencerRecord: { value: unknown } | null;
+    sharedReads: Awaited<ReturnType<typeof websiteAggregateService.getSharedReads>> | null;
+  }> {
+    const sharedReadsPromise = websiteAggregateService.getSharedReads(tenantId).catch(() => null);
+    const [aggregate, tenant, accountRecord, influencerRecord, sharedReads] = await Promise.all([
+      safe(() => websiteAggregateService.build(tenantId), null),
+      safe(() => websiteAggregateService.getTenantMeta(tenantId), null),
+      safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "account_data" } } }), null),
+      safe(() => prisma.setting.findUnique({ where: { tenantId_key: { tenantId, key: "influencer_data" } } }), null),
+      safe(() => sharedReadsPromise, null),
+    ]);
+    return { aggregate, tenant, accountRecord, influencerRecord, sharedReads };
   }
 
   private toSnapshot(
