@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ExternalLink, Layout, Globe, CheckCircle2, Clock, AlertTriangle, Rocket, Loader2, History, ArrowUpRight } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
-import { publishWebsite, rollbackWebsite, getCreatorPublishUsage } from "@/actions/publish.actions";
+import { publishWebsite, rollbackWebsite, getCreatorPublishUsage, getPublishStatus } from "@/actions/publish.actions";
 import type { PublishUsage } from "@/lib/publishing/publish-usage";
 import { getPublishFailurePresentation, type PublishFailureAction } from "@/lib/publishing/publish-error-messages";
 
@@ -69,7 +69,15 @@ export function StorefrontStatusCard({
     try {
       const res = await publishWebsite();
       if (res.success) {
-        window.location.reload();
+        router.refresh();
+        // Explicit status refresh ensures badge flips without waiting for full RSC cache
+        try {
+          const [statusRes, usageRes] = await Promise.all([getPublishStatus(), getCreatorPublishUsage()]);
+          if (usageRes.success && usageRes.usage) setUsage(usageRes.usage);
+          void statusRes;
+        } catch {
+          // ignore — router.refresh will re-render with fresh metrics
+        }
       } else {
         const presentation = getPublishFailurePresentation(res);
         setPublishError(presentation.message);
@@ -78,8 +86,9 @@ export function StorefrontStatusCard({
     } catch {
       setPublishError("Publishing failed");
       setUpgradeAction(null);
+    } finally {
+      setPublishing(false);
     }
-    setPublishing(false);
   };
 
   const handleRestoreVersion = async (version: number) => {

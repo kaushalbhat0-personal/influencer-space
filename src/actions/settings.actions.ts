@@ -394,6 +394,7 @@ export async function updateApiKeys(
 
     revalidatePath("/admin/settings");
     revalidatePath("/admin/integrations");
+    await afterContentChange(tenantId);
     return { success: true };
   } catch (error) {
     if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {

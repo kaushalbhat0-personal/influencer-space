@@ -383,6 +383,23 @@ export function BuilderWorkspace() {
     ).catch(() => {});
   }, []);
 
+  // External publish (dashboard / API auto-publish) — refresh canonical state on refocus
+  useEffect(() => {
+    const onFocusRefresh = () => {
+      refreshPublishStatus();
+      refreshOverview();
+    };
+    window.addEventListener("focus", onFocusRefresh);
+    const onVis = () => {
+      if (!document.hidden) onFocusRefresh();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", onFocusRefresh);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [refreshPublishStatus, refreshOverview]);
+
   const handleApplyTheme = useCallback(
     async (themeId: string) => {
       // Apply persists the theme + saves the draft (no publish).
@@ -426,7 +443,12 @@ export function BuilderWorkspace() {
       if (res.success) {
         setPublishStatus("published");
         setStatusMsg("Published successfully");
+        // Canonical overview is stale after publish (snapshot now equals draft)
+        await refreshOverview();
         refreshPublishStatus();
+        // Draft now matches live snapshot
+        builderStore.markClean();
+        setSaveStatus("CLEAN");
       } else {
         setStatusMsg(res.error || "Publish failed");
       }
@@ -435,7 +457,7 @@ export function BuilderWorkspace() {
     } finally {
       setPublishing(false);
     }
-  }, [publishing, isBuilderDirty, handleSaveDraft, refreshPublishStatus]);
+  }, [publishing, isBuilderDirty, handleSaveDraft, refreshPublishStatus, refreshOverview]);
 
   if (loading) {
     return (

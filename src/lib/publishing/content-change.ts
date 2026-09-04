@@ -28,6 +28,7 @@ export async function afterContentChange(
   tenantId: string,
   options?: ContentChangeOptions,
 ): Promise<void> {
+  let storeRoots: string[] = [];
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -37,18 +38,32 @@ export async function afterContentChange(
     // A tenant can be reached via BOTH the subdomain and any custom domain.
     // Revalidate every route that serves the storefront so live content
     // updates appear regardless of how the fan reached the site.
-    const storeRoots = [tenant?.customDomain, tenant?.subdomain].filter(
+    storeRoots = [tenant?.customDomain, tenant?.subdomain].filter(
       (r): r is string => Boolean(r),
     );
     for (const root of storeRoots) {
-      revalidatePath(`/${root}`);
-      revalidatePath(`/${root}`, "layout");
+      try {
+        revalidatePath(`/${root}`);
+        revalidatePath(`/${root}`, "layout");
+      } catch {
+        // cache invalidation is best-effort; pending flag is authoritative
+      }
     }
 
     if (options?.revalidateDashboard) {
-      revalidatePath("/admin/dashboard");
+      try {
+        revalidatePath("/admin/dashboard");
+      } catch {
+        // best-effort
+      }
     }
+  } catch (error) {
+    logger.warn("afterContentChange: storefront revalidation skipped", "content", {
+      error: error instanceof Error ? error : undefined,
+    });
+  }
 
+  try {
     // RCCF-15: the published storefront is snapshot-only, so a CMS edit does
     // not reach the live site until the creator publishes. Flip the publish
     // state to pending so the dashboard stops claiming the site is "Live".
@@ -60,7 +75,7 @@ export async function afterContentChange(
       metadata: { tenantId, storeRoots },
     });
   } catch (error) {
-    logger.warn("afterContentChange: cache invalidation skipped", "content", {
+    logger.warn("afterContentChange: markChangesPending failed", "content", {
       error: error instanceof Error ? error : undefined,
     });
   }

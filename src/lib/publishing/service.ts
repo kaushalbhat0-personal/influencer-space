@@ -15,7 +15,7 @@
 import { prisma } from "@/lib/prisma";
 import { buildStorefrontUrlWithTenant, buildPreviewUrl } from "@/lib/config/platform";
 import { platformEventBus } from "@/lib/events";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { safeCorrelationId } from "@/lib/platform/correlation/context";
 import type { CorrelationContext } from "@/lib/platform/correlation/types";
 import type { BuilderPage } from "@/lib/builder/types";
@@ -340,14 +340,25 @@ export class PublishingService {
       }
 
       try {
+        // Tenant-scoped invalidation: storefront + dashboard + tagged caches
         revalidatePath("/", "layout");
         revalidatePath("/admin/dashboard");
-        revalidatePath(`/${tenant.subdomain}`);
+        revalidateTag(`publish:${tenantId}`);
+        revalidateTag(`publish:${websiteId}`);
+        revalidateTag(`tenant:${tenantId}`);
+        if (tenant.subdomain) {
+          revalidatePath(`/${tenant.subdomain}`);
+          revalidatePath(`/${tenant.subdomain}`, "layout");
+        }
         if (tenant.customDomain) {
           revalidatePath(`/${tenant.customDomain}`);
+          revalidatePath(`/${tenant.customDomain}`, "layout");
         }
-      } catch {
-        // cache invalidation is fire-and-forget; already committed
+      } catch (error) {
+        logger.warn("Publishing revalidation failed", "publishing", {
+          metadata: { tenantId, version: result.version } as Record<string, unknown>,
+          error: error instanceof Error ? error : undefined,
+        });
       }
 
       logger.info("Publishing completed", "publishing", { correlation, duration: Date.now() - startTime, metadata: { tenantId, version: result.version, capabilityIssues } });
