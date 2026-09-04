@@ -81,7 +81,7 @@ export function ConstructionPreview({
               className={cn(
                 "flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-wide",
                 state?.status === "completed"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  ? "border-emerald-500/30 bg-[var(--color-success)]/10 text-[var(--color-success)]"
                   : state?.status === "running"
                     ? "border-[var(--brand-primary,#6366F1)]/40 bg-[var(--brand-primary,#6366F1)]/10 text-[var(--brand-primary,#6366F1)]"
                     : "border-[var(--border,rgba(255,255,255,0.08))] text-[var(--text-muted,#71717A)]",
@@ -167,8 +167,8 @@ export function ConstructionPreview({
             </main>
 
             {construction.isFailure && (
-              <div className="mt-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4" data-construction-failure>
-                <p className="text-xs font-medium text-red-400">Construction paused</p>
+              <div className="mt-6 rounded-lg border border-[var(--color-danger-border)] bg-[var(--color-danger-surface)] p-4" data-construction-failure>
+                <p className="text-xs font-medium text-[var(--color-danger)]">Construction paused</p>
                 <p className="mt-1 text-[10px] text-[var(--text-secondary,#A1A1AA)]">
                   Completed sections are preserved. You can retry the build.
                 </p>

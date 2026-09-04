@@ -123,7 +123,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
             <div className="flex items-center gap-2 mb-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={cn("h-1 flex-1 rounded-full transition-colors",
-                  i < currentIdx - 1 ? "bg-[var(--brand-primary)]" : "bg-white/[0.06]"
+                  i < currentIdx - 1 ? "bg-[var(--brand-primary)]" : "bg-[var(--surface-hover)]"
                 )} />
               ))}
             </div>
@@ -138,7 +138,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               <Sparkles className="h-8 w-8 text-[var(--brand-primary)]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Welcome to CreatorStore</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Welcome to CreatorStore</h1>
               <p className="mt-2 text-[var(--text-secondary)]">Let&apos;s build your creator business.</p>
             </div>
             <button onClick={next} className="btn-primary w-full py-3">
@@ -154,7 +154,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               <button onClick={back} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-4">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
-              <h2 className="text-xl font-semibold text-white">Who are you?</h2>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Who are you?</h2>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">This helps us set up your workspace.</p>
             </div>
             <div className="grid gap-3">
@@ -166,17 +166,17 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                   key={p.id}
                   onClick={() => { selectPersona(p.id); next(); }}
                   className={cn(
-                    "flex items-start gap-4 rounded-xl border p-5 text-left transition-all",
+                    "flex items-start gap-4 rounded-[var(--radius-card)] border p-5 text-left transition-all",
                     state.persona === p.id
                       ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/[0.06]"
-                      : "border-white/[0.08] bg-[var(--surface-base)]/50 hover:border-white/[0.15]"
+                      : "border-[var(--border)] bg-[var(--surface-card)] hover:border-[var(--border-strong)]"
                   )}
                 >
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-[var(--radius-control)] bg-[var(--brand-primary)]/10 flex items-center justify-center">
                     <p.icon className="h-5 w-5 text-[var(--brand-primary)]" />
                   </div>
                   <div>
-                    <p className="font-medium text-white">{p.label}</p>
+                    <p className="font-medium text-[var(--text-primary)]">{p.label}</p>
                     <p className="text-sm text-[var(--text-muted)] mt-0.5">{p.desc}</p>
                   </div>
                 </button>
@@ -192,7 +192,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               <button onClick={back} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-4">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
-              <h2 className="text-xl font-semibold text-white">Choose your plan</h2>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Choose your plan</h2>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 {isFreePlan ? "Start free. Upgrade anytime." : "You selected a paid plan."}
               </p>
@@ -210,14 +210,14 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                   data-plan={plan.code}
                   onClick={() => update({ selectedPlan: plan.code })}
                   className={cn(
-                    "w-full flex items-center justify-between rounded-xl border p-4 text-left transition-all",
+                    "w-full flex items-center justify-between rounded-[var(--radius-card)] border p-4 text-left transition-all",
                     state.selectedPlan === plan.code
                       ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/[0.06]"
-                      : "border-white/[0.08] bg-[var(--surface-base)]/50"
+                      : "border-[var(--border)] bg-[var(--surface-card)]"
                   )}
                 >
                   <div>
-                    <p className="font-medium text-white">{plan.name}</p>
+                    <p className="font-medium text-[var(--text-primary)]">{plan.name}</p>
                     <p className="text-xs text-[var(--text-muted)]">{plan.description}</p>
                   </div>
                   <span className={cn("text-sm font-semibold",
@@ -239,7 +239,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               <button onClick={back} className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-1 mb-4">
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
               </button>
-              <h2 className="text-xl font-semibold text-white">Create your account</h2>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Create your account</h2>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">You&apos;re joining as a {state.persona}. {isFreePlan ? "Free forever." : ""}</p>
             </div>
             <div>
@@ -258,7 +258,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
                 className="admin-input" placeholder="Min 8 characters" autoComplete="new-password" />
             </div>
             {state.error && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">{state.error}</div>
+              <div className="rounded-lg bg-[var(--color-danger-surface)] border border-[var(--color-danger-border)] p-3 text-sm text-[var(--color-danger)]">{state.error}</div>
             )}
             <button
               onClick={handleSubmit}
@@ -275,7 +275,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
           <div className="text-center space-y-5">
             <div className="animate-spin h-8 w-8 border-2 border-[var(--brand-primary)]/30 border-t-[var(--brand-primary)] rounded-full mx-auto" />
             <div>
-              <h2 className="text-lg font-semibold text-white">Setting up your workspace</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Setting up your workspace</h2>
               <p className="text-sm text-[var(--text-muted)] mt-1">Creating account, provisioning billing, preparing dashboard...</p>
             </div>
           </div>
@@ -284,11 +284,11 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
         {/* Success */}
         {state.step === "success" && (
           <div className="text-center space-y-6">
-            <div className="rounded-full bg-emerald-500/20 p-4 w-fit mx-auto">
-              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+            <div className="rounded-full bg-[var(--color-success-surface)] p-4 w-fit mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-[var(--color-success)]" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">
                 {state.persona === "creator" ? "Let's build your website." : "Let's onboard your first creator."}
               </h2>
               {/* RCCF-MKT-11: the plan name is derived from the selected plan so a

@@ -34,12 +34,12 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
     setBusy(false);
   }
 
-  const input = "w-full rounded-md border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]";
+  const input = "w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]";
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5">
-        <h3 className="text-sm font-semibold text-white mb-4">New Creator</h3>
+      <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">New Creator</h3>
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs text-[var(--text-secondary)]">Creator Name</label>
@@ -65,19 +65,19 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
         </div>
 
         {result && (
-          <div className={`mt-4 rounded-lg p-3 text-xs ${result.ok ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`} data-testid="ci-result">
+          <div className={`mt-4 rounded-[var(--radius-card)] p-3 text-xs ${result.ok ? "bg-[var(--color-success-surface)] text-[var(--color-success)]" : "bg-[var(--color-danger-surface)] text-[var(--color-danger)]"}`} data-testid="ci-result">
             <p>{result.message}</p>
             {result.inviteUrl && (
               <p className="mt-2">
-                Invitation: <code className="text-emerald-400" data-testid="ci-invite-url">{result.inviteUrl}</code>
+                Invitation: <code className="text-[var(--color-success)]" data-testid="ci-invite-url">{result.inviteUrl}</code>
               </p>
             )}
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 text-xs text-[var(--text-muted)] space-y-3">
-        <h3 className="text-sm font-semibold text-white">How it works</h3>
+      <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-card)] p-5 text-xs text-[var(--text-muted)] space-y-3">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">How it works</h3>
         <ol className="list-decimal space-y-1 pl-4">
           <li>We analyze the creator&apos;s public profile from their URL.</li>
           <li>We set up their workspace, website and publishing for you.</li>

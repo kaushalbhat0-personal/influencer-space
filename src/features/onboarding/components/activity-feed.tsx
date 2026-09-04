@@ -45,11 +45,11 @@ function StatusIcon({ activity }: { activity: ActivityState }) {
     case "completed":
       return (
         <SuccessIcon>
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--color-success)]" />
         </SuccessIcon>
       );
     case "failed":
-      return <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />;
+      return <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--color-danger)]" />;
     case "skipped":
     case "cancelled":
       return <Minus className="h-4 w-4 shrink-0 text-[var(--text-muted,#71717A)]" />;
@@ -155,8 +155,8 @@ export function ActivityFeedView({
       </div>
 
       {hasFailure && (
-        <div className="border-t border-red-500/20 bg-red-500/10 px-4 py-2.5" data-activity-failure>
-          <p className="text-[11px] font-medium text-red-400">Building paused</p>
+        <div className="border-t border-[var(--color-danger-border)] bg-[var(--color-danger-surface)] px-4 py-2.5" data-activity-failure>
+          <p className="text-[11px] font-medium text-[var(--color-danger)]">Building paused</p>
           <p className="mt-0.5 text-[10px] text-[var(--text-secondary,#A1A1AA)]">
             Completed activity history is preserved. You can retry.
           </p>

@@ -30,27 +30,27 @@ export function ClaimInviteClient({ token, email }: { token: string; email: stri
     setBusy(false);
   }
 
-  const input = "w-full rounded-md border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]";
+  const input = "w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]";
 
   return (
     <div className="mt-4 space-y-3">
       <div>
-        <label className="mb-1 block text-xs text-zinc-400">Email</label>
+        <label className="mb-1 block text-xs text-[var(--text-muted)]">Email</label>
         <input className={input} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} data-testid="claim-email" />
       </div>
       <div>
-        <label className="mb-1 block text-xs text-zinc-400">Password</label>
+        <label className="mb-1 block text-xs text-[var(--text-muted)]">Password</label>
         <input className={input} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} data-testid="claim-password" />
       </div>
       <div>
-        <label className="mb-1 block text-xs text-zinc-400">Confirm Password</label>
+        <label className="mb-1 block text-xs text-[var(--text-muted)]">Confirm Password</label>
         <input className={input} type="password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} data-testid="claim-confirm" />
       </div>
-      <button onClick={submit} disabled={busy || !token} className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm text-white hover:bg-indigo-600 disabled:opacity-50" data-testid="claim-submit">
+      <button onClick={submit} disabled={busy || !token} className="w-full rounded-md bg-[var(--brand-primary)] px-4 py-2 text-sm text-white hover:bg-[var(--primary-hover)] disabled:opacity-50" data-testid="claim-submit">
         {busy ? "Activating…" : "Activate Workspace"}
       </button>
       {notice && (
-        <p className={`rounded-lg p-2 text-xs ${notice.ok ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`} data-testid="claim-notice">
+        <p className={`rounded-[var(--radius-card)] p-2 text-xs ${notice.ok ? "bg-[var(--color-success-surface)] text-[var(--color-success)] border border-[var(--color-success-border)]" : "bg-[var(--color-danger-surface)] text-[var(--color-danger)] border border-[var(--color-danger-border)]"}`} data-testid="claim-notice">
           {notice.message}
         </p>
       )}

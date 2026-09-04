@@ -85,7 +85,7 @@ const PLATFORM_ICONS: Record<string, typeof Globe> = {
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
-  youtube: "text-red-400",
+  youtube: "text-[var(--color-danger)]",
   instagram: "text-pink-400",
   tiktok: "text-cyan-400",
   twitter: "text-blue-400",
@@ -459,15 +459,15 @@ export default function OnboardingPage() {
         {step === "import" && (
           <div className="space-y-6">
             <div>
-              <h1 className="text-xl font-semibold text-white">Build your CreatorStore</h1>
-              <p className="mt-1 text-sm text-zinc-400">
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Build your CreatorStore</h1>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 Choose how you&apos;d like to start. Nothing is permanent — you can always import more later.
               </p>
             </div>
 
             {Array.from(getProvidersByCategory().entries()).map(([category, providers]) => (
               <div key={category} className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   {category === "import" ? "Import Existing Presence" : category === "ai" ? "Create with AI" : "Start Fresh"}
                 </p>
                 <div className="grid gap-2">
@@ -478,27 +478,27 @@ export default function OnboardingPage() {
                         setSelectedProvider(p);
                       }}
                       className={cn(
-                        "flex items-start gap-3 rounded-lg border p-3 text-left w-full transition-all",
+                        "flex items-start gap-3 rounded-[var(--radius-card)] border p-3 text-left w-full transition-all",
                         selectedProvider?.id === p.id
-                          ? "border-indigo-500/40 bg-indigo-500/[0.06]"
-                          : "border-white/[0.06] bg-zinc-900/30 hover:border-white/[0.15]"
+                          ? "border-[var(--brand-primary)]/40 bg-[var(--brand-primary)]/10"
+                          : "border-[var(--border)] bg-[var(--surface-card)] hover:border-[var(--border-strong)]"
                       )}
                     >
-                      <div className="shrink-0 h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                        {category === "import" ? <GlobeIcon className="h-4 w-4 text-indigo-400" /> : category === "ai" ? <Sparkles className="h-4 w-4 text-amber-400" /> : <Edit3 className="h-4 w-4 text-emerald-400" />}
+                      <div className="shrink-0 h-8 w-8 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center">
+                        {category === "import" ? <GlobeIcon className="h-4 w-4 text-[var(--brand-primary)]" /> : category === "ai" ? <Sparkles className="h-4 w-4 text-[var(--color-warning)]" /> : <Edit3 className="h-4 w-4 text-[var(--color-success)]" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm text-white">{p.label}</p>
+                          <p className="font-medium text-sm text-[var(--text-primary)]">{p.label}</p>
                         </div>
-                        <p className="text-[11px] text-zinc-500">{p.description}</p>
+                        <p className="text-[11px] text-[var(--text-muted)]">{p.description}</p>
                       </div>
                     </button>
                   ))}
                 </div>
               </div>
             ))}
-            <p className="text-center text-[11px] text-zinc-600 leading-relaxed">
+            <p className="text-center text-[11px] text-[var(--text-muted)] leading-relaxed">
               You can always connect more profiles later from Settings.<br />
               Your website is fully editable after generation.
             </p>
@@ -517,9 +517,9 @@ export default function OnboardingPage() {
 
             {selectedProvider && selectedProvider.inputType === "none" && (
               <div className="space-y-4">
-                <p className="text-lg font-semibold text-white">{selectedProvider.title}</p>
-                <p className="text-sm text-zinc-400">{selectedProvider.subtitle}</p>
-                <p className="text-[11px] text-zinc-600">{selectedProvider.estimatedTime}</p>
+                <p className="text-lg font-semibold text-[var(--text-primary)]">{selectedProvider.title}</p>
+                <p className="text-sm text-[var(--text-secondary)]">{selectedProvider.subtitle}</p>
+                <p className="text-[11px] text-[var(--text-muted)]">{selectedProvider.estimatedTime}</p>
                 <button
                   onClick={handleBuildManually}
                   disabled={loading}
@@ -537,8 +537,8 @@ export default function OnboardingPage() {
             )}
 
             {error && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
-                <p className="text-xs text-red-400">{error}</p>
+              <div className="rounded-lg bg-[var(--color-danger-surface)] border border-[var(--color-danger-border)] p-3">
+                <p className="text-xs text-[var(--color-danger)]">{error}</p>
               </div>
             )}
           </div>
@@ -548,21 +548,21 @@ export default function OnboardingPage() {
           <div className="space-y-6">
             <button
               onClick={() => setStep("import")}
-              className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300"
+              className="flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-zinc-300"
             >
               <ArrowLeft className="h-4 w-4" /> Change URL
             </button>
 
             <div>
-              <h1 className="text-xl font-semibold text-white">Profile Detected</h1>
-              <p className="mt-1 text-sm text-zinc-400">
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Profile Detected</h1>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 We found your profile. Review the details and we&apos;ll generate your storefront.
               </p>
             </div>
 
             {profileData.acquisition && (
               <p
-                className="text-[10px] uppercase tracking-wide text-zinc-600"
+                className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]"
                 data-testid="acquisition-status"
                 aria-label={`Profile acquisition: ${profileData.acquisition.platform} via ${profileData.acquisition.adapter}`}
               >
@@ -573,23 +573,23 @@ export default function OnboardingPage() {
               </p>
             )}
 
-            <div className="rounded-xl bg-white/[0.03] border border-white/5 p-5 space-y-4">
+            <div className="rounded-[var(--radius-card)] bg-[var(--surface-card)] border border-[var(--border-subtle)] p-5 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg font-bold text-white shrink-0">
+                <div className="h-14 w-14 rounded-full bg-[var(--brand-primary)] flex items-center justify-center text-lg font-bold text-[var(--text-primary)] shrink-0">
                   {profileData.creatorName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium truncate">{profileData.creatorName}</p>
+                  <p className="text-[var(--text-primary)] font-medium truncate">{profileData.creatorName}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <PlatformIcon className={cn(
                       "h-3.5 w-3.5",
-                      PLATFORM_COLORS[profileData.platform] || "text-zinc-400",
+                      PLATFORM_COLORS[profileData.platform] || "text-[var(--text-secondary)]",
                     )} />
-                    <span className="text-xs text-zinc-500 capitalize">{profileData.platform}</span>
+                    <span className="text-xs text-[var(--text-muted)] capitalize">{profileData.platform}</span>
                     {profileData.followers !== undefined && profileData.followers > 0 && (
                       <>
-                        <span className="text-zinc-700">Â·</span>
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-[var(--text-muted)]">Â·</span>
+                        <span className="text-xs text-[var(--text-muted)]">
                           {profileData.followers.toLocaleString()} followers
                         </span>
                       </>
@@ -599,38 +599,38 @@ export default function OnboardingPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3">
-                <div className="rounded-lg bg-white/[0.03] px-3 py-2">
-                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Category</p>
+                <div className="rounded-lg bg-[var(--surface-card)] px-3 py-2">
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Category</p>
                   <select
                     value={categoryOverride || profileData.category || "general"}
                     onChange={(e) => setCategoryOverride(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none focus:border-zinc-600"
+                    className="mt-1 w-full rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-300 outline-none focus:border-[var(--border-focus)]"
                   >
                     {CATEGORY_OPTIONS.map((c) => (
                       <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                   </select>
                   {profileData.categoryRequiresReview && (
-                    <p className="mt-1.5 flex items-center gap-1 text-[10px] text-amber-400">
+                    <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--color-warning)]">
                       <AlertTriangle className="h-3 w-3 shrink-0" />
                       Detection confidence was low — review the category above.
                     </p>
                   )}
                 </div>
-                <div className="rounded-lg bg-white/[0.03] px-3 py-2">
-                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Persona</p>
+                <div className="rounded-lg bg-[var(--surface-card)] px-3 py-2">
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Persona</p>
                   <p className="text-sm text-zinc-300 mt-0.5">{profileData.persona.name}</p>
                 </div>
-                <div className="rounded-lg bg-white/[0.03] px-3 py-2">
-                  <p className="text-[10px] text-zinc-600 uppercase tracking-wider">Profile Match</p>
+                <div className="rounded-lg bg-[var(--surface-card)] px-3 py-2">
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Profile Match</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <div className="flex-1 h-1.5 rounded-full bg-zinc-800">
+                    <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-hover)]">
                       <div
-                        className="h-full rounded-full bg-emerald-500"
+                        className="h-full rounded-full bg-[var(--color-success)]"
                         style={{ width: `${Math.round(profileData.confidence * 100)}%` }}
                       />
                     </div>
-                    <span className="text-xs text-zinc-400">{Math.round(profileData.confidence * 100)}%</span>
+                    <span className="text-xs text-[var(--text-secondary)]">{Math.round(profileData.confidence * 100)}%</span>
                   </div>
                 </div>
               </div>
@@ -647,7 +647,7 @@ export default function OnboardingPage() {
             )}
 
             <div>
-              <label htmlFor="workspace-name" className="block text-xs font-medium text-zinc-400 mb-1.5">
+              <label htmlFor="workspace-name" className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">
                 Storefront Name
               </label>
               <input
@@ -692,37 +692,37 @@ export default function OnboardingPage() {
 
         {step === "complete" && (
           <div className="text-center space-y-6">
-            <div className="rounded-full bg-emerald-500/20 p-4 w-fit mx-auto">
-              <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <div className="rounded-full bg-[var(--color-success-surface)] p-4 w-fit mx-auto">
+              <CheckCircle2 className="h-10 w-10 text-[var(--color-success)]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Your storefront is ready!</h1>
-              <p className="text-zinc-400 mt-2 text-sm">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Your storefront is ready!</h1>
+              <p className="text-[var(--text-secondary)] mt-2 text-sm">
                 Redirecting you to your dashboard...
               </p>
             </div>
 
             {goldenScore !== null && (
-              <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-4">
+              <div className="rounded-[var(--radius-card)] bg-[var(--surface-card)] border border-[var(--border-subtle)] p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-400">Quality Check</span>
+                  <span className="text-sm text-[var(--text-secondary)]">Quality Check</span>
                   <span className={cn(
                     "text-sm font-medium",
-                    goldenScore >= 0.8 ? "text-emerald-400" : goldenScore >= 0.5 ? "text-amber-400" : "text-red-400",
+                    goldenScore >= 0.8 ? "text-[var(--color-success)]" : goldenScore >= 0.5 ? "text-[var(--color-warning)]" : "text-[var(--color-danger)]",
                   )}>
                     {Math.round(goldenScore * 100)}%
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-zinc-800">
+                <div className="h-1.5 rounded-full bg-[var(--surface-hover)]">
                   <div
                     className={cn(
                       "h-full rounded-full",
-                      goldenScore >= 0.8 ? "bg-emerald-500" : goldenScore >= 0.5 ? "bg-amber-500" : "bg-red-500",
+                      goldenScore >= 0.8 ? "bg-[var(--color-success)]" : goldenScore >= 0.5 ? "bg-amber-500" : "bg-red-500",
                     )}
                     style={{ width: `${Math.round(goldenScore * 100)}%` }}
                   />
                 </div>
-                <div className="grid grid-cols-1 gap-2 text-left text-xs text-zinc-500">
+                <div className="grid grid-cols-1 gap-2 text-left text-xs text-[var(--text-muted)]">
                   {goldenScore >= 0.8 && <p>Your storefront was generated with high confidence. The content, structure, and branding closely match your creator identity.</p>}
                   {goldenScore >= 0.5 && goldenScore < 0.8 && <p>Your storefront is ready. You may want to review the generated content and make adjustments in the builder to better match your brand.</p>}
                   {goldenScore < 0.5 && <p>Your storefront was generated with limited data. Review and customize your content in the builder to ensure it reflects your brand.</p>}
@@ -740,16 +740,16 @@ export default function OnboardingPage() {
             )}>
               <AlertTriangle className={cn(
                 "h-10 w-10",
-                retryInfo ? "text-amber-400" : "text-red-400",
+                retryInfo ? "text-[var(--color-warning)]" : "text-[var(--color-danger)]",
               )} />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-white">
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">
                 {retryInfo ? "We couldn't publish your website" : "We couldn't build your storefront"}
               </h1>
-              <p className="text-zinc-400 mt-2 text-sm">{error || "Something went wrong while building your storefront."}</p>
+              <p className="text-[var(--text-secondary)] mt-2 text-sm">{error || "Something went wrong while building your storefront."}</p>
               {retryInfo && (
-                <p className="text-zinc-500 mt-3 text-xs">
+                <p className="text-[var(--text-muted)] mt-3 text-xs">
                   Your storefront was created successfully. Publishing the live version failed.
                   You can retry or continue to the dashboard.
                 </p>
@@ -791,13 +791,13 @@ export default function OnboardingPage() {
                   </button>
                   <button
                     onClick={() => router.push("/admin/dashboard")}
-                    className="text-sm text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
+                    className="text-sm text-[var(--text-muted)] hover:text-zinc-300 underline underline-offset-2"
                   >
                     Go to Dashboard instead
                   </button>
                   <a
                     href="mailto:support@creatorspace.app?subject=Storefront%20generation%20help"
-                    className="block text-sm text-zinc-600 hover:text-zinc-400 underline underline-offset-2"
+                    className="block text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] underline underline-offset-2"
                   >
                     Contact Support
                   </a>
