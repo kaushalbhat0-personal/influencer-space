@@ -198,7 +198,7 @@ export function CoursesManager({ initialData }: CoursesManagerProps) {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Delete ${confirmDelete.title}`}>
-          <div className="absolute inset-0 bg-[rgba(24,24,27,0.20)] backdrop-blur-sm" onClick={() => !isDeleting && setConfirmDelete(null)} />
+          <div className="absolute inset-0 bg-[var(--surface-overlay)]/20 backdrop-blur-sm" onClick={() => !isDeleting && setConfirmDelete(null)} />
           <div className="relative admin-card p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">Delete &quot;{confirmDelete.title}&quot;?</h3>
             <p className="mt-1 text-sm text-[var(--text-muted)]">This will permanently delete the course. This cannot be undone.</p>

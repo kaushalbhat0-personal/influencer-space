@@ -34,11 +34,11 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
     setBusy(false);
   }
 
-  const input = "w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-200";
+  const input = "w-full rounded-md border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]";
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5">
         <h3 className="text-sm font-semibold text-white mb-4">New Creator</h3>
         <div className="space-y-3">
           <div>
@@ -76,7 +76,7 @@ export function CreatorImportClient({ agencyId }: { agencyId: string }) {
         )}
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-xs text-zinc-500 space-y-3">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5 text-xs text-zinc-500 space-y-3">
         <h3 className="text-sm font-semibold text-white">How it works</h3>
         <ol className="list-decimal space-y-1 pl-4">
           <li>We analyze the creator&apos;s public profile from their URL.</li>

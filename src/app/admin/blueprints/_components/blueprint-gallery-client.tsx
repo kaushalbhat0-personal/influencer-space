@@ -35,9 +35,9 @@ export function BlueprintGalleryClient({
           placeholder="Search templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[200px] rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-zinc-600"
+          className="flex-1 min-w-[200px] rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-300 placeholder-zinc-600 outline-none focus:border-[var(--border-focus)]"
         />
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 outline-none">
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="rounded-lg border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-zinc-400 outline-none">
           <option value="">All categories</option>
           {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
         </select>
@@ -49,7 +49,7 @@ export function BlueprintGalleryClient({
             key={bp.id}
             onClick={() => setSelectedBp(bp)}
             className={`group rounded-xl border p-5 text-left transition-all ${
-              selectedBp?.id === bp.id ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50" : "border-white/10 hover:border-white/30"
+              selectedBp?.id === bp.id ? "border-s8ul-cyan ring-2 ring-s8ul-cyan/50" : "border-[var(--border)] hover:border-[var(--border-strong)]"
             }`}
           >
             <div className="mb-2 flex items-center justify-between">
@@ -88,7 +88,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="mx-auto max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 p-6">
+      <div className="mx-auto max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-6">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-bold text-white">{blueprint.name}</h2>
@@ -100,15 +100,15 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
         <p className="mt-4 text-sm text-zinc-400">{blueprint.description}</p>
 
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-lg bg-zinc-800/50 p-3 text-center">
+          <div className="rounded-lg bg-[var(--surface-hover)] p-3 text-center">
             <p className="text-lg font-bold text-white">{blueprint.pages.length}</p>
             <p className="text-[10px] text-zinc-500">Pages</p>
           </div>
-          <div className="rounded-lg bg-zinc-800/50 p-3 text-center">
+          <div className="rounded-lg bg-[var(--surface-hover)] p-3 text-center">
             <p className="text-lg font-bold text-white">{totalSections}</p>
             <p className="text-[10px] text-zinc-500">Sections</p>
           </div>
-          <div className="rounded-lg bg-zinc-800/50 p-3 text-center">
+          <div className="rounded-lg bg-[var(--surface-hover)] p-3 text-center">
             <p className="text-lg font-bold text-white">{blueprint.navigation.length}</p>
             <p className="text-[10px] text-zinc-500">Nav Items</p>
           </div>
@@ -118,7 +118,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
           <h3 className="mb-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Pages</h3>
           <div className="space-y-1">
             {blueprint.pages.map((page) => (
-              <div key={page.id} className="flex items-center justify-between rounded-lg bg-zinc-800/30 px-3 py-2">
+              <div key={page.id} className="flex items-center justify-between rounded-lg bg-[var(--surface-hover)] px-3 py-2">
                 <div>
                   <p className="text-xs text-zinc-300">{page.name}</p>
                   <p className="text-[10px] text-zinc-600">{page.sections.length} sections &middot; /{page.slug}</p>
@@ -133,7 +133,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
           <h3 className="mb-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Navigation</h3>
           <div className="flex flex-wrap gap-1">
             {blueprint.navigation.filter((n) => n.visible).map((item) => (
-              <span key={item.id} className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400">{item.label}</span>
+              <span key={item.id} className="rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] text-zinc-400">{item.label}</span>
             ))}
           </div>
         </div>
@@ -144,7 +144,7 @@ function BlueprintDetailPanel({ blueprint, onClose }: { blueprint: BlueprintDefi
             <div className="flex flex-wrap gap-1">
               {allRecommended.map((themeId) => {
                 const theme = themeRegistry.getById(themeId);
-                return <span key={themeId} className="rounded bg-zinc-800 px-2 py-1 text-[10px] text-zinc-400">{theme?.name ?? themeId}</span>;
+                return <span key={themeId} className="rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] text-zinc-400">{theme?.name ?? themeId}</span>;
               })}
             </div>
           </div>

@@ -30,7 +30,7 @@ export function ClaimInviteClient({ token, email }: { token: string; email: stri
     setBusy(false);
   }
 
-  const input = "w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-zinc-200";
+  const input = "w-full rounded-md border border-[var(--border)] bg-[var(--surface-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]";
 
   return (
     <div className="mt-4 space-y-3">
