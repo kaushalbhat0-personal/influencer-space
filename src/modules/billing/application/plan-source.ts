@@ -124,10 +124,14 @@ async function resolveActivePlanImpl(
 ): Promise<ResolvedActivePlan> {
   // RCCF-29: warm the Super Admin runtime overrides so the capability engine
   // (getPlan overlay) honors persisted BillingPlan.runtimeConfig limits.
-  await loadRuntimeFeatureOverrides();
+  // Parallelize with the first DB lookup (independent, saves ~300ms cold).
+  const overridesPromise = loadRuntimeFeatureOverrides();
 
   if (workspaceId) {
-    const sub = await billingRepository.findSubscriptionWithPlan(workspaceId);
+    const [ , sub ] = await Promise.all([
+      overridesPromise,
+      billingRepository.findSubscriptionWithPlan(workspaceId),
+    ]);
     if (sub?.plan?.code) {
       if (!isSubscriptionEntitlementEligible(sub)) return noEntitlement("v2", sub.status);
       // IMPLEMENTATION-42 Phase 5: clamp Launch → Grow for agency-managed creators.
@@ -137,31 +141,44 @@ async function resolveActivePlanImpl(
   }
 
   if (tenantId) {
-    const workspace = await prisma.workspace.findFirst({
-      where: { tenantId },
-      select: { id: true },
-    });
-    if (workspace) {
-      const sub = await billingRepository.findSubscriptionWithPlan(workspace.id);
+    // Single query via workspace include instead of workspace (1) + subscription (1) serial = saves 1 query + ~120ms.
+    // In production the include returns billingSubscription directly; fallback preserves test mocks where workspace returns only {id}.
+    const [ , workspaceWithSub ] = await Promise.all([
+      overridesPromise,
+      prisma.workspace.findFirst({
+        where: { tenantId },
+        select: { id: true, billingSubscription: { include: { plan: { select: { code: true } } } } },
+      }),
+    ]);
+    const subFromInclude = (workspaceWithSub as unknown as { billingSubscription?: { plan?: { code?: string } } })?.billingSubscription;
+    if ((subFromInclude as unknown as { plan?: { code?: string } })?.plan?.code) {
+      const typedSub = subFromInclude as unknown as SubscriptionEntitlementState & { plan: { code: string }; status: string };
+      if (!isSubscriptionEntitlementEligible(typedSub)) return noEntitlement("v2", typedSub.status);
+      const code = await resolveRestrictedPlanCode({ tenantId, code: typedSub.plan.code });
+      return { code, origin: "v2", status: typedSub.status };
+    }
+    if (workspaceWithSub) {
+      const sub = await billingRepository.findSubscriptionWithPlan(workspaceWithSub.id);
       if (sub?.plan?.code) {
         if (!isSubscriptionEntitlementEligible(sub)) return noEntitlement("v2", sub.status);
         const code = await resolveRestrictedPlanCode({ tenantId, code: sub.plan.code });
         return { code, origin: "v2", status: sub.status };
       }
     }
-      const legacy = await prisma.subscription.findUnique({
-        where: { tenantId },
-        select: { plan: true, status: true, currentPeriodEnd: true },
-      });
-      if (legacy?.plan) {
-        if (!isSubscriptionEntitlementEligible({ status: legacy.status, currentPeriodEnd: legacy.currentPeriodEnd })) {
-          return noEntitlement("legacy", legacy.status);
-        }
-        const code = await resolveRestrictedPlanCode({ tenantId, code: legacy.plan });
-        return { code, origin: "legacy", status: legacy.status };
+    const legacy = await prisma.subscription.findUnique({
+      where: { tenantId },
+      select: { plan: true, status: true, currentPeriodEnd: true },
+    });
+    if (legacy?.plan) {
+      if (!isSubscriptionEntitlementEligible({ status: legacy.status, currentPeriodEnd: legacy.currentPeriodEnd })) {
+        return noEntitlement("legacy", legacy.status);
+      }
+      const code = await resolveRestrictedPlanCode({ tenantId, code: legacy.plan });
+      return { code, origin: "legacy", status: legacy.status };
     }
   }
 
+  await overridesPromise;
   return { code: null, origin: "none", status: null };
 }
 
