@@ -357,7 +357,7 @@ export function InteractiveCanvas({
           // RCCF-BUILDER-04B F-07: stronger canvas dominance — frame border/ring/shadow
           // strengthened so the canvas reads as the primary website object vs surrounding zinc-950 rails
           // (outer bg kept at 900/40 to preserve preview-gutter contract).
-          className="@container/main theme-root relative mx-auto shrink-0 overflow-hidden rounded-lg border border-white/[0.15] bg-zinc-950 shadow-2xl shadow-black/60 ring-1 ring-white/10 transition-all"
+          className="@container/main theme-root relative mx-auto shrink-0 overflow-hidden rounded-lg border border-white/[0.15] bg-zinc-950 shadow-[var(--shadow-overlay)] ring-1 ring-white/10 transition-all"
           style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center", ...(resolved?.themeVars as React.CSSProperties | undefined) }}
         >
           <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">

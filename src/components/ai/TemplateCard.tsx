@@ -38,7 +38,7 @@ export const TemplateCard = forwardRef<HTMLButtonElement, TemplateCardProps>(
           "flex flex-col items-center gap-2 rounded-xl border p-4 transition-all duration-200 text-center",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/50",
           selected
-            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 shadow-[0_0_20px_rgba(0,245,255,0.1)]"
+            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 shadow-[var(--shadow-card)]"
             : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10",
           disabled && "opacity-40 cursor-not-allowed",
           loading && "animate-pulse",

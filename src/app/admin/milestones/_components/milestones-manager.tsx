@@ -144,7 +144,7 @@ export function MilestonesManager({
       {/* ── Toast ── */}
       {toast && (
         <div
-          className={`fixed right-4 top-4 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg transition-all ${
+          className={`fixed right-4 top-4 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-[var(--shadow-overlay)] transition-all ${
             toast.type === "success"
               ? "bg-emerald-500/90 text-black"
               : "bg-red-500/90 text-white"
@@ -344,7 +344,7 @@ export function MilestonesManager({
     {confirmDelete && (
       <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={`Delete ${confirmDelete.name}`}>
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)} />
-        <div className="relative bg-[var(--surface-card)] rounded-xl border border-[var(--border)] p-6 max-w-sm w-full mx-4 shadow-xl">
+        <div className="relative bg-[var(--surface-card)] rounded-xl border border-[var(--border)] p-6 max-w-sm w-full mx-4 shadow-[var(--shadow-overlay)]">
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Delete &quot;{confirmDelete.name}&quot;?</h3>
           <p className="mt-2 text-sm text-[var(--text-muted)]">This cannot be undone.</p>
           <div className="mt-6 flex justify-end gap-3">

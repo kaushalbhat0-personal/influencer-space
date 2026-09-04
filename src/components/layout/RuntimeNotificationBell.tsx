@@ -36,7 +36,7 @@ export function RuntimeNotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-40 w-80 rounded-xl border border-white/10 bg-[var(--surface-overlay)] shadow-2xl overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-40 w-80 rounded-xl border border-white/10 bg-[var(--surface-overlay)] shadow-[var(--shadow-overlay)] overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <h3 className="text-sm font-semibold text-white">Notifications</h3>
               <div className="flex items-center gap-3">

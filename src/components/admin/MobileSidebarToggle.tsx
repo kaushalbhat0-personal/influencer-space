@@ -12,7 +12,7 @@ export function MobileSidebarToggle({ isOpen, onToggle }: MobileSidebarTogglePro
     <motion.button
       onClick={onToggle}
       whileTap={{ scale: 0.9 }}
-      className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary)]/20 to-[var(--brand-secondary)]/20 text-[var(--brand-primary)] shadow-lg shadow-[var(--brand-primary)]/10 backdrop-blur-xl lg:hidden"
+      className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary)]/20 to-[var(--brand-secondary)]/20 text-[var(--brand-primary)] shadow-[var(--shadow-card)] backdrop-blur-xl lg:hidden"
       aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
     >
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

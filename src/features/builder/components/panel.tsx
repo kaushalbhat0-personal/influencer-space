@@ -145,7 +145,7 @@ export function ResizablePanel({
         aria-expanded={!collapsed}
         data-testid={`panel-toggle-${side}`}
         className={cn(
-          "absolute top-4 z-20 rounded-full bg-zinc-800 p-1 text-zinc-400 shadow-lg shadow-black/40 transition-colors hover:text-zinc-200",
+          "absolute top-4 z-20 rounded-full bg-zinc-800 p-1 text-zinc-400 shadow-[var(--shadow-card)] transition-colors hover:text-zinc-200",
           side === "left" ? "right-0 translate-x-1/2" : "left-0 -translate-x-1/2",
         )}
       >

@@ -23,7 +23,7 @@ export function HelpPanel({ open, onClose, context }: { open: boolean; onClose: 
   return (
     <div className="fixed inset-0 z-[90] flex justify-end" role="dialog" aria-modal="true" aria-labelledby="help-title">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
-      <div className="relative flex h-full w-full max-w-sm flex-col border-l border-white/10 bg-zinc-950 shadow-xl">
+      <div className="relative flex h-full w-full max-w-sm flex-col border-l border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]">
         <div className="border-b border-white/10 p-4">
           <div className="flex items-center justify-between">
             <h2 id="help-title" className="text-base font-semibold text-white">How can we help?</h2>

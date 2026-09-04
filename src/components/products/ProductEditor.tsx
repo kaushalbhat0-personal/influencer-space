@@ -108,7 +108,7 @@ export function ProductEditor({ product, tenantId, open, onClose, onSave, saving
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="absolute right-0 top-0 h-full w-full max-w-2xl overflow-y-auto border-l border-white/10 bg-zinc-950 shadow-2xl"
+            className="absolute right-0 top-0 h-full w-full max-w-2xl overflow-y-auto border-l border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]"
             role="dialog"
             aria-modal="true"
             aria-label={product ? "Edit Product" : "New Product"}

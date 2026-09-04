@@ -26,9 +26,9 @@ export function GlassCard({
       whileTap={{ scale: 0.97 }}
       className={cn(
         "rounded-[var(--radius-card-elevated)] bg-white/10 p-4 backdrop-blur-md backdrop-saturate-150 sm:p-6",
-        "shadow-[0_8px_32px_rgba(0,0,0,0.12)]",
+        "shadow-[var(--shadow-card)]",
         "border border-white/20",
-        withGoldBorder && "border-amber-400/50 shadow-amber-400/20",
+        withGoldBorder && "border-amber-400/50 shadow-[var(--shadow-card)]",
         className,
       )}
       {...props}

@@ -89,7 +89,7 @@ export function CommandPalette({ items = DEFAULT_ITEMS, className }: CommandPale
           exit={{ opacity: 0, scale: 0.95, y: -10 }}
           transition={{ duration: 0.15 }}
           className={cn(
-            "relative z-10 w-full max-w-lg rounded-xl border border-white/10 bg-[var(--surface-overlay)] shadow-2xl overflow-hidden",
+            "relative z-10 w-full max-w-lg rounded-xl border border-white/10 bg-[var(--surface-overlay)] shadow-[var(--shadow-overlay)] overflow-hidden",
             className
           )}
           role="dialog"

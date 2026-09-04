@@ -88,7 +88,7 @@ export function MediaPickerDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl border border-white/10 bg-zinc-950 shadow-2xl">
+      <div className="flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl border border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
           <h3 className="text-sm font-semibold text-white">Media Library</h3>
           <button onClick={onClose} className="text-zinc-500 hover:text-white" aria-label="Close">

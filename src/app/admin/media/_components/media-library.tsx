@@ -518,7 +518,7 @@ function BatchConfirmDialog({ count, videos, images, onCancel, onConfirm }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-sm rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-2xl">
+      <div className="w-full max-w-sm rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-[var(--shadow-overlay)]">
         <h3 className="text-base font-semibold text-white">Delete {count} asset{count !== 1 ? "s" : ""}?</h3>
         <p className="mt-2 text-xs text-zinc-400">
           This action cannot be undone. {count} file{count !== 1 ? "s" : ""} will be removed:
@@ -543,7 +543,7 @@ function BlockedDialog({ assets, onClose }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-2xl">
+      <div className="w-full max-w-md rounded-[var(--radius-card-elevated)] border border-[var(--border)] bg-[var(--surface-card)] p-5 shadow-[var(--shadow-overlay)]">
         <h3 className="text-base font-semibold text-white">Cannot delete referenced assets</h3>
         <p className="mt-1 text-xs text-zinc-400">These assets are still in use. Remove them from their sections first, or replace them.</p>
         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">

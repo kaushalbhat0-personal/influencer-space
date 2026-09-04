@@ -254,7 +254,7 @@ export function SheetContent({
         tabIndex={-1}
         onKeyDown={onKeyDown}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-[var(--surface-card)] p-6 shadow-lg transition ease-in-out border-[var(--border)]",
+          "fixed z-50 flex flex-col gap-4 bg-[var(--surface-card)] p-6 shadow-[var(--shadow-overlay)] transition ease-in-out border-[var(--border)]",
           "duration-300 focus:outline-none",
           sideClasses[side],
           className

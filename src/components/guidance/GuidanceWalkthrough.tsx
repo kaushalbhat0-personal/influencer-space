@@ -50,7 +50,7 @@ export function GuidanceWalkthrough({ definition, onClose }: { definition: Guida
   const cur = definition.steps[step];
   return (
     <div data-testid="guidance-walkthrough" className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="guidance-title">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-zinc-900 p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-zinc-900 p-6 shadow-[var(--shadow-overlay)]">
         {step === 0 && (
           <div className="mb-4">
             <h2 id="guidance-title" className="text-lg font-semibold text-white">{definition.title} 👋</h2>

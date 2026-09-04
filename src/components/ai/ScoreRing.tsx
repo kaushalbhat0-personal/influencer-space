@@ -25,7 +25,7 @@ const VARIANT_COLORS = {
   success: { stroke: "#22C55E", bg: "rgba(34,197,94,0.15)" },
   warning: { stroke: "#F59E0B", bg: "rgba(245,158,11,0.15)" },
   danger: { stroke: "#EF4444", bg: "rgba(239,68,68,0.15)" },
-  default: { stroke: "#00F5FF", bg: "rgba(0,245,255,0.1)" },
+  default: { stroke: "#6366F1", bg: "rgba(99,102,241,0.12)" },
 };
 
 export function ScoreRing({
@@ -95,7 +95,7 @@ export function ScoreRing({
             strokeDashoffset={offset}
             transform={`rotate(-90 ${dim / 2} ${dim / 2})`}
             style={{ transition: reduced ? "none" : "stroke-dashoffset 0.3s ease-out" }}
-            className="drop-shadow-[0_0_6px_rgba(0,245,255,0.4)]"
+            className=""
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">

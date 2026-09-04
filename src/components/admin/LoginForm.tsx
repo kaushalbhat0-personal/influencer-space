@@ -74,7 +74,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative w-full max-w-md"
       >
-        <div className="rounded-[var(--radius-card-elevated)] border border-white/10 bg-white/5 p-8 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_8px_32px_rgba(0,0,0,0.4)] sm:p-10">
+        <div className="rounded-[var(--radius-card-elevated)] border border-white/10 bg-white/5 p-8 backdrop-blur-2xl backdrop-saturate-150 shadow-[var(--shadow-overlay)] sm:p-10">
           <div className="text-center">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}

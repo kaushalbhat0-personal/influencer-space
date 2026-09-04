@@ -104,7 +104,7 @@ export function BuilderMobilePanel({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-hidden rounded-t-2xl border-t border-white/10 bg-zinc-950 shadow-2xl"
+            className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-hidden rounded-t-2xl border-t border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]"
           >
             <div ref={sheetRef} className="flex flex-col h-full">
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">

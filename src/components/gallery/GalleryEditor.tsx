@@ -87,7 +87,7 @@ export function GalleryEditor({ item, open, onClose, onSave, saving }: GalleryEd
           <motion.div
             initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="absolute right-0 top-0 h-full w-full max-w-lg overflow-y-auto border-l border-white/10 bg-zinc-950 shadow-2xl"
+            className="absolute right-0 top-0 h-full w-full max-w-lg overflow-y-auto border-l border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]"
             role="dialog" aria-modal="true" aria-label="Edit Media"
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-zinc-950/95 px-6 py-4 backdrop-blur-sm">

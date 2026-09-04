@@ -568,7 +568,7 @@ const SURFACE_SWATCHES: Record<string, string> = {
   glass: "bg-white/20 backdrop-blur-sm border border-white/30",
   "soft-glow": "bg-indigo-400/20 shadow-[0_0_12px_rgba(129,140,248,0.8)]",
   "gradient-border": "bg-zinc-800 border border-[var(--brand-primary)]",
-  floating: "bg-zinc-700 shadow-lg shadow-black/60 -translate-y-px",
+  floating: "bg-zinc-700 shadow-[var(--shadow-card)] -translate-y-px",
   luxury: "bg-gradient-to-br from-amber-200/60 via-amber-500/30 to-zinc-800",
   neon: "bg-[var(--color-info-surface)] border border-[var(--color-info-border)] shadow-[0_0_10px_rgba(34,211,238,0.8)]",
 };

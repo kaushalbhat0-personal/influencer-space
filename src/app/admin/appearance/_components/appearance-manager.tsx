@@ -93,7 +93,7 @@ export function AppearanceManager({
                   }`}
                 >
                   <span
-                    className="h-8 w-8 rounded-full border-2 border-[var(--border-subtle)] shadow-lg"
+                    className="h-8 w-8 rounded-full border-2 border-[var(--border-subtle)] shadow-[var(--shadow-card)]"
                     style={{ backgroundColor: preset.accent }}
                   />
                   <span className="text-[10px] font-medium text-zinc-400">{preset.label}</span>

@@ -25,7 +25,7 @@ export function StrategyCard({
       className={cn(
         "relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 w-full",
         active
-          ? "border-[var(--brand-primary)]/50 bg-[var(--brand-primary)]/10 shadow-[0_0_20px_rgba(99,102,241,0.08)]"
+          ? "border-[var(--brand-primary)]/50 bg-[var(--brand-primary)]/10 shadow-[var(--shadow-card)]"
           : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]",
       )}
       aria-pressed={active}
