@@ -42,13 +42,13 @@ export function BuilderToolbar({
 
   return (
     <div className="flex flex-col flex-shrink-0 border-b border-white/10 bg-zinc-950 z-20">
-      {/* Row 1 — brand + identity + undo/redo + mobile panel toggles */}
-      <div className="flex h-11 items-center justify-between gap-2 px-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+      {/* Row 1 — single ~44px primary row at 390; compact device + save collapsed into Row 1 at <md */}
+      <div className="flex h-11 items-center justify-between gap-1.5 px-3">
+        <div className="flex items-center gap-1.5 min-w-0">
           <Link
             href="/admin/dashboard"
             aria-label="Back to Dashboard"
-            className="shrink-0 rounded-lg p-1 text-zinc-500 hover:bg-white/5 hover:text-zinc-200 transition-colors"
+            className="shrink-0 rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-500 hover:bg-white/5 hover:text-zinc-200 transition-colors lg:min-h-0 lg:min-w-0 lg:p-1"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -58,23 +58,34 @@ export function BuilderToolbar({
           >
             CreatorStore
           </Link>
-          <span className="hidden md:inline h-4 w-px bg-white/10 shrink-0" />
-          <span className="truncate text-xs text-zinc-300 font-medium">{creatorName}</span>
+          <span className="truncate text-xs text-zinc-300 font-medium max-w-[90px] sm:max-w-none">{creatorName}</span>
           <span className="hidden lg:inline h-4 w-px bg-white/10 shrink-0" />
           <span className="hidden lg:inline truncate text-[11px] text-zinc-600">{themeName ?? "No theme"}</span>
-          <span className="hidden xl:inline text-zinc-800 text-[10px]">·</span>
-          <span className="hidden xl:inline truncate text-[11px] text-zinc-600">{blueprintName ?? "—"}</span>
+          {/* Compact device segmented control — visible at <md, hidden at md+ where Row 2 shows it */}
+          <div className="flex items-center gap-0.5 rounded-[var(--radius-control)] bg-zinc-800/50 p-0.5 md:hidden">
+            {devices.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => onDeviceChange(d.id)}
+                aria-pressed={device === d.id}
+                aria-label={`${d.label} preview`}
+                className={cn("rounded-[var(--radius-control)] min-h-[44px] min-w-[44px] flex items-center justify-center px-2 py-1 transition-colors border md:min-h-[32px] md:min-w-[32px]", device === d.id ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border)]" : "text-zinc-500 hover:text-zinc-300 border-transparent")}
+              >
+                <d.icon className="h-3.5 w-3.5" />
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {/* Mobile-only panel access — mirrors the bottom bar without duplicating actions. */}
+          {/* Mobile-only panel access */}
           {onOpenSections && onOpenProperties && (
             <div className="flex items-center gap-0.5 lg:hidden">
               <button
                 onClick={onOpenSections}
                 aria-pressed={mobilePanel === "sections"}
                 aria-label="Toggle sections panel"
-                className={cn("rounded p-1 transition-colors", mobilePanel === "sections" ? "text-[var(--text-primary)] bg-[var(--surface-hover)]" : "text-zinc-500 hover:text-zinc-300")}
+                className={cn("rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors lg:min-h-0 lg:min-w-0 lg:p-1", mobilePanel === "sections" ? "text-[var(--text-primary)] bg-[var(--surface-hover)]" : "text-zinc-500 hover:text-zinc-300")}
               >
                 <Layers className="h-3.5 w-3.5" />
               </button>
@@ -82,7 +93,7 @@ export function BuilderToolbar({
                 onClick={onOpenProperties}
                 aria-pressed={mobilePanel === "properties"}
                 aria-label="Toggle properties panel"
-                className={cn("rounded p-1 transition-colors", mobilePanel === "properties" ? "text-[var(--text-primary)] bg-[var(--surface-hover)]" : "text-zinc-500 hover:text-zinc-300")}
+                className={cn("rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors lg:min-h-0 lg:min-w-0 lg:p-1", mobilePanel === "properties" ? "text-[var(--text-primary)] bg-[var(--surface-hover)]" : "text-zinc-500 hover:text-zinc-300")}
               >
                 <Settings2 className="h-3.5 w-3.5" />
               </button>
@@ -90,13 +101,13 @@ export function BuilderToolbar({
           )}
           <span className="hidden sm:inline h-4 w-px bg-white/10 shrink-0" />
           <CompletionBadge pct={completionPct} />
-          <span className="h-4 w-px bg-white/10 shrink-0" />
+          <span className="hidden sm:inline h-4 w-px bg-white/10 shrink-0" />
           <button
             onClick={() => builderCommands.undo()}
             disabled={!history.canUndo}
             aria-label="Undo"
             title="Undo"
-            className={cn("rounded p-1 transition-colors", history.canUndo ? "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" : "text-zinc-700")}
+            className={cn("rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors lg:min-h-0 lg:min-w-0 lg:p-1", history.canUndo ? "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" : "text-zinc-700")}
           >
             <Undo className="h-3.5 w-3.5" />
           </button>
@@ -105,24 +116,33 @@ export function BuilderToolbar({
             disabled={!history.canRedo}
             aria-label="Redo"
             title="Redo"
-            className={cn("rounded p-1 transition-colors", history.canRedo ? "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" : "text-zinc-700")}
+            className={cn("rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors lg:min-h-0 lg:min-w-0 lg:p-1", history.canRedo ? "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200" : "text-zinc-700")}
           >
             <Redo className="h-3.5 w-3.5" />
+          </button>
+          {/* Compact Save — icon-only at <md to save width, full label at md+ is in Row 2 */}
+          <button
+            onClick={onSave}
+            disabled={saving}
+            aria-label="Save draft"
+            className="flex md:hidden items-center justify-center rounded-[var(--radius-control)] min-h-[44px] min-w-[44px] bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+          >
+            {saving ? <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> : <Upload className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Row 2 — device switch + preview + view live + save (wraps on narrow screens) */}
-      <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/5 px-3 py-1.5">
+      {/* Row 2 — hidden at <md to keep 44px chrome at 390; visible at md+ for full controls */}
+      <div className="hidden md:flex min-h-10 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/5 px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/50 p-0.5">
+          <div className="flex items-center gap-0.5 rounded-[var(--radius-control)] bg-zinc-800/50 p-0.5">
             {devices.map((d) => (
               <button
                 key={d.id}
                 onClick={() => onDeviceChange(d.id)}
                 aria-pressed={device === d.id}
                 aria-label={`${d.label} preview — ${d.id === "mobile" ? "375 pixels" : d.id === "tablet" ? "768 pixels" : "1200 pixels"}`}
-                className={cn("rounded-md min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors border", device === d.id ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border)]" : "text-zinc-600 hover:text-zinc-400 border-transparent")}
+                className={cn("rounded-[var(--radius-control)] min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors border", device === d.id ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border)]" : "text-zinc-600 hover:text-zinc-400 border-transparent")}
               >
                 <d.icon className="h-3.5 w-3.5" />
               </button>
@@ -138,7 +158,7 @@ export function BuilderToolbar({
             disabled={saving}
             data-testid="toolbar-save-draft"
             aria-label="Save draft"
-            className="flex items-center gap-1 rounded-md bg-[var(--surface-hover)] border border-[var(--border)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="flex items-center gap-1 rounded-[var(--radius-control)] bg-[var(--surface-hover)] border border-[var(--border)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             {saving ? (
               <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>

@@ -577,8 +577,8 @@ export function BuilderWorkspace() {
         />
       </BuilderMobilePanel>
 
-      {/* Status bar — 06B unified save status */}
-      <div className="flex h-8 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 text-[10px] text-zinc-600 shrink-0">
+      {/* Status bar — 06B unified save status; h-11 at 390 for 44px touch, h-8 at sm+ */}
+      <div className="flex h-11 sm:h-8 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 text-[10px] text-zinc-600 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <span
             role="status"
@@ -603,7 +603,7 @@ export function BuilderWorkspace() {
             disabled={!isBuilderDirty || saveStatus === "SAVING"}
             data-testid="builder-save-draft"
             aria-label="Save draft — save without publishing"
-            className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="flex items-center gap-1 rounded-[var(--radius-control)] px-2 py-2 min-h-[44px] sm:min-h-0 sm:py-0.5 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             {saveStatus === "SAVING" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
             Save Draft
@@ -614,7 +614,7 @@ export function BuilderWorkspace() {
             disabled={publishing || saveStatus === "SAVING"}
             data-testid="builder-publish"
             aria-label="Publish — make changes live"
-            className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            className="flex items-center gap-1 rounded-[var(--radius-control)] bg-emerald-500/10 px-2 py-2 min-h-[44px] sm:min-h-0 sm:py-0.5 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             {publishing ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
             Publish

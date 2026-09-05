@@ -104,21 +104,21 @@ export function BuilderMobilePanel({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] overflow-hidden rounded-t-2xl border-t border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]"
+            className="absolute inset-x-0 bottom-0 max-h-[60vh] sm:max-h-[70vh] max-h-[60dvh] overflow-hidden rounded-t-[var(--radius-card-elevated)] border-t border-white/10 bg-zinc-950 shadow-[var(--shadow-overlay)]"
           >
             <div ref={sheetRef} className="flex flex-col h-full">
-              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:p-4">
                 <h2 className="text-sm font-semibold text-white">{title}</h2>
                 <button
                   ref={closeRef}
                   onClick={onClose}
                   aria-label={`Close ${title}`}
-                  className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-white/10 hover:text-white"
+                  className="rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-500 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="min-h-0 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]">
+              <div className="min-h-0 max-h-[55vh] sm:max-h-[65vh] overflow-y-auto overscroll-contain p-4 sm:p-4 pb-[env(safe-area-inset-bottom)]">
                 {children}
               </div>
             </div>

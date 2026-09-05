@@ -254,7 +254,7 @@ export function SheetContent({
         tabIndex={-1}
         onKeyDown={onKeyDown}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-[var(--surface-card)] p-6 shadow-[var(--shadow-overlay)] transition ease-in-out border-[var(--border)]",
+          "fixed z-50 flex flex-col gap-4 bg-[var(--surface-card)] p-4 sm:p-6 shadow-[var(--shadow-overlay)] transition ease-in-out border-[var(--border)]",
           "duration-300 focus:outline-none",
           sideClasses[side],
           className
@@ -266,7 +266,7 @@ export function SheetContent({
           type="button"
           aria-label="Close"
           onClick={() => setOpen(false)}
-          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          className="absolute right-4 top-4 rounded-[var(--radius-control)] p-2 min-h-[44px] min-w-[44px] flex items-center justify-center opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)] focus:ring-offset-2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
         >
           <X className="h-4 w-4" />
         </button>
