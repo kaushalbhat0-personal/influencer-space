@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { DashboardWidget } from "@/components/ui/DashboardWidget";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency, formatDate, formatSubscriptionStatus } from "@/lib/billing";
 import type { BillingPlan, BillingSubscription } from "@/lib/billing";
+import { RENEWAL_GRACE_DAYS } from "@/lib/billing/constants";
+import { getGracePeriodEndDate } from "@/lib/billing/subscription-engine";
 import { capabilityEngine } from "@/lib/capabilities/engine";
 import { cn } from "@/lib/utils";
-import { CreditCard, ArrowUp, ArrowDown, Check, X } from "lucide-react";
+import { CreditCard, ArrowUp, ArrowDown, Check, X, AlertTriangle } from "lucide-react";
 
 interface SubscriptionManagerProps {
   currentPlan: BillingPlan;
@@ -57,6 +60,15 @@ export function SubscriptionManager({
 }: SubscriptionManagerProps) {
   const statusInfo = formatSubscriptionStatus(subscription.status);
 
+  // RCCF-BILLING-07B — derived grace/trial context (reuse canonical helpers, no new logic)
+  const isPastDue = subscription.status === "PAST_DUE";
+  const isExpired = subscription.status === "EXPIRED";
+  const isCancelled = subscription.status === "CANCELLED";
+  const renewsAtDate = subscription.renewsAt ? new Date(subscription.renewsAt) : null;
+  const graceEndDate = isPastDue && renewsAtDate ? getGracePeriodEndDate(renewsAtDate, RENEWAL_GRACE_DAYS) : null;
+  const remainingMs = graceEndDate ? graceEndDate.getTime() - Date.now() : null;
+  const remainingDays = remainingMs !== null ? Math.ceil(remainingMs / (1000 * 60 * 60 * 24)) : null;
+
   const allFeatures = Array.from(
     new Set(availablePlans.flatMap((p) => Object.keys(p.features))),
   ).filter((f) => f !== "storage_gb"); // RCCF-59: creators render storage via storage_mb
@@ -73,6 +85,63 @@ export function SubscriptionManager({
       error={error}
     >
       <div className="space-y-4">
+        {/* RCCF-BILLING-07B — PAST_DUE grace transparency */}
+        {isPastDue && (
+          <div role="status" aria-live="polite" data-testid="submgr-past-due" className="rounded-lg border border-red-500/20 bg-red-500/10 p-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-red-300">Payment failed — Past Due</p>
+                {graceEndDate ? (
+                  <p className="mt-1 text-xs leading-relaxed text-red-200/80">
+                    Your storefront stays live during the {RENEWAL_GRACE_DAYS}-day grace period until <span className="font-semibold text-red-200">{formatDate(graceEndDate.toISOString())}</span>
+                    {remainingDays !== null && remainingDays > 0 ? ` — ${remainingDays} day${remainingDays === 1 ? "" : "s"} remaining` : remainingDays === 0 ? " — expires today" : ""}. Successful payment restores Active instantly.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs leading-relaxed text-red-200/80">
+                    Your storefront stays live during the {RENEWAL_GRACE_DAYS}-day grace period. Successful payment during grace restores access; after grace your site returns 404.
+                  </p>
+                )}
+                {onRetry && (
+                  <Button size="sm" variant="default" onClick={onRetry} disabled={loading} aria-label="Retry payment" className="mt-3" data-testid="submgr-retry-cta">
+                    Retry Payment
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* RCCF-BILLING-07B — EXPIRED distinct from CANCELLED */}
+        {isExpired && (
+          <div role="status" aria-live="polite" data-testid="submgr-expired" className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-amber-300">Storefront unavailable — Expired</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-200/80">
+                  Your public storefront is returning 404 — the {RENEWAL_GRACE_DAYS}-day Past Due grace has elapsed. This is different from Cancelled (you cancelled) — Expired means the renewal never recovered. Upgrade to Creator Grow to restore instantly. Preview still works via <code className="rounded bg-amber-500/20 px-1 py-0.5 text-[10px]">?preview=true</code>.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="default" onClick={() => onUpgrade("creator_grow")} disabled={loading} data-testid="submgr-upgrade-grow" aria-label="Upgrade to Creator Grow to restore storefront">
+                    Upgrade to Creator Grow
+                  </Button>
+                  <Link href="/pricing" className="inline-flex items-center rounded-lg border border-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/10" data-testid="submgr-pricing-link">
+                    View pricing
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isCancelled && (
+          <div role="status" data-testid="submgr-cancelled" className="rounded-lg border border-white/10 bg-white/5 p-3">
+            <p className="text-sm font-medium text-zinc-300">Subscription cancelled</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">You cancelled this subscription. Use Resume to reactivate, or upgrade to a paid plan. Your storefront 404s until a paid plan is Active.</p>
+          </div>
+        )}
+
         <div className="rounded-lg bg-white/5 p-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>

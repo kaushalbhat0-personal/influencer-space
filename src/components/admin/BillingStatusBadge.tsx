@@ -9,8 +9,9 @@ const STATUS_MAP: Record<string, string> = {
   TRIALING: "bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]",
   PAST_DUE: "bg-red-500/15 text-red-400",
   FAILED: "bg-red-500/15 text-red-400",
-  CANCELLED: "bg-zinc-800 text-[var(--text-secondary)]",
-  EXPIRED: "bg-zinc-800 text-[var(--text-secondary)]",
+  // RCCF-BILLING-07B — EXPIRED distinct from CANCELLED: expired = storefront 404 (system), cancelled = user-initiated.
+  CANCELLED: "bg-zinc-800 text-[var(--text-secondary)] border border-white/10",
+  EXPIRED: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
   REFUNDED: "bg-violet-500/15 text-violet-400",
   DRAFT: "bg-zinc-800 text-[var(--text-secondary)]",
   FREE: "bg-zinc-800 text-[var(--text-secondary)]",
