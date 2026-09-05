@@ -24,6 +24,11 @@ export interface DashboardMetrics {
   recentVersions: Array<{ version: number; createdAt: string }>;
   /** Creator Success Runtime data for guided onboarding */
   creatorSuccess?: import("@/lib/creator-success/runtime").CreatorSuccessData;
+  /** Creator brand polish (05E) — restrained accent using existing appearance data */
+  brandColor?: string | null;
+  profileAvatarUrl?: string | null;
+  coverUrl?: string | null;
+  heroName?: string | null;
 }
 
 export interface DashboardActivity {

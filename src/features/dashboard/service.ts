@@ -27,7 +27,7 @@ export const dashboardService = {
     // P0: reuse request-cached Settings/tenant/website/booking reads (same keys as SharedReads)
     // Keeps tenant isolation — cache key is tenantId (+ key for settings)
     // P1: 3× product.count → 1× filtered aggregate (preserves total/published/active semantics)
-    const [productCounts, revenue, gallery, links, messages, publishStatus, tenant, testimonialValue, seoValue, website, bookings, offerings, orders] = await Promise.all([
+    const [productCounts, revenue, gallery, links, messages, publishStatus, tenant, testimonialValue, seoValue, website, bookings, offerings, orders, heroData, websiteBrand] = await Promise.all([
       websiteAggregateService.getProductCounts(tenantId).then(r => [r.total, r.published, r.active] as [number, number, number]),
       prisma.productOrder.aggregate({
         // RCCF-72.18D.6.4 — dead "PAID" predicate removed (D.5.2-A established
@@ -49,6 +49,9 @@ export const dashboardService = {
       safeMetric(() => websiteAggregateService.getBookingCount(tenantId), 0),
       safeMetric(() => prisma.offering.count({ where: { tenantId } }), 0),
       websiteAggregateService.getOrderCountCompleted(tenantId),
+      // 05E: existing brand/cover data only — no new API/schema
+      safeMetric(() => SettingsService.getSettingByKey(tenantId, "hero_data"), null),
+      safeMetric(() => prisma.website.findUnique({ where: { tenantId }, select: { themeColors: true } }).then(r => r?.themeColors ?? null), null),
     ]);
     // Adapt cached SettingsService values (which return `value` directly) to dashboard's expected shape
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,6 +86,14 @@ export const dashboardService = {
 
 
 
+    const hero = (heroData as Record<string, unknown> | null) ?? null;
+    const themeColors = (websiteBrand as Record<string, string> | null) ?? null;
+    const brandColor = themeColors?.primary ?? themeColors?.accent ?? null;
+    const safeUrl = (u: unknown) => typeof u === "string" && /^https:\/\//.test(u) ? u : null;
+    const profileAvatarUrl = safeUrl(hero?.profilePictureUrl) ?? null;
+    const coverUrl = safeUrl(hero?.backgroundUrl) ?? safeUrl(hero?.posterUrl) ?? null;
+    const heroName = typeof hero?.name === "string" && hero.name.trim() ? String(hero.name).trim() : null;
+
     return {
       productCount: totalProducts,
       activeProductCount,
@@ -107,6 +118,10 @@ export const dashboardService = {
       testimonialCount,
       currentTheme: website?.themePackageId ?? null,
       recentVersions,
+      brandColor,
+      profileAvatarUrl,
+      coverUrl,
+      heroName,
     };
   }),
 

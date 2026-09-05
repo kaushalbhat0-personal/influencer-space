@@ -122,6 +122,19 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
   const isLive = metrics.publishState === "live" && (metrics.publishedVersion ?? 0) > 0;
   const hasProducts = metrics.publishedProductCount > 0;
 
+  // 05E brand polish — existing appearance data only, restrained accent
+  const brandColor = (metrics as unknown as { brandColor?: string | null }).brandColor ?? null;
+  const avatarUrl = (metrics as unknown as { profileAvatarUrl?: string | null }).profileAvatarUrl ?? null;
+  const coverUrl = (metrics as unknown as { coverUrl?: string | null }).coverUrl ?? null;
+  const heroName = (metrics as unknown as { heroName?: string | null }).heroName ?? null;
+  const displayName = heroName || creatorName;
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("") || "C";
+
   return (
     <FeaturePage
       title={`Welcome back, ${creatorName}`}
@@ -139,42 +152,89 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       }
     >
       <div className="space-y-6">
-        {/* Hero — purposeful Creator Home, uses only existing metrics, platform-card-primary elevation */}
-        <section aria-labelledby="dashboard-hero" className="platform-card-primary p-6 sm:p-8">
-          <p className="platform-section-label">Your store</p>
-          <h2 id="dashboard-hero" className="platform-display mt-2">
-            {emptyStore ? "Let's build your store" : isLive ? "Your storefront is live" : hasProducts ? "Your store is ready" : "Let's build your store"}
-          </h2>
-          <p className="platform-body mt-3">
-            {!emptyStore
-              ? `${metrics.productCount} products · ${metrics.orderCount} orders · ${formatCurrency(metrics.revenue)} revenue — ${metrics.storefrontUrl}`
-              : "Add your first product, then publish to go live."}
-          </p>
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
-              <p className="platform-section-label">Products</p>
-              <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{metrics.productCount}</p>
-              <p className="platform-caption">{metrics.activeProductCount} active</p>
+        {/* Hero — Creator-owned polish (05E): cover if exists, restrained brand accent, identity row; keeps 05A hierarchy, 05D density, 05C 390 ergonomics */}
+        <section aria-labelledby="dashboard-hero" className="platform-card-primary overflow-hidden">
+          {coverUrl ? (
+            <div className="relative h-20 sm:h-24 overflow-hidden" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={coverUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-card)] via-[var(--surface-card)]/40 to-transparent" />
             </div>
-            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
-              <p className="platform-section-label">Orders</p>
-              <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{metrics.orderCount}</p>
-              <p className="platform-caption">{metrics.totalOrders} total</p>
+          ) : null}
+          <div className="h-1 w-full" style={brandColor ? { backgroundColor: brandColor } : { background: "var(--border-subtle)" }} aria-hidden="true" />
+          <div className="p-6 sm:p-8">
+            <div className="flex items-start gap-3 sm:gap-4">
+              {/* Identity — avatar with restrained brand ring, no invented imagery fallback */}
+              <div
+                className="hidden h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-[var(--surface-subtle)] sm:flex"
+                style={brandColor ? { borderColor: brandColor, borderWidth: "1.5px" } : { borderColor: "var(--border)" }}
+                aria-hidden="true"
+              >
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="font-display text-sm font-bold text-[var(--text-primary)]">{initials}</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="platform-section-label">Your store</p>
+                  {isLive && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-500 ring-1 ring-emerald-500/20">● Live</span>}
+                </div>
+                <h2 id="dashboard-hero" className="platform-display mt-1.5 leading-tight">
+                  {emptyStore ? "Let's build your store" : isLive ? "Your storefront is live" : hasProducts ? "Your store is ready" : "Let's build your store"}
+                </h2>
+                <p className="platform-metadata mt-1.5 truncate">
+                  <span className="font-medium text-[var(--text-primary)]">{displayName}</span>
+                  <span className="mx-1 text-[var(--text-muted)]">·</span>
+                  <span className="text-[var(--text-muted)]">{metrics.storefrontUrl}</span>
+                </p>
+                <p className="platform-body mt-2 max-w-[60ch] text-[13px] leading-relaxed">
+                  {!emptyStore
+                    ? `${metrics.productCount} products · ${metrics.orderCount} orders · ${formatCurrency(metrics.revenue)} revenue`
+                    : "Add your first product, then publish to go live."}
+                </p>
+              </div>
+              {/* Desktop storefront link preserves 390 ergonomics — hidden on narrow, flex on sm+ */}
+              <Link
+                href={metrics.storefrontUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden shrink-0 items-center gap-1 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] transition-colors sm:inline-flex"
+              >
+                View
+              </Link>
             </div>
-            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
-              <p className="platform-section-label">Revenue</p>
-              <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{formatCurrency(metrics.revenue)}</p>
-              <p className="platform-caption">{avgOrder} avg</p>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
+                <p className="platform-section-label">Products</p>
+                <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{metrics.productCount}</p>
+                <p className="platform-caption">{metrics.activeProductCount} active</p>
+              </div>
+              <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
+                <p className="platform-section-label">Orders</p>
+                <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{metrics.orderCount}</p>
+                <p className="platform-caption">{metrics.totalOrders} total</p>
+              </div>
+              <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
+                <p className="platform-section-label">Revenue</p>
+                <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{formatCurrency(metrics.revenue)}</p>
+                <p className="platform-caption">{avgOrder} avg</p>
+              </div>
             </div>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Link href="/builder" className="btn-primary">
-              <Layout className="h-3.5 w-3.5 mr-1.5 inline" />
-              Open Builder
-            </Link>
-            <Link href={metrics.storefrontUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-              View Storefront
-            </Link>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Link href="/builder" className="btn-primary">
+                <Layout className="h-3.5 w-3.5 mr-1.5 inline" />
+                Open Builder
+              </Link>
+              <Link href={metrics.storefrontUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary sm:hidden">
+                View Storefront
+              </Link>
+              <Link href="/admin/website-ready" className="btn-secondary hidden sm:inline-flex">
+                Website Status
+              </Link>
+            </div>
           </div>
         </section>
 
