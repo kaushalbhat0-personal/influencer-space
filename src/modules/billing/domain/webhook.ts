@@ -14,6 +14,7 @@ export type WebhookAction =
   | "activate"
   | "renew"
   | "cancel"
+  | "expire"
   | "pause"
   | "resume"
   | "past_due"
@@ -27,7 +28,7 @@ export interface WebhookMapping {
 export const RAZORPAY_EVENT_MAP: Record<string, WebhookMapping> = {
   "subscription.activated": { eventType: "SUBSCRIPTION_ACTIVATED", action: "activate" },
   "subscription.charged": { eventType: "SUBSCRIPTION_RENEWED", action: "renew" },
-  "subscription.completed": { eventType: "SUBSCRIPTION_CANCELLED", action: "cancel" },
+  "subscription.completed": { eventType: "SUBSCRIPTION_EXPIRED", action: "expire" },
   "subscription.cancelled": { eventType: "SUBSCRIPTION_CANCELLED", action: "cancel" },
   "subscription.paused": { eventType: "SUBSCRIPTION_PAUSED", action: "pause" },
   "subscription.resumed": { eventType: "SUBSCRIPTION_RESUMED", action: "resume" },
@@ -78,6 +79,8 @@ export function targetStatusForAction(action: WebhookAction): SubscriptionStatus
       return "ACTIVE";
     case "cancel":
       return "CANCELLED";
+    case "expire":
+      return "EXPIRED";
     case "pause":
       return "PAST_DUE";
     case "past_due":
