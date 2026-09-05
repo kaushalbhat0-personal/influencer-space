@@ -20,6 +20,49 @@ import type { BillingLineItem } from "@/lib/billing/types";
 // RCCF-BILLING-UX-02B: capability UNLIMITED (-1) → billing presentation Infinity.
 const toQuotaLimit = (value: number): number => (value === -1 ? Infinity : value);
 
+// RCCF-BILLING-06B — P0 hardening: safely normalize paid amount from string|number paise/rupees via BigInt.
+// Accepts number (rupees, e.g. 1999 or 1999.00) or string paise (e.g. "199900") or string rupees ("1999.00").
+// Returns rupees as number with 2-decimal precision, or null on malformed/missing/zero/negative.
+export function normalizePaidAmount(raw: unknown): number | null {
+  try {
+    if (raw == null || raw === "") return null;
+    if (typeof raw === "number") {
+      if (!Number.isFinite(raw) || raw <= 0) return null;
+      // rupees number → paise via BigInt to avoid floating drift
+      const paise = BigInt(Math.round(raw * 100));
+      if (paise <= BigInt(0)) return null;
+      return Number(paise) / 100;
+    }
+    if (typeof raw === "string") {
+      if (/[\u0000-\u001f\u007f]/.test(raw)) return null;
+      const s = raw.trim();
+      if (!s) return null;
+      // reject non-numeric (allow single dot)
+      if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
+      if (s.startsWith("-")) return null;
+      if (s.includes(".")) {
+        const [whole, fracRaw] = s.split(".");
+        const frac = (fracRaw + "00").slice(0, 2);
+        const paise = BigInt(whole || "0") * BigInt(100) + BigInt(frac);
+        if (paise <= BigInt(0)) return null;
+        return Number(paise) / 100;
+      }
+      // integer string → paise
+      const paise = BigInt(s);
+      if (paise <= BigInt(0)) return null;
+      // Heuristic: paise values for our plans are >= 99900 (₹999). A bare "1999" as paise would be ₹19.99 (no plan), so keep as paise.
+      return Number(paise) / 100;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function paiseFromRupees(amount: number): bigint {
+  return BigInt(Math.round(amount * 100));
+}
+
 export class BillingService {
   async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
     const start = Date.now();
@@ -81,7 +124,7 @@ export class BillingService {
     providerReference: string;
     idempotencyKey: string;
     renewsAt?: Date | null;
-    amount?: number;
+    amount?: number | string;
   }): Promise<{ handled: boolean; status?: string | null; error?: string }> {
     const { eventName, workspaceId, planCode, providerReference, idempotencyKey } = input;
     const start = Date.now();
@@ -130,14 +173,10 @@ export class BillingService {
     // a duplicate delivery stays idempotent; the subscription state is left
     // unchanged. Non-paid transitions (cancel/pause/past_due/resume) keep their
     // existing semantics and are unaffected by the payment guard.
+    // RCCF-BILLING-06B — harden paid amount: accept string|number paise via BigInt, reject malformed,
+    // and emit durable RECONCILIATION_REQUIRED so a later repair can reconcile the captured payment.
     const isPaidTransition = mapping.action === "activate" || mapping.action === "renew";
-    const validPaidAmount: number | null =
-      isPaidTransition &&
-      typeof input.amount === "number" &&
-      Number.isFinite(input.amount) &&
-      input.amount > 0
-        ? Math.round(input.amount * 100) / 100
-        : null;
+    const validPaidAmount: number | null = isPaidTransition ? normalizePaidAmount(input.amount) : null;
 
     if (isPaidTransition && validPaidAmount === null) {
       await billingRepository.createEvent({
@@ -147,6 +186,16 @@ export class BillingService {
         idempotencyKey,
         payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: existing?.status, note: "payment_guard:no_activation" },
       });
+      // Durable reconciliation marker — provider captured funds but amount cannot be safely reconciled.
+      await billingRepository
+        .createEvent({
+          workspaceId,
+          accountId: workspaceId,
+          type: "RECONCILIATION_REQUIRED",
+          idempotencyKey: `reconcile_required_${providerReference}`,
+          payload: { paymentId: providerReference, planCode: plan.code, eventName, reason: "payment_guard:no_activation", rawAmount: String(input.amount ?? "") },
+        })
+        .catch(() => {});
       await logAction(
         (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
         "billing:payment-ignored",
@@ -156,14 +205,17 @@ export class BillingService {
     }
 
     // RCCF-73 — ONE-TIME price integrity. A paid transition for a one-time
-    // plan (Partner Solo/Scale) must carry EXACTLY the DB-authoritative price.
-    // A ₹4,998 or ₹5,000 capture NEVER activates and NEVER mints an invoice;
-    // the event is recorded (idempotent replay) and the subscription state is
-    // left untouched. Subscription-form plans keep their existing provider-
-    // contract semantics (Creator behavior unchanged).
+    // plan (Partner Solo/Scale) must carry the DB-authoritative price within
+    // 1 paise (rounding tolerance). A capture outside that window NEVER activates
+    // and NEVER mints an invoice; the event is recorded and RECONCILIATION_REQUIRED
+    // is emitted so support can reconcile. Subscription-form plans keep their
+    // existing provider-contract semantics (Creator behavior unchanged).
     if (isPaidTransition && isOneTimePlan(plan.code)) {
       const expectedAmount = Math.round((plan.price ?? 0) * 100) / 100;
-      if (validPaidAmount === null || expectedAmount <= 0 || validPaidAmount !== expectedAmount) {
+      const expectedPaise = paiseFromRupees(expectedAmount);
+      const capturedPaise = validPaidAmount !== null ? paiseFromRupees(validPaidAmount) : null;
+      const diffPaise = capturedPaise !== null ? (capturedPaise > expectedPaise ? capturedPaise - expectedPaise : expectedPaise - capturedPaise) : null;
+      if (validPaidAmount === null || expectedAmount <= 0 || diffPaise === null || diffPaise > BigInt(1)) {
         await billingRepository.createEvent({
           workspaceId,
           accountId: workspaceId,
@@ -171,6 +223,15 @@ export class BillingService {
           idempotencyKey,
           payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: existing?.status, note: "one_time_amount_mismatch:no_activation", capturedAmount: validPaidAmount, expectedAmount },
         });
+        await billingRepository
+          .createEvent({
+            workspaceId,
+            accountId: workspaceId,
+            type: "RECONCILIATION_REQUIRED",
+            idempotencyKey: `reconcile_required_${providerReference}`,
+            payload: { paymentId: providerReference, planCode: plan.code, eventName, reason: "one_time_amount_mismatch", capturedAmount: validPaidAmount, expectedAmount },
+          })
+          .catch(() => {});
         await logAction(
           (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
           "billing:payment-ignored",

@@ -70,6 +70,64 @@ function sanitizeFailureReason(raw: string | null | undefined): string | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+// RCCF-BILLING-06B — P0: safely parse paise (string|number) via BigInt, reject malformed/negative/zero.
+// Returns rupees as number with 2-decimal precision, or null on invalid/missing.
+function safePaiseToRupees(raw: unknown): number | null {
+  try {
+    if (raw == null || raw === "") return null;
+    let paise: bigint;
+    if (typeof raw === "number") {
+      if (!Number.isFinite(raw) || raw <= 0) return null;
+      // paise as integer number (e.g. 199900) — round to nearest paise
+      paise = BigInt(Math.round(raw));
+    } else if (typeof raw === "string") {
+      const s = raw.trim();
+      if (!s) return null;
+      if (/[\u0000-\u001f\u007f]/.test(s)) return null;
+      // allow decimal string like "1999.00" as rupees (fallback), but primary is integer paise
+      if (s.includes(".")) {
+        const [whole, fracRaw] = s.split(".");
+        if (!/^-?\d+$/.test(whole) || !/^\d+$/.test(fracRaw)) return null;
+        const frac = (fracRaw + "00").slice(0, 2);
+        const sign = whole.startsWith("-") ? -BigInt(1) : BigInt(1);
+        const absWhole = whole.replace("-", "") || "0";
+        paise = BigInt(absWhole) * BigInt(100) + BigInt(frac) * sign;
+        // For rupee decimal string, paise already correct
+        if (paise <= BigInt(0)) return null;
+        return Number(paise) / 100;
+      }
+      if (!/^-?\d+$/.test(s)) return null;
+      paise = BigInt(s);
+      if (paise <= BigInt(0)) return null;
+    } else {
+      return null;
+    }
+    if (paise <= BigInt(0)) return null;
+    return Number(paise) / 100;
+  } catch {
+    return null;
+  }
+}
+
+function safePaiseAmount(raw: unknown): bigint | null {
+  try {
+    if (raw == null || raw === "") return null;
+    if (typeof raw === "number") {
+      if (!Number.isFinite(raw) || raw <= 0) return null;
+      return BigInt(Math.round(raw));
+    }
+    if (typeof raw === "string") {
+      const s = raw.trim();
+      if (!s || /[\u0000-\u001f\u007f]/.test(s) || !/^-?\d+$/.test(s)) return null;
+      const paise = BigInt(s);
+      return paise > BigInt(0) ? paise : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for") ?? "webhook";
   const rateCheck = checkRateLimit(`webhook:${ip}`, "/api/webhooks/razorpay");
@@ -128,7 +186,8 @@ export async function POST(req: Request) {
       const addonNotes = entityNotes(payload);
       const addonPaymentEntity = (payload.payload?.payment?.entity ?? {}) as Record<string, unknown>;
       const addonPaymentId = (addonPaymentEntity.id as string | undefined) || "";
-      const capturedAmountPaise = Number(addonPaymentEntity.amount ?? 0);
+      const rawAddonPaise = addonPaymentEntity.amount as unknown;
+      const capturedAmountPaise = safePaiseAmount(rawAddonPaise) !== null ? Number(safePaiseAmount(rawAddonPaise)) : 0;
       try {
         const { partnerCapacityPurchase } = await import("@/modules/billing/application/partner-capacity-purchase");
         await partnerCapacityPurchase.handleCapture({
@@ -229,6 +288,8 @@ export async function POST(req: Request) {
     // â”€â”€ Subscription lifecycle events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (SUBSCRIPTION_EVENTS.has(event)) {
       if (!workspaceId) return NextResponse.json({ ok: true });
+      const rawSubAmount = (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.amount;
+      const parsedSubAmount = safePaiseToRupees(rawSubAmount);
       const result = await billingService.handleSubscriptionWebhook({
         eventName: event,
         workspaceId,
@@ -236,7 +297,7 @@ export async function POST(req: Request) {
         providerReference: ref,
         idempotencyKey,
         renewsAt: event === "subscription.activated" || event === "subscription.charged" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
-        amount: Number(((payload.payload?.payment?.entity?.amount as number | undefined) ?? 0)) / 100,
+        amount: parsedSubAmount ?? (undefined as unknown as number),
       });
       if (!result.handled && result.error) {
         captureError(new Error(result.error), { service: "razorpay-webhook", operation: "subscriptionWebhook" });
@@ -260,7 +321,10 @@ export async function POST(req: Request) {
       // read through explicit string casts instead of implicit any.
       const orderId: string = (payload.payload?.payment?.entity?.order_id as string | undefined) || "";
       const paymentId: string = (payload.payload?.payment?.entity?.id as string | undefined) || "";
-      const capturedAmountPaise: number = Number(payload.payload?.payment?.entity?.amount ?? 0);
+      const rawCapturedPaise = (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.amount;
+      const capturedPaiseBigint = safePaiseAmount(rawCapturedPaise);
+      const capturedAmountPaise: number = capturedPaiseBigint !== null ? Number(capturedPaiseBigint) : 0;
+      const capturedRupees = safePaiseToRupees(rawCapturedPaise);
 
       try {
         if (workspaceId) {
@@ -270,7 +334,7 @@ export async function POST(req: Request) {
             planCode,
             providerReference: orderId || paymentId,
             idempotencyKey,
-            amount: capturedAmountPaise / 100,
+            amount: capturedRupees ?? (undefined as unknown as number),
           });
         } else {
           const guestEmail: string = notes.email || "";
@@ -285,7 +349,7 @@ export async function POST(req: Request) {
                   planCode,
                   providerReference: orderId || paymentId,
                   idempotencyKey: `${idempotencyKey}_${m.workspace.id}`,
-                  amount: capturedAmountPaise / 100,
+                  amount: capturedRupees ?? (undefined as unknown as number),
                 });
               }
             }

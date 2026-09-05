@@ -59,6 +59,34 @@ for (const key of REQUIRED) {
 
 console.log("");
 
+// RCCF-BILLING-06B — Razorpay key equivalence (live vs test family + value match)
+// Both keys must be present and belong to the same family (rzp_live_ vs rzp_test_)
+// and carry the same value — a drift would charge live while checkout.js loads
+// test (or vice versa). Presence-only, no secret material is echoed.
+const pubKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+const secKey = process.env.RAZORPAY_KEY_ID ?? "";
+if (pubKey && secKey) {
+  const pubLive = pubKey.startsWith("rzp_live_");
+  const secLive = secKey.startsWith("rzp_live_");
+  const pubTest = pubKey.startsWith("rzp_test_");
+  const secTest = secKey.startsWith("rzp_test_");
+  const familyOk = (pubLive && secLive) || (pubTest && secTest);
+  const valueOk = pubKey === secKey;
+  if (!familyOk) {
+    console.error(`  ✗ Razorpay key family MISMATCH — NEXT_PUBLIC_RAZORPAY_KEY_ID is ${pubLive ? "live" : pubTest ? "test" : "unknown"} but RAZORPAY_KEY_ID is ${secLive ? "live" : secTest ? "test" : "unknown"}`);
+    exitCode = 1;
+  } else if (!valueOk) {
+    console.error(`  ✗ Razorpay key value MISMATCH — NEXT_PUBLIC_RAZORPAY_KEY_ID and RAZORPAY_KEY_ID differ (same family but different value)`);
+    exitCode = 1;
+  } else {
+    console.log(`  ✅ Razorpay keys — Equivalent (${pubLive ? "live" : "test"} family, ${pubKey.length} chars)`);
+  }
+} else if (!pubKey || !secKey) {
+  // missing already reported in REQUIRED loop; no extra output
+}
+
+console.log("");
+
 for (const { key, note } of WARN) {
   const value = process.env[key];
   if (!value || value === "") {
