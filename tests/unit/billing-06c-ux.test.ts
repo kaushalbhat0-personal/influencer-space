@@ -90,7 +90,7 @@ vi.mock("@/modules/billing/infrastructure/providers/razorpay", async () => {
 import { billingService } from "@/modules/billing/application/service";
 import { getPlan } from "@/lib/capabilities";
 
-describe("RCCF-BILLING-06C — ₹0 Launch free downgrade (never Razorpay)", () => {
+describe("RCCF-BILLING-06E — Launch trial downgrade must be rejected (06C ACTIVE/null gone)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     h2.mockFindPlanByCode.mockImplementation(async (code: string) => {
@@ -105,12 +105,15 @@ describe("RCCF-BILLING-06C — ₹0 Launch free downgrade (never Razorpay)", () 
     h2.mockCreateCheckout.mockResolvedValue({ success: true, orderId: "order_123" });
   });
 
-  it("downgrade Grow -> Launch with price 0 bypasses Razorpay and directly activates", async () => {
+  it("paid Grow -> Launch is rejected with actionable error, never Razorpay, no ACTIVE/null trial", async () => {
     const res = await billingService.changePlan("ws1", "creator_launch", "test@example.com");
-    expect(res.success).toBe(true);
+    expect(res.success).toBe(false);
+    expect(res.error).toContain("15-day trial");
     expect(h2.mockCreateCheckout).not.toHaveBeenCalled();
-    expect(h2.mockUpsert).toHaveBeenCalledWith("ws1", expect.objectContaining({ status: "ACTIVE" }));
-    expect(h2.mockCreateEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "SUBSCRIPTION_DOWNGRADED" }));
+    expect(h2.mockUpsert).not.toHaveBeenCalled();
+    // must not have created the 06C SUBSCRIPTION_DOWNGRADED ACTIVE/null path
+    const downgradedCalls = h2.mockCreateEvent.mock.calls.filter((c: unknown[]) => (c[0] as {type:string}).type === "SUBSCRIPTION_DOWNGRADED");
+    expect(downgradedCalls.length).toBe(0);
   });
 
   it("upgrade Launch -> Grow still goes via Razorpay (subscription)", async () => {

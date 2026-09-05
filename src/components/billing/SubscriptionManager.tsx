@@ -141,6 +141,10 @@ export function SubscriptionManager({
                 </span>
               );
             }
+            // 06E: Launch is 15-day trial — never present as downgrade for paid creators
+            if (plan.code === "creator_launch" && currentPlan.code !== "creator_launch") {
+              return null;
+            }
 
             // Capability-based classification — never price-ordered.
             const cmp = capabilityEngine.comparePlans(currentPlan.code, plan.code);

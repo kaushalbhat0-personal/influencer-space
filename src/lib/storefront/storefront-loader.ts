@@ -55,7 +55,20 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
 
   const homepage = options?.homepage ?? false;
 
-  if (preview && (await canPreviewTenant(tenant.id))) {
+  // RCCF-BILLING-06E — canonical storefront entitlement gate.
+  // Uses existing resolveActivePlan / isSubscriptionEntitlementEligible semantics:
+  // ACTIVE until renewsAt, TRIALING only while trialEndsAt future, PAST_DUE/CANCELLED/EXPIRED never grant.
+  // Preview bypass: authorized creator ?preview=true sees draft even when expired so they can fix billing.
+  const isPreviewAuthorized = preview ? await canPreviewTenant(tenant.id) : false;
+  if (!isPreviewAuthorized) {
+    const { resolveActivePlan } = await import("@/modules/billing/application/plan-source");
+    const activePlan = await resolveActivePlan(null, tenant.id);
+    if (!activePlan.code) {
+      return null;
+    }
+  }
+
+  if (isPreviewAuthorized) {
     // Preview IS the Builder Runtime full-page: Draft Layout + Live CMS
     // Content, resolved through the same LayoutEngine + registry renderers as
     // publish and the builder canvas. No preview snapshot is ever persisted.
