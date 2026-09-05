@@ -49,7 +49,16 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
   const toggleSort = useCallback(() => setSortAsc((prev) => !prev), []);
 
   if (invoices.length === 0 && !loading && !error) {
-    return <DashboardWidget title="Invoices" icon={FileText} empty emptyMessage="No invoices yet. Invoices will appear after your first payment."><></></DashboardWidget>;
+    return (
+      <DashboardWidget
+        title="Invoices"
+        icon={FileText}
+        empty
+        emptyMessage="No invoices yet — trial has no invoices; paid renewals and one-time purchases create invoices after successful payment. Payment failures and grace do not create invoices."
+      >
+        <></>
+      </DashboardWidget>
+    );
   }
 
   return (

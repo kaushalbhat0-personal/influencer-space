@@ -29,6 +29,52 @@ const TABS = [
   { key: "usage", label: "Usage" },
 ] as const;
 
+// RCCF-BILLING-07D — humanize billing history using only existing BillingEvent data (type + payload + date)
+// No fabricated events; distinguishes trial, renewal, payment failure, cancellation, expiry, resumed, checkout
+export function humanizeTimelineEvent(e: { type: string; payload?: Record<string, unknown> }): { label: string; detail: string } {
+  const planCode = (e.payload?.planCode as string) || (e.payload?.plan as string) || "";
+  const planLabel = planCode ? planCode.replace(/_/g, " ") : "";
+  const rawAmount = e.payload?.amount as number | undefined;
+  const amountLabel = typeof rawAmount === "number" && Number.isFinite(rawAmount) ? ` · ₹${rawAmount}` : "";
+  switch (e.type) {
+    case "SUBSCRIPTION_CREATED":
+      return { label: "Subscription created — Trial", detail: planLabel ? `${planLabel} · 15-day trial` : "15-day free trial" };
+    case "CHECKOUT_STARTED":
+      return { label: "Checkout started", detail: planLabel ? `${planLabel}${amountLabel}` : "" };
+    case "SUBSCRIPTION_ACTIVATED":
+      // planCode distinguishes Launch trial vs paid activation using existing payload
+      return {
+        label: planLabel.includes("launch") ? "Trial activated" : "Subscription activated",
+        detail: planLabel ? `${planLabel}${amountLabel}` : "Active",
+      };
+    case "SUBSCRIPTION_RENEWED":
+      return { label: "Renewal successful", detail: planLabel ? `${planLabel}${amountLabel} · Active restored` : "Active restored" };
+    case "PAYMENT_SUCCEEDED":
+    case "PAYMENT_CAPTURED":
+      return { label: "Payment succeeded", detail: planLabel ? `${planLabel}${amountLabel}` : "Payment confirmed — webhook will activate" };
+    case "PAYMENT_FAILED":
+      return { label: "Payment failed — Past Due", detail: planLabel ? `${planLabel} · 3-day grace started` : "3-day grace started" };
+    case "SUBSCRIPTION_PAUSED":
+      return { label: "Payment paused — Past Due", detail: planLabel ? `${planLabel} · retry to restore` : "Retry to restore" };
+    case "SUBSCRIPTION_CANCELLED":
+      return { label: "Subscription cancelled", detail: planLabel ? `${planLabel} · storefront 404 until upgrade` : "" };
+    case "SUBSCRIPTION_EXPIRED":
+      return { label: "Expired — storefront 404", detail: planLabel ? `${planLabel} · grace elapsed` : "Grace elapsed — upgrade to restore" };
+    case "SUBSCRIPTION_RESUMED":
+      return { label: "Subscription resumed", detail: planLabel ? `${planLabel} → Active` : "Active restored" };
+    case "RECONCILIATION_REQUIRED":
+      return { label: "Payment flagged for reconciliation", detail: planLabel || "Support will reconcile" };
+    case "INVOICE_ISSUED":
+    case "INVOICE_PAID":
+      return { label: e.type === "INVOICE_PAID" ? "Invoice paid" : "Invoice issued", detail: planLabel ? `${planLabel}${amountLabel}` : "" };
+    default: {
+      // Fallback: humanize raw type without fabricating
+      const pretty = e.type.replace(/_/g, " ").toLowerCase();
+      return { label: pretty.charAt(0).toUpperCase() + pretty.slice(1), detail: planLabel };
+    }
+  }
+}
+
 let rzpLoaded = false;
 function loadRazorpayScript(): Promise<void> {
   return new Promise((resolve) => {
@@ -48,7 +94,8 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<string[]>([]);
-  const [timeline, setTimeline] = useState<Array<{ type: string; createdAt: string }>>([]);
+  type TimelineEvent = { type: string; createdAt: string; payload?: Record<string, unknown> };
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [planCode, setPlanCode] = useState<string>(billingData.plan.code);
 
   const showNotification = useCallback((msg?: string) => {
@@ -60,7 +107,13 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     const result = await getBillingDashboard(workspaceId, tenantId);
     if (result.success && result.data) {
       setCapabilities(result.data.capabilities);
-      setTimeline((result.data.history?.events ?? []).map((e: { type: string; createdAt: string }) => ({ type: e.type, createdAt: e.createdAt })));
+      setTimeline(
+        (result.data.history?.events ?? []).map((e: { type: string; createdAt: string; payload?: Record<string, unknown> }) => ({
+          type: e.type,
+          createdAt: e.createdAt,
+          payload: (e.payload as Record<string, unknown>) ?? undefined,
+        }))
+      );
       setPlanCode(result.data.planCode);
     }
   }, [workspaceId, tenantId]);
@@ -69,24 +122,37 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     void refresh();
   }, [refresh]);
 
+  // RCCF-BILLING-07D — clear stale payment errors before any new checkout
+  const clearPaymentError = useCallback(() => setError(null), []);
+
   async function openSubscriptionCheckout(checkout: { subscriptionId: string; keyId: string }) {
+    clearPaymentError();
     if (!checkout.subscriptionId || !checkout.keyId) {
       setError("Checkout could not be initialized — please retry or contact support.");
       return;
     }
+    const isPastDue = billingData.subscription.status === "PAST_DUE";
     await loadRazorpayScript();
     const options: Record<string, unknown> = {
       key: checkout.keyId,
       subscription_id: checkout.subscriptionId,
       name: "CreatorStore",
-      description: "Creator plan subscription — secure payment via Razorpay",
+      description: "Creator subscription — recurring billing via Razorpay (webhook activates plan)",
       handler: () => {
-        showNotification("Payment successful — your plan will activate shortly. You do not need to retry.");
+        showNotification(
+          isPastDue
+            ? "Payment successful — Past Due cleared, your storefront is restored. Webhook will mark Active shortly. You do not need to retry."
+            : "Payment successful — your subscription will activate via webhook shortly. Storefront restored once Active. You do not need to retry."
+        );
         void refresh();
       },
       modal: {
         ondismiss: () => {
-          setError("Checkout closed — no changes made. Your current plan is still active. You can retry anytime.");
+          setError(
+            isPastDue
+              ? "Checkout closed — no charge. Your 3-day Past Due grace continues (storefront still live). Retry before grace ends to restore Active."
+              : "Checkout closed — no charge. Your current plan is still active. You can retry anytime."
+          );
           setLoading(null);
         },
       },
@@ -96,7 +162,11 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
       const rzp = new (window as any).Razorpay(options);
       if (rzp && typeof rzp.on === "function") {
         rzp.on("payment.failed", () => {
-          setError("Payment failed — no changes made. Please check your card and retry, or try a different payment method.");
+          setError(
+            isPastDue
+              ? "Payment failed — still Past Due, 3-day grace continues (storefront live). Check your card and retry — no duplicate charge."
+              : "Payment failed — no charge, still on current plan. Check your card and retry, or try a different payment method."
+          );
           setLoading(null);
         });
       }
@@ -109,6 +179,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
 
   // RCCF-BILLING-07C — one-time Partner checkout (order_id, never subscription_id)
   async function openOrderCheckout(checkout: { orderId: string; keyId: string }) {
+    clearPaymentError();
     if (!checkout.orderId || !checkout.keyId) {
       setError("Checkout could not be initialized — please retry or contact support.");
       return;
@@ -118,14 +189,14 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
       key: checkout.keyId,
       order_id: checkout.orderId,
       name: "CreatorStore",
-      description: "One-time purchase — secure payment via Razorpay",
+      description: "One-time purchase — single charge via Razorpay (webhook confirms)",
       handler: () => {
-        showNotification("Payment successful — your purchase will be confirmed shortly. You do not need to retry.");
+        showNotification("Payment successful — your one-time purchase will be confirmed via webhook shortly. No renewal needed. You do not need to retry.");
         void refresh();
       },
       modal: {
         ondismiss: () => {
-          setError("Checkout closed — no changes made. You can retry anytime.");
+          setError("Checkout closed — no charge for this one-time purchase. You can retry anytime.");
           setLoading(null);
         },
       },
@@ -135,7 +206,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
       const rzp = new (window as any).Razorpay(options);
       if (rzp && typeof rzp.on === "function") {
         rzp.on("payment.failed", () => {
-          setError("Payment failed — no changes made. Please check your card and retry, or try a different payment method.");
+          setError("Payment failed — no charge for this one-time purchase. Check your card and retry with a different method.");
           setLoading(null);
         });
       }
@@ -148,7 +219,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
 
   const handleUpgrade = useCallback(async (target: string) => {
     setLoading(target);
-    setError(null);
+    clearPaymentError();
     try {
       const result = await changePlanAction(workspaceId, tenantId, target);
       if (result.success) {
@@ -174,7 +245,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
 
   const handleDowngrade = useCallback(async (target: string) => {
     setLoading(target);
-    setError(null);
+    clearPaymentError();
     try {
       const result = await changePlanAction(workspaceId, tenantId, target);
       if (result.success) {
@@ -199,7 +270,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
   const handleCancel = useCallback(async () => {
     if (!window.confirm("Cancel your subscription? Premium capabilities will be removed at the end of the period.")) return;
     setLoading("cancel");
-    setError(null);
+    clearPaymentError();
     try {
       const result = await cancelSubscriptionAction(workspaceId, tenantId);
       if (result.success) {
@@ -215,7 +286,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
 
   const handleResume = useCallback(async () => {
     setLoading("resume");
-    setError(null);
+    clearPaymentError();
     try {
       const result = await resumeSubscriptionAction(workspaceId, tenantId);
       if (result.success) {
@@ -231,7 +302,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
 
   const handleRetry = useCallback(async () => {
     setLoading("retry");
-    setError(null);
+    clearPaymentError();
     try {
       const result = await retryPaymentAction(workspaceId, tenantId, planCode);
       if (result.success && result.checkout) {
@@ -326,21 +397,35 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
               <PageSection>
                 <InvoiceCenter invoices={billingData.invoices} />
               </PageSection>
-              {timeline.length > 0 && (
-                <PageSection>
-                  <div className="admin-card p-5">
-                    <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Billing Timeline</h3>
-                    <ol className="space-y-1.5 text-xs" data-testid="billing-timeline">
-                      {timeline.map((e, i) => (
-                        <li key={`${e.type}-${i}`} className="flex items-center justify-between text-[var(--text-secondary)]">
-                          <span>{e.type}</span>
-                          <span className="text-[var(--text-muted)]">{new Date(e.createdAt).toLocaleString()}</span>
-                        </li>
-                      ))}
+              <PageSection>
+                <div className="admin-card p-5">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Billing Timeline</h3>
+                  {timeline.length > 0 ? (
+                    <ol className="space-y-2 text-xs" data-testid="billing-timeline">
+                      {timeline.map((e, i) => {
+                        const h = humanizeTimelineEvent(e);
+                        return (
+                          <li
+                            key={`${e.type}-${i}`}
+                            data-testid={`timeline-item-${e.type}`}
+                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded-md bg-white/[0.03] px-3 py-2"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium text-[var(--text-primary)]">{h.label}</p>
+                              {h.detail && <p className="text-[11px] text-[var(--text-muted)]">{h.detail}</p>}
+                            </div>
+                            <span className="shrink-0 text-[11px] text-[var(--text-muted)]">{new Date(e.createdAt).toLocaleString()}</span>
+                          </li>
+                        );
+                      })}
                     </ol>
-                  </div>
-                </PageSection>
-              )}
+                  ) : (
+                    <p className="text-xs text-[var(--text-muted)]" data-testid="timeline-empty">
+                      No billing activity yet — your 15-day trial is active. Renewals, payment failures, and cancellations will appear here with plan and amount.
+                    </p>
+                  )}
+                </div>
+              </PageSection>
             </DashboardGridMain>
             <DashboardGridSide>
               <PageSection>

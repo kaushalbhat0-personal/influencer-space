@@ -158,7 +158,7 @@ describe("RCCF-BILLING-07C — BillingPageClient one-time vs recurring checkout"
     expect(src).toContain("subscription_id: checkout.subscriptionId");
     expect(src).toContain("order_id: checkout.orderId");
     expect(src).toMatch(/description: "One-time purchase/);
-    expect(src).toMatch(/description: "Creator plan subscription/);
+    expect(src).toMatch(/description: "Creator subscription — recurring billing/);
     // No unsafe cast that conflates orderId → subscriptionId
     expect(src).not.toContain('as unknown as { subscriptionId');
     expect(src).not.toContain('await openSubscriptionCheckout(result.checkout as unknown');

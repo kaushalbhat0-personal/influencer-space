@@ -152,7 +152,8 @@ describe("RCCF-BILLING-06C — Scale checkout regression (subscription_id)", () 
     expect(src).toContain("ondismiss");
     expect(src).toContain("Checkout closed");
     expect(src).toContain("payment.failed");
-    expect(src).toContain("no changes made");
+    // 07D: copy is lifecycle-aware (no charge / grace), not generic "no changes made"
+    expect(src).toMatch(/no charge|no changes made/);
     expect(src).toContain("Downgraded to Creator Launch");
   });
 
