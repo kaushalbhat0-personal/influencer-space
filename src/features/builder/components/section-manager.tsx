@@ -14,7 +14,7 @@ import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
   ShoppingBag, Image, HelpCircle, Trophy, Gamepad2, Rss,
   Link2, MessageSquare, Mail, CreditCard, BookOpen, Music,
-  MessageCircle, Sparkles, Layout, Briefcase,
+  MessageCircle, Sparkles, Layout, Briefcase, MoreHorizontal,
 } from "lucide-react";
 
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
@@ -91,6 +91,8 @@ interface SectionData {
   /** True when the section has unpublished presentation overrides (draft dot). */
   hasDraft: boolean;
   moduleIds: string[];
+  /** Slot ids belonging to this section — for slot-based selection sync. */
+  slotIds: string[];
 }
 
 function SectionCard({
@@ -113,69 +115,67 @@ function SectionCard({
   const editHref = moduleId ? EDIT_LINKS[moduleId] : null;
   const contentLabel = CONTENT_LABELS[section.name.toLowerCase()] ?? "Items";
   const tid = section.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Prefer slot id for selection sync with canvas (canvas selects slotId)
+  const selectId = section.slotIds[0] ?? section.id;
 
   return (
-      <div
-        role="listitem"
-        onClick={() => onSelect(section.id)}
-        data-testid={`builder-section-${tid}`}
-        className={cn(
-          "group flex items-center gap-1.5 rounded-lg px-2 py-2 cursor-pointer transition-colors",
-          isSelected
-            ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] ring-1 ring-[var(--brand-primary)]/30"
-            : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
-        )}
+    <div
+      role="listitem"
+      data-testid={`builder-section-${tid}`}
+      className={cn(
+        "group flex items-center gap-1.5 rounded-lg px-2 py-2 min-w-0 overflow-hidden transition-colors",
+        isSelected
+          ? "bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] ring-1 ring-[var(--brand-primary)]/30"
+          : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
+      )}
+    >
+      {/* Selectable region — P1-3 keyboard selectable; native button preserves semantics, outer listitem stays non-button (no nested button conflict) */}
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        aria-label={`Select ${section.name} section`}
+        data-testid={`builder-section-select-${tid}`}
+        title={section.name}
+        onClick={() => onSelect(selectId)}
+        className="flex flex-1 min-w-0 items-center gap-1.5 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] cursor-pointer"
       >
-      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(section.id);
-            }}
-            aria-pressed={isSelected}
-            aria-label={`Select ${section.name} section`}
-            data-testid={`builder-section-select-${tid}`}
-            className="text-left text-[11px] font-medium truncate rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-0"
-          >
-            {section.name}
-          </button>
-          {/* RCCF-IMPLEMENTATION-74: canonical item count (aggregate-driven).
-              Only repeatable sections with count > 0 show a badge — never "(0)",
-              never a static section, never block/slot count. */}
-          {section.itemCount != null && section.itemCount > 0 && (
-            <span className="text-[9px] text-zinc-500 shrink-0">
-              {section.itemCount} {contentLabel.toLowerCase()}
-            </span>
-          )}
-          {/* Draft dot: the section has presentation overrides in the draft
-              (custom title/description/visibility/hide-when-empty) that are not
-              yet published. Subtle, derived from existing builder data. */}
-          {section.hasDraft && (
+        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/80"
-              title="Has unpublished presentation changes"
-              aria-label="Has unpublished presentation changes"
-            />
-          )}
+              className="text-left text-[11px] font-medium truncate"
+              title={section.name}
+            >
+              {section.name}
+            </span>
+            {section.itemCount != null && section.itemCount > 0 && (
+              <span className="text-[9px] text-zinc-500 shrink-0">
+                {section.itemCount} {contentLabel.toLowerCase()}
+              </span>
+            )}
+            {section.hasDraft && (
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/80"
+                title="Has unpublished presentation changes"
+                aria-label="Has unpublished presentation changes"
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className={cn(
+              "flex items-center gap-0.5 text-[9px]",
+              section.visible ? "text-emerald-400/80" : "text-zinc-600"
+            )}>
+              {section.visible ? <Eye className="h-2.5 w-2.5" /> : <EyeOff className="h-2.5 w-2.5" />}
+              {section.visible ? "Visible" : "Hidden"}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <span className={cn(
-            "flex items-center gap-0.5 text-[9px]",
-            section.visible ? "text-emerald-400/80" : "text-zinc-600"
-          )}>
-            {section.visible ? <Eye className="h-2.5 w-2.5" /> : <EyeOff className="h-2.5 w-2.5" />}
-            {section.visible ? "Visible" : "Hidden"}
-          </span>
-        </div>
-      </div>
+      </button>
 
-      {/* Actions are always visible below lg (touch has no hover) and revealed
-           on hover/focus on desktop — never hover-only. */}
-      <div className="flex items-center gap-0.5 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
+      {/* Primary actions — always visible, shrink-0, 44px mobile. Secondary (duplicate/delete/edit) collapse into menu (P1-4) */}
+      <div className="flex items-center gap-0.5 shrink-0">
         <button onClick={(e) => { e.stopPropagation(); onMoveUp(section.id); }}
           data-testid={`section-${tid}-up`}
           aria-label={`Move ${section.name} up`}
@@ -196,24 +196,52 @@ function SectionCard({
           className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
           {section.visible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </button>
-        {editHref && (
-          <Link href={editHref} className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1"
-            onClick={(e) => e.stopPropagation()}>
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        )}
-        <button onClick={(e) => { e.stopPropagation(); onDuplicate(section.id); }}
-          data-testid={`section-${tid}-duplicate`}
-          aria-label={`Duplicate ${section.name}`}
-          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
-          <Copy className="h-3 w-3" />
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${section.name}"?`)) onDelete(section.id); }}
-          data-testid={`section-${tid}-delete`}
-          aria-label={`Delete ${section.name}`}
-          className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-red-500/20 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 lg:min-h-[28px] lg:min-w-[28px] lg:p-1">
-          <Trash2 className="h-3 w-3" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label={`More actions for ${section.name}`}
+            data-testid={`section-${tid}-more`}
+            className="flex items-center justify-center rounded min-h-[44px] min-w-[44px] p-2 text-zinc-500 hover:bg-white/10 hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] lg:min-h-[28px] lg:min-w-[28px] lg:p-1"
+          >
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </button>
+          {menuOpen && (
+            <>
+              <button
+                aria-hidden
+                tabIndex={-1}
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
+                className="fixed inset-0 z-10 cursor-default"
+              />
+              <div
+                role="menu"
+                data-testid={`section-${tid}-menu`}
+                className="absolute right-0 top-full z-20 mt-1 min-w-[160px] rounded-lg border border-white/10 bg-zinc-900 p-1 shadow-[var(--shadow-overlay)]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {editHref && (
+                  <Link role="menuitem" href={editHref} onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-xs text-zinc-300 hover:bg-white/10 min-h-[44px] lg:min-h-0">
+                    <ExternalLink className="h-3 w-3" /> Edit content
+                  </Link>
+                )}
+                <button role="menuitem" onClick={() => { setMenuOpen(false); onDuplicate(section.id); }}
+                  data-testid={`section-${tid}-duplicate`}
+                  aria-label={`Duplicate ${section.name}`}
+                  className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-xs text-zinc-300 hover:bg-white/10 min-h-[44px] lg:min-h-0">
+                  <Copy className="h-3 w-3" /> Duplicate
+                </button>
+                <button role="menuitem" onClick={() => { setMenuOpen(false); if (confirm(`Delete "${section.name}"?`)) onDelete(section.id); }}
+                  data-testid={`section-${tid}-delete`}
+                  aria-label={`Delete ${section.name}`}
+                  className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-xs text-red-400 hover:bg-red-500/10 min-h-[44px] lg:min-h-0">
+                  <Trash2 className="h-3 w-3" /> Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -236,6 +264,7 @@ export function SectionManager({
     setSections(
       page?.sections?.map((s) => {
         const moduleIds = s.slots.map((sl) => sl.moduleId);
+        const slotIds = s.slots.map((sl) => sl.id);
         const hasDraft = s.slots.some((sl) => {
           const presentation = (sl.config as Record<string, unknown>)?.presentation as Record<string, unknown> | undefined;
           return !!presentation && Object.keys(presentation).length > 0;
@@ -246,6 +275,7 @@ export function SectionManager({
           visible: s.visible,
           itemCount: sectionCountResolver.countForModule(moduleIds[0] ?? "", aggregate),
           moduleIds,
+          slotIds,
           hasDraft,
         };
       }) ?? []
@@ -301,21 +331,24 @@ export function SectionManager({
     <div className={cn("flex flex-col h-full", className)}>
       {sections.length > 0 ? (
         <div className="flex-1 overflow-y-auto space-y-0.5 p-1.5" role="list" aria-label="Sections">
-          {sections.map((section, index) => (
-            <SectionCard
-              key={section.id}
-              section={section}
-              index={index}
-              total={sections.length}
-              isSelected={builderStore.isSelected(section.id)}
-              onSelect={(id) => builderStore.select(id)}
-              onMoveUp={(id) => moveSection(id, "up")}
-              onMoveDown={(id) => moveSection(id, "down")}
-              onToggleVisibility={toggleVisibility}
-              onDuplicate={(id) => { builderEditor.duplicateSection(id); setTimeout(refresh, 50); }}
-              onDelete={removeSection}
-            />
-          ))}
+          {sections.map((section, index) => {
+            const isSelected = section.slotIds.some((sid) => builderStore.isSelected(sid)) || builderStore.isSelected(section.id);
+            return (
+              <SectionCard
+                key={section.id}
+                section={section}
+                index={index}
+                total={sections.length}
+                isSelected={isSelected}
+                onSelect={(id) => builderStore.select(id)}
+                onMoveUp={(id) => moveSection(id, "up")}
+                onMoveDown={(id) => moveSection(id, "down")}
+                onToggleVisibility={toggleVisibility}
+                onDuplicate={(id) => { builderEditor.duplicateSection(id); setTimeout(refresh, 50); }}
+                onDelete={removeSection}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center p-4">

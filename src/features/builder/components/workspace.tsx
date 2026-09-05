@@ -83,7 +83,7 @@ export function BuilderWorkspace() {
   // re-arms the debounce (otherwise autosave dies silently after one error).
   const [saveAttempt, setSaveAttempt] = useState(0);
   const [creatorName, setCreatorName] = useState("");
-  const [completionPct, setCompletionPct] = useState(0);
+  const [healthScore, setHealthScore] = useState<number | null>(null);
   const [overviewData, setOverviewData] = useState<BuilderOverviewData | null>(null);
   const [publishing, setPublishing] = useState(false);
   // RCCF-IMPLEMENTATION-74: the Website Aggregate fetched by the canvas
@@ -187,7 +187,7 @@ export function BuilderWorkspace() {
         setOverviewData(d);
         import("@/actions/health.actions").then((mod) =>
           mod.getWebsiteHealthScore(d.tenant.id).then((h) => {
-            if (h.success && h.score != null) setCompletionPct(h.score);
+            if (h.success && h.score != null) setHealthScore(h.score);
           })
         ).catch(() => {});
       }
@@ -477,7 +477,7 @@ export function BuilderWorkspace() {
         themeName={themeName}
         blueprintName={blueprintName}
         creatorName={creatorName}
-        completionPct={completionPct}
+        healthScore={healthScore}
         publishStatus={publishStatus}
         storefrontUrl={storefrontUrl}
         onDeviceChange={(d) => { setDevice(d); builderStore.setDevice(d); }}
@@ -506,7 +506,7 @@ export function BuilderWorkspace() {
             onToggle={() => setRightCollapsed((v) => !v)}
             currentThemeId={currentThemeId}
             planCode={planCode}
-            completionPct={completionPct}
+            healthScore={healthScore}
             onThemePreview={handleThemePreview}
             previewThemeId={previewThemeId}
             onApplyTheme={handleApplyTheme}
@@ -565,7 +565,7 @@ export function BuilderWorkspace() {
           onToggle={() => setMobilePanel(null)}
           currentThemeId={currentThemeId}
           planCode={planCode}
-          completionPct={completionPct}
+          healthScore={healthScore}
           onThemePreview={handleThemePreview}
           previewThemeId={previewThemeId}
           onApplyTheme={handleApplyTheme}

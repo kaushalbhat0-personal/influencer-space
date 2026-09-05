@@ -9,7 +9,8 @@ interface Props {
   onToggle: () => void;
   currentThemeId: string | null;
   planCode?: string | null;
-  completionPct: number;
+  healthScore: number | null;
+  completionPct?: number | null;
   onThemePreview: (themeId: string) => void;
   previewThemeId: string | null;
   onApplyTheme: (themeId: string) => void;
@@ -21,5 +22,6 @@ interface Props {
 }
 
 export function BuilderProperties(props: Props) {
-  return <WebsitePanel {...props} />;
+  const normalized = { ...props, healthScore: props.healthScore ?? props.completionPct ?? null } as typeof props & { healthScore: number | null };
+  return <WebsitePanel {...normalized} />;
 }

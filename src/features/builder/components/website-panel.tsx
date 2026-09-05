@@ -25,7 +25,10 @@ interface Props {
   onToggle: () => void;
   currentThemeId: string | null;
   planCode?: string | null;
-  completionPct: number;
+  /** WebsiteHealthEngine overallScore (0-100). Null while loading — never builder completion. */
+  healthScore: number | null;
+  /** Backward compat */
+  completionPct?: number | null;
   onThemePreview: (themeId: string) => void;
   previewThemeId: string | null;
   onApplyTheme: (themeId: string) => void;
@@ -44,6 +47,7 @@ export function WebsitePanel({
   onToggle,
   currentThemeId,
   planCode,
+  healthScore: healthScoreProp,
   completionPct,
   onThemePreview,
   previewThemeId,
@@ -54,6 +58,7 @@ export function WebsitePanel({
   appearanceDraft,
   onAppearancePreviewChange,
 }: Props) {
+  const healthScore = healthScoreProp ?? completionPct ?? null;
   // RCCF-BUILDER-03A: stabilize appearance identity — previously an inline literal
   // created a new reference on every Workspace render, causing AppearancePanel's
   // useEffect([appearance]) to overwrite optimistic NEW state with stale OLD.
@@ -90,20 +95,26 @@ export function WebsitePanel({
     overview?.appearance?.experienceBackgroundImageOpacity,
   ]);
   if (collapsed) {
+    const isHealthLoading = healthScore === null;
+    const collapsedScore = healthScore ?? 0;
     return (
       <div className="flex h-full flex-col items-center gap-2 py-2">
         <button onClick={onToggle} className="rounded p-1 text-zinc-600 hover:text-[var(--brand-primary)] hover:bg-white/5" title="Expand Website panel" aria-label="Expand properties rail">
           <PanelRightClose className="h-4 w-4 rotate-180" />
         </button>
         {overview && (
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-[9px] font-bold text-zinc-500">{completionPct}%</span>
-            <div className="h-12 w-1.5 rounded-full bg-zinc-800 overflow-hidden">
+          <div className="flex flex-col items-center gap-1" data-testid={isHealthLoading ? "health-vertical-loading" : "health-vertical"}>
+            {isHealthLoading ? (
+              <span data-testid="health-badge-loading" aria-busy="true" className="h-2 w-6 animate-pulse rounded bg-zinc-700" />
+            ) : (
+              <span className="text-[9px] font-bold text-zinc-500" title="Website health — view dashboard">{collapsedScore}%</span>
+            )}
+            <div className="h-12 w-1.5 rounded-full bg-zinc-800 overflow-hidden" aria-hidden="true">
               <div
                 className="w-full rounded-full transition-all"
                 style={{
-                  height: `${completionPct}%`,
-                  backgroundColor: completionPct >= 80 ? "#34d399" : completionPct >= 50 ? "#f59e0b" : "#525252",
+                  height: isHealthLoading ? "0%" : `${collapsedScore}%`,
+                  backgroundColor: collapsedScore >= 80 ? "#34d399" : collapsedScore >= 50 ? "#f59e0b" : "#525252",
                 }}
               />
             </div>
@@ -159,16 +170,18 @@ export function WebsitePanel({
           </div>
         )}
 
-        {/* Progress — RCCF-03: canonical WebsiteHealthEngine score surfaced as a
-            thin progress indicator that deep-links to the Dashboard. The Builder
-            does not compute, score, recommend or persist health/business data. */}
+        {/* Health — RCCF-03: canonical WebsiteHealthEngine score surfaced as a
+            thin health indicator that deep-links to the Dashboard health. The Builder
+            does not compute, score, recommend or persist health/business data. Never
+            fabricate builder progress. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/5">
-            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">Progress</p>
-            <CompletionBadge pct={completionPct} large />
+            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">Health</p>
+            <CompletionBadge healthScore={healthScore} isLoading={healthScore === null} large />
           </div>
           <div className="p-2.5 text-[10px] text-zinc-400 space-y-1">
             <p>Template: {overview?.blueprint?.name ?? "Creator"}</p>
+            <p className="text-[9px] text-zinc-500">Website health from dashboard — not builder completion.</p>
           </div>
         </div>
       </div>

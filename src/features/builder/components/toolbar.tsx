@@ -15,7 +15,10 @@ interface Props {
   themeName: string | null;
   blueprintName: string | null;
   creatorName: string;
-  completionPct: number;
+  /** WebsiteHealthEngine overallScore (0-100) — never builder completion. Null while loading. */
+  healthScore: number | null;
+  /** Backward compat */
+  completionPct?: number | null;
   publishStatus: PublishStatusValue;
   storefrontUrl: string;
   onDeviceChange: (d: BuilderCanvas["device"]) => void;
@@ -28,10 +31,11 @@ interface Props {
 }
 
 export function BuilderToolbar({
-  device, themeName, blueprintName, creatorName, completionPct,
+  device, themeName, blueprintName, creatorName, healthScore: healthScoreProp, completionPct,
   publishStatus, storefrontUrl, onDeviceChange, onSave, saving,
   mobilePanel, onOpenSections, onOpenProperties,
 }: Props) {
+  const healthScore = healthScoreProp ?? completionPct ?? null;
   const history = builderQuery.getHistoryState();
 
   const devices = [
@@ -100,7 +104,7 @@ export function BuilderToolbar({
             </div>
           )}
           <span className="hidden sm:inline h-4 w-px bg-white/10 shrink-0" />
-          <CompletionBadge pct={completionPct} />
+          <CompletionBadge healthScore={healthScore} isLoading={healthScore === null} />
           <span className="hidden sm:inline h-4 w-px bg-white/10 shrink-0" />
           <button
             onClick={() => builderCommands.undo()}
