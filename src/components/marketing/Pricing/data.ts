@@ -102,13 +102,18 @@ export function getFeatureDisplayValue(
   return value;
 }
 
-// Family-appropriate comparison vocabulary (RCCF-58/60.2). The runtime feature
-// map is shared across families, but creator-commerce and agency features must
-// not be shown under the wrong tab — an Agency's plan does not govern its
-// clients' products/orders, and Creators have no team/client management.
-// Creators render `storage_mb`; Partner plans do NOT advertise storage
-// (no real Partner storage capability — RCCF-60.2), so `storage_gb` is never
-// shown on the Partner comparison either.
+// Family-appropriate comparison vocabulary (RCCF-58/60.2) — AUDIT 07E.
+// These sets are *presentation* filters, not entitlement authority.
+// Entitlement authority is COMMERCE_PLANS (plans.ts) + capabilityEngine (plans.ts/features).
+// The comparison table is a marketing presentation: an Agency's plan does not
+// govern its clients' products/orders, and Creators have no team/client management.
+// Creators render `storage_mb`; Partner plans do NOT advertise storage (no real
+// Partner storage capability — RCCF-60.2), so `storage_gb` is never shown on the
+// Partner comparison either.
+// Preserved as presentation allowlists after audit (removing them would expand the
+// Partner table to include creator-commerce limits like max_products/max_gallery
+// and misrepresent product entitlements). One entitlement authority, two
+// presentation vocabularies — validated by 07E parity test.
 const CREATOR_EXCLUDED = new Set([
   "max_clients", "max_team_members", "agency_clients", "multiple_users",
   "white_label", "remove_branding", "automation", "bulk_publish", "multiple_brands",

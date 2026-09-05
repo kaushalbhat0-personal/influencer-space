@@ -4,7 +4,8 @@ import { useState } from "react";
 import { savePlanConfig, rollbackPlanVersion, upsertCoupon, upsertLaunchProgram, resyncBillingCatalog } from "@/actions/super-admin-pricing.actions";
 import type { PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
 import type { CapabilityCatalogItem } from "@/lib/capabilities/catalog";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
+import { isOneTimePlan } from "@/config/commerce/plans";
 
 export interface CenterPlan {
   code: string;
@@ -283,7 +284,23 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
           <Field label="Monthly price (₹)"><input className={inputCls} value={form.monthlyPrice} onChange={(e) => set("monthlyPrice", e.target.value)} placeholder="999" /></Field>
           <Field label="Annual price (₹/yr)"><input className={inputCls} value={form.annualPrice} onChange={(e) => set("annualPrice", e.target.value)} placeholder="9990" /></Field>
           <Field label="Trial days"><input className={inputCls} value={form.trialDays} onChange={(e) => set("trialDays", e.target.value)} placeholder="15" /></Field>
-          <Field label="Grace period (days)"><input className={inputCls} value={form.gracePeriodDays} onChange={(e) => set("gracePeriodDays", e.target.value)} /></Field>
+          {/* RCCF-BILLING-07E — Partner one-time plans have no renewal grace; hide/disable presentation but preserve data/schema */}
+          {(() => {
+            const oneTime = isOneTimePlan(form.code);
+            return (
+              <Field label={`Grace period (days)${oneTime ? " — not applicable (one-time)" : ""}`}>
+                <input
+                  className={cn(inputCls, oneTime && "opacity-50 cursor-not-allowed")}
+                  value={form.gracePeriodDays}
+                  onChange={(e) => set("gracePeriodDays", e.target.value)}
+                  disabled={oneTime}
+                  aria-disabled={oneTime}
+                  title={oneTime ? "One-time plans have no renewal — grace period is not presented to customers. Value is preserved in data but ignored at runtime." : undefined}
+                />
+                {oneTime && <p className="mt-1 text-[11px] text-zinc-500">One-time purchase — no renewal grace. This field is preserved in data but not presented to customers.</p>}
+              </Field>
+            );
+          })()}
           <Field label="CTA label"><input className={inputCls} value={form.ctaLabel} onChange={(e) => set("ctaLabel", e.target.value)} /></Field>
           <Field label="CTA type">
             <select className={inputCls} value={form.ctaType} onChange={(e) => set("ctaType", e.target.value)}>

@@ -115,10 +115,17 @@ export function Pricing({ data }: PricingProps) {
             </button>
             <span className={cn("flex items-center gap-1.5 text-sm", cycle === "yearly" ? "text-zinc-200" : "text-zinc-500")}>
               Yearly
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
-                <BadgePercent className="h-3 w-3" aria-hidden="true" />
-                Save ~17%
-              </span>
+              {(() => {
+                // RCCF-BILLING-07E — derive savings from runtime annual/monthly via getAnnualSavings, never hardcode ~17%
+                const vals = plans.map((p) => getAnnualSavings(p)).filter((v): v is number => typeof v === "number" && v > 0);
+                const maxSavings = vals.length ? Math.max(...vals) : null;
+                return maxSavings ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                    <BadgePercent className="h-3 w-3" aria-hidden="true" />
+                    Save {maxSavings}%
+                  </span>
+                ) : null;
+              })()}
             </span>
           </div>
         )}
