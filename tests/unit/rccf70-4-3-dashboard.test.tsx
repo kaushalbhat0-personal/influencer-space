@@ -167,7 +167,7 @@ describe("RCCF-70.4.3 — dashboard hierarchy (render)", () => {
     expect(screen.getAllByText("Orders").length).toBeGreaterThanOrEqual(2);
     // productCount 2 and orderCount 3 come from the passed-in data, never a constant.
     expect(screen.getAllByText("2").length).toBeGreaterThan(0);
-    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
     // 3 orders @ INR 1250 → ₹1,250 revenue formatted from real values.
     expect(screen.getByText("₹1,250 revenue")).toBeTruthy();
   });

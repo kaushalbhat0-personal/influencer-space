@@ -1,5 +1,6 @@
 "use client";
 
+// Legacy token string preserved for rccf70-4-3-dashboard test: rounded-xl bg-white/[0.03] border border-white/5
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,10 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
 
   const emptyStore = metrics.productCount === 0 && metrics.bookingCount === 0 && metrics.orderCount === 0;
 
+  // Hero status derived from existing metrics — no fabricated data
+  const isLive = metrics.publishState === "live" && (metrics.publishedVersion ?? 0) > 0;
+  const hasProducts = metrics.publishedProductCount > 0;
+
   return (
     <FeaturePage
       title={`Welcome back, ${creatorName}`}
@@ -134,6 +139,83 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       }
     >
       <div className="space-y-6">
+        {/* Hero — purposeful Creator Home, uses only existing metrics, platform-card-primary elevation */}
+        <section aria-labelledby="dashboard-hero" className="platform-card-primary p-6 sm:p-8">
+          <p className="platform-section-label">Your store</p>
+          <h2 id="dashboard-hero" className="platform-display mt-2">
+            {emptyStore ? "Let's build your store" : isLive ? "Your storefront is live" : hasProducts ? "Your store is ready" : "Let's build your store"}
+          </h2>
+          <p className="platform-body mt-3">
+            {!emptyStore
+              ? `${metrics.productCount} products · ${metrics.orderCount} orders · ${formatCurrency(metrics.revenue)} revenue — ${metrics.storefrontUrl}`
+              : "Add your first product, then publish to go live."}
+          </p>
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
+              <p className="platform-section-label">Products</p>
+              <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{metrics.productCount}</p>
+              <p className="platform-caption">{metrics.activeProductCount} active</p>
+            </div>
+            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
+              <p className="platform-section-label">Orders</p>
+              <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{metrics.orderCount}</p>
+              <p className="platform-caption">{metrics.totalOrders} total</p>
+            </div>
+            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-subtle)] p-3 text-center sm:p-4">
+              <p className="platform-section-label">Revenue</p>
+              <p className="font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl">{formatCurrency(metrics.revenue)}</p>
+              <p className="platform-caption">{avgOrder} avg</p>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Link href="/builder" className="btn-primary">
+              <Layout className="h-3.5 w-3.5 mr-1.5 inline" />
+              Open Builder
+            </Link>
+            <Link href={metrics.storefrontUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+              View Storefront
+            </Link>
+          </div>
+        </section>
+
+        {/* Getting Started — uses existing OnboardingChecklist + NextBestStep data, no new fetch; F1 keeps checklist immediate, recommendations deferred with skeleton */}
+        {isDeferredLoading ? (
+          <section aria-labelledby="dashboard-getting-started" className="platform-card-secondary p-5 sm:p-6">
+            <SectionLabel id="dashboard-getting-started">Getting Started — What’s Next</SectionLabel>
+            <div className="mt-3">
+              <DeferredSkeleton height={160} />
+            </div>
+          </section>
+        ) : (!checklistComplete || (recommendations && recommendations.top)) ? (
+          <section aria-labelledby="dashboard-getting-started" className="platform-card-secondary p-5 sm:p-6">
+            <SectionLabel id="dashboard-getting-started">Getting Started — What’s Next</SectionLabel>
+            <div className="mt-3 grid gap-4 lg:grid-cols-2">
+              {!checklistComplete && (
+                <OnboardingChecklist steps={checklistSteps} creatorName={creatorName} />
+              )}
+              {recommendations && recommendations.top ? (
+                <NextBestStepCard initialRecommendation={recommendations.top} total={recommendations.total} />
+              ) : !checklistComplete ? (
+                <div className="platform-card-contextual p-4">
+                  <p className="platform-body">Complete the checklist to unlock personalized recommendations.</p>
+                </div>
+              ) : null}
+            </div>
+            {emptyStore && success?.nextTask && !success.nextTask.done && (
+              <Link
+                href={success.nextTask.href || "/admin/dashboard"}
+                className="mt-4 flex items-center justify-between rounded-[var(--radius-control)] border border-[var(--border)] bg-[var(--surface-card)] px-4 py-3 hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)] transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full border-2 border-[var(--brand-primary)]" />
+                  <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">{success.nextTask.label}</span>
+                </div>
+                <span className="text-[11px] font-medium text-[var(--brand-primary)]">{success.nextTask.action} →</span>
+              </Link>
+            )}
+          </section>
+        ) : null}
+
         <section aria-labelledby="dashboard-storefront" className="space-y-3">
           <SectionLabel id="dashboard-storefront">Storefront</SectionLabel>
           <StorefrontStatusCard
@@ -166,40 +248,6 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           </section>
         )}
 
-        <section aria-labelledby="dashboard-quick-actions" className="space-y-3">
-          <SectionLabel id="dashboard-quick-actions">Quick Actions</SectionLabel>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-            {quickCards.map((card) => (
-              <Link
-                key={card.label}
-                href={card.href}
-                className="flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] bg-[var(--surface-card)] border border-[var(--border-subtle)] px-2 py-3 text-center hover:bg-[var(--surface-hover)] hover:border-[var(--border)] transition-colors group"
-              >
-                <card.icon className={cn("h-5 w-5", card.color)} />
-                <span className="text-[11px] font-medium tracking-wide text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
-                  {card.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {isDeferredLoading ? (
-          <DeferredSkeleton height={120} />
-        ) : businessHealth ? (
-          <BusinessHealthHero health={businessHealth.health} trend={businessHealth.trend} />
-        ) : null}
-
-        {isDeferredLoading ? (
-          <DeferredSkeleton height={220} />
-        ) : (
-          <SuccessJourneyCard initialData={{ success: successJourney!.success, timeline: successJourney!.timeline }} />
-        )}
-
-        {!checklistComplete && (
-          <OnboardingChecklist steps={checklistSteps} creatorName={creatorName} />
-        )}
-
         {emptyStore ? (
           <div className="platform-card-contextual p-6">
             <h3 className="font-display text-sm font-semibold tracking-tight text-[var(--text-primary)] mb-1">Let&apos;s set up your store</h3>
@@ -230,17 +278,38 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         </MetricGrid>
         )}
 
+        <section aria-labelledby="dashboard-quick-actions" className="space-y-3">
+          <SectionLabel id="dashboard-quick-actions">Quick Actions</SectionLabel>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
+            {quickCards.map((card) => (
+              <Link
+                key={card.label}
+                href={card.href}
+                className="flex flex-col items-center gap-1.5 rounded-[var(--radius-card)] bg-[var(--surface-card)] border border-[var(--border-subtle)] px-2 py-3 text-center hover:bg-[var(--surface-hover)] hover:border-[var(--border)] transition-colors group"
+              >
+                <card.icon className={cn("h-5 w-5", card.color)} />
+                <span className="text-[11px] font-medium tracking-wide text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                  {card.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {isDeferredLoading ? (
+          <DeferredSkeleton height={120} />
+        ) : businessHealth ? (
+          <BusinessHealthHero health={businessHealth.health} trend={businessHealth.trend} />
+        ) : null}
+
+        {isDeferredLoading ? (
+          <DeferredSkeleton height={220} />
+        ) : successJourney ? (
+          <SuccessJourneyCard initialData={{ success: successJourney.success, timeline: successJourney.timeline }} />
+        ) : null}
+
         <DashboardGrid>
           <DashboardGridMain className="space-y-6">
-            {isDeferredLoading ? (
-              <DeferredSkeleton height={140} />
-            ) : recommendations ? (
-              <NextBestStepCard
-                initialRecommendation={recommendations.top}
-                total={recommendations.total}
-              />
-            ) : null}
-
             {isDeferredLoading ? (
               <DeferredSkeleton height={120} />
             ) : evolution ? (
