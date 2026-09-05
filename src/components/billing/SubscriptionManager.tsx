@@ -87,18 +87,18 @@ export function SubscriptionManager({
       <div className="space-y-4">
         {/* RCCF-BILLING-07B — PAST_DUE grace transparency */}
         {isPastDue && (
-          <div role="status" aria-live="polite" data-testid="submgr-past-due" className="rounded-lg border border-red-500/20 bg-red-500/10 p-3">
+          <div role="status" aria-live="polite" data-testid="submgr-past-due" className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 break-words">
             <div className="flex items-start gap-2.5">
               <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" aria-hidden="true" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-red-300">Payment failed — Past Due</p>
                 {graceEndDate ? (
-                  <p className="mt-1 text-xs leading-relaxed text-red-200/80">
+                  <p className="mt-1 text-xs leading-relaxed text-red-200/80 break-words">
                     Your storefront stays live during the {RENEWAL_GRACE_DAYS}-day grace period until <span className="font-semibold text-red-200">{formatDate(graceEndDate.toISOString())}</span>
                     {remainingDays !== null && remainingDays > 0 ? ` — ${remainingDays} day${remainingDays === 1 ? "" : "s"} remaining` : remainingDays === 0 ? " — expires today" : ""}. Successful payment restores Active instantly.
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs leading-relaxed text-red-200/80">
+                  <p className="mt-1 text-xs leading-relaxed text-red-200/80 break-words">
                     Your storefront stays live during the {RENEWAL_GRACE_DAYS}-day grace period. Successful payment during grace restores access; after grace your site returns 404.
                   </p>
                 )}
@@ -114,12 +114,12 @@ export function SubscriptionManager({
 
         {/* RCCF-BILLING-07B — EXPIRED distinct from CANCELLED */}
         {isExpired && (
-          <div role="status" aria-live="polite" data-testid="submgr-expired" className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+          <div role="status" aria-live="polite" data-testid="submgr-expired" className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 break-words">
             <div className="flex items-start gap-2.5">
               <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" aria-hidden="true" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-amber-300">Storefront unavailable — Expired</p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-200/80">
+                <p className="mt-1 text-xs leading-relaxed text-amber-200/80 break-words">
                   Your public storefront is returning 404 — the {RENEWAL_GRACE_DAYS}-day Past Due grace has elapsed. This is different from Cancelled (you cancelled) — Expired means the renewal never recovered. Upgrade to Creator Grow to restore instantly. Preview still works via <code className="rounded bg-amber-500/20 px-1 py-0.5 text-[10px]">?preview=true</code>.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -136,9 +136,9 @@ export function SubscriptionManager({
         )}
 
         {isCancelled && (
-          <div role="status" data-testid="submgr-cancelled" className="rounded-lg border border-white/10 bg-white/5 p-3">
+          <div role="status" data-testid="submgr-cancelled" className="rounded-lg border border-white/10 bg-white/5 p-3 break-words">
             <p className="text-sm font-medium text-zinc-300">Subscription cancelled</p>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-500">You cancelled this subscription. Use Resume to reactivate, or upgrade to a paid plan. Your storefront 404s until a paid plan is Active.</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500 break-words">You cancelled this subscription. Use Resume to reactivate, or upgrade to a paid plan. Your storefront 404s until a paid plan is Active.</p>
           </div>
         )}
 
@@ -163,8 +163,14 @@ export function SubscriptionManager({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" role="grid" aria-label="Plan comparison">
+        <div
+          className="overflow-x-auto overscroll-x-contain rounded-lg -mx-1 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+          tabIndex={0}
+          role="region"
+          aria-label="Plan comparison, scroll horizontally to compare plans"
+        >
+          <p className="text-[11px] text-zinc-500 sm:hidden mb-1" aria-hidden="true">← Scroll to compare plans →</p>
+          <table className="w-full min-w-[520px] text-sm" role="grid" aria-label="Plan comparison">
             <thead>
               <tr className="border-b border-white/10">
                 <th scope="col" className="text-left py-2 px-2 text-xs text-[var(--text-muted)] font-medium">Feature</th>
@@ -217,9 +223,11 @@ export function SubscriptionManager({
                 <span
                   key={plan.code}
                   data-testid="cta-launch-disabled"
+                  role="note"
                   aria-disabled="true"
+                  aria-label="Creator Launch is a 15-day free trial at signup, not a permanent free plan and not available as a downgrade"
                   title="Creator Launch is a 15-day free trial at signup — not a permanent free plan and not available as a downgrade. To leave a paid plan, cancel or contact support."
-                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/15 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)]"
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-dashed border-white/15 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] break-words"
                 >
                   <span aria-hidden="true">⊘</span> Creator Launch — 15-day trial only
                 </span>

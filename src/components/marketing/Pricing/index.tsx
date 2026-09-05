@@ -96,31 +96,38 @@ export function Pricing({ data }: PricingProps) {
             because Creator Growth/Scale remain recurring subscriptions. */}
         {!isPartner && plans.some((p) => p.annualPrice) && (
           <div className="mb-8 flex items-center justify-center gap-3 text-sm" role="group" aria-label="Billing cycle">
-            <span className={cn("text-sm", cycle === "monthly" ? "text-zinc-200" : "text-zinc-500")}>Monthly</span>
+            <span id="billing-cycle-monthly" className={cn("text-sm", cycle === "monthly" ? "text-zinc-200" : "text-zinc-500")}>Monthly</span>
             <button
               type="button"
               role="switch"
               aria-checked={cycle === "yearly"}
-              aria-label="Toggle yearly billing"
+              aria-labelledby="billing-cycle-monthly billing-cycle-yearly"
+              aria-label={`Billing cycle: ${cycle}, toggle to ${cycle === "yearly" ? "monthly" : "yearly"}`}
               onClick={() => setCycle((c) => (c === "monthly" ? "yearly" : "monthly"))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setCycle((c) => (c === "monthly" ? "yearly" : "monthly"));
+                }
+              }}
               className={cn(
-                "relative h-6 w-11 rounded-full transition-colors",
+                "relative h-6 w-11 rounded-full transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900",
                 cycle === "yearly" ? "bg-indigo-500" : "bg-white/10"
               )}
             >
               <span className={cn(
-                "absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all",
+                "absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all motion-reduce:transition-none",
                 cycle === "yearly" ? "left-[22px]" : "left-0.5"
               )} />
             </button>
-            <span className={cn("flex items-center gap-1.5 text-sm", cycle === "yearly" ? "text-zinc-200" : "text-zinc-500")}>
+            <span id="billing-cycle-yearly" className={cn("flex items-center gap-1.5 text-sm", cycle === "yearly" ? "text-zinc-200" : "text-zinc-500")}>
               Yearly
               {(() => {
                 // RCCF-BILLING-07E — derive savings from runtime annual/monthly via getAnnualSavings, never hardcode ~17%
                 const vals = plans.map((p) => getAnnualSavings(p)).filter((v): v is number => typeof v === "number" && v > 0);
                 const maxSavings = vals.length ? Math.max(...vals) : null;
                 return maxSavings ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400" aria-label={`Save ${maxSavings} percent with yearly billing`}>
                     <BadgePercent className="h-3 w-3" aria-hidden="true" />
                     Save {maxSavings}%
                   </span>

@@ -51,8 +51,14 @@ export function ComparisonMatrix({ plans, family }: ComparisonProps) {
     <div className="mt-20" data-testid="comparison-matrix">
       <h3 className="text-center text-lg font-semibold text-white mb-2">Compare plans</h3>
       <p className="mb-6 text-center text-sm text-zinc-500">See exactly what&apos;s included at each tier.</p>
-      <div className="overflow-x-auto rounded-2xl border border-white/[0.06]">
-        <table className="w-full text-sm" role="table" aria-label="Plan comparison">
+      <p className="mb-2 text-center text-[11px] text-zinc-500 sm:hidden" aria-hidden="true">← Scroll to compare →</p>
+      <div
+        className="overflow-x-auto overscroll-x-contain rounded-2xl border border-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 motion-reduce:transition-none"
+        tabIndex={0}
+        role="region"
+        aria-label="Plan comparison, scroll horizontally to see all plans"
+      >
+        <table className="w-full min-w-[640px] text-sm" role="table" aria-label="Plan comparison">
           <thead>
             <tr className="border-b border-white/[0.08] bg-white/[0.02]">
               <th className="sticky left-0 z-10 bg-[#0a0a0a] py-3 px-4 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider min-w-56">

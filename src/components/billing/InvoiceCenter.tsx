@@ -69,22 +69,22 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
       loading={loading}
       error={error}
       actions={
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[140px] sm:flex-none">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-muted)]" aria-hidden="true" />
             <input
               type="search"
               placeholder="Search invoices..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="admin-input pl-8 py-1.5 text-xs w-40"
+              className="admin-input pl-8 py-1.5 text-xs w-full sm:w-40 motion-reduce:transition-none"
               aria-label="Search invoices"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as InvoiceStatus | "ALL")}
-            className="admin-input py-1.5 text-xs w-28"
+            className="admin-input py-1.5 text-xs w-full sm:w-28 flex-1 sm:flex-none motion-reduce:transition-none"
             aria-label="Filter by status"
           >
             <option value="ALL">All Status</option>
@@ -97,13 +97,18 @@ export function InvoiceCenter({ invoices, loading, error, onDownload }: InvoiceC
         </div>
       }
     >
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm" role="table" aria-label="Invoice list">
+      <div
+        className="overflow-x-auto overscroll-x-contain -mx-1 px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md motion-reduce:transition-none"
+        tabIndex={0}
+        role="region"
+        aria-label="Invoices table, scroll horizontally to see more"
+      >
+        <table className="w-full min-w-[560px] text-sm" role="table" aria-label="Invoice list">
           <thead>
             <tr className="border-b border-white/10">
-              <th scope="col" className="text-left py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">
-                <button onClick={toggleSort} className="flex items-center gap-1 hover:text-[var(--text-primary)]" aria-label={`Sort by date ${sortAsc ? "descending" : "ascending"}`}>
-                  Date <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
+              <th scope="col" aria-sort={sortAsc ? "ascending" : "descending"} className="text-left py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">
+                <button onClick={toggleSort} className="flex items-center gap-1 hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1 -ml-1 motion-reduce:transition-none" aria-label={`Sort by date ${sortAsc ? "descending" : "ascending"}`}>
+                  Date <ArrowUpDown className="h-3 w-3 motion-reduce:transition-none" aria-hidden="true" />
                 </button>
               </th>
               <th scope="col" className="text-left py-2.5 px-2 text-xs text-[var(--text-muted)] font-medium">Invoice</th>

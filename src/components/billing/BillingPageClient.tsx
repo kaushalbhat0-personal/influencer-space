@@ -354,10 +354,14 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
         status={saved ? { label: "Updated!", variant: "success" } : undefined}
       />
       {error && (
-        <div role="alert" className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400" data-testid="billing-error">
+        <div role="alert" aria-live="assertive" aria-atomic="true" tabIndex={-1} className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400 motion-reduce:transition-none" data-testid="billing-error">
           {error}
         </div>
       )}
+      {/* RCCF-BILLING-07F — live region for success/polite announcements, no focus trap */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only" data-testid="billing-live-region">
+        {saved ? "Billing updated successfully" : ""}
+      </div>
       {/* RCCF-PAYMENTS-UX-01C: canonical sales-readiness card */}
       <PaymentStrategyCard {...(paymentStrategy ?? { strategy: null, readiness: null })} />
       <nav className="mb-6 flex gap-1 border-b border-[var(--border)] overflow-x-auto" aria-label="Billing sections" role="tablist">
