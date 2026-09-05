@@ -71,22 +71,41 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
 
   async function openSubscriptionCheckout(checkout: { subscriptionId?: string; keyId?: string; orderId?: string }) {
     if (!checkout.subscriptionId || !checkout.keyId) {
-      setError("Checkout could not be initialized.");
+      setError("Checkout could not be initialized — please retry or contact support.");
       return;
     }
     await loadRazorpayScript();
-    const options = {
+    const options: Record<string, unknown> = {
       key: checkout.keyId,
       subscription_id: checkout.subscriptionId,
       name: "CreatorStore",
-      description: "Subscription",
+      description: "Creator plan subscription — secure payment via Razorpay",
       handler: () => {
-        showNotification("Subscription started — you will be notified once it activates.");
+        showNotification("Payment successful — your plan will activate shortly. You do not need to retry.");
         void refresh();
       },
+      modal: {
+        ondismiss: () => {
+          setError("Checkout closed — no changes made. Your current plan is still active. You can retry anytime.");
+          setLoading(null);
+        },
+      },
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    new (window as any).Razorpay(options).open();
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rzp = new (window as any).Razorpay(options);
+      // Payment failure is webhook-authoritative, but surface a creator-friendly hint if Razorpay fires the event
+      if (rzp && typeof rzp.on === "function") {
+        rzp.on("payment.failed", () => {
+          setError("Payment failed — no changes made. Please check your card and retry, or try a different payment method.");
+          setLoading(null);
+        });
+      }
+      rzp.open();
+    } catch {
+      setError("Checkout could not be opened. Please refresh and retry.");
+      setLoading(null);
+    }
   }
 
   const handleUpgrade = useCallback(async (target: string) => {
@@ -94,10 +113,23 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     setError(null);
     try {
       const result = await changePlanAction(workspaceId, tenantId, target);
-      if (result.success && result.checkout) {
-        await openSubscriptionCheckout(result.checkout);
+      if (result.success) {
+        if (result.checkout?.subscriptionId) {
+          await openSubscriptionCheckout(result.checkout);
+        } else if (result.checkout?.orderId) {
+          // One-time partner plans use order checkout — same modal path but order_id
+          await openSubscriptionCheckout(result.checkout as unknown as { subscriptionId?: string; keyId?: string });
+          // Fallback: if provider returned only order (should not happen for Creator), treat as success after refresh
+          if (!result.checkout?.subscriptionId) {
+            showNotification("Checkout ready — please complete payment. Your current plan stays active until payment succeeds.");
+          }
+        } else {
+          // Free downgrade (Launch) — no Razorpay, already active
+          showNotification("Plan updated — your new plan is now active.");
+          await refresh();
+        }
       } else {
-        setError(result.error ?? "Upgrade failed");
+        setError(result.error ?? "Upgrade failed — please check your plan and retry. Your current plan is still active.");
       }
     } finally {
       setLoading(null);
@@ -110,10 +142,16 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     setError(null);
     try {
       const result = await changePlanAction(workspaceId, tenantId, target);
-      if (result.success && result.checkout) {
-        await openSubscriptionCheckout(result.checkout);
+      if (result.success) {
+        if (result.checkout?.subscriptionId) {
+          await openSubscriptionCheckout(result.checkout);
+        } else {
+          // Free Launch downgrade — no payment, immediate activation (webhook not needed)
+          showNotification(target === "creator_launch" ? "Downgraded to Creator Launch — free plan is now active. No payment required." : "Plan updated — your new plan is now active.");
+          await refresh();
+        }
       } else {
-        setError(result.error ?? "Downgrade failed");
+        setError(result.error ?? "Downgrade failed — your current plan is still active. Please retry or contact support.");
       }
     } finally {
       setLoading(null);

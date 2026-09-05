@@ -714,6 +714,38 @@ export class BillingService {
       return { success: false, error: "This plan is already active — a one-time purchase does not renew." };
     }
 
+    // RCCF-BILLING-06C — ₹0 free downgrade (Creator Launch) never touches Razorpay.
+    // Mirrors product free fulfillment (checkout.actions:182) — direct canonical update,
+    // no Razorpay order with amount 0, webhook remains authority for paid paths only.
+    if (target.price === 0 || target.price === null) {
+      let planRow = await billingRepository.findPlanByCode(planCode);
+      if (!planRow) {
+        const { seedBillingCatalog } = await import("../infrastructure/catalog-seed");
+        await seedBillingCatalog().catch(() => {});
+        planRow = await billingRepository.findPlanByCode(planCode);
+        if (!planRow) return { success: false, error: `Unknown plan: ${planCode}` };
+      }
+      const previous = current;
+      const sub = await billingRepository.upsertSubscription(workspaceId, {
+        planId: planRow.id,
+        status: "ACTIVE",
+        renewsAt: null,
+        cancelledAt: null,
+        cancellationReason: null,
+        trialEndsAt: null,
+      });
+      await billingRepository.createEvent({
+        workspaceId,
+        accountId: workspaceId,
+        type: "SUBSCRIPTION_DOWNGRADED",
+        idempotencyKey: `downgrade_free_${workspaceId}_${planCode}_${Date.now()}`,
+        payload: { planCode, previousPlan: previous?.plan?.code, previousStatus: previous?.status, newStatus: "ACTIVE", freeDowngrade: true },
+      });
+      const tId = (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system";
+      await logAction(tId, "billing:downgrade-free", { workspaceId, planCode, previousPlan: previous?.plan?.code }).catch(() => {});
+      return { success: true, orderId: sub.id };
+    }
+
     return this.createCheckout(workspaceId, planCode, email);
   }
 

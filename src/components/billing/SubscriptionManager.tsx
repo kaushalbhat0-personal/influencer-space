@@ -3,8 +3,9 @@
 import { DashboardWidget } from "@/components/ui/DashboardWidget";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { formatCurrency, formatDate, formatSubscriptionStatus, getUpgradePath } from "@/lib/billing";
+import { formatCurrency, formatDate, formatSubscriptionStatus } from "@/lib/billing";
 import type { BillingPlan, BillingSubscription } from "@/lib/billing";
+import { capabilityEngine } from "@/lib/capabilities/engine";
 import { cn } from "@/lib/utils";
 import { CreditCard, ArrowUp, ArrowDown, Check, X } from "lucide-react";
 
@@ -133,10 +134,26 @@ export function SubscriptionManager({
         <div className="flex flex-wrap gap-2 pt-2">
           {availablePlans.map((plan) => {
             const isCurrent = plan.code === currentPlan.code;
-            if (isCurrent) return null;
+            if (isCurrent) {
+              return (
+                <span key={plan.code} className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-[var(--text-muted)]" aria-label={`Current plan: ${plan.name}`}>
+                  ✓ Current — {plan.name}
+                </span>
+              );
+            }
 
-            const upgradePath = getUpgradePath(currentPlan.code);
-            const isUpgrade = upgradePath.includes(plan.code);
+            // Capability-based classification — never price-ordered.
+            const cmp = capabilityEngine.comparePlans(currentPlan.code, plan.code);
+            const rev = capabilityEngine.comparePlans(plan.code, currentPlan.code);
+            const hasTrueUpgrade = cmp ? (cmp.addedFeatures.length > 0 || cmp.upgradedLimits.some((l) => (l as {to:number;from:number}).to === -1 || ((l as {to:number;from:number}).from !== -1 && (l as {to:number;from:number}).to > (l as {to:number;from:number}).from))) : false;
+            const hasTrueReverse = rev ? (rev.addedFeatures.length > 0 || rev.upgradedLimits.some((l) => (l as {to:number;from:number}).to === -1 || ((l as {to:number;from:number}).from !== -1 && (l as {to:number;from:number}).to > (l as {to:number;from:number}).from))) : false;
+            const isUpgrade = hasTrueUpgrade;
+            const isDowngrade = !isUpgrade && hasTrueReverse;
+            const isDowngradeFallback = !isUpgrade && !isDowngrade && plan.price < currentPlan.price;
+
+            const label = isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
+            const isDowngradeFinal = isDowngrade || isDowngradeFallback;
+            const capDiff = cmp ? cmp.addedFeatures.length : 0;
 
             return (
               <Button
@@ -145,10 +162,11 @@ export function SubscriptionManager({
                 variant={isUpgrade ? "default" : "outline"}
                 onClick={() => isUpgrade ? onUpgrade(plan.code) : onDowngrade(plan.code)}
                 disabled={loading}
-                aria-label={`${isUpgrade ? "Upgrade" : "Downgrade"} to ${plan.name} plan`}
+                aria-label={`${isUpgrade ? "Upgrade" : "Downgrade"} to ${plan.name} plan — ${isUpgrade ? `${capDiff} new capabilities` : isDowngradeFinal ? "fewer capabilities, lower price" : "switch plan"}`}
+                title={isUpgrade ? `Unlock ${capDiff} new capabilities` : isDowngradeFinal ? `Move to ${plan.name} — fewer capabilities, lower price` : label}
               >
                 {isUpgrade ? <ArrowUp className="h-3.5 w-3.5 mr-1" /> : <ArrowDown className="h-3.5 w-3.5 mr-1" />}
-                {isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`}
+                {label}
               </Button>
             );
           })}
