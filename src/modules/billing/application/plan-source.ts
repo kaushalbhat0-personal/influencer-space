@@ -12,6 +12,8 @@ import { resolvePlan } from "@/lib/capabilities/plan-resolution";
 import { resolveRestrictedPlanCode } from "./plan-restriction";
 import { loadRuntimeFeatureOverrides } from "./runtime-config-loader";
 import { headers } from "next/headers";
+import { RENEWAL_GRACE_DAYS } from "@/lib/billing/constants";
+import { getGracePeriodEndDate } from "@/lib/billing/subscription-engine";
 
 export type PlanOrigin = "v2" | "legacy" | "none";
 
@@ -34,8 +36,13 @@ export interface SubscriptionEntitlementState {
  *
  * Billing lifecycle semantics are deliberately centralized here: ACTIVE is
  * eligible until an explicit period end, TRIALING is eligible only while its
- * trial is open (or when the existing record has no trial end), and PAST_DUE /
- * CANCELLED / EXPIRED never grant access because no grace period exists.
+ * trial is open (or when the existing record has no trial end), and
+ * PAST_DUE is eligible ONLY during the 3-day renewal grace (now <= renewsAt + 3 days).
+ * CANCELLED / EXPIRED never grant access.
+ *
+ * RCCF-BILLING-06H — renewal grace is exactly RENEWAL_GRACE_DAYS via
+ * getGracePeriodEndDate (reuses subscription-engine infrastructure); no duplicate
+ * eligibility logic and never RevenueConfiguration's 7-day default.
  */
 export function isSubscriptionEntitlementEligible(
   subscription: SubscriptionEntitlementState,
@@ -49,6 +56,14 @@ export function isSubscriptionEntitlementEligible(
   if (status === "TRIALING") {
     const end = subscription.trialEndsAt ?? subscription.currentPeriodEnd;
     return !end || end.getTime() > now.getTime();
+  }
+  if (status === "PAST_DUE") {
+    // RCCF-BILLING-06H — 3-day grace: PAST_DUE is entitled only while now <= renewsAt + 3 days.
+    // Uses getGracePeriodEndDate so grace math stays single-authority.
+    const renewsAt = subscription.renewsAt ?? subscription.currentPeriodEnd;
+    if (!renewsAt) return false;
+    const graceEnd = getGracePeriodEndDate(new Date(renewsAt), RENEWAL_GRACE_DAYS);
+    return now.getTime() <= graceEnd.getTime();
   }
   return false;
 }

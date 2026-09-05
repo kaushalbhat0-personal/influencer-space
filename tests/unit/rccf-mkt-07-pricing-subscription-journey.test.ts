@@ -159,8 +159,12 @@ describe("MKT-07 — subscription state grants or denies entitlements safely", (
     expect(isSubscriptionEntitlementEligible({ status: "ACTIVE" }, now)).toBe(true); // no end → active
   });
 
-  it("PAST_DUE / CANCELLED / EXPIRED never grant access (no grace period by design)", () => {
-    for (const status of ["PAST_DUE", "CANCELLED", "EXPIRED"]) {
+  it("PAST_DUE grants only within 3-day grace; CANCELLED/EXPIRED never grant (RCCF-BILLING-06H)", () => {
+    // PAST_DUE within grace → entitled (3-day storefront grace)
+    expect(isSubscriptionEntitlementEligible({ status: "PAST_DUE", renewsAt: future }, now)).toBe(true);
+    // PAST_DUE outside grace → not entitled
+    expect(isSubscriptionEntitlementEligible({ status: "PAST_DUE", renewsAt: past }, now)).toBe(false);
+    for (const status of ["CANCELLED", "EXPIRED"] as const) {
       expect(isSubscriptionEntitlementEligible({ status, renewsAt: future }, now)).toBe(false);
     }
   });

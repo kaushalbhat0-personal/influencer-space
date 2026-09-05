@@ -25,9 +25,13 @@ describe("RCCF-BILLING-06E — isSubscriptionEntitlementEligible (canonical gate
   it("TRIALING with no trialEndsAt is eligible (open trial)", () => {
     expect(isSubscriptionEntitlementEligible({ status: "TRIALING", trialEndsAt: null }, now)).toBe(true);
   });
-  it("PAST_DUE never grants (no grace yet)", () => {
-    expect(isSubscriptionEntitlementEligible({ status: "PAST_DUE", renewsAt: future }, now)).toBe(false);
+  it("PAST_DUE grants only within 3-day grace (RCCF-BILLING-06H)", () => {
+    // within grace: renewsAt future → still within 3-day window → entitled
+    expect(isSubscriptionEntitlementEligible({ status: "PAST_DUE", renewsAt: future }, now)).toBe(true);
+    // null renewsAt → never entitled (no indefinite grace)
     expect(isSubscriptionEntitlementEligible({ status: "PAST_DUE", renewsAt: null }, now)).toBe(false);
+    // outside grace: renewsAt past + 3 days < now → not entitled
+    expect(isSubscriptionEntitlementEligible({ status: "PAST_DUE", renewsAt: past }, now)).toBe(false);
   });
   it("CANCELLED never grants", () => {
     expect(isSubscriptionEntitlementEligible({ status: "CANCELLED", renewsAt: future }, now)).toBe(false);

@@ -1,5 +1,6 @@
 import type { BillingSubscription } from "./types";
 import type { SubscriptionStatus } from "./constants";
+import { RENEWAL_GRACE_DAYS } from "./constants";
 import { getPlan, getAllPlans } from "@/lib/capabilities";
 
 function getPlanFamily(code: string): "creator" | "agency" | "unknown" {
@@ -77,7 +78,7 @@ export function getTrialEndDate(startDate: Date, trialDays = 14): Date {
   return end;
 }
 
-export function getGracePeriodEndDate(renewalDate: Date, graceDays = 7): Date {
+export function getGracePeriodEndDate(renewalDate: Date, graceDays = RENEWAL_GRACE_DAYS): Date {
   const end = new Date(renewalDate);
   end.setDate(end.getDate() + graceDays);
   return end;
@@ -89,9 +90,11 @@ export function isInTrial(subscription: BillingSubscription): boolean {
   return new Date(subscription.trialEndsAt) > new Date();
 }
 
-export function isInGracePeriod(subscription: BillingSubscription, graceDays = 7): boolean {
+export function isInGracePeriod(subscription: BillingSubscription, graceDays = RENEWAL_GRACE_DAYS): boolean {
   if (subscription.status !== "PAST_DUE") return false;
-  if (!subscription.renewsAt) return true;
+  // RCCF-BILLING-06H — renewal grace is exactly RENEWAL_GRACE_DAYS; a missing
+  // renewsAt is NOT indefinite grace — it is outside grace (expired).
+  if (!subscription.renewsAt) return false;
   const graceEnd = getGracePeriodEndDate(new Date(subscription.renewsAt), graceDays);
   return new Date() <= graceEnd;
 }

@@ -30,3 +30,8 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 export const DEFAULT_CURRENCY = "INR";
+
+// RCCF-BILLING-06H — renewal grace for paid Creator subscriptions: exactly 3 days of
+// storefront grace after renewal failure (PAST_DUE). Explicit product constant —
+// never derived from RevenueConfiguration's 7-day default.
+export const RENEWAL_GRACE_DAYS = 3;

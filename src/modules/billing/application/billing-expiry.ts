@@ -1,0 +1,107 @@
+import { prisma } from "@/lib/prisma";
+import { validateTransition } from "@/modules/billing/domain/lifecycle";
+import { RENEWAL_GRACE_DAYS } from "@/lib/billing/constants";
+import { getGracePeriodEndDate } from "@/lib/billing/subscription-engine";
+import { captureError } from "@/lib/observability/error-tracker";
+
+/**
+ * RCCF-BILLING-06H — canonical billing expiry logic.
+ * Extracted so the cron route stays Next.js-type-clean and tests can import directly.
+ */
+export async function runBillingExpiry(now = new Date()) {
+  const pastDueSubs = await prisma.billingSubscription.findMany({
+    where: { status: "PAST_DUE" },
+    select: { id: true, workspaceId: true, accountId: true, renewsAt: true, status: true },
+  });
+
+  let expired = 0;
+  let skipped = 0;
+  const details: string[] = [];
+
+  for (const sub of pastDueSubs) {
+    const renewsAt = sub.renewsAt;
+    let graceExpired: boolean;
+    if (!renewsAt) {
+      graceExpired = true;
+    } else {
+      const graceEnd = getGracePeriodEndDate(new Date(renewsAt), RENEWAL_GRACE_DAYS);
+      graceExpired = now.getTime() > graceEnd.getTime();
+    }
+    if (!graceExpired) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      validateTransition(sub.status as never, "EXPIRED");
+    } catch {
+      skipped++;
+      continue;
+    }
+
+    const idempotencyKey = `billing_expiry_${sub.id}_${renewsAt ? new Date(renewsAt).toISOString().slice(0, 10) : "no_renews"}`;
+
+    const existingEvent = await prisma.billingEvent.findUnique({ where: { idempotencyKey } }).catch(() => null);
+    if (existingEvent) {
+      skipped++;
+      continue;
+    }
+
+    const fresh = await prisma.billingSubscription.findUnique({ where: { id: sub.id }, select: { status: true } });
+    if (!fresh || fresh.status !== "PAST_DUE") {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.billingSubscription.update({ where: { id: sub.id }, data: { status: "EXPIRED" } });
+        await tx.billingEvent.create({
+          data: {
+            workspaceId: sub.workspaceId,
+            accountId: sub.accountId,
+            type: "SUBSCRIPTION_EXPIRED",
+            idempotencyKey,
+            payload: {
+              previousStatus: "PAST_DUE",
+              newStatus: "EXPIRED",
+              renewsAt: renewsAt?.toISOString() ?? null,
+              reason: "grace_expired",
+              graceDays: RENEWAL_GRACE_DAYS,
+            },
+          },
+        });
+        if (sub.workspaceId) {
+          const ws = await tx.workspace.findUnique({ where: { id: sub.workspaceId }, select: { tenantId: true } });
+          if (ws?.tenantId) {
+            await tx.auditLog.create({
+              data: {
+                tenantId: ws.tenantId,
+                action: "billing:subscription-expired",
+                metadata: {
+                  workspaceId: sub.workspaceId,
+                  subscriptionId: sub.id,
+                  previousStatus: "PAST_DUE",
+                  newStatus: "EXPIRED",
+                  reason: "grace_expired",
+                },
+              },
+            });
+          }
+        }
+      });
+      expired++;
+      details.push(sub.id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("Unique constraint") || msg.includes("P2002") || msg.includes("idempotencyKey")) {
+        skipped++;
+      } else {
+        captureError(err, { service: "billing-expiry", operation: "expire" });
+        skipped++;
+      }
+    }
+  }
+
+  return { expired, skipped, details, totalPastDue: pastDueSubs.length };
+}
