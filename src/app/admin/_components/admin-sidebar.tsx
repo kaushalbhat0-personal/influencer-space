@@ -7,8 +7,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { type NavConfigWire, type NavGroupWire } from "@/config/admin-nav";
 import { resolveAdminNavIcon } from "@/config/admin-nav-icons";
-import { ChevronDown, ExternalLink, LogOut, X } from "lucide-react";
+import { ChevronDown, ExternalLink, LogOut, X, Building2, User } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
+import { useWorkspace } from "@/modules/workspace/presentation/context";
 
 interface AdminSidebarProps {
   open: boolean;
@@ -22,6 +23,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const asideRef = useRef<HTMLElement>(null);
+  const { workspace } = useWorkspace();
 
   const toggleGroup = useCallback((label: string) => {
     setCollapsed((prev) => {
@@ -139,6 +141,24 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
           </button>
         </div>
 
+        {/* Creator identity — restrained, reuses WorkspaceSwitcher avatar pattern; no new data */}
+        {workspace && (
+          <div className="flex items-center gap-3 border-b border-[var(--border)] bg-[var(--surface-subtle)]/50 px-4 py-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-hover)] border border-[var(--border)]">
+              {workspace.type === "AGENCY" ? (
+                <Building2 className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden />
+              ) : (
+                <User className="h-4 w-4 text-[var(--brand-primary)]" aria-hidden />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-[var(--text-primary)]">{workspace.name || workspace.slug}</p>
+              <p className="truncate platform-caption">{workspace.type === "AGENCY" ? "Agency workspace" : "Creator workspace"}</p>
+            </div>
+            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden title="Active" />
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {nav.groups.map((group, gi) => (
@@ -147,10 +167,10 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
                 <button
                   onClick={() => toggleGroup(group.label!)}
                   className={cn(
-                    "flex w-full items-center gap-1 rounded-[var(--radius-md)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest transition-colors",
+                    "flex w-full items-center gap-1 rounded-[var(--radius-md)] px-3 py-1.5 platform-section-label transition-colors",
                     isGroupActive(group)
                       ? "text-[var(--text-primary)]"
-                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                      : "hover:text-[var(--text-secondary)]"
                   )}
                   aria-expanded={!isGroupCollapsed(group)}
                 >

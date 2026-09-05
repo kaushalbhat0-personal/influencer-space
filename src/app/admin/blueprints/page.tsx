@@ -10,8 +10,8 @@ export default async function BlueprintsPage() {
   return (
     <div className="p-6 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Website Templates</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Choose a starting template for your website. Templates determine your page structure and sections.</p>
+        <h1 className="platform-display">Website Templates</h1>
+        <p className="platform-body mt-1.5">Choose a starting template for your website. Templates determine your page structure and sections.</p>
       </div>
       <BlueprintGalleryClient blueprints={blueprints} categories={categories} />
     </div>

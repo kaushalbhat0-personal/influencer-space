@@ -25,8 +25,8 @@ export default async function AdminMilestonesPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Milestones</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <h1 className="platform-display">Milestones</h1>
+        <p className="platform-body mt-1.5">
           Manage career milestones and achievements.
         </p>
       </div>

@@ -24,8 +24,8 @@ export function MessagesList({ messages }: { messages: ContactData[] }) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Messages</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Contact form submissions</p>
+          <h1 className="platform-display">Messages</h1>
+          <p className="platform-body mt-1.5">Contact form submissions</p>
         </div>
         {unreadCount > 0 && (
           <span className="admin-badge-cyan">{unreadCount} unread</span>

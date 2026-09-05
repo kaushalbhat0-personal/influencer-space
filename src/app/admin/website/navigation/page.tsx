@@ -33,8 +33,8 @@ export default async function WebsiteNavigationPage() {
   return (
     <div className="p-6 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Navigation</h1>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">Manage your website&apos;s navigation menu. Changes are saved immediately and included in the next publish.</p>
+        <h1 className="platform-display">Navigation</h1>
+        <p className="platform-body mt-1.5">Manage your website&apos;s navigation menu. Changes are saved immediately and included in the next publish.</p>
       </div>
       <NavigationManager initialItems={result.success ? result.data ?? [] : []} availablePages={pages} />
     </div>

@@ -125,7 +125,7 @@ function SidebarGroup({
       <button
         onClick={onToggle}
         className={cn(
-          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors",
+          "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 platform-section-label hover:text-[var(--text-secondary)] transition-colors",
           collapsed && "justify-center"
         )}
         aria-expanded={expanded}

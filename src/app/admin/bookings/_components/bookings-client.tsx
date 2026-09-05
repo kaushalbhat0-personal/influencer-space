@@ -63,8 +63,8 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
     <div className="p-6 max-w-6xl">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Bookings</h1>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">Manage your calendar-based bookings and appointments.</p>
+          <h1 className="platform-display">Bookings</h1>
+          <p className="platform-body mt-1.5">Manage your calendar-based bookings and appointments.</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="shrink-0 rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--primary-hover)]">{showForm ? "Cancel" : "New Booking"}</button>
       </div>

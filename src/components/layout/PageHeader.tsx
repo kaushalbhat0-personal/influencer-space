@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 export interface PageHeaderProps {
   title: string;
   description?: string;
+  kicker?: string;
   breadcrumbs?: BreadcrumbItem[];
   actions?: ReactNode;
   status?: { label: string; variant?: "success" | "warning" | "danger" | "default" };
@@ -13,7 +14,7 @@ export interface PageHeaderProps {
   className?: string;
 }
 
-export function PageHeader({ title, description, breadcrumbs, actions, status, tabs, className }: PageHeaderProps) {
+export function PageHeader({ title, description, kicker, breadcrumbs, actions, status, tabs, className }: PageHeaderProps) {
   return (
     <div className={cn("mb-8", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -23,8 +24,9 @@ export function PageHeader({ title, description, breadcrumbs, actions, status, t
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1 min-w-0">
+          {kicker && <p className="platform-section-label mb-1.5">{kicker}</p>}
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-white truncate">{title}</h1>
+            <h1 className="platform-display truncate">{title}</h1>
             {status && (
               <span
                 className={cn(
@@ -39,7 +41,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, status, t
               </span>
             )}
           </div>
-          {description && <p className="mt-1 text-sm text-[var(--text-secondary)]">{description}</p>}
+          {description && <p className="platform-body mt-1.5">{description}</p>}
         </div>
         {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
       </div>

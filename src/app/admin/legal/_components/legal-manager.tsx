@@ -30,8 +30,8 @@ export function LegalManager({ initial }: { initial: Record<LegalPageKey, { titl
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Legal</h1>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">Your website includes standard legal pages to help you get started. These are general templates and should be reviewed and customized for your business and local requirements.</p>
+        <h1 className="platform-display">Legal</h1>
+        <p className="platform-body mt-1.5">Your website includes standard legal pages to help you get started. These are general templates and should be reviewed and customized for your business and local requirements.</p>
       </div>
       {PAGES.map((p) => (
         <GlassCard key={p.key} className="p-6">

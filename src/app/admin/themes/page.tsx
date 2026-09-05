@@ -34,8 +34,8 @@ export default async function ThemesPage() {
   return (
     <div className="p-6 max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-[var(--text-primary)] text-2xl font-bold font-display">Theme Marketplace</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <h1 className="platform-display">Theme Marketplace</h1>
+        <p className="platform-body mt-1.5">
           Browse professionally designed themes and open them in the Builder. The Builder is the only place themes are applied and published.
         </p>
       </div>

@@ -166,7 +166,7 @@ export function FAQManager({ initialData }: FAQManagerProps) {
           <div className="absolute inset-0 bg-[var(--surface-overlay)]/20 backdrop-blur-sm" onClick={() => !isDeleting && setConfirmDelete(null)} />
           <div className="relative admin-card p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">Delete &quot;{confirmDelete.question}&quot;?</h3>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">This will permanently delete the FAQ. This cannot be undone.</p>
+            <p className="platform-body mt-1.5">This will permanently delete the FAQ. This cannot be undone.</p>
             {deleteError && <p className="mt-3 text-xs text-red-600" role="alert">{deleteError}</p>}
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setConfirmDelete(null)} disabled={isDeleting} className="btn-secondary text-sm disabled:opacity-50">Cancel</button>
