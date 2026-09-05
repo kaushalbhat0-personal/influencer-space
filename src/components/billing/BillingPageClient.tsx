@@ -69,7 +69,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     void refresh();
   }, [refresh]);
 
-  async function openSubscriptionCheckout(checkout: { subscriptionId?: string; keyId?: string; orderId?: string }) {
+  async function openSubscriptionCheckout(checkout: { subscriptionId: string; keyId: string }) {
     if (!checkout.subscriptionId || !checkout.keyId) {
       setError("Checkout could not be initialized — please retry or contact support.");
       return;
@@ -94,7 +94,45 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rzp = new (window as any).Razorpay(options);
-      // Payment failure is webhook-authoritative, but surface a creator-friendly hint if Razorpay fires the event
+      if (rzp && typeof rzp.on === "function") {
+        rzp.on("payment.failed", () => {
+          setError("Payment failed — no changes made. Please check your card and retry, or try a different payment method.");
+          setLoading(null);
+        });
+      }
+      rzp.open();
+    } catch {
+      setError("Checkout could not be opened. Please refresh and retry.");
+      setLoading(null);
+    }
+  }
+
+  // RCCF-BILLING-07C — one-time Partner checkout (order_id, never subscription_id)
+  async function openOrderCheckout(checkout: { orderId: string; keyId: string }) {
+    if (!checkout.orderId || !checkout.keyId) {
+      setError("Checkout could not be initialized — please retry or contact support.");
+      return;
+    }
+    await loadRazorpayScript();
+    const options: Record<string, unknown> = {
+      key: checkout.keyId,
+      order_id: checkout.orderId,
+      name: "CreatorStore",
+      description: "One-time purchase — secure payment via Razorpay",
+      handler: () => {
+        showNotification("Payment successful — your purchase will be confirmed shortly. You do not need to retry.");
+        void refresh();
+      },
+      modal: {
+        ondismiss: () => {
+          setError("Checkout closed — no changes made. You can retry anytime.");
+          setLoading(null);
+        },
+      },
+    };
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rzp = new (window as any).Razorpay(options);
       if (rzp && typeof rzp.on === "function") {
         rzp.on("payment.failed", () => {
           setError("Payment failed — no changes made. Please check your card and retry, or try a different payment method.");
@@ -114,19 +152,16 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     try {
       const result = await changePlanAction(workspaceId, tenantId, target);
       if (result.success) {
-        if (result.checkout?.subscriptionId) {
-          await openSubscriptionCheckout(result.checkout);
-        } else if (result.checkout?.orderId) {
-          // One-time partner plans use order checkout — same modal path but order_id
-          await openSubscriptionCheckout(result.checkout as unknown as { subscriptionId?: string; keyId?: string });
-          // Fallback: if provider returned only order (should not happen for Creator), treat as success after refresh
-          if (!result.checkout?.subscriptionId) {
-            showNotification("Checkout ready — please complete payment. Your current plan stays active until payment succeeds.");
-          }
-        } else {
+        if (result.checkout?.subscriptionId && result.checkout?.keyId) {
+          await openSubscriptionCheckout({ subscriptionId: result.checkout.subscriptionId, keyId: result.checkout.keyId });
+        } else if (result.checkout?.orderId && result.checkout?.keyId) {
+          await openOrderCheckout({ orderId: result.checkout.orderId, keyId: result.checkout.keyId });
+        } else if (!result.checkout?.subscriptionId && !result.checkout?.orderId) {
           // Free downgrade (Launch) — no Razorpay, already active
           showNotification("Plan updated — your new plan is now active.");
           await refresh();
+        } else {
+          setError("Checkout could not be initialized — please retry or contact support.");
         }
       } else {
         setError(result.error ?? "Upgrade failed — please check your plan and retry. Your current plan is still active.");
@@ -143,8 +178,10 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     try {
       const result = await changePlanAction(workspaceId, tenantId, target);
       if (result.success) {
-        if (result.checkout?.subscriptionId) {
-          await openSubscriptionCheckout(result.checkout);
+        if (result.checkout?.subscriptionId && result.checkout?.keyId) {
+          await openSubscriptionCheckout({ subscriptionId: result.checkout.subscriptionId, keyId: result.checkout.keyId });
+        } else if (result.checkout?.orderId && result.checkout?.keyId) {
+          await openOrderCheckout({ orderId: result.checkout.orderId, keyId: result.checkout.keyId });
         } else {
           // Free Launch downgrade — no payment, immediate activation (webhook not needed)
           showNotification(target === "creator_launch" ? "Downgraded to Creator Launch — free plan is now active. No payment required." : "Plan updated — your new plan is now active.");
@@ -198,7 +235,13 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     try {
       const result = await retryPaymentAction(workspaceId, tenantId, planCode);
       if (result.success && result.checkout) {
-        await openSubscriptionCheckout(result.checkout);
+        if (result.checkout.subscriptionId && result.checkout.keyId) {
+          await openSubscriptionCheckout({ subscriptionId: result.checkout.subscriptionId, keyId: result.checkout.keyId });
+        } else if (result.checkout.orderId && result.checkout.keyId) {
+          await openOrderCheckout({ orderId: result.checkout.orderId, keyId: result.checkout.keyId });
+        } else {
+          setError(result.error ?? "Retry failed — please retry or contact support.");
+        }
       } else {
         setError(result.error ?? "Retry failed");
       }

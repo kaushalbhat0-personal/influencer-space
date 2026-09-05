@@ -210,22 +210,32 @@ export function SubscriptionManager({
                 </span>
               );
             }
-            // 06E: Launch is 15-day trial — never present as downgrade for paid creators
+            // 06E/07C: Launch is a 15-day signup trial — not a downgrade target for paid creators.
+            // Render as disabled informational state, not a hidden/misleading CTA.
             if (plan.code === "creator_launch" && currentPlan.code !== "creator_launch") {
-              return null;
+              return (
+                <span
+                  key={plan.code}
+                  data-testid="cta-launch-disabled"
+                  aria-disabled="true"
+                  title="Creator Launch is a 15-day free trial at signup — not a permanent free plan and not available as a downgrade. To leave a paid plan, cancel or contact support."
+                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/15 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)]"
+                >
+                  <span aria-hidden="true">⊘</span> Creator Launch — 15-day trial only
+                </span>
+              );
             }
 
-            // Capability-based classification — never price-ordered.
+            // RCCF-BILLING-07C — capability-only classification; price is never a fallback.
             const cmp = capabilityEngine.comparePlans(currentPlan.code, plan.code);
             const rev = capabilityEngine.comparePlans(plan.code, currentPlan.code);
             const hasTrueUpgrade = cmp ? (cmp.addedFeatures.length > 0 || cmp.upgradedLimits.some((l) => (l as {to:number;from:number}).to === -1 || ((l as {to:number;from:number}).from !== -1 && (l as {to:number;from:number}).to > (l as {to:number;from:number}).from))) : false;
             const hasTrueReverse = rev ? (rev.addedFeatures.length > 0 || rev.upgradedLimits.some((l) => (l as {to:number;from:number}).to === -1 || ((l as {to:number;from:number}).from !== -1 && (l as {to:number;from:number}).to > (l as {to:number;from:number}).from))) : false;
             const isUpgrade = hasTrueUpgrade;
             const isDowngrade = !isUpgrade && hasTrueReverse;
-            const isDowngradeFallback = !isUpgrade && !isDowngrade && plan.price < currentPlan.price;
+            const isNeutral = !isUpgrade && !isDowngrade;
 
-            const label = isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`;
-            const isDowngradeFinal = isDowngrade || isDowngradeFallback;
+            const label = isUpgrade ? `Upgrade to ${plan.name}` : isDowngrade ? `Downgrade to ${plan.name}` : `Switch to ${plan.name}`;
             const capDiff = cmp ? cmp.addedFeatures.length : 0;
 
             return (
@@ -233,12 +243,17 @@ export function SubscriptionManager({
                 key={plan.code}
                 size="sm"
                 variant={isUpgrade ? "default" : "outline"}
-                onClick={() => isUpgrade ? onUpgrade(plan.code) : onDowngrade(plan.code)}
+                onClick={() => {
+                  if (isUpgrade) onUpgrade(plan.code);
+                  else if (isDowngrade) onDowngrade(plan.code);
+                  else onUpgrade(plan.code);
+                }}
                 disabled={loading}
-                aria-label={`${isUpgrade ? "Upgrade" : "Downgrade"} to ${plan.name} plan — ${isUpgrade ? `${capDiff} new capabilities` : isDowngradeFinal ? "fewer capabilities, lower price" : "switch plan"}`}
-                title={isUpgrade ? `Unlock ${capDiff} new capabilities` : isDowngradeFinal ? `Move to ${plan.name} — fewer capabilities, lower price` : label}
+                aria-label={`${isUpgrade ? "Upgrade" : isDowngrade ? "Downgrade" : "Switch"} to ${plan.name} plan — ${isUpgrade ? `${capDiff} new capabilities` : isDowngrade ? "fewer capabilities" : "capability-neutral switch"}`}
+                title={isUpgrade ? `Unlock ${capDiff} new capabilities` : isDowngrade ? `Move to ${plan.name} — fewer capabilities` : label}
+                data-testid={isUpgrade ? `cta-upgrade-${plan.code}` : isDowngrade ? `cta-downgrade-${plan.code}` : `cta-switch-${plan.code}`}
               >
-                {isUpgrade ? <ArrowUp className="h-3.5 w-3.5 mr-1" /> : <ArrowDown className="h-3.5 w-3.5 mr-1" />}
+                {isUpgrade ? <ArrowUp className="h-3.5 w-3.5 mr-1" /> : isDowngrade ? <ArrowDown className="h-3.5 w-3.5 mr-1" /> : null}
                 {label}
               </Button>
             );
