@@ -78,6 +78,18 @@
   --font-platform-display: var(--font-geist-sans), Inter, system-ui, sans-serif;
   --font-platform-body: Inter, system-ui, sans-serif;
   --font-platform-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
+  /* Content density — comfortable default (compact/spacious via html[data-density]) */
+  --admin-card-px: 1.5rem;
+  --admin-card-py: 1.25rem;
+  --admin-card-header-px: 1.5rem;
+  --admin-card-header-py: 1rem;
+  --admin-table-th-px: 1rem;
+  --admin-table-th-py: 0.75rem;
+  --admin-table-td-px: 1rem;
+  --admin-table-td-py: 1rem;
+  --admin-table-toolbar-py: 0.75rem;
+  --admin-gap: 1.5rem;
+  --admin-empty-py: 4rem;
 }
 
 /* ── LIGHT THEME TOKENS — intentionally designed, not inverted dark ─────
@@ -129,6 +141,45 @@ html[data-theme="light"] {
   --shadow-overlay: 0 8px 24px rgba(15, 23, 42, 0.12), 0 16px 48px rgba(15, 23, 42, 0.10);
   --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 3px #6366F1;
   --focus-ring-offset: #FFFFFF;
+}
+
+/* ── CONTENT DENSITY (RCCF-VISUAL-05D) ───────────────────────────────
+   Wires the existing comfortable/compact/spacious setting (Website.themeConfig.layoutDensity)
+   into admin tables/cards via html[data-density]. Comfortable is :root default.
+   Compact reduces table/card padding for high-volume content; spacious adds breathing room.
+   Mobile guard: compact does not collapse below comfortable touch at 390. */
+html[data-density="compact"] {
+  --admin-card-px: 1rem;
+  --admin-card-py: 0.75rem;
+  --admin-card-header-px: 1rem;
+  --admin-card-header-py: 0.625rem;
+  --admin-table-th-px: 0.75rem;
+  --admin-table-th-py: 0.5rem;
+  --admin-table-td-px: 0.75rem;
+  --admin-table-td-py: 0.625rem;
+  --admin-table-toolbar-py: 0.5rem;
+  --admin-gap: 1rem;
+  --admin-empty-py: 2.5rem;
+}
+html[data-density="spacious"] {
+  --admin-card-px: 2rem;
+  --admin-card-py: 2rem;
+  --admin-card-header-px: 2rem;
+  --admin-card-header-py: 1.25rem;
+  --admin-table-th-px: 1.25rem;
+  --admin-table-th-py: 1rem;
+  --admin-table-td-px: 1.25rem;
+  --admin-table-td-py: 1.25rem;
+  --admin-table-toolbar-py: 1rem;
+  --admin-gap: 2rem;
+  --admin-empty-py: 5rem;
+}
+@media (max-width: 640px) {
+  html[data-density="compact"] {
+    --admin-card-py: 1rem;
+    --admin-table-td-py: 0.875rem;
+    --admin-table-th-py: 0.625rem;
+  }
 }
 
 /* ── ACCESSIBILITY ──────────────────────────────────────────────────── */
@@ -449,14 +500,16 @@ body {
   }
 
   .admin-table th {
-    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+    @apply text-left text-xs font-semibold uppercase tracking-wider;
+    padding: var(--admin-table-th-py) var(--admin-table-th-px);
     background: var(--surface-hover);
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border);
   }
 
   .admin-table td {
-    @apply px-4 py-4 text-sm;
+    @apply text-sm;
+    padding: var(--admin-table-td-py) var(--admin-table-td-px);
     border-top: 1px solid var(--border-subtle);
     color: var(--text-secondary);
   }

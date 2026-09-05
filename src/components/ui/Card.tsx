@@ -19,7 +19,7 @@ export function Card({
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("border-b border-[var(--border-subtle)] px-6 py-4", className)} {...props} />;
+  return <div className={cn("border-b border-[var(--border-subtle)] px-[var(--admin-card-header-px)] py-[var(--admin-card-header-py)]", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
@@ -32,13 +32,13 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-6 py-5", className)} {...props} />;
+  return <div className={cn("px-[var(--admin-card-px)] py-[var(--admin-card-py)]", className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("border-t border-[var(--border-subtle)] px-6 py-4", className)}
+      className={cn("border-t border-[var(--border-subtle)] px-[var(--admin-card-header-px)] py-[var(--admin-card-header-py)]", className)}
       {...props}
     />
   );

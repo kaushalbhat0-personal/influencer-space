@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { updateTheme } from "@/actions/theme.actions";
 import { PreviewShell } from "@/components/admin/PreviewShell";
 import type { ThemeOverrides } from "@/components/admin/PreviewShell";
+import { setDensityAttribute } from "@/components/layout/DensityProvider";
 
 const COLOR_PRESETS = [
   { label: "Cyan", primary: "#00f5ff", secondary: "#00f5ff", accent: "#06b6d4" },
@@ -51,10 +52,16 @@ export function AppearanceManager({
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
 
+  // Keep admin density in sync with preview + live admin shells
+  useEffect(() => {
+    setDensityAttribute(theme.layoutDensity);
+  }, [theme.layoutDensity]);
+
   function applyChange(partial: Partial<ThemeState>) {
     const updated = { ...theme, ...partial };
     setTheme(updated);
     setSaved(false);
+    if (partial.layoutDensity) setDensityAttribute(partial.layoutDensity as "compact" | "comfortable" | "spacious");
 
     startTransition(async () => {
       await updateTheme(tenantId, partial);

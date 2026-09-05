@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createBooking, approveBooking, cancelBooking, getBookingSlots } from "@/actions/booking.actions";
 import { formatCurrency } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 interface Booking {
   id: string;
@@ -93,24 +94,24 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
         </div>
       )}
 
-      <div className="rounded-xl border border-white/10 bg-zinc-900/50">
+      <div className="platform-card-secondary overflow-hidden">
         {bookings.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[var(--text-muted)]">No bookings yet. Create your first booking to start accepting appointments.</div>
+          <div className="px-[var(--admin-card-px)] py-[var(--admin-empty-py)] text-center"><EmptyState variant="contextual" title="No bookings yet" description="Create your first booking to start accepting appointments." action={<button onClick={() => setShowForm(true)} className="btn-primary text-xs">New Booking</button>} /></div>
         ) : (
           <>
             {/* Desktop — tabular layout preserved exactly */}
             <table className="hidden w-full text-xs md:table">
-              <thead><tr className="border-b border-white/5 text-[var(--text-muted)]"><th className="px-4 py-3 text-left">Date</th><th className="px-4 py-3 text-left">Time</th><th className="px-4 py-3 text-left">Title</th><th className="px-4 py-3 text-left">Customer</th><th className="px-4 py-3 text-left">Price</th><th className="px-4 py-3 text-left">Status</th><th className="px-4 py-3 text-left">Actions</th></tr></thead>
+              <thead><tr className="border-b border-white/5 text-[var(--text-muted)]"><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Date</th><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Time</th><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Title</th><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Customer</th><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Price</th><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Status</th><th className="px-[var(--admin-table-th-px)] py-[var(--admin-table-th-py)] text-left">Actions</th></tr></thead>
               <tbody>
                 {bookings.map((b) => (
                   <tr key={b.id} className="border-b border-white/5 text-[var(--text-primary)] hover:bg-white/[0.02]">
-                    <td className="px-4 py-3">{new Date(b.slotDate).toLocaleDateString()}</td>
-                    <td className="px-4 py-3">{b.slotStart} - {b.slotEnd}</td>
-                    <td className="px-4 py-3 font-medium">{b.title}{b.offering ? <span className="ml-2 rounded bg-[var(--color-info-surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-info)] border border-[var(--color-info-border)]">Service</span> : null}</td>
-                    <td className="px-4 py-3">{b.customerName || "—"}{b.customerEmail ? ` · ${b.customerEmail}` : ""}</td>
-                    <td className="px-4 py-3">{formatCurrency(b.price)}</td>
-                    <td className="px-4 py-3"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[b.status] ?? ""}`}>{b.status}</span></td>
-                    <td className="px-4 py-3">
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)]">{new Date(b.slotDate).toLocaleDateString()}</td>
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)]">{b.slotStart} - {b.slotEnd}</td>
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)] font-medium">{b.title}{b.offering ? <span className="ml-2 rounded bg-[var(--color-info-surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-info)] border border-[var(--color-info-border)]">Service</span> : null}</td>
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)]">{b.customerName || "—"}{b.customerEmail ? ` · ${b.customerEmail}` : ""}</td>
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)]">{formatCurrency(b.price)}</td>
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)]"><span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[b.status] ?? ""}`}>{b.status}</span></td>
+                    <td className="px-[var(--admin-table-td-px)] py-[var(--admin-table-td-py)]">
                       <BookingActions b={b} onApprove={handleApprove} onCancel={handleCancel} />
                     </td>
                   </tr>
@@ -121,7 +122,7 @@ export function BookingsClient({ initialBookings, tenantId }: { initialBookings:
             {/* Mobile — readable cards, every field preserved, touch actions */}
             <div className="divide-y divide-white/5 md:hidden">
               {bookings.map((b) => (
-                <div key={b.id} className="p-4">
+                <div key={b.id} className="px-[var(--admin-card-px)] py-[var(--admin-card-py)]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, Search, ExternalLink, Layout } from "lucide-react";
@@ -18,14 +18,21 @@ export function AdminLayoutClient({
   siteUrl,
   publishStatus = "draft",
   nav,
+  density = "comfortable",
 }: {
   children: React.ReactNode;
   siteUrl: string;
   publishStatus?: PublishStatusValue;
   nav: NavConfigWire;
+  density?: "compact" | "comfortable" | "spacious";
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+
+  // RCCF-VISUAL-05D: wire layoutDensity -> html[data-density] for admin density system
+  useEffect(() => {
+    document.documentElement.dataset.density = density;
+  }, [density]);
 
   const isLoginPage = pathname === "/admin/login";
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);

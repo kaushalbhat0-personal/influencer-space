@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export interface Column<T> {
   key: string;
@@ -77,8 +78,8 @@ export function DataTable<T>({
 
   if (loading) {
     return (
-      <div className={cn("admin-card overflow-hidden", className)}>
-        <div className="p-4 space-y-3">
+      <div className={cn("platform-card-secondary overflow-hidden", className)}>
+        <div className="px-[var(--admin-card-px)] py-[var(--admin-card-py)] space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="h-10 rounded bg-white/5 animate-pulse" />
           ))}
@@ -89,16 +90,20 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className={cn("admin-card p-12 text-center", className)}>
-        <p className="text-[var(--text-muted)] text-sm">{emptyMessage}</p>
+      <div className={cn("overflow-hidden", className)}>
+        <EmptyState
+          variant="contextual"
+          title={emptyMessage}
+          description="Get started by adding your first item — your content will appear here."
+        />
       </div>
     );
   }
 
   return (
-    <div className={cn("admin-card overflow-hidden", className)}>
+    <div className={cn("platform-card-secondary overflow-hidden", className)}>
       {searchable && (
-        <div className="border-b border-white/10 px-4 py-3">
+        <div className="border-b border-white/10 px-[var(--admin-table-th-px)] py-[var(--admin-table-toolbar-py)]">
           <input
             type="text"
             value={search}
@@ -138,27 +143,45 @@ export function DataTable<T>({
             </tr>
           </thead>
           <tbody>
-            {paged.map((row, i) => (
-              <tr
-                key={i}
-                className={cn(onRowClick && "cursor-pointer")}
-                onClick={() => onRowClick?.(row)}
-                tabIndex={onRowClick ? 0 : undefined}
-                onKeyDown={(e) => { if (e.key === "Enter" && onRowClick) onRowClick(row); }}
-              >
-                {columns.map((col) => (
-                  <td key={col.key} className={col.className}>
-                    {col.cell(row)}
-                  </td>
-                ))}
+            {paged.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="py-8 text-center px-[var(--admin-table-td-px)]">
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {search ? `No results match “${search}”. Try a different search or clear the filter.` : emptyMessage}
+                  </p>
+                  {search && (
+                    <button
+                      onClick={() => { setSearch(""); setPage(1); }}
+                      className="btn-ghost mt-3 text-xs"
+                    >
+                      Clear filter
+                    </button>
+                  )}
+                </td>
               </tr>
-            ))}
+            ) : (
+              paged.map((row, i) => (
+                <tr
+                  key={i}
+                  className={cn(onRowClick && "cursor-pointer")}
+                  onClick={() => onRowClick?.(row)}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={(e) => { if (e.key === "Enter" && onRowClick) onRowClick(row); }}
+                >
+                  {columns.map((col) => (
+                    <td key={col.key} className={col.className}>
+                      {col.cell(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between border-t border-white/10 px-[var(--admin-table-th-px)] py-[var(--admin-table-toolbar-py)]">
           <p className="text-xs text-[var(--text-muted)]">
             Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sorted.length)} of {sorted.length}
           </p>

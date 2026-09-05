@@ -36,6 +36,7 @@ export default async function AdminLayout({
   // iconKey strings, and the client resolves icons via its own registry.
   const visibleNav = toNavWire(filterNavForPlan(ADMIN_NAV, planCode));
 
+  let density: "compact" | "comfortable" | "spacious" = "comfortable";
   if (tenantId) {
     const [tenant, website] = await Promise.all([
       prisma.tenant.findUnique({
@@ -46,9 +47,12 @@ export default async function AdminLayout({
         where: { tenantId },
         select: {
           publishStatus: { select: { state: true, liveVersion: true } },
+          themeConfig: true,
         },
       }),
     ]);
+    const cfg = (website?.themeConfig ?? {}) as Record<string, string>;
+    if (cfg.layoutDensity === "compact" || cfg.layoutDensity === "spacious") density = cfg.layoutDensity as typeof density;
 
     if (tenant) {
       siteUrl = buildSiteUrlForAdmin(tenant.customDomain, tenant.subdomain);
@@ -64,7 +68,7 @@ export default async function AdminLayout({
 
   return (
     <>
-      <AdminLayoutClient siteUrl={siteUrl} publishStatus={publishStatus} nav={visibleNav}>{children}</AdminLayoutClient>
+      <AdminLayoutClient siteUrl={siteUrl} publishStatus={publishStatus} nav={visibleNav} density={density}>{children}</AdminLayoutClient>
       <GuidanceShell audience="creator" helpContext="Dashboard" />
     </>
   );
