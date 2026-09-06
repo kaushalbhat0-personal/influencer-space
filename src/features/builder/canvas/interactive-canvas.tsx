@@ -431,7 +431,7 @@ export function InteractiveCanvas({
                           !isSelected && "hover:ring-1 hover:ring-white/10"
                         )}
                       >
-                        {/* RCCF-VISUAL-01G — obvious inline Edit for section heading */}
+                        {/* RCCF-VISUAL-01G — obvious inline Edit for section heading — 02B: responsive offset + max-w to avoid hero/media overlap at 375 */}
                         <button
                           type="button"
                           aria-label={`Edit ${section.moduleId} heading`}
@@ -446,11 +446,11 @@ export function InteractiveCanvas({
                               input?.scrollIntoView({ behavior: "smooth", block: "center" });
                             }, 120);
                           }}
-                          className="absolute right-2 top-2 z-10 inline-flex h-7 items-center gap-1 rounded-full border border-[rgba(99,102,241,0.35)] bg-[var(--surface-card,#18181B)] px-2.5 py-1 text-xs font-medium text-[var(--brand-primary,#6366F1)] shadow-sm transition-colors hover:bg-[var(--brand-primary,#6366F1)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] opacity-90 hover:opacity-100"
+                          className="absolute right-2 top-2 sm:right-3 sm:top-3 z-10 inline-flex h-6 sm:h-7 max-w-[60%] sm:max-w-none items-center gap-1 truncate rounded-full border border-[rgba(99,102,241,0.35)] bg-[var(--surface-card,#18181B)] px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium text-[var(--brand-primary,#6366F1)] shadow-sm transition-colors hover:bg-[var(--brand-primary,#6366F1)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] opacity-90 hover:opacity-100"
                           data-testid={`edit-section-${slotId}`}
                         >
-                          <Pencil className="h-3 w-3" />
-                          Edit
+                          <Pencil className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Edit</span>
                         </button>
                         <ComponentErrorBoundary componentId={section.moduleId}>
                           <ComponentRenderer
@@ -506,11 +506,11 @@ export function InteractiveCanvas({
                               input?.select();
                             }, 120);
                           }}
-                          className="absolute right-2 top-2 z-10 inline-flex h-7 items-center gap-1 rounded-full border border-[rgba(99,102,241,0.35)] bg-[var(--surface-card,#18181B)] px-2.5 py-1 text-xs font-medium text-[var(--brand-primary,#6366F1)] shadow-sm transition-colors hover:bg-[var(--brand-primary,#6366F1)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] opacity-90"
+                          className="absolute right-2 top-2 sm:right-3 sm:top-3 z-10 inline-flex h-6 sm:h-7 max-w-[60%] sm:max-w-none items-center gap-1 truncate rounded-full border border-[rgba(99,102,241,0.35)] bg-[var(--surface-card,#18181B)] px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-medium text-[var(--brand-primary,#6366F1)] shadow-sm transition-colors hover:bg-[var(--brand-primary,#6366F1)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] opacity-90"
                           data-testid={`edit-section-${slotId}`}
                         >
-                          <Pencil className="h-3 w-3" />
-                          Edit
+                          <Pencil className="h-3 w-3 shrink-0" />
+                          <span className="truncate">Edit</span>
                         </button>
                         <ComponentErrorBoundary componentId={section.moduleId}>
                           <ComponentRenderer

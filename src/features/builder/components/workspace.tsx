@@ -577,8 +577,8 @@ export function BuilderWorkspace() {
         />
       </BuilderMobilePanel>
 
-      {/* Status bar — 06B unified save status; h-11 at 390 for 44px touch, h-8 at sm+ */}
-      <div className="flex h-11 sm:h-8 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 text-[10px] text-zinc-600 shrink-0">
+      {/* Status bar — 06B unified save status; h-11 at 390 for 44px touch, h-8 at sm+ — 02B: lifted to zinc-400 for 10px AA */}
+      <div className="flex h-11 sm:h-8 items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--surface-base)] px-3 text-[10px] text-zinc-400 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <span
             role="status"
@@ -596,7 +596,7 @@ export function BuilderWorkspace() {
           {statusMsg && <span className={cn("truncate", statusMsg === "Changes saved" || statusMsg === "Saved" || statusMsg === "All changes saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-zinc-600 hidden md:inline" title="Changes are saved locally until you publish">Draft</span>
+          <span className="text-zinc-400 hidden md:inline" title="Changes are saved locally until you publish">Draft</span>
           <span className="text-zinc-800 hidden md:inline">|</span>
           <button
             onClick={handleSaveDraft}

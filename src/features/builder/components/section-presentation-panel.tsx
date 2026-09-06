@@ -50,8 +50,8 @@ export function SectionPresentationPanel() {
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">Section Presentation</p>
-          <p className="mt-0.5 truncate text-[10px] text-zinc-500">{moduleId}</p>
+          <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Section Presentation</p>
+          <p className="mt-0.5 truncate text-[10px] text-zinc-400">{moduleId}</p>
         </div>
         <button
           type="button"
@@ -92,7 +92,7 @@ export function SectionPresentationPanel() {
           <input type="checkbox" checked={p.hideWhenEmpty ?? true} onChange={(e) => set({ hideWhenEmpty: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-zinc-900 accent-[var(--brand-primary)]" />
         </label>
       </div>
-      <p className="mt-2 text-[10px] text-zinc-600">Changes preview live in the canvas and appear after you publish. They never affect how your store is analysed.</p>
+      <p className="mt-2 text-[10px] text-zinc-400">Changes preview live in the canvas and appear after you publish. They never affect how your store is analysed.</p>
     </div>
     </>
   );

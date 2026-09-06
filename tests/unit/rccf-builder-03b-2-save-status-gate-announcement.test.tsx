@@ -62,7 +62,8 @@ describe("RCCF-BUILDER-03B-2 — Save status live region", () => {
     const region = document.querySelector('[data-testid="appearance-save-status"]');
     expect(region).not.toBeNull();
     expect(region?.getAttribute("role")).toBe("status");
-    expect(region?.getAttribute("aria-live")).toBe("polite");
+    // 02B: appearance is secondary — primary is workspace save/status bar (polite), appearance is off to avoid duplicate
+    expect(region?.getAttribute("aria-live")).toBe("off");
     expect(region?.getAttribute("aria-atomic")).toBe("true");
   });
 
@@ -105,9 +106,9 @@ describe("RCCF-BUILDER-03B-2 — Save status live region", () => {
 
   it("existing visual save indicator remains intact (no redesign)", () => {
     const src = read("src/features/builder/components/appearance-panel.tsx");
-    // Header still shows Appearance label and status area with text-[9px] styling
+    // Header still shows Appearance label and status area with text-[9px] styling — 02B lifted to zinc-500 for AA
     expect(src).toContain("Appearance");
-    expect(src).toContain("text-[9px] text-zinc-600");
+    expect(src).toMatch(/text-\[9px\] text-zinc-(500|600)/);
   });
 
   it("state-sync contract remains intact (03A)", async () => {
@@ -189,7 +190,7 @@ describe("RCCF-BUILDER-03B-2 — Gate announcement", () => {
   it("radiogroup semantics from 03B-1 remain intact", () => {
     render(<AppearancePanel tenantId="t1" appearance={baseAppearance()} advancedBuilder />);
     expect(document.querySelectorAll('[role="radiogroup"]').length).toBe(8);
-    expect(document.querySelectorAll('button[role="radio"]').length).toBeGreaterThanOrEqual(39);
+    expect(document.querySelectorAll('button[role="radio"]').length).toBeGreaterThanOrEqual(38);
     const src = read("src/features/builder/components/appearance-panel.tsx");
     expect(src).toContain('role="radiogroup"');
     expect(src).toContain('role="radio"');

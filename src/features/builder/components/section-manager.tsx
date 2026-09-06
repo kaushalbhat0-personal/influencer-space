@@ -165,7 +165,7 @@ function SectionCard({
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className={cn(
               "flex items-center gap-0.5 text-[9px]",
-              section.visible ? "text-emerald-400/80" : "text-zinc-600"
+              section.visible ? "text-emerald-400/80" : "text-zinc-400"
             )}>
               {section.visible ? <Eye className="h-2.5 w-2.5" /> : <EyeOff className="h-2.5 w-2.5" />}
               {section.visible ? "Visible" : "Hidden"}
@@ -356,13 +356,13 @@ export function SectionManager({
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[var(--text-muted)]">
               <Layout className="h-5 w-5" />
             </div>
-            <p className="text-xs text-zinc-600">No sections yet.<br />Add one below.</p>
+            <p className="text-xs text-zinc-400">No sections yet.<br />Add one below.</p>
           </div>
         </div>
       )}
 
       <div className="border-t border-white/5 p-2">
-        <p className="text-[9px] font-medium text-zinc-600 uppercase mb-1.5 px-1">Add Section</p>
+        <p className="text-[9px] font-medium text-zinc-400 uppercase mb-1.5 px-1">Add Section</p>
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-1">
           {DEFAULT_SECTIONS.map((entry) => {
             const Icon = getIcon(entry.name);

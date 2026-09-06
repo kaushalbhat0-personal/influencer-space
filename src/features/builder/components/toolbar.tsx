@@ -64,7 +64,7 @@ export function BuilderToolbar({
           </Link>
           <span className="truncate text-xs text-zinc-300 font-medium max-w-[90px] sm:max-w-none">{creatorName}</span>
           <span className="hidden lg:inline h-4 w-px bg-white/10 shrink-0" />
-          <span className="hidden lg:inline truncate text-[11px] text-zinc-600">{themeName ?? "No theme"}</span>
+          <span className="hidden lg:inline truncate text-[11px] text-zinc-400">{themeName ?? "No theme"}</span>
           {/* Compact device segmented control — visible at <md, hidden at md+ where Row 2 shows it */}
           <div className="flex items-center gap-0.5 rounded-[var(--radius-control)] bg-zinc-800/50 p-0.5 md:hidden">
             {devices.map((d) => (
@@ -146,7 +146,7 @@ export function BuilderToolbar({
                 onClick={() => onDeviceChange(d.id)}
                 aria-pressed={device === d.id}
                 aria-label={`${d.label} preview — ${d.id === "mobile" ? "375 pixels" : d.id === "tablet" ? "768 pixels" : "1200 pixels"}`}
-                className={cn("rounded-[var(--radius-control)] min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors border", device === d.id ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border)]" : "text-zinc-600 hover:text-zinc-400 border-transparent")}
+                className={cn("rounded-[var(--radius-control)] min-h-[32px] min-w-[32px] flex items-center justify-center px-2 py-1 transition-colors border", device === d.id ? "bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border)]" : "text-zinc-400 hover:text-zinc-300 border-transparent")}
               >
                 <d.icon className="h-3.5 w-3.5" />
               </button>

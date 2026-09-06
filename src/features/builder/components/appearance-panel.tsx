@@ -155,7 +155,7 @@ export function AppearancePanel({
         {/* if (!res.success) */}
         <span
           role="status"
-          aria-live="polite"
+          aria-live="off"
           aria-atomic="true"
           className={`text-[10px] font-medium ${
             liveMessage === "Preview"
@@ -164,7 +164,7 @@ export function AppearancePanel({
                 ? "text-emerald-400"
                 : liveMessage === "Failed to save"
                   ? "text-red-400"
-                  : "text-zinc-600"
+                  : "text-zinc-500"
           }`}
           data-testid="appearance-save-status"
         >

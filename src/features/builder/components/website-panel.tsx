@@ -99,7 +99,7 @@ export function WebsitePanel({
     const collapsedScore = healthScore ?? 0;
     return (
       <div className="flex h-full flex-col items-center gap-2 py-2">
-        <button onClick={onToggle} className="rounded p-1 text-zinc-600 hover:text-[var(--brand-primary)] hover:bg-white/5" title="Expand Website panel" aria-label="Expand properties rail">
+        <button onClick={onToggle} className="rounded p-1 text-zinc-400 hover:text-[var(--brand-primary)] hover:bg-white/5" title="Expand Website panel" aria-label="Expand properties rail">
           <PanelRightClose className="h-4 w-4 rotate-180" />
         </button>
         {overview && (
@@ -127,8 +127,8 @@ export function WebsitePanel({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Website</span>
-        <button onClick={onToggle} className="rounded p-0.5 text-zinc-600 hover:text-[var(--brand-primary)] hover:bg-white/5" aria-label="Collapse properties rail">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Website</span>
+        <button onClick={onToggle} className="rounded p-0.5 text-zinc-400 hover:text-[var(--brand-primary)] hover:bg-white/5" aria-label="Collapse properties rail">
           <PanelRightClose className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -140,7 +140,7 @@ export function WebsitePanel({
         {/* Theme — RCCF-03: Builder owns theme preview/application. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="px-2.5 py-1.5 border-b border-white/5">
-            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">Theme</p>
+            <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Theme</p>
           </div>
           <div className="p-2">
             <ThemeCard
@@ -176,12 +176,12 @@ export function WebsitePanel({
             fabricate builder progress. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/5">
-            <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-wider">Health</p>
+            <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Health</p>
             <CompletionBadge healthScore={healthScore} isLoading={healthScore === null} large />
           </div>
           <div className="p-2.5 text-[10px] text-zinc-400 space-y-1">
             <p>Template: {overview?.blueprint?.name ?? "Creator"}</p>
-            <p className="text-[9px] text-zinc-500">Website health from dashboard — not builder completion.</p>
+            <p className="text-[9px] text-zinc-400">Website health from dashboard — not builder completion.</p>
           </div>
         </div>
       </div>

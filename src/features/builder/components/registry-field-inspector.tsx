@@ -53,7 +53,7 @@ export function RegistryFieldInspector({ planCode }: { planCode?: string | null 
                 {field.requiresCapability && <span className="rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-semibold text-amber-300">premium</span>}
                 {disabled && <span className="text-[9px] text-amber-400">Upgrade required</span>}
               </span>
-              {field.description && <span className="text-[10px] text-zinc-600">{field.description}</span>}
+              {field.description && <span className="text-[10px] text-zinc-400">{field.description}</span>}
               {field.type === "number" && (
                 <input
                   type="number"
