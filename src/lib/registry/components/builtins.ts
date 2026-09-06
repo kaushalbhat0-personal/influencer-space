@@ -4,7 +4,7 @@ import type { RegistryFieldDefinition } from "./fields";
 import {
   HeroRenderer, HeroSplitRenderer, FooterRenderer,
   GalleryRenderer, GalleryBentoRenderer, ProductsRenderer, ProductsBentoRenderer, TimelineRenderer, TimelineMasonryRenderer,
-  LinksRenderer, TestimonialsRenderer, TestimonialsMarqueeRenderer, FaqRenderer,
+  LinksRenderer, TestimonialsRenderer, TestimonialsMarqueeRenderer, TestimonialsBentoRenderer, FaqRenderer,
   ContactRenderer, NewsletterRenderer,
   CoursesRenderer, ServicesRenderer, ServicesBentoRenderer, SpotifyRenderer, YouTubeRenderer,
   DiscordRenderer, InstagramRenderer,
@@ -258,6 +258,17 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "What People Say", speed: "normal" },
     renderer: TestimonialsMarqueeRenderer,
+  },
+  {
+    id: "testimonials.bento", type: "testimonials", name: "Testimonials Bento", category: "testimonials",
+    icon: "LayoutGrid", description: "Bento — featured quote + supporting cards",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: true,
+    animations: [{ id: "stagger", name: "Stagger" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "What People Say" },
+    renderer: TestimonialsBentoRenderer,
   },
   {
     id: "faq.default", type: "faq", name: "FAQ", category: "faq",

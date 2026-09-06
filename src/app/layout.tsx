@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { Literata, Space_Grotesk, Playfair_Display, Outfit } from "next/font/google";
+import { Literata, Space_Grotesk, Playfair_Display, Outfit, Sora } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getPlatformConfig } from "@/lib/config/platform";
@@ -39,6 +39,11 @@ const playfair = Playfair_Display({
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
+});
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
   display: "swap",
 });
 
@@ -88,7 +93,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${spaceGrotesk.variable} ${playfair.variable} ${outfit.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${spaceGrotesk.variable} ${playfair.variable} ${outfit.variable} ${sora.variable} antialiased`}
       >
         {children}
         <Analytics />

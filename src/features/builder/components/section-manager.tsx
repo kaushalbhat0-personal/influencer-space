@@ -43,7 +43,7 @@ const EDIT_LINKS: Record<string, string> = {
   "hero.split": "/admin/settings",
   "products.grid": "/admin/products", "products.bento": "/admin/products",
   "gallery.grid": "/admin/gallery", "gallery.bento": "/admin/gallery",
-  "testimonials.default": "/admin/testimonials", "testimonials.marquee": "/admin/testimonials",
+  "testimonials.default": "/admin/testimonials", "testimonials.marquee": "/admin/testimonials", "testimonials.bento": "/admin/testimonials",
   "faq.default": "/admin/faq", "timeline.default": "/admin/milestones", "timeline.masonry": "/admin/milestones",
   "games.default": "/admin/games", "links.default": "/admin/links",
   "contentFeed.default": "/admin/settings/content",
@@ -54,7 +54,7 @@ const EDIT_LINKS: Record<string, string> = {
 
 const CONTENT_LABELS: Record<string, string> = {
   products: "Products", "products bento": "Products", gallery: "Images", "gallery bento": "Images", testimonials: "Testimonials",
-  "testimonials marquee": "Testimonials", faq: "Items", timeline: "Events", "timeline masonry": "Events", games: "Games", links: "Links",
+  "testimonials marquee": "Testimonials", "testimonials bento": "Testimonials", faq: "Items", timeline: "Events", "timeline masonry": "Events", games: "Games", links: "Links",
   hero: "Hero", "hero split": "Hero", footer: "Footer", contact: "Contact",
   newsletter: "Subscribers", pricing: "Plans", courses: "Courses",
   services: "Services", "services bento": "Services", embed: "Embeds", social: "Links", contentfeed: "Posts",
@@ -78,6 +78,7 @@ const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId:
   { name: "Timeline Masonry", category: "timeline", componentId: "timeline.masonry" },
   { name: "Testimonials", category: "testimonials", componentId: "testimonials.default" },
   { name: "Testimonials Marquee", category: "testimonials", componentId: "testimonials.marquee" },
+  { name: "Testimonials Bento", category: "testimonials", componentId: "testimonials.bento" },
   { name: "FAQ", category: "faq", componentId: "faq.default" },
   { name: "Courses", category: "courses", componentId: "courses.default" },
   { name: "Services", category: "services", componentId: "services.default" },

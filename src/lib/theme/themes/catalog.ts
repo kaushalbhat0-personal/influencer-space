@@ -95,8 +95,8 @@ const F = {
   creator: { heading: "var(--font-outfit), Outfit, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
   // Minimal airy sans — intentional Inter
   minimal: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
-  // Midnight cinematic — Space Grotesk geometric (distinct from Sora alias)
-  midnight: { heading: "var(--font-space-grotesk), Space Grotesk, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Midnight cinematic — Sora (loaded) distinct geometric, fixes 04A alias
+  midnight: { heading: "var(--font-sora), Sora, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
   // Organic/Aurora soft rounded — Outfit (loaded)
   organic: { heading: "var(--font-outfit), Outfit, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
   // Glass studio — Geist Sans (loaded locally) distinct from Inter, surface glass distinguishes
@@ -241,6 +241,7 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     family: "executive", variantGroup: "executive-black",
     fonts: F.executive,
     dark: D.dark("#3B82F6", "#60A5FA", "#818CF8", "#000000", "#0D0D0D", "#161616"),
+    light: D.light("#2563EB", "#3B82F6", "#818CF8", "#FFFFFF", "#F8FAFC", "#F1F5F9"),
   }),
   makeTheme({
     id: "com.creatos.photography-light", slug: "photography-light", name: "Photography Light",
@@ -304,6 +305,7 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     family: "luxury", variantGroup: "luxury-champagne",
     fonts: F.luxury,
     dark: D.dark("#C9A227", "#F5E1A4", "#A3A3A3", "#0A0A0A", "#121212", "#1C1C1C"),
+    light: D.light("#92400E", "#C9A227", "#A3A3A3", "#FFFFFF", "#FFFBEB", "#FEF3C7"),
   }),
 ];
 

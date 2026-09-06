@@ -973,6 +973,75 @@ export function TestimonialsRenderer({ props }: RendererProps) {
 
 /* â”€â”€â”€ FAQ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
+/* ─── Testimonials Bento — RCCF-BUILDER-04G: featured quote + supporting grid ─
+   Reuses existing testimonial data (name/handle/content/avatar/rating) and
+   responsive container queries. Genuine difference via featured 2×2 bento
+   (larger avatar, quote scale, density) vs uniform grid. */
+export function TestimonialsBentoRenderer({ props }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const items = (p.resolvedData as Record<string, string>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Testimonials");
+  if (!useVisibility(props)) return null;
+  if (items.length === 0) return <EmptyState label="Add testimonials from your fans" />;
+
+  const featured = items[0]!;
+  const rest = items.slice(1);
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
+      <SectionHeading p={p} title={title} />
+      <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-3">
+        <div className="group relative flex flex-col justify-between overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--brand-primary)]/15 bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.32)] shadow-sm @sm/main:col-span-2 @sm/main:row-span-2">
+          <div>
+            <Quote className="h-6 w-6 text-[var(--brand-primary,#6366F1)]/40" aria-hidden />
+            <p className="mt-3 text-base leading-relaxed text-[var(--text-primary,#FAFAFA)] break-words @sm/main:text-lg">{featured.content || featured.message || ""}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            {featured.avatarUrl ? (
+              <CreatorImage src={featured.avatarUrl as string} alt={featured.name || "Testimonial"} variant="avatar" className="h-10 w-10 rounded-full @sm/main:h-12 @sm/main:w-12" />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-card-hover,#27272A)] text-sm text-[var(--text-muted,#71717A)] @sm/main:h-12 @sm/main:w-12">
+                {(featured.name || "?")[0]}
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)] break-words">{featured.name || "Anonymous"}</p>
+              {featured.handle && <p className="text-xs text-[var(--text-muted,#71717A)] break-words">{featured.handle}</p>}
+            </div>
+          </div>
+          {featured.rating && Number(featured.rating) > 0 && (
+            <div className="mt-3 flex items-center gap-0.5">
+              {Array.from({ length: Math.min(5, Number(featured.rating)) }).map((_, s) => (
+                <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              ))}
+            </div>
+          )}
+          <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-400 ring-1 ring-amber-500/20">Featured</span>
+        </div>
+        {rest.map((item: Record<string, string>, i: number) => (
+          <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.24)]">
+            <div className="mb-2 flex items-center gap-2">
+              {item.avatarUrl ? (
+                <CreatorImage src={item.avatarUrl as string} alt={item.name || "Testimonial"} variant="avatar" className="h-7 w-7 rounded-full" />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-card-hover,#27272A)] text-[10px] text-[var(--text-muted,#71717A)]">
+                  {(item.name || "?")[0]}
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-medium text-[var(--text-primary,#FAFAFA)] break-words">{item.name || "Anonymous"}</p>
+                {item.handle && <p className="text-[10px] text-[var(--text-muted,#71717A)] break-words">{item.handle}</p>}
+              </div>
+            </div>
+            <p className="line-clamp-3 text-xs leading-relaxed text-[var(--text-secondary,#A1A1AA)] break-words">{item.content || item.message || ""}</p>
+          </div>
+        ))}
+      </div>
+      <ViewAllLink href={p.viewAllHref} />
+    </div>
+  );
+}
+
 export function FaqRenderer({ props }: RendererProps) {
   const p = props as Record<string, unknown>;
   const items = (p.resolvedData as Record<string, string>[]) || [];
