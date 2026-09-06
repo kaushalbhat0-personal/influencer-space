@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // RCCF-LAUNCH-POLISH-05: consistent marketing chrome (nav/footer + metadata).
 export const metadata: Metadata = {
   title: "Showcase",
-  description: "Explore real creator storefronts built with CreatorStore.",
+  description: "Explore real websites built with CreatorStore.",
   alternates: { canonical: "/showcase" },
 };
 
@@ -32,12 +32,12 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
       {/* 03A foundation: hero hierarchy with readable measure, intentional spacing */}
       <div className="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-8 sm:pt-28 sm:pb-20">
         <div className="mx-auto max-w-[65ch] text-center mb-8 sm:mb-10">
-          <h1 className="platform-display">Creator Showcase</h1>
+          <h1 className="platform-display">Showcase</h1>
           <p className="platform-body mx-auto mt-3 max-w-[60ch] text-center">
-            Every site here is a real, published creator storefront — built from a profile, owned on its own domain.
+            Every site here is a real, published website — built from a profile, owned on its own domain.
           </p>
           <p className="platform-metadata mt-2 text-center">
-            Mystic Minutes · North Star — and every creator building with CreatorStore
+            Mystic Minutes · North Star — and every business building with CreatorStore
           </p>
         </div>
 
@@ -53,8 +53,8 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
                     type="text"
                     name="q"
                     defaultValue={q}
-                    placeholder="Search creators..."
-                    aria-label="Search creators"
+                    placeholder="Search websites..."
+                    aria-label="Search websites"
                     className="admin-input pl-10 py-2.5 text-sm w-full"
                   />
                 </div>
@@ -128,7 +128,7 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
               <Search className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" aria-hidden />
               <p className="font-display text-base font-semibold tracking-tight text-[var(--text-primary)]">No published sites yet.</p>
               <p className="platform-body mx-auto mt-2 text-sm max-w-[50ch]">
-                Every site shown here is a real, published CreatorStore website — yours could be the first. Publish from the builder to appear here.
+                Every site shown here is a real, published website — yours could be the first. Publish from the builder to appear here.
               </p>
             </div>
           )}

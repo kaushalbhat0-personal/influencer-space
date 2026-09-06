@@ -244,13 +244,13 @@ export function getCopy(
 
 function getDefaultCopy(task: AITaskType): string {
   const defaults: Record<string, string> = {
-    hero: "Build your creator business with CreatorStore.",
+    hero: "Build your business with CreatorStore.",
     about: "Welcome to my storefront.",
     cta: "Get Started",
-    seo: "CreatorStore — Your creator business platform.",
+    seo: "CreatorStore — your website and business, all in one.",
     products: "Products",
     faq: "Frequently asked questions",
-    brand: "Creator",
+    brand: "Business",
     copy: "",
   };
   return defaults[task] ?? "";

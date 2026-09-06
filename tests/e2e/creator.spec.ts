@@ -1,11 +1,11 @@
 /**
- * Creator Dashboard E2E Tests v1.0.0
+ * Dashboard E2E Tests v1.0.0
  */
 
 import { test, expect } from "../fixtures/auth";
 import { CreatorDashboard, CreatorOrders } from "../pages/creator";
 
-test.describe("Creator Dashboard", () => {
+test.describe("Dashboard", () => {
   test("Dashboard shows metric cards", async ({ creatorPage }) => {
     const dashboard = new CreatorDashboard(creatorPage);
     await dashboard.goto();

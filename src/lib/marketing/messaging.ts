@@ -11,7 +11,7 @@ export const BRAND = {
   shortDescription:
     "Turn your presence into a website and business you own.",
   description:
-    "CreatorStore turns your social profile into a complete creator business website — storefront, products, orders, analytics, SEO, and a visual drag-and-drop builder. Paste your YouTube, Instagram, or TikTok profile and get a storefront that matches your content and brand.",
+    "Turn your social profile into a complete business website — storefront, products, orders, analytics, SEO, and a visual drag-and-drop builder. Paste your YouTube, Instagram, or TikTok profile and get a website that matches your content and brand.",
   foundingYear: 2024,
   location: "Pune, Maharashtra, India",
   email: CONTACT_EMAIL,
@@ -19,7 +19,7 @@ export const BRAND = {
 } as const;
 
 export const POSITIONING = {
-  is: "A creator business platform that builds, manages, and publishes your online business from your existing content.",
+  is: "A platform that builds, manages, and publishes your online business from your existing content.",
   isNot: [
     "A template-based website builder",
     "Just a storefront or e-commerce tool",
@@ -27,7 +27,7 @@ export const POSITIONING = {
     "A Shopify alternative",
     "A social media scheduler",
   ],
-  tagline: "More than a website. Your entire creator business.",
+  tagline: "More than a website. Your entire business.",
 } as const;
 
 export const VALUE_PROPOSITIONS = [
@@ -101,7 +101,7 @@ export const MESSAGING_PILLARS = [
   },
   {
     id: "dashboard",
-    label: "Creator Dashboard",
+    label: "Dashboard",
     description:
       "Orders, customers, analytics, and content — all in one place.",
   },

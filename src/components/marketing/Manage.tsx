@@ -28,7 +28,7 @@ export function Manage() {
             </span>
           </h2>
           <p className="mt-3 text-zinc-500 max-w-xl mx-auto">
-            CreatorStore is the operating system for your creator business. Products, payments, content, customers — all in one place.
+            Your operating system for business — products, payments, content, customers, all in one place.
           </p>
         </div>
 

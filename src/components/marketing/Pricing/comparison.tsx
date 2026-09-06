@@ -7,7 +7,7 @@ import { getComparisonFeatureIds, getFeatureDisplayValue, type PlanFamily } from
 import { Check, Minus } from "lucide-react";
 
 /**
- * RCCF-MKT-05 — Launch core-content truth. On Creator Launch, products,
+ * RCCF-MKT-05 — Launch core-content truth. On Launch, products,
  * services, courses and games share ONE combined allowance of active items
  * (LAUNCH_GLOBAL_LIMIT = 3 in content-limit.enforcement). This client module
  * cannot import that server module (it pulls Prisma), so the value is pinned
@@ -15,7 +15,7 @@ import { Check, Minus } from "lucide-react";
  * the runtime constant — if the runtime ceiling ever changes, that test fails.
  */
 const LAUNCH_CORE_CONTENT_NOTE =
-  "On Creator Launch, products, services, courses and games share one combined allowance of up to 3 active items. All other content limits are independent per section.";
+  "On Launch, products, services, courses and games share one combined allowance of up to 3 active items. All other content limits are independent per section.";
 
 interface ComparisonProps {
   plans: ResolvedPlan[];

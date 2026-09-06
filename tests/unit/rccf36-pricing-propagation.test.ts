@@ -27,7 +27,7 @@ import { getRuntimePlan } from "@/modules/pricing/application/runtime";
 
 const DB_ROW = (price: number, rc: unknown) => ({
   code: "creator_grow",
-  name: "Creator Growth",
+  name: "Growth",
   family: "creator",
   price,
   currency: "INR",

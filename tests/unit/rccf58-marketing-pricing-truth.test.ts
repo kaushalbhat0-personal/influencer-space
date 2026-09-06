@@ -24,7 +24,7 @@ describe("RCCF-58 — storage presentation truth", () => {
     }
   });
 
-  it("storage renders the MB value for Creators; Partner plans advertise no storage", () => {
+  it("storage renders the MB value Personal; Partner plans advertise no storage", () => {
     expect(getFeatureDisplayValue("creator_scale", "storage_gb", 50, "numeric")).toBe("300 MB");
     expect(getFeatureDisplayValue("creator_enterprise", "storage_gb", 500, "numeric")).toBe("Custom");
     expect(getStorageDisplay("partner_solo")).toBe("—");

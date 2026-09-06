@@ -11,7 +11,7 @@ function mkPlan(overrides: Partial<BillingPlan> = {}): BillingPlan {
   return {
     code: "creator_grow",
     family: "creator",
-    name: "Creator Growth",
+    name: "Growth",
     description: "",
     price: 999,
     currency: "INR",
@@ -75,12 +75,12 @@ describe("RCCF-BILLING-07C — CTA correctness (capability-only, no price fallba
     ];
     // Use real registry codes for meaningful comparison
     const realPlans = [
-      { code: "creator_grow", name: "Creator Growth", price: 999, features: { max_products: -1, premium_themes: true } } as BillingPlan,
-      { code: "creator_scale", name: "Creator Scale", price: 1999, features: { max_products: -1, premium_themes: true, custom_domain: true } } as BillingPlan,
+      { code: "creator_grow", name: "Growth", price: 999, features: { max_products: -1, premium_themes: true } } as BillingPlan,
+      { code: "creator_scale", name: "Scale", price: 1999, features: { max_products: -1, premium_themes: true, custom_domain: true } } as BillingPlan,
     ];
     render(
       <SubscriptionManager
-        currentPlan={mkPlan({ code: "creator_grow", name: "Creator Growth", price: 999, features: { max_products: -1, premium_themes: true } } as any)}
+        currentPlan={mkPlan({ code: "creator_grow", name: "Growth", price: 999, features: { max_products: -1, premium_themes: true } } as any)}
         subscription={mkSub({ planCode: "creator_grow" })}
         availablePlans={realPlans as any}
         onUpgrade={() => {}}
@@ -96,9 +96,9 @@ describe("RCCF-BILLING-07C — CTA correctness (capability-only, no price fallba
 
 describe("RCCF-BILLING-07C — Launch disabled for paid creators", () => {
   it("paid creator sees Launch as disabled informational state, not hidden or downgrade", () => {
-    const current = mkPlan({ code: "creator_grow", name: "Creator Growth", price: 999 });
-    const launch = mkPlan({ code: "creator_launch", name: "Creator Launch", price: 0 });
-    const scale = mkPlan({ code: "creator_scale", name: "Creator Scale", price: 1999 });
+    const current = mkPlan({ code: "creator_grow", name: "Growth", price: 999 });
+    const launch = mkPlan({ code: "creator_launch", name: "Launch", price: 0 });
+    const scale = mkPlan({ code: "creator_scale", name: "Scale", price: 1999 });
     render(
       <SubscriptionManager
         currentPlan={current}
@@ -120,8 +120,8 @@ describe("RCCF-BILLING-07C — Launch disabled for paid creators", () => {
   });
 
   it("Launch creator sees normal Launch current state, not disabled", () => {
-    const launch = mkPlan({ code: "creator_launch", name: "Creator Launch", price: 0 });
-    const grow = mkPlan({ code: "creator_grow", name: "Creator Growth", price: 999 });
+    const launch = mkPlan({ code: "creator_launch", name: "Launch", price: 0 });
+    const grow = mkPlan({ code: "creator_grow", name: "Growth", price: 999 });
     render(
       <SubscriptionManager
         currentPlan={launch}

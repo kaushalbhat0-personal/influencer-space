@@ -142,8 +142,8 @@ export const CAPABILITY_LABELS: Record<CommerceCapability, string> = {
 export const COMMERCE_PLANS: CommercePlanConfig[] = [
   {
     code: "creator_launch",
-    name: "Creator Launch",
-    description: "Your profile-built creator website — free for the first 15 days.",
+    name: "Launch",
+    description: "Your profile-built website — free for the first 15 days.",
     family: "creator",
     price: 0,
     currency: "INR",
@@ -179,8 +179,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       hero_video_max_size_mb: 12,
       hero_video_max_duration_sec: 15,
     },
-    marketingDescription: "Get online with a website built from your creator profile. 15-day free trial — no credit card required.",
-    targetAudience: "New creators getting started",
+    marketingDescription: "Get online with a website built from your profile. 15-day free trial — no credit card required.",
+    targetAudience: "Getting started",
     // RCCF-MKT-05: truthful Launch entitlement copy. Products, services,
     // courses and games share ONE combined allowance of 3 ACTIVE items
     // (LAUNCH_GLOBAL_LIMIT, content-limit.enforcement) — never advertise them
@@ -188,7 +188,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     // links/feed keep their independent per-type limits of 3.
     marketingHighlights: [
       "Profile-built website generation",
-      "Beautiful creator website",
+      "Beautiful website",
       "CreatorStore subdomain",
       "Basic themes",
       "Up to 3 active items across products, services, courses & games",
@@ -205,8 +205,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   },
   {
     code: "creator_grow",
-    name: "Creator Growth",
-    description: "Unlimited products, premium themes and a full visual builder — the most popular plan for growing creators.",
+    name: "Growth",
+    description: "Unlimited products, premium themes and a full visual builder — the most popular plan for growing businesses.",
     family: "creator",
     price: 999,
     currency: "INR",
@@ -255,7 +255,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       hero_video_max_duration_sec: 15,
     },
     marketingDescription: "Unlimited products and gallery, premium themes, a full visual builder and automation credits (coming soon).",
-    targetAudience: "Most creators",
+    targetAudience: "Most businesses",
     marketingHighlights: [
       "Unlimited products",
       "Unlimited gallery",
@@ -272,8 +272,8 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   },
   {
     code: "creator_scale",
-    name: "Creator Scale",
-    description: "Run your creator business at full scale with advanced AI, API access and a brand you own.",
+    name: "Scale",
+    description: "Run your business at full scale with advanced AI, API access and a brand you own.",
     family: "creator",
     // RCCF-MKT-05 approved pricing contract: Creator Scale = ₹1,999/month.
     // Annual keeps the catalog-wide invariant annualPrice = 10 × monthly.
@@ -341,7 +341,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
       hero_video_max_duration_sec: 15,
     },
     marketingDescription: "Everything in Growth, plus your own custom domain, platform-managed payment webhooks, live social sync and advanced analytics.",
-    targetAudience: "Professional creators",
+    targetAudience: "Growing businesses",
     marketingHighlights: [
       "Everything in Growth",
       "Custom domain",
@@ -356,7 +356,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
   },
   {
     code: "creator_enterprise",
-    name: "Creator Enterprise",
+    name: "Enterprise",
     description: "Custom requirements and dedicated support for teams and brands.",
     family: "creator",
     price: null,

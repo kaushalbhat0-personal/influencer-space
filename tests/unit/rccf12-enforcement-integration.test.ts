@@ -72,7 +72,7 @@ describe("RCCF-12 — canonical plan resolution across scenarios", () => {
     h.mockWorkspaceFindFirst.mockResolvedValue({ id: "ws-1" });
     h.mockBillingSubFindUnique.mockResolvedValue(sub("creator_scale"));
     h.mockWorkspaceFindMany.mockResolvedValue([{ id: "ws-1", tenantId: "t1" }]);
-    h.mockBillingSubFindMany.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_scale", name: "Creator Scale" }, status: "ACTIVE" }]);
+    h.mockBillingSubFindMany.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_scale", name: "Scale" }, status: "ACTIVE" }]);
 
     const single = await resolveActivePlan(null, "t1");
     const batched = await resolvePlansForTenantIds(["t1"]);
@@ -86,7 +86,7 @@ describe("RCCF-12 — canonical plan resolution across scenarios", () => {
     h.mockWorkspaceFindFirst.mockResolvedValue({ id: "ws-m" });
     h.mockBillingSubFindUnique.mockResolvedValue({ ...sub("creator_launch"), workspaceId: "ws-m" });
     h.mockWorkspaceFindMany.mockResolvedValue([{ id: "ws-m", tenantId: "t-m" }]);
-    h.mockBillingSubFindMany.mockResolvedValue([{ workspaceId: "ws-m", plan: { code: "creator_launch", name: "Creator Launch" }, status: "ACTIVE" }]);
+    h.mockBillingSubFindMany.mockResolvedValue([{ workspaceId: "ws-m", plan: { code: "creator_launch", name: "Launch" }, status: "ACTIVE" }]);
 
     const single = await resolveActivePlan(null, "t-m");
     const batched = await resolvePlansForTenantIds(["t-m"]);

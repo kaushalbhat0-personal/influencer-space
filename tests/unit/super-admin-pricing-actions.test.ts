@@ -33,7 +33,7 @@ import type { PlanEditorInput } from "@/actions/super-admin-pricing.actions";
 
 const input: PlanEditorInput = {
   code: "creator_grow",
-  name: "Creator Growth",
+  name: "Growth",
   family: "creator",
   description: "Growth plan",
   targetAudience: null,

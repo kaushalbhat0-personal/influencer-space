@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from "node:fs";
 import type { DashboardData } from "@/features/dashboard/actions";
 import { DashboardPage } from "@/features/dashboard/components/dashboard-page";
 
-// RCCF-70.4.3 — Creator Dashboard Premium Creator OS implementation.
+// RCCF-70.4.3 — Dashboard Premium Creator OS implementation.
 // Presentation-only structural/behavioral assertions on the dashboard page:
 //   - Stitch-style hierarchy (Storefront → Quick Actions → metrics → content)
 //   - real server-derived metrics only (no fabricated analytics)

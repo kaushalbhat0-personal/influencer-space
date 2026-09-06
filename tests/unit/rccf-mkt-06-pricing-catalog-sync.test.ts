@@ -174,7 +174,7 @@ describe("MKT-06 Runtime — corrected BillingPlan resolves through the runtime 
 
 const scaleInput: PlanEditorInput = {
   code: "creator_scale",
-  name: "Creator Scale",
+  name: "Scale",
   family: "creator",
   description: "Scale",
   targetAudience: null,
@@ -253,7 +253,7 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
 
   it("keeps creator_growth's valid provider plan untouched when its price is unchanged", async () => {
     h.mockFindUnique.mockResolvedValue({ price: 999, runtimeConfig: null });
-    const res = await savePlanConfig({ ...scaleInput, code: "creator_grow", name: "Creator Growth", monthlyPrice: 999, changeNote: "no-op edit" });
+    const res = await savePlanConfig({ ...scaleInput, code: "creator_grow", name: "Growth", monthlyPrice: 999, changeNote: "no-op edit" });
 
     expect(res.success).toBe(true);
     expect(h.mockPlansCreate).not.toHaveBeenCalled(); // no new provider contract

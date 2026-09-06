@@ -1,5 +1,5 @@
 // ── Business Health Runtime — Domain Types ─────────────────
-// RCCF-EPIC-07. Answers "how healthy is your creator business?" by composing
+// RCCF-EPIC-07. Answers "how healthy is your business?" by composing
 // EVERY existing runtime into a single 0-100 Business Health Score. It owns no
 // business data — it is a derived projection over the Runtime Context.
 

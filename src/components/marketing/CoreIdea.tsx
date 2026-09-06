@@ -48,7 +48,7 @@ export function CoreIdea() {
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/60" />
                 <span className="ml-3 text-[10px] font-medium text-zinc-600">yourname.com</span>
               </div>
-              <div className="space-y-3" role="list" aria-label="What your CreatorStore home includes">
+              <div className="space-y-3" role="list" aria-label="What your home includes">
                 {LAYERS.map((layer, i) => (
                   <div
                     key={layer.label}

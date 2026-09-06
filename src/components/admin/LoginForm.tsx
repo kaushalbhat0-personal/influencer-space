@@ -90,7 +90,7 @@ export function LoginForm({ tenantId }: { tenantId: string | null }) {
               transition={{ delay: 0.35, duration: 0.5 }}
               className="mt-2 text-sm text-[var(--text-muted)]"
             >
-              Sign in to manage your CreatorBrand
+              Sign in to manage your workspace
             </motion.p>
           </div>
 

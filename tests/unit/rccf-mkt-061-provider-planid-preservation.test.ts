@@ -43,7 +43,7 @@ import type { PlanEditorInput } from "@/actions/super-admin-pricing.actions";
 function scaleInput(overrides: Partial<PlanEditorInput> = {}): PlanEditorInput {
   return {
     code: "creator_scale",
-    name: "Creator Scale",
+    name: "Scale",
     family: "creator",
     description: "Scale",
     targetAudience: null,

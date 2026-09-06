@@ -1,11 +1,11 @@
 const FAQ_ITEMS = [
   {
-    q: "Is Creator Launch really free?",
-    a: "Creator Launch is a 15-day free trial — no credit card required. Launch your website today and upgrade anytime. Creator Growth and Scale are paid subscriptions: if a renewal payment fails, your subscription becomes Past Due and your public storefront stays live for 3 days (grace). Successful payment during grace restores Active instantly. After 3 days without payment it becomes Expired and your storefront returns 404 until you upgrade (e.g., Creator Grow). You can always preview your draft via ?preview=true while signed in.",
+    q: "Is Launch really free?",
+    a: "Launch is a 15-day free trial — no credit card required. Launch your website today and upgrade anytime. Growth and Scale are paid subscriptions: if a renewal payment fails, your subscription becomes Past Due and your public storefront stays live for 3 days (grace). Successful payment during grace restores Active instantly. After 3 days without payment it becomes Expired and your storefront returns 404 until you upgrade (e.g., Growth). You can always preview your draft via ?preview=true while signed in.",
   },
   {
     q: "How does my storefront get built?",
-    a: "Paste your YouTube, Instagram, or creator profile URL. We analyze your content, brand colors, niche, audience, and social links — then build a storefront with products, checkout, and SEO. No manual entry needed.",
+    a: "Paste your YouTube, Instagram, or website URL. We analyze your content, brand colors, niche, audience, and social links — then build a storefront with products, checkout, and SEO. No manual entry needed.",
   },
   {
     q: "What platforms do you support?",
@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Can I use my own domain?",
-    a: "Yes — on Creator Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
+    a: "Yes — on Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
   },
   {
     q: "How do payments work?",
@@ -33,7 +33,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens if my payment fails?",
-    a: "Your subscription moves to Past Due. Your public storefront stays live for 3 days (grace) — retry payment in Billing to restore Active instantly. If unpaid after 3 days it becomes Expired and your storefront returns 404 until you upgrade (e.g., Upgrade to Creator Grow). Existing data is preserved and preview remains available while you fix billing.",
+    a: "Your subscription moves to Past Due. Your public storefront stays live for 3 days (grace) — retry payment in Billing to restore Active instantly. If unpaid after 3 days it becomes Expired and your storefront returns 404 until you upgrade (e.g., Upgrade to Growth). Existing data is preserved and preview remains available while you fix billing.",
   },
   {
     q: "Who owns my content and data?",

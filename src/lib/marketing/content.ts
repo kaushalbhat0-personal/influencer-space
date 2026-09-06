@@ -38,9 +38,9 @@ export const CREATOR_STATS: CreatorStat[] = [
 ];
 
 export const FEATURES_HERO_DATA = {
-  title: "Everything you need to run your creator business",
+  title: "Everything you need to run your business",
   subtitle:
-    "CreatorStore is more than a website. It's a complete business platform — built from your profile, fully customizable, and built to scale.",
+    "More than a website — a complete business platform built from your profile, fully customizable, and built to scale.",
 };
 
 export const ABOUT_HERO_DATA = {
@@ -56,14 +56,14 @@ export const ABOUT_HERO_DATA = {
   ],
   values: [
     {
-      title: "Creator First",
+      title: "You First",
       description:
-        "Every decision starts with what's best for creators. We build tools we'd want to use ourselves.",
+        "Every decision starts with what's best for you. We build tools we'd want to use ourselves.",
     },
     {
       title: "Automated, Human-Controlled",
       description:
-        "The platform handles the heavy lifting, but creators always stay in control. Customize everything, or change nothing.",
+        "The platform handles the heavy lifting, but you always stay in control. Customize everything, or change nothing.",
     },
     {
       title: "Simple by Default, Powerful When Needed",
@@ -85,7 +85,7 @@ export const FAQ_CATEGORIES = [
     items: [
       {
         q: "How does my storefront get built?",
-        a: "Paste your YouTube, Instagram, or creator profile URL. We analyze your content, brand colors, niche, audience, and social links — then build a complete storefront with products, checkout, and SEO. No manual entry needed.",
+        a: "Paste your YouTube, Instagram, or website URL. We analyze your content, brand colors, niche, audience, and social links — then build a complete storefront with products, checkout, and SEO. No manual entry needed.",
       },
       {
         q: "What platforms do you support?",
@@ -93,11 +93,11 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "How long does it take to get started?",
-        a: "From pasting your URL to having a live storefront, most creators are up and running in under 2 minutes. The build takes about 30-60 seconds.",
+        a: "From pasting your URL to having a live storefront, most people are up and running in under 2 minutes. The build takes about 30-60 seconds.",
       },
       {
         q: "Do I need technical skills?",
-        a: "Not at all. CreatorStore is designed for creators who want to focus on content, not code. The platform builds everything automatically, and the visual builder lets you customize without touching HTML or CSS.",
+        a: "Not at all. CreatorStore is designed for anyone who wants to focus on their work, not code. The platform builds everything automatically, and the visual builder lets you customize without touching HTML or CSS.",
       },
     ],
   },
@@ -115,7 +115,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Can I use my own domain?",
-        a: "Yes — on Creator Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
+        a: "Yes — on Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
       },
       {
         q: "Is the storefront mobile-friendly?",
@@ -137,7 +137,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "What does it cost to sell?",
-        a: "Creators keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan, and every rupee your customers spend goes to you. See the pricing page for current plan rates.",
+        a: "You keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan, and every rupee your customers spend goes to you. See the pricing page for current plan rates.",
       },
       {
         q: "Can I offer subscriptions or memberships?",
@@ -177,7 +177,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Is there a free trial?",
-        a: "Yes. Creator Launch is a 15-day free trial — no credit card required. Launch your website today and upgrade anytime. After the trial, your site stays live; editing and publishing follow your plan.",
+        a: "Yes. Launch is a 15-day free trial — no credit card required. Launch your website today and upgrade anytime. After the trial, your site stays live; editing and publishing follow your plan.",
       },
       {
         q: "How do refunds work?",

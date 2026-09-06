@@ -20,7 +20,7 @@ test.describe("Level 3 — Creator Lifecycle Certification", () => {
     await login.expectRedirectTo(/\/admin\/dashboard/);
   });
 
-  test("Phase 3: Creator dashboard loads", async ({ page }) => {
+  test("Phase 3: Dashboard loads", async ({ page }) => {
     const login = new LoginPage(page);
     await login.goto();
     await login.login(account.email, account.password);

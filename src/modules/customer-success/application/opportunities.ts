@@ -11,12 +11,12 @@ export function detectOpportunities(s: SuccessSignals): SuccessOpportunity[] {
   // Free/entry tier = the plan does not grant paid-tier features (premium themes).
   const onFreeTier = !entitlementService.has(s.planCode, "premium_themes");
   if (s.published && s.hasProducts && onFreeTier) {
-    opportunities.push({ type: "upgrade_growth", label: "Upgrade to Creator Growth", description: "Unlimited products, premium themes and a full visual builder.", value: 70, href: "/admin/billing" });
+    opportunities.push({ type: "upgrade_growth", label: "Upgrade to Growth", description: "Unlimited products, premium themes and a full visual builder.", value: 70, href: "/admin/billing" });
   }
 
   // Ready for Scale (real revenue).
   if (s.orderCount >= 10) {
-    opportunities.push({ type: "upgrade_scale", label: "Consider Creator Scale", description: "API access, webhooks, automation and advanced analytics.", value: 60, href: "/admin/billing" });
+    opportunities.push({ type: "upgrade_scale", label: "Consider Scale", description: "API access, webhooks, automation and advanced analytics.", value: 60, href: "/admin/billing" });
   }
 
   // Ready for Agency (strong performance).

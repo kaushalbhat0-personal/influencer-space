@@ -42,7 +42,7 @@ const FEATURES = [
   },
   {
     icon: Users,
-    title: "Creator Dashboard",
+    title: "Dashboard",
     body: "Manage orders, products, customers, and content from a single, powerful dashboard.",
   },
   {
@@ -60,13 +60,13 @@ export function PlatformOverview() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             A complete{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-              creator business
+              business
             </span>{" "}
             platform
           </h2>
           <p className="mt-3 text-zinc-500 max-w-2xl mx-auto">
             Not just a storefront. You get the entire infrastructure to run your
-            creator business — products, payments, analytics, SEO, and a visual
+            business — products, payments, analytics, SEO, and a visual
             builder.
           </p>
         </div>

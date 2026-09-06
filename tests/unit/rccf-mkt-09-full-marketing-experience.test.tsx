@@ -78,7 +78,7 @@ describe("MKT-09 — positioning: Your presence. Your business.", () => {
     expect(rootLayout).not.toContain("Built for Indian creators");
     // Hero outcomes now speak to a broader audience without inventing claims.
     expect(hero).toContain("Your own professional website");
-    expect(hero).toContain("For creators, freelancers & businesses");
+    expect(hero).toContain("Personal, freelancers & businesses");
   });
 
   it("does not overclaim a custom domain on every plan (Scale+ only)", () => {

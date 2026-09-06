@@ -129,14 +129,14 @@ describe("listAllSubscriptions — v2 + legacy union without duplication", () =>
     const t3 = rows.find((r) => r.tenantId === "t3");
     expect(t3?.origin).toBe("legacy");
     expect(t3?.planCode).toBe("STARTER");
-    expect(t3?.planDisplay).toBe("Creator Launch");
+    expect(t3?.planDisplay).toBe("Launch");
   });
 });
 
 describe("resolvePlansForTenantIds — batched resolution applies the agency clamp", () => {
   it("returns v2 codes unchanged for non-managed tenants", async () => {
     mockWorkspaceMany.mockResolvedValue([{ id: "ws-1", tenantId: "t1" }]);
-    mockV2Many.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_launch", name: "Creator Launch" }, status: "ACTIVE" }]);
+    mockV2Many.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_launch", name: "Launch" }, status: "ACTIVE" }]);
 
     const rows = await resolvePlansForTenantIds(["t1"]);
 
@@ -145,12 +145,12 @@ describe("resolvePlansForTenantIds — batched resolution applies the agency cla
 
   it("clamps agency-managed v2 tenants from Launch to Grow", async () => {
     mockWorkspaceMany.mockResolvedValue([{ id: "ws-1", tenantId: "t1" }]);
-    mockV2Many.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_launch", name: "Creator Launch" }, status: "ACTIVE" }]);
+    mockV2Many.mockResolvedValue([{ workspaceId: "ws-1", plan: { code: "creator_launch", name: "Launch" }, status: "ACTIVE" }]);
     mockAgencyTenant.mockResolvedValue([{ tenantId: "t1" }]);
 
     const rows = await resolvePlansForTenantIds(["t1"]);
 
-    expect(rows[0]).toMatchObject({ tenantId: "t1", planCode: "creator_grow", planDisplay: "Creator Growth", origin: "v2" });
+    expect(rows[0]).toMatchObject({ tenantId: "t1", planCode: "creator_grow", planDisplay: "Growth", origin: "v2" });
   });
 
   it("clamps legacy agency-managed tenants via canonical resolution", async () => {
@@ -159,7 +159,7 @@ describe("resolvePlansForTenantIds — batched resolution applies the agency cla
 
     const rows = await resolvePlansForTenantIds(["t2"]);
 
-    expect(rows[0]).toMatchObject({ tenantId: "t2", planCode: "creator_grow", planDisplay: "Creator Growth", origin: "legacy" });
+    expect(rows[0]).toMatchObject({ tenantId: "t2", planCode: "creator_grow", planDisplay: "Growth", origin: "legacy" });
   });
 
   it("returns Free/None for tenants without a subscription", async () => {

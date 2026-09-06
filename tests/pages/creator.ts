@@ -1,5 +1,5 @@
 /**
- * Creator Dashboard Page Object v1.0.0
+ * Dashboard Page Object v1.0.0
  */
 
 import type { Page, Locator } from "@playwright/test";

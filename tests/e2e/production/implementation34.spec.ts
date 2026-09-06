@@ -11,7 +11,7 @@ test("R8.1 - Pricing page reflects the canonical plan matrix (Launch/Grow/Scale/
   await page.goto("/pricing", { waitUntil: "networkidle", timeout: 60000 });
   await page.waitForSelector("text=Creator Launch", { timeout: 30000 });
 
-  for (const name of ["Creator Launch", "Creator Grow", "Creator Scale", "Creator Enterprise"]) {
+  for (const name of ["Launch", "Creator Grow", "Scale", "Enterprise"]) {
     expect(await page.locator(`text=${name}`).count()).toBeGreaterThan(0);
   }
   // Canonical prices, not duplicated.

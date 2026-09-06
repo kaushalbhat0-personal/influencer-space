@@ -91,7 +91,7 @@ describe("Capabilities — Plans", () => {
   it("should return canonical Creator Launch via legacy code", () => {
     const free = getPlan("creator_free");
     expect(free).toBeDefined();
-    expect(free!.name).toBe("Creator Launch");
+    expect(free!.name).toBe("Launch");
     expect(free!.family).toBe("creator");
     expect(free!.price).toBe(0);
   });
@@ -99,7 +99,7 @@ describe("Capabilities — Plans", () => {
   it("should return Creator Grow plan via legacy code", () => {
     const pro = getPlan("creator_pro");
     expect(pro).toBeDefined();
-    expect(pro!.name).toBe("Creator Growth");
+    expect(pro!.name).toBe("Growth");
     expect(pro!.price).toBe(999);
     expect(pro!.recommended).toBe(true);
     expect(pro!.badge).toBe("Most Popular");
@@ -108,7 +108,7 @@ describe("Capabilities — Plans", () => {
   it("should return Creator Scale plan via legacy code", () => {
     const elite = getPlan("creator_elite");
     expect(elite).toBeDefined();
-    expect(elite!.name).toBe("Creator Scale");
+    expect(elite!.name).toBe("Scale");
     expect(elite!.price).toBe(1999); // RCCF-MKT-05
   });
 
@@ -353,7 +353,7 @@ describe("Capabilities — Engine.planSummary", () => {
     const summary = capabilityEngine.planSummary("creator_free");
     expect(summary).not.toBeNull();
     expect(summary!.code).toBe("creator_launch");
-    expect(summary!.name).toBe("Creator Launch");
+    expect(summary!.name).toBe("Launch");
     // RCCF-LAUNCH-POLISH-06: theme_background_solid adds one feature to Launch.
     expect(summary!.featureCount).toBe(50);
     expect(summary!.enabledFeatureCount).toBeGreaterThan(0);
@@ -508,7 +508,7 @@ describe("Capabilities — Validation", () => {
   });
 
   it("should format canonical plan name", () => {
-    expect(formatPlanName("creator_free")).toBe("Creator Launch");
+    expect(formatPlanName("creator_free")).toBe("Launch");
     expect(formatPlanName("bogus")).toBe("Bogus");
   });
 
@@ -577,7 +577,7 @@ describe("Capabilities — Service Delegation", () => {
   });
 
   it("should delegate canonical plan accessors", () => {
-    expect(capabilityService.getPlan("creator_free")?.name).toBe("Creator Launch");
+    expect(capabilityService.getPlan("creator_free")?.name).toBe("Launch");
     // RCCF-MKT-04-R1: 9 → 8 plans after Partner Growth removal.
     expect(capabilityService.getAllPlans().length).toBe(8);
     expect(capabilityService.getPlansByFamily("creator").length).toBe(4);

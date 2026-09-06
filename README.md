@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CreatorStore
+
+This is the CreatorStore platform — a professional home for every business online.
 
 ## Getting Started
 

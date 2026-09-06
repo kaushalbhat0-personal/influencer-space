@@ -12,7 +12,7 @@ function mkPlan(overrides: Partial<BillingPlan> = {}): BillingPlan {
   return {
     code: "creator_grow",
     family: "creator",
-    name: "Creator Growth",
+    name: "Growth",
     description: "",
     price: 999,
     currency: "INR",
@@ -140,7 +140,7 @@ describe("RCCF-BILLING-07B — SubscriptionManager transparency", () => {
       <SubscriptionManager
         currentPlan={mkPlan()}
         subscription={sub}
-        availablePlans={[mkPlan({ code: "creator_launch", name: "Creator Launch", price: 0 }), mkPlan()]}
+        availablePlans={[mkPlan({ code: "creator_launch", name: "Launch", price: 0 }), mkPlan()]}
         onUpgrade={() => {}}
         onDowngrade={() => {}}
         onCancel={() => {}}
@@ -160,7 +160,7 @@ describe("RCCF-BILLING-07B — SubscriptionManager transparency", () => {
       <SubscriptionManager
         currentPlan={mkPlan()}
         subscription={sub}
-        availablePlans={[mkPlan(), mkPlan({ code: "creator_scale", name: "Creator Scale", price: 1999 })]}
+        availablePlans={[mkPlan(), mkPlan({ code: "creator_scale", name: "Scale", price: 1999 })]}
         onUpgrade={(c) => (upgradedTo = c)}
         onDowngrade={() => {}}
         onCancel={() => {}}
@@ -200,7 +200,7 @@ describe("RCCF-BILLING-07B — trial contextual info", () => {
   it("TRIALING active shows 15-day trial banner with ends date (no fabrication)", () => {
     const trialEndsAt = new Date(Date.now() + 10 * 86400000).toISOString();
     const data: BillingDashboardData = {
-      plan: mkPlan({ code: "creator_launch", name: "Creator Launch", price: 0 }),
+      plan: mkPlan({ code: "creator_launch", name: "Launch", price: 0 }),
       subscription: mkSub({ status: "TRIALING", trialEndsAt, isTrialActive: true, planCode: "creator_launch" }),
       invoices: [],
       paymentMethods: [],

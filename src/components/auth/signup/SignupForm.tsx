@@ -139,7 +139,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[var(--text-primary)]">Welcome to CreatorStore</h1>
-              <p className="mt-2 text-[var(--text-secondary)]">Let&apos;s build your creator business.</p>
+              <p className="mt-2 text-[var(--text-secondary)]">Let&apos;s build your business.</p>
             </div>
             <button onClick={next} className="btn-primary w-full py-3">
               Continue

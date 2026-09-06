@@ -76,7 +76,7 @@ const h = vi.hoisted(() => {
       hoisted.mockLogAction.mockResolvedValue({});
       hoisted.mockCaptureError.mockImplementation(() => {});
       hoisted.mockLogger.mockImplementation(() => {});
-      hoisted.mockPlanSummary.mockReturnValue({ code: "creator_launch", name: "Creator Launch" });
+      hoisted.mockPlanSummary.mockReturnValue({ code: "creator_launch", name: "Launch" });
       hoisted.mockEventBusPublish.mockImplementation(() => {});
       hoisted.mockSettingUpsert.mockResolvedValue({ id: "setting-1" });
       hoisted.mockProductCreate.mockResolvedValue({ id: "p1" });

@@ -85,17 +85,17 @@ function pricingData(): PricingData {
   return {
     // Minimal truthful shapes — enough to exercise tabs/panels/CTAs.
     creator: [
-      resolvedPlan({ code: "creator_launch", name: "Creator Launch", price: 0 }),
+      resolvedPlan({ code: "creator_launch", name: "Launch", price: 0 }),
       resolvedPlan({
         code: "creator_grow",
-        name: "Creator Growth",
+        name: "Growth",
         price: 999,
         annualPrice: 9990,
         ctaType: "checkout",
       }),
       resolvedPlan({
         code: "creator_scale",
-        name: "Creator Scale",
+        name: "Scale",
         price: 1999,
         annualPrice: 19990,
         ctaType: "checkout",
@@ -165,7 +165,7 @@ describe("MKT-10 P3-B — pricing plan selector tab semantics", () => {
     const tablist = getByRole("tablist", { name: "Pricing plans" });
     expect(tablist).toBeTruthy();
 
-    const creatorTab = getByRole("tab", { name: "For Creators" });
+    const creatorTab = getByRole("tab", { name: "Personal" });
     const partnerTab = getByRole("tab", { name: "For Partners" });
     expect(creatorTab.getAttribute("aria-selected")).toBe("true");
     expect(partnerTab.getAttribute("aria-selected")).toBe("false");
@@ -181,17 +181,17 @@ describe("MKT-10 P3-B — pricing plan selector tab semantics", () => {
 
   it("uses a roving tabindex — only the selected tab is a tab stop", () => {
     const { getByRole } = render(<PricingHarness />);
-    expect(getByRole("tab", { name: "For Creators" }).tabIndex).toBe(0);
+    expect(getByRole("tab", { name: "Personal" }).tabIndex).toBe(0);
     expect(getByRole("tab", { name: "For Partners" }).tabIndex).toBe(-1);
 
     fireEvent.click(getByRole("tab", { name: "For Partners" }));
     expect(getByRole("tab", { name: "For Partners" }).tabIndex).toBe(0);
-    expect(getByRole("tab", { name: "For Creators" }).tabIndex).toBe(-1);
+    expect(getByRole("tab", { name: "Personal" }).tabIndex).toBe(-1);
   });
 
   it("ArrowRight / ArrowLeft move selection AND focus with automatic activation", () => {
     const { getByRole } = render(<PricingHarness />);
-    const creatorTab = getByRole("tab", { name: "For Creators" });
+    const creatorTab = getByRole("tab", { name: "Personal" });
     const partnerTab = getByRole("tab", { name: "For Partners" });
 
     fireEvent.keyDown(creatorTab, { key: "ArrowRight" });
@@ -209,9 +209,9 @@ describe("MKT-10 P3-B — pricing plan selector tab semantics", () => {
     fireEvent.click(getByRole("tab", { name: "For Partners" }));
 
     fireEvent.keyDown(getByRole("tab", { name: "For Partners" }), { key: "Home" });
-    expect(getByRole("tab", { name: "For Creators" }).getAttribute("aria-selected")).toBe("true");
+    expect(getByRole("tab", { name: "Personal" }).getAttribute("aria-selected")).toBe("true");
 
-    fireEvent.keyDown(getByRole("tab", { name: "For Creators" }), { key: "End" });
+    fireEvent.keyDown(getByRole("tab", { name: "Personal" }), { key: "End" });
     expect(getByRole("tab", { name: "For Partners" }).getAttribute("aria-selected")).toBe("true");
   });
 
@@ -251,7 +251,7 @@ describe("MKT-10 P3-C — showcase shows only real published sites", () => {
     expect(page).toContain("showcase-empty");
     expect(page).toContain("No published sites yet.");
     // The real-sites claim must stay true under every data condition.
-    expect(page).toContain("real, published CreatorStore website");
+    expect(page).toContain("real, published website");
   });
 });
 

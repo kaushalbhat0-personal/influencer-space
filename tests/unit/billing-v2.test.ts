@@ -37,7 +37,7 @@ describe("EntitlementService", () => {
   it("should produce an audit report", () => {
     const audit = entitlement.audit("creator_free");
     expect(audit.length).toBeGreaterThan(0);
-    expect(audit[0]!.planName).toBe("Creator Launch");
+    expect(audit[0]!.planName).toBe("Launch");
   });
 
   it("should export a singleton instance", () => {

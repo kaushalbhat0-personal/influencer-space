@@ -36,7 +36,7 @@ export function StickyCTA({
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
         <p className="hidden text-sm text-zinc-400 sm:block">
-          {cta.description ?? "Start building your creator business free."}
+          {cta.description ?? "Start building your business free."}
         </p>
         <div className="flex w-full gap-3 sm:w-auto">
           {secondaryCta && (

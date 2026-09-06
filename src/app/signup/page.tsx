@@ -8,7 +8,7 @@ import { getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
 // "— CreatorStore", so a branded title here rendered "…CreatorStore — CreatorStore".
 export const metadata: Metadata = {
   title: "Sign Up Free",
-  description: "Create your free CreatorStore account and build your creator website in minutes.",
+  description: "Create your free CreatorStore account and build your website in minutes.",
 };
 
 // RCCF-36: signup pricing consumes the canonical runtime (DB-authoritative)

@@ -138,7 +138,7 @@ export function AIDemo({ onComplete, onCtaClick }: AIDemoProps) {
             comes together
           </h2>
           <p className="mt-3 text-zinc-500">
-            This is a preview of the steps CreatorStore follows to build a creator business from a social profile.
+            This is a preview of the steps CreatorStore follows to build your business from a social profile.
           </p>
         </div>
 

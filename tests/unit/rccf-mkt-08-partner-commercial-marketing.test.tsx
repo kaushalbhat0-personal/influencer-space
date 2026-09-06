@@ -205,12 +205,12 @@ describe("MKT-08-R1 — Pricing component (partner tab)", () => {
 });
 
 describe("MKT-08-R1 — Pricing component (creator regression)", () => {
-  it("keeps the Monthly/Yearly toggle and recurring semantics for Creators", () => {
+  it("keeps the Monthly/Yearly toggle and recurring semantics Personal", () => {
     const { container, getByRole } = render(<Pricing data={pricingData()} />);
     // Toggle present on the default creator tab.
     const toggle = container.querySelector('[role="switch"]');
     expect(toggle).not.toBeNull();
-    expect(getByRole("tab", { name: "For Creators" }).getAttribute("aria-selected")).toBe("true");
+    expect(getByRole("tab", { name: "Personal" }).getAttribute("aria-selected")).toBe("true");
 
     const text = () => container.textContent ?? "";
     expect(text()).toContain("₹999");
