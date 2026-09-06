@@ -14,14 +14,14 @@ import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
   ShoppingBag, Image, HelpCircle, Trophy, Gamepad2, Rss,
   Link2, MessageSquare, Mail, CreditCard, BookOpen, Music,
-  MessageCircle, Sparkles, Layout, Briefcase, MoreHorizontal,
+  MessageCircle, Sparkles, Layout, Briefcase, MoreHorizontal, Send,
 } from "lucide-react";
 
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
   hero: Sparkles, products: ShoppingBag, gallery: Image,
   testimonials: MessageSquare, faq: HelpCircle, timeline: Trophy,
   games: Gamepad2, contentfeed: Rss, links: Link2, footer: Layout,
-  contact: Mail, newsletter: Rss, pricing: CreditCard, courses: BookOpen,
+  contact: Mail, newsletter: Send, pricing: CreditCard, courses: BookOpen,
   services: Briefcase, embed: Music, social: MessageCircle,
 };
 

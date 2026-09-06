@@ -78,28 +78,31 @@ const D = {
   }),
 };
 
-// Family typography stacks — generic fallbacks so no font-file dependency, yet visually distinct.
+// Family typography stacks — all headings reference next/font variables already loaded in app/layout.tsx
+// (Literata, Space Grotesk, Playfair, Outfit, Geist Sans/Mono) + Inter global. No new font infrastructure.
+// Each family now has a visibly distinct heading stack; body remains Inter for readability.
+// T-01 fix: creator/midnight/glass/executive no longer alias to bare Inter.
 const F = {
-  // Editorial serif — for photography/light & academy
-  editorial: { heading: "Literata, Georgia, serif", body: "Inter, system-ui, sans-serif" },
-  // Luxury display serif
-  luxury: { heading: "'Playfair Display', Georgia, serif", body: "Inter, system-ui, sans-serif" },
-  // Brutalist mono — sharp, technical
-  brutalist: { heading: "'Courier Prime', Courier, monospace", body: "'Courier Prime', Courier, monospace" },
-  // Tech/Cyber geometric mono
-  tech: { heading: "'JetBrains Mono', monospace", body: "Inter, system-ui, sans-serif" },
-  // Creator soft sans (Plus Jakarta-like via system)
-  creator: { heading: "'Plus Jakarta Sans', Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
-  // Minimal airy sans
+  // Editorial serif — for photography/light & academy (literary, warm)
+  editorial: { heading: "var(--font-literata), Literata, Georgia, serif", body: "Inter, system-ui, sans-serif" },
+  // Luxury display serif — high-contrast editorial
+  luxury: { heading: "var(--font-playfair), 'Playfair Display', Georgia, serif", body: "Inter, system-ui, sans-serif" },
+  // Brutalist mono — sharp, technical (Geist Mono is loaded locally)
+  brutalist: { heading: "var(--font-geist-mono), JetBrains Mono, ui-monospace, monospace", body: "var(--font-geist-mono), JetBrains Mono, ui-monospace, monospace" },
+  // Tech/Cyber geometric — Space Grotesk (loaded) distinct from mono
+  tech: { heading: "var(--font-space-grotesk), Space Grotesk, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Creator soft sans — Outfit rounded (loaded) distinct from Inter minimal
+  creator: { heading: "var(--font-outfit), Outfit, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Minimal airy sans — intentional Inter
   minimal: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
-  // Midnight cinematic — same sans but distinct pack handles contrast
-  midnight: { heading: "Sora, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
-  // Organic/Aurora soft rounded
-  organic: { heading: "Outfit, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
-  // Glass studio — Inter but surface glass distinguishes
-  glass: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
-  // Executive commerce — formal sans
-  executive: { heading: "Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Midnight cinematic — Space Grotesk geometric (distinct from Sora alias)
+  midnight: { heading: "var(--font-space-grotesk), Space Grotesk, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Organic/Aurora soft rounded — Outfit (loaded)
+  organic: { heading: "var(--font-outfit), Outfit, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Glass studio — Geist Sans (loaded locally) distinct from Inter, surface glass distinguishes
+  glass: { heading: "var(--font-geist-sans), Geist, Inter, system-ui, sans-serif", body: "Inter, system-ui, sans-serif" },
+  // Executive commerce — Literata serif formal (distinct from Inter, complements corporate)
+  executive: { heading: "var(--font-literata), Literata, Georgia, serif", body: "Inter, system-ui, sans-serif" },
 };
 
 export const catalogThemes: ReturnType<typeof createTheme>[] = [
@@ -150,6 +153,7 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     family: "midnight", variantGroup: "midnight-amber",
     fonts: F.midnight,
     dark: D.dark("#F59E0B", "#38BDF8", "#FB7185", "#0F172A", "#1E293B", "#334155"),
+    light: D.light("#F59E0B", "#0F172A", "#38BDF8", "#FFFFFF", "#F8FAFC", "#F1F5F9"),
   }),
   makeTheme({
     id: "com.creatos.creator-glass", slug: "creator-glass", name: "Creator Glass",
@@ -159,6 +163,7 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     family: "glass", variantGroup: "glass-teal",
     fonts: F.glass,
     dark: D.dark("#14B8A6", "#2DD4BF", "#818CF8", "#0B1220", "#152033", "#1E2B42"),
+    light: D.light("#0F766E", "#14B8A6", "#818CF8", "#FFFFFF", "#F0FDFA", "#F1F5F9"),
   }),
   makeTheme({
     id: "com.creatos.gaming-neon", slug: "gaming-neon", name: "Gaming Neon",
@@ -257,6 +262,7 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     family: "organic-aurora", variantGroup: "aurora-festival",
     fonts: F.organic,
     dark: D.dark("#F43F5E", "#8B5CF6", "#22D3EE", "#0B0B12", "#14141E", "#1E1E2A"),
+    light: D.light("#E11D48", "#8B5CF6", "#06B6D4", "#FFFFFF", "#FFF1F2", "#F1F5F9"),
   }),
   makeTheme({
     id: "com.creatos.music-stage", slug: "music-stage", name: "Music Stage",
@@ -276,6 +282,7 @@ export const catalogThemes: ReturnType<typeof createTheme>[] = [
     family: "brutalist", variantGroup: "brutalist-energy",
     fonts: F.brutalist,
     dark: D.dark("#F97316", "#FB923C", "#FACC15", "#0A0A0A", "#121212", "#1B1B1B"),
+    light: D.light("#EA580C", "#F97316", "#FACC15", "#FFFFFF", "#FFF7ED", "#F1F5F9"),
   }),
   makeTheme({
     id: "com.creatos.education-academy", slug: "education-academy", name: "Education Academy",
