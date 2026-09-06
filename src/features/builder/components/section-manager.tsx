@@ -14,7 +14,7 @@ import {
   Eye, EyeOff, ExternalLink, Trash2, Copy, ArrowUp, ArrowDown,
   ShoppingBag, Image, HelpCircle, Trophy, Gamepad2, Rss,
   Link2, MessageSquare, Mail, CreditCard, BookOpen, Music,
-  MessageCircle, Sparkles, Layout, Briefcase, MoreHorizontal, Send,
+  MessageCircle, Sparkles, Layout, Briefcase, MoreHorizontal, Send, Columns2,
 } from "lucide-react";
 
 const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
@@ -27,6 +27,7 @@ const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
 
 function getIcon(sectionName: string) {
   const key = sectionName.toLowerCase();
+  if (key === "hero split") return Columns2;
   if (SECTION_ICONS[key]) return SECTION_ICONS[key];
   // RCCF-BUILDER-04C: bento/masonry variants reuse base category icon
   if (key.includes("product")) return ShoppingBag;

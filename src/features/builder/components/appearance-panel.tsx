@@ -376,8 +376,8 @@ export function AppearancePanel({
 
       {/* RCCF-71.5.1 — radius is already resolved by LayoutEngine; expose the
            existing persisted field here instead of introducing Builder CSS. */}
-      <Field label="Corner Roundness">
-        <div title={`${borderRadiusLabel(state.borderRadius)} — drag to adjust roundness`}>
+      <Field label="Corner Roundness" title={borderRadiusLabel(state.borderRadius)}>
+        <div>
           <input
             type="range"
             min="0"
@@ -520,10 +520,10 @@ export function AppearancePanel({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, title }: { label: string; children: React.ReactNode; title?: string }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400" title={title}>{label}</p>
       {children}
     </div>
   );

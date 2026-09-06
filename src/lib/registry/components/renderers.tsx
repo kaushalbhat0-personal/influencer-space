@@ -1052,14 +1052,14 @@ export function FaqRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
-        <div className="space-y-3">
+        <div className="space-y-[calc(var(--section-spacing,3.5rem)*0.22)]">
           {items.map((item: Record<string, string>, i: number) => (
             <details key={i} className="group rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60">
-              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">
+              <summary className="flex cursor-pointer items-center justify-between px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.22)] text-sm font-medium text-[var(--text-primary,#FAFAFA)]">
                 {item.question || item.q}
                 <svg suppressHydrationWarning className="h-4 w-4 text-[var(--text-muted,#71717A)] transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </summary>
-              <div className="border-t border-white/5 px-4 py-3 text-xs text-[var(--text-muted,#71717A)]">{item.answer || item.a}</div>
+              <div className="border-t border-white/5 px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.22)] text-xs text-[var(--text-muted,#71717A)]">{item.answer || item.a}</div>
             </details>
           ))}
         </div>
@@ -1084,7 +1084,7 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
     return (
       <div className="mx-auto max-w-lg px-4 py-[var(--section-spacing,3rem)] text-center">
         <SectionHeading p={props} title={title} />
-        <div className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-6">
+        <div className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.36)]">
           <p className="text-sm text-[var(--text-secondary,#A1A1AA)]">Thanks for reaching out! I&apos;ll get back to you soon.</p>
         </div>
       </div>
@@ -1101,20 +1101,20 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
         {!p.description && (
           <p className="mb-6 text-center text-sm text-[var(--text-muted,#71717A)]">Have a question or want to collaborate? Reach out!</p>
         )}
-        <div className="space-y-4">
+        <div className="space-y-[calc(var(--section-spacing,3.5rem)*0.28)]">
           <div>
             <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Name</label>
-            <input disabled placeholder="Your name" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+            <input disabled placeholder="Your name" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Email</label>
-            <input disabled type="email" placeholder="your@email.com" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+            <input disabled type="email" placeholder="your@email.com" className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Message</label>
-            <textarea disabled rows={4} className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" placeholder="Your message..." />
+            <textarea disabled rows={4} className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" placeholder="Your message..." />
           </div>
-          <button type="button" disabled className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">Send Message</button>
+          <button type="button" disabled className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">Send Message</button>
           <p className="text-center text-[10px] font-medium uppercase tracking-widest text-amber-400/80">Preview — submissions disabled</p>
         </div>
       </div>
@@ -1130,25 +1130,25 @@ export function ContactRenderer({ props, previewMode }: RendererProps) {
       <form action={async (fd) => {
         fd.set("tenantId", tenantId);
         action(fd);
-      }} className="space-y-4">
+      }} className="space-y-[calc(var(--section-spacing,3.5rem)*0.28)]">
         <input type="hidden" name="tenantId" value={tenantId} />
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Name</label>
-          <input name="name" required maxLength={200} className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your name" />
+          <input name="name" required maxLength={200} className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your name" />
           {state.fieldErrors?.name && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.name[0]}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Email</label>
-          <input name="email" type="email" required maxLength={200} className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="your@email.com" />
+          <input name="email" type="email" required maxLength={200} className="w-full rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="your@email.com" />
           {state.fieldErrors?.email && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs text-[var(--text-muted,#71717A)]">Message</label>
-          <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your message..." />
+          <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full resize-none rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder="Your message..." />
           {state.fieldErrors?.message && <p className="mt-1 text-xs text-red-400">{state.fieldErrors.message[0]}</p>}
         </div>
         {state.error && <p className="text-xs text-red-400">{state.error}</p>}
-        <button type="submit" className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">Send Message</button>
+        <button type="submit" className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">Send Message</button>
       </form>
     </div>
   );
@@ -1182,8 +1182,8 @@ export function NewsletterRenderer({ props, previewMode }: RendererProps) {
         <SectionHeading p={props} title={title} />
         <p className="mb-6 text-sm text-[var(--text-muted,#71717A)]">Stay updated with the latest content and announcements.</p>
         <div className="flex gap-2">
-          <input disabled placeholder={p.placeholder || "Your email"} className="flex-1 rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
-          <button type="button" disabled className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">{p.buttonText || "Subscribe"}</button>
+          <input disabled placeholder={p.placeholder || "Your email"} className="flex-1 rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 opacity-60 disabled:cursor-not-allowed" />
+          <button type="button" disabled className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm font-semibold text-[var(--button-primary-fg,#09090b)] opacity-50 disabled:cursor-not-allowed">{p.buttonText || "Subscribe"}</button>
         </div>
         <p className="mt-2 text-[10px] font-medium uppercase tracking-widest text-amber-400/80">Preview — subscriptions disabled</p>
       </div>
@@ -1199,8 +1199,8 @@ export function NewsletterRenderer({ props, previewMode }: RendererProps) {
         action(fd);
       }} className="flex gap-2">
         <input type="hidden" name="tenantId" value={tenantId} />
-        <input name="email" type="email" required className="flex-1 rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
-        <button type="submit" className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-4 py-2.5 text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">{p.buttonText || "Subscribe"}</button>
+        <input name="email" type="email" required className="flex-1 rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" placeholder={p.placeholder || "Your email"} />
+        <button type="submit" className="rounded-[var(--radius-lg,0.5rem)] bg-[var(--button-primary-bg,#00f5ff)] px-[calc(var(--section-spacing,3.5rem)*0.28)] py-[calc(var(--section-spacing,3.5rem)*0.18)] text-sm font-semibold text-[var(--button-primary-fg,#09090b)] transition-opacity hover:bg-[var(--button-primary-hover,#00d9f2)]">{p.buttonText || "Subscribe"}</button>
       </form>
       {state.error && <p className="mt-2 text-xs text-red-400">{state.error}</p>}
       {state.fieldErrors?.email && <p className="mt-2 text-xs text-red-400">{state.fieldErrors.email[0]}</p>}
