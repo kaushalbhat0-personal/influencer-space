@@ -292,6 +292,7 @@ export function AppearancePanel({
             />
           ))}
         </div>
+        <p className="mt-1.5 text-[10px] leading-snug text-zinc-500">Changes the page backdrop — not the cards.</p>
 
         {/* RCCF-71.6.4: background IMAGE (Growth/Scale). Only rendered when the
              image preset is active. The image goes through the canonical media
@@ -375,18 +376,21 @@ export function AppearancePanel({
 
       {/* RCCF-71.5.1 — radius is already resolved by LayoutEngine; expose the
            existing persisted field here instead of introducing Builder CSS. */}
-      <Field label={`Corner Roundness (${borderRadiusLabel(state.borderRadius)})`}>
-        <input
-          type="range"
-          min="0"
-          max="24"
-          step="1"
-          value={clampedRadius(state.borderRadius)}
-          onChange={(event) => applyChange({ borderRadius: event.target.value })}
-          disabled={locked}
-          aria-label="Border radius"
-          className="w-full accent-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
-        />
+      <Field label="Corner Roundness">
+        <div title={`${borderRadiusLabel(state.borderRadius)} — drag to adjust roundness`}>
+          <input
+            type="range"
+            min="0"
+            max="24"
+            step="1"
+            value={clampedRadius(state.borderRadius)}
+            onChange={(event) => applyChange({ borderRadius: event.target.value })}
+            disabled={locked}
+            aria-label="Border radius"
+            title={borderRadiusLabel(state.borderRadius)}
+            className="w-full accent-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </div>
         <div className="flex justify-between text-[10px] font-medium text-zinc-500"><span>Sharp</span><span>Soft</span></div>
       </Field>
 

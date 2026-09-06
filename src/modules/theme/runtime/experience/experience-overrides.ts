@@ -48,7 +48,7 @@ export const BACKGROUND_PRESETS: Record<string, BackgroundPreset> = {
   },
   midnight: {
     id: "midnight",
-    label: "Midnight",
+    label: "Midnight Glow",
     description: "Solid with a centered glow",
     background: { kind: "solid", glow: "center" },
   },
@@ -66,13 +66,13 @@ export const BACKGROUND_PRESETS: Record<string, BackgroundPreset> = {
   },
   mesh: {
     id: "mesh",
-    label: "Mesh",
+    label: "Mesh Blend",
     description: "Dual-tone radial mesh",
     background: { kind: "mesh", colors: ["rgba(129,140,248,0.22)", "rgba(59,130,246,0.14)"], glow: "top" },
   },
   aurora: {
     id: "aurora",
-    label: "Aurora",
+    label: "Aurora Wash",
     description: "Multi-color aurora wash",
     background: {
       kind: "aurora",
@@ -82,7 +82,7 @@ export const BACKGROUND_PRESETS: Record<string, BackgroundPreset> = {
   },
   pattern: {
     id: "pattern",
-    label: "Pattern",
+    label: "Lined",
     description: "Subtle line texture",
     background: { kind: "pattern", pattern: "lines", glow: "top" },
   },
@@ -100,7 +100,7 @@ export const SURFACE_PRESETS: Record<string, SurfacePreset> = {
   elevated: { id: "elevated", label: "Elevated", surface: "elevated", premium: false },
   glass: { id: "glass", label: "Glass", surface: "glass", premium: true },
   "soft-glow": { id: "soft-glow", label: "Soft Glow", surface: "soft-glow", premium: true },
-  "gradient-border": { id: "gradient-border", label: "Gradient Border", surface: "gradient-border", premium: true },
+  "gradient-border": { id: "gradient-border", label: "Framed", surface: "gradient-border", premium: true },
   floating: { id: "floating", label: "Floating", surface: "floating", premium: true },
   luxury: { id: "luxury", label: "Luxury", surface: "luxury", premium: true },
   neon: { id: "neon", label: "Neon", surface: "neon", premium: true },

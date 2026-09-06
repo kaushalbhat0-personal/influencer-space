@@ -86,12 +86,12 @@ function SectionHeading({ p, title, elementId, previewMode }: { p: Record<string
 // configured density is restored at the large container breakpoint. All class
 // strings are literal so Tailwind's JIT emits every variant.
 const RESPONSIVE_GRID: Record<number, string> = {
-  1: "grid grid-cols-1 gap-4",
-  2: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2",
-  3: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3",
-  4: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-4",
-  5: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-5",
-  6: "grid grid-cols-1 gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-6",
+  1: "grid grid-cols-1 gap-[calc(var(--section-spacing,3.5rem)*0.28)]",
+  2: "grid grid-cols-1 gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2",
+  3: "grid grid-cols-1 gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-3",
+  4: "grid grid-cols-1 gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-4",
+  5: "grid grid-cols-1 gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-5",
+  6: "grid grid-cols-1 gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-6",
 };
 
 function responsiveGridClass(columns: unknown): string {
@@ -407,7 +407,7 @@ export function GalleryBentoRenderer({ props, elementId, previewMode }: Renderer
   return (
     <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
       <SectionHeading p={p} title={title} elementId={elementId} previewMode={previewMode} />
-      <div className="grid gap-4 @sm/main:grid-cols-3">
+      <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-3">
         <div
           role="button"
           tabIndex={0}
@@ -536,7 +536,7 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
         {/* RCCF-68.3.2: container-aware grid — mobile 1 col, medium 2, desktop = configured columns. */}
         <div className={responsiveGridClass(columns)}>
           {products.map((prod: Record<string, unknown>, idx: number) => (
-            <div key={idx} className="group rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 transition-colors hover:border-[var(--brand-primary,#6366F1)] hover:bg-[var(--surface-card,#18181B)]">
+            <div key={idx} className="group rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.28)] transition-colors hover:border-[var(--brand-primary,#6366F1)] hover:bg-[var(--surface-card,#18181B)]">
               <div className="relative mb-2 overflow-hidden rounded">
                 {prod.imageUrl ? (
                   <CreatorImage
@@ -601,7 +601,7 @@ export function ProductsBentoRenderer({ props, previewMode }: RendererProps) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
       <SectionHeading p={p} title={title} />
-      <div className="grid gap-4 @sm/main:grid-cols-3">
+      <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-3">
         {/* Featured — 2×2 on @sm, full width on mobile, taller media */}
         <div className="group relative flex flex-col overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--brand-primary)]/15 bg-[var(--surface-card,#18181B)]/60 shadow-sm transition-all duration-300 hover:shadow-lg @sm/main:col-span-2 @sm/main:row-span-2">
           <div className="relative overflow-hidden">
@@ -622,7 +622,7 @@ export function ProductsBentoRenderer({ props, previewMode }: RendererProps) {
               <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">Featured pick</span>
             )}
           </div>
-          <div className="flex flex-1 flex-col p-4 @sm/main:p-5">
+          <div className="flex flex-1 flex-col p-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:p-[calc(var(--section-spacing,3.5rem)*0.35)]">
             <p className="text-base font-semibold tracking-tight text-[var(--text-primary,#FAFAFA)] break-words @sm/main:text-lg">{String(featured.name || "")}</p>
             {featured.description ? (
               <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-[var(--text-muted,#71717A)] break-words">{String(featured.description)}</p>
@@ -657,7 +657,7 @@ export function ProductsBentoRenderer({ props, previewMode }: RendererProps) {
                 <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-black">Featured</span>
               )}
             </div>
-            <div className="flex flex-1 flex-col p-3">
+            <div className="flex flex-1 flex-col p-[calc(var(--section-spacing,3.5rem)*0.22)]">
               <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)] break-words line-clamp-1">{String(prod.name || "")}</p>
               {prod.description ? (
                 <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-[var(--text-muted,#71717A)] break-words">{String(prod.description)}</p>
@@ -735,11 +735,11 @@ export function TimelineMasonryRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 @sm/main:grid-cols-2">
+        <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2">
           {milestones.map((m: Record<string, string>, i: number) => (
             <div
               key={i}
-              className="group relative flex flex-col overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-[var(--border,rgba(255,255,255,0.12))] break-inside-avoid"
+              className="group relative flex flex-col overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.28)] shadow-sm transition-all duration-300 hover:shadow-md hover:border-[var(--border,rgba(255,255,255,0.12))] break-inside-avoid"
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="text-xs font-semibold tracking-widest text-[var(--brand-secondary,#00f5ff)] break-words">{m.year}</p>
@@ -933,7 +933,7 @@ export function TestimonialsRenderer({ props }: RendererProps) {
             mobile is 1 column so testimonials never cram. */}
         <div className={responsiveGridClass(Math.min(columns, items.length))}>
           {items.map((item: Record<string, string>, i: number) => (
-            <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4">
+            <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.28)]">
               <div className="mb-2 flex items-center gap-2">
                 {item.avatarUrl ? (
                   <CreatorImage
@@ -1150,7 +1150,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
     return (
       <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
+        <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {courses.map((course: Record<string, unknown>, i: number) => (
             <div key={i} className="group overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
@@ -1170,7 +1170,7 @@ export function CoursesRenderer({ props }: RendererProps) {  const p = props as 
                   </span>
                 )}
               </div>
-              <div className="p-4">
+              <div className="p-[calc(var(--section-spacing,3.5rem)*0.28)]">
                 <p className="text-xs font-semibold text-[var(--brand-secondary,#00f5ff)]">{(String(course.category || "")).toUpperCase() || "COURSE"}</p>
                 <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(course.title || "")}</p>
                 {!!course.description && <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(course.description)}</p>}
@@ -1199,7 +1199,7 @@ export function ServicesRenderer({ props, previewMode }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
+        <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {services.map((service: Record<string, unknown>, i: number) => (
             <div key={i} className="group overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 text-center transition-colors hover:border-[var(--brand-primary,#6366F1)]">
               <div className="relative">
@@ -1219,7 +1219,7 @@ export function ServicesRenderer({ props, previewMode }: RendererProps) {
                   </span>
                 )}
               </div>
-              <div className="p-6">
+              <div className="p-[calc(var(--section-spacing,3.5rem)*0.32)]">
                 {!!service.category && (
                   <p className="text-xs font-semibold text-[var(--brand-secondary,#00f5ff)]">{String(service.category).toUpperCase()}</p>
                 )}
@@ -1384,7 +1384,7 @@ export function BookingsRenderer({ props, previewMode }: RendererProps) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
       <SectionHeading p={p} title={title} />
-      <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
+      <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-3">
         {slots.map((slot, i) => (
           <BookingCard key={i} slot={slot as Record<string, unknown>} previewMode={previewMode} />
         ))}
@@ -1422,7 +1422,7 @@ function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; pre
   // no submitPublicBooking request, no rate-limit request.
   if (previewMode) {
     return (
-      <div className="flex flex-col rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
+      <div className="flex flex-col rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.35)]">
         <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(slot.title || "Booking")}</p>
         {slot.description ? <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(slot.description)}</p> : null}
         <p className="mt-2 text-xs text-[var(--brand-secondary,#00f5ff)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
@@ -1441,7 +1441,7 @@ function BookingCard({ slot, previewMode }: { slot: Record<string, unknown>; pre
   }
 
   return (
-    <div className="flex flex-col rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-5">
+    <div className="flex flex-col rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.35)]">
       <p className="text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{String(slot.title || "Booking")}</p>
       {slot.description ? <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{String(slot.description)}</p> : null}
       <p className="mt-2 text-xs text-[var(--brand-secondary,#00f5ff)]">{dateLabel} · {String(slot.slotStart || "")}–{String(slot.slotEnd || "")}</p>
@@ -1621,9 +1621,9 @@ export function GamesRenderer({ props }: RendererProps) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} />
-        <div className="grid gap-4 @sm/main:grid-cols-2 @lg/main:grid-cols-3">
+        <div className="grid gap-[calc(var(--section-spacing,3.5rem)*0.28)] @sm/main:grid-cols-2 @lg/main:grid-cols-3">
           {games.map((game: Record<string, string>, i: number) => (
-            <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 text-center">
+            <div key={i} className="rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-[calc(var(--section-spacing,3.5rem)*0.28)] text-center">
               {game.logoUrl ? (
                 <div className="mx-auto mb-3 h-20 w-20">
                   <CreatorImage src={game.logoUrl} alt={game.name} variant="logo" />
@@ -1660,7 +1660,7 @@ export function ContentFeedRenderer({ props, elementId, previewMode }: RendererP
     return (
       <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
         <SectionHeading p={p} title={title} elementId={elementId} previewMode={previewMode} />
-        <div className="grid grid-cols-2 gap-3 @sm/main:grid-cols-3 @lg/main:grid-cols-4">
+        <div className="grid grid-cols-2 gap-[calc(var(--section-spacing,3.5rem)*0.22)] @sm/main:grid-cols-3 @lg/main:grid-cols-4">
           {items.map((item: Record<string, string>, i: number) => {
             const isVideo = item.mediaType === "video";
             const pinned = isPinned(i);
