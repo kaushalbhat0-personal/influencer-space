@@ -16,12 +16,14 @@ const inputCls = "admin-input px-2.5 py-1.5 text-xs";
 export function SectionPresentationPanel() {
   const subscribe = (cb: () => void) => builderEvents.subscribe("store:changed", () => cb());
   useSyncExternalStore(subscribe, () => builderStore.getSelectedSlot()?.id ?? "");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const slot = builderStore.getSelectedSlot();
   if (!slot) return null;
 
   const p = (slot.config.presentation as SectionPresentation | undefined) ?? {};
   const moduleId = slot.moduleId;
+  const hasRegistryFields = !!componentRegistry.get(slot.moduleId)?.fields?.length;
 
   const set = (patch: Partial<SectionPresentation>) => {
     builderStore.updateSlotPresentation(slot.id, patch as Record<string, unknown>);
@@ -44,9 +46,6 @@ export function SectionPresentationPanel() {
       </button>
     );
   };
-
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const hasRegistryFields = !!componentRegistry.get(slot.moduleId)?.fields?.length;
 
   return (
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
