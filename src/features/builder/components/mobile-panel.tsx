@@ -43,7 +43,8 @@ export function BuilderMobilePanel({
     }, 50);
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" || e.key === "Esc" || (e as unknown as { code?: string }).code === "Escape") {
+        e.preventDefault();
         onClose();
         return;
       }
@@ -68,6 +69,7 @@ export function BuilderMobilePanel({
       }
     };
     document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -75,6 +77,7 @@ export function BuilderMobilePanel({
       openRef.current = false;
       window.clearTimeout(focusTimer);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = prevOverflow;
       // Return focus to whatever opened the panel.
       previouslyFocused?.focus?.();
