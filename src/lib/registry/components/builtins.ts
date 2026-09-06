@@ -3,7 +3,7 @@ import type { ComponentDefinition } from "./types";
 import type { RegistryFieldDefinition } from "./fields";
 import {
   HeroRenderer, HeroSplitRenderer, FooterRenderer,
-  GalleryRenderer, GalleryBentoRenderer, ProductsRenderer, TimelineRenderer,
+  GalleryRenderer, GalleryBentoRenderer, ProductsRenderer, ProductsBentoRenderer, TimelineRenderer, TimelineMasonryRenderer,
   LinksRenderer, TestimonialsRenderer, TestimonialsMarqueeRenderer, FaqRenderer,
   ContactRenderer, NewsletterRenderer,
   CoursesRenderer, ServicesRenderer, ServicesBentoRenderer, SpotifyRenderer, YouTubeRenderer,
@@ -159,6 +159,33 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     renderer: ProductsRenderer,
   },
   {
+    id: "products.bento", type: "products", name: "Products Bento", category: "products",
+    icon: "LayoutGrid", description: "Asymmetric bento — featured product + supporting tiles",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: true,
+    animations: [{ id: "stagger", name: "Stagger" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "Products", columns: 3 },
+    fields: PRODUCTS_GRID_FIELDS,
+    resolveData: ({ content }) => {
+      const productEntries = content.products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        imageUrl: p.imageUrl,
+        slug: p.slug,
+        isFeatured: p.isFeatured,
+        commerceMode: p.commerceMode,
+        whatsappUrl: p.whatsappUrl,
+      }));
+      const resolvedTitle = content.identity.name ? `${content.identity.name}'s Products` : "Products";
+      return { resolvedData: productEntries, resolvedTitle };
+    },
+    renderer: ProductsBentoRenderer,
+  },
+  {
     id: "timeline.default", type: "timeline", name: "Timeline", category: "timeline",
     icon: "Trophy", description: "Career milestones and achievements timeline",
     version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
@@ -168,6 +195,17 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "My Journey" },
     renderer: TimelineRenderer,
+  },
+  {
+    id: "timeline.masonry", type: "timeline", name: "Timeline Masonry", category: "timeline",
+    icon: "LayoutGrid", description: "Two-column staggered cards — masonry-like rhythm for milestones",
+    version: "1.0.0", supportsAI: false, supportsTheme: true, supportsAnimation: true,
+    supportsResponsive: true, supportsSEO: true,
+    animations: [{ id: "stagger", name: "Stagger" }],
+    responsive: { mobile: true, tablet: true, desktop: true },
+    validation: { schema: {} },
+    defaultProps: { title: "My Journey" },
+    renderer: TimelineMasonryRenderer,
   },
   {
     id: "links.default", type: "links", name: "Social Links", category: "links",

@@ -27,17 +27,24 @@ const SECTION_ICONS: Record<string, typeof ShoppingBag> = {
 
 function getIcon(sectionName: string) {
   const key = sectionName.toLowerCase();
-  return SECTION_ICONS[key] ?? Layout;
+  if (SECTION_ICONS[key]) return SECTION_ICONS[key];
+  // RCCF-BUILDER-04C: bento/masonry variants reuse base category icon
+  if (key.includes("product")) return ShoppingBag;
+  if (key.includes("timeline")) return Trophy;
+  if (key.includes("gallery")) return Image;
+  if (key.includes("testimonial")) return MessageSquare;
+  if (key.includes("hero")) return Sparkles;
+  return Layout;
 }
 
 const EDIT_LINKS: Record<string, string> = {
   "hero.default": "/admin/settings", "hero.gaming": "/admin/settings",
   "hero.fitness": "/admin/settings", "hero.education": "/admin/settings",
   "hero.split": "/admin/settings",
-  "products.grid": "/admin/products",
+  "products.grid": "/admin/products", "products.bento": "/admin/products",
   "gallery.grid": "/admin/gallery", "gallery.bento": "/admin/gallery",
   "testimonials.default": "/admin/testimonials", "testimonials.marquee": "/admin/testimonials",
-  "faq.default": "/admin/faq", "timeline.default": "/admin/milestones",
+  "faq.default": "/admin/faq", "timeline.default": "/admin/milestones", "timeline.masonry": "/admin/milestones",
   "games.default": "/admin/games", "links.default": "/admin/links",
   "contentFeed.default": "/admin/settings/content",
   "courses.default": "/admin/courses",
@@ -46,11 +53,11 @@ const EDIT_LINKS: Record<string, string> = {
 };
 
 const CONTENT_LABELS: Record<string, string> = {
-  products: "Products", gallery: "Images", testimonials: "Testimonials",
-  faq: "Items", timeline: "Events", games: "Games", links: "Links",
-  hero: "Hero", footer: "Footer", contact: "Contact",
+  products: "Products", "products bento": "Products", gallery: "Images", "gallery bento": "Images", testimonials: "Testimonials",
+  "testimonials marquee": "Testimonials", faq: "Items", timeline: "Events", "timeline masonry": "Events", games: "Games", links: "Links",
+  hero: "Hero", "hero split": "Hero", footer: "Footer", contact: "Contact",
   newsletter: "Subscribers", pricing: "Plans", courses: "Courses",
-  services: "Services", embed: "Embeds", social: "Links", contentfeed: "Posts",
+  services: "Services", "services bento": "Services", embed: "Embeds", social: "Links", contentfeed: "Posts",
 };
 
 /**
@@ -64,9 +71,11 @@ const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId:
   { name: "Hero", category: "hero", componentId: "hero.default" },
   { name: "Hero Split", category: "hero", componentId: "hero.split" },
   { name: "Products", category: "products", componentId: "products.grid" },
+  { name: "Products Bento", category: "products", componentId: "products.bento" },
   { name: "Gallery", category: "gallery", componentId: "gallery.grid" },
   { name: "Gallery Bento", category: "gallery", componentId: "gallery.bento" },
   { name: "Timeline", category: "timeline", componentId: "timeline.default" },
+  { name: "Timeline Masonry", category: "timeline", componentId: "timeline.masonry" },
   { name: "Testimonials", category: "testimonials", componentId: "testimonials.default" },
   { name: "Testimonials Marquee", category: "testimonials", componentId: "testimonials.marquee" },
   { name: "FAQ", category: "faq", componentId: "faq.default" },

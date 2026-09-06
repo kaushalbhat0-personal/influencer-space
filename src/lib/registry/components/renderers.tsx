@@ -553,9 +553,9 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{String(prod.name || "")}</p>
+              <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)] break-words">{String(prod.name || "")}</p>
               {prod.description ? (
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--text-muted,#71717A)]">{String(prod.description)}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--text-muted,#71717A)] break-words">{String(prod.description)}</p>
               ) : null}
               <p className="mt-1 text-xs text-[var(--text-muted,#71717A)]">{typeof prod.price === "number" && prod.price ? formatCurrency(prod.price) : ""}</p>
               {prod.id ? (
@@ -579,6 +579,104 @@ export function ProductsRenderer({ props, previewMode }: RendererProps) {
   return <EmptyState label="Add products in Dashboard" />;
 }
 
+/* ─── Products Bento — RCCF-BUILDER-04C: 1 featured + supporting tiles ─────────
+   Reuses Gallery Bento bento pattern (asymmetric 2/3) but for commerce:
+   - Featured: larger media, fuller description, price, featured badge, CTA
+   - Supporting: compact tiles, truncated description, price
+   Container-aware: mobile 1 col, @sm/main 3 cols (featured 2×2), rest 1×1.
+   Genuine composition difference via column ratios, card proportions, density. */
+export function ProductsBentoRenderer({ props, previewMode }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const products = (p.resolvedData as Record<string, unknown>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Products");
+  if (!useVisibility(props)) return null;
+  if (products.length === 0) return <EmptyState label="Add products in Dashboard" />;
+
+  const featured = products[0]!;
+  const rest = products.slice(1);
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
+      <SectionHeading p={p} title={title} />
+      <div className="grid gap-4 @sm/main:grid-cols-3">
+        {/* Featured — 2×2 on @sm, full width on mobile, taller media */}
+        <div className="group relative flex flex-col overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--brand-primary)]/15 bg-[var(--surface-card,#18181B)]/60 shadow-sm transition-all duration-300 hover:shadow-lg @sm/main:col-span-2 @sm/main:row-span-2">
+          <div className="relative overflow-hidden">
+            {featured.imageUrl ? (
+              <CreatorImage
+                src={String(featured.imageUrl)}
+                alt={String(featured.name || "")}
+                variant="product"
+                className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:transition-none @sm/main:aspect-[16/11]"
+              />
+            ) : (
+              <div className="flex aspect-[16/10] items-center justify-center bg-[var(--surface-card-hover,#27272A)] @sm/main:aspect-[16/11]">
+                <span className="text-2xl text-[var(--text-muted,#71717A)]">{String((featured.name as string)?.[0] ?? "P")}</span>
+              </div>
+            )}
+            <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black shadow-sm">Featured</span>
+            {Boolean(featured.isFeatured) && (
+              <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">Featured pick</span>
+            )}
+          </div>
+          <div className="flex flex-1 flex-col p-4 @sm/main:p-5">
+            <p className="text-base font-semibold tracking-tight text-[var(--text-primary,#FAFAFA)] break-words @sm/main:text-lg">{String(featured.name || "")}</p>
+            {featured.description ? (
+              <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-[var(--text-muted,#71717A)] break-words">{String(featured.description)}</p>
+            ) : null}
+            <p className="mt-2 text-sm font-semibold text-[var(--text-primary,#FAFAFA)]">{typeof featured.price === "number" && featured.price ? formatCurrency(featured.price) : ""}</p>
+            <div className="mt-3">
+              {featured.id ? (
+                <ProductCardCtas prod={featured as Record<string, unknown>} previewMode={previewMode} />
+              ) : (
+                <p className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] py-2 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">Buy Now</p>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Supporting tiles — compact, 1×1, truncated */}
+        {rest.map((prod: Record<string, unknown>, idx: number) => (
+          <div key={idx} className="group flex flex-col overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 shadow-sm transition-all duration-300 hover:shadow-lg">
+            <div className="relative overflow-hidden">
+              {prod.imageUrl ? (
+                <CreatorImage
+                  src={String(prod.imageUrl)}
+                  alt={String(prod.name || "")}
+                  variant="product"
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02] motion-reduce:transition-none"
+                />
+              ) : (
+                <div className="flex aspect-[4/3] items-center justify-center bg-[var(--surface-card-hover,#27272A)]">
+                  <span className="text-xs text-[var(--text-muted,#71717A)]">{String((prod.name as string)?.[0] ?? "P")}</span>
+                </div>
+              )}
+              {Boolean(prod.isFeatured) && (
+                <span className="absolute left-2 top-2 rounded-full bg-amber-500/90 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-black">Featured</span>
+              )}
+            </div>
+            <div className="flex flex-1 flex-col p-3">
+              <p className="text-sm font-medium text-[var(--text-primary,#FAFAFA)] break-words line-clamp-1">{String(prod.name || "")}</p>
+              {prod.description ? (
+                <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-[var(--text-muted,#71717A)] break-words">{String(prod.description)}</p>
+              ) : null}
+              <p className="mt-1 text-xs font-medium text-[var(--text-muted,#71717A)]">{typeof prod.price === "number" && prod.price ? formatCurrency(prod.price) : ""}</p>
+              <div className="mt-2">
+                {prod.id ? (
+                  <ProductCardCtas prod={prod as Record<string, unknown>} previewMode={previewMode} />
+                ) : (
+                  <p className="w-full rounded-[var(--radius-lg,0.5rem)] bg-[var(--surface-card-hover,#27272A)] py-1.5 text-center text-xs font-semibold text-[var(--text-muted,#71717A)]">Buy Now</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Single-product case: bento still reads as authored — no empty tiles */}
+      <ViewAllLink href={p.viewAllHref} />
+    </div>
+  );
+}
+
 /* â”€â”€â”€ Timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function TimelineRenderer({ props }: RendererProps) {
@@ -593,8 +691,8 @@ export function TimelineRenderer({ props }: RendererProps) {
         <SectionHeading p={p} title={title} />
         <div className="space-y-6">
           {milestones.map((m: Record<string, string>, i: number) => (
-            <div key={i} className="relative border-l-2 border-zinc-800 pl-6">
-              <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-zinc-800 bg-[var(--surface-root,#0A0A0B)]" />
+            <div key={i} className="relative border-l-2 border-[var(--border,rgba(255,255,255,0.08))] pl-6">
+              <div className="absolute -left-2.5 top-0 h-5 w-5 rounded-full border-2 border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-root,#0A0A0B)]" />
               {m.imageUrl && (
                 <div className="mb-2 w-full max-w-xs overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card-hover,#27272A)]">
                   <CreatorImage
@@ -606,8 +704,60 @@ export function TimelineRenderer({ props }: RendererProps) {
                 </div>
               )}
               <p className="text-xs font-semibold text-[var(--brand-secondary,#00f5ff)]">{m.year}</p>
-              <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)]">{m.title || m.name}</p>
-              <p className="text-xs text-[var(--text-muted,#71717A)]">{m.description || ""}</p>
+              <p className="mt-1 text-sm font-medium text-[var(--text-primary,#FAFAFA)] break-words">{m.title || m.name}</p>
+              <p className="text-xs text-[var(--text-muted,#71717A)] break-words">{m.description || ""}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return <EmptyState label="Add milestones to your timeline" />;
+}
+
+/* ─── Timeline Masonry — RCCF-BUILDER-04C: 2-col staggered cards ──────────
+   Reuses existing grid primitives (no new masonry library). Genuine difference
+   via column ratios (1→2), card proportions (bordered cards vs vertical line),
+   alignment (grid vs linear), density (gap-4 masonry-like rhythm), pacing.
+   Container-aware: 1 col mobile, 2 cols @sm/main, same spacing tokens.
+   Preserves ordering, content, empty states, long titles, missing media. */
+export function TimelineMasonryRenderer({ props }: RendererProps) {
+  const p = props as Record<string, unknown>;
+  const milestones = (p.resolvedData as Record<string, string>[]) || [];
+  const title = (p.resolvedTitle as string) || String(p.title || "Timeline");
+  if (!useVisibility(props)) return null;
+
+  if (milestones.length > 0) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-[var(--section-spacing,3rem)]">
+        <SectionHeading p={p} title={title} />
+        <div className="grid gap-4 @sm/main:grid-cols-2">
+          {milestones.map((m: Record<string, string>, i: number) => (
+            <div
+              key={i}
+              className="group relative flex flex-col overflow-hidden rounded-[var(--radius-xl,0.75rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card,#18181B)]/60 p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-[var(--border,rgba(255,255,255,0.12))] break-inside-avoid"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-semibold tracking-widest text-[var(--brand-secondary,#00f5ff)] break-words">{m.year}</p>
+                {i === 0 && milestones.length > 2 && (
+                  <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-400 ring-1 ring-amber-500/20">Latest</span>
+                )}
+              </div>
+              {m.imageUrl && (
+                <div className="mt-3 overflow-hidden rounded-[var(--radius-lg,0.5rem)] border border-[var(--border,rgba(255,255,255,0.08))] bg-[var(--surface-card-hover,#27272A)]">
+                  <CreatorImage
+                    src={m.imageUrl}
+                    alt={m.title || m.name || "Milestone"}
+                    variant="gallery"
+                    className="aspect-[16/10] w-full object-cover"
+                  />
+                </div>
+              )}
+              <p className="mt-3 text-sm font-semibold tracking-tight text-[var(--text-primary,#FAFAFA)] break-words">{m.title || m.name}</p>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted,#71717A)] break-words">{m.description || ""}</p>
+              {/* Subtle year dot — ties back to vertical timeline lineage without the line */}
+              <span className="pointer-events-none absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[var(--brand-secondary,#00f5ff)] opacity-0 transition-opacity group-hover:opacity-60" aria-hidden />
             </div>
           ))}
         </div>
