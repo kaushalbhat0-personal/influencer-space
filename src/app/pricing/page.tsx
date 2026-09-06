@@ -33,14 +33,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const minPartner = paidFromPrice(data.partner);
   const fromCreator = minCreator != null ? ` Paid plans from ${formatCurrency(minCreator)}/month.` : "";
   const fromPartner = minPartner != null ? ` Partner plans from ${formatCurrency(minPartner)} one-time.` : "";
-  const description = `Transparent pricing for creators and partners. Creator plans from Free.${fromCreator}${fromPartner}`;
+  const description = `Transparent pricing for individuals and partners. Individual plans from Free.${fromCreator}${fromPartner}`;
   return {
     title: "Pricing",
     description,
     alternates: { canonical: "/pricing" },
     openGraph: {
       title: "Pricing — CreatorStore",
-      description: "Simple, transparent pricing for creators and partners. Pay for your creator platform. Partners charge their own service fees.",
+      description: "Simple, transparent pricing for individuals and partners. Pay for your website — your work, services, products and content in one place you own.",
     },
   };
 }
@@ -68,7 +68,7 @@ async function PricingSchemaJsonLd() {
       category: isOneTimePlan(p.code)
         ? "Partner plan (one-time purchase)"
         : p.family === "creator"
-          ? "Creator subscription"
+          ? "Individual subscription"
           : "Partner subscription",
     }));
 
@@ -80,7 +80,7 @@ async function PricingSchemaJsonLd() {
           "@context": "https://schema.org",
           "@type": "Product",
           name: "CreatorStore",
-          description: "Creator platform for independent creators and partners.",
+          description: "Platform for individuals, freelancers, businesses and partners to build a professional website and business you own.",
           brand: { "@type": "Brand", name: "CreatorStore" },
           offers: {
             "@type": "AggregateOffer",
@@ -94,9 +94,9 @@ async function PricingSchemaJsonLd() {
 
 function FaqSchemaJsonLd() {
   const faqs = [
-    { q: "Do partner plans include creator subscriptions?", a: "No. Every creator pays CreatorStore directly for their own Creator plan. Partner plans cover your agency business only." },
+    { q: "Do partner plans include individual subscriptions?", a: "No. Every individual pays CreatorStore directly for their own plan. Partner plans cover your agency business only." },
     { q: "Can a partner charge clients for services?", a: "Yes. You may charge clients separately for setup, migration, training, branding, consulting and maintenance." },
-    { q: "What is the minimum plan for a creator I onboard?", a: "Partner-onboarded creators use Creator Growth or higher — Creator Launch is not available for agency-managed creators." },
+    { q: "What is the minimum plan for a client I onboard?", a: "Partner-onboarded clients use Growth or higher — Launch is not available for agency-managed clients." },
   ];
   return (
     <script

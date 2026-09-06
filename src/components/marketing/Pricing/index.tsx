@@ -12,7 +12,7 @@ import { PARTNER_ADDON_UNIT_PRICE_INR } from "@/config/commerce/agency-addons";
 import { isOneTimePlan } from "@/config/commerce/plans";
 
 const TABS: { id: PlanFamily; label: string }[] = [
-  { id: "creator", label: "Personal" },
+  { id: "creator", label: "For Individuals" },
   { id: "agency", label: "For Partners" },
 ];
 

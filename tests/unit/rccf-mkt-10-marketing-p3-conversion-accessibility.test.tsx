@@ -165,7 +165,7 @@ describe("MKT-10 P3-B — pricing plan selector tab semantics", () => {
     const tablist = getByRole("tablist", { name: "Pricing plans" });
     expect(tablist).toBeTruthy();
 
-    const creatorTab = getByRole("tab", { name: "Personal" });
+    const creatorTab = getByRole("tab", { name: "For Individuals" });
     const partnerTab = getByRole("tab", { name: "For Partners" });
     expect(creatorTab.getAttribute("aria-selected")).toBe("true");
     expect(partnerTab.getAttribute("aria-selected")).toBe("false");
@@ -181,17 +181,17 @@ describe("MKT-10 P3-B — pricing plan selector tab semantics", () => {
 
   it("uses a roving tabindex — only the selected tab is a tab stop", () => {
     const { getByRole } = render(<PricingHarness />);
-    expect(getByRole("tab", { name: "Personal" }).tabIndex).toBe(0);
+    expect(getByRole("tab", { name: "For Individuals" }).tabIndex).toBe(0);
     expect(getByRole("tab", { name: "For Partners" }).tabIndex).toBe(-1);
 
     fireEvent.click(getByRole("tab", { name: "For Partners" }));
     expect(getByRole("tab", { name: "For Partners" }).tabIndex).toBe(0);
-    expect(getByRole("tab", { name: "Personal" }).tabIndex).toBe(-1);
+    expect(getByRole("tab", { name: "For Individuals" }).tabIndex).toBe(-1);
   });
 
   it("ArrowRight / ArrowLeft move selection AND focus with automatic activation", () => {
     const { getByRole } = render(<PricingHarness />);
-    const creatorTab = getByRole("tab", { name: "Personal" });
+    const creatorTab = getByRole("tab", { name: "For Individuals" });
     const partnerTab = getByRole("tab", { name: "For Partners" });
 
     fireEvent.keyDown(creatorTab, { key: "ArrowRight" });
@@ -209,9 +209,9 @@ describe("MKT-10 P3-B — pricing plan selector tab semantics", () => {
     fireEvent.click(getByRole("tab", { name: "For Partners" }));
 
     fireEvent.keyDown(getByRole("tab", { name: "For Partners" }), { key: "Home" });
-    expect(getByRole("tab", { name: "Personal" }).getAttribute("aria-selected")).toBe("true");
+    expect(getByRole("tab", { name: "For Individuals" }).getAttribute("aria-selected")).toBe("true");
 
-    fireEvent.keyDown(getByRole("tab", { name: "Personal" }), { key: "End" });
+    fireEvent.keyDown(getByRole("tab", { name: "For Individuals" }), { key: "End" });
     expect(getByRole("tab", { name: "For Partners" }).getAttribute("aria-selected")).toBe("true");
   });
 

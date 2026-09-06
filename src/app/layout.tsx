@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     title: "CreatorStore | Your presence. Your business.",
     description:
       "A professional home for everything you create, share, showcase, and sell — one place you own. Keep 100% of every sale.",
-    images: [{ url: `${APP_URL}/marketing-assets/marketing/01-homepage-desktop.png`, width: 1440, height: 900, alt: "CreatorStore — professional home for creators (Mystic Minutes · North Star examples)" }],
+    images: [{ url: `${APP_URL}/marketing-assets/marketing/01-homepage-desktop.png`, width: 1440, height: 900, alt: "CreatorStore — professional home for your business (Mystic Minutes · North Star examples)" }],
   },
   twitter: {
     card: "summary_large_image",
