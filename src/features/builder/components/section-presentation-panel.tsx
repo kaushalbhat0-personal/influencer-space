@@ -1,10 +1,11 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { builderStore } from "@/lib/builder/store";
 import { builderEvents } from "@/lib/builder/events";
 import type { SectionPresentation } from "@/modules/section-presentation";
 import { RegistryFieldInspector } from "./registry-field-inspector";
+import { componentRegistry } from "@/lib/registry/components";
 
 const inputCls = "admin-input px-2.5 py-1.5 text-xs";
 
@@ -44,9 +45,10 @@ export function SectionPresentationPanel() {
     );
   };
 
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const hasRegistryFields = !!componentRegistry.get(slot.moduleId)?.fields?.length;
+
   return (
-    <>
-      <RegistryFieldInspector />
       <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3">
       <div className="flex items-center justify-between">
         <div>
@@ -93,7 +95,26 @@ export function SectionPresentationPanel() {
         </label>
       </div>
       <p className="mt-2 text-[10px] text-zinc-400">Changes preview live in the canvas and appear after you publish. They never affect how your store is analysed.</p>
+      {hasRegistryFields && (
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            aria-expanded={advancedOpen}
+            aria-controls="advanced-fields"
+            data-testid="advanced-fields-toggle"
+            className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[10px] font-medium text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+          >
+            <span>Advanced</span>
+            <span className="text-[10px]">{advancedOpen ? "−" : "+"}</span>
+          </button>
+          {advancedOpen && (
+            <div id="advanced-fields" className="mt-2">
+              <RegistryFieldInspector />
+            </div>
+          )}
+        </div>
+      )}
     </div>
-    </>
   );
 }

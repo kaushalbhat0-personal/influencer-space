@@ -82,6 +82,22 @@ const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId:
 
 const DEFAULT_SECTIONS = SECTION_CATALOG.filter((e) => componentRegistry.get(e.componentId) !== undefined);
 
+// 03B: curated primary set (8-10) — reduces 17-option density, Show all reveals full registry (no fork)
+const FEATURED_COMPONENT_IDS = new Set<string>([
+  "hero.default",
+  "products.grid",
+  "gallery.grid",
+  "testimonials.default",
+  "faq.default",
+  "courses.default",
+  "services.default",
+  "newsletter.default",
+  "contact.default",
+  "footer.default",
+]);
+const FEATURED_SECTIONS = DEFAULT_SECTIONS.filter((e) => FEATURED_COMPONENT_IDS.has(e.componentId));
+const REMAINING_SECTIONS = DEFAULT_SECTIONS.filter((e) => !FEATURED_COMPONENT_IDS.has(e.componentId));
+
 interface SectionData {
   id: string;
   name: string;
@@ -257,6 +273,7 @@ export function SectionManager({
   aggregate?: WebsiteAggregate | null;
 }) {
   const [sections, setSections] = useState<SectionData[]>([]);
+  const [showAllSections, setShowAllSections] = useState(false);
 
   const refresh = useCallback(() => {
     const canvas = builderStore.canvas;
@@ -363,8 +380,8 @@ export function SectionManager({
 
       <div className="border-t border-white/5 p-2">
         <p className="text-[9px] font-medium text-zinc-400 uppercase mb-1.5 px-1">Add Section</p>
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-1">
-          {DEFAULT_SECTIONS.map((entry) => {
+        <div id="add-section-grid" className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-1">
+          {(showAllSections ? DEFAULT_SECTIONS : FEATURED_SECTIONS).map((entry) => {
             const Icon = getIcon(entry.name);
             return (
               <button key={entry.componentId} onClick={() => addSection(entry)}
@@ -376,6 +393,18 @@ export function SectionManager({
             );
           })}
         </div>
+        {REMAINING_SECTIONS.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowAllSections((v) => !v)}
+            aria-expanded={showAllSections}
+            aria-controls="add-section-grid"
+            data-testid="add-section-toggle"
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-white/10 bg-white/[0.02] px-2 py-1.5 text-[10px] font-medium text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+          >
+            {showAllSections ? "Show less" : `Show all (${REMAINING_SECTIONS.length} more)`}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -519,8 +519,8 @@ export function BuilderWorkspace() {
         </ResizablePanel>
       </div>
 
-      {/* Persistent mobile bottom control bar — Canvas is the default workspace. */}
-      <div className="flex h-12 shrink-0 items-center border-t border-[var(--border)] bg-[var(--surface-base)] lg:hidden" data-testid="builder-mobile-bar">
+      {/* Persistent mobile bottom control bar — Canvas is the default workspace. 03B: h-12→h-11 saves 4px canvas space, hitbox preserved via min-h-[44px] */}
+      <div className="flex h-11 shrink-0 items-center border-t border-[var(--border)] bg-[var(--surface-base)] lg:hidden" data-testid="builder-mobile-bar">
         <MobileBarButton
           active={mobilePanel === "sections"}
           onClick={() => setMobilePanel((p) => (p === "sections" ? null : "sections"))}
@@ -593,7 +593,7 @@ export function BuilderWorkspace() {
             {saveStatus === "DIRTY" ? "Unsaved changes" : saveStatus === "SAVING" ? "Saving changes…" : saveStatus === "SAVED" ? "Changes saved" : saveStatus === "FAILED" ? "Failed to save changes" : "All changes saved"}
           </span>
           <span className="text-zinc-800 hidden sm:inline">|</span>
-          {statusMsg && <span className={cn("truncate", statusMsg === "Changes saved" || statusMsg === "Saved" || statusMsg === "All changes saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
+          {statusMsg && <span className={cn("hidden sm:inline truncate", statusMsg === "Changes saved" || statusMsg === "Saved" || statusMsg === "All changes saved" ? "text-emerald-400" : "text-red-400")}>{statusMsg}</span>}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-zinc-400 hidden md:inline" title="Changes are saved locally until you publish">Draft</span>
@@ -606,7 +606,7 @@ export function BuilderWorkspace() {
             className="flex items-center gap-1 rounded-[var(--radius-control)] px-2 py-2 min-h-[44px] sm:min-h-0 sm:py-0.5 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             {saveStatus === "SAVING" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-            Save Draft
+            <span className="hidden sm:inline">Save Draft</span>
           </button>
           <span className="text-zinc-800 hidden md:inline">|</span>
           <button
@@ -652,7 +652,7 @@ function MobileBarButton({
       aria-label={label}
       data-testid={testId}
       className={cn(
-        "flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[9px] font-medium transition-colors",
+        "flex flex-1 flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] text-[9px] font-medium transition-colors",
         active ? "text-[var(--brand-primary)]" : "text-zinc-500 hover:text-zinc-300",
       )}
     >
