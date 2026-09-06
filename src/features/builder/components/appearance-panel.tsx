@@ -143,34 +143,51 @@ export function AppearancePanel({
   }
 
   const locked = !advancedBuilder;
+  const isDirty = !shallowEqualAppearance(state, appearance);
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Appearance</span>
-        {/* 06A: local preview — no Saving/Saved, only Preview when dirty */}
-        {/* Legacy guardrails for 04B: keep substrings for source checks */}
-        {/* setLiveMessage("Saved") */}
-        {/* setLiveMessage("Failed to save") */}
-        {/* if (!res.success) */}
-        <span
-          role="status"
-          aria-live="off"
-          aria-atomic="true"
-          className={`text-[10px] font-medium ${
-            liveMessage === "Preview"
-              ? "text-amber-400 animate-pulse"
-              : liveMessage === "Saved"
-                ? "text-emerald-400"
-                : liveMessage === "Failed to save"
-                  ? "text-red-400"
-                  : "text-zinc-500"
-          }`}
-          data-testid="appearance-save-status"
-        >
-          {liveMessage ? liveMessage : ""}
+        {/* Preview/Live distinction — Preview is canvas-only until Save Draft */}
+        <span className="flex items-center gap-1.5">
+          {isDirty && !locked && (
+            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold tracking-wide text-amber-400 ring-1 ring-amber-500/20">
+              Preview
+            </span>
+          )}
+          {!isDirty && !locked && (
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold tracking-wide text-emerald-400 ring-1 ring-emerald-500/20">
+              Live
+            </span>
+          )}
+          {/* 06A: local preview — no Saving/Saved, only Preview when dirty */}
+          {/* Legacy guardrails for 04B: keep substrings for source checks */}
+          {/* setLiveMessage("Saved") */}
+          {/* setLiveMessage("Failed to save") */}
+          {/* if (!res.success) */}
+          <span
+            role="status"
+            aria-live="off"
+            aria-atomic="true"
+            className={`text-[10px] font-medium ${
+              liveMessage === "Preview"
+                ? "text-amber-400 animate-pulse"
+                : liveMessage === "Saved"
+                  ? "text-emerald-400"
+                  : liveMessage === "Failed to save"
+                    ? "text-red-400"
+                    : "text-zinc-500"
+            }`}
+            data-testid="appearance-save-status"
+          >
+            {liveMessage ? liveMessage : ""}
+          </span>
         </span>
       </div>
+      {isDirty && !locked && (
+        <p className="text-[10px] leading-snug text-amber-300/80">Previewing on canvas — Save Draft to make live.</p>
+      )}
 
       {locked && (
         <div
@@ -185,8 +202,8 @@ export function AppearancePanel({
         </div>
       )}
 
-      {/* Typography — font */}
-      <Field label="Font">
+      {/* Typography — typeface */}
+      <Field label="Typeface">
         <div
           role="radiogroup"
           aria-label="Font"
@@ -215,8 +232,8 @@ export function AppearancePanel({
         </div>
       </Field>
 
-      {/* Heading weight */}
-      <Field label="Heading weight">
+      {/* Heading weight — keep weight term for a11y, but label clearer */}
+      <Field label="Heading Weight">
         <div
           role="radiogroup"
           aria-label="Heading weight"
@@ -245,8 +262,8 @@ export function AppearancePanel({
         </div>
       </Field>
 
-      {/* Background preset */}
-      <Field label="Background">
+      {/* Background preset — clearer: Page Background */}
+      <Field label="Page Background">
         <div
           role="radiogroup"
           aria-label="Background"
@@ -325,8 +342,8 @@ export function AppearancePanel({
         )}
       </Field>
 
-      {/* Surface preset */}
-      <Field label="Surface">
+      {/* Surface preset — clearer: Card Surface */}
+      <Field label="Card Surface">
         <div
           role="radiogroup"
           aria-label="Surface"
@@ -357,8 +374,8 @@ export function AppearancePanel({
       </Field>
 
       {/* RCCF-71.5.1 — radius is already resolved by LayoutEngine; expose the
-          existing persisted field here instead of introducing Builder CSS. */}
-      <Field label={`Border radius (${borderRadiusLabel(state.borderRadius)})`}>
+           existing persisted field here instead of introducing Builder CSS. */}
+      <Field label={`Corner Roundness (${borderRadiusLabel(state.borderRadius)})`}>
         <input
           type="range"
           min="0"
@@ -373,7 +390,7 @@ export function AppearancePanel({
         <div className="flex justify-between text-[10px] font-medium text-zinc-500"><span>Sharp</span><span>Soft</span></div>
       </Field>
 
-      <Field label="Layout density">
+      <Field label="Section Spacing">
         <div
           role="radiogroup"
           aria-label="Layout density"
@@ -407,9 +424,9 @@ export function AppearancePanel({
            premium_themes-gated `updateTheme`; the canvas + publish resolve the
            exact same presets from the shared registry. */}
       <p className="text-[10px] leading-snug text-zinc-500">
-        Controls how your hero content is positioned and layered.
+        Position and frame your hero — preview updates live on canvas.
       </p>
-      <Field label="Hero text alignment">
+      <Field label="Hero Alignment">
         <div
           role="radiogroup"
           aria-label="Hero text alignment"
@@ -438,7 +455,7 @@ export function AppearancePanel({
         </div>
       </Field>
 
-      <Field label="Hero content width">
+      <Field label="Hero Width">
         <div
           role="radiogroup"
           aria-label="Hero content width"
@@ -467,7 +484,7 @@ export function AppearancePanel({
         </div>
       </Field>
 
-      <Field label="Hero overlay">
+      <Field label="Hero Tint">
         <div
           role="radiogroup"
           aria-label="Hero overlay"
@@ -550,27 +567,27 @@ function handleRadiogroupKeyDown(
 const LAYOUT_DENSITY_OPTIONS = ["compact", "comfortable", "spacious"] as const;
 
 const BACKGROUND_SWATCHES: Record<string, string> = {
-  solid: "bg-zinc-700",
-  none: "bg-transparent border border-dashed border-zinc-600",
-  midnight: "bg-[radial-gradient(circle_at_50%_20%,#6366f1_0%,#18181b_65%)]",
-  gradient: "bg-gradient-to-b from-[var(--brand-primary)]/60 to-zinc-900",
-  radial: "bg-[radial-gradient(circle_at_50%_0%,#818cf8_0%,#18181b_70%)]",
-  mesh: "bg-[radial-gradient(circle_at_20%_0%,#818cf8_0%,transparent_55%),radial-gradient(circle_at_85%_100%,#3b82f6_0%,#18181b_65%)]",
-  aurora: "bg-[radial-gradient(circle_at_20%_15%,#818cf8_0%,transparent_38%),radial-gradient(circle_at_80%_0%,#c084fc_0%,transparent_35%),linear-gradient(135deg,#18181b,#164e63)]",
-  pattern: "bg-[repeating-linear-gradient(135deg,#3f3f46_0_1px,transparent_1px_6px)] bg-zinc-800",
-  image: "bg-[linear-gradient(135deg,rgba(129,140,248,0.35),rgba(24,24,27,0.9))]",
+  solid: "bg-[var(--surface-card)] border border-[var(--border)]",
+  none: "bg-transparent border border-dashed border-[var(--border)]",
+  midnight: "bg-[radial-gradient(circle_at_50%_20%,var(--brand-primary)_0%,var(--surface-root)_65%)] border border-[var(--border)]",
+  gradient: "bg-gradient-to-b from-[var(--brand-primary)]/30 to-[var(--surface-root)] border border-[var(--border)]",
+  radial: "bg-[radial-gradient(circle_at_50%_0%,var(--brand-primary)/18_0%,transparent_70%)] bg-[var(--surface-card)] border border-[var(--border)]",
+  mesh: "bg-[radial-gradient(circle_at_20%_0%,var(--brand-primary)/20_0%,transparent_55%),radial-gradient(circle_at_85%_100%,var(--brand-secondary)/15_0%,var(--surface-root)_65%)] border border-[var(--border)]",
+  aurora: "bg-[radial-gradient(circle_at_20%_15%,var(--brand-primary)/22_0%,transparent_38%),radial-gradient(circle_at_80%_0%,var(--brand-secondary)/16_0%,transparent_35%),linear-gradient(135deg,var(--surface-card),var(--surface-root))] border border-[var(--border)]",
+  pattern: "bg-[repeating-linear-gradient(135deg,var(--border)_0_1px,transparent_1px_6px)] bg-[var(--surface-card)] border border-[var(--border)]",
+  image: "bg-[linear-gradient(135deg,var(--brand-primary)/15,var(--surface-card))] border border-[var(--border)]",
 };
 
 const SURFACE_SWATCHES: Record<string, string> = {
-  flat: "bg-zinc-700",
-  minimal: "bg-zinc-800/70",
-  elevated: "bg-zinc-600 shadow-md shadow-black/40",
-  glass: "bg-white/20 backdrop-blur-sm border border-white/30",
-  "soft-glow": "bg-indigo-400/20 shadow-[0_0_12px_rgba(129,140,248,0.8)]",
-  "gradient-border": "bg-zinc-800 border border-[var(--brand-primary)]",
-  floating: "bg-zinc-700 shadow-[var(--shadow-card)] -translate-y-px",
-  luxury: "bg-gradient-to-br from-amber-200/60 via-amber-500/30 to-zinc-800",
-  neon: "bg-[var(--color-info-surface)] border border-[var(--color-info-border)] shadow-[0_0_10px_rgba(34,211,238,0.8)]",
+  flat: "bg-[var(--surface-card)] border border-[var(--border)]",
+  minimal: "bg-[var(--surface-card)]/70 border border-[var(--border)]",
+  elevated: "bg-[var(--surface-card)] border border-[var(--border)] shadow-[var(--shadow-card)]",
+  glass: "bg-[var(--surface-card)]/60 backdrop-blur-sm border border-[var(--border)]",
+  "soft-glow": "bg-[var(--brand-primary)]/12 border border-[var(--brand-primary)]/20 shadow-[0_0_12px_var(--brand-primary)/20]",
+  "gradient-border": "bg-[var(--surface-card)] border border-[var(--brand-primary)]/40",
+  floating: "bg-[var(--surface-card)] border border-[var(--border)] shadow-[var(--shadow-card)]",
+  luxury: "bg-gradient-to-br from-[var(--brand-primary)]/15 via-[var(--brand-secondary)]/10 to-[var(--surface-card)] border border-[var(--border)]",
+  neon: "bg-[var(--color-info-surface)] border border-[var(--color-info-border)] shadow-[0_0_10px_var(--color-info-border)]",
 };
 
 function clampedRadius(value: string): number {

@@ -61,14 +61,16 @@ function EmptyState({ label = "No content yet" }: { label?: string }) {
 // RCCF-LAUNCH-TRACK-04: shared section heading — honors presentation
 // (hideTitle, descriptionOverride). Every data-driven renderer uses it; no
 // duplicated title logic.
+// 04D: rhythm normalized to --section-spacing — heading block breathing scales
+// with compact/comfortable/spacious (no new density values, no one-off px).
 function SectionHeading({ p, title, elementId, previewMode }: { p: Record<string, unknown>; title: string; elementId?: string; previewMode?: boolean }) {
   if (p.hideTitle) return null;
   const description = p.description ? String(p.description) : null;
   return (
-    <div className="mb-8 text-center">
-      <div className="mx-auto mb-3 h-0.5 w-8 rounded-full bg-[var(--brand-primary,#6366F1)] opacity-60" aria-hidden />
+    <div className="mb-[calc(var(--section-spacing,3.5rem)*0.55)] text-center">
+      <div className="mx-auto mb-[calc(var(--section-spacing,3.5rem)*0.18)] h-0.5 w-8 rounded-full bg-[var(--brand-primary,#6366F1)] opacity-60" aria-hidden />
       <h2 className="text-2xl font-[var(--brand-font-weight-heading,700)] tracking-tight text-[var(--text-primary,#FAFAFA)] md:text-3xl">{title}</h2>
-      {description && <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary,#A1A1AA)]">{description}</p>}
+      {description && <p className="mx-auto mt-[calc(var(--section-spacing,3.5rem)*0.18)] max-w-2xl text-sm leading-relaxed text-[var(--text-secondary,#A1A1AA)]">{description}</p>}
     </div>
   );
 }
@@ -207,8 +209,9 @@ export function HeroRenderer({ props, elementId: _elementId, previewMode }: Rend
       </div>
 
       {/* â”€â”€ Overlapping profile picture + identity (never above the media) â”€â”€ */}
-      <div className="-mt-[72px] @sm/main:-mt-[18%] relative z-10">
-        <div className={`${contentWidthClass} ${textAlignClass} px-4 pb-10 pt-4 @sm/main:pb-16 @sm/main:pt-6`}>
+      {/* 04D: density-aware — overlap + inner breathing scale with --section-spacing (compact/comfortable/spacious) */}
+      <div className="relative z-10 -mt-[calc(var(--section-spacing,3.5rem)*0.72+28px)] @sm/main:-mt-[calc(var(--section-spacing,3.5rem)*0.78+32px)]">
+        <div className={`${contentWidthClass} ${textAlignClass} px-4 pt-[calc(var(--section-spacing,3.5rem)*0.28)] pb-[calc(var(--section-spacing,3.5rem)*0.68)] @sm/main:pt-[calc(var(--section-spacing,3.5rem)*0.38)] @sm/main:pb-[calc(var(--section-spacing,3.5rem)*0.95)]`}>
           {profilePictureUrl && (
             <div className="relative mx-auto mb-5 h-32 w-32 overflow-hidden rounded-full border-4 border-[var(--surface-root,#09090B)] shadow-2xl shadow-black/50 ring-2 ring-white/10 @sm/main:h-36 @sm/main:w-36">
               <CreatorImage src={profilePictureUrl} alt={name || "Profile"} variant="avatar" className="h-full w-full" />
