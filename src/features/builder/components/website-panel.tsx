@@ -7,6 +7,7 @@ import { CompletionBadge } from "./completion-badge";
 import { SectionPresentationPanel } from "./section-presentation-panel";
 import { AppearancePanel } from "./appearance-panel";
 import type { BuilderOverviewData } from "@/actions/builder-overview.actions";
+import { themeRegistry } from "@/lib/theme/registry-new";
 
 // RCCF-71.2/71.3/71.5 guardrail compatibility: legacy tests assert these exact
 // substrings exist via `read("src/features/builder/components/website-panel.tsx")`.
@@ -94,6 +95,54 @@ export function WebsitePanel({
     overview?.appearance?.experienceBackgroundImageAssetId,
     overview?.appearance?.experienceBackgroundImageOpacity,
   ]);
+
+  // RCCF-BUILDER-03C: Site context — truthful, compact identity using only
+  // existing overview data. Gracefully omits any unavailable segment.
+  const siteContextLine = useMemo(() => {
+    const parts: string[] = [];
+
+    const rawSite =
+      overview?.website?.name?.trim() ||
+      overview?.tenant?.name?.trim() ||
+      overview?.brand?.name?.trim() ||
+      null;
+    if (rawSite) parts.push(rawSite);
+
+    // Theme/template context: prefer blueprint name when present, else resolve
+    // the human theme name from the canonical registry (no new source).
+    let themeLabel: string | null = null;
+    const blueprintName = overview?.blueprint?.name?.trim() || null;
+    if (blueprintName) {
+      themeLabel = blueprintName;
+    } else {
+      const tid = currentThemeId ?? overview?.website?.themePackageId ?? null;
+      if (tid) {
+        try {
+          const def = themeRegistry.getById(tid) ?? themeRegistry.getAll().find((t) => t.slug === tid || t.id === tid) ?? null;
+          if (def?.name) themeLabel = def.name;
+        } catch {
+          // ignore — omit unavailable theme context
+        }
+      }
+    }
+    if (themeLabel) parts.push(themeLabel);
+
+    const sections = overview?.contentCounts?.sections;
+    if (typeof sections === "number" && Number.isFinite(sections)) {
+      parts.push(`${sections} ${sections === 1 ? "section" : "sections"}`);
+    }
+
+    if (parts.length === 0) return null;
+    return `Site: ${parts.join(" · ")}`;
+  }, [
+    overview?.website?.name,
+    overview?.tenant?.name,
+    overview?.brand?.name,
+    overview?.blueprint?.name,
+    overview?.website?.themePackageId,
+    overview?.contentCounts?.sections,
+    currentThemeId,
+  ]);
   if (collapsed) {
     const isHealthLoading = healthScore === null;
     const collapsedScore = healthScore ?? 0;
@@ -174,13 +223,24 @@ export function WebsitePanel({
             thin health indicator that deep-links to the Dashboard health. The Builder
             does not compute, score, recommend or persist health/business data. Never
             fabricate builder progress. */}
+        {/* RCCF-BUILDER-03C: Site context replaces generic Template: Creator — subtle,
+            truthful, compact (Site: <name> · <theme> · <count>), gracefully omits
+            unavailable values, preserves health score and dashboard link. */}
         <div className="rounded-lg border border-white/5 bg-zinc-900/50">
           <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/5">
             <p className="text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Health</p>
             <CompletionBadge healthScore={healthScore} isLoading={healthScore === null} large />
           </div>
           <div className="p-2.5 text-[10px] text-zinc-400 space-y-1">
-            <p>Template: {overview?.blueprint?.name ?? "Creator"}</p>
+            {siteContextLine ? (
+              <p
+                className="truncate text-[10px] leading-snug text-zinc-400"
+                title={siteContextLine}
+                data-testid="health-site-context"
+              >
+                {siteContextLine}
+              </p>
+            ) : null}
             <p className="text-[9px] text-zinc-400">Website health from dashboard — not builder completion.</p>
           </div>
         </div>

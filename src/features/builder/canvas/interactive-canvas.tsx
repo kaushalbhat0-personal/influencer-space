@@ -360,13 +360,17 @@ export function InteractiveCanvas({
           className="@container/main theme-root relative mx-auto shrink-0 overflow-hidden rounded-lg border border-white/[0.15] bg-zinc-950 shadow-[var(--shadow-overlay)] ring-1 ring-white/10 transition-all"
           style={{ width: DEVICE_WIDTHS[device] ?? 1200, transform: `scale(${zoom})`, transformOrigin: "top center", ...(resolved?.themeVars as React.CSSProperties | undefined) }}
         >
-          <div className="flex items-center gap-1.5 border-b border-white/5 px-3 py-2">
-            <div className="flex gap-1">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
-              <div className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-            </div>
-            <span className="ml-2 text-[10px] text-zinc-600">{DEVICE_WIDTHS[device] ?? 1200}px</span>
+          {/* RCCF-BUILDER-03C: canvas identity — subtle creator/site context replaces generic macOS chrome. Uses the live aggregate identity already resolved for the preview; no new source of truth. */}
+          <div className="flex items-center justify-between gap-2 border-b border-white/5 px-3 py-2">
+            <span
+              className="min-w-0 truncate text-[11px] font-medium tracking-tight text-zinc-400"
+              title={liveContent?.identity?.name?.trim() ? liveContent.identity.name.trim() : undefined}
+              data-testid="builder-canvas-identity"
+              aria-label={liveContent?.identity?.name?.trim() ? `${liveContent.identity.name.trim()} — preview` : "Preview"}
+            >
+              {liveContent?.identity?.name?.trim() || null}
+            </span>
+            <span className="shrink-0 text-[10px] tabular-nums text-zinc-500">{DEVICE_WIDTHS[device] ?? 1200}px</span>
           </div>
 
           <div className="relative min-h-[600px]">
