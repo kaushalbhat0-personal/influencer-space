@@ -36,6 +36,13 @@ const ALLOWED_DOCUMENT_MIMES = [
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500 MB
 const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_RESUME_SIZE = 5 * 1024 * 1024; // 5 MB — resume private, stricter than general document
+
+export const ALLOWED_RESUME_MIMES = [
+  "application/pdf",
+  "text/plain",
+  "text/csv",
+] as const;
 
 const ALLOWED_FOLDERS = [
   "profile",
@@ -48,6 +55,7 @@ const ALLOWED_FOLDERS = [
   "feed",
   "library",
   "general",
+  "resumes",
 ];
 
 export type MediaCategory = "image" | "video" | "document";
@@ -69,6 +77,16 @@ export class MediaValidator {
 
     const sizeError = this.validateSize(file.mimeType, file.size);
     if (sizeError) errors.push(sizeError);
+
+    // Resume-specific stricter checks (private, 5MB, only pdf/txt/csv)
+    if (folder === "resumes") {
+      if (!ALLOWED_RESUME_MIMES.includes(file.mimeType as typeof ALLOWED_RESUME_MIMES[number])) {
+        errors.push(`Unsupported resume MIME type: ${file.mimeType}. Allowed: ${ALLOWED_RESUME_MIMES.join(", ")}`);
+      }
+      if (file.size > MAX_RESUME_SIZE) {
+        errors.push(`Resume file too large: ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum: 5 MB`);
+      }
+    }
 
     // Reject empty/invalid media payloads before they reach storage — a video
     // whose bytes are not a real container will "upload fine" but never play.
@@ -106,6 +124,11 @@ export class MediaValidator {
       const hasOgg =
         buffer[0] === 0x4f && buffer[1] === 0x67 && buffer[2] === 0x67 && buffer[3] === 0x53;
       if (!hasOgg) return "File does not look like a valid Ogg video";
+    }
+    // PDF — %PDF header
+    if (mimeType === "application/pdf") {
+      const header = buffer.subarray(0, 4).toString("utf-8");
+      if (header !== "%PDF") return "File does not look like a valid PDF";
     }
     return null;
   }
@@ -182,6 +205,14 @@ export class MediaValidator {
 
   get allowedFolders(): string[] {
     return [...ALLOWED_FOLDERS];
+  }
+
+  get allowedResumeMimes(): string[] {
+    return [...ALLOWED_RESUME_MIMES];
+  }
+
+  get maxResumeSize(): number {
+    return MAX_RESUME_SIZE;
   }
 }
 

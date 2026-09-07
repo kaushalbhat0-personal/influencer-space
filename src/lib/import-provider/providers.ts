@@ -116,6 +116,29 @@ registerImportProvider({
   },
 });
 
+// ── Resume (file) ─────────────────────────────────────────────
+registerImportProvider({
+  id: "resume",
+  label: "Upload Resume",
+  description: "Upload your PDF or TXT resume to generate your storefront.",
+  icon: "file-text",
+  category: "import",
+  title: "Upload Your Resume",
+  subtitle: "Upload your PDF or TXT resume — we'll extract it and build your storefront.",
+  inputType: "file",
+  placeholder: "",
+  helperText: "PDF or TXT, 5 MB max, private to your tenant.",
+  estimatedTime: "15 – 30 seconds",
+  capabilities: ["branding", "experience", "ai"],
+  available: true,
+  supportsLaterImport: true,
+  // File handling is authoritative in src/actions/resume.actions.ts (importResume)
+  // — this stub keeps the registry consistent without duplicating storage logic.
+  async acquire(input: string): Promise<CreatorProfile> {
+    return { platform: "resume", creatorName: "Creator", bio: input, rawSource: input };
+  },
+});
+
 // ── Manual AI ─────────────────────────────────────────────────
 registerImportProvider({
   id: "manual_ai",

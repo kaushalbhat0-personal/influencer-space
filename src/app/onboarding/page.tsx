@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn, slugify } from "@/lib/utils";
 import { importCreatorProfile, runCreatorGeneration, createGenerationSession, getGenerationSessionProgress, getActiveGenerationSession, markOnboardingComplete, retryPublish, createManualWebsite } from "@/actions/onboarding.actions";
+import { importResume } from "@/actions/resume.actions";
 import { getOnboardingPreview, seedOnboardingIntelligence } from "@/actions/onboarding-intelligence.actions";
 import type { OnboardingPreview } from "@/modules/runtime-context";
 import { useGenerationExperience } from "@/features/onboarding/use-generation-experience";
@@ -30,6 +31,7 @@ interface ProfileData {
   avatarUrl?: string;
   followers?: number;
   category?: string;
+  bio?: string;
   persona: { id: string; name: string };
   confidence: number;
   categoryConfidence?: number;
@@ -255,6 +257,45 @@ export default function OnboardingPage() {
     }
     setLoading(false);
   }, [sourceUrl]);
+
+  const handleResumeFile = useCallback(async (file: File) => {
+    setLoading(true);
+    setError(null);
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await importResume(formData);
+    if (res.success && res.bio) {
+      const creatorName = res.creatorName || file.name.replace(/\.[^.]+$/, "") || "Creator";
+      // Reuse existing ProfileData shape — resume bio flows through same knowledgeGraph path as manual_ai
+      setProfileData({
+        platform: "resume",
+        creatorName,
+        bio: res.bio,
+        category: "general",
+        persona: { id: "professional", name: "Professional" },
+        confidence: 0.85,
+      });
+      setCategoryOverride("general");
+      setWorkspaceName(creatorName);
+      // Use extracted bio as sourceUrl so existing importProfile → knowledgeGraph pipeline reuses manual_ai path
+      setSourceUrl(res.bio || file.name);
+      const previewResult = await getOnboardingPreview({
+        name: creatorName,
+        bio: res.bio || "",
+        category: "general",
+        platform: "resume",
+        socialLinks: [],
+      });
+      if (previewResult.success && previewResult.data) {
+        setPreview(previewResult.data);
+        setQuestionAnswers({});
+      }
+      setStep("preview");
+    } else {
+      setError(res.error || "Could not process resume");
+    }
+    setLoading(false);
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     setLoading(true);
@@ -496,6 +537,7 @@ export default function OnboardingPage() {
                   if (data.name) setWorkspaceName(data.name);
                   handleAnalyze();
                 }}
+                onFileSubmit={(file) => handleResumeFile(file)}
               />
             )}
 

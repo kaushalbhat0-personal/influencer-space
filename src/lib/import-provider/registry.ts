@@ -37,8 +37,8 @@ export interface ImportProvider {
   title: string;
   /** Display subtitle shown below the title. */
   subtitle: string;
-  /** Input type: url = single URL field, text = textarea, none = no input. */
-  inputType: "url" | "text" | "none";
+  /** Input type: url = single URL field, text = textarea, file = single file upload, none = no input. */
+  inputType: "url" | "text" | "file" | "none";
   placeholder: string;
   /** Optional hint shown below the input (e.g. "Paste your channel URL"). */
   helperText?: string;

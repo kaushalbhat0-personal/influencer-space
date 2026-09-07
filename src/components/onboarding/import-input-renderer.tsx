@@ -13,16 +13,19 @@ import { Loader2 } from "lucide-react";
 export function ImportInputRenderer({
   provider,
   onSubmit,
+  onFileSubmit,
   loading,
 }: {
   provider: ImportProvider;
   onSubmit: (data: { sourceUrl: string; name?: string; meta?: Record<string, string> }) => void;
+  onFileSubmit?: (file: File) => void;
   loading: boolean;
 }) {
   const [urlValue, setUrlValue] = useState("");
   const [textareaValue, setTextareaValue] = useState("");
   const [formFields, setFormFields] = useState<Record<string, string>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // ── URL providers (YouTube, Website, Google Business) ──
   if (provider.inputType === "url") {
@@ -109,6 +112,43 @@ export function ImportInputRenderer({
         {validationError && <p className="text-xs text-red-400">{validationError}</p>}
         <button onClick={handleTextSubmit} disabled={!textareaValue.trim() || loading} className="btn-primary w-full py-3 disabled:opacity-50">
           {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Building…</span> : "Build Storefront"}
+        </button>
+      </div>
+    );
+  }
+
+  // ── File providers (Resume) ──
+  if (provider.inputType === "file") {
+    const handleFileSubmit = () => {
+      if (!selectedFile) { setValidationError("Please select a file."); return; }
+      if (selectedFile.size > 5 * 1024 * 1024) { setValidationError("Resume file too large: 5 MB maximum."); return; }
+      const allowed = ["application/pdf", "text/plain", "text/csv"];
+      if (!allowed.includes(selectedFile.type)) { setValidationError(`Unsupported file type: ${selectedFile.type}. Allowed: PDF, TXT, CSV.`); return; }
+      setValidationError(null);
+      if (onFileSubmit) onFileSubmit(selectedFile);
+      else onSubmit({ sourceUrl: selectedFile.name });
+    };
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <p className="text-lg font-semibold text-white">{provider.title}</p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">{provider.subtitle}</p>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Resume File</label>
+          <input
+            type="file"
+            accept=".pdf,.txt,.csv"
+            onChange={(e) => { const f = e.target.files?.[0] ?? null; setSelectedFile(f); setValidationError(null); }}
+            className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--brand-primary)] file:text-white hover:file:bg-[var(--brand-primary)]/90"
+          />
+          {selectedFile && <p className="mt-1 text-xs text-[var(--text-muted)]">{selectedFile.name} — {(selectedFile.size / 1024).toFixed(0)} KB</p>}
+        </div>
+        {provider.helperText && <p className="text-[11px] text-[var(--text-muted)]">{provider.helperText}</p>}
+        {validationError && <p className="text-xs text-red-400">{validationError}</p>}
+        <button onClick={handleFileSubmit} disabled={!selectedFile || loading} className="btn-primary w-full py-3 disabled:opacity-50">
+          {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Uploading…</span> : "Continue"}
         </button>
       </div>
     );
