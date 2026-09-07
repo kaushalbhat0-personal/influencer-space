@@ -10,23 +10,38 @@ const INTEGRATION_DEFS = [
 
 export const integrationService = {
   async list(tenantId: string): Promise<IntegrationData[]> {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: {
-        youtubeApiKey: true,
-        youtubeChannelId: true,
-        instagramApiKey: true,
-        instagramAccessToken: true,
-      },
-    });
+    const [tenant, statsRows] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          youtubeApiKey: true,
+          youtubeChannelId: true,
+          instagramApiKey: true,
+          instagramAccessToken: true,
+        },
+      }),
+      prisma.socialStats.findMany({
+        where: { tenantId },
+        select: { platform: true, followers: true, views: true, posts: true, updatedAt: true },
+      }),
+    ]);
 
-    return INTEGRATION_DEFS.map((def) => ({
-      ...def,
-      connected: this.isConnected(def.platform, tenant),
-      status: this.getStatus(def.platform, tenant),
-      config: this.getConfig(def.platform, tenant),
-      scopes: this.getScopes(def.platform),
-    }));
+    const statsByPlatform = new Map<string, { followers: number; views: number; posts: number; updatedAt: Date }>();
+    for (const r of statsRows) {
+      statsByPlatform.set(r.platform, { followers: r.followers, views: r.views, posts: r.posts, updatedAt: r.updatedAt });
+    }
+
+    return INTEGRATION_DEFS.map((def) => {
+      const s = statsByPlatform.get(def.platform);
+      return {
+        ...def,
+        connected: this.isConnected(def.platform, tenant),
+        status: this.getStatus(def.platform, tenant),
+        config: this.getConfig(def.platform, tenant),
+        scopes: this.getScopes(def.platform),
+        stats: s ? { followers: s.followers, views: s.views, posts: s.posts, updatedAt: s.updatedAt.toISOString() } : null,
+      };
+    });
   },
 
   isConnected(platform: string, tenant: Record<string, unknown> | null): boolean {

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockTenantFindUnique } = vi.hoisted(() => ({
+const { mockTenantFindUnique, mockSocialStatsFindMany } = vi.hoisted(() => ({
   mockTenantFindUnique: vi.fn(),
+  mockSocialStatsFindMany: vi.fn(async () => []),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -9,12 +10,18 @@ vi.mock("@/lib/prisma", () => ({
     tenant: {
       findUnique: mockTenantFindUnique,
     },
+    socialStats: {
+      findMany: mockSocialStatsFindMany,
+    },
   },
 }));
 
 import { integrationService } from "../service";
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockSocialStatsFindMany.mockResolvedValue([]);
+});
 
 describe("Integration service", () => {
   it("list returns all integration definitions", async () => {

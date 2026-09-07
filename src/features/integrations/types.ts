@@ -5,6 +5,13 @@ export type IntegrationStatus =
   | "not_connected"
   | "coming_soon";
 
+export interface SocialStatView {
+  followers: number;
+  views: number;
+  posts: number;
+  updatedAt: string | null;
+}
+
 export interface IntegrationData {
   platform: string;
   name: string;
@@ -14,6 +21,7 @@ export interface IntegrationData {
   icon: string;
   config: Record<string, string | boolean>;
   scopes: string[];
+  stats: SocialStatView | null;
 }
 
 export interface IntegrationConfig {

@@ -54,6 +54,59 @@ export function IntegrationsClient({
   );
 }
 
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return n.toLocaleString();
+}
+
+function formatTimeAgo(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  if (Number.isNaN(diff)) return null;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function SocialStatBlock({ integration }: { integration: IntegrationData }) {
+  const stats = integration.stats;
+  const connected = integration.status === "connected" || integration.status === "configured";
+  // Never invent numbers: if no row, show missing; if row exists show exactly persisted numbers
+  if (!connected) return null;
+  if (!stats) {
+    return <p className="mt-3 text-xs text-zinc-500">No live data yet — connect and wait for the next sync.</p>;
+  }
+  const ago = formatTimeAgo(stats.updatedAt);
+  const stale = stats.updatedAt ? Date.now() - new Date(stats.updatedAt).getTime() > 7 * 24 * 3600 * 1000 : false;
+  return (
+    <div className="mt-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+      <p className="text-xs text-zinc-400">
+        {integration.platform === "youtube" ? (
+          <>
+            <span className="text-zinc-200 font-medium">{formatNumber(stats.followers)}</span> subscribers ·{" "}
+            <span className="text-zinc-200 font-medium">{formatNumber(stats.views)}</span> views ·{" "}
+            <span className="text-zinc-200 font-medium">{formatNumber(stats.posts)}</span> videos
+          </>
+        ) : (
+          <>
+            <span className="text-zinc-200 font-medium">{formatNumber(stats.followers)}</span> followers ·{" "}
+            <span className="text-zinc-200 font-medium">{formatNumber(stats.posts)}</span> posts
+          </>
+        )}
+      </p>
+      <p className={`mt-1 text-[11px] ${stale ? "text-amber-400" : "text-zinc-500"}`}>
+        {ago ? (stale ? `Stale — last synced ${ago}` : `Synced ${ago}`) : "Synced"}
+      </p>
+    </div>
+  );
+}
+
 function IntegrationCard({
   integration,
   tenantId,
@@ -75,6 +128,7 @@ function IntegrationCard({
   return (
     <GlassCard className="p-5">
       <CardHeader name={integration.name} description={integration.description} Icon={Icon} statusMeta={meta} />
+      <SocialStatBlock integration={integration} />
       <div className="mt-4">
         {integration.platform === "youtube" ? (
           <YoutubeControls integration={integration} tenantId={tenantId} />
