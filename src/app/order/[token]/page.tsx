@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
+import { headers } from "next/headers";
+import { checkRateLimit } from "@/lib/security/rate-limiter";
+import { isValidGuestToken, maskEmail, maskLine1, maskPhone } from "@/lib/security/guest-order";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,7 +17,32 @@ export async function generateMetadata() {
 export default async function GuestOrderPage({ params }: { params: { token: string } }) {
   noStore();
   const token = params.token?.trim();
-  if (!token || token.length < 32) notFound();
+  // SEC-07: reject malformed tokens cheaply before any DB work.
+  // Guest tokens are 64 hex chars (crypto.randomBytes(32).toString('hex')).
+  if (!token || !isValidGuestToken(token)) notFound();
+
+  // SEC-07: rate limit guest order lookup per IP to slow enumeration.
+  try {
+    const headersList = headers();
+    const forwarded = headersList.get("x-forwarded-for");
+    const trustedIp = forwarded
+      ? forwarded.split(",").map((s) => s.trim()).filter(Boolean).pop() || "unknown"
+      : headersList.get("x-real-ip") || "unknown";
+    const rate = checkRateLimit(`guest-order:${trustedIp}`, "/guest-order");
+    if (!rate.allowed) {
+      return (
+        <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+          <div className="max-w-md text-center space-y-4">
+            <h1 className="text-xl font-semibold">Too many requests</h1>
+            <p className="text-sm text-zinc-400">Please slow down and try again in a moment.</p>
+            <Link href="/" className="text-sm text-indigo-400 hover:underline">Back to home</Link>
+          </div>
+        </main>
+      );
+    }
+  } catch {
+    // headers() unavailable in some contexts — continue without rate limit
+  }
 
   let order: Awaited<ReturnType<typeof prisma.productOrder.findUnique>>;
   try {
@@ -102,8 +130,9 @@ export default async function GuestOrderPage({ params }: { params: { token: stri
             <div className="pt-4 border-t border-white/5">
               <p className="text-xs uppercase tracking-widest text-zinc-500">Shipping to</p>
               <p className="text-sm text-white">{shipping.name}</p>
-              <p className="text-sm text-zinc-400">{shipping.line1}, {shipping.city}, {shipping.state} {shipping.pin}, {shipping.country}</p>
-              <p className="text-sm text-zinc-400">{shipping.phone}</p>
+              <p className="text-sm text-zinc-400">{maskLine1(shipping.line1)}, {shipping.city}, {shipping.state} {shipping.pin}, {shipping.country}</p>
+              <p className="text-sm text-zinc-400">{maskPhone(shipping.phone)}</p>
+              {order.fanEmail && <p className="text-xs text-zinc-500">Contact: {maskEmail(order.fanEmail)}</p>}
             </div>
           )}
 

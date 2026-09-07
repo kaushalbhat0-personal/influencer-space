@@ -16,6 +16,7 @@ const REQUIRED_CONFIGS: Array<{ key: string; label: string }> = [
   { key: "NEXT_PUBLIC_APP_URL", label: "Public App URL" },
   { key: "NEXT_PUBLIC_SUPABASE_URL", label: "Supabase URL" },
   { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", label: "Supabase Anon Key" },
+  { key: "TOKEN_ENCRYPTION_KEY", label: "Encryption Key (TOKEN_ENCRYPTION_KEY)" },
 ];
 
 const OPTIONAL_CONFIGS: Array<{ key: string; label: string }> = [
@@ -29,6 +30,16 @@ const OPTIONAL_CONFIGS: Array<{ key: string; label: string }> = [
   { key: "VERCEL_PROJECT_ID", label: "Vercel Project ID" },
 ];
 
+function decodeEncryptionKey(raw: string): Buffer | null {
+  const trimmed = raw.trim();
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) return Buffer.from(trimmed, "hex");
+  try {
+    return Buffer.from(trimmed, "base64");
+  } catch {
+    return null;
+  }
+}
+
 export function validateConfig(): { ok: boolean; checks: ConfigCheck[]; errors: string[] } {
   const checks: ConfigCheck[] = [];
   const errors: string[] = [];
@@ -41,6 +52,18 @@ export function validateConfig(): { ok: boolean; checks: ConfigCheck[]; errors: 
 
   for (const cfg of OPTIONAL_CONFIGS) {
     checks.push({ key: cfg.key, label: cfg.label, required: false, present: !!process.env[cfg.key] });
+  }
+
+  // SEC-06: validate TOKEN_ENCRYPTION_KEY entropy — must decode to exactly
+  // 32 bytes (same logic as src/lib/crypto.ts decodeKey). Do not log secret.
+  const rawKey = process.env.TOKEN_ENCRYPTION_KEY;
+  if (rawKey) {
+    const decoded = decodeEncryptionKey(rawKey);
+    if (!decoded || decoded.length !== 32) {
+      errors.push(
+        `Invalid TOKEN_ENCRYPTION_KEY: must decode to 32 bytes (got ${decoded ? decoded.length : 0}). Use 'openssl rand -hex 32' (64 hex) or 'openssl rand -base64 32' (44 chars).`,
+      );
+    }
   }
 
   return { ok: errors.length === 0, checks, errors };

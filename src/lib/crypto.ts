@@ -52,3 +52,15 @@ export function decrypt(ciphertext: string): string {
 
   return decipher.update(data) + decipher.final("utf8");
 }
+
+// SEC-06: fail-closed at startup in production — deployment must crash before
+// serving traffic if TOKEN_ENCRYPTION_KEY is missing or has wrong entropy.
+// Validation is identical to getKey()/decodeKey above. Do not log secret.
+if (process.env.NODE_ENV === "production") {
+  try {
+    getKey();
+  } catch (err) {
+    // Re-throw as startup error so the process exits before handling requests
+    throw new Error((err as Error).message);
+  }
+}

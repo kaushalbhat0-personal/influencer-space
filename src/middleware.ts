@@ -13,8 +13,8 @@ if (!secret && process.env.NODE_ENV === "production") {
   throw new Error("NEXTAUTH_SECRET is required in production");
 }
 
-/** Loopback / localhost callers are the developer machine — never rate-limited. */
-function isLoopbackIp(ip: string): boolean {
+/** Loopback / localhost callers are the developer machine — exempt only in non-production. */
+export function isLoopbackIp(ip: string): boolean {
   const first = ip.split(",")[0].trim();
   return (
     first === "::1" ||
@@ -25,6 +25,21 @@ function isLoopbackIp(ip: string): boolean {
     first === "::ffff:127.0.0.1" ||
     first.startsWith("::ffff:127.")
   );
+}
+
+/** Trusted client IP — Vercel's `request.ip` is not client-spoofable. */
+export function getTrustedIp(request: NextRequest): string {
+  const trusted = (request as unknown as { ip?: string }).ip;
+  if (trusted) return trusted;
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const parts = forwarded
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1] as string;
+  }
+  return request.headers.get("x-real-ip") || "unknown";
 }
 
 /**
@@ -77,16 +92,15 @@ export async function middleware(request: NextRequest) {
   // are rate-limited here — the NextAuth session/csrf pollers and sign-out must
   // never count against the login bucket (prevents self-lockout). Registration
   // is rate-limited inside its own route (V-016 — not double-counted).
+  // SEC-02: production never trusts client-controlled X-Forwarded-For for
+  // loopback exemption. `request.ip` (Vercel) is trusted; fallback uses last
+  // X-Forwarded-For entry. Loopback bypass is dev-only.
   if (pathname === "/api/auth/callback/credentials" || pathname === "/api/auth/signin") {
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-    // RCCF-72.17C.1: loopback/local development traffic (the developer machine,
-    // local E2E/Playwright runs) is exempt from the auth rate limit. The limit
-    // exists to throttle external credential-stuffing; a local caller cannot be
-    // an attacker at this layer (the request is not yet authenticated, so a
-    // "super admin" exemption is not determinable here). Production external
-    // IPs remain rate-limited.
-    if (!isLoopbackIp(ip)) {
-      const rate = checkRateLimit(`/api/auth/login:${ip}`, "/api/auth/login");
+    const trustedIp = getTrustedIp(request);
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const isLoopback = isLoopbackIp(trustedIp);
+    if (!(isDevelopment && isLoopback)) {
+      const rate = checkRateLimit(`/api/auth/login:${trustedIp}`, "/api/auth/login");
       if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
   }

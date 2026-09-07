@@ -349,6 +349,9 @@ export async function verifyPayment(
   razorpaySignature: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+      return { success: false, error: "Invalid payment signature" };
+    }
     const body = razorpayOrderId + "|" + razorpayPaymentId;
     const crypto = await import("crypto");
     const expectedSignature = crypto
@@ -360,8 +363,13 @@ export async function verifyPayment(
       return { success: false, error: "Invalid payment signature" };
     }
 
-    const order = await prisma.productOrder.findUnique({
-      where: { razorpayOrderId },
+    // SEC-01: scope lookup to authoritative tenant context — a valid HMAC for
+    // any amount must never complete another tenant's PENDING order.
+    const checkoutTenantId = await resolveCheckoutTenantId();
+    if (!checkoutTenantId) return { success: false, error: "Order not found" };
+
+    const order = await prisma.productOrder.findFirst({
+      where: { razorpayOrderId, tenantId: checkoutTenantId },
     });
     if (!order) return { success: false, error: "Order not found" };
 
@@ -369,19 +377,19 @@ export async function verifyPayment(
       return { success: true };
     }
 
-    // RCCF-IMPLEMENTATION-72: verify the CAPTURED amount matches the order
-    // amount before completing (the HMAC proves authenticity, not the amount).
+    // RCCF-IMPLEMENTATION-72 + SEC-01: fail-closed amount verification.
+    // HMAC proves authenticity, not amount. Webhook is authoritative but
+    // the browser path must not silently ignore verification failures.
     try {
       const razorpay = getRazorpayInstance();
       const payment = await razorpay.payments.fetch(razorpayPaymentId);
       const capturedPaise = Number(payment?.amount ?? 0);
       const expectedPaise = Math.round(order.amount * 100);
-      if (capturedPaise !== expectedPaise) {
+      if (!capturedPaise || capturedPaise !== expectedPaise) {
         return { success: false, error: "Payment amount does not match order amount" };
       }
     } catch {
-      // Amount verification is best-effort on the client path; the webhook is
-      // the authoritative reconcile and enforces the same check.
+      return { success: false, error: "Payment verification failed" };
     }
 
     // RCCF-38: complete through the canonical boundary — this reserves the

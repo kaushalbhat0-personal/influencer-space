@@ -26,6 +26,8 @@ const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/affiliate-clicks": { windowMs: 60_000, maxRequests: 60 },
   // RCCF-67.4: public storefront booking submissions (per-IP, per minute).
   "/public-bookings": { windowMs: 60_000, maxRequests: 10 },
+  // SEC-07: guest order lookup (public token page) — throttles enumeration.
+  "/guest-order": { windowMs: 60_000, maxRequests: 30 },
 };
 
 export interface RateLimitResult {
