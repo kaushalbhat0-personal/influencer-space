@@ -48,7 +48,7 @@ export const integrationService = {
     if (!tenant) return false;
     switch (platform) {
       case "youtube": return !!(tenant.youtubeApiKey && tenant.youtubeChannelId);
-      case "instagram": return !!tenant.instagramApiKey;
+      case "instagram": return !!tenant.instagramAccessToken;
       default: return false;
     }
   },
@@ -64,7 +64,7 @@ export const integrationService = {
         return "not_connected";
       }
       case "instagram":
-        return tenant.instagramApiKey ? "configured" : "not_connected";
+        return tenant.instagramAccessToken ? "connected" : "not_connected";
       default:
         return "coming_soon";
     }
@@ -78,7 +78,7 @@ export const integrationService = {
         hasChannel: !!tenant.youtubeChannelId,
         channelId: (tenant.youtubeChannelId as string | null) || "",
       };
-      case "instagram": return { configured: !!tenant.instagramApiKey };
+      case "instagram": return { configured: !!tenant.instagramAccessToken };
       default: return {};
     }
   },

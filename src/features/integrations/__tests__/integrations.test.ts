@@ -63,16 +63,25 @@ describe("Integration service", () => {
     expect(youtube?.status).toBe("incomplete");
   });
 
-  it("marks instagram as configured when api key exists", async () => {
-    mockTenantFindUnique.mockResolvedValue({ youtubeApiKey: null, youtubeChannelId: null, instagramApiKey: "key-123", instagramAccessToken: null });
+  it("marks instagram as connected when access token exists (OAuth)", async () => {
+    mockTenantFindUnique.mockResolvedValue({ youtubeApiKey: null, youtubeChannelId: null, instagramApiKey: null, instagramAccessToken: "enc-token" });
     const result = await integrationService.list("t1");
     const instagram = result.find((i) => i.platform === "instagram");
     expect(instagram?.connected).toBe(true);
-    expect(instagram?.status).toBe("configured");
+    expect(instagram?.status).toBe("connected");
     expect(instagram?.config.configured).toBe(true);
   });
 
-  it("marks instagram as not connected without api key", async () => {
+  it("legacy instagramApiKey alone no longer marks connected", async () => {
+    mockTenantFindUnique.mockResolvedValue({ youtubeApiKey: null, youtubeChannelId: null, instagramApiKey: "key-123", instagramAccessToken: null });
+    const result = await integrationService.list("t1");
+    const instagram = result.find((i) => i.platform === "instagram");
+    expect(instagram?.connected).toBe(false);
+    expect(instagram?.status).toBe("not_connected");
+    expect(instagram?.config.configured).toBe(false);
+  });
+
+  it("marks instagram as not connected without access token", async () => {
     mockTenantFindUnique.mockResolvedValue({ youtubeApiKey: null, youtubeChannelId: null, instagramApiKey: null, instagramAccessToken: null });
     const result = await integrationService.list("t1");
     const instagram = result.find((i) => i.platform === "instagram");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Play,
@@ -303,8 +303,16 @@ function InstagramControls({
   const [apiKey, setApiKey] = useState("");
   const [save, setSave] = useState<SaveState>(emptySave);
   const [isPending, startTransition] = useTransition();
+  const [query, setQuery] = useState<{ instagram: string | null; reason: string | null }>({ instagram: null, reason: null });
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    setQuery({ instagram: p.get("instagram"), reason: p.get("reason") });
+  }, []);
 
   const configured = !!integration.config.configured;
+  const instagramQuery = query.instagram;
+  const reason = query.reason;
 
   async function handleSave() {
     setSave({ pending: true, message: null, ok: null });
@@ -334,7 +342,7 @@ function InstagramControls({
   if (configured && !editing) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-zinc-400">Instagram is configured and ready to sync content.</p>
+        <p className="text-sm text-zinc-400">Instagram is connected and ready to sync content.</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setEditing(true)} className="admin-btn-cyan px-4 py-2 text-xs">
             <Settings2 className="mr-1.5 inline h-3.5 w-3.5" />
@@ -349,40 +357,63 @@ function InstagramControls({
   }
 
   return (
-    <form
-      onSubmit={(e) => { e.preventDefault(); startTransition(() => void handleSave()); }}
-      className="space-y-4"
-    >
-      <Input
-        id="instagramApiKey"
-        name="instagramApiKey"
-        label="Instagram Credential"
-        type="password"
-        value={apiKey}
-        onChange={(e) => setApiKey(e.target.value)}
-        placeholder={configured ? "Credential configured — type to replace" : "Enter your Instagram credential"}
-        autoComplete="off"
-      />
-      <p className="text-xs text-zinc-500">Used to keep your storefront content up to date.</p>
-
-      {save.message && (
-        <p className={save.ok ? "text-sm text-emerald-400" : "text-sm text-red-400"} role="status">
-          {save.message}
-        </p>
+    <div className="space-y-4">
+      {instagramQuery === "connected" && (
+        <p className="text-sm text-emerald-400" role="status">Instagram connected — syncing will start shortly.</p>
       )}
+      {instagramQuery === "error" && (
+        <p className="text-sm text-red-400" role="status">Instagram connect failed{reason ? `: ${reason}` : ""}.</p>
+      )}
+      <a href="/api/auth/instagram/authorize" className="admin-btn-cyan inline-flex items-center px-4 py-2 text-xs">
+        <Camera className="mr-1.5 h-3.5 w-3.5" />
+        Connect with Instagram
+      </a>
+      <p className="text-xs text-zinc-500">OAuth is required for live follower sync. You will be redirected to Instagram to authorize.</p>
+
+      <details className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+        <summary className="cursor-pointer text-xs text-zinc-400">Use legacy key (deprecated)</summary>
+        <form
+          onSubmit={(e) => { e.preventDefault(); startTransition(() => void handleSave()); }}
+          className="mt-3 space-y-3"
+        >
+          <Input
+            id="instagramApiKey"
+            name="instagramApiKey"
+            label="Instagram Credential"
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder={configured ? "Credential configured — type to replace" : "Enter your Instagram credential"}
+            autoComplete="off"
+          />
+          <p className="text-xs text-zinc-500">Legacy plaintext keys no longer enable live sync — use OAuth above.</p>
+
+          {save.message && (
+            <p className={save.ok ? "text-sm text-emerald-400" : "text-sm text-red-400"} role="status">
+              {save.message}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" disabled={save.pending || isPending} className="admin-btn-cyan px-4 py-2 text-xs">
+              {save.pending || isPending ? <Loader2 className="mr-1.5 inline h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+              {save.pending || isPending ? "Saving..." : "Save legacy key"}
+            </button>
+            {configured && (
+              <button type="button" onClick={() => setEditing(false)} className="admin-btn-outline px-4 py-2 text-xs">
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      </details>
 
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={save.pending || isPending} className="admin-btn-cyan px-4 py-2 text-xs">
-          {save.pending || isPending ? <Loader2 className="mr-1.5 inline h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
-          {save.pending || isPending ? "Saving..." : "Save"}
+        <button type="button" onClick={() => { void handleDisconnect(); }} disabled={save.pending} className="admin-btn-danger px-4 py-2 text-xs">
+          {save.pending ? "Working..." : "Disconnect"}
         </button>
-        {configured && (
-          <button type="button" onClick={() => setEditing(false)} className="admin-btn-outline px-4 py-2 text-xs">
-            Cancel
-          </button>
-        )}
       </div>
-    </form>
+    </div>
   );
 }
 

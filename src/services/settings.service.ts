@@ -181,7 +181,12 @@ export const SettingsService = {
     const data =
       platform === "youtube"
         ? { youtubeApiKey: null, youtubeChannelId: null }
-        : { instagramApiKey: null };
+        : {
+            instagramApiKey: null,
+            instagramAccessToken: null,
+            instagramRefreshToken: null,
+            instagramTokenExpiry: null,
+          };
 
     await prisma.tenant.update({
       where: { id: tenantId },
