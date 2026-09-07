@@ -1,14 +1,18 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
-export async function generateMetadata({ params }: { params: { token: string } }) {
-  return { title: `Order ${params.token.slice(0, 8)}…` };
+export async function generateMetadata() {
+  return { title: "Order Status" };
 }
 
 export default async function GuestOrderPage({ params }: { params: { token: string } }) {
+  noStore();
   const token = params.token?.trim();
   if (!token || token.length < 32) notFound();
 

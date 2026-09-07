@@ -212,40 +212,43 @@ export async function createDirectCheckout(input: { productId: string; customerE
   if (result.success && result.checkoutUrl) {
     const guestToken = crypto.randomBytes(32).toString("hex");
     const guestTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const order = await prisma.productOrder.create({
-      data: {
-        tenantId,
-        productId: product.id,
-        amount: totalAmount,
-        status: "PENDING",
-        razorpayOrderId: result.providerReference ?? `dc_${Date.now()}`,
-        fanEmail: input.customerEmail ?? null,
-        commerceStrategy: "DIRECT_CREATOR",
-        provider: account.provider,
-        providerReference: result.providerReference ?? null,
-        providerMetadata: { checkoutUrl: result.checkoutUrl, reconciliationRef, quantity: String(quantity) },
-        paymentAccountId: raw.id,
-        quantity,
-        guestToken,
-        guestTokenExpiresAt,
-      },
-    });
-    if (validatedShipping) {
-      await prisma.shippingAddress.create({
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.productOrder.create({
         data: {
-          orderId: order.id,
           tenantId,
-          name: validatedShipping.name,
-          phone: validatedShipping.phone,
-          email: input.customerEmail ?? null,
-          line1: validatedShipping.line1,
-          city: validatedShipping.city,
-          state: validatedShipping.state,
-          pin: validatedShipping.pin,
-          country: validatedShipping.country,
+          productId: product.id,
+          amount: totalAmount,
+          status: "PENDING",
+          razorpayOrderId: result.providerReference ?? `dc_${Date.now()}`,
+          fanEmail: input.customerEmail ?? null,
+          commerceStrategy: "DIRECT_CREATOR",
+          provider: account.provider,
+          providerReference: result.providerReference ?? null,
+          providerMetadata: { checkoutUrl: result.checkoutUrl, reconciliationRef, quantity: String(quantity) },
+          paymentAccountId: raw.id,
+          quantity,
+          guestToken,
+          guestTokenExpiresAt,
         },
-      }).catch(() => {});
-    }
+      });
+      if (validatedShipping) {
+        await tx.shippingAddress.create({
+          data: {
+            orderId: created.id,
+            tenantId,
+            name: validatedShipping.name,
+            phone: validatedShipping.phone,
+            email: input.customerEmail ?? null,
+            line1: validatedShipping.line1,
+            city: validatedShipping.city,
+            state: validatedShipping.state,
+            pin: validatedShipping.pin,
+            country: validatedShipping.country,
+          },
+        });
+      }
+      return created;
+    });
     return { success: true, checkoutUrl: result.checkoutUrl, guestToken };
   }
   return { success: !!result.success && !!result.checkoutUrl, checkoutUrl: result.checkoutUrl, error: result.error };

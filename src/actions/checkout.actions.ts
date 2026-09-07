@@ -224,40 +224,41 @@ export async function createCheckout(
     // Calculate tax
     const { tax, total } = calculateTax(amount);
 
-    // Create DB order — buyer email is the captured, validated value.
+    // Create DB order atomically with shipping (F1) — shipping failure rolls back order
     const guestToken = generateGuestToken();
     const guestTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const dbOrder = await prisma.productOrder.create({
-      data: {
-        tenantId,
-        productId: product.id,
-        amount: total,
-        status: "PENDING",
-        razorpayOrderId: "",
-        fanEmail: buyerEmail,
-        quantity,
-        guestToken,
-        guestTokenExpiresAt,
-      },
-    });
-
-    // Persist shipping address for physical products
-    if (validatedShipping) {
-      await prisma.shippingAddress.create({
+    const dbOrder = await prisma.$transaction(async (tx) => {
+      const order = await tx.productOrder.create({
         data: {
-          orderId: dbOrder.id,
           tenantId,
-          name: validatedShipping.name,
-          phone: validatedShipping.phone,
-          email: buyerEmail,
-          line1: validatedShipping.line1,
-          city: validatedShipping.city,
-          state: validatedShipping.state,
-          pin: validatedShipping.pin,
-          country: validatedShipping.country,
+          productId: product.id,
+          amount: total,
+          status: "PENDING",
+          razorpayOrderId: "",
+          fanEmail: buyerEmail,
+          quantity,
+          guestToken,
+          guestTokenExpiresAt,
         },
-      }).catch(() => {});
-    }
+      });
+      if (validatedShipping) {
+        await tx.shippingAddress.create({
+          data: {
+            orderId: order.id,
+            tenantId,
+            name: validatedShipping.name,
+            phone: validatedShipping.phone,
+            email: buyerEmail,
+            line1: validatedShipping.line1,
+            city: validatedShipping.city,
+            state: validatedShipping.state,
+            pin: validatedShipping.pin,
+            country: validatedShipping.country,
+          },
+        });
+      }
+      return order;
+    });
 
     // VALIDATION-01 V-028: free products / 100%-off coupons (total ≤ 0) cannot
     // go through Razorpay (it rejects amount 0). Complete the order immediately

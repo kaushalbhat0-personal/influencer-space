@@ -178,18 +178,25 @@ export async function reconcileDirectCreatorPaymentLinkPayment(
       })
       .catch(() => {});
 
-    // RCCF-COMMERCE-02: customer order confirmation — best-effort via existing communication infrastructure, webhook-authoritative only
+    // RCCF-COMMERCE-02: customer order confirmation — best-effort via existing communication infrastructure, webhook-authoritative only — F3 dedup via BillingEvent (same key as order-completion)
     try {
-      const fullOrder = await prisma.productOrder.findUnique({ where: { id: order.id }, select: { id: true, guestToken: true, fanEmail: true, amount: true, tenantId: true, productId: true } });
-      if (fullOrder?.guestToken && fullOrder.fanEmail) {
-        const product = await prisma.product.findUnique({ where: { id: fullOrder.productId }, select: { name: true } });
-        const tenant = await prisma.tenant.findUnique({ where: { id: fullOrder.tenantId }, select: { name: true } });
-        const { getPlatformConfig } = await import("@/lib/config/platform");
-        const base = getPlatformConfig().appUrl;
-        const orderStatusUrl = `${base}/order/${fullOrder.guestToken}`;
-        const storeName = tenant?.name || product?.name || "Store";
-        const { sendCommunication } = await import("@/modules/communication");
-        await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fullOrder.id, email: fullOrder.fanEmail }, { orderId: fullOrder.id, productName: product?.name ?? "Product", amount: String(fullOrder.amount), storeName, orderStatusUrl }).catch(() => {});
+      const idempotencyKey = `order_customer_confirmed_${order.id}`;
+      const existing = await prisma.billingEvent.findUnique({ where: { idempotencyKey }, select: { id: true } }).catch(() => null);
+      if (!existing) {
+        const fullOrder = await prisma.productOrder.findUnique({ where: { id: order.id }, select: { id: true, guestToken: true, fanEmail: true, amount: true, tenantId: true, productId: true } });
+        if (fullOrder?.guestToken && fullOrder.fanEmail) {
+          const product = await prisma.product.findUnique({ where: { id: fullOrder.productId }, select: { name: true } });
+          const tenant = await prisma.tenant.findUnique({ where: { id: fullOrder.tenantId }, select: { name: true } });
+          const { getPlatformConfig } = await import("@/lib/config/platform");
+          const base = getPlatformConfig().appUrl;
+          const orderStatusUrl = `${base}/order/${fullOrder.guestToken}`;
+          const storeName = tenant?.name || product?.name || "Store";
+          const { sendCommunication } = await import("@/modules/communication");
+          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fullOrder.id, email: fullOrder.fanEmail }, { orderId: fullOrder.id, productName: product?.name ?? "Product", amount: String(fullOrder.amount), storeName, orderStatusUrl }).catch(() => ({ success: false }));
+          if ((sent as { success?: boolean })?.success) {
+            await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fullOrder.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: fullOrder.id } } }).catch(() => {});
+          }
+        }
       }
     } catch {}
 
