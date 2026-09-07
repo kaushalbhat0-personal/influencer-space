@@ -1,6 +1,6 @@
 /**
  * Resume text extraction — minimal, tenant-scoped, no secrets in logs.
- * Supports text/plain, text/csv (utf-8) and application/pdf (pdf-parse).
+ * Supports text/plain, text/csv (utf-8) and application/pdf (unpdf).
  * DOCX deliberately deferred (P2) per audit.
  */
 export async function extractResumeText(buffer: Buffer, mimeType: string): Promise<string> {
@@ -15,49 +15,15 @@ export async function extractResumeText(buffer: Buffer, mimeType: string): Promi
   }
 
   if (mimeType === "application/pdf") {
-    // pdf-parse@1.1.1 enters a legacy debug branch when loaded via ESM
-    // (`!module.parent` is truthy for ESM `import("pdf-parse")`), which
-    // synchronously reads `./test/data/05-versions-space.pdf` and throws
-    // ENOENT before the uploaded buffer is ever parsed. Loading through
-    // CommonJS `require` keeps `module.parent` truthy so the debug branch
-    // is skipped. `createRequire` is the ESM-compatible way to obtain a CJS
-    // `require` under Node; plain `eval("require")` is the Next.js-bundler
-    // fallback (server actions are bundled and `import.meta.url` may not
-    // resolve).
-    let pdfParse: (data: Buffer) => Promise<{ text: string }>;
     try {
-      // Prefer ESM-safe CJS require (survives bundling via createRequire)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let mod: any;
-      try {
-        const { createRequire } = await import("node:module");
-        // `import.meta.url` is available in native ESM; Next.js may transpile
-        // this file, so guard dynamically via `eval` to avoid static analysis.
-        const metaUrl: string | undefined =
-          (eval("import.meta.url") as string | undefined) ??
-          (typeof __filename !== "undefined" ? __filename : undefined);
-        if (!metaUrl) throw new Error("no metaUrl");
-        const require = createRequire(metaUrl);
-        mod = require("pdf-parse");
-      } catch {
-        // Next.js server-bundle fallback: direct CJS require (externals-safe)
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        mod = eval("require")("pdf-parse");
-      }
-      pdfParse = (mod?.default ?? mod) as (data: Buffer) => Promise<{ text: string }>;
-      if (typeof pdfParse !== "function") throw new Error("PDF parser unavailable");
-    } catch (e) {
-      // Do not leak filesystem/package internals to caller
-      throw new Error("PDF parsing failed");
-    }
-    try {
-      const data = await pdfParse(buffer);
-      const text = (data.text || "").trim();
+      const { extractText } = await import("unpdf");
+      const data = new Uint8Array(buffer);
+      const result = await extractText(data, { mergePages: true });
+      const text = (typeof result.text === "string" ? result.text : String(result.text ?? "")).trim();
       if (!text) throw new Error("PDF contains no extractable text");
       return text.slice(0, 12000);
     } catch (e) {
       const raw = e instanceof Error ? e.message : "PDF parsing failed";
-      // Sanitize: never surface ENOENT paths or package internals to user
       const isInternal =
         raw.includes("ENOENT") || raw.includes("test/data") || raw.includes("module.parent");
       const msg = isInternal ? "PDF parsing failed" : raw;
