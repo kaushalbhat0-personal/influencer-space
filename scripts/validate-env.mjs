@@ -39,6 +39,8 @@ const WARN = [
   { key: "VERCEL_PROJECT_ID", note: "Custom domain attachment won't work" },
   { key: "STRIPE_SECRET_KEY", note: "Stripe billing won't work" },
   { key: "HEALTH_SECRET", note: "Health endpoint won't be protected" },
+  { key: "RESEND_API_KEY", note: "Customer confirmation email will be log-only (no real email)" },
+  { key: "EMAIL_FROM", note: "Customer confirmation email will be log-only (set to e.g. Pendallo <noreply@pendallo.in>)" },
 ];
 
 let exitCode = 0;

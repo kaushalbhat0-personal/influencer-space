@@ -22,7 +22,7 @@ describe("RCCF-TRACK-02 — communication registry", () => {
     expect(COMMUNICATION_REGISTRY.length).toBeGreaterThan(5);
     for (const c of COMMUNICATION_REGISTRY) {
       expect(typeof c.id).toBe("string");
-      expect(["creator", "agency", "super_admin"]).toContain(c.audience);
+      expect(["creator", "agency", "super_admin", "customer"]).toContain(c.audience);
       expect(["email", "in_app", "alert", "sms", "whatsapp", "push"]).toContain(c.channel);
       expect(typeof c.template.subject).toBe("string");
       expect(typeof c.template.body).toBe("string");
