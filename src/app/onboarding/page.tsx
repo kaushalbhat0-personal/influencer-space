@@ -176,7 +176,13 @@ export default function OnboardingPage() {
       if (result.data.estimatedRemainingMs != null) setEstimatedRemainingMs(result.data.estimatedRemainingMs);
       if (result.data.status === "completed") {
         clearPolling();
-        setTimeout(() => router.replace("/admin/dashboard"), 400);
+        // P2-1: ensure JWT is refreshed so lifecycle READY is visible to middleware,
+        // then use full document navigation (not soft router.replace) so the new
+        // tenant cookie is read. This mirrors handleBuildManually's window.location.
+        try {
+          await fetch("/api/auth/refresh-session", { method: "POST", credentials: "include" });
+        } catch {}
+        setTimeout(() => { window.location.href = "/admin/dashboard"; }, 400);
       }
       if (result.data.status === "failed") {
         clearPolling();
@@ -184,7 +190,7 @@ export default function OnboardingPage() {
         setError("We couldn't finish building your storefront. Please try again.");
       }
     }, 1500);
-  }, [clearPolling, router]);
+  }, [clearPolling]);
 
   useEffect(() => {
     return () => clearPolling();
@@ -361,8 +367,10 @@ export default function OnboardingPage() {
           // session refresh is best-effort; redirect will re-validate
         }
 
-        // RCCF-LAUNCH-TRACK-03: brief success message before navigating.
-        setTimeout(() => router.replace("/admin/dashboard"), 400);
+        // P2-1: use full document navigation so the refreshed JWT (with tenantId)
+        // is read by middleware. Soft router.replace would keep the stale token
+        // and bounce back to /onboarding.
+        setTimeout(() => { window.location.href = "/admin/dashboard"; }, 400);
       } else if (res.retryable && res.tenantId) {
         clearPolling();
         setRetryInfo({ tenantId: res.tenantId });

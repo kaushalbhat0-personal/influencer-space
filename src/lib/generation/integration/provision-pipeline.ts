@@ -78,13 +78,22 @@ export function buildProvisioningInput(params: {
   // acquired identity (name/bio/avatar/social links) reaches the brand + hero.
   const kg = params.pipelineResult.knowledgeGraph;
 
+  const isValidHttpUrl = (url: string): boolean => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   const base = {
     creatorName: params.creatorName,
     name: kg?.creator?.name ?? params.creatorName,
     bio: kg?.creator?.bio ?? "",
     avatarUrl: params.avatarUrl ?? "",
     socialLinks: (kg?.socialLinks ?? [])
-      .filter((l) => l.url)
+      .filter((l) => l.url && isValidHttpUrl(l.url))
       .map((l) => ({ platform: l.platform, url: l.url, label: l.handle || undefined })),
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,

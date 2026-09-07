@@ -195,8 +195,16 @@ export class ProvisioningService {
       // URL fallback, deduping by platform+url so the hero never shows the
       // controlling platform twice.
       const sourcePlatformLabel = input.sourcePlatform || "youtube";
-      const sourceLink = input.sourceUrl ? [{ platform: sourcePlatformLabel, url: input.sourceUrl }] : [];
-      const acquiredLinks = input.socialLinks?.length ? input.socialLinks : [];
+      const isValidHttpUrl = (url: string): boolean => {
+        try {
+          const parsed = new URL(url);
+          return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch {
+          return false;
+        }
+      };
+      const sourceLink = input.sourceUrl && isValidHttpUrl(input.sourceUrl) ? [{ platform: sourcePlatformLabel, url: input.sourceUrl }] : [];
+      const acquiredLinks = (input.socialLinks ?? []).filter((l) => l.url && isValidHttpUrl(l.url));
       const socialLinks = [...sourceLink, ...acquiredLinks].filter(
         (link, index, all) => index === all.findIndex((other) => other.platform === link.platform && other.url === link.url),
       );
