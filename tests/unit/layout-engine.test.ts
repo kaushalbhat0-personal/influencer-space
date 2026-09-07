@@ -161,7 +161,7 @@ describe("LayoutEngine — navigation", () => {
 describe("LayoutEngine — metadata", () => {
   it("falls back to identity name for SEO title", () => {
     const doc = engine.resolve(minimalSnapshot());
-    expect(doc.metadata.title).toBe("Minimal — CreatorStore");
+    expect(doc.metadata.title).toBe("Minimal — Pendallo");
   });
 
   it("uses custom SEO title when provided", () => {

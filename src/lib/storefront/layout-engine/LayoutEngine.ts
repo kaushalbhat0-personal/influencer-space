@@ -14,6 +14,7 @@ import {
   baseOf,
   type SectionPresentation,
 } from "@/modules/section-presentation";
+import { BRAND } from "@/lib/marketing/messaging";
 
 // VALIDATION-05: per-section composition logs ran on every request in
 // production (~11 calls/section). Gate them to non-production.
@@ -147,7 +148,7 @@ export class LayoutEngine {
     const seo = snapshot.content.seo;
     const hero = snapshot.content.hero;
 
-    const title = seo.title || `${identity.name} — CreatorStore`;
+    const title = seo.title || `${identity.name} — ${BRAND.name}`;
     const description = seo.description || identity.tagline || identity.bio || "Creator storefront";
 
     const image = identity.avatarUrl || hero.imageUrl || hero.posterUrl || undefined;
@@ -161,7 +162,7 @@ export class LayoutEngine {
         description,
         url: canonicalUrl,
         ...(image ? { image } : {}),
-        siteName: "CreatorStore",
+        siteName: BRAND.name,
         type: "profile",
       },
       twitter: {

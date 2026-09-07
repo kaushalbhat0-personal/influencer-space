@@ -5,6 +5,7 @@ import { Footer } from "@/components/marketing/Footer";
 import { getPublicPricingData, getRuntimePlansByFamily } from "@/modules/pricing/application/runtime";
 import { isOneTimePlan } from "@/config/commerce/plans";
 import { formatCurrency } from "@/lib/utils";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     alternates: { canonical: "/pricing" },
     openGraph: {
-      title: "Pricing — CreatorStore",
+      title: `Pricing — ${BRAND.name}`,
       description: "Simple, transparent pricing for individuals and partners. Pay for your website — your work, services, products and content in one place you own.",
     },
   };
@@ -79,9 +80,9 @@ async function PricingSchemaJsonLd() {
         __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Product",
-          name: "CreatorStore",
+          name: BRAND.name,
           description: "Platform for individuals, freelancers, businesses and partners to build a professional website and business you own.",
-          brand: { "@type": "Brand", name: "CreatorStore" },
+          brand: { "@type": "Brand", name: BRAND.name },
           offers: {
             "@type": "AggregateOffer",
             offers,
@@ -94,7 +95,7 @@ async function PricingSchemaJsonLd() {
 
 function FaqSchemaJsonLd() {
   const faqs = [
-    { q: "Do partner plans include individual subscriptions?", a: "No. Every individual pays CreatorStore directly for their own plan. Partner plans cover your agency business only." },
+    { q: "Do partner plans include individual subscriptions?", a: `No. Every individual pays ${BRAND.name} directly for their own plan. Partner plans cover your agency business only.` },
     { q: "Can a partner charge clients for services?", a: "Yes. You may charge clients separately for setup, migration, training, branding, consulting and maintenance." },
     { q: "What is the minimum plan for a client I onboard?", a: "Partner-onboarded clients use Growth or higher — Launch is not available for agency-managed clients." },
   ];

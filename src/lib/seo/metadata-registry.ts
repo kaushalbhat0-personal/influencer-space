@@ -1,6 +1,7 @@
 import type { MetadataPreview, PageSEOSettings, SEOGlobalSettings } from "./types";
 import { FUTURE_PAGE_TYPES } from "./constants";
 import type { MetadataGenerator } from "./types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface GeneratorEntry {
   generator: MetadataGenerator;
@@ -55,7 +56,7 @@ export class MetadataRegistry {
   }
 
   private truncateGoogleTitle(title: string, brandName: string): string {
-    if (!title) return `${brandName} — CreatorStore`;
+    if (!title) return `${brandName} — ${BRAND.name}`;
     return title.length > 60 ? `${title.slice(0, 57)}...` : title;
   }
 
@@ -85,7 +86,7 @@ export function homeMetadataGenerator(): MetadataGenerator {
     generate(settings: PageSEOSettings, global: SEOGlobalSettings): MetadataPreview {
       const googleTitle = settings.seoTitle
         ? (settings.seoTitle.length > 60 ? `${settings.seoTitle.slice(0, 57)}...` : settings.seoTitle)
-        : `${global.brandName} — CreatorStore`;
+        : `${global.brandName} — ${BRAND.name}`;
       return {
         googleTitle,
         googleDescription: settings.metaDescription || global.metaDescription,

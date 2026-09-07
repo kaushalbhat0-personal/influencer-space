@@ -114,7 +114,8 @@ describe("RCCF-MKT-03 - metadata (no duplicated brand)", () => {
 
   it("root template still appends the brand exactly once", () => {
     const layout = read("src/app/layout.tsx");
-    expect(layout).toContain('template: "%s — CreatorStore"');
+    expect(layout).toMatch(/template:\s*`%s — \$\{BRAND\.name\}`/);
+    expect(layout).toContain('BRAND.name');
   });
 });
 

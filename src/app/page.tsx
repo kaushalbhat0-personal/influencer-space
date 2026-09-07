@@ -19,7 +19,7 @@ import { SEED_LOGOS } from "@/lib/marketing/trust/logos";
 import { getPlatformConfig } from "@/lib/config/platform";
 import { getPublicPricingData } from "@/modules/pricing/application/runtime";
 import { ExperienceSection, THEME_EXPERIENCES } from "@/modules/theme/runtime/experience";
-import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
+import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 // RCCF-IMPLEMENTATION-71: the homepage embeds runtime pricing — render live so
 // Super Admin pricing changes reflect immediately (falls back to defaults if
@@ -28,12 +28,12 @@ export const dynamic = "force-dynamic";
 
 /**
  * RCCF-MKT-02-R1: absolute title prevents the root template from appending a
- * second "— CreatorStore" to the homepage title.
+ * second "— Pendallo" to the homepage title.
  */
 export const metadata: Metadata = {
-  title: { absolute: "CreatorStore — Your presence. Your business." },
+  title: { absolute: `${BRAND.name} — Your presence. Your business.` },
   description:
-    "CreatorStore is a professional home online — your website, showcase, links, and storefront in one place you own. Build it in minutes and keep 100% of every sale.",
+    `${BRAND.name} is a professional home online — your website, showcase, links, and storefront in one place you own. Build it in minutes and keep 100% of every sale.`,
   alternates: { canonical: "/" },
 };
 
@@ -45,7 +45,7 @@ function OrganizationSchema() {
   const org = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "CreatorStore",
+    name: BRAND.name,
     url: getPlatformConfig().appUrl,
     email: CONTACT_EMAIL,
     description:

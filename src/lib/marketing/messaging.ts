@@ -3,7 +3,7 @@
 export const CONTACT_EMAIL = "info.micronest@gmail.com";
 
 export const BRAND = {
-  name: "CreatorStore",
+  name: "Pendallo",
   tagline: "Turn your content into a business.",
   // RCCF-MKT-09: positioning breadth — the platform serves creators, freelancers,
   // coaches, artists, brands, small businesses and agencies. "Presence" keeps the
@@ -59,7 +59,7 @@ export const VALUE_PROPOSITIONS = [
   {
     id: "publish-anywhere",
     headline: "Publish anywhere",
-    body: "Publish to your own domain, a CreatorStore subdomain, or your existing website. One click, instantly live.",
+    body: "Publish to your own domain, a Pendallo subdomain, or your existing website. One click, instantly live.",
   },
   {
     id: "scale-with-agencies",

@@ -13,13 +13,15 @@ const FAQ_SCHEMA = [
   { q: "Can agencies use CreatorStore?", a: "Yes. Partner plans support client management and white-label branding, and paid Partners can earn recurring commission from eligible active clients." },
 ];
 
+import { BRAND } from "@/lib/marketing/messaging";
+
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "Frequently asked questions about CreatorStore — storefront generation, pricing, payments, agency features, and more.",
+  description: `Frequently asked questions about ${BRAND.name} — storefront generation, pricing, payments, agency features, and more.`,
   alternates: { canonical: "/faq" },
   openGraph: {
-    title: "FAQ — CreatorStore",
-    description: "Everything you need to know about CreatorStore. Storefront generation, pricing, payments, custom domains, and agency features.",
+    title: `FAQ — ${BRAND.name}`,
+    description: `Everything you need to know about ${BRAND.name}. Storefront generation, pricing, payments, custom domains, and agency features.`,
   },
 };
 

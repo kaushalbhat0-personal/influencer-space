@@ -200,13 +200,13 @@ describe("buildPageSeoDefaults (Phase 5 per-page SEO)", () => {
   });
 
   it("falls back to pageName — siteTitle when no registry defaults exist", () => {
-    const seo = buildPageSeoDefaults(null, "Custom", "CreatorStore", "Priya");
-    expect(seo.title).toBe("Custom — CreatorStore");
+    const seo = buildPageSeoDefaults(null, "Custom", "Pendallo", "Priya");
+    expect(seo.title).toBe("Custom — Pendallo");
     expect(seo.description).toBe("");
   });
 
   it("keeps a registry title that has no placeholder verbatim", () => {
-    const seo = buildPageSeoDefaults({ seoTitle: "Gallery" }, "Gallery", "CreatorStore", "Priya");
+    const seo = buildPageSeoDefaults({ seoTitle: "Gallery" }, "Gallery", "Pendallo", "Priya");
     expect(seo.title).toBe("Gallery");
   });
 });

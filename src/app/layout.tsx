@@ -4,6 +4,7 @@ import { Literata, Space_Grotesk, Playfair_Display, Outfit, Sora } from "next/fo
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getPlatformConfig } from "@/lib/config/platform";
+import { BRAND } from "@/lib/marketing/messaging";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -59,26 +60,26 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
     default:
-      "CreatorStore | Your presence. Your business.",
-    template: "%s — CreatorStore",
+      `${BRAND.name} | Your presence. Your business.`,
+    template: `%s — ${BRAND.name}`,
   },
   description:
-    "CreatorStore is a professional home online — a website you own with your work, links, storefront, products, and checkout in one place. Keep 100% of every sale. UPI and card checkout via Razorpay.",
+    `${BRAND.name} is a professional home online — a website you own with your work, links, storefront, products, and checkout in one place. Keep 100% of every sale. UPI and card checkout via Razorpay.`,
   robots: { index: true, follow: true },
   // RCCF-VISUAL-03B-CORRECTION: OG now uses neutral marketing hero (not Spower Gaming storefront).
   // Canonical visual references across marketing are Mystic Minutes / North Star.
   openGraph: {
     type: "website",
-    siteName: "CreatorStore",
+    siteName: BRAND.name,
     url: APP_URL,
-    title: "CreatorStore | Your presence. Your business.",
+    title: `${BRAND.name} | Your presence. Your business.`,
     description:
       "A professional home for everything you create, share, showcase, and sell — one place you own. Keep 100% of every sale.",
-    images: [{ url: `${APP_URL}/marketing-assets/marketing/01-homepage-desktop.png`, width: 1440, height: 900, alt: "CreatorStore — professional home for your business (Mystic Minutes · North Star examples)" }],
+    images: [{ url: `${APP_URL}/marketing-assets/marketing/01-homepage-desktop.png`, width: 1440, height: 900, alt: `${BRAND.name} — professional home for your business (Mystic Minutes · North Star examples)` }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CreatorStore | Your presence. Your business.",
+    title: `${BRAND.name} | Your presence. Your business.`,
     description:
       "Your professional home online — website, showcase, links, and commerce in one place you own.",
     images: [`${APP_URL}/marketing-assets/marketing/01-homepage-desktop.png`],

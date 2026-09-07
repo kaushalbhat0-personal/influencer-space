@@ -8,10 +8,10 @@ import { BRAND } from "@/lib/marketing/messaging";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `Learn about CreatorStore — the platform for your presence and your business. Our mission, story, and values. ${BRAND.shortDescription}`,
+  description: `Learn about ${BRAND.name} — the platform for your presence and your business. Our mission, story, and values. ${BRAND.shortDescription}`,
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About — CreatorStore",
+    title: `About — ${BRAND.name}`,
     description: "Learn about our mission to democratize commerce for professionals, freelancers, and businesses.",
   },
 };

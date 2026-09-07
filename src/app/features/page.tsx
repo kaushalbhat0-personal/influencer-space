@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   description: `Everything you need to run your business online: profile-built websites, visual builder, commerce, order analytics, SEO, and agency tools. ${BRAND.shortDescription}`,
   alternates: { canonical: "/features" },
   openGraph: {
-    title: "Features — CreatorStore",
+    title: `Features — ${BRAND.name}`,
     description: "Profile-built storefronts, visual drag-and-drop builder, native UPI commerce, order analytics, SEO, and agency platform — all in one.",
   },
 };
