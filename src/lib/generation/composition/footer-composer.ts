@@ -1,5 +1,6 @@
 import type { KnowledgeGraph } from "@/lib/generation/intelligence/types";
 import type { SectionBlueprint, NavItem } from "./types";
+import { PLATFORM_ATTRIBUTION } from "@/lib/marketing/messaging";
 
 export class FooterComposer {
   compose(graph: KnowledgeGraph, navItems: NavItem[]): SectionBlueprint {
@@ -17,7 +18,7 @@ export class FooterComposer {
         showBackToTop: true,
         navigation: this.getFooterNav(navItems),
         copyright: `© ${new Date().getFullYear()} ${name}. All rights reserved.`,
-        branding: `Powered by Influencer Space`,
+        branding: PLATFORM_ATTRIBUTION,
       },
       reason: "Footer with navigation, social links, and copyright",
       confidence: 0.9,

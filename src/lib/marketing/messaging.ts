@@ -2,6 +2,8 @@
  * surface (footer, contact page, legal pages, schema, metadata) uses this. */
 export const CONTACT_EMAIL = "info.micronest@gmail.com";
 
+export const PLATFORM_ATTRIBUTION = "Powered by Micronest Services" as const;
+
 export const BRAND = {
   name: "Pendallo",
   tagline: "Turn your content into a business.",
