@@ -25,13 +25,28 @@ export class ClientService {
       orderBy: { createdAt: "desc" },
     });
 
+    // PERF-01: batch health scores — one batched evaluateMany (~8 queries total)
+    // instead of N sequential evaluate (13*N queries). No second health
+    // implementation: evaluateMany reuses buildChecksFromAggregates.
+    const tenantIdsWithWebsite = agencyTenants
+      .filter((at) => !!at.tenant.website)
+      .map((at) => at.tenant.id);
+    let healthMap: Map<string, { overallScore: number }> | null = null;
+    if (tenantIdsWithWebsite.length > 0) {
+      try {
+        healthMap = await websiteHealthEngine.evaluateMany(tenantIdsWithWebsite);
+      } catch {
+        healthMap = null;
+      }
+    }
+
     const results: ClientData[] = [];
 
     for (const at of agencyTenants) {
       const tenant = at.tenant;
       const website = tenant.website;
       const publishState = website?.publishStatus?.state ?? null;
-      const healthScore = website ? await this.getHealthScoreShort(tenant.id) : null;
+      const healthScore = website ? (healthMap?.get(tenant.id)?.overallScore ?? null) : null;
 
       results.push({
         id: at.id,

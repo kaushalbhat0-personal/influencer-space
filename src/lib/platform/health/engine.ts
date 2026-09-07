@@ -41,6 +41,181 @@ export class WebsiteHealthEngine {
     return { overallScore, checks, categoryScores, topRecommendations };
   });
 
+  // PERF-01: batched evaluation to avoid 13*N queries. Reuses the same
+  // scoring logic as single-tenant evaluate; no second health implementation.
+  evaluateMany = requestCache(async (tenantIds: string[]): Promise<Map<string, HealthReport>> => {
+    const unique = Array.from(new Set(tenantIds.filter(Boolean)));
+    if (unique.length === 0) return new Map<string, HealthReport>();
+
+    // ── Batched DB reads — ~8 queries total for N tenants, not 13*N ──────────
+    const [
+      productGroups,
+      galleryGroups,
+      linkGroups,
+      timelineGroups,
+      feedGroups,
+      gameGroups,
+      orderGroups,
+      brands,
+      websites,
+      publishStatuses,
+      settingsRows,
+    ] = await Promise.all([
+      prisma.product.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique }, status: "PUBLISHED", isActive: true, archivedAt: null },
+        _count: { _all: true },
+      }),
+      prisma.galleryImage.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique }, status: "PUBLISHED", isActive: true },
+        _count: { _all: true },
+      }),
+      prisma.affiliateLink.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique }, isActive: true },
+        _count: { _all: true },
+      }),
+      prisma.timelineEvent.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique } },
+        _count: { _all: true },
+      }),
+      prisma.contentFeedItem.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique }, hidden: false },
+        _count: { _all: true },
+      }),
+      prisma.game.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique }, isActive: true },
+        _count: { _all: true },
+      }),
+      prisma.productOrder.groupBy({
+        by: ["tenantId"],
+        where: { tenantId: { in: unique }, status: { in: ["PAID", "COMPLETED"] } },
+        _count: { _all: true },
+      }),
+      prisma.brand.findMany({
+        where: { website: { tenantId: { in: unique } } },
+        select: { name: true, tagline: true, bio: true, avatarUrl: true, website: { select: { tenantId: true } } },
+      }),
+      prisma.website.findMany({
+        where: { tenantId: { in: unique } },
+        select: { id: true, themeColors: true, tenantId: true },
+      }),
+      prisma.publishStatus.findMany({
+        where: { website: { tenantId: { in: unique } } },
+        select: { state: true, website: { select: { tenantId: true } } },
+      }),
+      prisma.setting.findMany({
+        where: { tenantId: { in: unique }, key: { in: ["testimonials", "faq", "seo"] } },
+        select: { tenantId: true, key: true, value: true },
+      }),
+    ]);
+
+    const toCountMap = (groups: Array<{ tenantId: string; _count: { _all: number } }>): Map<string, number> => {
+      const m = new Map<string, number>();
+      for (const g of groups) m.set(g.tenantId, g._count._all);
+      return m;
+    };
+    const productMap = toCountMap(productGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+    const galleryMap = toCountMap(galleryGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+    const linkMap = toCountMap(linkGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+    const timelineMap = toCountMap(timelineGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+    const feedMap = toCountMap(feedGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+    const gameMap = toCountMap(gameGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+    const orderMap = toCountMap(orderGroups as unknown as Array<{ tenantId: string; _count: { _all: number } }>);
+
+    const brandMap = new Map<string, { name: string | null; tagline: string | null; bio: string | null; avatarUrl: string | null }>();
+    for (const b of brands as unknown as Array<{ name: string | null; tagline: string | null; bio: string | null; avatarUrl: string | null; website: { tenantId: string } }>) {
+      brandMap.set(b.website.tenantId, { name: b.name, tagline: b.tagline, bio: b.bio, avatarUrl: b.avatarUrl });
+    }
+
+    const websiteMap = new Map<string, { id: string; themeColors: unknown }>();
+    for (const w of websites as unknown as Array<{ id: string; themeColors: unknown; tenantId: string }>) {
+      websiteMap.set(w.tenantId, { id: w.id, themeColors: w.themeColors });
+    }
+
+    const publishMap = new Map<string, { state: string }>();
+    for (const p of publishStatuses as unknown as Array<{ state: string; website: { tenantId: string } }>) {
+      publishMap.set(p.website.tenantId, { state: p.state });
+    }
+
+    const settingsMap = new Map<string, Map<string, unknown>>();
+    for (const s of settingsRows as unknown as Array<{ tenantId: string; key: string; value: unknown }>) {
+      if (!settingsMap.has(s.tenantId)) settingsMap.set(s.tenantId, new Map());
+      settingsMap.get(s.tenantId)!.set(s.key, s.value);
+    }
+
+    const result = new Map<string, HealthReport>();
+    for (const tenantId of unique) {
+      try {
+        const checks = this.buildChecksFromAggregates({
+          brand: brandMap.get(tenantId) ?? null,
+          productCount: productMap.get(tenantId) ?? 0,
+          galleryCount: galleryMap.get(tenantId) ?? 0,
+          linkCount: linkMap.get(tenantId) ?? 0,
+          timelineCount: timelineMap.get(tenantId) ?? 0,
+          testimonialValue: settingsMap.get(tenantId)?.get("testimonials") ?? null,
+          faqValue: settingsMap.get(tenantId)?.get("faq") ?? null,
+          feedCount: feedMap.get(tenantId) ?? 0,
+          gameCount: gameMap.get(tenantId) ?? 0,
+          seoValue: settingsMap.get(tenantId)?.get("seo") ?? null,
+          website: websiteMap.get(tenantId) ?? null,
+          publishState: publishMap.get(tenantId)?.state ?? null,
+          orderCount: orderMap.get(tenantId) ?? 0,
+        });
+        const overallScore = this.computeOverall(checks);
+        const categoryScores = this.computeCategoryScores(checks);
+        const topRecommendations = checks.filter((c) => !c.done).sort((a, b) => b.weight - a.weight).slice(0, 5);
+        result.set(tenantId, { overallScore, checks, categoryScores, topRecommendations });
+      } catch {
+        // Preserve tenant isolation — one tenant failure does not poison others
+      }
+    }
+    return result;
+  });
+
+  private buildChecksFromAggregates(data: {
+    brand: { name: string | null; tagline: string | null; bio: string | null; avatarUrl: string | null } | null;
+    productCount: number;
+    galleryCount: number;
+    linkCount: number;
+    timelineCount: number;
+    testimonialValue: unknown | null;
+    faqValue: unknown | null;
+    feedCount: number;
+    gameCount: number;
+    seoValue: unknown | null;
+    website: { id: string; themeColors: unknown } | null;
+    publishState: string | null;
+    orderCount: number;
+  }): HealthCheck[] {
+    const testimonialCount = Array.isArray(data.testimonialValue) ? data.testimonialValue.length : 0;
+    const faqCount = Array.isArray(data.faqValue) ? data.faqValue.length : 0;
+    const hasCustomTheme = data.website?.themeColors && Object.keys(data.website.themeColors as Record<string, unknown>).length > 0;
+    const isPublished = data.publishState === "live";
+    return [
+      { id: "profile_name", label: "Profile Name", description: "Set your display name so visitors know who you are.", score: data.brand?.name ? 100 : 0, done: !!data.brand?.name, href: "/admin/profile", category: "brand", weight: 10 },
+      { id: "profile_tagline", label: "Tagline", description: "Add a tagline that summarises what you do.", score: data.brand?.tagline ? 100 : 0, done: !!data.brand?.tagline, href: "/admin/profile", category: "brand", weight: 5 },
+      { id: "profile_bio", label: "Bio", description: "Write your biography to build trust.", score: data.brand?.bio ? 100 : 0, done: !!data.brand?.bio, href: "/admin/profile", category: "brand", weight: 5 },
+      { id: "profile_avatar", label: "Profile Photo", description: "Upload a profile photo — faces convert.", score: data.brand?.avatarUrl ? 100 : 0, done: !!data.brand?.avatarUrl, href: "/admin/profile", category: "brand", weight: 8 },
+      { id: "products", label: "Products", description: "Publish products to give fans something to buy.", score: Math.min(data.productCount * 20, 100), done: data.productCount * 20 >= 100, href: "/admin/products", category: "commerce", weight: 15 },
+      { id: "orders", label: "First Sale", description: "Complete your first order to start earning.", score: data.orderCount > 0 ? 100 : 0, done: data.orderCount > 0, href: "/admin/orders", category: "commerce", weight: 20 },
+      { id: "gallery", label: "Gallery", description: "Showcase your work with images and videos.", score: Math.min(data.galleryCount * 10, 100), done: data.galleryCount * 10 >= 100, href: "/admin/gallery", category: "content", weight: 10 },
+      { id: "timeline", label: "Timeline", description: "Share your journey with milestones.", score: Math.min(data.timelineCount * 20, 100), done: data.timelineCount * 20 >= 100, href: "/admin/milestones", category: "content", weight: 5 },
+      { id: "testimonials", label: "Testimonials", description: "Social proof convinces undecided visitors.", score: Math.min(testimonialCount * 25, 100), done: testimonialCount * 25 >= 100, href: "/admin/testimonials", category: "content", weight: 8 },
+      { id: "faq", label: "FAQ", description: "Answer common questions to reduce friction.", score: Math.min(faqCount * 25, 100), done: faqCount * 25 >= 100, href: "/admin/faq", category: "content", weight: 5 },
+      { id: "games", label: "Games", description: "List your games for fans to discover.", score: Math.min(data.gameCount * 25, 100), done: data.gameCount * 25 >= 100, href: "/admin/games", category: "content", weight: 3 },
+      { id: "links", label: "Links", description: "Add social and affiliate links.", score: Math.min(data.linkCount * 25, 100), done: data.linkCount * 25 >= 100, href: "/admin/links", category: "social", weight: 5 },
+      { id: "feed", label: "Content Feed", description: "Connect your social media for fresh content.", score: Math.min(data.feedCount * 20, 100), done: data.feedCount * 20 >= 100, href: "/admin/settings/content", category: "social", weight: 5 },
+      { id: "seo", label: "SEO", description: "Configure titles and descriptions for search engines.", score: data.seoValue ? 100 : 0, done: Boolean(data.seoValue), href: "/admin/seo", category: "seo", weight: 10 },
+      { id: "theme", label: "Custom Theme", description: "Customize colors and fonts to match your brand.", score: hasCustomTheme ? 100 : 0, done: Boolean(hasCustomTheme), href: "/admin/appearance", category: "design", weight: 8 },
+      { id: "publishing", label: "Publish", description: "Publish your website to go live.", score: isPublished ? 100 : 0, done: isPublished, href: "/admin/website-ready", category: "platform", weight: 20 },
+    ];
+  }
+
   private async runChecks(tenantId: string): Promise<HealthCheck[]> {
     // P0: reuse request-cached SharedReads for brand/hero/links/seo/website/testimonials etc.
     const sharedReads = await websiteAggregateService.getSharedReads(tenantId).catch(() => null);
@@ -88,33 +263,21 @@ export class WebsiteHealthEngine {
       websiteAggregateService.getOrderCountPaidCompleted(tenantId),
     ]);
 
-    const testimonialCount = testimonialSetting?.value && Array.isArray(testimonialSetting.value)
-      ? testimonialSetting.value.length
-      : 0;
-    const faqCount = faqSetting?.value && Array.isArray(faqSetting.value)
-      ? faqSetting.value.length
-      : 0;
-    const hasCustomTheme = website?.themeColors && Object.keys(website.themeColors as Record<string, unknown>).length > 0;
-    const isPublished = publishStatus?.state === "live";
-
-    return [
-      { id: "profile_name", label: "Profile Name", description: "Set your display name so visitors know who you are.", score: brand?.name ? 100 : 0, done: !!brand?.name, href: "/admin/profile", category: "brand", weight: 10 },
-      { id: "profile_tagline", label: "Tagline", description: "Add a tagline that summarises what you do.", score: brand?.tagline ? 100 : 0, done: !!brand?.tagline, href: "/admin/profile", category: "brand", weight: 5 },
-      { id: "profile_bio", label: "Bio", description: "Write your biography to build trust.", score: brand?.bio ? 100 : 0, done: !!brand?.bio, href: "/admin/profile", category: "brand", weight: 5 },
-      { id: "profile_avatar", label: "Profile Photo", description: "Upload a profile photo — faces convert.", score: brand?.avatarUrl ? 100 : 0, done: !!brand?.avatarUrl, href: "/admin/profile", category: "brand", weight: 8 },
-      { id: "products", label: "Products", description: "Publish products to give fans something to buy.", score: Math.min(productCount * 20, 100), done: productCount * 20 >= 100, href: "/admin/products", category: "commerce", weight: 15 },
-      { id: "orders", label: "First Sale", description: "Complete your first order to start earning.", score: orderCount > 0 ? 100 : 0, done: orderCount > 0, href: "/admin/orders", category: "commerce", weight: 20 },
-      { id: "gallery", label: "Gallery", description: "Showcase your work with images and videos.", score: Math.min(galleryCount * 10, 100), done: galleryCount * 10 >= 100, href: "/admin/gallery", category: "content", weight: 10 },
-      { id: "timeline", label: "Timeline", description: "Share your journey with milestones.", score: Math.min(timelineCount * 20, 100), done: timelineCount * 20 >= 100, href: "/admin/milestones", category: "content", weight: 5 },
-      { id: "testimonials", label: "Testimonials", description: "Social proof convinces undecided visitors.", score: Math.min(testimonialCount * 25, 100), done: testimonialCount * 25 >= 100, href: "/admin/testimonials", category: "content", weight: 8 },
-      { id: "faq", label: "FAQ", description: "Answer common questions to reduce friction.", score: Math.min(faqCount * 25, 100), done: faqCount * 25 >= 100, href: "/admin/faq", category: "content", weight: 5 },
-      { id: "games", label: "Games", description: "List your games for fans to discover.", score: Math.min(gameCount * 25, 100), done: gameCount * 25 >= 100, href: "/admin/games", category: "content", weight: 3 },
-      { id: "links", label: "Links", description: "Add social and affiliate links.", score: Math.min(linkCount * 25, 100), done: linkCount * 25 >= 100, href: "/admin/links", category: "social", weight: 5 },
-      { id: "feed", label: "Content Feed", description: "Connect your social media for fresh content.", score: Math.min(feedCount * 20, 100), done: feedCount * 20 >= 100, href: "/admin/settings/content", category: "social", weight: 5 },
-      { id: "seo", label: "SEO", description: "Configure titles and descriptions for search engines.", score: seoSetting ? 100 : 0, done: Boolean(seoSetting), href: "/admin/seo", category: "seo", weight: 10 },
-      { id: "theme", label: "Custom Theme", description: "Customize colors and fonts to match your brand.", score: hasCustomTheme ? 100 : 0, done: Boolean(hasCustomTheme), href: "/admin/appearance", category: "design", weight: 8 },
-      { id: "publishing", label: "Publish", description: "Publish your website to go live.", score: isPublished ? 100 : 0, done: isPublished, href: "/admin/website-ready", category: "platform", weight: 20 },
-    ];
+    return this.buildChecksFromAggregates({
+      brand,
+      productCount,
+      galleryCount,
+      linkCount,
+      timelineCount,
+      testimonialValue: testimonialSetting?.value ?? null,
+      faqValue: faqSetting?.value ?? null,
+      feedCount,
+      gameCount,
+      seoValue: seoSetting?.value ?? null,
+      website,
+      publishState: publishStatus?.state ?? null,
+      orderCount,
+    });
   }
 
   private computeOverall(checks: HealthCheck[]): number {
