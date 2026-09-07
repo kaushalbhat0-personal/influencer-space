@@ -22,6 +22,7 @@ import { runWorkflow } from "@/lib/observability/workflow-diagnostics";
 import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import { correlationService } from "@/lib/platform/correlation";
+import { isValidHttpUrl } from "@/lib/validation/url";
 
 export type ProvisioningMode = "create_new_admin" | "attach_existing_user";
 
@@ -195,14 +196,6 @@ export class ProvisioningService {
       // URL fallback, deduping by platform+url so the hero never shows the
       // controlling platform twice.
       const sourcePlatformLabel = input.sourcePlatform || "youtube";
-      const isValidHttpUrl = (url: string): boolean => {
-        try {
-          const parsed = new URL(url);
-          return parsed.protocol === "http:" || parsed.protocol === "https:";
-        } catch {
-          return false;
-        }
-      };
       const sourceLink = input.sourceUrl && isValidHttpUrl(input.sourceUrl) ? [{ platform: sourcePlatformLabel, url: input.sourceUrl }] : [];
       const acquiredLinks = (input.socialLinks ?? []).filter((l) => l.url && isValidHttpUrl(l.url));
       const socialLinks = [...sourceLink, ...acquiredLinks].filter(

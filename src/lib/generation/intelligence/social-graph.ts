@@ -1,4 +1,5 @@
 import type { ContentSource, SocialLink } from "./types";
+import { isValidHttpUrl } from "@/lib/validation/url";
 
 export class SocialGraph {
   build(source: ContentSource): SocialLink[] {
@@ -67,12 +68,12 @@ export class SocialGraph {
   private extractUrls(source: ContentSource): string[] {
     const urls = new Set<string>();
     for (const link of source.links ?? []) {
-      try { new URL(link); urls.add(link); } catch {}
+      if (isValidHttpUrl(link)) urls.add(link);
     }
     for (const item of source.content ?? []) {
       const matches = item.text?.match(/https?:\/\/[^\s]+/g) ?? [];
       for (const url of matches) {
-        try { new URL(url); urls.add(url); } catch {}
+        if (isValidHttpUrl(url)) urls.add(url);
       }
     }
     return Array.from(urls);

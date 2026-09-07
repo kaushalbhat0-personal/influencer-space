@@ -2,6 +2,7 @@
 import type { ContentSource } from "@/lib/generation/intelligence/types";
 import type { PipelineResult } from "@/lib/generation/integration/types";
 import type { ImportProfileResult } from "@/lib/onboarding/service";
+import { isValidHttpUrl } from "@/lib/validation/url";
 
 export interface ProvisionPipelineInput {
   sourceUrl: string;
@@ -77,15 +78,6 @@ export function buildProvisioningInput(params: {
   // RCCF-05A: basic profile data flows into provisioning �?" the legitimately
   // acquired identity (name/bio/avatar/social links) reaches the brand + hero.
   const kg = params.pipelineResult.knowledgeGraph;
-
-  const isValidHttpUrl = (url: string): boolean => {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch {
-      return false;
-    }
-  };
 
   const base = {
     creatorName: params.creatorName,
@@ -168,9 +160,9 @@ export function detectPlatform(url: string): string {
 }
 
 export function buildContentSource(url: string, platform: string, creatorName: string): ContentSource {
-  // VALIDATION-01 V-006: "Build with AI" sends free text (not a URL) — treat it
-  // as the creator's description/bio instead of a bogus username/link.
-  const isFreeText = !/^https?:\/\//i.test(url) && !url.includes(".");
+  // RCCF-PRELAUNCH-03D: strict standalone URL check — resume prose (even with dots)
+  // must be treated as free text/bio, never as a link/username source.
+  const isFreeText = !isValidHttpUrl(url);
   const username = isFreeText
     ? creatorName.toLowerCase().replace(/\s+/g, "")
     : url.split("/").filter(Boolean).pop() || creatorName.toLowerCase().replace(/\s+/g, "");

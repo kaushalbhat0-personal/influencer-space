@@ -143,15 +143,7 @@ PROFILE Full-stack software engineer specializing in TypeScript...`;
   });
 });
 
-// Direct validation of the isValidHttpUrl boundary (mirrors the helper)
-function isValidHttpUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+import { isValidHttpUrl } from "@/lib/validation/url";
 
 describe("P2-2: URL validation helper", () => {
   it("accepts https and http", () => {
