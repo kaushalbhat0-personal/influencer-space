@@ -2,8 +2,10 @@ import { requireTenant } from "@/lib/auth/require-tenant";
 import { FeaturePage } from "@/features/_shared/components/feature-page";
 import { integrationService } from "@/features/integrations/service";
 import { IntegrationsClient } from "@/features/integrations/components/integrations-client";
+import { ResendIntegrationCard } from "@/features/integrations/components/resend-integration-card";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { entitlementService } from "@/lib/capabilities";
+import { getTenantResendIntegration } from "@/modules/tenant-integration/resend";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -32,13 +34,19 @@ export default async function AdminIntegrationsPage() {
   }
 
   const integrations = await integrationService.list(tenantId);
+  const resendIntegration = await getTenantResendIntegration(tenantId);
 
   return (
     <FeaturePage
       title="Integrations"
       description="Connect your accounts and services to keep your storefront connected to your audience."
     >
-      <IntegrationsClient integrations={integrations} tenantId={tenantId} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ResendIntegrationCard initial={resendIntegration} />
+      </div>
+      <div className="mt-6">
+        <IntegrationsClient integrations={integrations} tenantId={tenantId} />
+      </div>
     </FeaturePage>
   );
 }

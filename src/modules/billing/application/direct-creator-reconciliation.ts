@@ -192,7 +192,7 @@ export async function reconcileDirectCreatorPaymentLinkPayment(
           const orderStatusUrl = `${base}/order/${fullOrder.guestToken}`;
           const storeName = tenant?.name || product?.name || "Store";
           const { sendCommunication } = await import("@/modules/communication");
-          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fullOrder.id, email: fullOrder.fanEmail }, { orderId: fullOrder.id, productName: product?.name ?? "Product", amount: String(fullOrder.amount), storeName, orderStatusUrl }).catch(() => ({ success: false }));
+          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fullOrder.id, email: fullOrder.fanEmail }, { orderId: fullOrder.id, productName: product?.name ?? "Product", amount: String(fullOrder.amount), storeName, orderStatusUrl }, { tenantId: fullOrder.tenantId }).catch(() => ({ success: false }));
           if ((sent as { success?: boolean })?.success) {
             await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fullOrder.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: fullOrder.id } } }).catch(() => {});
           }

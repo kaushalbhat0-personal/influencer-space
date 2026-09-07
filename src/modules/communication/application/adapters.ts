@@ -14,6 +14,8 @@ export interface DeliveryRequest {
   subject: string;
   body: string;
   payload: Record<string, unknown>;
+  /** RCCF-INTEGRATIONS-03 — tenant that owns the sending identity (e.g. order tenant). */
+  tenantId?: string;
 }
 
 export interface DeliveryResult {
@@ -50,8 +52,59 @@ class EmailLogAdapter implements CommunicationProviderAdapter {
   }
 }
 
-/** Production Resend email adapter — implements the same interface, sends via Resend API. */
-class ResendEmailAdapter implements CommunicationProviderAdapter {
+/** Shared Resend send helper — caller supplies verified apiKey/from. Never logs secrets. */
+async function sendViaResend(
+  req: DeliveryRequest,
+  apiKey: string,
+  from: string,
+  provider: string,
+): Promise<DeliveryResult> {
+  const to = req.recipient.email;
+  if (!to) return { success: false, provider, error: "Recipient email missing" };
+  try {
+    await prisma.notification.create({
+      data: {
+        audience: req.recipient.audience,
+        recipientId: req.recipient.recipientId,
+        category: "billing",
+        title: req.subject,
+        body: req.body,
+        priority: "medium",
+        channel: "email",
+        data: { email: to, payload: req.payload, provider, from } as never,
+      },
+    }).catch(() => {});
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [to], subject: req.subject, text: req.body }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => res.statusText);
+      return { success: false, provider, error: `Resend ${res.status}: ${errText.slice(0, 300)}` };
+    }
+    return { success: true, provider };
+  } catch (err) {
+    return { success: false, provider, error: err instanceof Error ? err.message : "Resend delivery failed" };
+  }
+}
+
+/** Tenant-owned Resend adapter — uses per-tenant verified apiKey/from. */
+class TenantResendAdapter implements CommunicationProviderAdapter {
+  readonly channel: CommunicationChannel = "email";
+  constructor(
+    private readonly apiKey: string,
+    private readonly from: string,
+  ) {}
+  async deliver(req: DeliveryRequest): Promise<DeliveryResult> {
+    return sendViaResend(req, this.apiKey, this.from, "tenant_resend");
+  }
+}
+
+/** Platform-owned Resend adapter — uses global RESEND_API_KEY/EMAIL_FROM. */
+class PlatformResendAdapter implements CommunicationProviderAdapter {
   readonly channel: CommunicationChannel = "email";
   async deliver(req: DeliveryRequest): Promise<DeliveryResult> {
     const apiKey = process.env.RESEND_API_KEY;
@@ -59,49 +112,21 @@ class ResendEmailAdapter implements CommunicationProviderAdapter {
     if (!apiKey || !from) {
       return { success: false, provider: "resend", error: "RESEND_API_KEY or EMAIL_FROM not configured" };
     }
-    const to = req.recipient.email;
-    if (!to) {
-      return { success: false, provider: "resend", error: "Recipient email missing" };
+    return sendViaResend(req, apiKey, from, "platform_resend");
+  }
+}
+
+/** Legacy production Resend adapter — kept for back-compat. Delegates to PlatformResend. */
+class ResendEmailAdapter implements CommunicationProviderAdapter {
+  readonly channel: CommunicationChannel = "email";
+  async deliver(req: DeliveryRequest): Promise<DeliveryResult> {
+    // RCCF-INTEGRATIONS-03: legacy path now delegates to platform adapter
+    const apiKey = process.env.RESEND_API_KEY;
+    const from = process.env.EMAIL_FROM;
+    if (!apiKey || !from) {
+      return { success: false, provider: "resend", error: "RESEND_API_KEY or EMAIL_FROM not configured" };
     }
-    try {
-      // Always persist audit record first — durable even if provider fails (retryable via CommunicationLog).
-      await prisma.notification.create({
-        data: {
-          audience: req.recipient.audience,
-          recipientId: req.recipient.recipientId,
-          category: "billing",
-          title: req.subject,
-          body: req.body,
-          priority: "medium",
-          channel: "email",
-          data: { email: to, payload: req.payload, provider: "resend", from } as never,
-        },
-      }).catch(() => {});
-
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from,
-          to: [to],
-          subject: req.subject,
-          text: req.body,
-        }),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => res.statusText);
-        return { success: false, provider: "resend", error: `Resend ${res.status}: ${errText.slice(0, 300)}` };
-      }
-
-      return { success: true, provider: "resend" };
-    } catch (err) {
-      // Never log apiKey/from — handled by runtime semantics (caller logs generic failure).
-      return { success: false, provider: "resend", error: err instanceof Error ? err.message : "Resend delivery failed" };
-    }
+    return sendViaResend(req, apiKey, from, "resend");
   }
 }
 
@@ -148,7 +173,7 @@ class AdminAlertAdapter implements CommunicationProviderAdapter {
 
 function resolveEmailAdapter(): CommunicationProviderAdapter {
   if (process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
-    return new ResendEmailAdapter();
+    return new PlatformResendAdapter();
   }
   return new EmailLogAdapter();
 }
@@ -177,7 +202,7 @@ export const communicationAdapters: Record<string, CommunicationProviderAdapter>
 } as Record<string, CommunicationProviderAdapter>;
 
 // Test seams — do not use in production code outside tests.
-export const __testables = { EmailLogAdapter, ResendEmailAdapter, resolveEmailAdapter };
+export const __testables = { EmailLogAdapter, ResendEmailAdapter, PlatformResendAdapter, TenantResendAdapter, resolveEmailAdapter, sendViaResend };
 
 export function getAdapter(channel: CommunicationChannel): CommunicationProviderAdapter | null {
   if (channel === "email") return resolveEmailAdapter();

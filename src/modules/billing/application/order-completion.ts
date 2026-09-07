@@ -92,7 +92,7 @@ export async function completeProductOrder(
             const orderStatusUrl = `${base}/order/${fresh.guestToken}`;
             const storeName = tenant?.name || product?.name || "Store";
             const { sendCommunication } = await import("@/modules/communication");
-            const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }).catch(() => ({ success: false }));
+            const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }, { tenantId: fresh.tenantId }).catch(() => ({ success: false }));
             if ((sent as { success?: boolean })?.success) {
               await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fresh.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: order.id } } }).catch(() => {});
             }
@@ -162,7 +162,7 @@ export async function completeProductOrder(
           const orderStatusUrl = `${base}/order/${fresh.guestToken}`;
           const storeName = tenant?.name || product?.name || "Store";
           const { sendCommunication } = await import("@/modules/communication");
-          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }).catch(() => ({ success: false }));
+          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }, { tenantId: fresh.tenantId }).catch(() => ({ success: false }));
           if ((sent as { success?: boolean })?.success) {
             await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fresh.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: order.id } } }).catch(() => {});
           }

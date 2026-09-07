@@ -30,9 +30,10 @@ describe("RCCF-INTEGRATIONS-02 — communicationAdapters lazy email resolution",
     process.env.RESEND_API_KEY = "re_test_123";
     process.env.EMAIL_FROM = "Pendallo <noreply@pendallo.in>";
 
-    // Same module instance, fresh env → should now resolve to Resend
-    expect(mod.getAdapter("email")?.constructor.name).toBe("ResendEmailAdapter");
-    expect(mod.__testables.resolveEmailAdapter().constructor.name).toBe("ResendEmailAdapter");
+    // Same module instance, fresh env → should now resolve to platform Resend (RCCF-03 renamed to PlatformResendAdapter)
+    const expectResend = (name: string) => expect(["ResendEmailAdapter", "PlatformResendAdapter"]).toContain(name);
+    expectResend(mod.getAdapter("email")?.constructor.name ?? "");
+    expectResend(mod.__testables.resolveEmailAdapter().constructor.name ?? "");
 
     delete process.env.RESEND_API_KEY;
     expect(mod.getAdapter("email")?.constructor.name).toBe("EmailLogAdapter");
@@ -44,7 +45,7 @@ describe("RCCF-INTEGRATIONS-02 — communicationAdapters lazy email resolution",
 
     process.env.RESEND_API_KEY = "re_test_999";
     process.env.EMAIL_FROM = "Pendallo <noreply@pendallo.in>";
-    expect(mod.communicationAdapters.email.constructor.name).toBe("ResendEmailAdapter");
+    expect(["ResendEmailAdapter", "PlatformResendAdapter"]).toContain(mod.communicationAdapters.email.constructor.name);
   });
 
   it("in_app and alert adapters remain singletons (not env-dependent)", async () => {

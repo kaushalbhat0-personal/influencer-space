@@ -104,6 +104,7 @@ model Tenant {
   website               Website?
   clientAssignments     ClientAssignment[]
   bookings              Booking[]
+  tenantIntegrations    TenantIntegration[]
 
   @@index([customDomain])
   @@index([createdAt])
@@ -293,6 +294,30 @@ model PaymentAccount {
   @@index([tenantId, isActive])
   @@index([provider])
   @@index([status])
+}
+
+/// RCCF-INTEGRATIONS-03 — Tenant-owned provider credentials (Phase 1: Resend).
+/// Additive only. Credentials are individually AES-256-GCM encrypted via
+/// src/lib/crypto (TOKEN_ENCRYPTION_KEY). Metadata holds non-secret values.
+/// One row per (tenant, provider); provider "resend" is the only active
+/// provider in this ticket.
+model TenantIntegration {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @db.Uuid
+  provider           String // "resend" (future: youtube | instagram | meta)
+  status             String    @default("pending") // pending | verified | failed | disconnected
+  verificationStatus String    @default("unverified") // unverified | verified | failed
+  credentials        Json? // { apiKey: "<encrypted>" } — encrypted values only
+  metadata           Json      @default("{}") // { emailFrom, domain, domainVerified }
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@index([tenantId, status])
+  @@index([provider, status])
 }
 
 /// ⛔️ DOMAIN FROZEN after Phase 2a — no schema changes without Architecture Review.

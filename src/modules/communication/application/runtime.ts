@@ -14,15 +14,25 @@ const requestCache: <T extends (...args: never[]) => unknown>(fn: T) => T =
 
 export const MAX_BACKOFF_MS = 60_000;
 
+// RCCF-INTEGRATIONS-03 — tenant-owned email routing.
+// Only these templates are legally allowed to spend tenant's Resend quota.
+const TENANT_OWNED_TEMPLATES = new Set<string>(["order.customer_confirmed"]);
+
 // ── Send (route → template → deliver → log) ─────────────────
 
-export async function sendCommunication(templateId: string, recipient: Recipient, data: Record<string, unknown>): Promise<{ success: boolean; error?: string }> {
+export async function sendCommunication(
+  templateId: string,
+  recipient: Recipient,
+  data: Record<string, unknown>,
+  opts?: { tenantId?: string },
+): Promise<{ success: boolean; error?: string }> {
   const def = COMMUNICATION_BY_ID[templateId];
   if (!def) return { success: false, error: `Unknown communication: ${templateId}` };
 
   const subject = renderTemplate(def.template.subject, data);
   const body = renderTemplate(def.template.body, data);
-  const payload = { ...data, __template: templateId };
+  // Preserve tenantId for retries/audit without leaking secrets
+  const payload = { ...data, __template: templateId, ...(opts?.tenantId ? { __tenantId: opts.tenantId } : {}) };
 
   const log = await prisma.communicationLog.create({
     data: {
@@ -32,13 +42,70 @@ export async function sendCommunication(templateId: string, recipient: Recipient
     },
   });
 
-  const adapter = getAdapter(def.channel);
+  // ── Tenant vs platform decision (RCCF-INTEGRATIONS-03) ──────────
+  // order.customer_confirmed → try tenant verified Resend first; if absent, stay on log (do NOT silently use platform)
+  // all other email templates → platform Resend (global) if configured, else log
+  let adapter = getAdapter(def.channel);
+  let deliverReq: { templateId: string; recipient: Recipient; channel: typeof def.channel; subject: string; body: string; payload: Record<string, unknown>; tenantId?: string } = {
+    templateId, recipient, channel: def.channel, subject, body, payload,
+  };
+
+  if (def.channel === "email" && TENANT_OWNED_TEMPLATES.has(templateId) && opts?.tenantId) {
+    try {
+      const { getTenantResendConfig } = await import("@/modules/tenant-integration/resend");
+      const cfg = await getTenantResendConfig(opts.tenantId);
+      if (cfg) {
+        const { __testables } = await import("./adapters");
+        const tenantAdapter = new __testables.TenantResendAdapter(cfg.apiKey, cfg.emailFrom);
+        deliverReq = { ...deliverReq, tenantId: opts.tenantId };
+        const tenantResult = await tenantAdapter.deliver(deliverReq).catch((e) => ({ success: false, provider: "tenant_resend", error: e instanceof Error ? e.message : "delivery failed" }));
+        if (tenantResult.success) {
+          await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: tenantResult.provider } });
+          return { success: true };
+        }
+        const retries = log.retries + 1;
+        const failed = retries >= def.retries;
+        await prisma.communicationLog.update({
+          where: { id: log.id },
+          data: { status: failed ? "failed" : "queued", retries, error: tenantResult.error ?? "delivery failed" },
+        });
+        return { success: false, error: tenantResult.error ?? "delivery failed" };
+      }
+      // No verified tenant config → preserve log fallback (not platform)
+      // Fall through to EmailLogAdapter below
+      const { __testables } = await import("./adapters");
+      const logAdapter = new __testables.EmailLogAdapter();
+      const result = await logAdapter.deliver(deliverReq).catch((e) => ({ success: false, provider: "log", error: e instanceof Error ? e.message : "delivery failed" }));
+      if (result.success) {
+        await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: result.provider } });
+        return { success: true };
+      }
+      const retries = log.retries + 1;
+      const failed = retries >= def.retries;
+      await prisma.communicationLog.update({
+        where: { id: log.id },
+        data: { status: failed ? "failed" : "queued", retries, error: result.error ?? "delivery failed" },
+      });
+      return { success: false, error: result.error ?? "delivery failed" };
+    } catch {
+      // If tenant lookup fails, fall back to log (never platform for tenant templates)
+      const { __testables } = await import("./adapters");
+      const logAdapter = new __testables.EmailLogAdapter();
+      const result = await logAdapter.deliver(deliverReq).catch(() => ({ success: false, provider: "log", error: "delivery failed" }));
+      if (result.success) {
+        await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: result.provider } });
+        return { success: true };
+      }
+      return { success: false, error: result.error ?? "delivery failed" };
+    }
+  }
+
   if (!adapter) {
     await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "failed", error: "No adapter" } });
     return { success: false, error: "No adapter for channel" };
   }
 
-  const result = await adapter.deliver({ templateId, recipient, channel: def.channel, subject, body, payload }).catch((e) => ({ success: false, provider: "none", error: e instanceof Error ? e.message : "delivery failed" }));
+  const result = await adapter.deliver(deliverReq as never).catch((e) => ({ success: false, provider: "none", error: e instanceof Error ? e.message : "delivery failed" }));
   if (result.success) {
     await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: result.provider } });
     return { success: true };
@@ -160,8 +227,28 @@ export async function retryFailedCommunications(limit = 50): Promise<{ retried: 
     const payload = (log.payload as Record<string, unknown>) ?? {};
     const subject = renderTemplate(def.template.subject, payload);
     const body = renderTemplate(def.template.body, payload);
-    const adapter = getAdapter(def.channel);
-    const result = adapter ? await adapter.deliver({ templateId: log.templateId, recipient, channel: def.channel, subject, body, payload }).catch(() => ({ success: false, provider: "none", error: "delivery failed" })) : { success: false, provider: "none", error: "no adapter" };
+    // Respect tenant-owned routing on retry as well
+    let adapter = getAdapter(def.channel);
+    let deliverReq: Record<string, unknown> = { templateId: log.templateId, recipient, channel: def.channel, subject, body, payload };
+    const tenantIdForRetry = (payload["__tenantId"] as string) ?? null;
+    if (def.channel === "email" && TENANT_OWNED_TEMPLATES.has(log.templateId) && tenantIdForRetry) {
+      try {
+        const { getTenantResendConfig } = await import("@/modules/tenant-integration/resend");
+        const cfg = await getTenantResendConfig(tenantIdForRetry);
+        if (cfg) {
+          const { __testables } = await import("./adapters");
+          adapter = new __testables.TenantResendAdapter(cfg.apiKey, cfg.emailFrom);
+          deliverReq = { ...deliverReq, tenantId: tenantIdForRetry };
+        } else {
+          const { __testables } = await import("./adapters");
+          adapter = new __testables.EmailLogAdapter();
+        }
+      } catch {
+        const { __testables } = await import("./adapters");
+        adapter = new __testables.EmailLogAdapter();
+      }
+    }
+    const result = adapter ? await adapter.deliver(deliverReq as never).catch(() => ({ success: false, provider: "none", error: "delivery failed" })) : { success: false, provider: "none", error: "no adapter" };
     if (result.success) {
       await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", retries: log.retries + 1, provider: result.provider, error: null } });
       retried++;
