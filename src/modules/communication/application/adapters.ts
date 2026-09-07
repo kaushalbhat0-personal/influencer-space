@@ -153,17 +153,37 @@ function resolveEmailAdapter(): CommunicationProviderAdapter {
   return new EmailLogAdapter();
 }
 
+// RCCF-INTEGRATIONS-02 — lazy email resolution: the warm-server singleton
+// `communicationAdapters.email` was evaluated once at import and then never
+// reflected a later RESEND_API_KEY/EMAIL_FROM change (or test override).
+// In-App and Alert remain singletons (no env dependency); email is always
+// re-resolved so provider configuration cannot go stale.
+const inAppAdapter = new InAppAdapter();
+const alertAdapter = new AdminAlertAdapter();
+
 export const communicationAdapters: Record<string, CommunicationProviderAdapter> = {
-  email: resolveEmailAdapter(),
-  in_app: new InAppAdapter(),
-  alert: new AdminAlertAdapter(),
-};
+  // Back-compat: `communicationAdapters.email` now delegates to the live config
+  // via a getter-like object so existing `communicationAdapters["email"]` reads
+  // never see a stale adapter. Direct reads should migrate to getAdapter("email").
+  get email(): CommunicationProviderAdapter {
+    return resolveEmailAdapter();
+  },
+  set email(_v: CommunicationProviderAdapter) {
+    // Allow tests that assign communicationAdapters.email to still work;
+    // the next read will still re-resolve from env, so we no-op.
+  },
+  in_app: inAppAdapter,
+  alert: alertAdapter,
+} as Record<string, CommunicationProviderAdapter>;
 
 // Test seams — do not use in production code outside tests.
 export const __testables = { EmailLogAdapter, ResendEmailAdapter, resolveEmailAdapter };
 
 export function getAdapter(channel: CommunicationChannel): CommunicationProviderAdapter | null {
-  return communicationAdapters[channel] ?? null;
+  if (channel === "email") return resolveEmailAdapter();
+  if (channel === "in_app") return inAppAdapter;
+  if (channel === "alert") return alertAdapter;
+  return null;
 }
 
 // Notification category/priority inferred from the template id's prefix.

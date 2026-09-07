@@ -370,7 +370,6 @@ export async function GET(request: NextRequest) {
         id: true,
         youtubeApiKey: true,
         youtubeChannelId: true,
-        instagramApiKey: true,
         twitchChannelId: true,
       },
       take: BATCH_SIZE,
@@ -416,17 +415,17 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        /* Instagram (prefer encrypted OAuth token, fallback to plaintext key) */
+        /* Instagram — encrypted OAuth token only (RCCF-INTEGRATIONS-02).
+         * Plaintext Tenant.instagramApiKey fallback removed: it was never a
+         * valid Graph API access token and caused 401s against
+         * graph.instagram.com/me. The column remains for migration safety but
+         * is no longer read here. */
         let instaToken: string | null = null;
 
         try {
           instaToken = await getDecryptedToken(tenant.id, "instagram");
         } catch {
           /* ignore decrypt errors */
-        }
-
-        if (!instaToken && tenant.instagramApiKey) {
-          instaToken = tenant.instagramApiKey;
         }
 
         if (instaToken) {

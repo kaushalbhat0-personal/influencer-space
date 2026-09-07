@@ -47,6 +47,12 @@ let exitCode = 0;
 
 console.log("\n🔐 Environment Variable Validation\n");
 
+function decodeTokenKey(raw) {
+  const trimmed = String(raw).trim();
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) return Buffer.from(trimmed, "hex");
+  return Buffer.from(trimmed, "base64");
+}
+
 for (const key of REQUIRED) {
   const value = process.env[key];
   if (!value || value.startsWith("your-") || value === "") {
@@ -56,6 +62,36 @@ for (const key of REQUIRED) {
     // RCCF-72.18D.7.4 — presence-only reporting. Never echo even a prefix of
     // credential values into deployment logs.
     console.log(`  ✅ ${key} — Set (${value.length} chars)`);
+  }
+}
+
+// RCCF-INTEGRATIONS-02 — TOKEN_ENCRYPTION_KEY entropy/length validation.
+// Must decode to exactly 32 bytes. Supports both documented representations:
+//   hex:    `openssl rand -hex 32`  → 64 hex chars
+//   base64: `openssl rand -base64 32` → ~44 chars (base64)
+// Never logs key material.
+{
+  const raw = process.env.TOKEN_ENCRYPTION_KEY;
+  if (raw && !raw.startsWith("your-") && raw !== "") {
+    const trimmed = String(raw).trim();
+    const isHex = /^[0-9a-fA-F]{64}$/.test(trimmed);
+    const isBase64Shape = /^[A-Za-z0-9+/=_-]+$/.test(trimmed) && trimmed.length >= 40 && trimmed.length <= 48;
+    let bytes = null;
+    try {
+      bytes = decodeTokenKey(raw);
+    } catch {
+      bytes = null;
+    }
+    if (!bytes || bytes.length !== 32) {
+      console.error(
+        `  ✗ TOKEN_ENCRYPTION_KEY — INVALID (decoded ${bytes ? bytes.length : 0} bytes, expected 32). Use 'openssl rand -hex 32' (64 hex) or 'openssl rand -base64 32' (44 chars)`,
+      );
+      exitCode = 1;
+    } else if (!isHex && !isBase64Shape) {
+      console.warn(`  ⚠️  TOKEN_ENCRYPTION_KEY — unexpected format (expected 64 hex or ~44 base64 chars) — decoded to 32 bytes, accepting`);
+    } else {
+      console.log(`  ✅ TOKEN_ENCRYPTION_KEY — valid (${isHex ? "hex" : "base64"}, 32 bytes)`);
+    }
   }
 }
 
