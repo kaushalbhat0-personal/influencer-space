@@ -604,6 +604,34 @@ export async function runCreatorGeneration(
         create: { tenantId: provisioned.tenantId, key: "builder_artifact", value: JSON.parse(JSON.stringify(builderData)) },
       });
     }
+    // RCCF-PRELAUNCH-02A: persist generated builder pages for ConstructionPreview.
+    // New-tenant path previously only wrote builder_artifact Setting, but
+    // ConstructionPreview reads Page/Section/Block via BuilderService.load()
+    // — therefore the preview stayed empty (null snapshot) even after
+    // artifact_generation completed. Persist only when the website has no
+    // existing pages (preserves reuse-tenant draft when it already has pages).
+    if (builderData && provisioned?.websiteId) {
+      try {
+        const sections = (builderData.sections as Array<{ id?: string; type: string; props: Record<string, unknown> }> | undefined) ?? [];
+        if (sections.length > 0) {
+          const { BuilderService } = await import("@/lib/builder/builder-service");
+          const builderService = new BuilderService();
+          const existing = await builderService.load(provisioned.websiteId);
+          if (existing.length === 0) {
+            const { storefrontToBuilderPages } = await import("@/lib/builder/artifact-loader");
+            const builderPages = storefrontToBuilderPages({
+              sections: sections.map((s) => ({ id: s.id ?? s.type, type: s.type, props: s.props ?? {} })) as never,
+              navigation: (builderData as Record<string, unknown>).navigation as Record<string, unknown> | undefined,
+            });
+            if (builderPages.length > 0) {
+              await builderService.save(provisioned.websiteId, builderPages);
+            }
+          }
+        }
+      } catch {
+        // builder persistence is best-effort; publishing will still validate and fail visibly if needed
+      }
+    }
     markStage("builder_init", "completed");
 
     markStage("publishing", "running");
