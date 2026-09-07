@@ -19,6 +19,26 @@ import type { PaymentAccountInput, PaymentRefundInput } from "@/modules/payment-
 import { decrypt } from "@/lib/crypto";
 import { captureError } from "@/lib/observability/error-tracker";
 
+function validateShippingInput(input: unknown): { valid: boolean; error?: string; data?: { name: string; phone: string; line1: string; city: string; state: string; pin: string; country: string } } {
+  if (!input || typeof input !== "object") return { valid: false, error: "Shipping address is required for physical products" };
+  const s = input as Record<string, unknown>;
+  const name = String(s.name ?? "").trim();
+  const phone = String(s.phone ?? "").trim();
+  const line1 = String(s.line1 ?? "").trim();
+  const city = String(s.city ?? "").trim();
+  const state = String(s.state ?? "").trim();
+  const pin = String(s.pin ?? "").trim();
+  const country = String(s.country ?? "IN").trim().toUpperCase() || "IN";
+  if (!name || name.length < 2) return { valid: false, error: "Buyer name is required" };
+  if (!/^\d{10}$/.test(phone)) return { valid: false, error: "Valid 10-digit phone is required" };
+  if (!line1 || line1.length < 5) return { valid: false, error: "Address line 1 is required" };
+  if (!city || city.length < 2) return { valid: false, error: "City is required" };
+  if (!state || state.length < 2) return { valid: false, error: "State is required" };
+  if (!/^\d{6}$/.test(pin)) return { valid: false, error: "Valid 6-digit PIN is required" };
+  if (country !== "IN") return { valid: false, error: "Only IN country is supported" };
+  return { valid: true, data: { name, phone, line1, city, state, pin, country } };
+}
+
 async function requireCreatorOrSuperAdmin(): Promise<{ tenantId?: string; isSuper: boolean; actor?: string }> {
   const session = await getServerSession(authOptions);
   const role = session?.user?.role;
@@ -92,7 +112,7 @@ export async function disconnectMyPaymentAccount(provider?: string): Promise<{ s
 /** Phase 6 — DIRECT_CREATOR checkout: create a hosted checkout on the creator's
  * account. The customer is a storefront guest, so the tenant comes from the
  * product row. CreatorStore is never in the money flow. */
-export async function createDirectCheckout(input: { productId: string; customerEmail?: string; customerName?: string }): Promise<{ success: boolean; checkoutUrl?: string; error?: string }> {
+export async function createDirectCheckout(input: { productId: string; customerEmail?: string; customerName?: string; shipping?: unknown; quantity?: unknown }): Promise<{ success: boolean; checkoutUrl?: string; error?: string; guestToken?: string }> {
   // RCCF-69.2 — DIRECT_CREATOR is `status: "future"` in the canonical registry
   // and the webhook cannot reconcile its Payment Links (notes mismatch). It must
   // never be invoked in the normal production path — a strategy not marked
@@ -111,6 +131,25 @@ export async function createDirectCheckout(input: { productId: string; customerE
   });
   if (!product) return { success: false, error: "Product not found" };
   const tenantId = product.tenantId;
+
+  // RCCF-COMMERCE-02: quantity server-authoritative, MVP =1
+  let quantity = 1;
+  if ((input as { quantity?: unknown }).quantity !== undefined && (input as { quantity?: unknown }).quantity !== null) {
+    const qRaw = (input as { quantity?: unknown }).quantity;
+    const q = typeof qRaw === "number" ? qRaw : typeof qRaw === "string" ? parseInt(String(qRaw), 10) : 1;
+    quantity = Number.isFinite(q) && q > 0 ? Math.floor(q) : 1;
+    quantity = 1;
+  }
+  let validatedShipping: ReturnType<typeof validateShippingInput>["data"] | null = null;
+  const isPhysical = (product as { type?: string }).type === "physical";
+  if (isPhysical) {
+    const shippingResult = validateShippingInput((input as { shipping?: unknown }).shipping);
+    if (!shippingResult.valid) return { success: false, error: shippingResult.error };
+    validatedShipping = shippingResult.data!;
+  } else if ((input as { shipping?: unknown }).shipping) {
+    const shippingResult = validateShippingInput((input as { shipping?: unknown }).shipping);
+    if (shippingResult.valid) validatedShipping = shippingResult.data!;
+  }
 
   const strategy = await resolveCommerceStrategy(tenantId);
   if (strategy.id !== "DIRECT_CREATOR" || strategy.definition.status !== "active") {
@@ -154,37 +193,60 @@ export async function createDirectCheckout(input: { productId: string; customerE
   //     reconciliationRef stays FALLBACK.
   const reconciliationRef = crypto.randomUUID();
 
+  const totalAmount = product.price * quantity;
   const result = await adapter.createCheckout({
     providerAccount: { provider: account.provider as never, providerKeyId: keyId, providerKeySecret: keySecret, providerAccountId },
     order: {
       // RCCF-72.18D.7.3 — NEVER the productId (not unique per checkout) and
       // never any client/tenant-provided value. Server-minted per checkout.
       referenceId: reconciliationRef,
-      amount: product.price,
+      amount: totalAmount,
       currency: "INR",
       description: product.name,
       customerEmail: input.customerEmail,
       customerName: input.customerName,
-      metadata: { reconciliationRef },
+      metadata: { reconciliationRef, quantity: String(quantity) },
     },
   });
 
   if (result.success && result.checkoutUrl) {
-    await prisma.productOrder.create({
+    const guestToken = crypto.randomBytes(32).toString("hex");
+    const guestTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const order = await prisma.productOrder.create({
       data: {
         tenantId,
         productId: product.id,
-        amount: product.price,
+        amount: totalAmount,
         status: "PENDING",
         razorpayOrderId: result.providerReference ?? `dc_${Date.now()}`,
         fanEmail: input.customerEmail ?? null,
         commerceStrategy: "DIRECT_CREATOR",
         provider: account.provider,
         providerReference: result.providerReference ?? null,
-        providerMetadata: { checkoutUrl: result.checkoutUrl, reconciliationRef },
+        providerMetadata: { checkoutUrl: result.checkoutUrl, reconciliationRef, quantity: String(quantity) },
         paymentAccountId: raw.id,
+        quantity,
+        guestToken,
+        guestTokenExpiresAt,
       },
     });
+    if (validatedShipping) {
+      await prisma.shippingAddress.create({
+        data: {
+          orderId: order.id,
+          tenantId,
+          name: validatedShipping.name,
+          phone: validatedShipping.phone,
+          email: input.customerEmail ?? null,
+          line1: validatedShipping.line1,
+          city: validatedShipping.city,
+          state: validatedShipping.state,
+          pin: validatedShipping.pin,
+          country: validatedShipping.country,
+        },
+      }).catch(() => {});
+    }
+    return { success: true, checkoutUrl: result.checkoutUrl, guestToken };
   }
   return { success: !!result.success && !!result.checkoutUrl, checkoutUrl: result.checkoutUrl, error: result.error };
 }

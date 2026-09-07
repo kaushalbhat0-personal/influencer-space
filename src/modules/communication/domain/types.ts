@@ -4,7 +4,7 @@
 // and retries.
 
 export type CommunicationChannel = "email" | "in_app" | "alert" | "sms" | "whatsapp" | "push";
-export type CommunicationAudience = "creator" | "agency" | "super_admin";
+export type CommunicationAudience = "creator" | "agency" | "super_admin" | "customer";
 export type NotificationPriority = "low" | "medium" | "high";
 
 export interface CommunicationTemplate {

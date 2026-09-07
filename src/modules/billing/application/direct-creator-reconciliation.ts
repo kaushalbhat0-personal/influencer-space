@@ -178,6 +178,21 @@ export async function reconcileDirectCreatorPaymentLinkPayment(
       })
       .catch(() => {});
 
+    // RCCF-COMMERCE-02: customer order confirmation — best-effort via existing communication infrastructure, webhook-authoritative only
+    try {
+      const fullOrder = await prisma.productOrder.findUnique({ where: { id: order.id }, select: { id: true, guestToken: true, fanEmail: true, amount: true, tenantId: true, productId: true } });
+      if (fullOrder?.guestToken && fullOrder.fanEmail) {
+        const product = await prisma.product.findUnique({ where: { id: fullOrder.productId }, select: { name: true } });
+        const tenant = await prisma.tenant.findUnique({ where: { id: fullOrder.tenantId }, select: { name: true } });
+        const { getPlatformConfig } = await import("@/lib/config/platform");
+        const base = getPlatformConfig().appUrl;
+        const orderStatusUrl = `${base}/order/${fullOrder.guestToken}`;
+        const storeName = tenant?.name || product?.name || "Store";
+        const { sendCommunication } = await import("@/modules/communication");
+        await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fullOrder.id, email: fullOrder.fanEmail }, { orderId: fullOrder.id, productName: product?.name ?? "Product", amount: String(fullOrder.amount), storeName, orderStatusUrl }).catch(() => {});
+      }
+    } catch {}
+
     return { status: "completed", orderId: order.id };
   } catch (error) {
     captureError(error, { service: "direct-creator-reconciliation", operation: input.paymentId });

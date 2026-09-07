@@ -8,8 +8,43 @@ import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { headers } from "next/headers";
+import crypto from "crypto";
 
 const emailSchema = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export interface ShippingInput {
+  name: string;
+  phone: string;
+  line1: string;
+  city: string;
+  state: string;
+  pin: string;
+  country?: string;
+}
+
+function validateShipping(input: unknown): { valid: boolean; error?: string; data?: ShippingInput } {
+  if (!input || typeof input !== "object") return { valid: false, error: "Shipping address is required for physical products" };
+  const s = input as Record<string, unknown>;
+  const name = String(s.name ?? "").trim();
+  const phone = String(s.phone ?? "").trim();
+  const line1 = String(s.line1 ?? "").trim();
+  const city = String(s.city ?? "").trim();
+  const state = String(s.state ?? "").trim();
+  const pin = String(s.pin ?? "").trim();
+  const country = String(s.country ?? "IN").trim().toUpperCase() || "IN";
+  if (!name || name.length < 2) return { valid: false, error: "Buyer name is required" };
+  if (!/^\d{10}$/.test(phone)) return { valid: false, error: "Valid 10-digit phone is required" };
+  if (!line1 || line1.length < 5) return { valid: false, error: "Address line 1 is required" };
+  if (!city || city.length < 2) return { valid: false, error: "City is required" };
+  if (!state || state.length < 2) return { valid: false, error: "State is required" };
+  if (!/^\d{6}$/.test(pin)) return { valid: false, error: "Valid 6-digit PIN is required" };
+  if (country !== "IN") return { valid: false, error: "Only IN country is supported" };
+  return { valid: true, data: { name, phone, line1, city, state, pin, country } };
+}
+
+function generateGuestToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
 
 /**
  * RCCF-69.2 (P0) — canonical checkout tenant authority.
@@ -67,12 +102,16 @@ export type CheckoutResult = {
   checkoutUrl?: string;
   /** RCCF-72.18D.7.5: stable failure category (e.g. PAYMENT_SETUP_REQUIRED) for safe UI mapping. */
   code?: string;
+  guestToken?: string;
+  quantity?: number;
 };
 
 export async function createCheckout(
   productId: string,
   fanEmail: string,
-  couponCode?: string
+  couponCode?: string,
+  shippingInput?: unknown,
+  quantityInput?: unknown
 ): Promise<CheckoutResult> {
   try {
     // RCCF-69.2 — server-side rate limit before any expensive provider work. The
@@ -112,6 +151,28 @@ export async function createCheckout(
     });
     if (!product) return { success: false, error: "Product not found" };
 
+    // RCCF-COMMERCE-02: quantity is server-authoritative, MVP quantity = 1
+    let quantity = 1;
+    if (quantityInput !== undefined && quantityInput !== null) {
+      const q = typeof quantityInput === "number" ? quantityInput : typeof quantityInput === "string" ? parseInt(String(quantityInput), 10) : 1;
+      quantity = Number.isFinite(q) && q > 0 ? Math.floor(q) : 1;
+      // MVP: clamp to 1, do not build multi-quantity checkout
+      quantity = 1;
+    }
+
+    // RCCF-COMMERCE-02: physical products require shipping address
+    let validatedShipping: ShippingInput | null = null;
+    const isPhysical = (product as { type?: string }).type === "physical";
+    if (isPhysical) {
+      const shippingResult = validateShipping(shippingInput);
+      if (!shippingResult.valid) return { success: false, error: shippingResult.error };
+      validatedShipping = shippingResult.data!;
+    } else if (shippingInput) {
+      // For non-physical, accept optional shipping if provided but don't require
+      const shippingResult = validateShipping(shippingInput);
+      if (shippingResult.valid) validatedShipping = shippingResult.data!;
+    }
+
     const tenantId = product.tenantId;
 
     // RCCF-IMPLEMENTATION-73: every commerce flow asks the canonical runtime —
@@ -126,7 +187,7 @@ export async function createCheckout(
     // normal production path — only a strategy marked `active` may branch here.
     if (commerceStrategy.id === "DIRECT_CREATOR" && commerceStrategy.definition.status === "active") {
       const { createDirectCheckout } = await import("@/actions/payment-account.actions");
-      const direct = await createDirectCheckout({ productId: product.id, customerEmail: buyerEmail });
+      const direct = await createDirectCheckout({ productId: product.id, customerEmail: buyerEmail, shipping: validatedShipping ?? undefined, quantity });
       if (direct.success && direct.checkoutUrl) {
         return { success: true, checkoutUrl: direct.checkoutUrl, orderId: undefined };
       }
@@ -143,7 +204,7 @@ export async function createCheckout(
       return { success: false, error: direct.error ?? "Creator payment account not ready" };
     }
 
-    let amount = product.price;
+    let amount = product.price * quantity;
     let discountAmount = 0;
     let couponApplied = false;
 
@@ -164,6 +225,8 @@ export async function createCheckout(
     const { tax, total } = calculateTax(amount);
 
     // Create DB order — buyer email is the captured, validated value.
+    const guestToken = generateGuestToken();
+    const guestTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const dbOrder = await prisma.productOrder.create({
       data: {
         tenantId,
@@ -172,8 +235,29 @@ export async function createCheckout(
         status: "PENDING",
         razorpayOrderId: "",
         fanEmail: buyerEmail,
+        quantity,
+        guestToken,
+        guestTokenExpiresAt,
       },
     });
+
+    // Persist shipping address for physical products
+    if (validatedShipping) {
+      await prisma.shippingAddress.create({
+        data: {
+          orderId: dbOrder.id,
+          tenantId,
+          name: validatedShipping.name,
+          phone: validatedShipping.phone,
+          email: buyerEmail,
+          line1: validatedShipping.line1,
+          city: validatedShipping.city,
+          state: validatedShipping.state,
+          pin: validatedShipping.pin,
+          country: validatedShipping.country,
+        },
+      }).catch(() => {});
+    }
 
     // VALIDATION-01 V-028: free products / 100%-off coupons (total ≤ 0) cannot
     // go through Razorpay (it rejects amount 0). Complete the order immediately
@@ -201,6 +285,8 @@ export async function createCheckout(
         couponApplied,
         discountAmount,
         tax,
+        guestToken,
+        quantity,
       };
     }
 
@@ -245,6 +331,8 @@ export async function createCheckout(
       couponApplied,
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
       tax,
+      guestToken,
+      quantity,
     };
   } catch (error) {
     return {

@@ -77,6 +77,22 @@ export async function completeProductOrder(
       const { computeAndPersistAgencyCommission } = await import("@/lib/agency-commission/service");
       await computeAndPersistAgencyCommission(order.id);
     } catch {}
+    // RCCF-COMMERCE-02: customer confirmation (webhook-authoritative, also covers free orders)
+    try {
+      if ((order as { guestToken?: string | null }).guestToken && (order as { fanEmail?: string | null }).fanEmail) {
+        const fresh = await prisma.productOrder.findUnique({ where: { id: order.id }, select: { guestToken: true, fanEmail: true, amount: true, tenantId: true, productId: true } });
+        if (fresh?.guestToken && fresh.fanEmail) {
+          const product = await prisma.product.findUnique({ where: { id: fresh.productId }, select: { name: true } });
+          const tenant = await prisma.tenant.findUnique({ where: { id: fresh.tenantId }, select: { name: true } });
+          const { getPlatformConfig } = await import("@/lib/config/platform");
+          const base = getPlatformConfig().appUrl;
+          const orderStatusUrl = `${base}/order/${fresh.guestToken}`;
+          const storeName = tenant?.name || product?.name || "Store";
+          const { sendCommunication } = await import("@/modules/communication");
+          await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fresh.guestToken, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }).catch(() => {});
+        }
+      }
+    } catch {}
     return { success: true };
   }
 
@@ -123,6 +139,22 @@ export async function completeProductOrder(
   try {
     const { computeAndPersistAgencyCommission } = await import("@/lib/agency-commission/service");
     await computeAndPersistAgencyCommission(order.id);
+  } catch {}
+  // RCCF-COMMERCE-02: customer confirmation (webhook-authoritative)
+  try {
+    if ((order as { guestToken?: string | null }).guestToken && (order as { fanEmail?: string | null }).fanEmail) {
+      const fresh = await prisma.productOrder.findUnique({ where: { id: order.id }, select: { guestToken: true, fanEmail: true, amount: true, tenantId: true, productId: true } });
+      if (fresh?.guestToken && fresh.fanEmail) {
+        const product = await prisma.product.findUnique({ where: { id: fresh.productId }, select: { name: true } });
+        const tenant = await prisma.tenant.findUnique({ where: { id: fresh.tenantId }, select: { name: true } });
+        const { getPlatformConfig } = await import("@/lib/config/platform");
+        const base = getPlatformConfig().appUrl;
+        const orderStatusUrl = `${base}/order/${fresh.guestToken}`;
+        const storeName = tenant?.name || product?.name || "Store";
+        const { sendCommunication } = await import("@/modules/communication");
+        await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: fresh.guestToken, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }).catch(() => {});
+      }
+    }
   } catch {}
   return { success: true };
 }

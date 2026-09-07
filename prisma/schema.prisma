@@ -544,6 +544,11 @@ model ProductOrder {
   refundId             String?
   refundAmount         Int?        // cumulative refunded amount in minor units (paise)
   refundedAt           DateTime?
+  // RCCF-COMMERCE-02: physical commerce MVP — quantity is always server-authoritative, default 1.
+  quantity             Int         @default(1)
+  // RCCF-COMMERCE-02: secure guest order-status token — high-entropy, non-guessable, per-order.
+  guestToken           String?     @unique
+  guestTokenExpiresAt  DateTime?
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 

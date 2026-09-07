@@ -67,17 +67,23 @@ export function BuyNowButton({
   // grouping and fulfillment access depend on it).
   const [buyerEmail, setBuyerEmail] = useState("");
   const [awaitingEmail, setAwaitingEmail] = useState(false);
+  const [buyerName, setBuyerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [line1, setLine1] = useState("");
+  const [city, setCity] = useState("");
+  const [stateVal, setStateVal] = useState("");
+  const [pin, setPin] = useState("");
 
   const showToast = useCallback((type: "success" | "error", message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  async function runCheckout(email: string) {
+  async function runCheckout(email: string, shipping?: { name: string; phone: string; line1: string; city: string; state: string; pin: string; country: string }) {
     setLoading(true);
     setToast(null);
 
-    const result = await createCheckout(productId, email);
+    const result = await createCheckout(productId, email, undefined, shipping, 1);
 
     // VALIDATION-01 V-028: free products / 100%-off coupons are fulfilled
     // without Razorpay — show success directly.
@@ -151,13 +157,10 @@ export function BuyNowButton({
 
   function handleBuy() {
     if (previewMode) return; // never initiate production checkout in preview
-    if (!buyerEmail.trim() || !EMAIL_RE.test(buyerEmail.trim())) {
-      setAwaitingEmail(true);
-      return;
-    }
-    void runCheckout(buyerEmail.trim());
+    setAwaitingEmail(true);
   }
 
+  const shippingValid = buyerName.trim().length >= 2 && /^\d{10}$/.test(phone) && line1.trim().length >= 5 && city.trim().length >= 2 && stateVal.trim().length >= 2 && /^\d{6}$/.test(pin) && EMAIL_RE.test(buyerEmail.trim());
   if (awaitingEmail && !previewMode) {
     return (
       <>
@@ -174,33 +177,25 @@ export function BuyNowButton({
         )}
         <div className="mt-1.5 w-full space-y-2">
           <p className="text-center text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted,#71717A)]">
-            Email for your receipt &amp; download
+            Shipping details &amp; receipt
           </p>
-          <input
-            type="email"
-            value={buyerEmail}
-            onChange={(e) => setBuyerEmail(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && buyerEmail.trim() && EMAIL_RE.test(buyerEmail.trim())) {
-                void runCheckout(buyerEmail.trim());
-              }
-            }}
-            placeholder="you@example.com"
-            autoFocus
-            className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-center text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none"
-          />
+          <input type="text" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Full name" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input type="email" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit phone" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <input type="text" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Address line 1" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          <div className="grid grid-cols-2 gap-2">
+            <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+            <input type="text" value={stateVal} onChange={(e) => setStateVal(e.target.value)} placeholder="State" className="rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
+          </div>
+          <input type="text" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="6-digit PIN" className="w-full rounded-lg border border-[var(--border,rgba(255,255,255,0.12))] bg-[var(--surface-card,#18181B)] px-4 py-2.5 text-sm text-[var(--text-primary,#FAFAFA)] placeholder-zinc-700 focus:border-zinc-600 focus:outline-none" />
           <button
-            onClick={() => void runCheckout(buyerEmail.trim())}
-            disabled={loading || !buyerEmail.trim() || !EMAIL_RE.test(buyerEmail.trim())}
+            onClick={() => void runCheckout(buyerEmail.trim(), { name: buyerName.trim(), phone: phone.trim(), line1: line1.trim(), city: city.trim(), state: stateVal.trim(), pin: pin.trim(), country: "IN" })}
+            disabled={loading || !shippingValid}
             className="w-full rounded-lg bg-[var(--button-primary-bg,#00f5ff)] py-2 text-xs font-semibold text-[var(--button-primary-fg,#09090b)] transition-all hover:bg-[var(--button-primary-hover,#00d9f2)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Processing…" : "Continue to payment"}
           </button>
-          <button
-            onClick={() => setAwaitingEmail(false)}
-            disabled={loading}
-            className="w-full py-1 text-center text-[11px] text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#A1A1AA)]"
-          >
+          <button onClick={() => setAwaitingEmail(false)} disabled={loading} className="w-full py-1 text-center text-[11px] text-[var(--text-muted,#71717A)] hover:text-[var(--text-secondary,#A1A1AA)]">
             Cancel
           </button>
         </div>
