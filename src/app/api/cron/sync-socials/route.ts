@@ -394,91 +394,128 @@ export async function GET(request: NextRequest) {
         // Fall through to the cursor bump so unentitled tenants are not
         // re-selected on every cron run.
       } else {
+        // PERF-02: run independent provider fetches concurrently. Each
+        // provider's stats+content are independent, and providers are
+        // independent of each other. One provider failure must not prevent
+        // others — hence Promise.allSettled with per-provider try/catch.
+        // Token retrieval (decrypt/refresh) is also parallelized where safe.
+        // Tenant loop itself remains sequential (BATCH_SIZE bounded) so we
+        // do not create unbounded concurrency across tenants.
+
+        // Parallel token retrieval for Instagram and Twitch (independent).
+        const [instaToken, twitchToken] = await Promise.all([
+          (async (): Promise<string | null> => {
+            try {
+              let t = await getDecryptedToken(tenant.id, "instagram");
+              if (!t) {
+                try {
+                  t = await refreshToken(tenant.id, "instagram");
+                } catch {
+                  /* refresh failed — treat as disconnected */
+                }
+              }
+              return t;
+            } catch {
+              return null;
+            }
+          })(),
+          (async (): Promise<string | null> => {
+            try {
+              let t = await getDecryptedToken(tenant.id, "twitch");
+              if (!t && tenant.twitchChannelId) {
+                try {
+                  t = await refreshToken(tenant.id, "twitch");
+                } catch {
+                  /* if refresh also fails, skip Twitch for this cycle */
+                }
+              }
+              return t;
+            } catch {
+              return null;
+            }
+          })(),
+        ]);
+
+        const providerTasks: Promise<string | null>[] = [];
+
         /* YouTube (API key — no OAuth needed) */
         if (tenant.youtubeApiKey && tenant.youtubeChannelId) {
-          const stats = await fetchYouTubeStats(
-            tenant.youtubeApiKey,
-            tenant.youtubeChannelId,
+          providerTasks.push(
+            (async (): Promise<string | null> => {
+              try {
+                const [stats, ytItems] = await Promise.all([
+                  fetchYouTubeStats(tenant.youtubeApiKey!, tenant.youtubeChannelId!).catch(() => null),
+                  fetchYouTubeContent(tenant.youtubeApiKey!, tenant.youtubeChannelId!).catch(() => [] as ContentItem[]),
+                ]);
+                if (stats) {
+                  await upsertStats(tenant.id, stats);
+                }
+                if (ytItems.length > 0) {
+                  const n = await syncContentItems(tenant.id, ytItems);
+                  logger.info(`synced ${n} YouTube content items`, "sync-socials");
+                }
+                return stats ? "youtube" : null;
+              } catch {
+                return null;
+              }
+            })(),
           );
-          if (stats) {
-            await upsertStats(tenant.id, stats);
-            synced.push("youtube");
-          }
-
-          const ytItems = await fetchYouTubeContent(
-            tenant.youtubeApiKey,
-            tenant.youtubeChannelId,
-          );
-          if (ytItems.length > 0) {
-            const n = await syncContentItems(tenant.id, ytItems);
-            logger.info(`synced ${n} YouTube content items`, "sync-socials");
-          }
         }
 
-        /* Instagram — encrypted OAuth token only (RCCF-INTEGRATIONS-02).
-         * Plaintext Tenant.instagramApiKey fallback removed: it was never a
-         * valid Graph API access token and caused 401s against
-         * graph.instagram.com/me. The column remains for migration safety but
-         * is no longer read here.
-         * RCCF-INT-IG-REFRESH: try refresh of expired long-lived token before giving up. */
-        let instaToken: string | null = null;
-
-        try {
-          instaToken = await getDecryptedToken(tenant.id, "instagram");
-        } catch {
-          /* ignore decrypt errors */
-        }
-
-        if (!instaToken) {
-          try {
-            instaToken = await refreshToken(tenant.id, "instagram");
-          } catch {
-            /* refresh failed — treat as disconnected */
-          }
-        }
-
+        /* Instagram — encrypted OAuth token only */
         if (instaToken) {
-          const stats = await fetchInstagramStats(instaToken);
-          if (stats) {
-            await upsertStats(tenant.id, stats);
-            synced.push("instagram");
-          }
-
-          const igItems = await fetchInstagramContent(instaToken);
-          if (igItems.length > 0) {
-            const n = await syncContentItems(tenant.id, igItems);
-            logger.info(`synced ${n} Instagram content items`, "sync-socials");
-          }
+          const token = instaToken;
+          providerTasks.push(
+            (async (): Promise<string | null> => {
+              try {
+                const [stats, igItems] = await Promise.all([
+                  fetchInstagramStats(token).catch(() => null),
+                  fetchInstagramContent(token).catch(() => [] as ContentItem[]),
+                ]);
+                if (stats) {
+                  await upsertStats(tenant.id, stats);
+                }
+                if (igItems.length > 0) {
+                  const n = await syncContentItems(tenant.id, igItems);
+                  logger.info(`synced ${n} Instagram content items`, "sync-socials");
+                }
+                return stats ? "instagram" : null;
+              } catch {
+                return null;
+              }
+            })(),
+          );
         }
 
         /* Twitch (prefer encrypted OAuth token) */
-        let twitchToken: string | null = null;
-
-        try {
-          twitchToken = await getDecryptedToken(tenant.id, "twitch");
-        } catch {
-          /* ignore decrypt errors */
-        }
-
-        if (!twitchToken && tenant.twitchChannelId) {
-          try {
-            twitchToken = await refreshToken(tenant.id, "twitch");
-          } catch {
-            /* if refresh also fails, skip Twitch for this cycle */
-          }
-        }
-
         if (twitchToken && tenant.twitchChannelId) {
-          const stats = await fetchTwitchStats(twitchToken, tenant.twitchChannelId);
-          if (stats) {
-            await upsertStats(tenant.id, stats);
-            synced.push("twitch");
-          }
+          const token = twitchToken;
+          providerTasks.push(
+            (async (): Promise<string | null> => {
+              try {
+                const [stats, twItems] = await Promise.all([
+                  fetchTwitchStats(token, tenant.twitchChannelId!).catch(() => null),
+                  fetchTwitchContent(token, tenant.twitchChannelId!).catch(() => [] as ContentItem[]),
+                ]);
+                if (stats) {
+                  await upsertStats(tenant.id, stats);
+                }
+                if (twItems.length > 0) {
+                  const n = await syncContentItems(tenant.id, twItems);
+                  logger.info(`synced ${n} Twitch content items`, "sync-socials");
+                }
+                return stats ? "twitch" : null;
+              } catch {
+                return null;
+              }
+            })(),
+          );
+        }
 
-          const twItems = await fetchTwitchContent(twitchToken, tenant.twitchChannelId);
-          if (twItems.length > 0) {
-            const n = await syncContentItems(tenant.id, twItems);
-            logger.info(`synced ${n} Twitch content items`, "sync-socials");
+        if (providerTasks.length > 0) {
+          const settled = await Promise.allSettled(providerTasks);
+          for (const r of settled) {
+            if (r.status === "fulfilled" && r.value) synced.push(r.value);
           }
         }
       }

@@ -417,6 +417,15 @@ export class MediaService {
 
     this.emit("AssetReplaced", { assetId: options.assetId, tenantId: existing.tenantId });
 
+    // PERF-03: tenant-scoped cache invalidation so edited asset does not stay
+    // stale for 24h (minimumCacheTTL was 86400). Tag is tenant-isolated.
+    try {
+      const { revalidateTag } = await import("next/cache");
+      revalidateTag(`tenant-aggregate:${existing.tenantId}`);
+    } catch {
+      // best-effort — not in Next cache context during tests
+    }
+
     return { assetId: options.assetId, url: result.publicUrl, deduplicated: false };
   }
 
