@@ -147,11 +147,42 @@ export default function OnboardingPage() {
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeSessionRef = useRef<string | null>(null);
 
   const clearPolling = useCallback(() => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    activeSessionRef.current = null;
   }, []);
+
+  const startPolling = useCallback((sessionId: string, startTime: number) => {
+    clearPolling();
+    activeSessionRef.current = sessionId;
+    timerRef.current = setInterval(() => setElapsedMs(Date.now() - startTime), 1000);
+    pollRef.current = setInterval(async () => {
+      const currentId = activeSessionRef.current ?? sessionId;
+      const result = await getGenerationSessionProgress(currentId);
+      if (!result.success) return;
+      setSessionStages(result.data.stages);
+      setActivity((prev) => {
+        const next = result.data.activity ?? [];
+        if (result.data.status === "completed") next.push("Your website is ready!");
+        return [...prev, ...next.filter((m) => !prev.includes(m))].slice(-20);
+      });
+      if (result.data.progressPercent > 0) setProgressPercent((p) => Math.max(p, result.data.progressPercent));
+      else setProgressPercent(result.data.progressPercent);
+      if (result.data.estimatedRemainingMs != null) setEstimatedRemainingMs(result.data.estimatedRemainingMs);
+      if (result.data.status === "completed") {
+        clearPolling();
+        setTimeout(() => router.replace("/admin/dashboard"), 400);
+      }
+      if (result.data.status === "failed") {
+        clearPolling();
+        setStep("error");
+        setError("We couldn't finish building your storefront. Please try again.");
+      }
+    }, 1500);
+  }, [clearPolling, router]);
 
   useEffect(() => {
     return () => clearPolling();
@@ -159,38 +190,24 @@ export default function OnboardingPage() {
 
   // RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery — resume the latest in-flight
   // session so progress continues after a refresh (never restarts from stage 1).
+  // Consolidated: never compete with an actively running generation poll.
   useEffect(() => {
+    if (pollRef.current || activeSessionRef.current) return;
     let cancelled = false;
     (async () => {
       const active = await getActiveGenerationSession();
       if (cancelled || !active.success || !active.sessionId || !active.data) return;
+      if (pollRef.current || activeSessionRef.current) return;
       setSessionId(active.sessionId);
       setStep("generating");
       setLoading(false);
       setSessionStages(active.data.stages ?? []);
       setProgressPercent(active.data.progressPercent ?? 0);
       const startTime = Date.now() - (active.data.elapsedMs ?? 0);
-      timerRef.current = setInterval(() => setElapsedMs(Date.now() - startTime), 1000);
-      pollRef.current = setInterval(async () => {
-        const result = await getGenerationSessionProgress(active.sessionId!);
-        if (!result.success) return;
-        setSessionStages(result.data.stages);
-        setActivity((prev) => [...prev, ...(result.data.activity ?? []).filter((m) => !prev.includes(m))].slice(-20));
-        if (result.data.progressPercent > 0) setProgressPercent((p) => Math.max(p, result.data.progressPercent));
-        if (result.data.status === "completed") {
-          clearPolling();
-          
-          setTimeout(() => router.replace("/admin/dashboard"), 400);
-        }
-        if (result.data.status === "failed") {
-          clearPolling();
-          setStep("error");
-          setError("We couldn't finish building your storefront. Please try again.");
-        }
-      }, 1500);
+      startPolling(active.sessionId, startTime);
     })();
     return () => { cancelled = true; };
-  }, [clearPolling, router]);
+  }, [clearPolling, router, startPolling]);
 
   const handleAnalyze = useCallback(async () => {
     if (!sourceUrl.trim()) return;
@@ -258,43 +275,7 @@ export default function OnboardingPage() {
       }
 
       setSessionId(newSessionId);
-      const startTime = Date.now();
-      timerRef.current = setInterval(() => {
-        setElapsedMs(Date.now() - startTime);
-      }, 1000);
-
-      pollRef.current = setInterval(async () => {
-        const result = await getGenerationSessionProgress(newSessionId);
-        if (!result.success) return;
-
-        setSessionStages(result.data.stages);
-        setActivity((prev) => {
-          const next = result.data.activity ?? [];
-          if (result.data.status === "completed") next.push("Your website is ready!");
-          return [...prev, ...next.filter((m) => !prev.includes(m))].slice(-20);
-        });
-        if (result.data.progressPercent > 0) {
-          setProgressPercent((prev) => Math.max(prev, result.data.progressPercent));
-        } else {
-          setProgressPercent(result.data.progressPercent);
-        }
-        if (result.data.estimatedRemainingMs != null) {
-          setEstimatedRemainingMs(result.data.estimatedRemainingMs);
-        }
-
-        if (result.data.status === "completed") {
-          clearPolling();
-          
-          // RCCF-LAUNCH-TRACK-03: a brief success message so the user registers
-          // completion before the page changes (~400ms, not an artificial delay).
-          setTimeout(() => router.replace("/admin/dashboard"), 400);
-        }
-        if (result.data.status === "failed") {
-          clearPolling();
-          setStep("error");
-          setError("We couldn't finish building your storefront. Please try again.");
-        }
-      }, 1500);
+      startPolling(newSessionId, Date.now());
 
       const res = await runCreatorGeneration(
         sourceUrl, workspaceName,
@@ -452,6 +433,8 @@ export default function OnboardingPage() {
     sessionId: sessionId ?? undefined,
     refreshKey: experience.currentId,
     enabled: step === "generating" && !!sessionId,
+    isComplete: experience.isComplete,
+    progress: experience.progress,
   });
 
   return (

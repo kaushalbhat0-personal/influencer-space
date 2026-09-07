@@ -16,6 +16,9 @@ export interface ConstructionSnapshotOptions {
   /** Refetch when this value changes (e.g. the current generation stage). */
   refreshKey?: string | null;
   enabled?: boolean;
+  /** When true, force a final load even if refreshKey is null/deduped (completion). */
+  isComplete?: boolean;
+  progress?: number;
 }
 
 export interface ConstructionSnapshotState {
@@ -29,9 +32,12 @@ export function useConstructionSnapshot({
   subdomain,
   refreshKey,
   enabled = true,
+  isComplete = false,
+  progress,
 }: ConstructionSnapshotOptions): ConstructionSnapshotState & { refetch: () => void } {
   const [state, setState] = useState<ConstructionSnapshotState>({ snapshot: null, isLoading: false, error: null });
   const keyRef = useRef<string | null>(null);
+  const completeRef = useRef(false);
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
@@ -52,10 +58,18 @@ export function useConstructionSnapshot({
       return;
     }
     if (!sessionId && !subdomain) return;
+    // Final completion should trigger a fresh load even if refreshKey is deduped as null
+    const shouldForceComplete = (isComplete || progress === 100) && !completeRef.current;
+    if (shouldForceComplete) {
+      completeRef.current = true;
+      keyRef.current = "__complete__";
+      void load();
+      return;
+    }
     if (keyRef.current === refreshKey) return;
     keyRef.current = refreshKey ?? "";
     void load();
-  }, [enabled, sessionId, subdomain, refreshKey, load]);
+  }, [enabled, sessionId, subdomain, refreshKey, isComplete, progress, load]);
 
   return { ...state, refetch: load };
 }

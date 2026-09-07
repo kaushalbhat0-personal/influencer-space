@@ -18,6 +18,7 @@ import { buildRuntimeSnapshot } from "@/lib/storefront/build-snapshot";
 import { layoutEngine } from "@/lib/storefront/layout-engine";
 import { sessionService } from "@/lib/generation/session";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { unstable_noStore as noStore } from "next/cache";
 
 export interface ConstructionSnapshotData {
   theme: Record<string, string>;
@@ -48,6 +49,7 @@ export interface GetConstructionSnapshotResult {
 export async function getConstructionSnapshot(
   input: GetConstructionSnapshotInput,
 ): Promise<GetConstructionSnapshotResult> {
+  noStore();
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };

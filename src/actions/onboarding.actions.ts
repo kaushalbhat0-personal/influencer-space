@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorization";
 import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
+import { unstable_noStore as noStore } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { logAction } from "@/lib/audit";
@@ -789,6 +790,7 @@ type SessionProgressSuccess = {
 type SessionProgressResult = { success: true; data: SessionProgressSuccess } | { success: false; error: string };
 
 export async function getGenerationSessionProgress(sessionId: string): Promise<SessionProgressResult> {
+  noStore();
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
@@ -847,6 +849,7 @@ export async function getGenerationSessionProgress(sessionId: string): Promise<S
 /** RCCF-LAUNCH-TRACK-03 Phase 8: refresh recovery â€” resume the latest in-flight
  *  generation session (never restart progress, never return to stage 1). */
 export async function getActiveGenerationSession(): Promise<{ success: boolean; sessionId?: string; data?: Extract<SessionProgressResult, { success: true }>["data"]; error?: string }> {
+  noStore();
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
