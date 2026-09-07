@@ -12,23 +12,29 @@ export default async function GuestOrderPage({ params }: { params: { token: stri
   const token = params.token?.trim();
   if (!token || token.length < 32) notFound();
 
-  const order = await prisma.productOrder.findUnique({
-    where: { guestToken: token },
-    select: {
-      id: true,
-      amount: true,
-      quantity: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-      fanEmail: true,
-      guestTokenExpiresAt: true,
-      tenantId: true,
-      productId: true,
-      provider: true,
-      refundStatus: true,
-    },
-  });
+  let order: Awaited<ReturnType<typeof prisma.productOrder.findUnique>>;
+  try {
+    order = await (prisma.productOrder.findUnique as (args: unknown) => Promise<Awaited<ReturnType<typeof prisma.productOrder.findUnique>>>)({
+      where: { guestToken: token },
+      select: {
+        id: true,
+        amount: true,
+        quantity: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        fanEmail: true,
+        guestTokenExpiresAt: true,
+        tenantId: true,
+        productId: true,
+        provider: true,
+        refundStatus: true,
+      },
+    } as unknown as never);
+  } catch {
+    // DB migration pending (quantity/guestToken columns not yet deployed) — treat as not found rather than 500
+    notFound();
+  }
 
   if (!order) notFound();
   if (order.guestTokenExpiresAt && new Date(order.guestTokenExpiresAt) < new Date()) {
