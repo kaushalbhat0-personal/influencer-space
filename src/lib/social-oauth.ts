@@ -73,6 +73,20 @@ export async function getDecryptedToken(
   tenantId: string,
   provider: Provider,
 ): Promise<string | null> {
+  return getDecryptedTokenInternal(tenantId, provider, false);
+}
+
+/**
+ * Internal helper that can optionally ignore expiry.
+ * Used by refreshToken("instagram") to decrypt an expired long-lived token
+ * for the documented refresh flow (GET graph.instagram.com/refresh_access_token
+ * requires the expired token itself). Never logs token material.
+ */
+async function getDecryptedTokenInternal(
+  tenantId: string,
+  provider: Provider,
+  allowExpired: boolean,
+): Promise<string | null> {
   const select =
     provider === "instagram"
       ? ({ instagramAccessToken: true, instagramTokenExpiry: true } as const)
@@ -96,7 +110,7 @@ export async function getDecryptedToken(
       : (tenant as unknown as Record<string, unknown>).twitchTokenExpiry;
 
   if (!encrypted || typeof encrypted !== "string") return null;
-  if (expiry && expiry instanceof Date && expiry < new Date()) return null;
+  if (!allowExpired && expiry && expiry instanceof Date && expiry < new Date()) return null;
 
   try {
     return decrypt(encrypted);
@@ -106,28 +120,40 @@ export async function getDecryptedToken(
 }
 
 /**
- * Attempt to refresh an expired token.
- * Currently only Twitch supports app-based refresh flows.
+ * Attempt to refresh an expired Instagram long-lived token.
+ * Uses the documented refresh flow: GET graph.instagram.com/refresh_access_token
+ * with the (possibly expired) token. On success encrypts and persists the new
+ * token + expiry. On failure returns null (disconnected behavior) without logging
+ * token material. Preserves TOKEN_ENCRYPTION_KEY compatibility.
  */
 export async function refreshToken(
   tenantId: string,
   provider: Provider,
 ): Promise<string | null> {
   if (provider === "instagram") {
-    // Instagram's long-lived token can be refreshed simply by making a
-    // GET request — but that requires the current (possibly expired) token.
-    // We attempt a refresh GET; if it fails, the admin must re-connect.
-    const current = await getDecryptedToken(tenantId, "instagram");
+    // Must decrypt expired token — getDecryptedToken() returns null when expired,
+    // so use allowExpired=true helper. Never logs token.
+    const current = await getDecryptedTokenInternal(tenantId, "instagram", true);
     if (!current) return null;
 
     const url = new URL("https://graph.instagram.com/refresh_access_token");
     url.searchParams.set("grant_type", "ig_refresh_token");
     url.searchParams.set("access_token", current);
 
-    const res = await fetch(url.toString());
+    let res: Response;
+    try {
+      res = await fetch(url.toString(), { signal: AbortSignal.timeout(10_000) });
+    } catch {
+      return null;
+    }
     if (!res.ok) return null;
 
-    const data = await res.json();
+    let data: { access_token?: string; expires_in?: number };
+    try {
+      data = (await res.json()) as typeof data;
+    } catch {
+      return null;
+    }
     if (data.access_token) {
       await prisma.tenant.update({
         where: { id: tenantId },

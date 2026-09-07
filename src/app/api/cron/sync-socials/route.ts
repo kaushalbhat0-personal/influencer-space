@@ -419,13 +419,22 @@ export async function GET(request: NextRequest) {
          * Plaintext Tenant.instagramApiKey fallback removed: it was never a
          * valid Graph API access token and caused 401s against
          * graph.instagram.com/me. The column remains for migration safety but
-         * is no longer read here. */
+         * is no longer read here.
+         * RCCF-INT-IG-REFRESH: try refresh of expired long-lived token before giving up. */
         let instaToken: string | null = null;
 
         try {
           instaToken = await getDecryptedToken(tenant.id, "instagram");
         } catch {
           /* ignore decrypt errors */
+        }
+
+        if (!instaToken) {
+          try {
+            instaToken = await refreshToken(tenant.id, "instagram");
+          } catch {
+            /* refresh failed — treat as disconnected */
+          }
         }
 
         if (instaToken) {
