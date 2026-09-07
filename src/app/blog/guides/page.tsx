@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const metadata: Metadata = {
   title: "Guides",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 
 const guides = [
   {
-    title: "Getting Started with CreatorStore",
+    title: `Getting Started with ${BRAND.name}`,
     description:
       "Set up your storefront in under 10 minutes. Connect your social accounts, add products, and go live.",
     href: "/blog/guides/getting-started",

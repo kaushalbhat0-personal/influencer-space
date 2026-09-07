@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { changeAgencyPlanAction } from "@/actions/partner.actions";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface Props {
   currentPlanCode: string;
@@ -37,13 +38,13 @@ export function AgencyPlanManager({ currentPlanCode, currentPlanName, trialActiv
           order_id: checkout.orderId,
           amount: checkout.amountPaise,
           currency: checkout.currency ?? "INR",
-          name: "CreatorStore",
+          name: BRAND.name,
           theme: { color: "#6366f1" },
         }
       : {
           key: checkout.keyId,
           subscription_id: checkout.subscriptionId,
-          name: "CreatorStore",
+          name: BRAND.name,
           theme: { color: "#6366f1" },
         };
     new (window as unknown as { Razorpay: new (o: unknown) => { open: () => void } }).Razorpay(options).open();

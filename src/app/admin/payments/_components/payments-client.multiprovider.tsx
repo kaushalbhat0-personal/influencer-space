@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { saveMyPaymentAccount, verifyMyPaymentAccount, disconnectMyPaymentAccount, getMyPaymentAccounts, setMyActiveProvider } from "@/actions/payment-account.actions";
+import { BRAND } from "@/lib/marketing/messaging";
 import { PAYMENT_PROVIDERS } from "@/modules/payment-account/providers/meta";
 import type { PaymentAccountData, PaymentReadinessReport } from "@/modules/payment-account/domain/types";
 import { CheckCircle2, ShieldCheck, CreditCard, Globe } from "lucide-react";
@@ -72,7 +73,7 @@ export function PaymentsMultiproviderClient({ initialAccounts, initialActive, in
       {msg && <div className="rounded-lg border border-[var(--color-success)]/20 bg-[var(--color-success-surface)] px-4 py-2 text-sm text-[var(--color-success)]">{msg}</div>}
       <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-card)] p-5" style={{ boxShadow: "var(--shadow-elevation)" }}>
         <p className="text-sm font-semibold text-[var(--text-primary)]">Get Paid</p>
-        <p className="text-sm text-[var(--text-secondary)]">Choose how customers will pay you. Funds land directly in your account — CreatorStore never takes a fee.</p>
+        <p className="text-sm text-[var(--text-secondary)]">Choose how customers will pay you. Funds land directly in your account — {BRAND.name} never takes a fee.</p>
         {(() => {
           const isDirect = readiness?.strategy === "DIRECT_CREATOR";
           const canClaimReceiving = !!active && isDirect && readiness?.readiness === "ready" && readiness?.provider === active;

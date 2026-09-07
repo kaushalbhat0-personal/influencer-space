@@ -3,6 +3,7 @@
 // here; runtimes only reference these ids (or the event wiring maps events).
 
 import type { CommunicationDefinition } from "../domain/types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const COMMUNICATION_REGISTRY: CommunicationDefinition[] = [
   // ── Commerce ───────────────────────────────────────────────
@@ -24,7 +25,7 @@ export const COMMUNICATION_REGISTRY: CommunicationDefinition[] = [
   // Capability-accurate: the role label must never overclaim permissions.
   // The accept URL carries the opaque token — never raw IDs or authorization
   // internals. Expiry is server-derived and rendered for the invitee.
-  { id: "team.invitation", name: "Team Invitation", audience: "agency", priority: "high", channel: "email", category: "system", retries: 3, throttle: null, requiredData: ["agencyName", "roleLabel", "acceptUrl", "expiryDate"], template: { subject: "You're invited to join {{agencyName}} on CreatorStore", body: "You're invited to join {{agencyName}} on CreatorStore.\n\nRole: {{roleLabel}}\n\nAccept invitation:\n{{acceptUrl}}\n\nThis invitation expires on {{expiryDate}}." } },
+  { id: "team.invitation", name: "Team Invitation", audience: "agency", priority: "high", channel: "email", category: "system", retries: 3, throttle: null, requiredData: ["agencyName", "roleLabel", "acceptUrl", "expiryDate"], template: { subject: `You're invited to join {{agencyName}} on ${BRAND.name}`, body: `You're invited to join {{agencyName}} on ${BRAND.name}.\n\nRole: {{roleLabel}}\n\nAccept invitation:\n{{acceptUrl}}\n\nThis invitation expires on {{expiryDate}}.` } },
 
   // ── Admin alerts ───────────────────────────────────────────
   { id: "alert.failed_generation", name: "Failed Generation", audience: "super_admin", priority: "high", channel: "alert", category: "system", retries: 3, throttle: "1h", requiredData: ["error"], template: { subject: "Generation failed", body: "A generation failed: {{error}}." } },

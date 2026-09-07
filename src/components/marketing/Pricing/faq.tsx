@@ -1,3 +1,5 @@
+import { BRAND } from "@/lib/marketing/messaging";
+
 const FAQ_ITEMS = [
   {
     q: "Is Launch really free?",
@@ -9,23 +11,23 @@ const FAQ_ITEMS = [
   },
   {
     q: "What platforms do you support?",
-    a: "YouTube, Instagram, TikTok, X (Twitter), LinkedIn, Twitch, and any website URL. If your content lives online, CreatorStore can work with it.",
+    a: `YouTube, Instagram, TikTok, X (Twitter), LinkedIn, Twitch, and any website URL. If your content lives online, ${BRAND.name} can work with it.`,
   },
   {
     q: "Can I use my own domain?",
-    a: "Yes — on Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
+    a: `Yes — on Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a ${BRAND.name} subdomain for free.`,
   },
   {
     q: "How do payments work?",
-    a: "CreatorStore uses Razorpay for payment processing. Your customers can pay via UPI, credit/debit cards, net banking, and wallets. Payouts go directly to your linked account.",
+    a: `${BRAND.name} uses Razorpay for payment processing. Your customers can pay via UPI, credit/debit cards, net banking, and wallets. Payouts go directly to your linked account.`,
   },
   {
     q: "What can I sell?",
     a: "Digital products, physical merchandise, services and bookings, and affiliate links — with UPI and card checkout via Razorpay. Courses can be showcased on your storefront.",
   },
   {
-    q: "Can agencies use CreatorStore?",
-    a: "Yes. Partner plans support multi-client workspaces, white-label branding on higher tiers, team collaboration, and agency revenue insights. Generate storefronts for clients in minutes.",
+    q: `Can agencies use ${BRAND.name}?`,
+    a: `Yes. Partner plans support multi-client workspaces, white-label branding on higher tiers, team collaboration, and agency revenue insights. Generate storefronts for clients in minutes.`,
   },
   {
     q: "Can I switch plans later?",

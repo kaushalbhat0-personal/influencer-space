@@ -63,8 +63,8 @@ export default function FeaturesPage() {
       {/* Value Propositions */}
       <Section id="value-props">
         <SectionHeading
-          title="Why CreatorStore?"
-          subtitle="Seven reasons people choose CreatorStore over templates, link-in-bio tools, and website builders."
+          title={`Why ${BRAND.name}?`}
+          subtitle={`Seven reasons people choose ${BRAND.name} over templates, link-in-bio tools, and website builders.`}
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {VALUE_PROPOSITIONS.map((vp) => (
@@ -87,7 +87,7 @@ export default function FeaturesPage() {
       <Section id="capabilities">
         <SectionHeading
           title="One home, everything under one roof"
-          subtitle="The capabilities of your CreatorStore site — grouped by what they help you do."
+          subtitle={`The capabilities of your ${BRAND.name} site — grouped by what they help you do.`}
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {PLATFORM_CAPABILITIES.map((category) => {

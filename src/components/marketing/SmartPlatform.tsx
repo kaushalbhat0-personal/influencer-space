@@ -1,5 +1,6 @@
 import { Brain, HeartPulse, Target, TrendingUp, Sparkles, Compass } from "lucide-react";
 import { Section, SectionHeading } from "./Section";
+import { BRAND } from "@/lib/marketing/messaging";
 
 /** RCCF-IMPLEMENTATION-73 Phase 3 — Smart Platform messaging.
  * Every capability is REAL and backed by a runtime module, but presented in
@@ -48,7 +49,7 @@ export function SmartPlatform() {
     <Section id="smart-platform" background="subtle">
       <SectionHeading
         title="A platform that works with you"
-        subtitle="CreatorStore is more than a website builder — it understands your business and helps you grow it."
+        subtitle={`${BRAND.name} is more than a website builder — it understands your business and helps you grow it.`}
       />
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {CAPABILITIES.map((c) => (

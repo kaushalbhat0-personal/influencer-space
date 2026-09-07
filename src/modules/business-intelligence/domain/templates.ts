@@ -1,4 +1,5 @@
 import type { BusinessTemplate } from "./types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
   {
@@ -29,7 +30,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "digital_download", name: "Digital Product Pack", description: "Curated digital products and resources.", priceHint: "999" },
       { type: "course", name: "Online Course", description: "In-depth video course on your expertise.", priceHint: "2999" },
     ],
-    seo: { titleTemplate: "{businessName} — Creator Storefront", descriptionTemplate: "{businessName}: {tagline || 'Premium creator storefront on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Creator Storefront", descriptionTemplate: `{businessName}: {tagline || 'Premium creator storefront on ${BRAND.name}'}` },
     conversion: [
       { widget: "newsletter", priority: 1 },
       { widget: "social_proof", priority: 2 },
@@ -65,7 +66,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "course", name: "Online Program", description: "Structured program with video lessons and materials.", priceHint: "4999" },
       { type: "membership", name: "Community Access", description: "Join a community of like-minded individuals.", priceHint: "999/month" },
     ],
-    seo: { titleTemplate: "{businessName} — Coaching & Consulting", descriptionTemplate: "{businessName}: {tagline || 'Professional coaching services on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Coaching & Consulting", descriptionTemplate: `{businessName}: {tagline || 'Professional coaching services on ${BRAND.name}'}` },
     conversion: [
       { widget: "booking", priority: 1 },
       { widget: "testimonials", priority: 2 },
@@ -99,7 +100,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "gift_card", name: "Gift Card", description: "Give the gift of a great meal.", priceHint: "500" },
       { type: "physical_product", name: "Merchandise", description: "Branded merchandise and packaged goods.", priceHint: "999" },
     ],
-    seo: { titleTemplate: "{businessName} — Restaurant & Dining", descriptionTemplate: "{businessName}: {tagline || 'Experience exceptional dining on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Restaurant & Dining", descriptionTemplate: `{businessName}: {tagline || 'Experience exceptional dining on ${BRAND.name}'}` },
     conversion: [
       { widget: "booking", priority: 1 },
       { widget: "reviews", priority: 2 },
@@ -136,7 +137,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "consultation", name: "Discovery Call", description: "Free initial consultation to understand your needs.", priceHint: "Free" },
       { type: "retainer", name: "Monthly Retainer", description: "Ongoing support and execution partnership.", priceHint: "24999/month" },
     ],
-    seo: { titleTemplate: "{businessName} — Agency Services", descriptionTemplate: "{businessName}: {tagline || 'Full-service agency on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Agency Services", descriptionTemplate: `{businessName}: {tagline || 'Full-service agency on ${BRAND.name}'}` },
     conversion: [
       { widget: "booking", priority: 1 },
       { widget: "case_studies", priority: 2 },
@@ -172,7 +173,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "consultation", name: "Consultation", description: "Expert advice and guidance.", priceHint: "1499" },
       { type: "digital_download", name: "Resource Pack", description: "Ready-to-use templates and assets.", priceHint: "799" },
     ],
-    seo: { titleTemplate: "{businessName} — Freelancer Portfolio", descriptionTemplate: "{businessName}: {tagline || 'Freelance services on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Freelancer Portfolio", descriptionTemplate: `{businessName}: {tagline || 'Freelance services on ${BRAND.name}'}` },
     conversion: [
       { widget: "portfolio", priority: 1 },
       { widget: "testimonials", priority: 2 },
@@ -206,7 +207,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "booking", name: "Personal Training", description: "One-on-one training sessions.", priceHint: "999/session" },
       { type: "digital_download", name: "Workout Plan", description: "Customized workout and nutrition plan.", priceHint: "1499" },
     ],
-    seo: { titleTemplate: "{businessName} — Fitness & Training", descriptionTemplate: "{businessName}: {tagline || 'Transform your fitness journey on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Fitness & Training", descriptionTemplate: `{businessName}: {tagline || 'Transform your fitness journey on ${BRAND.name}'}` },
     conversion: [
       { widget: "booking", priority: 1 },
       { widget: "pricing", priority: 2 },
@@ -237,7 +238,7 @@ export const BUSINESS_TEMPLATES: BusinessTemplate[] = [
       { type: "service", name: "Standard Service", description: "Professional service tailored to your needs.", priceHint: "999" },
       { type: "digital_download", name: "Digital Product", description: "High-quality digital download.", priceHint: "499" },
     ],
-    seo: { titleTemplate: "{businessName} — Storefront", descriptionTemplate: "{businessName}: {tagline || 'Storefront on CreatorStore'}" },
+    seo: { titleTemplate: "{businessName} — Storefront", descriptionTemplate: `{businessName}: {tagline || 'Storefront on ${BRAND.name}'}` },
     conversion: [
       { widget: "cta_banner", priority: 1 },
       { widget: "testimonials", priority: 2 },

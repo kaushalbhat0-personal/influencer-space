@@ -8,6 +8,7 @@ import { BillingDashboard } from "./BillingDashboard";
 import { SubscriptionManager } from "./SubscriptionManager";
 import { InvoiceCenter } from "./InvoiceCenter";
 import { PaymentMethodManager } from "./PaymentMethodManager";
+import { BRAND } from "@/lib/marketing/messaging";
 import { UsageDashboard } from "./UsageDashboard";
 import { changePlanAction, cancelSubscriptionAction, resumeSubscriptionAction, retryPaymentAction, getBillingDashboard } from "@/actions/billing.actions";
 import type { BillingDashboard as BillingDashboardData, BillingPlan } from "@/lib/billing";
@@ -136,7 +137,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     const options: Record<string, unknown> = {
       key: checkout.keyId,
       subscription_id: checkout.subscriptionId,
-      name: "CreatorStore",
+      name: BRAND.name,
       description: "Creator subscription — recurring billing via Razorpay (webhook activates plan)",
       handler: () => {
         showNotification(
@@ -188,7 +189,7 @@ export function BillingPageClient({ billingData, availablePlans, workspaceId, te
     const options: Record<string, unknown> = {
       key: checkout.keyId,
       order_id: checkout.orderId,
-      name: "CreatorStore",
+      name: BRAND.name,
       description: "One-time purchase — single charge via Razorpay (webhook confirms)",
       handler: () => {
         showNotification("Payment successful — your one-time purchase will be confirmed via webhook shortly. No renewal needed. You do not need to retry.");

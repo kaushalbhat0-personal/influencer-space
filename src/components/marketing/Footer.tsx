@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
+import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 const FOOTER_LINKS = [
   { href: "/terms", label: "Terms" },
@@ -41,7 +41,7 @@ export function Footer() {
           ))}
         </div>
         <p className="mt-4">
-          &copy; {new Date().getFullYear()} CreatorStore. All rights reserved.
+          &copy; {new Date().getFullYear()} {BRAND.name}. All rights reserved.
         </p>
       </div>
     </footer>

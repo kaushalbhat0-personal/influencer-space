@@ -12,6 +12,7 @@ import { WorkspaceSwitcher } from "@/components/workspace/WorkspaceSwitcher";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import type { NavConfigWire } from "@/config/admin-nav";
 import { AdminPublishControl } from "./admin-publish-control";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export function AdminLayoutClient({
   children,
@@ -61,7 +62,7 @@ export function AdminLayoutClient({
           <Menu className="h-5 w-5" />
         </button>
         <span className="font-display text-sm font-bold tracking-tight text-[var(--text-primary)]">
-          CreatorStore
+          {BRAND.name}
         </span>
         <div className="flex-1" />
         <AdminPublishControl status={publishStatus} size="sm" />

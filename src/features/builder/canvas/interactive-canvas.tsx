@@ -39,6 +39,7 @@ import { traceRuntime, computeRuntimeSignature, type AggregateTraceDiagnostics }
 import type { ResolvedSnapshotTheme } from "@/lib/theme/resolver-new";
 import { applyHeroPresentation } from "@/lib/hero/presentation-options";
 import { FONT_MAP } from "@/lib/theme/font-options";
+import { BRAND } from "@/lib/marketing/messaging";
 import type { AppearanceState } from "../components/appearance-panel";
 
 const DEVICE_WIDTHS: Record<string, number> = { mobile: 375, tablet: 768, desktop: 1200 };
@@ -530,10 +531,10 @@ export function InteractiveCanvas({
                   </footer>
                 );
               })}
-            {sections.filter((s) => s.moduleId.startsWith("footer.")).length === 0 && (
+              {sections.filter((s) => s.moduleId.startsWith("footer.")).length === 0 && (
               <footer data-testid="builder-footer" className="border-t border-[var(--border,rgba(0,0,0,0.08))] bg-[var(--surface-root,#0A0A0B)]">
                 <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-[var(--text-muted,#71717A)]">
-                  © {liveContent?.identity?.name || "CreatorStore"}
+                  © {liveContent?.identity?.name || BRAND.name}
                 </div>
               </footer>
             )}

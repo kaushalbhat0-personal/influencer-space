@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BRAND } from "@/lib/marketing/messaging";
 
 // RCCF-MKT-11: page-level metadata replaces the layout's openGraph object, so
 // the index declares its own canonical here (the layout cannot carry one —
@@ -39,7 +40,7 @@ export default function BlogPage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">CreatorStore Blog</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{BRAND.name} Blog</h1>
         {/* RCCF-MKT-10 P3-A: the blog index is a positioning surface — it
             speaks to the full platform audience, not a single segment.
             Individual articles stay topic-specific on purpose. */}

@@ -5,6 +5,7 @@ import { CommerceStrategyBadge } from "@/modules/commerce-strategy/presentation/
 import { Landmark, ArrowRight, CheckCircle2, AlertTriangle } from "lucide-react";
 import type { ResolvedCommerceStrategy } from "@/modules/commerce-strategy/domain/types";
 import type { PaymentReadinessReport } from "@/modules/payment-account/domain/types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export interface PaymentStrategyCardProps {
   strategy: ResolvedCommerceStrategy | null;
@@ -36,19 +37,19 @@ export function PaymentStrategyCard({ strategy, readiness, activeProviderLabel, 
             Payment Strategy
           </p>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            You earn <span className="font-semibold text-emerald-400">100% of every product, service, course, booking and donation</span> — CreatorStore never takes a transaction fee.
+            You earn <span className="font-semibold text-emerald-400">100% of every product, service, course, booking and donation</span> — {BRAND.name} never takes a transaction fee.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <CommerceStrategyBadge strategy={strategy.id} readiness={badgeReadiness} />
-          <span className="text-[11px] text-[var(--text-muted)]">· {strategy.definition.merchantOfRecord === "platform" ? "CreatorStore handles payments for you" : "you handle payments directly"}</span>
+          <span className="text-[11px] text-[var(--text-muted)]">· {strategy.definition.merchantOfRecord === "platform" ? `${BRAND.name} handles payments for you` : "you handle payments directly"}</span>
         </div>
       </div>
 
       {isPlatform && (
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-card)] px-3 py-2 text-xs text-[var(--text-muted)]">
           <CheckCircle2 className="h-3.5 w-3.5 text-[var(--text-muted)]" />
-          CreatorStore handles payments for you — no setup needed.
+          {BRAND.name} handles payments for you — no setup needed.
         </div>
       )}
 

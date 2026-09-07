@@ -19,6 +19,7 @@ import { serializeJsonLd } from "@/lib/storefront/json-ld";
 import type { GoalProfile } from "@/modules/goals-runtime";
 import type { ThemeExperience } from "@/modules/theme/runtime/experience";
 import { footerService } from "@/lib/footer/service";
+import { BRAND } from "@/lib/marketing/messaging";
 
 /**
  * RCCF-02: the published storefront reads gates ONLY from the baked snapshot.
@@ -311,7 +312,7 @@ export async function StorefrontPage({
               {footerSections.length === 0 && (
                 <footer data-testid="storefront-footer" className="border-t border-[var(--border,rgba(0,0,0,0.08))] bg-[var(--surface-root,#0A0A0B)]">
                   <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-[var(--text-muted,#71717A)]">
-                    © {snap.content.identity.name || "CreatorStore"}
+                    © {snap.content.identity.name || BRAND.name}
                   </div>
                 </footer>
               )}

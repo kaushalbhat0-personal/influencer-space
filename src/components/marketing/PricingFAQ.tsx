@@ -1,4 +1,5 @@
 import { FAQ_CATEGORIES } from "@/lib/marketing/content";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export function PricingFAQ() {
   return (
@@ -12,7 +13,7 @@ export function PricingFAQ() {
             </span>
           </h2>
           <p className="mt-3 text-zinc-500">
-            Everything you need to know about CreatorStore.
+            Everything you need to know about {BRAND.name}.
           </p>
         </div>
 

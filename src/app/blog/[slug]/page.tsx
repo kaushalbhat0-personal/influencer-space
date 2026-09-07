@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BRAND } from "@/lib/marketing/messaging";
 
 const posts = {
   "how-to-monetize-your-audience": {
@@ -9,7 +10,7 @@ const posts = {
     content: `
       <p>Monetizing your audience in India has never been more accessible. With UPI payments, regional language content, and a rapidly growing digital economy, creators have more tools than ever to turn their passion into profit.</p>
       <h2>1. Digital Products (Zero Inventory)</h2>
-      <p>Sell PDF guides, presets, templates, or courses. No shipping, no returns, instant delivery. Platforms like CreatorStore let you upload once and sell forever.</p>
+      <p>Sell PDF guides, presets, templates, or courses. No shipping, no returns, instant delivery. Platforms like ${BRAND.name} let you upload once and sell forever.</p>
       <h2>2. Physical Merch</h2>
       <p>T-shirts, hoodies, mugs — your fans want to rep your brand. With print-on-demand, you never hold inventory. Designer uploads the artwork, creator promotes, and every sale generates profit.</p>
       <h2>3. Affiliate Marketing</h2>
@@ -28,7 +29,7 @@ const posts = {
       <h2>YouTube — Deep Trust, Higher Conversion</h2>
       <p>YouTube videos build deeper trust. A 10-minute tutorial or review creates more buying intent than a 15-second reel. Best for tech, education, and gaming creators.</p>
       <h2>The Winner? Both.</h2>
-      <p>Use Instagram for top-of-funnel awareness and YouTube for in-depth trust-building. Link both to your CreatorStore and let your storefront do the rest.</p>
+      <p>Use Instagram for top-of-funnel awareness and YouTube for in-depth trust-building. Link both to your ${BRAND.name} and let your storefront do the rest.</p>
     `,
   },
   "upi-integration-for-creators": {
@@ -39,9 +40,9 @@ const posts = {
       <h2>Why UPI Matters for Creators</h2>
       <p>UPI is how a large share of Indian audiences prefer to pay online. If your storefront doesn't support UPI, you're leaving money on the table. Credit cards work, but UPI is what your audience actually uses day to day.</p>
       <h2>Setting Up UPI Payments</h2>
-      <p>With CreatorStore, UPI is built in through Razorpay. Your customers can pay via UPI, cards, net banking, and wallets, and payouts go directly to your linked account.</p>
+      <p>With ${BRAND.name}, UPI is built in through Razorpay. Your customers can pay via UPI, cards, net banking, and wallets, and payouts go directly to your linked account.</p>
       <h2>Instant Checkout</h2>
-      <p>UPI payments confirm at checkout in seconds, so customers aren't waiting on approvals or card OTPs. You keep 100% of every sale — CreatorStore never takes a transaction fee.</p>
+      <p>UPI payments confirm at checkout in seconds, so customers aren't waiting on approvals or card OTPs. You keep 100% of every sale — ${BRAND.name} never takes a transaction fee.</p>
     `,
   },
 };

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { CheckCircle2, Loader2, SkipForward, RefreshCw } from "lucide-react";
 import { MarketingEvents } from "@/lib/analytics/marketing";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface DemoStage {
   id: string;
@@ -138,7 +139,7 @@ export function AIDemo({ onComplete, onCtaClick }: AIDemoProps) {
             comes together
           </h2>
           <p className="mt-3 text-zinc-500">
-            This is a preview of the steps CreatorStore follows to build your business from a social profile.
+            This is a preview of the steps {BRAND.name} follows to build your business from a social profile.
           </p>
         </div>
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface SectionProps {
   readonly id?: string;
@@ -74,16 +75,16 @@ export function SectionHeading({
       }
     >
       <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-        {title.includes("CreatorStore") ? (
+        {title.includes(BRAND.name) ? (
           <>
-            {title.split("CreatorStore").map((part, i, arr) => (
+            {title.split(BRAND.name).map((part, i, arr) => (
               <span key={i}>
                 {part}
                 {i < arr.length - 1 && (
                   <span
                     className={`bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}
                   >
-                    CreatorStore
+                    {BRAND.name}
                   </span>
                 )}
               </span>

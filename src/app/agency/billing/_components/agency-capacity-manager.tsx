@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { createAdditionalClientCheckoutAction, cancelAgencyCapacityAction } from "@/actions/partner.actions";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface AddonView {
   id: string;
@@ -58,7 +59,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
           order_id: res.orderId,
           amount: res.amountPaise,
           currency: res.currency ?? "INR",
-          name: "CreatorStore",
+          name: BRAND.name,
           description: `${quantity} additional client website${quantity > 1 ? "s" : ""}`,
           theme: { color: "#6366f1" },
         }).open();

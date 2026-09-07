@@ -21,6 +21,7 @@ import { provisionCreator } from "@/actions/provision.actions";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProvisioningSummary } from "@/components/provisioning/ProvisioningSummary";
 import { ProvisioningTimeline } from "@/components/provisioning/ProvisioningTimeline";
+import { BRAND } from "@/lib/marketing/messaging";
 import type { StepperStep, StrategyOption, ChecklistItem, SectionToggle } from "@/components/ai";
 import type { GenerateWebsiteResult } from "@/lib/generation/operations";
 import {
@@ -227,7 +228,7 @@ export default function GeneratePage() {
       <div className="max-w-3xl mx-auto space-y-6">
         <PageHeader
           title="Creator Import"
-          description="Import creators from YouTube, Demo Seeds or Manual setup and provision complete CreatorStore websites."
+          description={`Import creators from YouTube, Demo Seeds or Manual setup and provision complete ${BRAND.name} websites.`}
           breadcrumbs={[{ label: "Dashboard", href: "/super-admin" }, { label: "Creator Platform" }, { label: "Creator Import" }]}
         />
         <Stepper steps={flowSteps(step)} currentStep={step} size="compact" />

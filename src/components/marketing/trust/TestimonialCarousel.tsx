@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import type { TrustTestimonial } from "@/lib/marketing/trust/types";
 import { Section } from "@/components/marketing/Section";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface TestimonialCarouselProps {
   readonly testimonials: readonly TrustTestimonial[];
@@ -14,7 +15,7 @@ interface TestimonialCarouselProps {
 export function TestimonialCarousel({
   testimonials,
   title = "What creators are saying",
-  subtitle = "Real stories from creators who built their business with CreatorStore.",
+  subtitle = `Real stories from creators who built their business with ${BRAND.name}.`,
 }: TestimonialCarouselProps) {
   const [current, setCurrent] = useState(0);
   const total = testimonials.length;

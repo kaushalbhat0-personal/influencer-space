@@ -5,6 +5,7 @@
  * No creator should ever see an empty dashboard — always know what to do next.
  */
 import { prisma } from "@/lib/prisma";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export interface CreatorMilestone {
   id: string;
@@ -19,7 +20,7 @@ export interface CreatorMilestone {
 }
 
 const MILESTONES: Omit<CreatorMilestone, "done">[] = [
-  { id: "account", label: "Account created", description: "Your CreatorStore account is ready", action: "Done", href: "", estimatedMinutes: 0, category: "website", priority: 1 },
+  { id: "account", label: "Account created", description: `Your ${BRAND.name} account is ready`, action: "Done", href: "", estimatedMinutes: 0, category: "website", priority: 1 },
   { id: "website", label: "Website generated", description: "AI built your storefront", action: "View your site", href: "", estimatedMinutes: 0, category: "website", priority: 2 },
   { id: "hero", label: "Customize your homepage", description: "Make your hero section your own", action: "Edit Hero", href: "/admin/settings", estimatedMinutes: 3, category: "website", priority: 3 },
   { id: "logo", label: "Upload your logo", description: "Brand your storefront", action: "Upload Logo", href: "/admin/appearance", estimatedMinutes: 1, category: "brand", priority: 4 },

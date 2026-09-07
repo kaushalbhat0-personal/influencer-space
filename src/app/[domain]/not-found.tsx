@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export default function StorefrontNotFound() {
   return (
@@ -10,7 +11,7 @@ export default function StorefrontNotFound() {
           This creator profile doesn&apos;t exist or has been removed.
         </p>
         <Link href="/" className="admin-btn-cyan inline-flex text-sm">
-          ← Back to CreatorStore
+          ← Back to {BRAND.name}
         </Link>
       </div>
     </main>

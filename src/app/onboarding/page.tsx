@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getProvidersByCategory, type ImportProvider } from "@/lib/import-provider/registry";
 import "@/lib/import-provider/providers";
+import { BRAND } from "@/lib/marketing/messaging";
 import { ImportInputRenderer } from "@/components/onboarding/import-input-renderer";
 import { OnboardingIntelligence } from "@/components/onboarding/OnboardingIntelligence";
 
@@ -459,7 +460,7 @@ export default function OnboardingPage() {
         {step === "import" && (
           <div className="space-y-6">
             <div>
-              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Build your CreatorStore</h1>
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Build your {BRAND.name}</h1>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">
                 Choose how you&apos;d like to start. Nothing is permanent — you can always import more later.
               </p>

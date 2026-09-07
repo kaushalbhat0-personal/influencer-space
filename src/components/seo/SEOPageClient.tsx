@@ -11,6 +11,7 @@ import { StructuredDataBuilder } from "./StructuredDataBuilder";
 import { seoService, mapGlobalSettingsToForm, mapPageSettingsToForm } from "@/lib/seo";
 import type { SEOGlobalSettings, PageSEOSettings } from "@/lib/seo";
 import { PAGE_TYPES } from "@/lib/seo/constants";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface SEOPageClientProps {
   storeName: string;
@@ -25,7 +26,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
   const globalDefaults: SEOGlobalSettings = useMemo(() => mapGlobalSettingsToForm({
     siteTitle: storeName,
     brandName: storeName,
-    metaDescription: `Browse ${storeName}'s collection on CreatorStore`,
+    metaDescription: `Browse ${storeName}'s collection on ${BRAND.name}`,
     canonicalDomain: storefrontUrl,
     robotsIndex: true,
     sitemapEnabled: true,
@@ -67,7 +68,7 @@ export function SEOPageClient({ storeName, storefrontUrl }: SEOPageClientProps) 
     <ContentContainer>
       <PageHeader
         title="SEO"
-        description="Search engine optimization for your CreatorStore"
+        description={`Search engine optimization for your ${BRAND.name}`}
         breadcrumbs={[{ label: "Website", href: "/admin/appearance" }, { label: "SEO" }]}
         status={saved ? { label: "Saved!", variant: "success" } : { label: "Live", variant: "default" }}
       />

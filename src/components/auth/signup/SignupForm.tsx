@@ -9,6 +9,7 @@ import type { SignupState, Persona } from "./types";
 import { STEP_ORDER } from "./types";
 import { User, Building2, Sparkles, CheckCircle2, ArrowLeft } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { BRAND } from "@/lib/marketing/messaging";
 
 const DEFAULT_STATE: SignupState = {
   step: "welcome",
@@ -138,7 +139,7 @@ export function SignupForm({ pricing }: { pricing?: Record<string, { price: numb
               <Sparkles className="h-8 w-8 text-[var(--brand-primary)]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Welcome to CreatorStore</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Welcome to {BRAND.name}</h1>
               <p className="mt-2 text-[var(--text-secondary)]">Let&apos;s build your business.</p>
             </div>
             <button onClick={next} className="btn-primary w-full py-3">

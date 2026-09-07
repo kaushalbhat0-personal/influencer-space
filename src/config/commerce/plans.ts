@@ -11,6 +11,8 @@
  * capabilities a plan GRANTS; consumption happens through CapabilityService.
  */
 
+import { BRAND } from "@/lib/marketing/messaging";
+
 export type CommerceCapability =
   | "basic_builder"
   | "basic_themes"
@@ -189,7 +191,7 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     marketingHighlights: [
       "Profile-built website generation",
       "Beautiful website",
-      "CreatorStore subdomain",
+      `${BRAND.name} subdomain`,
       "Basic themes",
       "Up to 3 active items across products, services, courses & games",
       "3 gallery items",

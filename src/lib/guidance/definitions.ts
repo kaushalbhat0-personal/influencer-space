@@ -1,9 +1,10 @@
 import type { GuidanceDefinition, HelpArticle } from "./types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const CREATOR_GUIDANCE: GuidanceDefinition = {
   id: "creator-walkthrough",
   audience: "creator",
-  title: "Welcome to CreatorStore",
+  title: `Welcome to ${BRAND.name}`,
   description: "Let's get your website ready. We'll walk you through the important parts — you can skip and come back anytime.",
   steps: [
     { id: "website", title: "Your Website", description: "This is your website workspace. Everything you add here appears on your storefront." },

@@ -1,3 +1,4 @@
+import { BRAND } from "./messaging";
 
 export interface CreatorStat {
   label: string;
@@ -46,13 +47,13 @@ export const FEATURES_HERO_DATA = {
 export const ABOUT_HERO_DATA = {
   title: "We believe every creator and business deserves a real platform",
   subtitle:
-    "CreatorStore was founded to give creators, freelancers, and small businesses the same powerful tools that enterprises have — personalized, automated, and affordable.",
+    `${BRAND.name} was founded to give creators, freelancers, and small businesses the same powerful tools that enterprises have — personalized, automated, and affordable.`,
   mission:
     "To democratize online business by making enterprise-grade infrastructure accessible to every creator, freelancer, and business, regardless of size or technical skill.",
   story: [
-    "CreatorStore started with a simple observation: creators pour their hearts into content but have no easy way to turn that into a real business. Existing tools were either too complex (build a website from scratch), too limited (link-in-bio pages), or too expensive (enterprise platforms).",
-    "We built CreatorStore to bridge that gap. Our platform analyzes your existing content — your videos, posts, style, and audience — and builds a complete business platform tailored to you. Not a template. Not a generic page. A real business, built from your content.",
-    "CreatorStore is new, and we grow with the creators who build on it. Every storefront published today runs on the same platform end to end: a website you own, commerce when you want it, and a dashboard that keeps everything in one place. We're building the infrastructure we wished every creator had from day one.",
+    `${BRAND.name} started with a simple observation: creators pour their hearts into content but have no easy way to turn that into a real business. Existing tools were either too complex (build a website from scratch), too limited (link-in-bio pages), or too expensive (enterprise platforms).`,
+    `We built ${BRAND.name} to bridge that gap. Our platform analyzes your existing content — your videos, posts, style, and audience — and builds a complete business platform tailored to you. Not a template. Not a generic page. A real business, built from your content.`,
+    `${BRAND.name} is new, and we grow with the creators who build on it. Every storefront published today runs on the same platform end to end: a website you own, commerce when you want it, and a dashboard that keeps everything in one place. We're building the infrastructure we wished every creator had from day one.`,
   ],
   values: [
     {
@@ -89,7 +90,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "What platforms do you support?",
-        a: "YouTube, Instagram, TikTok, X (Twitter), LinkedIn, Twitch, and any website URL. If your content lives online, CreatorStore can work with it.",
+        a: `YouTube, Instagram, TikTok, X (Twitter), LinkedIn, Twitch, and any website URL. If your content lives online, ${BRAND.name} can work with it.`,
       },
       {
         q: "How long does it take to get started?",
@@ -97,7 +98,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Do I need technical skills?",
-        a: "Not at all. CreatorStore is designed for anyone who wants to focus on their work, not code. The platform builds everything automatically, and the visual builder lets you customize without touching HTML or CSS.",
+        a: `Not at all. ${BRAND.name} is designed for anyone who wants to focus on their work, not code. The platform builds everything automatically, and the visual builder lets you customize without touching HTML or CSS.`,
       },
     ],
   },
@@ -115,7 +116,7 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "Can I use my own domain?",
-        a: "Yes — on Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a CreatorStore subdomain for free.",
+        a: `Yes — on Scale, Enterprise, and higher-tier Partner plans, with free SSL. Launch and Growth use a ${BRAND.name} subdomain for free.`,
       },
       {
         q: "Is the storefront mobile-friendly?",
@@ -133,11 +134,11 @@ export const FAQ_CATEGORIES = [
       },
       {
         q: "How do payments work?",
-        a: "CreatorStore uses Razorpay for payment processing. Your customers can pay via UPI (BHIM, Google Pay, PhonePe, Paytm), credit/debit cards, net banking, and wallets. Payouts go directly to your linked account.",
+        a: `${BRAND.name} uses Razorpay for payment processing. Your customers can pay via UPI (BHIM, Google Pay, PhonePe, Paytm), credit/debit cards, net banking, and wallets. Payouts go directly to your linked account.`,
       },
       {
         q: "What does it cost to sell?",
-        a: "You keep 100% of every sale. CreatorStore never takes a transaction fee — you pay for your plan, and every rupee your customers spend goes to you. See the pricing page for current plan rates.",
+        a: `You keep 100% of every sale. ${BRAND.name} never takes a transaction fee — you pay for your plan, and every rupee your customers spend goes to you. See the pricing page for current plan rates.`,
       },
       {
         q: "Can I offer subscriptions or memberships?",
@@ -150,11 +151,11 @@ export const FAQ_CATEGORIES = [
     label: "Agency Features",
     items: [
       {
-        q: "Can agencies use CreatorStore?",
+        q: `Can agencies use ${BRAND.name}?`,
         a: "Yes. Partner plans support multi-client workspaces, team collaboration, and agency revenue insights. Generate storefronts for clients in minutes. On Scale and Enterprise plans you can also configure white-label branding (colors, logo, support details) shown on your branded client preview portal.",
       },
       {
-        q: "Can I white-label CreatorStore?",
+        q: `Can I white-label ${BRAND.name}?`,
         a: "On Scale and Enterprise plans you can configure your agency's branding — colors, logo, and support details — which is shown on your branded client preview portal. A fully client-facing custom-branded dashboard is on the roadmap but not yet available.",
       },
       {

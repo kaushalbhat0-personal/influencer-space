@@ -51,10 +51,12 @@ export function getTrialFraming(plan: ResolvedPlan): { title: string; subtitle: 
  * percentage or a guaranteed amount (the rate lives in the runtime
  * configuration hierarchy, not marketing).
  */
+import { BRAND } from "@/lib/marketing/messaging";
+
 export const PARTNER_VALUE_POINTS = [
   "Choose your Partner plan — start free with Partner Launch or pick a paid plan for more client capacity and advanced agency capabilities.",
   "Paid plans are a one-time purchase. Partner Solo and Partner Scale are paid once — there is no monthly Partner subscription.",
-  "Your clients have their own Creator plans and pay CreatorStore directly (partner-onboarded creators use Creator Growth or higher).",
+  `Your clients have their own Creator plans and pay ${BRAND.name} directly (partner-onboarded creators use Creator Growth or higher).`,
   "Earn recurring commission from eligible active clients as a paid Partner — your commission rate is determined by your Partner configuration and eligible client activity.",
 ];
 

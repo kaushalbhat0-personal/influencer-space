@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Menu, X } from "lucide-react";
 import type { DashboardNav, NavGroup, NavItem } from "@/lib/navigation/config";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface SidebarProps {
   nav: DashboardNav;
@@ -39,11 +40,11 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
       <div className="flex h-14 items-center gap-3 px-4 border-b border-[var(--border)]">
         {collapsed ? (
           <span className="mx-auto text-sm font-bold text-[var(--text-primary)] font-display">
-            CS
+            {BRAND.name.slice(0, 2).toUpperCase()}
           </span>
         ) : (
           <span className="text-sm font-bold text-[var(--text-primary)] font-display">
-            CreatorStore
+            {BRAND.name}
           </span>
         )}
       </div>
@@ -83,7 +84,7 @@ export function Sidebar({ nav, collapsed = false, bottom }: SidebarProps) {
           <div className="absolute inset-y-0 left-0 w-64 bg-[var(--surface-base)] border-r border-[var(--border)] shadow-[var(--shadow-overlay)]">
             <div className="flex h-14 items-center justify-between px-4 border-b border-[var(--border)] bg-[var(--surface-base)]">
               <span className="text-sm font-bold text-[var(--text-primary)] font-display">
-                CreatorStore
+                {BRAND.name}
               </span>
               <button onClick={() => setMobileOpen(false)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]" aria-label="Close sidebar">
                 <X className="h-5 w-5" />

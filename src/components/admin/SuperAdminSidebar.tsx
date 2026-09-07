@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ADMIN_REGISTRY, GROUP_ORDER, type AdminGroup } from "@/config/admin-registry";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, LogOut, ChevronDown } from "lucide-react";
+import { BRAND } from "@/lib/marketing/messaging";
 
 const GROUP_LABELS: Record<AdminGroup, string> = {
   overview: "Overview",
@@ -43,7 +44,7 @@ export function SuperAdminSidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-white/[0.06] bg-[var(--surface-base)]">
       <div className="flex h-14 items-center px-4 border-b border-white/[0.06]">
         <Link href="/super-admin" className="text-sm font-bold text-[var(--brand-primary)] tracking-tight">
-          CreatorStore
+          {BRAND.name}
         </Link>
       </div>
 

@@ -9,6 +9,7 @@ import { builderQuery } from "@/lib/builder/query";
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import { CompletionBadge } from "./completion-badge";
 import { ContextualHelp } from "@/components/guidance/ContextualHelp";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface Props {
   device: BuilderCanvas["device"];
@@ -60,7 +61,7 @@ export function BuilderToolbar({
             href="/admin/dashboard"
             className="hidden sm:inline shrink-0 text-sm font-bold text-[var(--text-primary)] font-display hover:text-[var(--text-secondary)] transition-colors"
           >
-            CreatorStore
+            {BRAND.name}
           </Link>
           <span className="truncate text-xs text-zinc-300 font-medium max-w-[90px] sm:max-w-none">{creatorName}</span>
           <span className="hidden lg:inline h-4 w-px bg-white/10 shrink-0" />

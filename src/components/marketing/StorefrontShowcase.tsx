@@ -1,4 +1,5 @@
 import { Globe, Smartphone, Search, Package, ShieldCheck, BadgeIndianRupee } from "lucide-react";
+import { BRAND } from "@/lib/marketing/messaging";
 
 /**
  * RCCF-MKT-02-R1 — Section 9: product experience.
@@ -11,7 +12,7 @@ import { Globe, Smartphone, Search, Package, ShieldCheck, BadgeIndianRupee } fro
  * are retained on disk for backwards compat but not used in active marketing.
  */
 const FACTS = [
-  { icon: Globe, title: "Your own domain", body: "Publish to your CreatorStore address, or connect your own domain with free SSL on eligible plans." },
+  { icon: Globe, title: "Your own domain", body: `Publish to your ${BRAND.name} address, or connect your own domain with free SSL on eligible plans.` },
   { icon: Smartphone, title: "Ready for every screen", body: "Your site is responsive out of the box — desktop, tablet, and phone." },
   { icon: Search, title: "Built-in SEO", body: "Meta tags, structured data, and sitemaps so people can actually find you." },
   { icon: Package, title: "Orders in one place", body: "Track orders, customers, and revenue from your dashboard." },
@@ -81,7 +82,7 @@ export function StorefrontShowcase() {
         </div>
 
         <p className="mb-14 text-center text-xs text-zinc-600">
-          Real examples — Mystic Minutes and Northstar Studio are live CreatorStore sites. Yours is generated from your profile.
+          Real examples — Mystic Minutes and Northstar Studio are live {BRAND.name} sites. Yours is generated from your profile.
         </p>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

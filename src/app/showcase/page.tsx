@@ -5,13 +5,14 @@ import { Search, ExternalLink, ArrowRight } from "lucide-react";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Footer } from "@/components/marketing/Footer";
 import { formatCurrency } from "@/lib/utils";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const dynamic = "force-dynamic";
 
 // RCCF-LAUNCH-POLISH-05: consistent marketing chrome (nav/footer + metadata).
 export const metadata: Metadata = {
   title: "Showcase",
-  description: "Explore real websites built with CreatorStore.",
+  description: `Explore real websites built with ${BRAND.name}.`,
   alternates: { canonical: "/showcase" },
 };
 
@@ -37,7 +38,7 @@ export default async function ShowcasePage({ searchParams }: { searchParams: { c
             Every site here is a real, published website — built from a profile, owned on its own domain.
           </p>
           <p className="platform-metadata mt-2 text-center">
-            Mystic Minutes · North Star — and every business building with CreatorStore
+            Mystic Minutes · North Star — and every business building with {BRAND.name}
           </p>
         </div>
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/lib/marketing/messaging";
+
 interface Props {
   slug: string;
   onSlugChange: (v: string) => void;
@@ -39,7 +41,7 @@ export function ProductSEOSection({ slug, onSlugChange, seoTitle, onSeoTitleChan
             onChange={(e) => onSeoTitleChange(e.target.value)}
             className="admin-input w-full"
             disabled={disabled}
-            placeholder="Buy My Product | CreatorStore"
+            placeholder={`Buy My Product | ${BRAND.name}`}
             maxLength={200}
           />
         </div>

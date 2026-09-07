@@ -10,6 +10,7 @@ import { resolveAdminNavIcon } from "@/config/admin-nav-icons";
 import { ChevronDown, ExternalLink, LogOut, X, Building2, User } from "lucide-react";
 import { PublishStatusBadge, type PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import { useWorkspace } from "@/modules/workspace/presentation/context";
+import { BRAND } from "@/lib/marketing/messaging";
 
 interface AdminSidebarProps {
   open: boolean;
@@ -130,7 +131,7 @@ export function AdminSidebar({ open, onClose, siteUrl = "/", publishStatus = "dr
             onClick={onClose}
             className="font-display text-[1.05rem] font-bold tracking-tight text-[var(--text-primary)]"
           >
-            CreatorStore
+            {BRAND.name}
           </Link>
           <button
             onClick={onClose}

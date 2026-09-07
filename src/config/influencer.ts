@@ -17,10 +17,12 @@ export type InfluencerDataType = {
   };
 };
 
+import { BRAND } from "@/lib/marketing/messaging";
+
 export const defaultConfig: InfluencerDataType = {
   name: "Creator",
   tagline: "Welcome to my creator storefront",
-  bio: "Creator on CreatorStore.",
+  bio: `Creator on ${BRAND.name}.`,
   social: {
     instagram: "",
     youtube: "",

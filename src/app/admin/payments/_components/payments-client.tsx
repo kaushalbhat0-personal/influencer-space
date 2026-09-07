@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveMyPaymentAccount, verifyMyPaymentAccount, disconnectMyPaymentAccount } from "@/actions/payment-account.actions";
+import { BRAND } from "@/lib/marketing/messaging";
 import { PAYMENT_PROVIDERS } from "@/modules/payment-account/providers/meta";
 import { CommerceStrategyBadge } from "@/modules/commerce-strategy/presentation/strategy-badge";
 import type { PaymentAccountData, PaymentReadinessReport } from "@/modules/payment-account/domain/types";
@@ -98,7 +99,7 @@ export function PaymentsClient({ account, readiness, error }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Payment readiness</p>
-            <p className="mt-1 text-sm text-[var(--text-primary)]">You keep <span className="font-semibold text-emerald-400">100% of every sale</span>. CreatorStore never takes a transaction fee.</p>
+            <p className="mt-1 text-sm text-[var(--text-primary)]">You keep <span className="font-semibold text-emerald-400">100% of every sale</span>. {BRAND.name} never takes a transaction fee.</p>
           </div>
           <div className="flex items-center gap-2">
             {readiness && <CommerceStrategyBadge strategy={readiness.strategy as never} />}

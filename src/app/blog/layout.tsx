@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/marketing/Footer";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   description:
     "Tips, guides, and strategies for creators, freelancers, and businesses building their presence and business online.",
   openGraph: {
-    title: "CreatorStore Blog",
+    title: `${BRAND.name} Blog`,
     description:
       "Learn how to build your presence online — showcase your work, sell products and services, and grow your business.",
   },
@@ -19,9 +20,9 @@ export const metadata: Metadata = {
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-6">
+      <header className="mx-auto max-w-3xl items-center justify-between px-4 py-6">
         <Link href="/" className="text-sm font-semibold text-zinc-400 transition-colors hover:text-white">
-          ← CreatorStore
+          ← {BRAND.name}
         </Link>
         <nav className="flex items-center gap-4 text-sm text-zinc-500">
           <Link href="/blog" className="hover:text-zinc-300">Blog</Link>

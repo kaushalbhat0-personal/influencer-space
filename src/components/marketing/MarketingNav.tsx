@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import { MotionPresence, MotionDiv } from "@/components/ui/MotionSafe";
+import { BRAND } from "@/lib/marketing/messaging";
 
 /**
  * RCCF-MKT-02-R1: nav carries the platform story, not a sitemap. Blog and
@@ -67,7 +68,7 @@ export function MarketingNav() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-lg font-bold text-transparent">
-              CreatorStore
+              {BRAND.name}
             </span>
           </Link>
 
@@ -147,7 +148,7 @@ export function MarketingNav() {
               <div className="flex h-16 items-center justify-between border-b border-white/[0.06] px-4">
                 <Link href="/" onClick={close}>
                   <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-lg font-bold text-transparent">
-                    CreatorStore
+                    {BRAND.name}
                   </span>
                 </Link>
                 <button

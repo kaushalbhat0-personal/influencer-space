@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BRAND } from "@/lib/marketing/messaging";
 
 // RCCF-IMPLEMENTATION-73 Phase 10: the guide links on /blog/guides previously
 // 404'd. One [slug] route serves all guides from canonical content.
 const GUIDES = [
   {
     slug: "getting-started",
-    title: "Getting Started with CreatorStore",
+    title: `Getting Started with ${BRAND.name}`,
     description: "Set up your storefront in under 10 minutes — connect your profile, add products, and go live.",
     sections: [
-      { h: "1. Paste your profile", p: "Go to the homepage and paste your YouTube, Instagram, or TikTok link. CreatorStore builds a storefront from your actual content." },
+      { h: "1. Paste your profile", p: `Go to the homepage and paste your YouTube, Instagram, or TikTok link. ${BRAND.name} builds a storefront from your actual content.` },
       { h: "2. Make it yours", p: "Use the visual builder to customize sections, themes, and pages. Add products, services, courses or bookings." },
-      { h: "3. Go live", p: "Publish to your CreatorStore subdomain or connect your own domain with free SSL. You keep 100% of every sale." },
+      { h: "3. Go live", p: `Publish to your ${BRAND.name} subdomain or connect your own domain with free SSL. You keep 100% of every sale.` },
     ],
   },
   {
@@ -29,8 +30,8 @@ const GUIDES = [
     title: "Setting Up UPI Payments",
     description: "Accept payments from your audience instantly with UPI, cards, and net banking.",
     sections: [
-      { h: "Payments on your store", p: "CreatorStore uses Razorpay so your customers can pay via UPI, cards, net banking and wallets." },
-      { h: "Your money", p: "You keep 100% of every sale — CreatorStore never takes a transaction fee. Connect your payment account to receive payouts." },
+      { h: "Payments on your store", p: `${BRAND.name} uses Razorpay so your customers can pay via UPI, cards, net banking and wallets.` },
+      { h: "Your money", p: `You keep 100% of every sale — ${BRAND.name} never takes a transaction fee. Connect your payment account to receive payouts.` },
       { h: "Customer experience", p: "Buyers get a smooth checkout, a receipt, and order tracking after purchase." },
     ],
   },
@@ -42,7 +43,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const guide = GUIDES.find((g) => g.slug === params.slug);
-  return { title: guide?.title ?? "Guide", description: guide?.description ?? "A CreatorStore guide" };
+  return { title: guide?.title ?? "Guide", description: guide?.description ?? `A ${BRAND.name} guide` };
 }
 
 export default function GuidePage({ params }: { params: { slug: string } }) {

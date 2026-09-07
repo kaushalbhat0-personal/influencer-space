@@ -1,8 +1,10 @@
 import { promptRegistry } from "@/lib/ai/prompts/registry";
 import { HeroContentSchema, FaqContentSchema, SeoContentSchema, CtaContentSchema, NewsletterContentSchema, TestimonialContentSchema, PricingContentSchema, LinksContentSchema, ContactContentSchema } from "./schemas";
 
+import { BRAND } from "@/lib/marketing/messaging";
+
 function buildSystemPrompt(schema: string): string {
-  return `You are a Content Studio AI for CreatorStore.
+  return `You are a Content Studio AI for ${BRAND.name}.
 Generate structured content for a creator's website section.
 Output ONLY valid JSON matching the schema below.
 No markdown, no explanations.

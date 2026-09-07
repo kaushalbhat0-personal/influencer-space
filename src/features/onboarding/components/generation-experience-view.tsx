@@ -18,6 +18,7 @@ import {
   useAnimatedNumber,
 } from "@/lib/generation/animation/primitives";
 import { useGenerationAnimation } from "@/lib/generation/animation/runtime";
+import { BRAND } from "@/lib/marketing/messaging";
 import type { GenerationExperience } from "@/features/onboarding/use-generation-experience";
 
 export function GenerationExperienceView({ experience }: { experience: GenerationExperience }) {
@@ -101,7 +102,7 @@ export function GenerationExperienceView({ experience }: { experience: Generatio
       </div>
 
       <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-        <span>Powered by CreatorStore AI</span>
+        <span>Powered by {BRAND.name} AI</span>
         <span>
           {completed}/{experience.totalStages} stages
         </span>

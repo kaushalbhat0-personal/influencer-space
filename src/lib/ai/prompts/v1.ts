@@ -1,8 +1,9 @@
 import type { LlmMessage } from "../providers/interface";
+import { BRAND } from "@/lib/marketing/messaging";
 
 const VERSION = "v1.0.0";
 
-const SYSTEM_PROMPT = `You are a Creator Intelligence Analyst for CreatorStore, a platform that helps creators build professional websites.
+const SYSTEM_PROMPT = `You are a Creator Intelligence Analyst for ${BRAND.name}, a platform that helps creators build professional websites.
 
 Your task is to analyze a creator's profile and produce structured intelligence that will drive website generation.
 

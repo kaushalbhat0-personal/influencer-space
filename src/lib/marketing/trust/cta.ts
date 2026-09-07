@@ -1,4 +1,5 @@
 import type { TrustCTA } from "./types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const SEED_CTAS: TrustCTA[] = [
   {
@@ -55,7 +56,7 @@ export const SEED_CTAS: TrustCTA[] = [
     href: "/contact",
     variant: "secondary",
     audience: "enterprise",
-    description: "See CreatorStore in action with a personalized walkthrough.",
+    description: `See ${BRAND.name} in action with a personalized walkthrough.`,
   },
   {
     id: "demo-watch",
@@ -87,6 +88,6 @@ export const SEED_CTAS: TrustCTA[] = [
     href: "/features",
     variant: "secondary",
     audience: "general",
-    description: "Explore all CreatorStore features and capabilities.",
+    description: `Explore all ${BRAND.name} features and capabilities.`,
   },
 ];

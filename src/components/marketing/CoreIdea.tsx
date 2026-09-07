@@ -1,4 +1,5 @@
 import { Globe, LayoutGrid, Link2, ShoppingBag, Gauge } from "lucide-react";
+import { BRAND } from "@/lib/marketing/messaging";
 
 /**
  * RCCF-MKT-02-R1 — Section 2: the core idea.
@@ -29,7 +30,7 @@ export function CoreIdea() {
             </h2>
             <p className="mt-4 max-w-lg text-base leading-relaxed text-zinc-400 sm:text-lg">
               Most tools give you one piece — a link page, a shop, or a blog.
-              CreatorStore gives you the whole home: your presence, your work,
+              {BRAND.name} gives you the whole home: your presence, your work,
               your links, and your business live together in one place you own.
             </p>
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-zinc-500">

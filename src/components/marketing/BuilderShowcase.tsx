@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { BRAND } from "@/lib/marketing/messaging";
 
 /**
  * RCCF-MKT-02-R1 — Section 6: Build.
@@ -25,7 +26,7 @@ const BUILDER_POINTS = [
   },
   {
     title: "One-click publish",
-    body: "Publish to your CreatorStore domain, or connect your own with free SSL on eligible plans.",
+    body: `Publish to your ${BRAND.name} domain, or connect your own with free SSL on eligible plans.`,
   },
 ] as const;
 
@@ -46,7 +47,7 @@ export function BuilderShowcase() {
             </h2>
             <p className="mt-4 max-w-lg text-base leading-relaxed text-zinc-400 sm:text-lg">
               Your home starts from your profile — then the visual builder puts
-              every section in your hands. CreatorStore is more than a checkout
+              every section in your hands. {BRAND.name} is more than a checkout
               page; it&rsquo;s a website you actually own.
             </p>
             <div className="mt-8">
