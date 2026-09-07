@@ -17,6 +17,7 @@
 import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 import { logAgencyAction } from "@/lib/audit";
+import { getPlatformConfig } from "@/lib/config/platform";
 import { resolveActivePlan } from "@/modules/billing/application/plan-source";
 import { capabilityService } from "@/lib/capabilities";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
@@ -43,7 +44,7 @@ export const TEAM_ROLE_LABELS: Record<TeamInviteRole, string> = {
  * built from window.location or a client-supplied origin.
  */
 export function resolveAppBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return getPlatformConfig().appUrl;
 }
 
 /** Least-privileged PARTNER plan used when a Partner has no resolvable subscription. */

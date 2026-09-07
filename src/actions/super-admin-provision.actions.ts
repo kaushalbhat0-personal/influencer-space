@@ -3,6 +3,7 @@
 import { provisioningService } from "@/modules/provisioning/application/provisioning-service";
 import { workspaceRepository } from "@/modules/workspace/infrastructure/repository";
 import { capabilityService } from "@/lib/capabilities";
+import { getPlatformConfig } from "@/lib/config/platform";
 import { prisma } from "@/lib/prisma";
 import { agencyTenantRelationship } from "@/modules/partner/application/partner-relationship";
 import { logAction } from "@/lib/audit";
@@ -275,7 +276,7 @@ export async function confirmProvision(params: {
       creatorName: params.creatorName,
     });
 
-    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/admin/login`;
+    const loginUrl = `${getPlatformConfig().appUrl}/admin/login`;
 
     return {
       success: true,

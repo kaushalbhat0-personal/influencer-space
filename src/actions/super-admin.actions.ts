@@ -9,6 +9,7 @@ import { defaultHeroData } from "@/config/hero";
 import { YouTubeScraperService } from "@/services/youtube-scraper.service";
 import { VercelService } from "@/services/vercel.service";
 import { getServerSession } from "next-auth";
+import { getPlatformConfig } from "@/lib/config/platform";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { toSubdomain } from "@/lib/utils";
@@ -118,7 +119,7 @@ export async function provisionNewCreator(
       return tenant;
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getPlatformConfig().appUrl;
 
     return {
       success: true,
@@ -226,7 +227,7 @@ export async function magicProvisionFromYoutube(
       return tenant;
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getPlatformConfig().appUrl;
 
     return {
       success: true,
@@ -411,7 +412,7 @@ export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTok
     .setExpirationTime("5m")
     .sign(secret);
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getPlatformConfig().appUrl;
   return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };
 }
 
@@ -439,7 +440,7 @@ export async function generateLoginAsAgencyToken(agencyId: string): Promise<Logi
     .sign(secret);
   await logAction("system", "support:impersonate-agency", { agencyId, actor: session.user.email }).catch(() => {});
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getPlatformConfig().appUrl;
   return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };
 }
 

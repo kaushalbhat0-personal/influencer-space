@@ -4,6 +4,7 @@
 // Funds land in creator's Stripe balance. CreatorStore never in flow.
 
 import type { PaymentProviderAdapter, PaymentCheckoutInput, PaymentCheckoutResult, PaymentVerificationInput, PaymentVerificationResult, PaymentRefundInput, PaymentRefundResult, PaymentAccountStatusResult } from "./types";
+import { getPlatformConfig } from "@/lib/config/platform";
 
 function stripeClient(secretKey?: string | null): unknown | null {
   if (!secretKey) return null;
@@ -26,8 +27,8 @@ export class StripePaymentAdapter implements PaymentProviderAdapter {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         line_items: [{ price_data: { currency: (input.order.currency || "inr").toLowerCase(), product_data: { name: input.order.description.slice(0, 80) }, unit_amount: Math.round(input.order.amount * 100) }, quantity: 1 }],
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/purchase/cancel`,
+        success_url: `${getPlatformConfig().appUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getPlatformConfig().appUrl}/purchase/cancel`,
         client_reference_id: input.order.referenceId,
         customer_email: input.order.customerEmail || undefined,
         metadata: { reconciliationRef: input.order.referenceId, creatorStore: "true", ...(input.order.metadata ?? {}) },
