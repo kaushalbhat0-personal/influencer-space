@@ -45,7 +45,7 @@ export async function sendCommunication(
   // ── Tenant vs platform decision (RCCF-INTEGRATIONS-03) ──────────
   // order.customer_confirmed → try tenant verified Resend first; if absent, stay on log (do NOT silently use platform)
   // all other email templates → platform Resend (global) if configured, else log
-  let adapter = getAdapter(def.channel);
+  const adapter = getAdapter(def.channel);
   let deliverReq: { templateId: string; recipient: Recipient; channel: typeof def.channel; subject: string; body: string; payload: Record<string, unknown>; tenantId?: string } = {
     templateId, recipient, channel: def.channel, subject, body, payload,
   };

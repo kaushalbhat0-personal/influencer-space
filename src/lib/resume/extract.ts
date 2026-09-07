@@ -15,8 +15,6 @@ export async function extractResumeText(buffer: Buffer, mimeType: string): Promi
   }
 
   if (mimeType === "application/pdf") {
-    // pdf-parse is CommonJS; handle both default and direct export
-    // @ts-ignore - pdf-parse has no types, handled as any
     const mod = await import("pdf-parse") as unknown as { default?: (data: Buffer) => Promise<{ text: string }> } & ((data: Buffer) => Promise<{ text: string }>);
     const pdfParse = (mod as { default?: (data: Buffer) => Promise<{ text: string }> }).default ?? (mod as unknown as (data: Buffer) => Promise<{ text: string }>);
     try {
