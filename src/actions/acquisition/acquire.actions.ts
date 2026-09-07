@@ -12,6 +12,7 @@ import { captureError } from "@/lib/observability/error-tracker";
 import { writeOnboardingComplete } from "@/lib/onboarding/complete";
 import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import type { AcquisitionStrategy, AcquisitionResult, AcquisitionRecord, AcquisitionProvisionResult } from "@/lib/acquisition/types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 let counter = 0;
 function nextId(): string {
@@ -122,7 +123,7 @@ export async function acquireAndProvision(
         tagline: profile.tagline,
         aboutSection: profile.description,
         seoTitle: businessName,
-        seoDescription: `${businessName} — ${profile.tagline || profile.description?.slice(0, 100) || "Storefront on CreatorStore"}`,
+        seoDescription: `${businessName} — ${profile.tagline || profile.description?.slice(0, 100) || `Storefront on ${BRAND.name}`}`,
       },
       generatedTheme: {
         preset: "custom",

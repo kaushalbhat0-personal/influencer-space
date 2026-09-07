@@ -1,5 +1,6 @@
 import type { WebsiteBlueprint } from "./types";
 import type { BusinessProfile } from "@/lib/acquisition/business-types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export function createEmptyBlueprint(name: string): WebsiteBlueprint {
   return {
@@ -46,7 +47,7 @@ export function blueprintFromProfile(profile: BusinessProfile): WebsiteBlueprint
   }));
   bp.commerce.enabled = profile.offers.length > 0;
 
-  bp.seo.globalDescription = `${name} — ${profile.tagline || profile.description?.slice(0, 80) || "Storefront on CreatorStore"}`;
+  bp.seo.globalDescription = `${name} — ${profile.tagline || profile.description?.slice(0, 80) || `Storefront on ${BRAND.name}`}`;
 
   if (profile.socialLinks.length > 0) {
     bp.analytics.trackEvents.push("social_click");

@@ -67,7 +67,8 @@ describe("composeFromGraph", () => {
     const config = composeFromGraph(mockGraph());
     expect(config.title).toBe("Test Creator");
     expect(config.tagline).toBe("Transform your fitness journey");
-    expect(config.domain).toBe("test-creator.creatorstore.com");
+    expect(config.domain).toContain("test-creator");
+    expect(config.domain).not.toContain("creatorstore.com");
   });
 });
 
@@ -209,7 +210,8 @@ describe("FeedComposer", () => {
 describe("ContactComposer", () => {
   it("creates contact section", () => {
     const contact = new ContactComposer().compose("test-creator", "Test Creator");
-    expect(contact.props.email).toBe("test-creator@creatorstore.com");
+    expect(contact.props.email).not.toContain("creatorstore.com");
+    expect(contact.props.email).toContain("@");
   });
 });
 

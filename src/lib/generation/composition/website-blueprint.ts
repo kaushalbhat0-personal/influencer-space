@@ -1,12 +1,21 @@
 import type { KnowledgeGraph } from "@/lib/generation/intelligence/types";
 import type { WebsiteConfig } from "./types";
+import { getPlatformConfig } from "@/lib/config/platform";
+
+function platformHost(): string {
+  try {
+    return new URL(getPlatformConfig().appUrl).hostname || "localhost";
+  } catch {
+    return "localhost";
+  }
+}
 
 export function compose(config?: Partial<WebsiteConfig>): WebsiteConfig {
   return {
     title: config?.title ?? "My Creator Store",
     tagline: config?.tagline ?? "Welcome to my official store",
     description: config?.description ?? "Creator store powered by Influencer Space",
-    domain: config?.domain ?? "default.creatorstore.com",
+    domain: config?.domain ?? `default.${platformHost()}`,
     locale: config?.locale ?? "en-US",
     currency: config?.currency ?? "USD",
     timezone: config?.timezone ?? "UTC",
@@ -22,7 +31,7 @@ export function composeFromGraph(graph: KnowledgeGraph): WebsiteConfig {
     title: name,
     tagline,
     description: graph.seo.metaDescription || graph.brand.description || `Official store for ${name}`,
-    domain: `${graph.seo.slug}.creatorstore.com`,
+    domain: `${graph.seo.slug}.${platformHost()}`,
     locale: "en-US",
     currency: "USD",
     timezone: "UTC",

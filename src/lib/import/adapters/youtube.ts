@@ -1,4 +1,5 @@
 import type { CreatorImportAdapter, ImportAnalysisResult } from "@/lib/import/types";
+import { BRAND } from "@/lib/marketing/messaging";
 
 let YouTubeScraperService: { fetchChannelMetadata: (url: string) => Promise<YouTubeChannelMeta | null> } | null = null;
 
@@ -85,7 +86,7 @@ export class YouTubeAdapter implements CreatorImportAdapter {
           services: [],
           socialLinks: [{ platform: "youtube", url: `https://youtube.com/@${handle}` }],
           seoTitle: meta.title,
-          seoDesc: meta.description?.slice(0, 160) || `${meta.title} — CreatorStore storefront`,
+          seoDesc: meta.description?.slice(0, 160) || `${meta.title} — ${BRAND.name} storefront`,
           palette,
           logoUrl: meta.thumbnailUrl,
           faq: [],
@@ -118,7 +119,7 @@ export class YouTubeAdapter implements CreatorImportAdapter {
           services: [],
           socialLinks: [{ platform: "youtube", url: `https://youtube.com/@${handle}` }],
           seoTitle: handle,
-          seoDesc: `${handle} — CreatorStore storefront`,
+          seoDesc: `${handle} — ${BRAND.name} storefront`,
           palette: { primary: "#6366f1", secondary: "#a78bfa" },
           faq: [],
           testimonials: [],

@@ -1,4 +1,5 @@
 import type { SectionBlueprint } from "./types";
+import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 export class ContactComposer {
   compose(slug: string, creatorName: string): SectionBlueprint {
@@ -10,7 +11,7 @@ export class ContactComposer {
       props: {
         title: "Get In Touch",
         subtitle: `Have a question about ${creatorName}'s products? Send us a message.`,
-        email: `${slug}@creatorstore.com`,
+        email: CONTACT_EMAIL,
         showPhone: true,
         phoneLabel: "Contact",
         showAddress: false,

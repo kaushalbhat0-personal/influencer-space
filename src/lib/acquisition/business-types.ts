@@ -1,5 +1,6 @@
 import { Store, User, GraduationCap, Briefcase, Building2, Utensils, Dumbbell, BookOpen, Camera, Code, Palette, Music, Pen, PenTool, Rocket } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export interface BusinessCategory {
   id: string;
@@ -117,7 +118,7 @@ export function businessProfileToCreatorProfile(profile: BusinessProfile): Creat
     services: profile.offers.filter((o) => ["service", "consultation"].includes(o.type)).map((o) => o.name),
     socialLinks: profile.socialLinks,
     seoTitle: profile.businessName,
-    seoDesc: `${profile.businessName} — ${profile.tagline || profile.description?.slice(0, 100) || "Storefront on CreatorStore"}`,
+    seoDesc: `${profile.businessName} — ${profile.tagline || profile.description?.slice(0, 100) || `Storefront on ${BRAND.name}`}`,
     palette: profile.palette,
     logoUrl: profile.logoUrl,
     faq: [],

@@ -2,6 +2,15 @@ import type { ContentSource, CreatorIntelligence, SEOIntelligence } from "./type
 import { NicheDetector } from "./niche-detector";
 import { KeywordExtractor } from "./keyword-extractor";
 import { CreatorProfiler } from "./creator-profiler";
+import { getPlatformConfig } from "@/lib/config/platform";
+
+function platformHost(): string {
+  try {
+    return new URL(getPlatformConfig().appUrl).hostname || "localhost";
+  } catch {
+    return "localhost";
+  }
+}
 
 export class SEOGenerator {
   constructor(
@@ -27,7 +36,7 @@ export class SEOGenerator {
       keywords,
       focusPhrase,
       slug,
-      canonical: `https://${slug}.creatorstore.com`,
+      canonical: `https://${slug}.${platformHost()}`,
       confidence: keywords.length > 0 ? 0.7 : 0.3,
     };
   }

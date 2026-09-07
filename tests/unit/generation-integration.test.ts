@@ -277,7 +277,8 @@ describe("GenerationPipeline", () => {
 
   it("generates storefront URL from domain", async () => {
     const result = await pipeline.runFullPipeline(mockRequest(), mockContentSource());
-    expect(result.storefrontUrl).toContain("test-creator.creatorstore.com");
+    expect(result.storefrontUrl).toContain("test-creator");
+    expect(result.storefrontUrl).not.toContain("creatorstore.com");
   });
 
   it("handles null generation result gracefully", async () => {

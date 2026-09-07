@@ -2,11 +2,12 @@ import type { BusinessProfile } from "@/lib/acquisition/business-types";
 import type { BusinessRecommendation, BusinessTemplate } from "../domain/types";
 import { getTemplate } from "../domain/templates";
 import { calculateHealth } from "./health-engine";
+import { BRAND } from "@/lib/marketing/messaging";
 
 function fillTemplate(template: string, business: BusinessProfile): string {
   return template
     .replace(/{businessName}/g, business.businessName || "Storefront")
-    .replace(/{tagline}/g, business.tagline || "Storefront on CreatorStore")
+    .replace(/{tagline}/g, business.tagline || `Storefront on ${BRAND.name}`)
     .replace(/{description}/g, business.description?.slice(0, 100) || "");
 }
 
