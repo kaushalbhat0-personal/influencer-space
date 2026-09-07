@@ -1,6 +1,7 @@
 // ── Product Types — Canonical Registry ──────────────────────
 // RCCF-IMPLEMENTATION-74 Phase 7. Every commerce product declares its type and
 // its fulfillment requirements. Declarative — no branching in consumers.
+import { BRAND } from "@/lib/marketing/messaging";
 
 export type ProductTypeId = "digital" | "physical" | "course" | "service" | "booking" | "affiliate" | "donation";
 
@@ -24,7 +25,7 @@ export const PRODUCT_TYPE_REGISTRY: ProductTypeDefinition[] = [
   { id: "course", label: "Course", requiresPayment: true, requiresShipping: false, requiresDownload: true, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "Access-based learning content (delivered via download for now)." },
   { id: "service", label: "Service", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: true, requiresInventory: false, requiresCustomerAction: false, description: "A service delivered after purchase." },
   { id: "booking", label: "Booking", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: true, requiresManualApproval: true, requiresInventory: false, requiresCustomerAction: true, description: "Paid appointment / time-slot booking." },
-  { id: "affiliate", label: "Affiliate Link", requiresPayment: false, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "Outbound affiliate link (no payment handled by CreatorStore)." },
+  { id: "affiliate", label: "Affiliate Link", requiresPayment: false, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: `Outbound affiliate link (no payment handled by ${BRAND.name}).` },
   { id: "donation", label: "Donation", requiresPayment: true, requiresShipping: false, requiresDownload: false, requiresBooking: false, requiresManualApproval: false, requiresInventory: false, requiresCustomerAction: false, description: "A donation to the creator." },
 ];
 

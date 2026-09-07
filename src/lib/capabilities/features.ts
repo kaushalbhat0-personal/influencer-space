@@ -1,5 +1,6 @@
 import type { FeatureInfo, FeatureCategory } from "./types";
 import { FEATURE_IDS } from "./constants";
+import { BRAND } from "@/lib/marketing/messaging";
 
 const CATEGORY: Record<string, FeatureCategory> = {
   [FEATURE_IDS.PRODUCTS]: "products",
@@ -102,7 +103,7 @@ export const FEATURE_CATALOG: Record<string, FeatureInfo> = {
     category: "branding", valueType: "boolean",
   },
   [FEATURE_IDS.REMOVE_BRANDING]: {
-    id: FEATURE_IDS.REMOVE_BRANDING, label: "Remove Branding", description: "Remove CreatorStore branding",
+    id: FEATURE_IDS.REMOVE_BRANDING, label: "Remove Branding", description: `Remove ${BRAND.name} branding`,
     category: "branding", valueType: "boolean",
   },
   [FEATURE_IDS.ANALYTICS_BASIC]: {

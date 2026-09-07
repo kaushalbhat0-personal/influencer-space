@@ -5,6 +5,7 @@
  * UI renders entirely from these metadata fields.
  */
 import { registerImportProvider, type CreatorProfile } from "./registry";
+import { BRAND } from "@/lib/marketing/messaging";
 
 // ── YouTube ───────────────────────────────────────────────────
 registerImportProvider({
@@ -147,7 +148,7 @@ registerImportProvider({
   icon: "sparkles",
   category: "ai",
   title: "✨ Build with AI",
-  subtitle: "Describe your work and we'll generate your first CreatorStore.",
+  subtitle: `Describe your work and we'll generate your first ${BRAND.name}.`,
   inputType: "text",
   placeholder: "I'm a fitness coach helping busy professionals lose weight through online coaching and nutrition plans.",
   helperText: "Try: Fitness Coach · Photographer · Developer · Restaurant · Fashion Brand · Music Artist · Consultant · Agency",
@@ -170,11 +171,11 @@ registerImportProvider({
 registerImportProvider({
   id: "blank",
   label: "🛠 Build Manually",
-  description: "Start with a blank CreatorStore and customise everything yourself.",
+  description: `Start with a blank ${BRAND.name} and customise everything yourself.`,
   icon: "edit",
   category: "fresh",
   title: "🛠 Build Manually",
-  subtitle: "Start with a blank CreatorStore and customise everything yourself. No AI, no imports — just you and the builder.",
+  subtitle: `Start with a blank ${BRAND.name} and customise everything yourself. No AI, no imports — just you and the builder.`,
   inputType: "none",
   placeholder: "",
   estimatedTime: "Instant",

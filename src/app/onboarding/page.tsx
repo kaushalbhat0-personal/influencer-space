@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { getProvidersByCategory, type ImportProvider } from "@/lib/import-provider/registry";
 import "@/lib/import-provider/providers";
-import { BRAND } from "@/lib/marketing/messaging";
+import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 import { ImportInputRenderer } from "@/components/onboarding/import-input-renderer";
 import { OnboardingIntelligence } from "@/components/onboarding/OnboardingIntelligence";
 
@@ -830,7 +830,7 @@ export default function OnboardingPage() {
                     Go to Dashboard instead
                   </button>
                   <a
-                    href="mailto:support@creatorspace.app?subject=Storefront%20generation%20help"
+                    href={`mailto:${CONTACT_EMAIL}?subject=Storefront%20generation%20help`}
                     className="block text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] underline underline-offset-2"
                   >
                     Contact Support

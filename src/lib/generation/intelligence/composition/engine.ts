@@ -11,6 +11,7 @@
  * section fields; everything else stays empty.
  */
 import { createHash } from "crypto";
+import { BRAND } from "@/lib/marketing/messaging";
 import type { WebsiteBlueprint } from "@/lib/generation/blueprint/types";
 import type { EvidenceIntelligence } from "@/lib/generation/intelligence/evidence/types";
 import type { RelationshipGraph } from "@/lib/generation/intelligence/evidence/relationship";
@@ -86,7 +87,7 @@ function contentPropsFor(sectionId: string, input: CompositionInput, label: stri
       return { title: label, items: links, showIcons: links.length > 0 };
     }
     case "footer":
-      return { copyright: `© ${new Date().getFullYear()} ${input.identity.name ?? "CreatorStore"}` };
+      return { copyright: `© ${new Date().getFullYear()} ${input.identity.name ?? BRAND.name}` };
     case "newsletter":
       return { title: label, placeholder: "Your email", buttonText: "Subscribe" };
     case "faq":

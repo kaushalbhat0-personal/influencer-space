@@ -8,6 +8,7 @@ import {
   verifyDomain,
 } from "@/actions/domain.actions";
 import type { VercelVerificationRecord } from "@/services/vercel.service";
+import { getPlatformConfig } from "@/lib/config/platform";
 
 export function DomainSettings({
   currentDomain,
@@ -87,7 +88,7 @@ export function DomainSettings({
       <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-5 backdrop-blur-sm">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Default Subdomain</h3>
         <p className="mt-2 font-mono text-sm text-zinc-300">
-          {subdomain}.{process.env.NEXT_PUBLIC_PLATFORM_BASE_DOMAIN || process.env.PLATFORM_BASE_DOMAIN || "creatorspace.app"}
+          {subdomain}.{process.env.NEXT_PUBLIC_PLATFORM_BASE_DOMAIN || getPlatformConfig().appUrl.replace(/^https?:\/\//, "").split("/")[0].split(":")[0]}
         </p>
       </div>
 

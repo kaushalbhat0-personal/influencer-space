@@ -9,6 +9,7 @@
  */
 
 import { captureError } from "@/lib/observability/error-tracker";
+import { BRAND } from "@/lib/marketing/messaging";
 
 // ── AI Router ──────────────────────────────────────────────────
 
@@ -244,10 +245,10 @@ export function getCopy(
 
 function getDefaultCopy(task: AITaskType): string {
   const defaults: Record<string, string> = {
-    hero: "Build your business with CreatorStore.",
+    hero: `Build your business with ${BRAND.name}.`,
     about: "Welcome to my storefront.",
     cta: "Get Started",
-    seo: "CreatorStore — your website and business, all in one.",
+    seo: `${BRAND.name} — your website and business, all in one.`,
     products: "Products",
     faq: "Frequently asked questions",
     brand: "Business",
