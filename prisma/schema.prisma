@@ -551,7 +551,7 @@ model ProductOrder {
   productId            String      @db.Uuid
   amount               Float
   status               String      @default("PENDING")
-  razorpayOrderId      String      @unique
+  razorpayOrderId      String?     @unique
   razorpayPaymentId    String?
   fanEmail             String?
   platformFeePercent   Float       @default(5)
@@ -577,7 +577,7 @@ model ProductOrder {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   fulfillment  OrderFulfillment?

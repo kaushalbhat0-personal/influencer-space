@@ -4,6 +4,6 @@ export type OrderRow = {
   amount: number;
   status: string;
   fanEmail: string | null;
-  razorpayOrderId: string;
+  razorpayOrderId: string | null;
   createdAt: string;
 }

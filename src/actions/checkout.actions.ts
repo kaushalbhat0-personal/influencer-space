@@ -234,7 +234,7 @@ export async function createCheckout(
           productId: product.id,
           amount: total,
           status: "PENDING",
-          razorpayOrderId: "",
+          razorpayOrderId: null,
           fanEmail: buyerEmail,
           quantity,
           guestToken,

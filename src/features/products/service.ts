@@ -179,8 +179,20 @@ export const productService = {
 
   async delete(id: string, tenantId: string): Promise<void> {
     // VALIDATION-01 V-035: scope product deletes to the session tenant.
-    const existing = await prisma.product.findFirst({ where: { id, tenantId }, select: { id: true } });
+    // DATA-01: never hard-delete a Product with historical orders. DB FK is
+    // now RESTRICT, and archivedAt is the canonical soft-delete authority
+    // reused here so ProductOrder history stays readable after archival.
+    const existing = await prisma.product.findFirst({ where: { id, tenantId }, select: { id: true, archivedAt: true } });
     if (!existing) throw new Error("Product not found");
+    if (existing.archivedAt) return;
+    const orderCount = await prisma.productOrder.count({ where: { productId: id } });
+    if (orderCount > 0) {
+      await prisma.product.update({ where: { id }, data: { archivedAt: new Date(), isActive: false, status: "ARCHIVED" } });
+      return;
+    }
+    // No orders — hard delete is safe (FK Restrict allows it). Preserve the
+    // ability to truly remove draft/never-sold products while archival remains
+    // the path for products with history.
     await prisma.product.delete({ where: { id } });
   },
 };

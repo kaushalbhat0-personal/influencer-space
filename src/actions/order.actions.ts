@@ -69,7 +69,7 @@ function toOrderRow(o: {
   amount: number;
   status: string;
   fanEmail: string | null;
-  razorpayOrderId: string;
+  razorpayOrderId: string | null;
   createdAt: Date;
   product?: { name: string } | null;
 }): OrderRow {

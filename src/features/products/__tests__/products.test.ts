@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockProductFindMany, mockProductCreate, mockProductUpdate, mockProductDelete, mockProductFindUnique, mockProductFindFirst } = vi.hoisted(() => ({
+const { mockProductFindMany, mockProductCreate, mockProductUpdate, mockProductDelete, mockProductFindUnique, mockProductFindFirst, mockProductOrderCount } = vi.hoisted(() => ({
   mockProductFindMany: vi.fn(),
   mockProductCreate: vi.fn(),
   mockProductUpdate: vi.fn(),
   mockProductDelete: vi.fn(),
   mockProductFindUnique: vi.fn(),
   mockProductFindFirst: vi.fn(),
+  mockProductOrderCount: vi.fn().mockResolvedValue(0),
+}));
+
+vi.mock("@/modules/payment-account", () => ({
+  computePaymentReadiness: vi.fn().mockResolvedValue({ readiness: "ready", strategy: "PLATFORM_COLLECT" }),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -18,6 +23,9 @@ vi.mock("@/lib/prisma", () => ({
       delete: mockProductDelete,
       findUnique: mockProductFindUnique,
       findFirst: mockProductFindFirst,
+    },
+    productOrder: {
+      count: mockProductOrderCount,
     },
   },
 }));
@@ -69,12 +77,23 @@ describe("Product service", () => {
     expect(result.price).toBe(50);
   });
 
-  it("delete calls prisma delete (scoped to tenant)", async () => {
-    mockProductFindFirst.mockResolvedValue({ id: "1" });
+  it("delete calls prisma delete (scoped to tenant) when no orders — hard delete", async () => {
+    mockProductFindFirst.mockResolvedValue({ id: "1", archivedAt: null });
+    mockProductOrderCount.mockResolvedValue(0);
     mockProductDelete.mockResolvedValue({});
     await productService.delete("1", "t1");
-    expect(mockProductFindFirst).toHaveBeenCalledWith({ where: { id: "1", tenantId: "t1" }, select: { id: true } });
+    expect(mockProductFindFirst).toHaveBeenCalledWith({ where: { id: "1", tenantId: "t1" }, select: { id: true, archivedAt: true } });
     expect(mockProductDelete).toHaveBeenCalledWith({ where: { id: "1" } });
+  });
+
+  it("delete archives instead of hard-deleting when orders exist (DATA-01)", async () => {
+    mockProductFindFirst.mockResolvedValue({ id: "1", archivedAt: null });
+    mockProductOrderCount.mockResolvedValue(2);
+    mockProductUpdate.mockResolvedValue({});
+    await productService.delete("1", "t1");
+    expect(mockProductOrderCount).toHaveBeenCalledWith({ where: { productId: "1" } });
+    expect(mockProductUpdate).toHaveBeenCalledWith({ where: { id: "1" }, data: { archivedAt: expect.any(Date), isActive: false, status: "ARCHIVED" } });
+    expect(mockProductDelete).not.toHaveBeenCalled();
   });
 
   it("returns empty list when no products", async () => {

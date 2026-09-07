@@ -34,7 +34,7 @@ const columns: Column<OrderRow>[] = [
     ),
   },
   { key: "createdAt", header: "Date", sortable: true, cell: (r) => <span className="text-[var(--text-muted)] text-xs">{formatDate(r.createdAt)}</span> },
-  { key: "razorpayOrderId", header: "Order ID", cell: (r) => <span className="text-[var(--text-muted)] text-xs font-mono">{r.razorpayOrderId.slice(0, 12)}...</span> },
+  { key: "razorpayOrderId", header: "Order ID", cell: (r) => <span className="text-[var(--text-muted)] text-xs font-mono">{r.razorpayOrderId ? `${r.razorpayOrderId.slice(0, 12)}...` : "—"}</span> },
 ];
 
 export function OrdersTable({ orders }: { orders: OrderRow[] }) {
