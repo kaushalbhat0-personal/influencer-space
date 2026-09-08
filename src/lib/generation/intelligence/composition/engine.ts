@@ -55,6 +55,13 @@ export interface CompositionInput {
   source?: ContentSource | null;
 }
 
+function isBlockedSocialUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (host === "manual.com" || host.endsWith(".manual.com")) return true;
+  } catch { return true; }
+  return false;
+}
 function heroProps(input: CompositionInput, cta: string): Record<string, unknown> {
   const name = input.identity.name ?? input.identity.username ?? "Creator";
   const heroMedia = resolveHeroMediaForRuntime({
@@ -62,6 +69,7 @@ function heroProps(input: CompositionInput, cta: string): Record<string, unknown
     posterUrl: input.identity.avatarUrl,
   });
   const platform = input.relationships.platforms[0] ?? null;
+  const cleanSocial = input.identity.socialLinks.filter((u) => isValidHttpUrl(u) && !isBlockedSocialUrl(u));
   return {
     title: name,
     name,
@@ -70,7 +78,7 @@ function heroProps(input: CompositionInput, cta: string): Record<string, unknown
     cta,
     ctaLink: "#",
     profilePictureUrl: input.identity.avatarUrl ?? "",
-    socialLinks: input.identity.socialLinks.slice(0, 4).map((url) => ({ url })),
+    socialLinks: cleanSocial.slice(0, 4).map((url) => ({ url })),
     ...(platform ? { liveBadgeText: "Live", showLiveBadge: false } : {}),
     resolvedMedia: heroMedia.resolvedMedia,
     mediaType: heroMedia.mediaType,
@@ -92,7 +100,7 @@ function contentPropsFor(sectionId: string, input: CompositionInput, label: stri
     case "github":
     case "community":
     case "events": {
-      const links = input.identity.socialLinks.slice(0, 6).map((url) => ({ url, label: url }));
+      const links = input.identity.socialLinks.filter((u) => isValidHttpUrl(u) && !isBlockedSocialUrl(u)).slice(0, 6).map((url) => ({ url, label: url }));
       return { title: label, items: links, showIcons: links.length > 0 };
     }
     case "footer":
@@ -213,7 +221,7 @@ function enrichNavigation(
   const seen = new Set<string>();
   const candidates: Array<{ label: string; href: string; platform: string }> = [];
   for (const url of allLinks) {
-    if (!isValidHttpUrl(url)) continue;
+    if (!isValidHttpUrl(url) || isBlockedSocialUrl(url)) continue;
     const low = url.toLowerCase();
     if (seen.has(low)) continue;
     seen.add(low);

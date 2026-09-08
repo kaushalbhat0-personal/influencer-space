@@ -408,6 +408,24 @@ export async function runCreatorGeneration(
       await sessionService.updateStage(generationSessionId, "planning_context", "running");
     }
 
+    // RCCF-PRELAUNCH-14A P0: For resume sources, composition/blueprint must be present — do NOT silently fallback.
+    // If generation genuinely fails, return controlled failure with actionable error and preserve session for retry.
+    const diag = (profileResult as import("@/lib/onboarding/service").ImportProfileResult).diagnostics ?? null;
+    const resumeFlag = diag ? diag.hasResumeSource : false;
+    // eslint-disable-next-line no-console
+    console.log(`[generation-diagnostics] hasResumeSource=${diag?.hasResumeSource ?? "unknown"} hasComposition=${diag?.hasComposition ?? !!profileResult.composition} hasBlueprint=${diag?.hasBlueprint ?? !!profileResult.blueprint} archetype=${diag?.archetype ?? "unknown"} compositionVersion=${diag?.compositionVersion ?? "unknown"} blueprintVersion=${diag?.blueprintVersion ?? "unknown"}`);
+
+    if (resumeFlag && (!profileResult.composition || !profileResult.blueprint)) {
+      const errMsg = `Intelligent composition unavailable for resume source (hasResumeSource=true hasComposition=${!!profileResult.composition} hasBlueprint=${!!profileResult.blueprint}). Please retry generation.`;
+      if (generationSessionId) {
+        await sessionService.updateStage(generationSessionId, "composition", "failed", errMsg).catch(() => {});
+        await sessionService.fail(generationSessionId, errMsg).catch(() => {});
+        const { emitGenerationEvent } = await import("@/modules/generation-progress");
+        await emitGenerationEvent(generationSessionId!, "generation.failed", { stage: "composition", error: errMsg }).catch(() => {});
+      }
+      return { success: false, stages, error: errMsg, retryable: true, tenantId: undefined };
+    }
+
     // RCCF-14: Use canonical intelligent pipeline when available. The tested 12A–12D path
     // (Evidence → Archetype → Blueprint v2 → Binder → BuilderDraft) is already computed
     // in profileResult.composition/blueprint. The legacy LayoutComposer path is kept as
@@ -786,13 +804,18 @@ export async function runCreatorGeneration(
       goldenValidation: goldenValidationOutput,
     };
   } catch (error) {
+    const msg = error instanceof Error ? error.message : "Generation failed";
+    const isIntelligentFailure = msg.startsWith("INTELLIGENT_");
     if (generationSessionId) {
       try {
-        await sessionService.fail(generationSessionId, error instanceof Error ? error.message : "Generation failed");
-      } catch {
-      }
+        await sessionService.fail(generationSessionId, msg);
+      } catch {}
+      try {
+        const { emitGenerationEvent } = await import("@/modules/generation-progress");
+        await emitGenerationEvent(generationSessionId!, "generation.failed", { stage: "composition", error: msg }).catch(() => {});
+      } catch {}
     }
-    return { success: false, error: error instanceof Error ? error.message : "Generation failed" };
+    return { success: false, error: msg, retryable: isIntelligentFailure ? true : undefined };
   }
 }
 

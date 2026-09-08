@@ -244,8 +244,20 @@ export function bindSection(
       const social = source?.socialLinks ?? source?.links ?? [];
       const resumeSocial = resume?.socialLinks ?? [];
       const all = [...social, ...resumeSocial.map((l) => l.url)];
+      // RCCF-PRELAUNCH-14A P2: filter invalid + manual.com at canonical binder source
+      const filtered = all.filter((u) => {
+        if (!u || typeof u !== "string") return false;
+        if (/\s/.test(u)) return false;
+        if (u.length > 2048 || u !== u.trim()) return false;
+        try {
+          const parsed = new URL(u);
+          if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+          if (parsed.hostname.toLowerCase() === "manual.com" || parsed.hostname.toLowerCase().endsWith(".manual.com")) return false;
+        } catch { return false; }
+        return true;
+      });
       // Dedupe
-      const uniq = Array.from(new Set(all.filter(Boolean))).slice(0, 6);
+      const uniq = Array.from(new Set(filtered.filter(Boolean))).slice(0, 6);
       if (uniq.length === 0 && hasSource) return empty({ title: fallbackLabel, items: [] });
       const items = uniq.map((url) => ({ url, label: url }));
       // For hasSource false (legacy without source), keep hasData true to preserve backward compat

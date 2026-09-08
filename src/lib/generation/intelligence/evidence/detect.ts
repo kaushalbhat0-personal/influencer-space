@@ -67,6 +67,27 @@ function matches(text: string, keywords: string[]): string[] {
   return keywords.filter((kw) => text.includes(kw));
 }
 
+function roleText(input: EvidenceIntelligenceInput): string {
+  if (!input.resume) return (input.sourceText ?? "").toLowerCase();
+  const r = input.resume;
+  return [
+    input.sourceText ?? "",
+    r.summary ?? "",
+    ...(r.skills ?? []),
+    ...(r.experience ?? []).map((e) => `${e.title} ${e.company ?? ""}`),
+    ...(r.education ?? []).map((e) => `${e.degree} ${e.institution ?? ""}`),
+    ...(r.certifications ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function projectText(input: EvidenceIntelligenceInput): string {
+  if (!input.resume) return "";
+  const r = input.resume;
+  return [...(r.projects ?? []).map((p) => `${p.name} ${p.description}`), ...(r.experience ?? []).map((e) => e.description)].join(" ").toLowerCase();
+}
+
 function evidenceFor(source: "bio" | "content" | "acquisition", values: string[], kind: EvidenceItem["kind"]): EvidenceItem[] {
   return values.map((value) => ({ source, value, kind }));
 }
@@ -74,6 +95,8 @@ function evidenceFor(source: "bio" | "content" | "acquisition", values: string[]
 /** Detect entities (multi, weighted, evidence-backed). */
 export function detectEntities(input: EvidenceIntelligenceInput): DetectedEntity[] {
   const text = allText(input);
+  const role = roleText(input);
+  const proj = projectText(input);
   let results: DetectedEntity[] = [];
 
   for (const rule of ENTITY_RULES) {
@@ -83,6 +106,21 @@ export function detectEntities(input: EvidenceIntelligenceInput): DetectedEntity
     if (score === 0) continue;
     // Niche affinity boost (e.g. sports niche → athlete).
     if (rule.nicheAffinity?.includes(input.graphNiche ?? "")) score += 1.5;
+    // RCCF-PRELAUNCH-14A: tiered weighting — role/title evidence outranks project-domain evidence.
+    // When a resume is present, down-weight entities whose evidence lives only in project descriptions.
+    if (input.resume) {
+      const roleBase = matches(role, rule.keywords).length + matches(role, rule.strongKeywords ?? []).length * 2;
+      const projBase = matches(proj, rule.keywords).length + matches(proj, rule.strongKeywords ?? []).length * 2;
+      // If entity matches only in project text and not in role text, apply domain discount.
+      if (roleBase === 0 && projBase > 0) {
+        // Project-domain-only entity (e.g. healthcare terms inside project descriptions for a developer)
+        score *= 0.45;
+      } else if (roleBase > 0 && projBase > 0) {
+        // Mixed — keep but slightly dampen project contribution already counted in base; no extra boost
+      }
+      // Developer role strongly reinforces even if healthcare domain also present — keep developer score intact;
+      // doctor-like entities with only healthcare domain get the 0.45 discount above.
+    }
     const confidence = Math.min(1, 0.35 + score * 0.08 + strong.length * 0.08);
     results.push({
       entity: rule.entity,
@@ -92,6 +130,25 @@ export function detectEntities(input: EvidenceIntelligenceInput): DetectedEntity
         ...evidenceFor("bio", strong.slice(0, 4), "entity"),
       ],
     });
+  }
+
+  // RCCF-PRELAUNCH-14A: generic developer-vs-healthcare-domain disambiguation.
+  // When a resume is present, if developer role evidence exists and doctor is project-domain-only, demote doctor.
+  if (input.resume) {
+    const lowerRole = roleText(input);
+    const hasDeveloperRole = /software engineer|developer|engineer|architect|full[ -]stack|frontend|backend|programming|coding|github/.test(lowerRole);
+    const hasDoctorRole = /\b(doctor|physician|surgeon|dentist|mbbs|\bmd\b|nurse)\b/.test(lowerRole);
+    if (hasDeveloperRole && !hasDoctorRole) {
+      const doctor = results.find((r) => r.entity === "doctor");
+      if (doctor) {
+        // Project-domain healthcare terms (clinic, medical, healthcare, patient) should not outrank developer title
+        const projLower = projectText(input);
+        const hasHealthcareDomainInProjects = /\b(healthcare|clinic|medical|patient)\b/.test(projLower);
+        if (hasHealthcareDomainInProjects) {
+          doctor.confidence *= 0.5;
+        }
+      }
+    }
   }
 
   // Specificity resolution: when a more-specific entity is detected alongside a

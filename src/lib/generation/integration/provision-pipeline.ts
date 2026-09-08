@@ -78,6 +78,7 @@ export function buildProvisioningInput(params: {
   // RCCF-05A: basic profile data flows into provisioning �?" the legitimately
   // acquired identity (name/bio/avatar/social links) reaches the brand + hero.
   const kg = params.pipelineResult.knowledgeGraph;
+  const isBlockedHost2 = (url: string) => { try { const h = new URL(url).hostname.toLowerCase(); return h === "manual.com" || h.endsWith(".manual.com"); } catch { return true; } };
 
   const base = {
     creatorName: params.creatorName,
@@ -85,7 +86,7 @@ export function buildProvisioningInput(params: {
     bio: kg?.creator?.bio ?? "",
     avatarUrl: params.avatarUrl ?? "",
     socialLinks: (kg?.socialLinks ?? [])
-      .filter((l) => l.url && isValidHttpUrl(l.url))
+      .filter((l) => l.url && isValidHttpUrl(l.url) && !isBlockedHost2(l.url))
       .map((l) => ({ platform: l.platform, url: l.url, label: l.handle || undefined })),
     sourceUrl: params.sourceUrl,
     sourcePlatform: params.sourcePlatform,

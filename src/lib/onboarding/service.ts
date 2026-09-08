@@ -24,9 +24,11 @@ import { buildEvidenceIntelligence } from "@/lib/generation/intelligence/evidenc
 import { buildRelationshipGraph } from "@/lib/generation/intelligence/evidence/relationship";
 import { buildWebsiteBlueprint } from "@/lib/generation/blueprint/builder";
 import type { WebsiteBlueprint as WebsiteIntelligenceBlueprint } from "@/lib/generation/blueprint/types";
-import { composeStorefront } from "@/lib/generation/intelligence/composition/engine";
+import { composeStorefront, COMPOSITION_VERSION } from "@/lib/generation/intelligence/composition/engine";
 import type { StorefrontComposition } from "@/lib/generation/intelligence/composition/types";
 import { archetypeResolver } from "@/lib/generation/archetype/resolver";
+import { BLUEPRINT_VERSION } from "@/lib/generation/blueprint/config";
+import { isValidHttpUrl } from "@/lib/validation/url";
 
 function acquisitionCompleteness(diagnostics: AcquisitionDiagnostics | undefined): number {
   if (!diagnostics) return 0.5;
@@ -41,6 +43,15 @@ export interface OnboardingProgress {
   progress: number;
   message: string;
   stages: Array<{ stage: string; status: string; error?: string }>;
+}
+
+export interface GenerationDiagnostics {
+  hasResumeSource: boolean;
+  hasComposition: boolean;
+  hasBlueprint: boolean;
+  archetype: string | null;
+  compositionVersion: number | null;
+  blueprintVersion: number | null;
 }
 
 export interface ImportProfileResult {
@@ -64,6 +75,8 @@ export interface ImportProfileResult {
   blueprint?: WebsiteIntelligenceBlueprint;
   /** IMPLEMENTATION-38 — executable Storefront Composition (Builder draft). */
   composition?: StorefrontComposition;
+  /** RCCF-PRELAUNCH-14A — structured generation diagnostics (no raw text). */
+  diagnostics?: GenerationDiagnostics;
 }
 
 export interface GenerateResult {
@@ -178,6 +191,7 @@ export class OnboardingService {
       aiNiches: identityProfile.primaryNiche ? [identityProfile.primaryNiche, ...identityProfile.secondaryNiches] : identityProfile.secondaryNiches,
       aiBusinessModel: identityProfile.businessModel,
       aiUsed: identityProfile.ai.used,
+      resume: source.resume ?? null,
     });
 
     const identityWithIntelligence: IdentityProfile = { ...identityProfile, intelligence };
@@ -209,47 +223,101 @@ export class OnboardingService {
       knowledgeGraph,
     });
 
-    const blueprint = buildWebsiteBlueprint({
-      evidence: intelligence,
-      relationships,
-      identity: {
-        entityType: identityProfile.entityType,
-        primaryNiche: intelligence.primaryNiche,
-        businessModel: intelligence.businessModels[0]?.model ?? identityProfile.businessModel,
-        audience: intelligence.audience.segments.map((a) => a.segment),
-        name: source.displayName || source.username,
-        username: source.username,
-        subdomain: source.username || "creator-store",
-      },
-      archetype: archetypeResult,
-      source,
-    });
+    // RCCF-PRELAUNCH-14A P2: sanitize socialLinks at canonical source — manual.com and raw prose never become social links
+    function sanitizeSocialLinks(urls: string[]): string[] {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const u of urls) {
+        if (!isValidHttpUrl(u)) continue;
+        try {
+          const host = new URL(u).hostname.toLowerCase();
+          if (host === "manual.com" || host.endsWith(".manual.com")) continue;
+        } catch { continue; }
+        const low = u.toLowerCase();
+        if (seen.has(low)) continue;
+        seen.add(low);
+        out.push(u);
+      }
+      return out;
+    }
+    const sanitizedIdentityLinks = sanitizeSocialLinks(source.socialLinks ?? source.links ?? []);
+
+    // RCCF-PRELAUNCH-14A P0: composition/blueprint must be produced for resume sources; never silently fallback later.
+    // Retry/recovery preferred over generic website. Controlled failure if generation genuinely fails.
+    let blueprint: WebsiteIntelligenceBlueprint;
+    let composition: StorefrontComposition;
+    const isResumeSource = !!source.resume;
+    try {
+      blueprint = buildWebsiteBlueprint({
+        evidence: intelligence,
+        relationships,
+        identity: {
+          entityType: identityProfile.entityType,
+          primaryNiche: intelligence.primaryNiche,
+          businessModel: intelligence.businessModels[0]?.model ?? identityProfile.businessModel,
+          audience: intelligence.audience.segments.map((a) => a.segment),
+          name: source.displayName || source.username,
+          username: source.username,
+          subdomain: source.username || "creator-store",
+        },
+        archetype: archetypeResult,
+        source,
+      });
+    } catch (err) {
+      if (isResumeSource) {
+        const msg = err instanceof Error ? err.message : "Blueprint generation failed";
+        throw new Error(`INTELLIGENT_BLUEPRINT_FAILED:${msg}`);
+      }
+      throw err;
+    }
 
     const identityWithBlueprint: IdentityProfile = { ...identityWithIntelligence, blueprint };
 
-    // IMPLEMENTATION-38: executable Storefront Composition — blueprint → Builder
-    // Aggregate configuration (deterministic, versioned, zero AI cost).
-    const composition = composeStorefront({
-      blueprint,
-      identity: {
-        entityType: identityProfile.entityType,
-        name: source.displayName || source.username,
-        username: source.username,
-        bio: source.bio || null,
-        tagline: source.website ?? null,
-        avatarUrl: source.avatarUrl || null,
-        socialLinks: source.socialLinks ?? source.links ?? [],
-        subdomain: source.username || "creator-store",
-      },
-      evidence: intelligence,
-      relationships,
-      source,
-    });
+    try {
+      composition = composeStorefront({
+        blueprint,
+        identity: {
+          entityType: identityProfile.entityType,
+          name: source.displayName || source.username,
+          username: source.username,
+          bio: source.bio || null,
+          tagline: source.website ?? null,
+          avatarUrl: source.avatarUrl || null,
+          socialLinks: sanitizedIdentityLinks,
+          subdomain: source.username || "creator-store",
+        },
+        evidence: intelligence,
+        relationships,
+        source,
+      });
+    } catch (err) {
+      if (isResumeSource) {
+        const msg = err instanceof Error ? err.message : "Composition generation failed";
+        throw new Error(`INTELLIGENT_COMPOSITION_FAILED:${msg}`);
+      }
+      throw err;
+    }
+
+    // Retry recovery: if resume source but blueprint/composition unexpectedly null (should not happen)
+    if (isResumeSource && (!blueprint || !composition)) {
+      throw new Error("INTELLIGENT_COMPOSITION_FAILED:resume source produced null blueprint/composition");
+    }
 
     const identityWithComposition: IdentityProfile = { ...identityWithBlueprint, composition };
 
     const channelMeta = acquisition.meta as ImportProfileResult["channelMeta"];
-    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithComposition, blueprint, composition };
+    const diagnostics: GenerationDiagnostics = {
+      hasResumeSource: isResumeSource,
+      hasComposition: !!composition,
+      hasBlueprint: !!blueprint,
+      archetype: archetypeResult.archetype ?? null,
+      compositionVersion: composition ? COMPOSITION_VERSION : null,
+      blueprintVersion: blueprint ? BLUEPRINT_VERSION : null,
+    };
+    // Structured diagnostics log (no raw text)
+    // eslint-disable-next-line no-console
+    console.log(`[generation-diagnostics] hasResumeSource=${diagnostics.hasResumeSource} hasComposition=${diagnostics.hasComposition} hasBlueprint=${diagnostics.hasBlueprint} archetype=${diagnostics.archetype} compositionVersion=${diagnostics.compositionVersion} blueprintVersion=${diagnostics.blueprintVersion}`);
+    const base = { platform, knowledgeGraph, personaMatch, experienceProfile, acquisition: acquisition.diagnostics, identityProfile: identityWithComposition, blueprint, composition, diagnostics };
     if (channelMeta) {
       return { ...base, channelMeta };
     }

@@ -6,13 +6,18 @@ export class SocialGraph {
     const links: SocialLink[] = [];
     const platform = source.platform?.toLowerCase() ?? "unknown";
 
-    links.push({
-      platform,
-      url: this.buildProfileUrl(platform, source.username),
-      handle: source.username,
-      followers: source.followers,
-      primary: true,
-    });
+    // RCCF-PRELAUNCH-14A P2: manual.com synthetic primary URL must never become a social link.
+    // Only known creator/social platforms generate a primary profile URL; manual stays empty.
+    const ALLOWED_PRIMARY_PLATFORMS = new Set(["youtube", "instagram", "tiktok", "linkedin", "twitter", "twitch", "github", "facebook", "spotify", "discord"]);
+    if (ALLOWED_PRIMARY_PLATFORMS.has(platform) && source.username) {
+      links.push({
+        platform,
+        url: this.buildProfileUrl(platform, source.username),
+        handle: source.username,
+        followers: source.followers,
+        primary: true,
+      });
+    }
 
     const mentioned = this.extractMentions(source);
     for (const mention of mentioned.slice(0, 5)) {
@@ -68,12 +73,20 @@ export class SocialGraph {
   private extractUrls(source: ContentSource): string[] {
     const urls = new Set<string>();
     for (const link of source.links ?? []) {
-      if (isValidHttpUrl(link)) urls.add(link);
+      if (!isValidHttpUrl(link)) continue;
+      try {
+        if (new URL(link).hostname.toLowerCase() === "manual.com") continue;
+      } catch { continue; }
+      urls.add(link);
     }
     for (const item of source.content ?? []) {
       const matches = item.text?.match(/https?:\/\/[^\s]+/g) ?? [];
       for (const url of matches) {
-        if (isValidHttpUrl(url)) urls.add(url);
+        if (!isValidHttpUrl(url)) continue;
+        try {
+          if (new URL(url).hostname.toLowerCase() === "manual.com") continue;
+        } catch { continue; }
+        urls.add(url);
       }
     }
     return Array.from(urls);

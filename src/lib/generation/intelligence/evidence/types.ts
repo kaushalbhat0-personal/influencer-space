@@ -92,4 +92,6 @@ export interface EvidenceIntelligenceInput {
   aiNiches?: string[];
   aiBusinessModel?: string | null;
   aiUsed?: boolean;
+  /** RCCF-PRELAUNCH-14A: structured resume for tiered evidence weighting (role vs project domain). */
+  resume?: import("@/lib/generation/intelligence/types").ResumeSource | null;
 }
