@@ -93,7 +93,7 @@ export const ARCHETYPE_BLUEPRINTS: Record<Archetype, { sections: SectionPlan[]; 
   professional_resume: {
     sections: PROFESSIONAL_SECTIONS,
     layout: "portfolio",
-    themeFamily: "dark-tech",
+    themeFamily: "corporate-agency",
   },
   creator: {
     sections: CREATOR_SECTIONS,
@@ -422,4 +422,4 @@ export function blueprintForArchetype(archetype: Archetype | null | undefined): 
   return ARCHETYPE_BLUEPRINTS[archetype] ?? null;
 }
 
-export const BLUEPRINT_VERSION = 2;
+export const BLUEPRINT_VERSION = 3;

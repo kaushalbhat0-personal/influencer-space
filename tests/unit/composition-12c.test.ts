@@ -181,8 +181,11 @@ describe("RCCF-PRELAUNCH-12C — Semantic Binder + Heading + Variant", () => {
     const expDefault = resolveVariant("professional_resume", "experience", "timeline.default", 1);
     expect(expDefault.moduleId).toBe("timeline.default");
 
-    const galBento = resolveVariant("creator", "gallery", "gallery.grid", 6);
-    expect(galBento.moduleId).toBe("gallery.bento");
+    // 12D: gallery.bento requires real image assets, not just count — without hasRealAssets it stays grid
+    const galBentoNoAsset = resolveVariant("creator", "gallery", "gallery.grid", 6);
+    expect(galBentoNoAsset.moduleId).toBe("gallery.grid");
+    const galBentoWithAssets = resolveVariant("creator", "gallery", "gallery.grid", 6, undefined, true);
+    expect(galBentoWithAssets.moduleId).toBe("gallery.bento");
 
     const galGrid = resolveVariant("creator", "gallery", "gallery.grid", 2);
     expect(galGrid.moduleId).toBe("gallery.grid");
@@ -193,8 +196,10 @@ describe("RCCF-PRELAUNCH-12C — Semantic Binder + Heading + Variant", () => {
     const prodGrid = resolveVariant("creator", "products", "products.grid", 2);
     expect(prodGrid.moduleId).toBe("products.grid");
 
-    const restaurantGal = resolveVariant("local_business", "gallery", "gallery.grid", 7);
-    expect(restaurantGal.moduleId).toBe("gallery.bento");
+    const restaurantGalNoAsset = resolveVariant("local_business", "gallery", "gallery.grid", 7);
+    expect(restaurantGalNoAsset.moduleId).toBe("gallery.grid");
+    const restaurantGalWithAssets = resolveVariant("local_business", "gallery", "gallery.grid", 7, undefined, true);
+    expect(restaurantGalWithAssets.moduleId).toBe("gallery.bento");
 
     const insufficient = resolveVariant("local_business", "gallery", "gallery.grid", 2);
     expect(insufficient.moduleId).toBe("gallery.grid");

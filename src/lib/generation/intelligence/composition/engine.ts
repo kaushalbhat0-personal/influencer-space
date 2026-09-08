@@ -27,7 +27,7 @@ import { resolveHeading } from "./headings";
 import { resolveVariant } from "./variants";
 import { isValidHttpUrl } from "@/lib/validation/url";
 
-export const COMPOSITION_VERSION = 2;
+export const COMPOSITION_VERSION = 3;
 
 /**
  * RCCF-67.3 — sections fully removed from the product (Pricing was never wired
@@ -335,17 +335,20 @@ export function composeStorefront(input: CompositionInput): StorefrontCompositio
       }
       // Heading intelligence — override title (presentation-only) except hero which keeps name
       if (plan.id !== "hero") {
-        const heading = resolveHeading(archetype, plan.id);
+        const heading = resolveHeading(archetype, plan.id, undefined, source);
         props.title = heading;
         // Also ensure label reflects heading for diagnostics
         reason += `; heading:${heading}`;
       } else {
         // Hero heading stays as identity name, but we still record heading resolver for consistency
-        const heroHeading = resolveHeading(archetype, plan.id);
+        const heroHeading = resolveHeading(archetype, plan.id, undefined, source);
         void heroHeading;
       }
-      // Variant intelligence — resolve variant based on itemCount
-      const variant = resolveVariant(archetype, plan.id, moduleId, itemCount);
+      // Variant intelligence — resolve variant based on itemCount and real assets (12D: do not bento text-only projects)
+      const hasRealAssets =
+        Array.isArray((props as Record<string, unknown>).images) &&
+        ((props as Record<string, unknown>).images as Array<Record<string, unknown>>).some((im) => typeof im.imageUrl === "string" && (im.imageUrl as string).length > 0);
+      const variant = resolveVariant(archetype, plan.id, moduleId, itemCount, undefined, hasRealAssets);
       if (variant.moduleId !== moduleId) {
         moduleId = variant.moduleId;
         reason += `; variant:${variant.moduleId} (${variant.reason})`;
@@ -374,8 +377,8 @@ export function composeStorefront(input: CompositionInput): StorefrontCompositio
     const baseModuleId2 = plan.id === "hero" ? heroVariant : mapping.moduleId;
     const baseProps = contentPropsFor(plan.id, input, plan.label);
     // Still apply heading/variant deterministically even without source, using itemCount 0 so fallback to default variant
-    const heading2 = plan.id !== "hero" ? resolveHeading(archetype, plan.id) : undefined;
-    const variant2 = resolveVariant(archetype, plan.id, baseModuleId2, 0);
+    const heading2 = plan.id !== "hero" ? resolveHeading(archetype, plan.id, undefined, source) : undefined;
+    const variant2 = resolveVariant(archetype, plan.id, baseModuleId2, 0, undefined, false);
     const finalProps = heading2 ? { ...baseProps, title: heading2 } : baseProps;
     return composeSection(
       { id: plan.id, label: plan.label, decision: plan.decision, type: mapping.type, moduleId: variant2.moduleId, order: plan.order, props: finalProps, mapping: mapping.mapping, reason: `${mapping.mapping} mapping for blueprint section "${plan.id}"; heading:${heading2 ?? plan.label}; variant:${variant2.moduleId}` },

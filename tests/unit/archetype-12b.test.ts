@@ -44,8 +44,8 @@ function makeIntel(source: import("@/lib/generation/intelligence/types").Content
 }
 
 describe("RCCF-PRELAUNCH-12B — Archetype Resolver + Intelligent Website Blueprint", () => {
-  it("BLUEPRINT_VERSION bumped to 2", () => {
-    expect(BLUEPRINT_VERSION).toBe(2);
+  it("BLUEPRINT_VERSION bumped to 3", () => {
+    expect(BLUEPRINT_VERSION).toBe(3);
   });
 
   it("professional_resume: Kaushal Resume → professional_resume with correct sections", async () => {
@@ -457,7 +457,7 @@ describe("RCCF-PRELAUNCH-12B — Archetype Resolver + Intelligent Website Bluepr
       identity: { entityType: null, primaryNiche: null, businessModel: null, audience: [], name: source.displayName, username: source.username, subdomain: source.username },
       // no archetype, no source
     });
-    expect(bp.version).toBe(2);
+    expect(bp.version).toBe(3);
     expect(bp.sections.length).toBeGreaterThan(0);
     expect(bp.visibleSections).toContain("hero");
     expect(bp.visibleSections).toContain("contact");

@@ -233,12 +233,28 @@ function promote(sections: SectionPlan[], id: string): void {
   }
 }
 
-function buildNavigation(sections: SectionPlan[], subdomain: string): NavigationItem[] {
-  return sections
-    .filter((s) => s.decision !== "hidden")
-    .sort((a, b) => a.order - b.order)
-    .slice(0, 6)
-    .map((s) => ({ id: s.id, label: s.label, href: `/#${s.id}`, order: s.order }));
+function buildNavigation(sections: SectionPlan[], subdomain: string, archetype?: string | null): NavigationItem[] {
+  const visible = sections.filter((s) => s.decision !== "hidden").sort((a, b) => a.order - b.order);
+  if (archetype !== "professional_resume") {
+    return visible.slice(0, 6).map((s) => ({ id: s.id, label: s.label, href: `/#${s.id}`, order: s.order }));
+  }
+  // Professional: Contact must always be included, prioritize primary sections + Contact, external links only after essential (composition layer)
+  const essentialIds = ["hero", "experience", "skills", "projects", "contact"];
+  const essential = visible.filter((s) => essentialIds.includes(s.id)).sort((a, b) => {
+    const ia = essentialIds.indexOf(a.id);
+    const ib = essentialIds.indexOf(b.id);
+    return ia - ib;
+  });
+  const essentialSet = new Set(essential.map((s) => s.id));
+  const remaining = visible.filter((s) => !essentialSet.has(s.id)).sort((a, b) => a.order - b.order);
+  const result: SectionPlan[] = [...essential];
+  for (const r of remaining) {
+    if (result.length >= 6) break;
+    result.push(r);
+  }
+  // If essential already >6 (should not), slice
+  const final = result.slice(0, 6).sort((a, b) => a.order - b.order);
+  return final.map((s) => ({ id: s.id, label: s.label, href: `/#${s.id}`, order: s.order }));
 }
 
 export function buildWebsiteBlueprint(input: BlueprintInput): WebsiteBlueprint {
@@ -275,7 +291,7 @@ export function buildWebsiteBlueprint(input: BlueprintInput): WebsiteBlueprint {
 
   const sections = decideSections(templateForDecide, input);
   const visibleSections = sections.filter((s) => s.decision !== "hidden").map((s) => s.id);
-  const navigation = buildNavigation(sections, input.identity.subdomain);
+  const navigation = buildNavigation(sections, input.identity.subdomain, archetype);
 
   const name = input.identity.name ?? input.identity.username ?? "Creator";
   const description = input.evidence.primaryNiche

@@ -50,7 +50,8 @@ export function resolveVariant(
   sectionId: string,
   baseModuleId: string,
   itemCount: number,
-  _evidence?: unknown
+  _evidence?: unknown,
+  hasRealAssets: boolean = false
 ): VariantDecision {
   const arch = (archetype as string) ?? "default";
 
@@ -64,11 +65,12 @@ export function resolveVariant(
       return { moduleId: baseModuleId, reason: "professional timeline default" };
     }
     if (sectionId === "projects" || sectionId === "portfolio" || sectionId === "gallery" || sectionId === "transformations") {
-      if (itemCount >= GALLERY_BENTO_THRESHOLD) {
+      // RCCF-PRELAUNCH-12D: do NOT select bento purely on count when no real image assets — choose text-appropriate grid
+      if (hasRealAssets && itemCount >= GALLERY_BENTO_THRESHOLD) {
         const m = "gallery.bento";
         return { moduleId: isRegistered(m) ? m : baseModuleId, reason: `gallery bento for ${itemCount} images` };
       }
-      return { moduleId: baseModuleId, reason: "gallery grid" };
+      return { moduleId: baseModuleId, reason: hasRealAssets ? "gallery grid (insufficient images for bento)" : "gallery grid (text data, no images)" };
     }
     if (sectionId === "hero") {
       const m = "hero.split";
@@ -86,11 +88,11 @@ export function resolveVariant(
   // Creator
   if (arch === "creator") {
     if (sectionId === "gallery" || sectionId === "portfolio" || sectionId === "transformations" || sectionId === "projects") {
-      if (itemCount >= GALLERY_BENTO_THRESHOLD) {
+      if (hasRealAssets && itemCount >= GALLERY_BENTO_THRESHOLD) {
         const m = "gallery.bento";
         return { moduleId: isRegistered(m) ? m : baseModuleId, reason: `creator gallery bento for ${itemCount}` };
       }
-      return { moduleId: baseModuleId, reason: "creator gallery grid" };
+      return { moduleId: baseModuleId, reason: hasRealAssets ? "creator gallery grid (insufficient for bento)" : "creator gallery grid (no images)" };
     }
     if (sectionId === "products" || sectionId === "merchandise") {
       if (itemCount >= PRODUCTS_BENTO_THRESHOLD) {
@@ -111,11 +113,11 @@ export function resolveVariant(
   // Local business
   if (arch === "local_business") {
     if (sectionId === "gallery" || sectionId === "portfolio" || sectionId === "transformations") {
-      if (itemCount >= GALLERY_BENTO_THRESHOLD) {
+      if (hasRealAssets && itemCount >= GALLERY_BENTO_THRESHOLD) {
         const m = "gallery.bento";
         return { moduleId: isRegistered(m) ? m : baseModuleId, reason: `local gallery bento for ${itemCount}` };
       }
-      return { moduleId: baseModuleId, reason: "local gallery grid" };
+      return { moduleId: baseModuleId, reason: hasRealAssets ? "local gallery grid (insufficient)" : "local gallery grid (no images)" };
     }
     if (sectionId === "menu" || sectionId === "products" || sectionId === "merchandise") {
       if (itemCount >= 4) {

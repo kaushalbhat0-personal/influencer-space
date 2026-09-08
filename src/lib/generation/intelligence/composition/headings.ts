@@ -83,15 +83,34 @@ function hashString(s: string): number {
  * Deterministic, grounded, no LLM, no prose rewriting.
  * Uses hash to pick among configured options so same input always same heading,
  * but heading is always from allowlist.
+ * RCCF-PRELAUNCH-12D: education heading distinguishes degree vs credentials deterministically.
  */
 export function resolveHeading(
   archetype: Archetype | string | null | undefined,
   sectionId: string,
-  _evidence?: unknown
+  _evidence?: unknown,
+  source?: import("@/lib/generation/intelligence/types").ContentSource | null
 ): string {
   const archKey = (archetype as string) ?? "default";
   const archMap = (REGISTRY as Record<string, Record<string, HeadingOptions>>)[archKey] ?? REGISTRY.default;
   const options = archMap[sectionId] ?? REGISTRY.default[sectionId] ?? [sectionId.charAt(0).toUpperCase() + sectionId.slice(1)];
+
+  // 12D: education/credentials distinction — grounded, deterministic
+  if ((sectionId === "education" || sectionId === "achievements") && archKey === "professional_resume" && source?.resume) {
+    const hasEdu = (source.resume.education.length ?? 0) > 0;
+    const hasCert = (source.resume.certifications.length ?? 0) > 0;
+    if (hasCert && !hasEdu) {
+      // Certifications-only → Credentials
+      const credOptions = archMap[sectionId] ?? options;
+      const cred = credOptions.find((h) => h.toLowerCase().includes("credential"));
+      if (cred) return cred;
+    }
+    if (hasEdu) {
+      const edu = options.find((h) => h.toLowerCase() === "education");
+      if (edu) return edu;
+    }
+  }
+
   // Deterministic pick: hash(archetype + sectionId) % options.length, but ensure first is most common for predictability
   // For 12C we want Kaushal professional skills to be one of ["Skills","What I Work With",...] — pick via hash for determinism
   const idx = hashString(`${archKey}:${sectionId}`) % options.length;

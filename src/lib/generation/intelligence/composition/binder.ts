@@ -37,6 +37,99 @@ function parseMenuItems(bio: string): string[] {
     .slice(0, 8);
 }
 
+/**
+ * Deterministic skill curation — prefer high-signal skills using existing evidence only.
+ * Target ~12-15 for first generation.
+ * Priority is based on a curated high-signal order (languages → frameworks → databases → AI → architecture → auth → testing → devops).
+ * No LLM, no invented categories, no mutation of source.
+ */
+const HIGH_SIGNAL_SKILL_ORDER = [
+  // Languages
+  "typescript",
+  "python",
+  "dart",
+  "sql",
+  "javascript",
+  // Frontend major
+  "react",
+  "next.js",
+  "flutter",
+  "tailwind",
+  "framer motion",
+  "gsap",
+  // State & Data
+  "zustand",
+  "tanstack query",
+  "react hook form",
+  "zod",
+  // Backend
+  "fastapi",
+  "flask",
+  "node.js",
+  "next.js server actions",
+  // Databases & ORM
+  "postgresql",
+  "supabase",
+  "prisma",
+  "drizzle",
+  "sqlite",
+  "sqlalchemy",
+  // AI/ML
+  "openrouter",
+  "prompt engineering",
+  "ocr",
+  // Auth & Security
+  "nextauth",
+  "better auth",
+  "jwt",
+  "rbac",
+  "rls",
+  // Payments
+  "razorpay",
+  // Testing
+  "vitest",
+  "playwright",
+  "pytest",
+  // DevOps
+  "vercel",
+  "github actions",
+  "docker",
+  "esbuild",
+  // Architecture
+  "clean architecture",
+  "domain-driven design",
+  "ddd",
+  "repository pattern",
+  "multi-tenant saas",
+  "cqrs",
+  "event-driven",
+];
+
+function skillPriority(skill: string): number {
+  const lower = skill.toLowerCase();
+  for (let i = 0; i < HIGH_SIGNAL_SKILL_ORDER.length; i++) {
+    const key = HIGH_SIGNAL_SKILL_ORDER[i];
+    if (lower.includes(key) || key.includes(lower)) return i;
+    // Also check exact token
+    if (lower === key) return i;
+  }
+  return 999;
+}
+
+function curateSkills(skills: string[]): string[] {
+  // Score each skill by priority, then by original index for stability
+  const scored = skills.map((s, idx) => ({
+    skill: s,
+    priority: skillPriority(s),
+    originalIndex: idx,
+  }));
+  scored.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    return a.originalIndex - b.originalIndex;
+  });
+  return scored.map((x) => x.skill);
+}
+
 export function bindSection(
   sectionId: string,
   source: ContentSource | null | undefined,
@@ -80,14 +173,26 @@ export function bindSection(
     }
     case "skills": {
       if (!resume || resume.skills.length === 0) return empty({ title: fallbackLabel, services: [] });
-      const services = resume.skills.map((s, i) => ({
+      // RCCF-PRELAUNCH-12D: intelligent curation — deterministic ranking using existing evidence only, no LLM
+      const curated = curateSkills(resume.skills);
+      const services = curated.slice(0, 15).map((s, i) => ({
         id: `skill_${i}`,
         title: s,
         description: null as string | null,
         price: 0,
         category: null as string | null,
       }));
-      return withData({ title: fallbackLabel, services }, services.length);
+      const remainingCount = resume.skills.length - services.length;
+      return withData(
+        {
+          title: fallbackLabel,
+          services,
+          // Expose remaining count for presentation layer if it supports "more" indicator
+          remainingCount: remainingCount > 0 ? remainingCount : 0,
+          totalCount: resume.skills.length,
+        },
+        services.length
+      );
     }
     case "projects":
     case "portfolio": {

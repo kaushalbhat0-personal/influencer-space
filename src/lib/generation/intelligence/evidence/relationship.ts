@@ -108,7 +108,30 @@ export function buildRelationshipGraph(sourceText: string, contentTexts: string[
   const nicheSet = new Set<string>();
 
   for (const [token, rule] of Object.entries(RELATIONSHIP_RULES)) {
-    if (!text.includes(token)) continue;
+    let matches = text.includes(token);
+    // RCCF-PRELAUNCH-12D: allow maps URL to also trigger google_maps platform (not just phrase)
+    if (token === "google maps" && !matches) {
+      const hasMapsUrlAlt = text.includes("google.com/maps") || text.includes("maps.google") || text.includes("goo.gl/maps") || text.includes("maps.app.goo.gl");
+      if (hasMapsUrlAlt) matches = true;
+    }
+    if (!matches) continue;
+    // RCCF-PRELAUNCH-12D: Google Maps false positive fix — phrase "Google Maps integration" in a software project
+    // must NOT create strong local_business evidence. Require stronger local-business signals:
+    // actual maps URL, address/location data, or menu/hours/reservation evidence.
+    if (token === "google maps") {
+      const hasMapsUrl = text.includes("google.com/maps") || text.includes("maps.google") || text.includes("goo.gl/maps") || text.includes("maps.app.goo.gl");
+      const hasLocalBusinessSignal =
+        text.includes("location:") ||
+        text.includes("address") ||
+        text.includes("menu:") ||
+        text.includes("hours") ||
+        text.includes("reservation") ||
+        text.includes("book a table") ||
+        text.includes("restaurant");
+      if (!hasMapsUrl && !hasLocalBusinessSignal) continue;
+      // Even with local signal, require maps URL for google_maps platform to avoid "Google Maps integration" false positive
+      if (!hasMapsUrl) continue;
+    }
     nodes.set(rule.label, { id: rule.label, kind: rule.kind, label: rule.label });
     if (rule.brand) {
       nodes.set(rule.brand, { id: rule.brand, kind: "brand", label: rule.brand });
