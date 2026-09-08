@@ -13,6 +13,49 @@ export interface ContentItem {
   url: string;
 }
 
+/**
+ * ResumeSource — additive semantic resume data (Phase 1: deterministic, no LLM).
+ * Every field derives from the raw extracted text; missing sections stay empty.
+ * `rawText` is always preserved for fallback/auditability.
+ */
+export interface ResumeExperience {
+  title: string;
+  company?: string;
+  duration?: string;
+  description: string;
+  raw: string;
+}
+
+export interface ResumeProject {
+  name: string;
+  description: string;
+  raw: string;
+}
+
+export interface ResumeEducation {
+  degree: string;
+  institution?: string;
+  years?: string;
+  raw: string;
+}
+
+export interface ResumeSocialLink {
+  platform: string;
+  url: string;
+}
+
+export interface ResumeSource {
+  rawText: string;
+  summary: string;
+  experience: ResumeExperience[];
+  skills: string[];
+  projects: ResumeProject[];
+  education: ResumeEducation[];
+  certifications: string[];
+  socialLinks: ResumeSocialLink[];
+  location: string | null;
+}
+
 export interface ContentSource {
   platform: string;
   username: string;
@@ -44,6 +87,8 @@ export interface ContentSource {
   socialLinks?: string[];
   /** Media summary when available. */
   media?: { count: number; types: string[] };
+  /** RCCF-PRELAUNCH-12A: structured resume when source is a resume (additive, optional). */
+  resume?: ResumeSource;
 }
 
 export interface CreatorIntelligence {

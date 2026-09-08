@@ -147,12 +147,27 @@ export class OnboardingService {
     // IMPLEMENTATION-36: evidence-backed intelligence — multi-entity, multi-niche,
     // business model, audience and recommendations, every conclusion traced to
     // evidence. Deterministic-first; reuses the hybrid AI output (no extra AI call).
+    // RCCF-PRELAUNCH-12A: flatten resume signals for evidence + relationship graphs (deterministic, additive).
+    const resumeTexts: string[] = source.resume
+      ? [
+          source.resume.summary,
+          ...source.resume.skills,
+          ...source.resume.experience.map((e) => `${e.title} ${e.company ?? ""} ${e.description}`),
+          ...source.resume.projects.map((p) => `${p.name} ${p.description}`),
+          ...source.resume.education.map((e) => `${e.degree} ${e.institution ?? ""}`),
+          ...source.resume.certifications,
+          source.resume.location ?? "",
+          ...source.resume.socialLinks.map((l) => l.url),
+        ].filter(Boolean)
+      : [];
+
     const intelligence = buildEvidenceIntelligence({
       sourceText: source.bio ?? "",
       sourceContentTexts: [
         ...(source.content ?? []).map((c) => c.text ?? ""),
         ...(source.keywords ?? []),
         ...(source.hashtags ?? []),
+        ...resumeTexts,
       ],
       followers: source.followers,
       acquisitionCompleteness: acquisitionCompleteness(acquisition.diagnostics),
@@ -174,6 +189,7 @@ export class OnboardingService {
       ...(source.content ?? []).map((c) => c.text ?? ""),
       ...(source.keywords ?? []),
       ...(source.hashtags ?? []),
+      ...resumeTexts,
     ];
     // The acquired platform is strong evidence (youtube → creator, twitch →
     // streamer, instagram → influencer) — feed it into the relationship graph.
