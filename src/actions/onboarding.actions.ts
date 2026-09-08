@@ -544,20 +544,7 @@ export async function runCreatorGeneration(
         }
       }
     } else {
-      // RCCF-14: For intelligent path, ensure provisioning uses the intelligent theme/layout, not the legacy generic
-      // Build a synthetic pipelineResult that reflects the intelligent composition's theme when available
-      let provisioningPipelineResult = pipelineResult;
-      if (intelligentBuilderArtifact && profileResult.composition) {
-        // Override the pipelineResult's blueprint theme with the intelligent theme for correct Website.themePackageId
-        const intelligentThemeId = profileResult.composition.theme.themeId;
-        // Create a minimal pipelineResult that will cause buildProvisioningInput to use the intelligent theme
-        // buildProvisioningInput extracts theme from pipelineResult.artifacts[theme_record].themeData, but for the intelligent path
-        // we can directly set the theme via the pipelineResult's blueprint is not used for theme (it's from artifacts)
-        // Instead, we will let buildProvisioningInput use the intelligent theme by temporarily patching the pipelineResult's artifacts
-        // If intelligent composition has a theme, we ensure the provisioningInput's generatedTheme uses it
-        // For now, we keep pipelineResult as is for provisioningInput's category, but ensure the Website theme is updated later via builderData
-        // The actual Website.themePackageId will be updated via the builderData's theme after provisioning (see below)
-      }
+      const provisioningPipelineResult = pipelineResult;
       const provisioningInput = buildProvisioningInput({
         runId,
         authenticatedUserId: userId,
