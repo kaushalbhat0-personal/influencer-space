@@ -165,7 +165,7 @@ function buildArtifact(
     sections: compositions
       .filter((c) => c.decision !== "hidden")
       .sort((a, b) => a.order - b.order)
-      .map((c) => ({ id: c.id, type: c.type, props: c.props })),
+      .map((c) => ({ id: c.id, type: c.type, props: c.props, moduleId: c.moduleId })),
     navigation: nav.map((n) => ({ id: n.id, label: n.label, href: n.href })),
     theme: themeId,
     metadata: {
@@ -178,26 +178,26 @@ function buildArtifact(
 
   const pages = [];
   const homeSections = artifact.sections
-    .map((s, i) => ({
+    .map((s: (typeof artifact.sections)[number] & { moduleId: string }, i) => ({
       id: `section_${s.id}`,
       name: s.type.charAt(0).toUpperCase() + s.type.slice(1),
       order: i,
       visible: true,
       locked: false,
-      slots: [{ id: `slot_${s.id}_0`, moduleId: SECTION_MAP[s.id]?.moduleId ?? "hero.default", parentId: null, order: 0, visible: true, locked: false, config: s.props }],
+      slots: [{ id: `slot_${s.id}_0`, moduleId: s.moduleId, parentId: null, order: 0, visible: true, locked: false, config: s.props }],
     }));
   pages.push({ id: "page_home", name: "Home", slug: "/", order: 1, isHome: true, theme: themeId, sections: homeSections });
 
   if (artifact.sections.some((s) => s.type === "products")) {
     const productSections = artifact.sections
       .filter((s) => s.type === "products")
-      .map((s, i) => ({
+      .map((s: (typeof artifact.sections)[number] & { moduleId: string }, i) => ({
         id: `section_${s.id}`,
         name: "Products",
         order: i,
         visible: true,
         locked: false,
-        slots: [{ id: `slot_${s.id}_0`, moduleId: SECTION_MAP[s.id]?.moduleId ?? "products.grid", parentId: null, order: 0, visible: true, locked: false, config: s.props }],
+        slots: [{ id: `slot_${s.id}_0`, moduleId: s.moduleId, parentId: null, order: 0, visible: true, locked: false, config: s.props }],
       }));
     pages.push({ id: "page_products", name: "Products", slug: "/products", order: 2, isHome: false, theme: themeId, sections: productSections });
   }
