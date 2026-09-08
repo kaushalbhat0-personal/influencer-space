@@ -56,6 +56,37 @@ export interface ResumeSource {
   location: string | null;
 }
 
+export interface StructuredProduct {
+  id: string;
+  name: string;
+  description?: string | null;
+  price?: number;
+  imageUrl?: string | null;
+  category?: string | null;
+  slug?: string;
+  url?: string | null;
+}
+
+export interface StructuredMenuItem {
+  name: string;
+  description?: string | null;
+  price?: number;
+  imageUrl?: string | null;
+  category?: string | null;
+}
+
+export interface StructuredTestimonial {
+  author: string;
+  content: string;
+  rating?: number;
+  role?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface StructuredHours {
+  text: string;
+}
+
 export interface ContentSource {
   platform: string;
   username: string;
@@ -89,6 +120,22 @@ export interface ContentSource {
   media?: { count: number; types: string[] };
   /** RCCF-PRELAUNCH-12A: structured resume when source is a resume (additive, optional). */
   resume?: ResumeSource;
+  /** RCCF-PRELAUNCH-15B: structured product/shop data (creator) — when present, Products binds real data. */
+  products?: StructuredProduct[];
+  /** RCCF-PRELAUNCH-15B: structured menu items (local business) — bound via products.* renderer. */
+  menuItems?: StructuredMenuItem[];
+  /** RCCF-PRELAUNCH-15B: structured testimonials/reviews — bound to testimonials section. */
+  testimonials?: StructuredTestimonial[];
+  /** RCCF-PRELAUNCH-15B: actual Google Maps URL (not prose mentions) */
+  googleMapsUrl?: string;
+  /** RCCF-PRELAUNCH-15B: actual business hours text */
+  hours?: string;
+  /** RCCF-PRELAUNCH-15B: reservation URL/evidence */
+  reservationUrl?: string;
+  /** RCCF-PRELAUNCH-15B: gallery/media assets with real image URLs */
+  gallery?: Array<{ id: string; title?: string; description?: string | null; imageUrl: string; mediaType: "image" | "video"; videoUrl?: string | null; altText?: string | null }>;
+  /** RCCF-PRELAUNCH-15B: content feed items (youtube etc) */
+  contentFeed?: Array<{ id: string; platform: string; url: string; thumbnailUrl?: string | null; caption?: string | null }>;
 }
 
 export interface CreatorIntelligence {

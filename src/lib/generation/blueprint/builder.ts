@@ -129,35 +129,46 @@ function applyDataDrivenHide(sections: SectionPlan[], input: BlueprintInput): Se
       case "github":
         return hasSocialPlatform(source, "github");
       case "testimonials":
-        // For 12B, testimonials are hidden unless we have explicit review signal
-        // (reviews keyword in source text) — no fabricated testimonials
-        return hasReviewSignal(source);
+        // 15B: only when actual review/testimonial evidence exists
+        return (source.testimonials?.length ?? 0) > 0;
       case "products":
       case "merchandise":
-        // Products where available: business model indicates products or we have products intelligence (future)
-        return hasBusinessModel(input, "products") || hasBusinessModel(input, "merchandise");
+        // 15B: only when structured product data exists (do not require keyword)
+        return (source.products?.length ?? 0) > 0;
       case "gallery":
       case "transformations":
       case "portfolio":
-        // Gallery where available: has media/platforms or gallery-like content
+        // 15B: require real gallery assets — not just platform name in prose
+        if ((source.gallery?.length ?? 0) > 0 && (source.gallery ?? []).some((g) => g.imageUrl && g.imageUrl.trim().length > 0)) return true;
+        // Keep professional fallback via resume projects but only when real assets present? For 15B creator, use platforms with real links
+        if ((source.contentFeed?.length ?? 0) > 0) return true;
+        // Fallback to previous platform check for backward compat, but require actual media links
         return hasPlatforms(input, ["instagram", "youtube", "tiktok"]) || hasSocialPlatform(source, "instagram") || (source.resume?.projects.length ?? 0) > 0;
       case "media":
       case "blog":
       case "resources":
-        return hasPlatforms(input, ["youtube", "instagram", "tiktok", "spotify"]);
+        if ((source.contentFeed?.length ?? 0) > 0) return true;
+        if ((source.content?.length ?? 0) > 0) return true;
+        return hasPlatforms(input, ["youtube", "instagram", "tiktok", "spotify"]) || hasMediaPlatformLink(source);
       case "community":
+        return hasCommunityLink(source);
       case "links":
       case "sponsors":
       case "events":
         return (source.socialLinks?.length ?? 0) > 0 || (source.links.length ?? 0) > 1 || (source.resume?.socialLinks.length ?? 0) > 0;
       case "menu":
+        // 15B: require structured menu when available, fallback to keyword for legacy
+        if ((source.menuItems?.length ?? 0) > 0) return true;
+        if ((source.products?.length ?? 0) > 0 && input.archetype?.archetype === "local_business") return true;
         return hasMenuSignal(source);
       case "location":
-        return !!(source.location || source.resume?.location || hasPlatforms(input, ["google_maps"]) || hasMenuSignal(source));
+        return !!(source.location || source.resume?.location || source.googleMapsUrl || hasPlatforms(input, ["google_maps"]));
       case "hours":
+        if (source.hours && source.hours.trim().length > 0) return true;
         return hasHoursSignal(source);
       case "reservations":
       case "booking":
+        if (source.reservationUrl && source.reservationUrl.trim().length > 0) return true;
         return hasReservationSignal(source);
       default:
         // Unknown section: keep as-is (do not hide unknown)
@@ -193,6 +204,18 @@ function hasBusinessModel(input: BlueprintInput, model: string): boolean {
   return ms.has(model as BusinessModelType);
 }
 
+function hasCommunityLink(source: ContentSource): boolean {
+  const all = [...(source.socialLinks ?? []), ...source.links, ...(source.resume?.socialLinks.map((l) => l.url) ?? [])];
+  const low = all.join(" ").toLowerCase();
+  return low.includes("discord") || low.includes("t.me") || low.includes("telegram") || low.includes("whatsapp") || low.includes("wa.me");
+}
+
+function hasMediaPlatformLink(source: ContentSource): boolean {
+  const all = [...(source.socialLinks ?? []), ...source.links, ...(source.content?.map((c) => c.url) ?? [])].join(" ").toLowerCase();
+  return all.includes("youtube") || all.includes("instagram") || all.includes("tiktok") || all.includes("twitch") || all.includes("spotify");
+}
+
+// Legacy helpers kept for backward compat but not used for 15B hide decisions
 function hasReviewSignal(source: ContentSource): boolean {
   const txt = [
     source.bio ?? "",

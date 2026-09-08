@@ -310,7 +310,9 @@ export class LayoutEngine {
         rendererDecision: content.hero.rendererDecision ?? null,
       });
     } else if (moduleId.startsWith("products.")) {
-      const productEntries: Record<string, unknown>[] = content.products.map((p) => ({
+      // 15B: when aggregate has products, use them; otherwise fallback to config.products (binder-bound menu/products for intelligence preview)
+      const aggProducts = content.products ?? [];
+      let productEntries: Record<string, unknown>[] = aggProducts.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -318,19 +320,32 @@ export class LayoutEngine {
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
-        // RCCF-66.2: per-product sales mode + resolved WhatsApp destination,
-        // baked into the snapshot by the aggregate. Legacy snapshots without
-        // them degrade to ONLINE (renderer normalizes).
-        commerceMode: p.commerceMode,
-        whatsappUrl: p.whatsappUrl,
+        commerceMode: (p as any).commerceMode,
+        whatsappUrl: (p as any).whatsappUrl,
       }));
+      if (productEntries.length === 0) {
+        const cfgProducts = (config as Record<string, unknown>).products as Array<Record<string, unknown>> | undefined;
+        if (cfgProducts && cfgProducts.length > 0) {
+          productEntries = cfgProducts.map((p) => ({
+            id: (p.id as string) || Math.random().toString(),
+            name: (p.name as string) || "",
+            description: (p.description as string) ?? null,
+            price: (p.price as number) ?? 0,
+            imageUrl: (p.imageUrl as string) ?? null,
+            slug: (p.slug as string) ?? "",
+            isFeatured: (p.isFeatured as boolean) ?? false,
+            commerceMode: (p.commerceMode as string) ?? undefined,
+            whatsappUrl: (p.whatsappUrl as string) ?? null,
+          }));
+        }
+      }
       config.resolvedData = productEntries;
       config.resolvedTitle = content.identity.name
         ? `${content.identity.name}'s Products`
-        : "Products";
+        : (config.resolvedTitle as string) || "Products";
       debugLog(tracePrefix, "products", { aggCount: content.products.length, resolvedCount: productEntries.length });
     } else if (moduleId.startsWith("gallery.")) {
-      const imageEntries: Record<string, unknown>[] = content.gallery.map((g) => ({
+      let imageEntries: Record<string, unknown>[] = content.gallery.map((g) => ({
         id: g.id,
         url: g.imageUrl,
         caption: g.title || g.description || "",
@@ -339,6 +354,20 @@ export class LayoutEngine {
         altText: g.altText,
         isVideo: g.mediaType === "video",
       }));
+      if (imageEntries.length === 0) {
+        const cfgImages = (config as Record<string, unknown>).images as Array<Record<string, unknown>> | undefined;
+        if (cfgImages && cfgImages.length > 0) {
+          imageEntries = cfgImages.map((img) => ({
+            id: (img.id as string) || (img.imageUrl as string) || Math.random().toString(),
+            url: (img.imageUrl as string) || (img.url as string) || "",
+            caption: (img.title as string) || (img.caption as string) || (img.description as string) || "",
+            description: img.description as string,
+            videoUrl: img.videoUrl as string,
+            altText: (img.altText as string) || (img.title as string),
+            isVideo: img.mediaType === "video",
+          }));
+        }
+      }
       config.resolvedData = imageEntries;
       config.resolvedTitle = "Gallery";
       debugLog(tracePrefix, "gallery", { aggCount: content.gallery.length, resolvedCount: imageEntries.length });
@@ -393,7 +422,8 @@ export class LayoutEngine {
     } else if (moduleId.startsWith("newsletter.")) {
       config.title = config.title || "Subscribe";
     } else if (moduleId.startsWith("testimonials.")) {
-      config.resolvedData = content.testimonials.map((t) => ({
+      let tData: typeof content.testimonials = content.testimonials ?? [];
+      let resolved = tData.map((t) => ({
         name: t.author,
         handle: t.role,
         content: t.content,
@@ -401,16 +431,45 @@ export class LayoutEngine {
         avatarUrl: t.avatarUrl,
         rating: t.rating,
       }));
+      if (resolved.length === 0) {
+        const cfgItems = (config as Record<string, unknown>).items as Array<Record<string, unknown>> | undefined;
+        const cfgT = (config as Record<string, unknown>).testimonials as Array<Record<string, unknown>> | undefined;
+        const src = cfgItems && cfgItems.length > 0 ? cfgItems : cfgT;
+        if (src && src.length > 0) {
+          resolved = src.map((t) => ({
+            name: (t.author as string) || (t.name as string) || "",
+            handle: (t.role as string) || (t.handle as string) || null,
+            content: (t.content as string) || (t.message as string) || "",
+            message: (t.content as string) || (t.message as string) || "",
+            avatarUrl: (t.avatarUrl as string) ?? null,
+            rating: (t.rating as number) ?? 5,
+          }));
+        }
+      }
+      config.resolvedData = resolved;
       config.resolvedTitle = "Testimonials";
       debugLog(tracePrefix, "testimonials", { aggCount: content.testimonials.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("faq.")) {
-      config.resolvedData = content.faq.map((f) => ({
+      let faqData = content.faq.map((f) => ({
         question: f.question,
         answer: f.answer,
         q: f.question,
         a: f.answer,
         category: f.category,
       }));
+      if (faqData.length === 0) {
+        const cfgItems = (config as Record<string, unknown>).items as Array<Record<string, unknown>> | undefined;
+        if (cfgItems && cfgItems.length > 0) {
+          faqData = cfgItems.map((f) => ({
+            question: (f.question as string) || (f.q as string) || "",
+            answer: (f.answer as string) || (f.a as string) || "",
+            q: (f.question as string) || (f.q as string) || "",
+            a: (f.answer as string) || (f.a as string) || "",
+            category: (f.category as string) ?? "general",
+          }));
+        }
+      }
+      config.resolvedData = faqData;
       config.resolvedTitle = "FAQ";
       debugLog(tracePrefix, "faq", { aggCount: content.faq.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("timeline.")) {

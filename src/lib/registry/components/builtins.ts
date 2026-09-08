@@ -155,8 +155,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     defaultProps: { layout: "grid", columns: 3, title: "", showViewAll: true, highlightFeatured: false, animation: "stagger" },
     // RCCF-VISUAL-02B-01: fields + resolveData proof
     fields: PRODUCTS_GRID_FIELDS,
-    resolveData: ({ content }) => {
-      const productEntries = content.products.map((p) => ({
+    resolveData: ({ content, config }) => {
+      let productEntries = content.products.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -164,10 +164,26 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
-        commerceMode: p.commerceMode,
-        whatsappUrl: p.whatsappUrl,
+        commerceMode: (p as any).commerceMode,
+        whatsappUrl: (p as any).whatsappUrl,
       }));
-      const resolvedTitle = content.identity.name ? `${content.identity.name}'s Products` : "Products";
+      if (productEntries.length === 0) {
+        const cfgProducts = (config as Record<string, unknown>)?.products as Array<Record<string, unknown>> | undefined;
+        if (cfgProducts && cfgProducts.length > 0) {
+          productEntries = cfgProducts.map((p) => ({
+            id: (p.id as string) || Math.random().toString(),
+            name: (p.name as string) || "",
+            description: (p.description as string) ?? null,
+            price: (p.price as number) ?? 0,
+            imageUrl: (p.imageUrl as string) ?? null,
+            slug: (p.slug as string) ?? "",
+            isFeatured: (p.isFeatured as boolean) ?? false,
+            commerceMode: (p.commerceMode as string) ?? undefined,
+            whatsappUrl: (p.whatsappUrl as string) ?? null,
+          }));
+        }
+      }
+      const resolvedTitle = (config as Record<string, unknown>)?.title as string || (content.identity.name ? `${content.identity.name}'s Products` : "Products");
       return { resolvedData: productEntries, resolvedTitle };
     },
     renderer: ProductsRenderer,
@@ -182,8 +198,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     validation: { schema: {} },
     defaultProps: { title: "Products", columns: 3 },
     fields: PRODUCTS_GRID_FIELDS,
-    resolveData: ({ content }) => {
-      const productEntries = content.products.map((p) => ({
+    resolveData: ({ content, config }) => {
+      let productEntries = content.products.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -191,10 +207,26 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
-        commerceMode: p.commerceMode,
-        whatsappUrl: p.whatsappUrl,
+        commerceMode: (p as any).commerceMode,
+        whatsappUrl: (p as any).whatsappUrl,
       }));
-      const resolvedTitle = content.identity.name ? `${content.identity.name}'s Products` : "Products";
+      if (productEntries.length === 0) {
+        const cfgProducts = (config as Record<string, unknown>)?.products as Array<Record<string, unknown>> | undefined;
+        if (cfgProducts && cfgProducts.length > 0) {
+          productEntries = cfgProducts.map((p) => ({
+            id: (p.id as string) || Math.random().toString(),
+            name: (p.name as string) || "",
+            description: (p.description as string) ?? null,
+            price: (p.price as number) ?? 0,
+            imageUrl: (p.imageUrl as string) ?? null,
+            slug: (p.slug as string) ?? "",
+            isFeatured: (p.isFeatured as boolean) ?? false,
+            commerceMode: (p.commerceMode as string) ?? undefined,
+            whatsappUrl: (p.whatsappUrl as string) ?? null,
+          }));
+        }
+      }
+      const resolvedTitle = (config as Record<string, unknown>)?.title as string || (content.identity.name ? `${content.identity.name}'s Products` : "Products");
       return { resolvedData: productEntries, resolvedTitle };
     },
     renderer: ProductsBentoRenderer,
