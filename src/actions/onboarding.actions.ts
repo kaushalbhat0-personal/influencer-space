@@ -563,7 +563,8 @@ export async function runCreatorGeneration(
       }
     } else {
       const provisioningPipelineResult = pipelineResult;
-      const provisioningInput: ReturnType<typeof buildProvisioningInput> & { generatedWebsite?: unknown } = buildProvisioningInput({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const provisioningInput: any = buildProvisioningInput({
         runId,
         authenticatedUserId: userId,
         creatorName: effectiveCreatorName,
@@ -574,13 +575,18 @@ export async function runCreatorGeneration(
         pipelineResult: provisioningPipelineResult,
         category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
         industry: categoryOverride || profileResult.knowledgeGraph.creator.niche,
-      }) as any;
+      });
       // RCCF-PRELAUNCH-14A: ensure intelligent composition reaches provisioning even when pipelineResult.artifacts is empty (synthetic intelligent path)
       if (intelligentBuilderArtifact) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (provisioningInput as any).generatedWebsite = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           sections: (intelligentBuilderArtifact as any).sections,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           navigation: (intelligentBuilderArtifact as any).navigation,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           theme: (intelligentBuilderArtifact as any).theme,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           metadata: (intelligentBuilderArtifact as any).metadata,
         };
       }
