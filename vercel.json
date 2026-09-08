@@ -11,6 +11,10 @@
     "src/app/builder/**/*": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "src/app/api/cron/generation/**/*": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   },
   "crons": [
@@ -33,6 +37,10 @@
     {
       "path": "/api/cron/reconcile-pending-orders",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/generation",
+      "schedule": "* * * * *"
     }
   ]
 }

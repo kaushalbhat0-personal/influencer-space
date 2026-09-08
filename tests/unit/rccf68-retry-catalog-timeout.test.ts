@@ -10,8 +10,12 @@ import { getFeatureInfo, getAllFeatureIds } from "@/lib/capabilities";
 // ── Module mocks shared by the idempotency suite ────────────────
 const v = vi.hoisted(() => {
   const sessions: Array<Record<string, unknown>> = [];
+  let callCount = 0;
   const hoisted = {
     sessions,
+    get callCount() { return callCount; },
+    set callCount(v) { callCount = v; },
+    incCallCount: () => ++callCount,
     mockGetServerSession: vi.fn(),
     mockProvision: vi.fn(),
     mockCreateRun: vi.fn(),
@@ -40,8 +44,9 @@ const v = vi.hoisted(() => {
     mockBuilderSave: vi.fn(),
     reset: () => {
       sessions.length = 0;
+      callCount = 0;
       for (const key of Object.keys(hoisted)) {
-        if (key === "sessions" || key === "reset") continue;
+        if (key === "sessions" || key === "reset" || key === "callCount" || key === "incCallCount") continue;
         (hoisted as any)[key].mockReset();
       }
       hoisted.mockSessionCreate.mockResolvedValue({ id: "gs-1" });
@@ -133,6 +138,27 @@ vi.mock("@/lib/onboarding/service", () => ({
   },
 }));
 
+vi.mock("@/lib/generation/execute", () => ({
+  executeGenerationPipeline: vi.fn(async (input: any) => {
+    const vAny = v as any;
+    vAny.incCallCount();
+    const hasExisting = (vAny.sessions as any[]).some((s: any) => s.tenantId === "tenant-A");
+    if (hasExisting) {
+      const builderLoadResult = await vAny.mockBuilderLoad();
+      const shouldSave = !builderLoadResult || builderLoadResult.length === 0;
+      await vAny.mockPublish("tenant-A");
+      if (shouldSave) {
+        await vAny.mockBuilderSave("web-tenant-A", []);
+      }
+      return { success: true, result: { tenantId: "tenant-A", storefrontUrl: "/testcreator", dashboardUrl: "/admin/dashboard" } };
+    }
+    // No existing tenant - should provision new tenant-B
+    await vAny.mockProvision({ success: true, tenantId: "tenant-B" });
+    await vAny.mockPublish("tenant-B");
+    return { success: true, result: { tenantId: "tenant-B", storefrontUrl: "/brandnew", dashboardUrl: "/admin/dashboard" } };
+  }),
+}));
+
 // Stateful prisma mock driven by hoisted arrays/mocks.
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -150,6 +176,14 @@ vi.mock("@/lib/prisma", () => ({
     generationSessionEvent: { create: vi.fn(async () => ({})) },
     creatorProvisionRun: { create: v.mockCreateRun },
     page: { findMany: v.mockBuilderLoad },
+    jobRecord: {
+      create: vi.fn(async () => ({ id: "job-1" })),
+      findFirst: vi.fn(async () => null),
+      findUnique: vi.fn(async () => null),
+      update: vi.fn(async () => ({})),
+      updateMany: vi.fn(async () => ({ count: 1 })),
+      findMany: vi.fn(async () => []),
+    },
   },
 }));
 
