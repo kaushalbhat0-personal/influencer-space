@@ -61,53 +61,7 @@ const CONTENT_LABELS: Record<string, string> = {
   services: "Services", "services bento": "Services", embed: "Embeds", social: "Links", contentfeed: "Posts",
 };
 
-/**
- * The sidebar catalog. Each entry maps to a REGISTERED component id, so every
- * "Add Section" click produces a section + default slot + registered component
- * that the canvas renders immediately. The catalog is validated against the
- * ComponentRegistry at module load — any entry whose component is not
- * registered is dropped, so the sidebar and canvas can never diverge.
- */
-const SECTION_CATALOG: { name: string; category: ComponentCategory; componentId: string }[] = [
-  { name: "Hero", category: "hero", componentId: "hero.default" },
-  { name: "Hero Split", category: "hero", componentId: "hero.split" },
-  { name: "Products", category: "products", componentId: "products.grid" },
-  { name: "Products Bento", category: "products", componentId: "products.bento" },
-  { name: "Gallery", category: "gallery", componentId: "gallery.grid" },
-  { name: "Gallery Bento", category: "gallery", componentId: "gallery.bento" },
-  { name: "Timeline", category: "timeline", componentId: "timeline.default" },
-  { name: "Timeline Masonry", category: "timeline", componentId: "timeline.masonry" },
-  { name: "Testimonials", category: "testimonials", componentId: "testimonials.default" },
-  { name: "Testimonials Marquee", category: "testimonials", componentId: "testimonials.marquee" },
-  { name: "Testimonials Bento", category: "testimonials", componentId: "testimonials.bento" },
-  { name: "FAQ", category: "faq", componentId: "faq.default" },
-  { name: "Courses", category: "courses", componentId: "courses.default" },
-  { name: "Services", category: "services", componentId: "services.default" },
-  { name: "Services Bento", category: "services", componentId: "services.bento" },
-  { name: "Games", category: "games", componentId: "games.default" },
-  { name: "ContentFeed", category: "contentFeed", componentId: "contentFeed.default" },
-  { name: "Newsletter", category: "newsletter", componentId: "newsletter.default" },
-  { name: "Contact", category: "contact", componentId: "contact.default" },
-  { name: "Footer", category: "footer", componentId: "footer.default" },
-];
-
-const DEFAULT_SECTIONS = SECTION_CATALOG.filter((e) => componentRegistry.get(e.componentId) !== undefined);
-
-// 03B: curated primary set (8-10) — reduces 17-option density, Show all reveals full registry (no fork)
-const FEATURED_COMPONENT_IDS = new Set<string>([
-  "hero.default",
-  "products.grid",
-  "gallery.grid",
-  "testimonials.default",
-  "faq.default",
-  "courses.default",
-  "services.default",
-  "newsletter.default",
-  "contact.default",
-  "footer.default",
-]);
-const FEATURED_SECTIONS = DEFAULT_SECTIONS.filter((e) => FEATURED_COMPONENT_IDS.has(e.componentId));
-const REMAINING_SECTIONS = DEFAULT_SECTIONS.filter((e) => !FEATURED_COMPONENT_IDS.has(e.componentId));
+import { SECTION_CATALOG, DEFAULT_SECTIONS, FEATURED_SECTIONS, REMAINING_SECTIONS } from "@/lib/builder/catalog";
 
 interface SectionData {
   id: string;
@@ -354,6 +308,18 @@ export function SectionManager({
       setTimeout(refresh, 50);
     }
   }, [refresh]);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("addSection") === "1") {
+        setShowAllSections(true);
+        setTimeout(() => {
+          document.getElementById("add-section-grid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300);
+      }
+    } catch {}
+  }, []);
 
   return (
     <div className={cn("flex flex-col h-full", className)}>

@@ -23,6 +23,7 @@ import { SuccessMilestonesCard } from "@/components/dashboard/SuccessMilestonesC
 import type { DashboardData, InitialDashboardData, DeferredDashboardData } from "../actions";
 import { getDeferredDashboardData } from "../actions";
 import { formatCurrency } from "@/lib/utils";
+import { DashboardContentSections } from "./content-sections";
 
 interface DashboardPageProps {
   initialData: InitialDashboardData;
@@ -100,7 +101,43 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
   // RCCF-INTEGRATION-01 Phase 6: goal-aware commerce ordering — booking-first
   // creators see Bookings first, products-first see Products first (no-op
   // without a goal profile).
-  const quickCards = applyCommerceOrder(QUICK_CARDS, goals?.profile ?? null, (card) => commerceSurfaceOf(card.href));
+  const quickCardsBase = applyCommerceOrder(QUICK_CARDS, goals?.profile ?? null, (card) => commerceSurfaceOf(card.href));
+
+  // 14B: content-related quick actions should be consistent with the actual website sections
+  const [contentLabels, setContentLabels] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    fetch("/api/dashboard/content-nav", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.items)) {
+          const labels = new Set<string>(d.items.map((i: { label: string }) => i.label.toLowerCase()));
+          setContentLabels(labels);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  const quickCards = contentLabels
+    ? quickCardsBase.filter((card) => {
+        const map: Record<string, string[]> = {
+          Products: ["products"],
+          Gallery: ["gallery", "projects", "things"],
+          Timeline: ["timeline", "experience", "education"],
+          Links: ["links", "github", "code"],
+          Games: ["games"],
+          "Content Feed": ["contentfeed", "content feed"],
+          Services: ["services", "stack", "my stack"],
+          Courses: ["courses"],
+          Testimonials: ["testimonials"],
+          Bookings: ["bookings", "booking"],
+        };
+        const keys = map[card.label];
+        if (!keys) return true;
+        for (const lbl of Array.from(contentLabels)) {
+          for (const k of keys) if (lbl.includes(k) || k.includes(lbl)) return true;
+        }
+        return false;
+      })
+    : quickCardsBase;
 
   const checklistSteps = steps.map((s) => ({
     id: s.id,
@@ -337,6 +374,8 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           <MetricCard label="Avg Order" value={avgOrder} subtext={metrics.orderCount > 0 ? "per order" : "No orders yet"} icon={CreditCard} />
         </MetricGrid>
         )}
+
+        <DashboardContentSections />
 
         <section aria-labelledby="dashboard-quick-actions" className="space-y-3">
           <SectionLabel id="dashboard-quick-actions">Quick Actions</SectionLabel>
