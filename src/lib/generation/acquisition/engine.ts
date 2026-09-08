@@ -14,7 +14,7 @@ import type { ContentSource } from "@/lib/generation/intelligence/types";
 import { getAdapterForUrl } from "./adapters";
 import { applyEnrichment } from "./enrichment";
 import type { AcquireResult, AdapterCapabilities, AcquisitionDiagnostics, PlatformAdapter } from "./types";
-import { parseResume, isLikelyResume } from "@/lib/resume/extract";
+import { parseResume, isLikelyResume, inferResumeName } from "@/lib/resume/extract";
 
 export function listCapabilities(capabilities: AdapterCapabilities): string[] {
   return Object.entries(capabilities)
@@ -130,6 +130,16 @@ export class ProfileAcquisitionEngine {
           parsed.certifications.length > 0;
         if (hasResumeData) {
           finalSource = { ...enriched, resume: parsed };
+          // Preserve resume identity: displayName must be the imported resume name (KAUSHAL G BHAT), not signup name
+          const inferredName = inferResumeName(parsed.rawText, finalSource.displayName || "Creator");
+          if (inferredName && inferredName !== finalSource.displayName) {
+            finalSource.displayName = inferredName;
+            // Keep username as signup-derived for tenant subdomain stability, but ensure it is set
+            if (!finalSource.username) {
+              finalSource.username = inferredName.toLowerCase().replace(/\s+/g, "");
+            }
+            resumeSignals.push(`resume:displayName:${inferredName}`);
+          }
           // Narrow bio to summary (grounded) to satisfy "must not collapse into bio"
           if (parsed.summary) {
             finalSource.bio = parsed.summary.slice(0, 1000);
