@@ -410,10 +410,31 @@ export class LayoutEngine {
       config.brandName = content.identity.name || "Northstar Studio";
       config.tagline = content.identity.tagline || "";
       config.bio = content.identity.bio || "";
-      config.footerDescription = footer?.description ?? (layoutConfig.footerDescription as string) ?? content.identity.bio ?? content.identity.tagline ?? "Design that moves your business forward.";
-      config.copyright = footer?.copyright ?? (layoutConfig.copyright as string) ?? `© ${new Date().getFullYear()} ${content.identity.name || "Northstar Studio"} — All rights reserved.`;
+      // RCCF-PRELAUNCH-16D: stale footer_config (inherited default) must never
+      // override the published snapshot's layout footer. The snapshot is
+      // authoritative; the tenant setting is draft-only. A stale footer is
+      // detected when its copyright exists but does not contain the current
+      // identity name AND the layout footer does contain the identity name —
+      // i.e. the baked aggregate footer was inherited from a different
+      // template (e.g. stale Northstar for Mystic) while the layout is correct.
+      // This is generic (no hard-coded tenant names) and preserves legitimate
+      // custom footers where either copyright contains the identity name or no
+      // layout alternative exists (e.g. existing tests with custom © Custom).
+      const identityName = (content.identity.name || "").trim();
+      const layoutCopyright = layoutConfig.copyright as string | undefined;
+      const isStaleFooter = Boolean(
+        footer?.copyright &&
+          identityName &&
+          !footer.copyright.includes(identityName) &&
+          typeof layoutCopyright === "string" &&
+          layoutCopyright.includes(identityName),
+      );
+      const effectiveFooter = isStaleFooter ? null : footer;
+      config.footerDescription = effectiveFooter?.description ?? (layoutConfig.footerDescription as string) ?? content.identity.bio ?? content.identity.tagline ?? "Design that moves your business forward.";
+      config.copyright = effectiveFooter?.copyright ?? (layoutConfig.copyright as string) ?? `© ${new Date().getFullYear()} ${content.identity.name || "Northstar Studio"} — All rights reserved.`;
       // Footer-owned columns: prefer persisted site footer_config, then legacy block config, then FooterRenderer defaults.
-      const ownedColumns = footer?.columns && footer.columns.length > 0 ? footer.columns : null;
+      // A stale footer never wins over layout columns.
+      const ownedColumns = effectiveFooter?.columns && effectiveFooter.columns.length > 0 ? effectiveFooter.columns : null;
       const blockColumns = layoutConfig.footerColumns as Array<{ title: string; links: Array<{ label: string; href: string }> }> | undefined;
       if (ownedColumns) config.footerColumns = ownedColumns;
       else if (blockColumns) config.footerColumns = blockColumns;
