@@ -32,6 +32,26 @@ export async function executeGenerationPipeline(input: ExecuteGenerationInput): 
   const { sessionId, sourceUrl, workspaceName = "My Storefront", timezone = "Asia/Kolkata", currency = "INR", language = "en", categoryOverride, goals, userId, creatorName: inputCreatorName } = input;
   const session = await prisma.generationSession.findUnique({ where: { id: sessionId } });
   if (!session) return { success: false, error: "Session not found" };
+  // Fast-path resume: if session is already at publishing 85, just complete publishing (idempotent, avoids re-running 50s import)
+  if (session.status === "publishing" && session.currentStage === "publishing" && session.progressPercent >= 80) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { tenantId: true } });
+    const tenantId = user?.tenantId;
+    if (tenantId) {
+      try {
+        const { publishingService: pub } = await import("@/lib/publishing/service");
+        const pubRes = await pub.publish(tenantId);
+        if (!pubRes.success) throw new Error(pubRes.error ?? "Publishing failed");
+        await sessionService.updateStage(sessionId, "publishing", "completed").catch(()=>{});
+        await sessionService.complete(sessionId, { storefrontUrl: `/${tenantId}`, dashboardUrl: "/admin/dashboard" }).catch(()=>{});
+        const { emitGenerationEvent } = await import("@/modules/generation-progress");
+        await emitGenerationEvent(sessionId, "generation.completed", { tenantId }).catch(()=>{});
+        return { success: true, tenantId, result: { tenantId } };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return { success: false, error: msg, retryable: true, tenantId: tenantId ?? undefined };
+      }
+    }
+  }
   const creatorName = inputCreatorName || session.creatorName || "Creator";
 
   const stages: Array<{ stage: string; status: string; error?: string }> = [];
