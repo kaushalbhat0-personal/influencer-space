@@ -90,7 +90,7 @@ function extractSocialLinksFromText(text: string): ResumeSocialLink[] {
   const pattern = /(?:https?:\/\/)?(?:www\.)?(github\.com\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]*)?|linkedin\.com\/(?:in|company)\/[A-Za-z0-9_-]+|twitter\.com\/[A-Za-z0-9_]+|x\.com\/[A-Za-z0-9_]+|instagram\.com\/[A-Za-z0-9_.]+|gitlab\.com\/[A-Za-z0-9_.-]+|behance\.net\/[A-Za-z0-9_-]+|dribbble\.com\/[A-Za-z0-9_-]+)/gi;
   let m: RegExpExecArray | null;
   while ((m = pattern.exec(text)) !== null) {
-    let raw = m[0].replace(/[.,;)\]]+$/,"").trim();
+    const raw = m[0].replace(/[.,;)\]]+$/,"").trim();
     if (!raw) continue;
     // Normalize to https:// if no scheme
     let url = raw;

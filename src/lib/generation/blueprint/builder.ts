@@ -263,8 +263,9 @@ export function buildWebsiteBlueprint(input: BlueprintInput): WebsiteBlueprint {
   const archetype = archetypeResult?.archetype ?? null;
 
   // Prefer archetype template when archetype is present and confident; otherwise entity template
-  const archetypeTemplate = blueprintForArchetype(archetype as any);
+  const archetypeTemplate = blueprintForArchetype(archetype as Archetype | null | undefined);
   const entityTemplate = blueprintForEntity((entity as Parameters<typeof blueprintForEntity>[0]) ?? "creator");
+  const archetypeCta = archetypeTemplate as unknown as { primaryCta?: string; secondaryCta?: string } | null;
   const baseTemplate = archetypeTemplate
     ? {
         ...archetypeTemplate,
@@ -274,8 +275,8 @@ export function buildWebsiteBlueprint(input: BlueprintInput): WebsiteBlueprint {
         analytics: archetypeTemplate ? entityTemplate.analytics : entityTemplate.analytics, // keep entity analytics for now
         integrations: entityTemplate.integrations,
         monetization: entityTemplate.monetization,
-        primaryCta: (archetypeTemplate as any).primaryCta ?? entityTemplate.primaryCta,
-        secondaryCta: (archetypeTemplate as any).secondaryCta ?? entityTemplate.secondaryCta,
+        primaryCta: archetypeCta?.primaryCta ?? entityTemplate.primaryCta,
+        secondaryCta: archetypeCta?.secondaryCta ?? entityTemplate.secondaryCta,
       } as unknown as ReturnType<typeof blueprintForEntity>
     : entityTemplate;
 
