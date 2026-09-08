@@ -563,7 +563,7 @@ export async function runCreatorGeneration(
       }
     } else {
       const provisioningPipelineResult = pipelineResult;
-      const provisioningInput = buildProvisioningInput({
+      const provisioningInput: ReturnType<typeof buildProvisioningInput> & { generatedWebsite?: unknown } = buildProvisioningInput({
         runId,
         authenticatedUserId: userId,
         creatorName: effectiveCreatorName,
@@ -574,7 +574,16 @@ export async function runCreatorGeneration(
         pipelineResult: provisioningPipelineResult,
         category: categoryOverride || profileResult.knowledgeGraph.creator.niche,
         industry: categoryOverride || profileResult.knowledgeGraph.creator.niche,
-      });
+      }) as any;
+      // RCCF-PRELAUNCH-14A: ensure intelligent composition reaches provisioning even when pipelineResult.artifacts is empty (synthetic intelligent path)
+      if (intelligentBuilderArtifact) {
+        (provisioningInput as any).generatedWebsite = {
+          sections: (intelligentBuilderArtifact as any).sections,
+          navigation: (intelligentBuilderArtifact as any).navigation,
+          theme: (intelligentBuilderArtifact as any).theme,
+          metadata: (intelligentBuilderArtifact as any).metadata,
+        };
+      }
 
       try {
         provisioned = await provisioningService.provision(provisioningInput);
@@ -690,11 +699,8 @@ export async function runCreatorGeneration(
       });
     }
     // RCCF-PRELAUNCH-02A: persist generated builder pages for ConstructionPreview.
-    // New-tenant path previously only wrote builder_artifact Setting, but
-    // ConstructionPreview reads Page/Section/Block via BuilderService.load()
-    // — therefore the preview stayed empty (null snapshot) even after
-    // artifact_generation completed. Persist only when the website has no
-    // existing pages (preserves reuse-tenant draft when it already has pages).
+    // For intelligent composition (resume), always overwrite the generic template pages that provisioning may have seeded.
+    // For legacy fallback, preserve existing pages to avoid overwriting a draft.
     if (builderData && provisioned?.websiteId) {
       try {
         const sections = (builderData.sections as Array<{ id?: string; type: string; props: Record<string, unknown> }> | undefined) ?? [];
@@ -702,7 +708,8 @@ export async function runCreatorGeneration(
           const { BuilderService } = await import("@/lib/builder/builder-service");
           const builderService = new BuilderService();
           const existing = await builderService.load(provisioned.websiteId);
-          if (existing.length === 0) {
+          const shouldOverwrite = !!intelligentBuilderArtifact || existing.length === 0;
+          if (shouldOverwrite) {
             const { storefrontToBuilderPages } = await import("@/lib/builder/artifact-loader");
             const builderPages = storefrontToBuilderPages({
               sections: sections.map((s) => ({ id: s.id ?? s.type, type: s.type, props: s.props ?? {} })) as never,
