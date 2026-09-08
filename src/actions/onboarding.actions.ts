@@ -408,11 +408,53 @@ export async function runCreatorGeneration(
       await sessionService.updateStage(generationSessionId, "planning_context", "running");
     }
 
+    // RCCF-14: Use canonical intelligent pipeline when available. The tested 12A–12D path
+    // (Evidence → Archetype → Blueprint v2 → Binder → BuilderDraft) is already computed
+    // in profileResult.composition/blueprint. The legacy LayoutComposer path is kept as
+    // fallback for non-resume / non-intelligent sources.
     const genStart = Date.now();
-    const generateResult = await onboardingService.generate(
-      profileResult.knowledgeGraph,
-      profileResult.experienceProfile,
-    );
+    let generateResult: Awaited<ReturnType<typeof onboardingService.generate>> | null = null;
+    let intelligentBuilderArtifact: ReturnType<typeof buildBuilderArtifactData> | null = null;
+    let intelligentCompositionForBuilder: typeof profileResult.composition | null = null;
+    if (profileResult.composition && profileResult.blueprint) {
+      intelligentCompositionForBuilder = profileResult.composition;
+      // Build a minimal pipelineResult-like artifact from the intelligent composition for downstream provisioning/building
+      // The composition's builder.artifact is already the canonical BuilderDraft artifact
+      intelligentBuilderArtifact = {
+        sections: profileResult.composition.builder.artifact.sections,
+        navigation: profileResult.composition.builder.artifact.navigation as unknown as Record<string, unknown>,
+        theme: profileResult.composition.builder.artifact.theme as unknown as Record<string, unknown>,
+        metadata: profileResult.composition.builder.artifact.metadata as unknown as Record<string, unknown>,
+      } as ReturnType<typeof buildBuilderArtifactData>;
+      // Create a synthetic generateResult that preserves the old shape for metrics/pipelineResult
+      // but uses the intelligent blueprint's layout/theme for publishing
+      generateResult = {
+        experiencePlan: null as unknown as Awaited<ReturnType<typeof onboardingService.generate>>["experiencePlan"],
+        websiteBlueprint: {
+          website: { title: profileResult.composition.publishing.title, tagline: "", description: profileResult.composition.publishing.description, domain: `${profileResult.composition.publishing.subdomain}`, locale: "en-US", currency: "USD", timezone: "UTC", version: 1 },
+          pages: [], navigation: { desktop: [], mobile: [], bottom: [], mobileBottom: [], sticky: true, style: "standard" },
+          sections: [], products: [], gallery: { enabled: false, albums: [], featuredImages: [], ordering: "chronological", layout: "grid" },
+          feed: { enabled: false, source: "", limit: 0, layout: "grid", showCaptions: false, autoplay: false },
+          about: null, contact: null, seo: { title: profileResult.composition.seo.title, description: profileResult.composition.seo.description, keywords: profileResult.composition.seo.keywords, ogImage: "", ogType: profileResult.composition.seo.openGraphType, twitterHandle: "", canonical: profileResult.composition.seo.canonical, structuredData: {}, sitemapPriority: 0.5, sitemapChangefreq: "daily" },
+          theme: { primary: "", secondary: "", accent: "", background: "", text: "", fonts: { heading: "", body: "" }, spacing: { sectionPadding: "", containerWidth: "", gap: "" }, borderRadius: "", mode: "light" as const, buttons: { borderRadius: "", padding: "", fontWeight: "", textTransform: "none" as const }, cards: { borderRadius: "", shadow: "", padding: "" }, colors: {} },
+          builder: profileResult.composition.builder.artifact as unknown as Awaited<ReturnType<typeof onboardingService.generate>>["websiteBlueprint"]["builder"],
+          metadata: { generatedAt: new Date().toISOString(), version: 1, confidence: 0.9, sourceKey: sourceUrl, intelligenceVersion: "1.0" },
+        },
+        artifacts: [],
+      };
+    } else {
+      generateResult = await onboardingService.generate(
+        profileResult.knowledgeGraph,
+        profileResult.experienceProfile,
+      );
+    }
+    // Ensure generateResult is set for metrics and downstream (fallback already handled)
+    if (!generateResult) {
+      generateResult = await onboardingService.generate(
+        profileResult.knowledgeGraph,
+        profileResult.experienceProfile,
+      );
+    }
     metricsService.recordDuration("generation", Date.now() - genStart, { sourcePlatform: profileResult.platform ?? "unknown" });
     markStage("generation", "completed");
 
@@ -423,9 +465,12 @@ export async function runCreatorGeneration(
       await sessionService.updateStage(generationSessionId, "artifact_generation", "completed");
     }
 
+    // RCCF-14: Hero identity must use imported evidence when confidently available (resume identity KAUSHAL G BHAT, not signup name)
+    const effectiveCreatorName = profileResult.knowledgeGraph.creator.name?.trim() || creatorName;
+
     const sourcePlatform = profileResult.platform;
     const runId = await provisioningService.createRun({
-      creatorName,
+      creatorName: effectiveCreatorName,
       sourceUrl,
       sourcePlatform,
     });
@@ -486,7 +531,7 @@ export async function runCreatorGeneration(
       const existingPages = await new BuilderService().load(existingWebsite.id);
       if (!existingPages || existingPages.length === 0) {
         const { storefrontToBuilderPages } = await import("@/lib/builder/artifact-loader");
-        const reuseBuilderData = buildBuilderArtifactData(pipelineResult);
+        const reuseBuilderData = intelligentBuilderArtifact ?? buildBuilderArtifactData(pipelineResult);
         const generatedSections = (reuseBuilderData?.sections as Array<{ id: string; type: string; props: Record<string, unknown> }> | undefined) ?? [];
         if (generatedSections.length > 0) {
           const builderPages = storefrontToBuilderPages({
@@ -502,7 +547,7 @@ export async function runCreatorGeneration(
       const provisioningInput = buildProvisioningInput({
         runId,
         authenticatedUserId: userId,
-        creatorName,
+        creatorName: effectiveCreatorName,
         sourceUrl,
         sourcePlatform,
         avatarUrl: profileResult.channelMeta?.thumbnailUrl,
@@ -564,7 +609,17 @@ export async function runCreatorGeneration(
     });
 
     markStage("builder_init", "running");
-    let builderData = buildBuilderArtifactData(pipelineResult);
+    // RCCF-14: Prefer intelligent builder artifact when available (12A–12D). The tested
+    // path (Evidence → Archetype → Blueprint v3 → Binder → BuilderDraft) is already
+    // computed in profileResult.composition. The legacy LayoutComposer path is fallback
+    // for non-resume / non-intelligent sources.
+    let builderData: ReturnType<typeof buildBuilderArtifactData> = intelligentBuilderArtifact ?? buildBuilderArtifactData(pipelineResult);
+    // Also respect the effective identity for the builder artifact's hero
+    if (intelligentBuilderArtifact && profileResult.composition) {
+      // Ensure builder artifact's hero uses the imported resume identity, not signup name
+      // (already handled in composeStorefront via identity, but also ensure pipelineResult's hero is correct)
+      builderData = intelligentBuilderArtifact;
+    }
 
     // RCCF-LAUNCH-TRACK-04 (Section Presets): seed industry-appropriate section
     // presentation by the creator's category/niche (e.g. photographer →
@@ -673,7 +728,7 @@ export async function runCreatorGeneration(
     }
 
     await logAction(provisioned.tenantId, "onboarding:completed", {
-      sourceUrl, sourcePlatform, workspaceName, workspaceId: resolvedWorkspaceId, creatorName,
+      sourceUrl, sourcePlatform, workspaceName, workspaceId: resolvedWorkspaceId, creatorName: effectiveCreatorName,
     });
 
     const website = await prisma.website.findUnique({
