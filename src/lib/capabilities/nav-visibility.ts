@@ -20,7 +20,19 @@ import type { LucideIcon } from "lucide-react";
  * UX ONLY. It does NOT replace server-side authorization (middleware + route
  * guards + action-level tenant checks remain authoritative).
  */
-export function isNavItemVisible(item: NavItem, planCode: string): boolean {
+export function isNavItemVisible(
+  item: NavItem,
+  planCode: string,
+  workspaceType?: string | null,
+  userRole?: string | null
+): boolean {
+  // RCCF-13F — workspace-type gate (UX only). Uses existing WorkspaceType authority.
+  if (item.requiresWorkspaceType) {
+    if (userRole === "SUPER_ADMIN") return true;
+    if (!workspaceType) return false;
+    if (workspaceType !== item.requiresWorkspaceType) return false;
+  }
+
   if (!item.requiredCapability) return true;
 
   if (item.requiredLimitAbove !== false) {
@@ -33,12 +45,17 @@ export function isNavItemVisible(item: NavItem, planCode: string): boolean {
 }
 
 /** Return the subset of nav config visible for a plan. */
-export function filterNavForPlan(config: NavConfig, planCode: string): NavConfig {
+export function filterNavForPlan(
+  config: NavConfig,
+  planCode: string,
+  workspaceType?: string | null,
+  userRole?: string | null
+): NavConfig {
   return {
     groups: config.groups
       .map((group) => ({
         ...group,
-        items: group.items.filter((item) => isNavItemVisible(item, planCode)),
+        items: group.items.filter((item) => isNavItemVisible(item, planCode, workspaceType, userRole)),
       }))
       .filter((group) => group.items.length > 0),
     footer: config.footer,

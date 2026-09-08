@@ -22,6 +22,12 @@ export interface NavItem {
   requiredCapability?: string;
   /** Numeric limit the feature must be > 0 (e.g. max_bookings). Default true. */
   requiredLimitAbove?: boolean;
+  /**
+   * RCCF-13F — optional workspace-type gate (UX only). When set, the item is
+   * visible only for that workspace type (e.g. AGENCY for Create Website).
+   * Uses existing Workspace/WorkspaceType authority, not a new system.
+   */
+  requiresWorkspaceType?: "AGENCY" | "TENANT";
 }
 
 export interface NavGroup {
@@ -87,7 +93,7 @@ export const ADMIN_NAV: NavConfig = {
   groups: [
     { items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/admin/create", label: "Create Website", icon: Wand2 },
+      { href: "/admin/create", label: "Create Website", icon: Wand2, requiresWorkspaceType: "AGENCY" },
     ]},
 
     {

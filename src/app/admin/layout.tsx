@@ -34,7 +34,10 @@ export default async function AdminLayout({
   // to fail with "Unsupported Server Component type: forwardRef". Capability
   // filtering stays server-side; `toNavWire` projects only serializable
   // iconKey strings, and the client resolves icons via its own registry.
-  const visibleNav = toNavWire(filterNavForPlan(ADMIN_NAV, planCode));
+  // RCCF-13F — gate Create Website to AGENCY workspace (TENANT has one primary website, edits via Builder)
+  const workspaceType = session?.user?.workspaceType ?? null;
+  const userRole = session?.user?.role ?? null;
+  const visibleNav = toNavWire(filterNavForPlan(ADMIN_NAV, planCode, workspaceType, userRole));
 
   let density: "compact" | "comfortable" | "spacious" = "comfortable";
   if (tenantId) {

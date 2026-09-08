@@ -95,13 +95,35 @@ export async function applyBlueprintToWebsite(
   // the website's tenant. No mutation/publish happens unless this passes.
   const caller = await prisma.user.findUnique({
     where: { id: userId },
-    select: { tenantId: true },
+    select: { tenantId: true, role: true },
   });
   if (!caller?.tenantId || caller.tenantId !== website.tenantId) {
     return { success: false, error: "Forbidden" };
   }
 
   const tenantId = website.tenantId;
+
+  // RCCF-13F — server-side ONE_WEBSITE_LIMIT for normal TENANT workspaces.
+  // Uses existing Workspace/WorkspaceType authority, not a new system.
+  // TENANT = one primary website, edits via Builder. AGENCY = multi-client.
+  // SUPER_ADMIN unaffected. Initial onboarding/provisioning is not via this action.
+  if (caller.role !== "SUPER_ADMIN") {
+    const workspace = await prisma.workspace.findUnique({
+      where: { tenantId },
+      select: { type: true },
+    });
+    if (workspace?.type === "TENANT") {
+      const [existingPages, publishStatus] = await Promise.all([
+        builderService.load(websiteId),
+        prisma.publishStatus.findUnique({ where: { websiteId }, select: { state: true, liveVersion: true } }),
+      ]);
+      const hasMeaningfulContent = existingPages.some((p) => p.sections.some((s) => s.slots.length > 0));
+      const isLive = publishStatus?.state === "live" && (publishStatus.liveVersion ?? 0) > 0;
+      if (hasMeaningfulContent || isLive) {
+        return { success: false, error: "ONE_WEBSITE_LIMIT" };
+      }
+    }
+  }
 
   // RCCF-27: applying a premium/paid theme through the manual-creation path
   // must respect the same premium_themes entitlement as applyThemePackage —
