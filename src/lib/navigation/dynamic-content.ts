@@ -50,10 +50,16 @@ function labelForSection(section: { name: string; slots: Array<{ moduleId: strin
  */
 export async function getDynamicContentNavItems(tenantId: string): Promise<NavItem[]> {
   const website = await prisma.website.findUnique({ where: { tenantId }, select: { id: true } });
-  if (!website) return [];
+  if (!website) {
+    try { const { logger } = await import("@/lib/observability/logger"); logger.info("DynamicContentNav no website", "dynamic-content", { metadata: { tenantId } }); } catch {}
+    return [];
+  }
   const pages = await new BuilderService().load(website.id);
   const home = pages.find((p) => p.isHome) ?? pages[0];
-  if (!home || home.sections.length === 0) return [];
+  if (!home || home.sections.length === 0) {
+    try { const { logger } = await import("@/lib/observability/logger"); logger.info("DynamicContentNav empty", "dynamic-content", { metadata: { tenantId, pages: pages.length, hasHome: !!home } }); } catch {}
+    return [];
+  }
   const items: NavItem[] = home.sections.map((section) => {
     const slot = section.slots[0];
     const moduleId = slot?.moduleId ?? "hero.default";

@@ -37,7 +37,26 @@ export default async function AdminLayout({
   // RCCF-13F — gate Create Website to AGENCY workspace (TENANT has one primary website, edits via Builder)
   const workspaceType = session?.user?.workspaceType ?? null;
   const userRole = session?.user?.role ?? null;
-  const visibleNav = toNavWire(filterNavForPlan(ADMIN_NAV, planCode, workspaceType, userRole));
+  let visibleNav = toNavWire(filterNavForPlan(ADMIN_NAV, planCode, workspaceType, userRole));
+
+  // 14B: dynamic Content nav for TENANT — derive from canonical BuilderService Page sections
+  if (tenantId) {
+    try {
+      const { getDynamicContentNavWithAddSection } = await import("@/lib/navigation/dynamic-content");
+      const dynamicContentItems = await getDynamicContentNavWithAddSection(tenantId);
+      const contentIdx = ADMIN_NAV.groups.findIndex((g) => g.label === "Content");
+      if (contentIdx !== -1 && dynamicContentItems.length > 0) {
+        const base = filterNavForPlan(ADMIN_NAV, planCode, workspaceType, userRole);
+        const groups = base.groups.map((g, idx) => {
+          if (idx === contentIdx) {
+            return { ...g, items: dynamicContentItems as unknown as typeof g.items };
+          }
+          return g;
+        });
+        visibleNav = toNavWire({ groups, footer: base.footer });
+      }
+    } catch {}
+  }
 
   let density: "compact" | "comfortable" | "spacious" = "comfortable";
   if (tenantId) {
