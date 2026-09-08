@@ -40,7 +40,7 @@
     },
     {
       "path": "/api/cron/generation",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

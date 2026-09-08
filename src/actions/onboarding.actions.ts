@@ -418,6 +418,11 @@ export async function runCreatorGeneration(
           },
         },
       }).catch(()=>{});
+      // Fire-and-forget worker trigger – daily cron is Hobby-limited, so enqueue must actively wake the worker
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+      if (baseUrl && process.env.CRON_SECRET) {
+        fetch(`${baseUrl}/api/cron/generation`, { method: "POST", headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } }).catch(()=>{});
+      }
     }
 
     const stages: Array<{ stage: string; status: string; error?: string }> = [];
