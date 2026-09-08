@@ -243,6 +243,7 @@ export class OnboardingService {
       },
       evidence: intelligence,
       relationships,
+      source,
     });
 
     const identityWithComposition: IdentityProfile = { ...identityWithBlueprint, composition };
