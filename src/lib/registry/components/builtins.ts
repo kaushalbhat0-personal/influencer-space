@@ -164,8 +164,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
-        commerceMode: (p as any).commerceMode,
-        whatsappUrl: (p as any).whatsappUrl,
+        commerceMode: (p as unknown as { commerceMode?: string }).commerceMode,
+        whatsappUrl: (p as unknown as { whatsappUrl?: string | null }).whatsappUrl,
       }));
       if (productEntries.length === 0) {
         const cfgProducts = (config as Record<string, unknown>)?.products as Array<Record<string, unknown>> | undefined;
@@ -207,8 +207,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
-        commerceMode: (p as any).commerceMode,
-        whatsappUrl: (p as any).whatsappUrl,
+        commerceMode: (p as unknown as { commerceMode?: string }).commerceMode,
+        whatsappUrl: (p as unknown as { whatsappUrl?: string | null }).whatsappUrl,
       }));
       if (productEntries.length === 0) {
         const cfgProducts = (config as Record<string, unknown>)?.products as Array<Record<string, unknown>> | undefined;

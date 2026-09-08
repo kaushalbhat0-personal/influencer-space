@@ -320,8 +320,8 @@ export class LayoutEngine {
         imageUrl: p.imageUrl,
         slug: p.slug,
         isFeatured: p.isFeatured,
-        commerceMode: (p as any).commerceMode,
-        whatsappUrl: (p as any).whatsappUrl,
+        commerceMode: (p as unknown as { commerceMode?: string }).commerceMode,
+        whatsappUrl: (p as unknown as { whatsappUrl?: string | null }).whatsappUrl,
       }));
       if (productEntries.length === 0) {
         const cfgProducts = (config as Record<string, unknown>).products as Array<Record<string, unknown>> | undefined;
@@ -422,7 +422,7 @@ export class LayoutEngine {
     } else if (moduleId.startsWith("newsletter.")) {
       config.title = config.title || "Subscribe";
     } else if (moduleId.startsWith("testimonials.")) {
-      let tData: typeof content.testimonials = content.testimonials ?? [];
+      const tData: typeof content.testimonials = content.testimonials ?? [];
       let resolved = tData.map((t) => ({
         name: t.author,
         handle: t.role,
