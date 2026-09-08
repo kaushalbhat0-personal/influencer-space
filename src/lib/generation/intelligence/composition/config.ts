@@ -35,6 +35,7 @@ export const SECTION_MAP: Record<string, SectionMapping> = {
   timeline: { type: "timeline", moduleId: "timeline.default", mapping: "exact" },
   achievements: { type: "timeline", moduleId: "timeline.default", mapping: "closest" },
   experience: { type: "timeline", moduleId: "timeline.default", mapping: "closest" },
+  education: { type: "timeline", moduleId: "timeline.default", mapping: "closest" },
   links: { type: "links", moduleId: "links.default", mapping: "exact" },
   menu: { type: "links", moduleId: "links.default", mapping: "closest" }, // menu list → links
   sponsors: { type: "links", moduleId: "links.default", mapping: "closest" },

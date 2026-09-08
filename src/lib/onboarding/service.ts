@@ -26,6 +26,7 @@ import { buildWebsiteBlueprint } from "@/lib/generation/blueprint/builder";
 import type { WebsiteBlueprint as WebsiteIntelligenceBlueprint } from "@/lib/generation/blueprint/types";
 import { composeStorefront } from "@/lib/generation/intelligence/composition/engine";
 import type { StorefrontComposition } from "@/lib/generation/intelligence/composition/types";
+import { archetypeResolver } from "@/lib/generation/archetype/resolver";
 
 function acquisitionCompleteness(diagnostics: AcquisitionDiagnostics | undefined): number {
   if (!diagnostics) return 0.5;
@@ -194,6 +195,20 @@ export class OnboardingService {
     // The acquired platform is strong evidence (youtube → creator, twitch →
     // streamer, instagram → influencer) — feed it into the relationship graph.
     const relationships = buildRelationshipGraph(sourceTexts[0] ?? "", [platform, ...sourceTexts.slice(1)]);
+
+    // RCCF-PRELAUNCH-12B: Archetype resolution — pure, config-driven, deterministic
+    const archetypeResult = archetypeResolver.resolve({
+      evidence: intelligence,
+      relationships,
+      source,
+      acquisition: {
+        completeness: acquisitionCompleteness(acquisition.diagnostics),
+        populatedFields: acquisition.diagnostics?.populatedFields ?? [],
+        missingFields: acquisition.diagnostics?.missingFields ?? [],
+      },
+      knowledgeGraph,
+    });
+
     const blueprint = buildWebsiteBlueprint({
       evidence: intelligence,
       relationships,
@@ -206,6 +221,8 @@ export class OnboardingService {
         username: source.username,
         subdomain: source.username || "creator-store",
       },
+      archetype: archetypeResult,
+      source,
     });
 
     const identityWithBlueprint: IdentityProfile = { ...identityWithIntelligence, blueprint };

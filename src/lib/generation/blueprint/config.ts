@@ -49,6 +49,64 @@ const GALLERY: SectionPlan = { id: "gallery", label: "Gallery", decision: "recom
 const TESTIMONIALS: SectionPlan = { id: "testimonials", label: "Testimonials", decision: "recommended", order: 40 };
 const FAQ: SectionPlan = { id: "faq", label: "FAQ", decision: "recommended", order: 50 };
 
+// ── Archetype-aware section plans (RCCF-PRELAUNCH-12B) ─────────────
+// Exact section IDs must be existing registered components (via SECTION_MAP).
+// These are archetype templates; builder decides hide/visible based on data signals.
+// Do not invent new components here.
+
+const PROFESSIONAL_SECTIONS: SectionPlan[] = [
+  HERO,
+  { id: "experience", label: "Experience", decision: "required", order: 10 },
+  { id: "skills", label: "Skills", decision: "required", order: 20 },
+  { id: "projects", label: "Projects", decision: "required", order: 30 },
+  { id: "education", label: "Education", decision: "recommended", order: 40 },
+  { id: "github", label: "GitHub", decision: "optional", order: 50 },
+  { id: "testimonials", label: "Testimonials", decision: "optional", order: 60 },
+  CONTACT,
+];
+
+const CREATOR_SECTIONS: SectionPlan[] = [
+  HERO,
+  { id: "products", label: "Products", decision: "recommended", order: 10 },
+  { id: "gallery", label: "Gallery", decision: "recommended", order: 20 },
+  { id: "media", label: "Media", decision: "recommended", order: 25 },
+  { id: "testimonials", label: "Testimonials", decision: "optional", order: 40 },
+  { id: "community", label: "Community", decision: "optional", order: 60 },
+  { id: "links", label: "Links", decision: "optional", order: 70 },
+  CONTACT,
+];
+
+const LOCAL_BUSINESS_SECTIONS: SectionPlan[] = [
+  HERO,
+  { id: "menu", label: "Menu", decision: "recommended", order: 10 },
+  { id: "reservations", label: "Reservations", decision: "recommended", order: 20 },
+  GALLERY, // gallery optional 30 already defined as recommended
+  { id: "location", label: "Location", decision: "recommended", order: 40 },
+  { id: "hours", label: "Hours", decision: "recommended", order: 50 },
+  { id: "testimonials", label: "Testimonials", decision: "optional", order: 60 },
+  CONTACT,
+];
+
+export type Archetype = "professional_resume" | "creator" | "local_business";
+
+export const ARCHETYPE_BLUEPRINTS: Record<Archetype, { sections: SectionPlan[]; layout: string; themeFamily: string }> = {
+  professional_resume: {
+    sections: PROFESSIONAL_SECTIONS,
+    layout: "portfolio",
+    themeFamily: "dark-tech",
+  },
+  creator: {
+    sections: CREATOR_SECTIONS,
+    layout: "creator",
+    themeFamily: "creator-lifestyle",
+  },
+  local_business: {
+    sections: LOCAL_BUSINESS_SECTIONS,
+    layout: "restaurant",
+    themeFamily: "warm-dining",
+  },
+};
+
 export const BLUEPRINTS: Record<string, BlueprintTemplate> = {
   athlete: {
     entity: "athlete",
@@ -359,4 +417,9 @@ export function blueprintForEntity(entity: EvidenceEntityType | null | undefined
   return BLUEPRINTS[entity ?? "creator"] ?? BLUEPRINTS.creator!;
 }
 
-export const BLUEPRINT_VERSION = 1;
+export function blueprintForArchetype(archetype: Archetype | null | undefined): { sections: SectionPlan[]; layout: string; themeFamily: string } | null {
+  if (!archetype) return null;
+  return ARCHETYPE_BLUEPRINTS[archetype] ?? null;
+}
+
+export const BLUEPRINT_VERSION = 2;

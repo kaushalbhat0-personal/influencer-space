@@ -44,11 +44,18 @@ export interface WebsiteBlueprint {
     relationshipChains: string[];
     reinforcedEntities: string[];
     brands: string[];
+    /** RCCF-PRELAUNCH-12B: resolved archetype */
+    archetype?: string | null;
+    archetypeConfidence?: number | null;
+    archetypeEvidence?: Array<{ signal: string; value: string | number | boolean; weight: number; archetype: string }>;
   };
   diagnostics: {
     sectionCount: number;
     visibleCount: number;
     integrationCount: number;
     monetizationCount: number;
+    /** RCCF-PRELAUNCH-12B: archetype diagnostics */
+    archetype?: string | null;
+    archetypeConfidence?: number | null;
   };
 }
