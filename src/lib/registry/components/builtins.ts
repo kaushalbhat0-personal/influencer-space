@@ -105,8 +105,8 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
     defaultProps: { layout: "grid", columns: 3, lightbox: true, density: "comfortable" },
     // RCCF-VISUAL-02B-01: fields + resolveData proof — same contract drives Builder + rendering
     fields: GALLERY_GRID_FIELDS,
-    resolveData: ({ content }) => {
-      const imageEntries = content.gallery.map((g) => ({
+    resolveData: ({ content, config }) => {
+      const fromContent = content.gallery.map((g) => ({
         id: g.id,
         url: g.imageUrl,
         caption: g.title || g.description || "",
@@ -115,7 +115,21 @@ const BUILTIN_COMPONENTS: ComponentDefinition[] = [
         altText: g.altText,
         isVideo: g.mediaType === "video",
       }));
-      return { resolvedData: imageEntries, resolvedTitle: "Gallery" };
+      if (fromContent.length > 0) return { resolvedData: fromContent, resolvedTitle: "Gallery" };
+      const cfgImages = (config as Record<string, unknown>).images as Array<Record<string, unknown>> | undefined;
+      if (cfgImages && cfgImages.length > 0) {
+        const mapped = cfgImages.map((img: Record<string, unknown>) => ({
+          id: (img.id as string) || (img.imageUrl as string) || Math.random().toString(),
+          url: (img.imageUrl as string) || (img.url as string) || "",
+          caption: (img.title as string) || (img.caption as string) || (img.description as string) || "",
+          description: img.description as string,
+          videoUrl: img.videoUrl as string,
+          altText: (img.altText as string) || (img.title as string),
+          isVideo: img.mediaType === "video",
+        }));
+        return { resolvedData: mapped, resolvedTitle: (config.title as string) || "Gallery" };
+      }
+      return { resolvedData: fromContent, resolvedTitle: "Gallery" };
     },
     renderer: GalleryRenderer,
   },

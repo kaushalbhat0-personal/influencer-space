@@ -414,15 +414,31 @@ export class LayoutEngine {
       config.resolvedTitle = "FAQ";
       debugLog(tracePrefix, "faq", { aggCount: content.faq.length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("timeline.")) {
-      config.resolvedData = content.timeline.map((t) => ({
+      const fromContent = content.timeline.map((t) => ({
         year: t.year,
         title: t.title,
         name: t.title,
         description: t.description,
         imageUrl: t.imageUrl,
       }));
-      config.resolvedTitle = "Timeline";
-      debugLog(tracePrefix, "timeline", { aggCount: content.timeline.length, resolvedCount: (config.resolvedData as unknown[]).length });
+      if (fromContent.length > 0) {
+        config.resolvedData = fromContent;
+      } else {
+        const cfgItems = (config as Record<string, unknown>).items as Array<Record<string, unknown>> | undefined;
+        if (cfgItems && cfgItems.length > 0) {
+          config.resolvedData = cfgItems.map((it: Record<string, unknown>) => ({
+            year: (it.year as string) || (it.duration as string) || "",
+            title: (it.title as string) || (it.name as string) || "",
+            name: (it.title as string) || (it.name as string) || "",
+            description: it.description as string,
+            imageUrl: it.imageUrl as string,
+          }));
+        } else {
+          config.resolvedData = fromContent;
+        }
+      }
+      config.resolvedTitle = (config.title as string) || "Timeline";
+      debugLog(tracePrefix, "timeline", { aggCount: content.timeline.length, resolvedCount: (config.resolvedData as unknown[]).length, fromConfig: Array.isArray((config as Record<string, unknown>).items) });
     } else if (moduleId.startsWith("games.")) {
       config.resolvedData = (content.games ?? []).map((g) => ({
         id: g.id,
@@ -458,7 +474,7 @@ export class LayoutEngine {
       config.resolvedTitle = "Courses";
       debugLog(tracePrefix, "courses", { aggCount: (content.courses ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
     } else if (moduleId.startsWith("services.")) {
-      config.resolvedData = (content.services ?? []).map((s) => ({
+      const fromContent = (content.services ?? []).map((s) => ({
         id: s.id,
         title: s.title,
         description: s.description,
@@ -467,12 +483,32 @@ export class LayoutEngine {
         imageUrl: s.imageUrl,
         category: s.category,
         featured: s.featured,
-        // RCCF-67.5 — bookable state + future open slots (server-derived).
         bookable: s.bookable ?? false,
         bookableSlots: s.bookableSlots ?? [],
       }));
-      config.resolvedTitle = "Services";
-      debugLog(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length });
+      if (fromContent.length > 0) {
+        config.resolvedData = fromContent;
+      } else {
+        const cfgServices = (config as Record<string, unknown>).services as Array<Record<string, unknown>> | undefined;
+        if (cfgServices && cfgServices.length > 0) {
+          config.resolvedData = cfgServices.map((s: Record<string, unknown>) => ({
+            id: (s.id as string) || Math.random().toString(),
+            title: (s.title as string) || "",
+            description: s.description as string,
+            price: s.price as number,
+            duration: s.duration as string,
+            imageUrl: s.imageUrl as string,
+            category: s.category as string,
+            featured: s.featured as boolean,
+            bookable: (s.bookable as boolean) ?? false,
+            bookableSlots: (s.bookableSlots as unknown[]) ?? [],
+          }));
+        } else {
+          config.resolvedData = fromContent;
+        }
+      }
+      config.resolvedTitle = (config.title as string) || "Services";
+      debugLog(tracePrefix, "services", { aggCount: (content.services ?? []).length, resolvedCount: (config.resolvedData as unknown[]).length, fromConfig: Array.isArray((config as Record<string, unknown>).services) });
     } else if (moduleId.startsWith("bookings.")) {
       // RCCF-67.4 — bookable slots from the aggregate (open, future, non-cancelled).
       config.resolvedData = (content.bookings ?? []).map((b) => ({
