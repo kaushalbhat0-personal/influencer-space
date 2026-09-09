@@ -171,8 +171,9 @@ async function persistSystemError(
 
     if (typeof window !== "undefined") return;
     // Use eval to hide prisma import from client bundler (pg requires Node built-ins)
-    const prismaMod = await (0, eval)('import("@/lib/prisma")') as { prisma: import("@/lib/prisma").prisma extends infer T ? T : never };
-    const prisma = (prismaMod as unknown as { prisma: typeof import("@/lib/prisma")["prisma"] }).prisma;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prismaMod: any = await (0, eval)('import("@/lib/prisma")');
+    const prisma: any = prismaMod.prisma ?? prismaMod.default?.prisma ?? prismaMod.default;
 
     const existing = await prisma.systemError.findFirst({ where: { fingerprint }, select: { id: true, tenantIds: true, count: true, status: true } });
 
