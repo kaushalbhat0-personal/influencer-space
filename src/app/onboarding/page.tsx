@@ -217,15 +217,18 @@ export default function OnboardingPage() {
     return () => { cancelled = true; };
   }, [clearPolling, router, startPolling]);
 
-  const handleAnalyze = useCallback(async () => {
-    if (!sourceUrl.trim()) return;
+  const handleAnalyze = useCallback(async (overrideUrl?: string) => {
+    const urlToAnalyze = (overrideUrl ?? sourceUrl).trim();
+    if (!urlToAnalyze) return;
+    // Keep sourceUrl state in sync when called with override (e.g., from ImportInputRenderer)
+    if (overrideUrl && overrideUrl !== sourceUrl) setSourceUrl(overrideUrl);
     setLoading(true);
     setError(null);
 
-    const platform = detectClientPlatform(sourceUrl);
+    const platform = detectClientPlatform(urlToAnalyze);
     setDetectedPlatform(platform);
 
-    const res = await importCreatorProfile(sourceUrl);
+    const res = await importCreatorProfile(urlToAnalyze);
     if (res.success && res.persona) {
       setProfileData({
         platform: res.platform || platform || "unknown",
@@ -541,9 +544,9 @@ export default function OnboardingPage() {
                 provider={selectedProvider}
                 loading={loading}
                 onSubmit={(data) => {
-                  setSourceUrl(data.sourceUrl);
                   if (data.name) setWorkspaceName(data.name);
-                  handleAnalyze();
+                  // Pass URL directly to avoid stale closure on sourceUrl state
+                  handleAnalyze(data.sourceUrl);
                 }}
                 onFileSubmit={(file) => handleResumeFile(file)}
               />
