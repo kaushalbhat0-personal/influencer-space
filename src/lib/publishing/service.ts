@@ -364,6 +364,7 @@ export class PublishingService {
       logger.info("Publishing completed", "publishing", { correlation, duration: Date.now() - startTime, metadata: { tenantId, version: result.version, capabilityIssues } });
       metricsService.recordDuration("publish", Date.now() - startTime, { status: "success", tenantId });
       metricsService.recordOutcome("publish", true, { tenantId });
+      try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.websitePublished({ tenantId, version: result.version }); } catch {}
       return { success: true, version: result.version, capabilityIssues };
     } catch (error) {
       captureError(error, { service: "publishing", operation: "publish", correlation, tenantId });

@@ -1201,11 +1201,13 @@ model JobRecord {
   error       String?
   triggeredBy String?
   metadata    Json?
+  tenantId    String?   @db.Uuid
   createdAt   DateTime  @default(now())
 
   @@index([status])
   @@index([type])
   @@index([createdAt])
+  @@index([tenantId])
 }
 
 /// Financial source of truth. Immutable after payment.
@@ -2082,4 +2084,40 @@ model PlanUsage {
 
   @@unique([tenantId, featureKey, periodStart])
   @@index([tenantId, featureKey])
+}
+
+/// RCCF-OBS-01 — durable application-error ledger (generic). Additive, non-authoritative
+/// for domain tables (AlertRecord/JobRecord/GenerationSession/BillingEvent remain canonical).
+/// Enables Super Admin to answer What/When/Where/Which tenant/correlation/How many/Which commit/Is resolved.
+model SystemError {
+  id            String   @id @default(uuid()) @db.Uuid
+  fingerprint   String
+  count         Int      @default(1)
+  firstSeen     DateTime @default(now())
+  lastSeen      DateTime @default(now())
+  level         String   // WARN | ERROR | FATAL
+  service       String
+  operation     String?
+  route         String?
+  message       String   @db.Text
+  stackTrace    String?  @db.Text
+  code          String?
+  tenantIds     String[] @default([])
+  correlationId String?
+  environment   String?
+  deploymentId  String?
+  commitSha     String?
+  recovery      String?  @db.Text
+  status        String   @default("NEW") // NEW | ACKNOWLEDGED | RESOLVED | IGNORED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([fingerprint])
+  @@index([status])
+  @@index([level])
+  @@index([service])
+  @@index([environment])
+  @@index([correlationId])
+  @@index([createdAt])
+  @@index([lastSeen])
 }

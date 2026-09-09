@@ -28,6 +28,7 @@ import { computePublishPeriod } from "@/lib/publishing/publish-period";
 import { suggestedPublishUpgrade } from "@/lib/publishing/publish-policy";
 import { planUsageRepository } from "../infrastructure/plan-usage-repository";
 import { ensureFulfillment } from "@/modules/fulfillment";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export const ORDERS_FEATURE_KEY = "orders";
 
@@ -71,12 +72,14 @@ export async function completeProductOrder(
   if (limit === -1) {
     // Unlimited plan: no usage row required.
     await prisma.productOrder.update({ where: { id: order.id }, data: completeData });
-    await ensureFulfillment(order.id).catch(() => {});
+    await ensureFulfillment(order.id).catch((e) => { captureError(e, { service: "commerce", operation: "ensureFulfillment", tenantId, route: "/checkout" }); });
     // RCCF-LAUNCH-10: agency product commission (best-effort, post-commit, idempotent)
     try {
       const { computeAndPersistAgencyCommission } = await import("@/lib/agency-commission/service");
       await computeAndPersistAgencyCommission(order.id);
-    } catch {}
+    } catch (e) {
+      captureError(e, { service: "commerce", operation: "agencyCommission", tenantId, route: "/checkout" });
+    }
     // RCCF-COMMERCE-02: customer confirmation (webhook-authoritative, also covers free orders) — F3 dedup via BillingEvent
     try {
       if ((order as { guestToken?: string | null }).guestToken && (order as { fanEmail?: string | null }).fanEmail) {
@@ -92,14 +95,19 @@ export async function completeProductOrder(
             const orderStatusUrl = `${base}/order/${fresh.guestToken}`;
             const storeName = tenant?.name || product?.name || "Store";
             const { sendCommunication } = await import("@/modules/communication");
-            const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }, { tenantId: fresh.tenantId }).catch(() => ({ success: false }));
+            const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }, { tenantId: fresh.tenantId }).catch((e) => { captureError(e, { service: "commerce", operation: "customerConfirmation", tenantId: fresh.tenantId, route: "/checkout" }); return { success: false } as never; });
             if ((sent as { success?: boolean })?.success) {
-              await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fresh.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: order.id } } }).catch(() => {});
+              await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fresh.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: order.id } } }).catch((e) => { captureError(e, { service: "commerce", operation: "customerConfirmation", tenantId: fresh.tenantId, route: "/checkout" }); });
+            } else if (fresh.fanEmail) {
+              captureError(new Error("Customer confirmation failed"), { service: "commerce", operation: "customerConfirmation", tenantId: fresh.tenantId, route: "/checkout" });
             }
           }
         }
       }
-    } catch {}
+    } catch (e) {
+      captureError(e, { service: "commerce", operation: "customerConfirmation", tenantId, route: "/checkout" });
+    }
+    try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.checkoutCompleted({ tenantId, provider: "razorpay" }); } catch {}
     return { success: true };
   }
 
@@ -129,6 +137,7 @@ export async function completeProductOrder(
   });
 
   if (txResult.quotaExceeded) {
+    captureError(new Error(`Order limit reached: ${txResult.used}/${limit}`), { service: "commerce", operation: "orderCompletion:quota", tenantId, route: "/checkout" });
     return {
       success: false,
       error: "Order limit reached",
@@ -141,12 +150,14 @@ export async function completeProductOrder(
     };
   }
 
-  await ensureFulfillment(order.id).catch(() => {});
+  await ensureFulfillment(order.id).catch((e) => { captureError(e, { service: "commerce", operation: "ensureFulfillment", tenantId, route: "/checkout" }); });
   // RCCF-LAUNCH-10: agency product commission (best-effort, post-commit, idempotent)
   try {
     const { computeAndPersistAgencyCommission } = await import("@/lib/agency-commission/service");
     await computeAndPersistAgencyCommission(order.id);
-  } catch {}
+  } catch (e) {
+    captureError(e, { service: "commerce", operation: "agencyCommission", tenantId, route: "/checkout" });
+  }
   // RCCF-COMMERCE-02: customer confirmation (webhook-authoritative) — F3 dedup via BillingEvent
   try {
     if ((order as { guestToken?: string | null }).guestToken && (order as { fanEmail?: string | null }).fanEmail) {
@@ -162,14 +173,19 @@ export async function completeProductOrder(
           const orderStatusUrl = `${base}/order/${fresh.guestToken}`;
           const storeName = tenant?.name || product?.name || "Store";
           const { sendCommunication } = await import("@/modules/communication");
-          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }, { tenantId: fresh.tenantId }).catch(() => ({ success: false }));
+          const sent = await sendCommunication("order.customer_confirmed", { audience: "customer", recipientId: order.id, email: fresh.fanEmail }, { orderId: order.id, productName: product?.name ?? "Product", amount: String(fresh.amount), storeName, orderStatusUrl }, { tenantId: fresh.tenantId }).catch((e) => { captureError(e, { service: "commerce", operation: "customerConfirmation", tenantId: fresh.tenantId, route: "/checkout" }); return { success: false } as never; });
           if ((sent as { success?: boolean })?.success) {
-            await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fresh.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: order.id } } }).catch(() => {});
+            await prisma.billingEvent.create({ data: { workspaceId: null, accountId: fresh.tenantId, type: "ORDER_CUSTOMER_CONFIRMED", idempotencyKey, payload: { orderId: order.id } } }).catch((e) => { captureError(e, { service: "commerce", operation: "customerConfirmation", tenantId: fresh.tenantId, route: "/checkout" }); });
+          } else if (fresh.fanEmail) {
+            captureError(new Error("Customer confirmation failed"), { service: "commerce", operation: "customerConfirmation", tenantId: fresh.tenantId, route: "/checkout" });
           }
         }
       }
     }
-  } catch {}
+    } catch (e) {
+    captureError(e, { service: "commerce", operation: "customerConfirmation", tenantId, route: "/checkout" });
+  }
+  try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.checkoutCompleted({ tenantId, provider: "razorpay" }); } catch {}
   return { success: true };
 }
 

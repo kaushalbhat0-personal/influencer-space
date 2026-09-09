@@ -69,6 +69,7 @@ export async function GET(request: Request) {
                     isTransient = true;
                   } else if (statusCode === 429 || (typeof statusCode === "number" && statusCode >= 500)) {
                     isTransient = true;
+                    if (statusCode === 429) captureError(new Error(`Razorpay 429 rate limited for order ${order.id}`), { service: "commerce", operation: "reconcilePendingOrders:rateLimited", tenantId: order.tenantId, route: "/api/cron/reconcile-pending-orders" });
                   } else {
                     const msg = err instanceof Error ? err.message : "";
                     const transientSignal = /timeout|timed out|econn|enotfound|eai_again|socket|fetch failed/i.test(msg);
@@ -113,6 +114,7 @@ export async function GET(request: Request) {
                 payload: { orderId: order.id, reason: "abandoned_7d" },
               },
             }).catch(() => {});
+            captureError(new Error(`Pending order expired after 7d: ${order.id}`), { service: "commerce", operation: "reconcilePendingOrders", tenantId: order.tenantId, route: "/api/cron/reconcile-pending-orders" });
             expired++;
           }
         });

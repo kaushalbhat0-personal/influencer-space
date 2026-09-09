@@ -24,6 +24,7 @@ import type { DashboardData, InitialDashboardData, DeferredDashboardData } from 
 import { getDeferredDashboardData } from "../actions";
 import { formatCurrency } from "@/lib/utils";
 import { DashboardContentSections } from "./content-sections";
+import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 interface DashboardPageProps {
   initialData: InitialDashboardData;
@@ -500,7 +501,22 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               <SuccessMilestonesCard success={success} />
             ) : null}
           </DashboardGridSide>
-        </DashboardGrid>
+          </DashboardGrid>
+
+        {/* Pilot feedback — lightweight, visible after generation */}
+        <section aria-labelledby="pilot-feedback" className="rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4 sm:p-5">
+          <h2 id="pilot-feedback" className="text-sm font-semibold text-amber-200">Found a bug or something difficult?</h2>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-300">
+            Tell us what happened at{" "}
+            <a href={`mailto:${CONTACT_EMAIL}?subject=Pilot%20feedback%20—%20${BRAND.name}`} className="font-medium text-amber-300 underline underline-offset-2 hover:text-amber-200">
+              {CONTACT_EMAIL}
+            </a>
+            . We&apos;re actively improving {BRAND.name} during the pilot and would love to hear what you run into.
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            Bugs, errors, confusing flows, or anything you expected to work differently — just email us. No form needed. · <Link href="/help" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Help Center</Link>
+          </p>
+        </section>
       </div>
     </FeaturePage>
   );

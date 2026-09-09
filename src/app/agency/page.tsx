@@ -9,6 +9,7 @@ import { getAgencyClientCapacity } from "@/modules/partner/application/partner-r
 import { AgencyClientsTable } from "./_components/agency-clients-table";
 import { AgencyRevenueSection } from "./_components/agency-revenue-section";
 import { AgencySuccessSection } from "./_components/agency-success-section";
+import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -93,7 +94,22 @@ export default async function AgencyDashboard() {
         </div>
       )}
 
-      {/* Recent Activity & Clients */}
+        {/* Pilot feedback — agency workspace */}
+        <section aria-labelledby="agency-pilot-feedback" className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4 sm:p-5">
+          <h2 id="agency-pilot-feedback" className="text-sm font-semibold text-amber-200">Found a bug or something difficult?</h2>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-300">
+            Tell us what happened at{" "}
+            <a href={`mailto:${CONTACT_EMAIL}?subject=Pilot%20feedback%20—%20${BRAND.name}%20Agency`} className="font-medium text-amber-300 underline underline-offset-2 hover:text-amber-200">
+              {CONTACT_EMAIL}
+            </a>
+            . We&apos;re actively improving {BRAND.name} during the pilot and would love to hear what you run into — bugs, confusion, or workflow friction.
+          </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            For agencies: client creation, generation, handoff, or billing questions — just email us. · <Link href="/help#agency" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Agency Help</Link>
+          </p>
+        </section>
+
+        {/* Recent Activity & Clients */}
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         {/* Recent Clients */}
         <div className="lg:col-span-2">

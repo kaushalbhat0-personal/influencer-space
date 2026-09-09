@@ -99,6 +99,13 @@ export const ADMIN_REGISTRY: AdminModule[] = [
     productionReady: true,
   },
   {
+    id: "errors", title: "Errors", group: "system",
+    href: "/super-admin/errors", icon: Monitor, permission: "super_admin",
+    searchable: true, keywords: ["errors", "exceptions", "failures", "fingerprint", "stack", "tenant", "correlation"],
+    auditCategory: "system", analyticsKey: "errors:viewed",
+    productionReady: true,
+  },
+  {
     id: "runbooks", title: "Runbooks", group: "overview",
     href: "/super-admin/runbooks", icon: BookOpen, permission: "super_admin",
     searchable: true, keywords: ["runbooks", "recovery", "guides", "playbooks", "incidents", "sop"],

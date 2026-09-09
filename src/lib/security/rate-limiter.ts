@@ -28,6 +28,7 @@ const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   "/public-bookings": { windowMs: 60_000, maxRequests: 10 },
   // SEC-07: guest order lookup (public token page) — throttles enumeration.
   "/guest-order": { windowMs: 60_000, maxRequests: 30 },
+  "/api/observability/client-error": { windowMs: 60_000, maxRequests: 20 },
 };
 
 export interface RateLimitResult {

@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getPlatformConfig } from "@/lib/config/platform";
 import { BRAND } from "@/lib/marketing/messaging";
+import { ClientErrorReporter } from "@/components/observability/client-error-reporter";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -97,6 +98,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${literata.variable} ${spaceGrotesk.variable} ${playfair.variable} ${outfit.variable} ${sora.variable} antialiased`}
       >
         {children}
+        <ClientErrorReporter />
         <Analytics />
         <SpeedInsights />
       </body>

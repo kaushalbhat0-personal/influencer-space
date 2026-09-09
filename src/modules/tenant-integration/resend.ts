@@ -305,6 +305,7 @@ export async function verifyResendIntegration(
     });
 
     await logAction(tenantId, "integration:resend-verified", { provider: PROVIDER, domain: expectedDomain, by: actor }).catch(() => {});
+    try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.integrationConnected({ provider: PROVIDER, tenantId }); } catch {}
     return { success: true, verified: true, integration: serialize(updated as never) };
   } catch (err) {
     // Network/timeout etc — do not mark failed permanently, keep pending so retry is possible

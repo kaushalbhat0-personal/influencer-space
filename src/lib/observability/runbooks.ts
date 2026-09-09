@@ -111,3 +111,25 @@ export function getRunbook(id: string): Runbook | undefined {
 export function getRunbookForAlert(alertRule: string): Runbook | undefined {
   return RUNBOOKS.find((r) => r.alertRule === alertRule);
 }
+
+const SYSTEM_ERROR_RUNBOOK: Record<string, string> = {
+  publishing: "publishing-failure",
+  provisioning: "provisioning-failure",
+  generation: "generation-failure",
+  billing: "billing-failure",
+  client: "generation-failure",
+  builder: "publishing-failure",
+  storefront: "publishing-failure",
+  partner: "provisioning-failure",
+  commerce: "billing-failure",
+};
+
+export function getRunbookForSystemError(service: string, operation?: string | null, code?: string | null): Runbook | undefined {
+  if (code === "P2002" || code === "P2025") return getRunbook("database-failure");
+  const key = `${service}:${operation ?? ""}`;
+  if (key.includes("publishing") || service === "publishing") return getRunbook("publishing-failure");
+  if (key.includes("provision") || service === "provisioning" || service === "generation") return getRunbook("generation-failure");
+  if (service === "billing" || service === "commerce") return getRunbook("billing-failure");
+  const mapped = SYSTEM_ERROR_RUNBOOK[service];
+  return mapped ? getRunbook(mapped) : undefined;
+}

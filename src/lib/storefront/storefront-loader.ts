@@ -28,6 +28,7 @@ import { experienceRegistry, applyExperienceOverride, resolveExperienceForCapabi
 import { renderableNavBases, reconcileNavigation } from "@/lib/navigation/reconcile";
 import { layoutEngine } from "@/lib/storefront/layout-engine";
 import type { AggregateTraceDiagnostics } from "@/lib/observability/runtime-trace";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export { normalizePageSlug, resolvePageBySlug } from "@/lib/storefront/page-resolver";
 
@@ -102,6 +103,7 @@ async function isPilotProspectGraceActive(tenantId: string): Promise<boolean> {
 }
 
 export const getStorefrontData = cache(async (slug: string, preview?: boolean, options?: StorefrontDataOptions): Promise<StorefrontData | null> => {
+  try {
   const tenant = await prisma.tenant.findFirst({ where: { OR: [{ subdomain: slug }, { customDomain: slug }] } });
   if (!tenant) return null;
 
@@ -232,12 +234,18 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
   if (!published.snapshot) {
     return { tenantId: tenant.id, snapshot: null, previewAuthorized: false, diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] } };
   }
+  try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.storefrontViewed({ tenantId: tenant.id }); } catch {}
   return {
     tenantId: tenant.id,
     snapshot: published.snapshot as unknown,
     previewAuthorized: false,
     diagnostics: { invalidAssetIds: [], skippedAssets: 0, moduleFailures: [] },
   };
+  } catch (e) {
+    // Preserve 404/empty semantics — do not expose stack to visitors
+    captureError(e, { service: "storefront", operation: "getStorefrontData", route: `/${slug}`, tenantId: undefined });
+    return null;
+  }
 });
 
 export function getCanonicalUrl(slug: string): string {

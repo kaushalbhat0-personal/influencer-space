@@ -13,6 +13,7 @@ import { onboardingService } from "@/lib/onboarding/service";
 import { writeOnboardingComplete } from "@/lib/onboarding/complete";
 import { goldenDataset, GoldenValidator } from "@/lib/generation/golden";
 import { publishingService } from "@/lib/publishing/service";
+import { VercelEvents } from "@/lib/analytics/vercel-events";
 import { sessionService, sessionRegistry } from "@/lib/generation/session";
 import { correlationService } from "@/lib/platform/correlation";
 import { platformEventBus } from "@/lib/events";
@@ -92,6 +93,7 @@ export async function createManualWebsite(): Promise<{
 
     return { success: true, tenantId, websiteId };
   } catch (error) {
+    captureError(error, { service: "onboarding", operation: "createManualWebsite", route: "/onboarding" });
     return { success: false, error: error instanceof Error ? error.message : "Failed to create website" };
   }
 }
@@ -276,6 +278,7 @@ export async function importCreatorProfile(sourceUrl: string): Promise<{
         : undefined,
     };
   } catch (error) {
+    captureError(error, { service: "onboarding", operation: "importProfile", route: "/onboarding" });
     return { success: false, error: error instanceof Error ? error.message : "Profile import failed" };
   }
 }
@@ -325,6 +328,8 @@ export async function runCreatorGeneration(
         await sessionService.start(gs.id);
         await sessionService.beginExecution(gs.id);
         await sessionService.updateStage(gs.id, "import_profile", "running");
+        try { VercelEvents.onboardingStarted({ platform: detectPlatform(sourceUrl) ?? undefined, tenantId: userId }); } catch {}
+        try { VercelEvents.generationStarted({ tenantId: userId, correlationId: ctx.correlationId }); } catch {}
       } catch (err) {
         captureError(err, { service: "onboarding-actions", operation: "createGenerationSession", correlation: ctx.correlationId });
       }
@@ -357,6 +362,7 @@ export async function runCreatorGeneration(
             name: `generation-${generationSessionId}`,
             status: "QUEUED",
             triggeredBy: userId,
+            tenantId: null,
             metadata: {
               sessionId: generationSessionId,
               sourceUrl,
@@ -404,6 +410,7 @@ export async function runCreatorGeneration(
           name: `generation-${generationSessionId}`,
           status: "QUEUED",
           triggeredBy: userId,
+          tenantId: null,
           metadata: {
             sessionId: generationSessionId,
             sourceUrl,
@@ -435,6 +442,7 @@ export async function runCreatorGeneration(
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Generation failed";
     const isIntelligentFailure = msg.startsWith("INTELLIGENT_");
+    captureError(error, { service: "generation", operation: "runCreatorGeneration", route: "/onboarding" });
     if (generationSessionId) {
       try {
         await sessionService.fail(generationSessionId, msg);

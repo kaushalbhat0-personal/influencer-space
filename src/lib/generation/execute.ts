@@ -72,6 +72,7 @@ export async function executeGenerationPipeline(input: ExecuteGenerationInput): 
     profileResult = input.existingProfileResult ?? await onboardingService.importProfile(sourceUrl, userId, creatorName, onImportProgress as never);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    captureError(err, { service: "generation", operation: "importProfile", route: "/onboarding" });
     await sessionService.updateStage(sessionId, "import_profile", "failed", msg).catch(()=>{});
     await sessionService.fail(sessionId, msg).catch(()=>{});
     return { success: false, error: msg, retryable: true };
@@ -107,6 +108,7 @@ export async function executeGenerationPipeline(input: ExecuteGenerationInput): 
   const resumeFlag = diag ? (diag as { hasResumeSource?: boolean }).hasResumeSource : false;
   if (resumeFlag && (!profileResult.composition || !profileResult.blueprint)) {
     const errMsg = `Intelligent composition unavailable for resume source (hasResumeSource=true hasComposition=${!!profileResult.composition} hasBlueprint=${!!profileResult.blueprint}). Please retry generation.`;
+    captureError(new Error(errMsg), { service: "generation", operation: "composition", route: "/onboarding" });
     await sessionService.updateStage(sessionId, "composition", "failed", errMsg).catch(()=>{});
     await sessionService.fail(sessionId, errMsg).catch(()=>{});
     await emitGenerationEvent(sessionId, "generation.failed", { stage: "composition", error: errMsg }).catch(()=>{});
@@ -215,6 +217,7 @@ export async function executeGenerationPipeline(input: ExecuteGenerationInput): 
       provisioned = await provisioningService.provision(provisioningInput as never) as never;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Provisioning failed";
+      captureError(err, { service: "provisioning", operation: "provision", route: "/onboarding" });
       markStage("provisioning", "failed", msg);
       await sessionService.fail(sessionId, msg).catch(()=>{});
       const { emitGenerationEvent: emit } = await import("@/modules/generation-progress");
@@ -222,6 +225,7 @@ export async function executeGenerationPipeline(input: ExecuteGenerationInput): 
       return { success: false, error: msg, retryable: false };
     }
     markStage("provisioning", "completed");
+    try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.clientWebsiteCreated({ tenantId: provisioned.tenantId }); } catch {}
   }
   await sessionService.updateStage(sessionId, "provisioning", "completed").catch(()=>{});
   await sessionService.updateProgress(sessionId, { status: "publishing", currentStage: "publishing", storefrontUrl: provisioned.storefrontUrl }).catch(()=>{});
@@ -318,6 +322,8 @@ export async function executeGenerationPipeline(input: ExecuteGenerationInput): 
     builderUrl: website ? "/builder" : undefined,
     dashboardUrl: website ? "/builder" : "/admin/dashboard",
   }).catch(()=>{});
+  try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.generationCompleted({ tenantId: provisioned.tenantId }); } catch {}
+  try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.websitePublished({ tenantId: provisioned.tenantId, version: 1 }); } catch {}
   await emitGenerationEvent(sessionId, "generation.publish.completed", { tenantId: provisioned.tenantId }).catch(()=>{});
   await emitGenerationEvent(sessionId, "generation.dashboard.ready", { tenantId: provisioned.tenantId }).catch(()=>{});
   await emitGenerationEvent(sessionId, "generation.completed", { tenantId: provisioned.tenantId }).catch(()=>{});

@@ -98,6 +98,15 @@ async function executeForJob(job: NonNullable<Awaited<ReturnType<typeof prisma.j
     await prisma.jobRecord.update({ where: { id: job.id }, data: { status: "FAILED", finishedAt: new Date(), error: "Session not found" } });
     return { success: false, error: "Session not found" };
   }
+  // RCCF-OBS-02 — ensure JobRecord → GenerationSession → Tenant correlation
+  if (!job.tenantId && session.creatorId) {
+    await prisma.jobRecord.update({ where: { id: job.id }, data: { tenantId: session.creatorId } }).catch(() => {});
+  } else if (!job.tenantId && session.workspaceId) {
+    try {
+      const ws = await prisma.workspace.findUnique({ where: { id: session.workspaceId }, select: { tenantId: true } });
+      if (ws?.tenantId) await prisma.jobRecord.update({ where: { id: job.id }, data: { tenantId: ws.tenantId } }).catch(() => {});
+    } catch {}
+  }
   if (["completed", "failed", "cancelled", "timed_out"].includes(session.status)) {
     await prisma.jobRecord.update({ where: { id: job.id }, data: { status: "SUCCEEDED", finishedAt: new Date() } });
     return { success: true, alreadyDone: true };

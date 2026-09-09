@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { logAction } from "@/lib/audit";
 import { getPlatformConfig, buildStorefrontUrlWithTenant } from "@/lib/config/platform";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export const CREATOR_INVITE_SETTING = "creator_invite";
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -47,6 +48,7 @@ export class CreatorInvitationService {
       if (isExpired) {
         await this.markExpired(input.tenantId).catch(() => {});
       } else {
+        captureError(new Error("Duplicate invitation"), { service: "partner", operation: "createInvitation:duplicate", tenantId: input.tenantId, route: "/agency" });
         return { success: false, error: "An invitation already exists for this creator" };
       }
     }
@@ -110,6 +112,7 @@ export class CreatorInvitationService {
         agencyTenantId ? { tenantId: agencyTenantId } : undefined,
       );
       if (!result.success) {
+        captureError(new Error(result.error ?? "Claim email failed"), { service: "partner", operation: "createInvitation:email", tenantId: input.tenantId, route: "/agency" });
         await logAction(input.tenantId, "partner:claim-email-failed", {
           agencyId: input.agencyId,
           email: invite.email,
@@ -122,6 +125,7 @@ export class CreatorInvitationService {
         }).catch(() => {});
       }
     } catch (err) {
+      captureError(err, { service: "partner", operation: "createInvitation:email", tenantId: input.tenantId, route: "/agency" });
       await logAction(input.tenantId, "partner:claim-email-failed", {
         agencyId: input.agencyId,
         email: input.email,
@@ -163,10 +167,19 @@ export class CreatorInvitationService {
       const invite = s.value as unknown as CreatorInvite;
       return invite.token === input.token && invite.email.toLowerCase() === input.email.toLowerCase();
     });
-    if (!setting) return { success: false, error: "Invitation not found" };
+    if (!setting) {
+      captureError(new Error("Invitation not found"), { service: "partner", operation: "claimInvitation:notFound", route: "/claim-invite" });
+      return { success: false, error: "Invitation not found" };
+    }
     const invite = setting.value as unknown as CreatorInvite;
-    if (invite.status !== "pending") return { success: false, error: "Invitation already claimed" };
-    if (new Date(invite.expiresAt).getTime() < Date.now()) return { success: false, error: "Invitation expired" };
+    if (invite.status !== "pending") {
+      captureError(new Error("Invitation already claimed"), { service: "partner", operation: "claimInvitation:alreadyClaimed", tenantId: setting.tenantId, route: "/claim-invite" });
+      return { success: false, error: "Invitation already claimed" };
+    }
+    if (new Date(invite.expiresAt).getTime() < Date.now()) {
+      captureError(new Error("Invitation expired"), { service: "partner", operation: "claimInvitation:expired", tenantId: setting.tenantId, route: "/claim-invite" });
+      return { success: false, error: "Invitation expired" };
+    }
 
     // VALIDATION-02 F12: NEVER overwrite an existing account. If this email
     // already has a user, the claim must be rejected — otherwise an agency
@@ -177,6 +190,7 @@ export class CreatorInvitationService {
       select: { id: true },
     });
     if (existingUser) {
+      captureError(new Error("Claim account exists"), { service: "partner", operation: "claimInvitation:accountExists", tenantId: setting.tenantId, route: "/claim-invite" });
       return { success: false, error: "An account with this email already exists. Sign in instead of claiming the invitation." };
     }
 
@@ -209,8 +223,10 @@ export class CreatorInvitationService {
       // VALIDATION-03: concurrent claim (double-click / second browser) can race
       // the existing-account check — the unique constraint surfaces as P2002.
       if (typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002") {
+        captureError(error, { service: "partner", operation: "claimInvitation:race", tenantId: setting.tenantId, route: "/claim-invite" });
         return { success: false, error: "An account with this email already exists. Sign in instead." };
       }
+      captureError(error, { service: "partner", operation: "claimInvitation:persist", tenantId: setting.tenantId, route: "/claim-invite" });
       throw error;
     }
 
@@ -219,6 +235,7 @@ export class CreatorInvitationService {
       data: { value: JSON.parse(JSON.stringify({ ...invite, status: "claimed", claimedAt: new Date().toISOString() })) },
     });
     await logAction(setting.tenantId, "partner:invitation-claimed", { email: input.email }).catch(() => {});
+    try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.claimCompleted({ tenantId: setting.tenantId }); } catch {}
     return { success: true, tenantId: setting.tenantId };
   }
 

@@ -12,7 +12,7 @@ const GUIDES = [
     sections: [
       { h: "1. Paste your profile", p: `Go to the homepage and paste your YouTube, Instagram, or TikTok link. ${BRAND.name} builds a storefront from your actual content.` },
       { h: "2. Make it yours", p: "Use the visual builder to customize sections, themes, and pages. Add products, services, courses or bookings." },
-      { h: "3. Go live", p: `Publish to your ${BRAND.name} subdomain or connect your own domain with free SSL. You keep 100% of every sale.` },
+      { h: "3. Go live", p: `Publish to your ${BRAND.name} subdomain or connect your own domain with free SSL (Scale+). You keep 100% of every sale.` },
     ],
   },
   {
@@ -21,8 +21,8 @@ const GUIDES = [
     description: "Sync your social content automatically so your storefront stays fresh.",
     sections: [
       { h: "Connect YouTube", p: "Add your YouTube channel link during setup. Your videos, stats and thumbnails can be pulled into your storefront feed." },
-      { h: "Connect Instagram", p: "Link your Instagram to bring your posts and audience signals into your store. Updates flow automatically." },
-      { h: "Keep it fresh", p: "Once connected, your storefront reflects your latest content — no manual uploads needed." },
+      { h: "Connect Instagram", p: "Link your Instagram to bring your posts and audience signals into your store. Live/automatic social sync is available on Creator Scale+ and higher." },
+      { h: "Keep it fresh", p: "On Creator Scale+ and higher, once connected your storefront reflects your latest content with live sync — no manual uploads needed." },
     ],
   },
   {

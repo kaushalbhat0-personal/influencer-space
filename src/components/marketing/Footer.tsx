@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 const FOOTER_LINKS = [
+  { href: "/help", label: "Help" },
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
   { href: "/refund", label: "Refunds" },

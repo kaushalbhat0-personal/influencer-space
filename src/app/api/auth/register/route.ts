@@ -6,6 +6,7 @@ import { logger } from "@/lib/observability/logger";
 import { captureError } from "@/lib/observability/error-tracker";
 import { isFlagEnabled, getPlatformConfig } from "@/lib/platform/platform-config";
 import { getTrialEndDate } from "@/lib/billing";
+import { VercelEvents } from "@/lib/analytics/vercel-events";
 
 export async function POST(req: Request) {
   // VALIDATION-04: honor the `enableNewRegistrations` platform flag. This is a
@@ -99,6 +100,8 @@ export async function POST(req: Request) {
 
         return { userId: user.id, agencyId: agency.id };
       });
+      try { VercelEvents.signupCompleted({ persona: "agency", tenantId: result.agencyId }); } catch {}
+      try { VercelEvents.agencyCreated({ agencyId: result.agencyId }); } catch {}
 
       return NextResponse.json({ success: true, userId: result.userId, email }, { status: 201 });
     }
@@ -146,6 +149,7 @@ export async function POST(req: Request) {
 
       return { userId: user.id };
     });
+    try { VercelEvents.signupCompleted({ persona: "creator", tenantId: result.userId }); } catch {}
 
     return NextResponse.json({ success: true, userId: result.userId, email }, { status: 201 });
   } catch (error) {

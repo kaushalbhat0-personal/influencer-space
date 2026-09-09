@@ -143,7 +143,7 @@ export const PLATFORM_CAPABILITIES = [
       "Theme customization",
       "Real-time preview",
       "One-click publishing",
-      "Custom domain with free SSL",
+      "Custom domain with free SSL (Scale+)",
       "Mobile-responsive design",
     ],
   },

@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { headers } from "next/headers";
 import crypto from "crypto";
+import { captureError } from "@/lib/observability/error-tracker";
 
 const emailSchema = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -191,6 +192,12 @@ export async function createCheckout(
       if (direct.success && direct.checkoutUrl) {
         return { success: true, checkoutUrl: direct.checkoutUrl, orderId: undefined };
       }
+      captureError(new Error(direct.error ?? "Direct creator checkout failed"), {
+        service: "billing",
+        operation: "createDirectCheckout",
+        tenantId,
+        route: "/checkout",
+      });
       // RCCF-72.18D.7.5 — fail-closed is preserved, but the buyer receives a
       // safe category instead of the creator's internal account state. The
       // canonical readiness gate itself is unchanged.
@@ -259,6 +266,7 @@ export async function createCheckout(
       }
       return order;
     });
+    try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.checkoutStarted({ tenantId, provider: "razorpay", strategy: commerceStrategy.id }); } catch {}
 
     // VALIDATION-01 V-028: free products / 100%-off coupons (total ≤ 0) cannot
     // go through Razorpay (it rejects amount 0). Complete the order immediately
@@ -291,21 +299,34 @@ export async function createCheckout(
       };
     }
 
-    // Create Razorpay order
-    const razorpay = getRazorpayInstance();
-    const razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(total * 100), // Razorpay expects paise
-      currency: "INR",
-      receipt: dbOrder.id,
-      notes: {
+    // Create Razorpay order — instrument failures for both PLATFORM_COLLECT and DIRECT_CREATOR (via createDirectCheckout already)
+    let razorpayOrder: { id: string };
+    try {
+      const razorpay = getRazorpayInstance();
+      razorpayOrder = await razorpay.orders.create({
+        amount: Math.round(total * 100), // Razorpay expects paise
+        currency: "INR",
+        receipt: dbOrder.id,
+        notes: {
+          tenantId,
+          productId: product.id,
+          orderId: dbOrder.id,
+          fanEmail,
+          commerceStrategy: commerceStrategy.id,
+          ...(couponApplied && { couponCode, discountAmount: String(discountAmount) }),
+        },
+      });
+    } catch (e) {
+      captureError(e, {
+        service: "billing",
+        operation: "createCheckout",
         tenantId,
-        productId: product.id,
-        orderId: dbOrder.id,
-        fanEmail,
-        commerceStrategy: commerceStrategy.id,
-        ...(couponApplied && { couponCode, discountAmount: String(discountAmount) }),
-      },
-    });
+        route: "/checkout",
+        // Do NOT persist payment credentials or raw provider payloads — only strategy/provider context via metadata
+      });
+      // Also log sanitized metadata via logger? captureError already logs
+      return { success: false, error: e instanceof Error ? e.message : "Checkout creation failed" };
+    }
 
     // Update DB order with Razorpay order ID
     await prisma.productOrder.update({
@@ -336,6 +357,16 @@ export async function createCheckout(
       quantity,
     };
   } catch (error) {
+    // Capture actionable failure context — no credentials/payment data
+    try {
+      const tenantHint = await resolveCheckoutTenantId().catch(() => null);
+      captureError(error, {
+        service: "billing",
+        operation: "createCheckout",
+        tenantId: tenantHint ?? undefined,
+        route: "/checkout",
+      });
+    } catch {}
     return {
       success: false,
       error: error instanceof Error ? error.message : "Checkout creation failed",

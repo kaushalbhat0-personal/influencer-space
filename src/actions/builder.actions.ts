@@ -8,6 +8,7 @@ import { publishSnapshotService } from "@/lib/publishing/snapshot";
 import { workspaceContext } from "@/modules/workspace/application/workspace-context";
 import { workspacePolicy } from "@/lib/workspace/policy";
 import { metricsService } from "@/lib/observability/metrics-service";
+import { captureError } from "@/lib/observability/error-tracker";
 import type { BuilderPage } from "@/lib/builder/types";
 import { storefrontToBuilderPages } from "@/lib/builder/artifact-loader";
 
@@ -92,6 +93,8 @@ export async function loadBuilderPages(): Promise<{ success: boolean; pages?: Bu
 
     return { success: true, pages };
   } catch (e) {
+    const tenantId = await resolveBuilderTenantId().catch(() => null);
+    captureError(e, { service: "builder", operation: "loadBuilderPages", tenantId: tenantId ?? undefined, route: "/builder" });
     return { success: false, error: String(e) };
   }
 }
@@ -137,7 +140,13 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
       }
     }
     const saveStart = Date.now();
-    await builderService.save(websiteId, pages);
+    try {
+      await builderService.save(websiteId, pages);
+    } catch (e) {
+      const tenantId = await resolveBuilderTenantId().catch(() => null);
+      captureError(e, { service: "builder", operation: "saveBuilderPages", tenantId: tenantId ?? undefined, route: "/builder" });
+      return { success: false, error: String(e) };
+    }
     metricsService.recordDuration("builder_save", Date.now() - saveStart, { websiteId });
 
     // VALIDATION-03.5 C2: the draft is the source of truth. markChangesPending
@@ -149,12 +158,15 @@ export async function saveBuilderPages(pages: BuilderPage[]): Promise<{ success:
         select: { tenantId: true },
       });
       await publishingService.markChangesPending(tenantId);
+      try { const { VercelEvents } = await import("@/lib/analytics/vercel-events"); VercelEvents.builderEdit({ tenantId }); } catch {}
     } catch {
       // best-effort — the draft is committed.
     }
 
     return { success: true };
   } catch (e) {
+    const tenantId = await resolveBuilderTenantId().catch(() => null);
+    captureError(e, { service: "builder", operation: "saveBuilderPages", tenantId: tenantId ?? undefined, route: "/builder" });
     return { success: false, error: String(e) };
   }
 }

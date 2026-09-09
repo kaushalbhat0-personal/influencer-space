@@ -23,6 +23,7 @@ import { getBuilderOverview, type BuilderOverviewData } from "@/actions/builder-
 import type { PublishStatusValue } from "@/components/publish/PublishStatusBadge";
 import { Upload, ExternalLink, Loader2, Layers, Settings2, MousePointer2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BuilderGuidance } from "./builder-guidance";
 
 /**
  * RCCF-68.3.3 — responsive Builder shell.
@@ -487,6 +488,8 @@ export function BuilderWorkspace() {
         onOpenSections={() => setMobilePanel((p) => (p === "sections" ? null : "sections"))}
         onOpenProperties={() => setMobilePanel((p) => (p === "properties" ? null : "properties"))}
       />
+
+      <BuilderGuidance />
 
       {/* Workspace row — side rails are desktop-only; canvas is always full width below lg. */}
       <div className="flex flex-1 overflow-hidden">

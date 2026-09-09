@@ -1,38 +1,38 @@
-# CreatorStore
+# Pendallo
 
-This is the CreatorStore platform — a professional home for every business online.
+Pendallo is a professional home online — your website, showcase, links, and storefront in one place you own. Turn your presence into a business you own.
 
-## Getting Started
+## What is Pendallo?
 
-First, run the development server:
+- Paste your YouTube, Instagram, TikTok, or any website link — Pendallo builds a complete storefront from your actual content (hero, products, navigation, checkout, SEO, social links).
+- Customize in the visual Builder (drag sections, themes, real-time preview) and publish to a Pendallo subdomain or your own domain (custom domain with free SSL on Scale+).
+- Sell via Razorpay (UPI, cards, net banking) — you keep 100% of every sale.
+- Agencies: create and manage client websites at `/agency` → **New Client Website** (website, Google Business, social, business description, or resume).
+
+## Quickstart
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Marketing: `/` → **Start as Creator** or **Become a Partner** → `/signup`
+- Individual: `/signup?persona=creator` → `/onboarding` → **Build My Storefront** → `/admin/dashboard` → **Open Builder** (`/builder`) → **Publish**
+- Agency: `/signup?persona=partner` → `/agency` → **New Client Website** (`/agency/generate`) → invitations via `/claim-invite` → client dashboard
+- Help: `/help` aggregates Getting Started, YouTube/Instagram, Payments, Builder path, FAQ, Agency How it works, and Contact
+- Guides: `/blog/guides/getting-started`, `/blog/guides/connect-social-media` (live sync on Scale+), `/blog/guides/upi-payments`
+- FAQ: `/faq` · Pricing: `/pricing` · Contact: `info.micronest@gmail.com`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Recommended Builder Path
 
-## Learn More
+Edit content → Appearance (`/admin/appearance`) → Integrations (`/admin/integrations`, Resend optional) → SEO (`/admin/seo`) → Domain (`/admin/settings/domain`) → **Publish** in `/builder`.
 
-To learn more about Next.js, take a look at the following resources:
+Live/automatic YouTube & Instagram sync is available on Creator Scale and higher.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Next.js 14 App Router · Prisma 7 · Supabase · NextAuth · Tailwind · Vercel. Workspace is the aggregate root for Creator and Agency.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `docs/` for architecture decisions (engineering) and `/help` for user-facing guidance.

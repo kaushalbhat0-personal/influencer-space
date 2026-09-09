@@ -10,6 +10,7 @@ import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { Globe, Palette, CheckCircle, Activity, ShoppingBag, Building2 } from "lucide-react";
 import Link from "next/link";
 import { AgencyBuilderButton } from "../../_components/agency-builder-button";
+import { BRAND } from "@/lib/marketing/messaging";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-            <span>Powered by {brand?.footerText ?? "Creatos"}</span>
+            <span>Powered by {brand?.footerText ?? BRAND.name}</span>
           </div>
         </div>
       </header>
@@ -152,7 +153,7 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
       {/* Branded Footer */}
       <footer className="border-t border-white/5 py-6 text-center">
         <p className="text-xs text-[var(--text-muted)]">
-          {brand?.footerText ?? "Powered by Creatos"}
+          {brand?.footerText ?? `Powered by ${BRAND.name}`}
         </p>
       </footer>
     </div>

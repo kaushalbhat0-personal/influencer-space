@@ -375,6 +375,18 @@ jobRunner.register({
   intervalMs: 86400000,
   execute: async () => { const r = await purgeOldAuditLogs(90); if (r.deleted > 0) log(`[Job] Purged ${r.deleted} old audit logs`); },
 });
+jobRunner.register({
+  id: "sync-health-alerts",
+  name: "Sync Health to Alerts",
+  intervalMs: 300000,
+  execute: async () => {
+    try {
+      const { alertStore } = await import("@/modules/operations/application/alert-store");
+      const result = await alertStore.syncFromRuntime("health-cron");
+      if (result.created > 0) log(`[Job] Synced ${result.created} health alerts`);
+    } catch {}
+  },
+});
 
 // RCCF-TRACK-02: register the Event Runtime → Communication subscriber at module
 // scope (idempotent). Business runtimes emit events only; the communication

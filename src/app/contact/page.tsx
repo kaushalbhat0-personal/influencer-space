@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ContactFormClient } from "./_components/contact-form-client";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { Footer } from "@/components/marketing/Footer";
-import { CONTACT_EMAIL } from "@/lib/marketing/messaging";
+import { BRAND, CONTACT_EMAIL } from "@/lib/marketing/messaging";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // info.micronest@gmail.com — no phone/WhatsApp anywhere on the page.
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Contact CreatorStore support at ${CONTACT_EMAIL}. We read every message and reply as soon as we can.`,
+  description: `Contact ${BRAND.name} support at ${CONTACT_EMAIL}. We read every message and reply as soon as we can.`,
   alternates: { canonical: "/contact" },
 };
 
