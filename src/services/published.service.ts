@@ -32,7 +32,11 @@ export async function getPublishedPageData(
   }
 
   // P2: persistent cache for immutable live snapshot — tags allow precise invalidation on publish
-  const snapshot = await publishSnapshotService.getLiveCached(website.id, tenantId).catch(() => publishSnapshotService.getLive(website.id));
+  // Batch 17C fix: getLiveCached may return null (cache miss or stale null) — fallback to direct getLive
+  let snapshot = await publishSnapshotService.getLiveCached(website.id, tenantId).catch(() => null);
+  if (!snapshot) {
+    snapshot = await publishSnapshotService.getLive(website.id).catch(() => null);
+  }
 
   if (snapshot) {
     return { tenantId, websiteId: website.id, snapshot: snapshot.data, fromSnapshot: true };
