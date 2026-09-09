@@ -10,7 +10,7 @@ export default async function AgencyTemplatesPage() {
 
   return (
     <ContentContainer>
-      <PageHeader title="Templates" description="Blueprint + theme catalog your agency can apply to creator workspaces."
+      <PageHeader title="Templates" description="Blueprint + theme catalog your agency can apply to client websites."
         breadcrumbs={[{ label: "Agency", href: "/agency" }, { label: "Templates" }]} />
 
       <h3 className="mb-3 text-sm font-medium text-[var(--text-primary)]" data-testid="templates-blueprints">Blueprints ({blueprints.length})</h3>

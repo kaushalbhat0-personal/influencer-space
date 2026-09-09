@@ -17,7 +17,17 @@ export function AgencyRevenueSection({ agencyId }: { agencyId: string }) {
 
   useEffect(() => { load(); }, [agencyId]);
 
-  if (!data?.ok || !data.summary || !data.payoutSummary) return null;
+  if (!data?.ok || !data.summary || !data.payoutSummary) {
+    return (
+      <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/50 p-6 text-center">
+        <p className="text-sm text-[var(--text-secondary)]">Recurring revenue appears after you onboard clients and they subscribe.</p>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">Create your first client website to start earning a recurring share.</p>
+        <a href="/agency/generate" className="mt-3 inline-flex rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+          Create Client Website
+        </a>
+      </div>
+    );
+  }
   const s = data.summary;
   const p = data.payoutSummary;
   const l = data.loyalty;
@@ -74,7 +84,7 @@ export function AgencyRevenueSection({ agencyId }: { agencyId: string }) {
 
       <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-[var(--text-muted)]">
         <span>Payouts: {p.pending} queued · {p.approved} approved · {p.processing} processing · <span className="text-emerald-400">{p.paid} paid</span> · <span className="text-red-400">{p.failed} failed</span></span>
-        <span className="text-[var(--text-muted)]">· You earn a recurring share of creator subscriptions only — creators keep 100% of product revenue.</span>
+        <span className="text-[var(--text-muted)]">· You earn a recurring share of client subscriptions only — clients keep 100% of product revenue.</span>
       </div>
 
       {data.entries && data.entries.length > 0 && (

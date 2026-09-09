@@ -86,7 +86,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm" data-testid="capacity-manager">
       <h3 className="mb-1 font-semibold text-white">Client Website Capacity</h3>
       <p className="mb-4 text-xs text-[var(--text-muted)]">
-        Each managed creator client equals one client website. Additional capacity beyond your plan&apos;s included
+        Each managed client equals one client website. Additional capacity beyond your plan&apos;s included
         allowance is <span className="text-[var(--text-primary)]">{formatCurrency(unitPriceInr)} one-time</span> per client website — no monthly charge.
       </p>
 

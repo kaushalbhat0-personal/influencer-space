@@ -18,7 +18,17 @@ export function AgencySuccessSection({ agencyId }: { agencyId: string }) {
   const needsHelp = clients.filter((c) => c.risk === "medium");
   const top = [...clients].sort((a, b) => b.score - a.score).slice(0, 5);
 
-  if (clients.length === 0) return null;
+  if (clients.length === 0) {
+    return (
+      <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/50 p-6 text-center">
+        <p className="text-sm text-[var(--text-secondary)]">Client success insights appear after you create client websites.</p>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">We track health, publishing and content scores for every client.</p>
+        <a href="/agency/generate" className="mt-3 inline-flex rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+          Create Client Website
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6">

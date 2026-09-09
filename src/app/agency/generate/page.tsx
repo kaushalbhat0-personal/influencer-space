@@ -11,8 +11,8 @@ export default async function AgencyGeneratePage() {
 
   return (
     <ContentContainer>
-      <PageHeader title="Creator Import" description="Provision a new creator, link them to your agency, and send a passwordless invitation."
-        breadcrumbs={[{ label: "Agency", href: "/agency" }, { label: "Creator Import" }]} />
+      <PageHeader title="New Client Website" description="Create a client website — give Pendallo a business profile and we intelligently build the site. Works without YouTube or Instagram."
+        breadcrumbs={[{ label: "Agency", href: "/agency" }, { label: "New Client Website" }]} />
       <CreatorImportClient agencyId={agencyId ?? ""} />
     </ContentContainer>
   );

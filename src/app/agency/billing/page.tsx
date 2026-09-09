@@ -56,7 +56,7 @@ export default async function AgencyBilling() {
 
   return (
     <ContentContainer>
-      <PageHeader title="Billing" description="Your partner plan and the creators you manage."
+      <PageHeader title="Billing" description="Your partner plan and the client websites you manage."
         breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Billing" }]} />
 
       <PageSection>
@@ -94,25 +94,25 @@ export default async function AgencyBilling() {
       <PageSection>
         <MetricGrid>
           <MetricCard label="Partner Tier" value={displayName} icon={CreditCard} subtext={`Renews ${subscriptionData[0]?.renewsAt ? new Date(subscriptionData[0].renewsAt).toISOString().slice(0, 10) : "per your plan"}`} />
-          <MetricCard label="Managed Creators" value={managedCreators} icon={Users} subtext={`Limit: ${limitLabel}`} />
-          <MetricCard label="Creator Subscriptions" value={activeSubs.length} icon={TrendingUp} />
-          <MetricCard label="Creator Invoices" value={invoiceData.length} icon={FileText} />
+          <MetricCard label="Client Websites" value={managedCreators} icon={Users} subtext={`Limit: ${limitLabel}`} />
+          <MetricCard label="Client Subscriptions" value={activeSubs.length} icon={TrendingUp} />
+          <MetricCard label="Client Invoices" value={invoiceData.length} icon={FileText} />
         </MetricGrid>
       </PageSection>
 
-      {/* Honest policy — creators pay Pendallo directly (Phase 5) */}
+      {/* Honest policy — clients pay Pendallo directly (Phase 5) */}
       <div className="mb-6 rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm text-[var(--text-secondary)]" data-testid="partner-subscription-policy">
-        <p className="font-medium text-[var(--text-primary)]">Creator Subscription Policy</p>
+        <p className="font-medium text-[var(--text-primary)]">Client Subscription Policy</p>
         <ul className="mt-2 space-y-1.5 text-xs text-[var(--text-muted)]" role="list">
-          <li>Every creator pays {BRAND.name} directly for their own Creator plan (Creator Grow minimum for partner-onboarded creators).</li>
-          <li>The invoices below are the creators&apos; subscriptions billed by {BRAND.name} — they are not your revenue.</li>
+          <li>Every client pays {BRAND.name} directly for their own Creator plan (Creator Grow minimum for partner-onboarded clients).</li>
+          <li>The invoices below are the clients&apos; subscriptions billed by {BRAND.name} — they are not your revenue.</li>
           <li>You may charge clients separately for setup, migration, training, branding, consulting and maintenance.</li>
         </ul>
       </div>
 
       {invoiceData.length > 0 && (
         <PageSection>
-          <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Creator Subscriptions (billed to {BRAND.name})</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Client Subscriptions (billed to {BRAND.name})</h2>
           <div className="admin-card overflow-hidden">
             <table className="admin-table">
               <thead>
@@ -147,14 +147,17 @@ export default async function AgencyBilling() {
       {invoiceData.length === 0 && (
         <div className="admin-card p-8 text-center">
           <CreditCard className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" />
-          <p className="text-sm text-[var(--text-muted)]">No creator subscriptions yet. They appear when your managed creators subscribe.</p>
+          <p className="text-sm text-[var(--text-muted)]">No client subscriptions yet. They appear when your clients subscribe to a Creator plan.</p>
+          <p className="mt-3">
+            <a href="/agency/generate" className="text-xs text-[var(--brand-primary)] hover:underline">Create your first client website →</a>
+          </p>
         </div>
       )}
 
       <PageSection>
         <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Recurring Revenue</h2>
         <div className="admin-card p-5 text-sm text-[var(--text-muted)]" data-testid="partner-rewards">
-          You earn a recurring share of every creator subscription you onboard. Your clients pay {BRAND.name} directly for
+          You earn a recurring share of every client subscription you onboard. Your clients pay {BRAND.name} directly for
           their own Creator plan; the platform shares a percentage of that subscription with you — no transaction fees, no
           manual invoicing. See your earnings on the Agency Dashboard.
         </div>

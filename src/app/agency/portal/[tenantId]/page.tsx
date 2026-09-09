@@ -9,6 +9,7 @@ import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorizat
 import { buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 import { Globe, Palette, CheckCircle, Activity, ShoppingBag, Building2 } from "lucide-react";
 import Link from "next/link";
+import { AgencyBuilderButton } from "../../_components/agency-builder-button";
 
 export const dynamic = "force-dynamic";
 
@@ -107,14 +108,12 @@ export default async function ClientPortalPage({ params }: { params: { tenantId:
             <span className="text-sm font-medium text-white">View Website</span>
             <span className="text-xs text-[var(--text-muted)]">See your live site</span>
           </Link>
-          <Link
-            href="/builder"
+          <AgencyBuilderButton
+            tenantId={tenant.id}
+            variant="card"
+            label="Open Builder"
             className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/50 p-6 hover:border-white/20 transition-all text-center"
-          >
-            <Activity className="h-6 w-6 text-[var(--brand-primary)]" />
-            <span className="text-sm font-medium text-white">Open Builder</span>
-            <span className="text-xs text-[var(--text-muted)]">Edit your layout</span>
-          </Link>
+          />
           <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/50 p-6 text-center">
             <Palette className="h-6 w-6 text-[var(--text-muted)]" />
             <span className="text-sm font-medium text-white">{themeName}</span>

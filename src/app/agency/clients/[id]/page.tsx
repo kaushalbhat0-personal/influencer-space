@@ -9,6 +9,7 @@ import { assertAgencyOwnsTenant } from "@/modules/partner/application/authorizat
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ClientInvite } from "./_components/client-invite";
+import { AgencyBuilderButton } from "../../_components/agency-builder-button";
 import { Building2, Globe, Palette, CheckCircle, Activity, ShoppingBag, Clock } from "lucide-react";
 import Link from "next/link";
 
@@ -55,9 +56,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <Link href={`/${tenant.subdomain}`} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
               View Website
             </Link>
-            <Link href={`/builder`} className="rounded-lg bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-semibold text-black hover:opacity-90">
-              Open Builder
-            </Link>
+            <AgencyBuilderButton tenantId={tenant.id} />
           </div>
         }
       />

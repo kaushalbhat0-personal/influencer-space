@@ -147,8 +147,8 @@ export const AGENCY_NAV: DashboardNav = {
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
         { label: "Dashboard", href: "/agency", icon: LayoutDashboard, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
-        { label: "Clients", href: "/agency/clients", icon: UserCheck, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
-        { label: "Websites", href: "/agency/websites", icon: Globe2, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
+        { label: "Clients", href: "/agency/clients", icon: UserCheck, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Websites", href: "/agency/websites", icon: Globe2, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
       ],
     },
     {
@@ -156,9 +156,9 @@ export const AGENCY_NAV: DashboardNav = {
       defaultOpen: true,
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
-        { label: "Creator Import", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN") },
-        { label: "Templates", href: "/agency/templates", icon: Layers, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
-        { label: "Analytics", href: "/agency/analytics", icon: BarChart3, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
+        { label: "New Client Website", href: "/agency/generate", icon: Bot, roles: allRoles("AGENCY_ADMIN") },
+        { label: "Templates", href: "/agency/templates", icon: Layers, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Analytics", href: "/agency/analytics", icon: BarChart3, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
       ],
     },
     {
@@ -166,9 +166,9 @@ export const AGENCY_NAV: DashboardNav = {
       defaultOpen: true,
       roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"),
       items: [
-        { label: "Domains", href: "/agency/domains", icon: Globe, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
-        { label: "Team", href: "/agency/team", icon: Users, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF"), badge: "new" },
-        { label: "Billing", href: "/agency/billing", icon: CreditCard, roles: allRoles("AGENCY_ADMIN"), badge: "new" },
+        { label: "Domains", href: "/agency/domains", icon: Globe, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Team", href: "/agency/team", icon: Users, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Billing", href: "/agency/billing", icon: CreditCard, roles: allRoles("AGENCY_ADMIN") },
       ],
     },
   ],

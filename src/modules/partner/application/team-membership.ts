@@ -147,12 +147,19 @@ export class PartnerTeamService {
       throw new TeamCapacityError(active, capacity.limit, capacity.planCode);
     }
 
+    // RCCF-PILOT-03 A: pending is active ONLY when not expired.
     const existingPending = await prisma.agencyTeamInvitation.findFirst({
       where: { workspaceId: workspace.id, email: normalizedEmail, status: "pending" },
-      select: { id: true },
+      select: { id: true, expiresAt: true },
     });
     if (existingPending) {
-      throw new TeamMembershipError("A pending invitation already exists for this email");
+      if (existingPending.expiresAt.getTime() <= Date.now()) {
+        await prisma.agencyTeamInvitation
+          .update({ where: { id: existingPending.id }, data: { status: "expired" } })
+          .catch(() => {});
+      } else {
+        throw new TeamMembershipError("A pending invitation already exists for this email");
+      }
     }
 
     const token = randomBytes(24).toString("hex");

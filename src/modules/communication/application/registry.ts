@@ -28,6 +28,13 @@ export const COMMUNICATION_REGISTRY: CommunicationDefinition[] = [
   // internals. Expiry is server-derived and rendered for the invitee.
   { id: "team.invitation", name: "Team Invitation", audience: "agency", priority: "high", channel: "email", category: "system", retries: 3, throttle: null, requiredData: ["agencyName", "roleLabel", "acceptUrl", "expiryDate"], template: { subject: `You're invited to join {{agencyName}} on ${BRAND.name}`, body: `You're invited to join {{agencyName}} on ${BRAND.name}.\n\nRole: {{roleLabel}}\n\nAccept invitation:\n{{acceptUrl}}\n\nThis invitation expires on {{expiryDate}}.` } },
 
+  // ── Prospect claim (RCCF-PILOT-02) ──────────────────────────
+  // Branded prospect claim email — sent via platform Resend (no tenant
+  // verification required). Preview URL is the published storefront; claim URL
+  // is the existing /claim-invite?token=&email= flow. After this template is
+  // delivered, the agency still retains the manual copy fallback.
+  { id: "claim.invitation", name: "Prospect Claim Invitation", audience: "customer", priority: "high", channel: "email", category: "system", retries: 3, throttle: null, requiredData: ["agencyName", "prospectName", "previewUrl", "claimUrl", "expiryDate"], template: { subject: `Your website is ready — claim it on ${BRAND.name}`, body: `Hi {{prospectName}},\n\n{{agencyName}} built you a website on ${BRAND.name}.\n\nPreview your site:\n{{previewUrl}}\n\nClaim your workspace (set your password):\n{{claimUrl}}\n\nThis invitation expires on {{expiryDate}}.\n\nIf you did not expect this, you can ignore this email.` } },
+
   // ── Admin alerts ───────────────────────────────────────────
   { id: "alert.failed_generation", name: "Failed Generation", audience: "super_admin", priority: "high", channel: "alert", category: "system", retries: 3, throttle: "1h", requiredData: ["error"], template: { subject: "Generation failed", body: "A generation failed: {{error}}." } },
   { id: "alert.webhook_failure", name: "Webhook Failure", audience: "super_admin", priority: "high", channel: "alert", category: "system", retries: 3, throttle: "1h", requiredData: ["error"], template: { subject: "Webhook failure", body: "A webhook failed: {{error}}." } },

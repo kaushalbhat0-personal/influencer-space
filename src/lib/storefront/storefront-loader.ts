@@ -49,6 +49,58 @@ export interface StorefrontDataOptions {
   homepage?: boolean;
 }
 
+const PILOT_PROSPECT_GRACE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * RCCF-PILOT-03 B: allowlisted pilot prospect — preserve public live snapshot
+ * for 30 days after publish when Setting pilot_prospect=true, even after the
+ * normal 15-day trial expires. Does NOT change billing entitlement, pricing,
+ * or subscription lifecycle; only the public storefront read path is extended,
+ * and only when a live snapshot already exists.
+ */
+async function isPilotProspectGraceActive(tenantId: string): Promise<boolean> {
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { tenantId_key: { tenantId, key: "pilot_prospect" } },
+      select: { value: true },
+    });
+    if (!setting?.value) return false;
+    const v: unknown = setting.value;
+    const enabled =
+      v === true ||
+      v === "true" ||
+      (typeof v === "object" &&
+        v !== null &&
+        ((v as Record<string, unknown>).value === true ||
+          (v as Record<string, unknown>).enabled === true ||
+          (v as Record<string, unknown>).pilot_prospect === true));
+    if (!enabled) return false;
+
+    const website = await prisma.website.findUnique({
+      where: { tenantId },
+      select: { id: true, createdAt: true },
+    });
+    if (!website) return false;
+
+    const status = await prisma.publishStatus.findUnique({
+      where: { websiteId: website.id },
+      select: { publishedAt: true, createdAt: true, state: true },
+    });
+    // Grace requires an already-published live snapshot — otherwise nothing to preserve.
+    const hasLive = status?.state === "live"
+      ? true
+      : (await prisma.publishSnapshot.findFirst({ where: { websiteId: website.id, state: "live" }, select: { id: true } })) !== null;
+    if (!hasLive) return false;
+
+    const reference = status?.publishedAt ?? status?.createdAt ?? website.createdAt;
+    if (!reference) return false;
+    const ageMs = Date.now() - new Date(reference).getTime();
+    return ageMs >= 0 && ageMs <= PILOT_PROSPECT_GRACE_MS;
+  } catch {
+    return false;
+  }
+}
+
 export const getStorefrontData = cache(async (slug: string, preview?: boolean, options?: StorefrontDataOptions): Promise<StorefrontData | null> => {
   const tenant = await prisma.tenant.findFirst({ where: { OR: [{ subdomain: slug }, { customDomain: slug }] } });
   if (!tenant) return null;
@@ -64,7 +116,9 @@ export const getStorefrontData = cache(async (slug: string, preview?: boolean, o
     const { resolveActivePlan } = await import("@/modules/billing/application/plan-source");
     const activePlan = await resolveActivePlan(null, tenant.id);
     if (!activePlan.code) {
-      return null;
+      if (!(await isPilotProspectGraceActive(tenant.id))) {
+        return null;
+      }
     }
   }
 

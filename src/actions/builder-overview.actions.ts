@@ -104,8 +104,15 @@ export interface BuilderOverviewData {
 
 async function getTenantAndWebsite() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  const tenantId = session.user.tenantId;
+  let tenantId = session?.user?.tenantId as string | null | undefined;
+  // Agency-managed client Builder context (encrypted __agency_client cookie, verified via assertAgencyOwnsTenant)
+  if (!tenantId && (session?.user as { agencyId?: string })?.agencyId) {
+    const { getAgencyBuilderTenantId } = await import("@/actions/agency-builder.actions");
+    const agencyTenantId = await getAgencyBuilderTenantId();
+    if (agencyTenantId) tenantId = agencyTenantId;
+  }
+  if (!tenantId) throw new Error("Unauthorized");
+  tenantId = String(tenantId);
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },

@@ -8,18 +8,19 @@
  * removed once all 51 themes declare tier inline (tracked, removal path: delete
  * map + tierFallbackForId in themes/index.ts and make ThemeDefinition.tier required).
  *
- * Distribution: 5 free · 10 starter (15) · 15 pro (30) · 20 business (50).
+ * Distribution: 6 free · 10 starter (16) · 15 pro (31) · 19 business (50).
  */
 import type { ThemeDefinition, ThemeTier } from "./types-new";
 import { tierRank } from "./access";
 
 export const THEME_TIER_BY_ID: Record<string, ThemeTier> = {
-  // ── FREE (5) ──
+  // ── FREE (6) — RCCF-17E: modern-restaurant (warm-dining) is free so Launch restaurant is not neon-dark
   "com.creatos.creator-studio": "free",
   "com.creatos.neon-dark": "free",
   "com.creatos.creator-dark": "free",
   "com.creatos.business-minimal": "free",
   "com.creatos.education-academy": "free",
+  "com.creatos.modern-restaurant": "free",
   // ── STARTER (10 → 15 total) ──
   "com.creatos.creator-light": "starter",
   "com.creatos.creator-bold": "starter",
@@ -47,7 +48,7 @@ export const THEME_TIER_BY_ID: Record<string, ThemeTier> = {
   "com.creatos.fitness-energy": "pro",
   "com.creatos.luxury-champagne": "pro",
   "com.creatos.executive": "pro",
-  // ── BUSINESS (20 → 50 total) ──
+  // ── BUSINESS (19 → 50 total) ──
   "com.creatos.startup": "business",
   "com.creatos.midnight-ocean": "business",
   "com.creatos.minimal-portfolio": "business",
@@ -61,7 +62,6 @@ export const THEME_TIER_BY_ID: Record<string, ThemeTier> = {
   "com.creatos.luxury-ivory": "business",
   "com.creatos.fashion": "business",
   "com.creatos.forest-canopy": "business",
-  "com.creatos.modern-restaurant": "business",
   "com.creatos.fine-dining": "business",
   "com.creatos.bistro": "business",
   "com.creatos.academy": "business",

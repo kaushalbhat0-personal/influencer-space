@@ -28,8 +28,8 @@ export default async function AgencyWebsitesPage() {
 
   return (
     <ContentContainer>
-      <PageHeader title="Websites" description="All managed creator websites." breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Websites" }]} />
-      {sites.length === 0 ? <EmptyState title="No websites" description="Generate websites for your clients." icon={Globe} /> : (
+      <PageHeader title="Websites" description="All managed client websites." breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Websites" }]} />
+      {sites.length === 0 ? <EmptyState title="No client websites yet" description="Create your first client website to generate a site." icon={Globe} action={<a href="/agency/generate" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">Create Client Website</a>} /> : (
         <WebsitesTable data={sites} />
       )}
     </ContentContainer>

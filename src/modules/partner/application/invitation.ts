@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { logAction } from "@/lib/audit";
+import { getPlatformConfig, buildStorefrontUrlWithTenant } from "@/lib/config/platform";
 
 export const CREATOR_INVITE_SETTING = "creator_invite";
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -39,10 +40,15 @@ export class CreatorInvitationService {
       select: { value: true },
     });
     const prev = existing?.value as unknown as CreatorInvite | undefined;
-    // A pending, unexpired invitation blocks a new one; expired/claimed invites
-    // may be re-issued (the agency can resend).
-    if (prev && prev.status === "pending" && new Date(prev.expiresAt).getTime() > Date.now()) {
-      return { success: false, error: "An invitation already exists for this creator" };
+    // RCCF-PILOT-03 A: a pending invitation is active ONLY when not expired.
+    // Expired pending may be replaced; we mark it expired first for audit.
+    if (prev && prev.status === "pending") {
+      const isExpired = new Date(prev.expiresAt).getTime() <= Date.now();
+      if (isExpired) {
+        await this.markExpired(input.tenantId).catch(() => {});
+      } else {
+        return { success: false, error: "An invitation already exists for this creator" };
+      }
     }
 
     const token = randomBytes(24).toString("hex");
@@ -67,6 +73,52 @@ export class CreatorInvitationService {
       create: { tenantId: input.tenantId, key: CREATOR_INVITE_SETTING, value: JSON.parse(JSON.stringify(invite)) },
     });
     await logAction(input.tenantId, "partner:invitation-created", { agencyId: input.agencyId, email: input.email }).catch(() => {});
+
+    // RCCF-PILOT-02 — branded prospect claim email via platform Resend.
+    // Runs AFTER the upsert (never inside the DB transaction). The invitation
+    // token/email remain authoritative; the email is a delivery mechanism only.
+    // Failure preserves manual copy fallback — creation still returns success.
+    try {
+      const tenantPromise = (prisma as unknown as { tenant?: { findUnique: (args: unknown) => Promise<{ subdomain: string; customDomain: string | null } | null> } }).tenant?.findUnique
+        ? (prisma as unknown as { tenant: { findUnique: (args: unknown) => Promise<{ subdomain: string; customDomain: string | null } | null> } }).tenant.findUnique({ where: { id: input.tenantId }, select: { subdomain: true, customDomain: true } }).catch(() => null)
+        : Promise.resolve(null);
+      const agencyPromise = prisma.websiteAgency
+        .findUnique({ where: { id: input.agencyId }, select: { name: true } })
+        .catch(() => null);
+      const [tenant, agency] = await Promise.all([tenantPromise, agencyPromise]);
+      const agencyName = agency?.name ?? "Your agency";
+      const previewUrl = tenant
+        ? buildStorefrontUrlWithTenant(tenant.customDomain ?? null, tenant.subdomain)
+        : `${getPlatformConfig().appUrl}/${input.tenantId}`;
+      const claimUrl = `${getPlatformConfig().appUrl}/claim-invite?token=${invite.token}&email=${encodeURIComponent(invite.email)}`;
+      const expiryDate = expiresAt.toISOString().split("T")[0] ?? expiresAt.toISOString();
+
+      const { sendCommunication } = await import("@/modules/communication");
+      const result = await sendCommunication(
+        "claim.invitation",
+        { audience: "customer", recipientId: input.tenantId, email: invite.email },
+        { agencyName, prospectName: invite.creatorName, previewUrl, claimUrl, expiryDate, email: invite.email },
+      );
+      if (!result.success) {
+        await logAction(input.tenantId, "partner:claim-email-failed", {
+          agencyId: input.agencyId,
+          email: invite.email,
+          error: result.error,
+        }).catch(() => {});
+      } else {
+        await logAction(input.tenantId, "partner:claim-email-sent", {
+          agencyId: input.agencyId,
+          email: invite.email,
+        }).catch(() => {});
+      }
+    } catch (err) {
+      await logAction(input.tenantId, "partner:claim-email-failed", {
+        agencyId: input.agencyId,
+        email: input.email,
+        error: err instanceof Error ? err.message : "delivery error",
+      }).catch(() => {});
+    }
+
     return { success: true, invite };
   }
 

@@ -94,7 +94,10 @@ export default async function AgencyAnalytics() {
           <PageSection>
             <div className="admin-card p-8 text-center">
               <Users className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" />
-              <p className="text-sm text-[var(--text-muted)]">No managed clients yet. Earnings appear once you onboard creators.</p>
+              <p className="text-sm text-[var(--text-muted)]">No client websites yet. Earnings appear once you onboard clients.</p>
+              <p className="mt-3">
+                <a href="/agency/generate" className="text-xs text-[var(--brand-primary)] hover:underline">Create your first client website →</a>
+              </p>
             </div>
           </PageSection>
         )}
@@ -153,6 +156,7 @@ export default async function AgencyAnalytics() {
             <div className="admin-card p-8 text-center">
               <Receipt className="h-8 w-8 text-[var(--text-muted)] mx-auto mb-3" />
               <p className="text-sm text-[var(--text-muted)]">No financial transactions yet.</p>
+              <p className="mt-2 text-xs text-[var(--text-muted)]">Transactions appear after your clients subscribe and generate commission.</p>
             </div>
           </PageSection>
         )}

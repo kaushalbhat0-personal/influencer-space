@@ -36,11 +36,11 @@ export default async function AgencyClientsPage({
     <ContentContainer>
       <PageHeader
         title="Clients"
-        description="All your managed creator clients."
+        description="All your managed client websites."
         breadcrumbs={[{ label: "Dashboard", href: "/agency" }, { label: "Clients" }]}
         actions={
-          <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
-            + New Client
+          <Link href="/agency/generate" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+            New Client Website
           </Link>
         }
       />
@@ -56,12 +56,12 @@ export default async function AgencyClientsPage({
       {clients.length === 0 ? (
         <EmptyState
           icon={Building}
-          title={query ? "No matching clients" : "No clients yet"}
-          description={query ? "Try a different search term." : "Create your first client to get started."}
+          title={query ? "No matching client websites" : "No client websites yet"}
+          description={query ? "Try a different search term." : "Create your first client website to get started — website, Google Business, social or resume."}
           action={
             !query ? (
-              <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
-                Create Client
+              <Link href="/agency/generate" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+                Create Client Website
               </Link>
             ) : undefined
           }

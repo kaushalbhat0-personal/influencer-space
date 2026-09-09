@@ -7,12 +7,12 @@ interface WebsiteRow { name: string; url: string; products: number; isActive: bo
 
 export function WebsitesTable({ data }: { data: WebsiteRow[] }) {
   const cols: Column<WebsiteRow>[] = [
-    { key: "name", header: "Creator", sortable: true, cell: (r) => <span className="text-white text-sm">{r.name}</span> },
+    { key: "name", header: "Client", sortable: true, cell: (r) => <span className="text-white text-sm">{r.name}</span> },
     { key: "url", header: "URL", sortable: true, cell: (r) => (
       <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-primary)] hover:underline text-xs font-mono">{r.url}</a>
     )},
     { key: "products", header: "Products", sortable: true, cell: (r) => <span className="text-[var(--text-primary)]">{r.products}</span> },
-    { key: "isActive", header: "Active", sortable: true, cell: (r) => (
+    { key: "isActive", header: "Status", sortable: true, cell: (r) => (
       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${r.isActive ? "bg-green-500/20 text-green-400" : "bg-zinc-800 text-[var(--text-secondary)]"}`}>{r.isActive ? "Active" : "Inactive"}</span>
     )},
   ];

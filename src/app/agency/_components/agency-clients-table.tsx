@@ -47,7 +47,7 @@ export function AgencyClientsTable({ data }: { data: ClientRow[] }) {
       ),
     },
     {
-      key: "status", header: "Client", sortable: true,
+      key: "status", header: "Client Status", sortable: true,
       cell: (r) => (
         <span className={`text-xs font-medium px-2 py-0.5 rounded ${
           r.status === "active" ? "bg-emerald-500/10 text-emerald-400" :

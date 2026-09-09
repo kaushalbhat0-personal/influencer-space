@@ -5,6 +5,7 @@ import { MetricCard } from "@/components/data/MetricCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Building, Globe, Users, Activity, TrendingUp, AlertTriangle, Clock, Shield } from "lucide-react";
 import { clientService } from "@/lib/client/service";
+import { getAgencyClientCapacity } from "@/modules/partner/application/partner-relationship";
 import { AgencyClientsTable } from "./_components/agency-clients-table";
 import { AgencyRevenueSection } from "./_components/agency-revenue-section";
 import { AgencySuccessSection } from "./_components/agency-success-section";
@@ -17,23 +18,37 @@ export default async function AgencyDashboard() {
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">No agency configured</p></ContentContainer>;
 
-  const [summary, recentActivity] = await Promise.all([
+  const [summary, recentActivity, capacity] = await Promise.all([
     clientService.getSummary(agencyId),
     clientService.getRecentActivity(agencyId, 10),
+    getAgencyClientCapacity(agencyId).catch(() => null),
   ]);
 
   const tenantNames = new Map(
     summary.recentClients.map((c) => [c.tenantId, c.businessName])
   );
 
+  const capacityLabel = capacity
+    ? capacity.limit === -1
+      ? `${capacity.used} / Unlimited`
+      : `${capacity.used} / ${capacity.limit}`
+    : null;
+  const capacitySubtext = capacity
+    ? capacity.limit === -1
+      ? "Unlimited client websites"
+      : capacity.limit - capacity.used > 0
+        ? `${capacity.limit - capacity.used} slots remaining`
+        : "At capacity — upgrade to add more"
+    : "Client website capacity";
+
   return (
     <ContentContainer>
       <PageHeader
-        title="Agency Dashboard"
-        description="Manage your clients and their websites."
+        title="Agency Workspace"
+        description="Build and manage client websites — health, publishing and billing in one place."
         actions={
-          <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90 transition-opacity">
-            + New Client
+          <Link href="/agency/generate" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90 transition-opacity">
+            New Client Website
           </Link>
         }
       />
@@ -44,8 +59,8 @@ export default async function AgencyDashboard() {
         <MetricCard label="Active Clients" value={summary.activeClients} icon={Users} />
         <MetricCard label="Published Sites" value={summary.publishedWebsites} icon={Globe} />
         <MetricCard label="Avg Health" value={summary.averageHealth > 0 ? `${summary.averageHealth}%` : "—"} icon={Activity} />
+        <MetricCard label="Capacity" value={capacityLabel ?? "—"} icon={Shield} subtext={capacitySubtext} />
         <MetricCard label="Need Attention" value={summary.needingAttention} icon={AlertTriangle} />
-        <MetricCard label="Unpublished" value={summary.unpublished} icon={Clock} />
       </div>
 
       {/* RCCF-IMPLEMENTATION-72: recurring subscription revenue */}
@@ -92,11 +107,11 @@ export default async function AgencyDashboard() {
           {summary.recentClients.length === 0 ? (
             <EmptyState
               icon={Building}
-              title="No clients yet"
-              description="Create your first client to start managing their website."
+              title="No client websites yet"
+              description="Create your first client website — choose a business website, Google Business profile, social link, description or resume."
               action={
-                <Link href="/agency/clients/new" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
-                  Create Client
+                <Link href="/agency/generate" className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-xs font-semibold text-black hover:opacity-90">
+                  Create Client Website
                 </Link>
               }
             />

@@ -79,3 +79,12 @@ prod-start.log
 
 # dev harness - local verification (Mystic/North Star storefront preview)
 src/app/dev-verify/
+# pilot gate temp artifacts
+rccf-03d-final-e2e.mjs
+test-screenshots-13d-fresh/
+test-screenshots-13g/
+test-screenshots-13h/
+test-screenshots-14a/
+.agents/skills/platform-experience-layer/
+.agents/skills/visual-foundation-normalization/
+

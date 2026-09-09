@@ -15,24 +15,52 @@ const builderService = new BuilderService();
 
 async function getWebsiteId(): Promise<string> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  const { prisma } = await import("@/lib/prisma");
-  const website = await prisma.website.findUnique({
-    where: { tenantId: session.user.tenantId },
-    select: { id: true },
-  });
-  if (!website) throw new Error("No website");
-  return website.id;
+  // Direct tenant owner path — unchanged
+  if (session?.user?.tenantId) {
+    const { prisma } = await import("@/lib/prisma");
+    const website = await prisma.website.findUnique({
+      where: { tenantId: session.user.tenantId },
+      select: { id: true },
+    });
+    if (!website) throw new Error("No website");
+    return website.id;
+  }
+  // Agency-managed client path — established via encrypted __agency_client cookie (selector, verified)
+  if ((session?.user as { agencyId?: string })?.agencyId) {
+    const { getAgencyBuilderTenantId } = await import("@/actions/agency-builder.actions");
+    const agencyTenantId = await getAgencyBuilderTenantId();
+    if (agencyTenantId) {
+      const { prisma } = await import("@/lib/prisma");
+      const website = await prisma.website.findUnique({
+        where: { tenantId: agencyTenantId },
+        select: { id: true },
+      });
+      if (!website) throw new Error("No website");
+      return website.id;
+    }
+  }
+  throw new Error("Unauthorized");
+}
+
+async function resolveBuilderTenantId(): Promise<string | null> {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.tenantId) return session.user.tenantId;
+  if ((session?.user as { agencyId?: string })?.agencyId) {
+    const { getAgencyBuilderTenantId } = await import("@/actions/agency-builder.actions");
+    const agencyTenantId = await getAgencyBuilderTenantId();
+    if (agencyTenantId) return agencyTenantId;
+  }
+  return null;
 }
 
 async function tryLoadFromArtifact(_websiteId: string): Promise<BuilderPage[] | null> {
   try {
     void _websiteId;
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.tenantId) return null;
+    const tenantId = await resolveBuilderTenantId();
+    if (!tenantId) return null;
     const { prisma } = await import("@/lib/prisma");
     const setting = await prisma.setting.findUnique({
-      where: { tenantId_key: { tenantId: session.user.tenantId, key: "builder_artifact" } },
+      where: { tenantId_key: { tenantId, key: "builder_artifact" } },
     });
     if (!setting?.value) return null;
 
