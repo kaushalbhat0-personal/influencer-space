@@ -169,8 +169,10 @@ async function persistSystemError(
     const { environment, deploymentId, commitSha } = getDeploymentContext();
     const level = ctx.level === "FATAL" ? "FATAL" : ctx.level === "ERROR" ? "ERROR" : ctx.level === "WARN" ? "WARN" : "ERROR";
 
-    // Dynamic import to avoid circular prisma client issues in tests
-    const { prisma } = await import("@/lib/prisma");
+    if (typeof window !== "undefined") return;
+    // Use eval to hide prisma import from client bundler (pg requires Node built-ins)
+    const prismaMod = await (0, eval)('import("@/lib/prisma")') as { prisma: import("@/lib/prisma").prisma extends infer T ? T : never };
+    const prisma = (prismaMod as unknown as { prisma: typeof import("@/lib/prisma")["prisma"] }).prisma;
 
     const existing = await prisma.systemError.findFirst({ where: { fingerprint }, select: { id: true, tenantIds: true, count: true, status: true } });
 

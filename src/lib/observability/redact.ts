@@ -2,9 +2,42 @@
  * RCCF-OBS-01 — redaction for SystemError before persistence.
  * Reuses audit.ts SENSITIVE_PATTERNS + extended pilot-sensitive patterns.
  * Never persist raw credential values or full sensitive request payloads.
+ * NOTE: This file is client-safe and must NOT import server-only modules like prisma.
  */
 
-import { sanitizeMetadata as sanitizeAuditMetadata } from "@/lib/audit";
+const AUDIT_SENSITIVE_PATTERNS = [
+  /key/i,
+  /secret/i,
+  /token/i,
+  /password/i,
+  /authorization/i,
+  /credential/i,
+  /api[_-]?key/i,
+];
+
+function isAuditSensitiveKey(key: string): boolean {
+  return AUDIT_SENSITIVE_PATTERNS.some((p) => p.test(key));
+}
+
+function sanitizeAuditMetadataLocal(meta: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(meta)) {
+    if (isAuditSensitiveKey(key)) {
+      out[key] = "[REDACTED]";
+    } else if (typeof value === "object" && value !== null) {
+      if (Array.isArray(value)) {
+        out[key] = value.map((v) => (typeof v === "object" && v !== null ? sanitizeAuditMetadataLocal(v as Record<string, unknown>) : v));
+      } else {
+        out[key] = sanitizeAuditMetadataLocal(value as Record<string, unknown>);
+      }
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+const sanitizeAuditMetadata = sanitizeAuditMetadataLocal;
 
 const REDACT = "[REDACTED]";
 

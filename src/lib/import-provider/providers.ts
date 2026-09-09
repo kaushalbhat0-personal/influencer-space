@@ -29,21 +29,8 @@ registerImportProvider({
     return null;
   },
   async acquire(input: string): Promise<CreatorProfile> {
-    try {
-      const { ProfileAcquisitionEngine } = await import("@/lib/generation/acquisition/engine");
-      const engine = new ProfileAcquisitionEngine();
-      const result = await engine.acquire(input, "");
-      const source = result.source as unknown as Record<string, unknown>;
-      return {
-        platform: "youtube", creatorName: (source.displayName as string) || input,
-        bio: source.bio as string | undefined, avatarUrl: source.avatarUrl as string | undefined,
-        followers: source.followers as number | undefined, website: source.website as string | undefined,
-        socialLinks: (source.socialLinks as Array<{ platform: string; url: string }>) ?? [], rawSource: input,
-        metadata: result.meta as Record<string, unknown> | undefined,
-      };
-    } catch {
-      return { platform: "youtube", creatorName: input, rawSource: input };
-    }
+    // Client-safe: do not import server acquisition engine (requires prisma/pg)
+    return { platform: "youtube", creatorName: input, rawSource: input };
   },
 });
 
