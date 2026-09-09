@@ -200,10 +200,21 @@ export class PartnerTeamService {
       const expiryDate = input.expiresAt.toISOString().split("T")[0];
       const actor = input.actorUserId ? await resolveUserIdentity(input.actorUserId) : {};
 
+      // RCCF-AGENCY-08: agency-owned — resolve agency tenant for cost isolation
+      let agencyTenantId: string | undefined;
+      try {
+        const { getAgencyTenantIdForRead } = await import("@/modules/tenant-integration/agency-tenant");
+        const atid = await getAgencyTenantIdForRead(input.agencyId);
+        if (atid) agencyTenantId = atid;
+      } catch {
+        // fall back to log
+      }
+
       const result = await sendCommunication(
         "team.invitation",
         { audience: "agency", recipientId: input.agencyId, email: input.email },
         { agencyName, roleLabel, acceptUrl, expiryDate, email: input.email },
+        agencyTenantId ? { tenantId: agencyTenantId } : undefined,
       );
       if (!result.success) {
         await logAgencyAction(input.agencyId, "partner:team-invitation-delivery-failed", { email: input.email, role: input.role, error: result.error, ...actor }).catch(() => {});

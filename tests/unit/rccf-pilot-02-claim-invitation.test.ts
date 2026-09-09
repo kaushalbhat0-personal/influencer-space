@@ -218,7 +218,7 @@ describe("RCCF-PILOT-02 — wiring: createInvitation → platform email after TX
     expect(h.mockSendCommunication).not.toHaveBeenCalled();
   });
 
-  it("sends via platform Resend (not tenant) — no tenantId in opts, audience customer", async () => {
+  it("sends via agency-owned path — never platform_resend, falls to log when agency has no Resend", async () => {
     await creatorInvitationService.createInvitation({
       agencyId: AGENCY,
       tenantId: TENANT,
@@ -228,12 +228,11 @@ describe("RCCF-PILOT-02 — wiring: createInvitation → platform email after TX
     });
     const [, recipient] = h.mockSendCommunication.mock.calls[0] as unknown as [string, { audience: string; recipientId: string }];
     expect(recipient.audience).toBe("customer");
-    // TENANT_OWNED_TEMPLATES does not contain claim.invitation — runtime will use PlatformResendAdapter
     const { COMMUNICATION_BY_ID: byId } = await import("@/modules/communication");
     expect(byId["claim.invitation"].channel).toBe("email");
-    // Ensure not in tenant-owned set (platform path)
+    // RCCF-AGENCY-08: claim.invitation is AGENCY_OWNED, never platform
     const runtime = await import("@/modules/communication/application/runtime");
-    // runtime's TENANT_OWNED_TEMPLATES is internal — verify via source: only order.customer_confirmed is tenant-owned
     expect((runtime as unknown as { TENANT_OWNED_TEMPLATES?: Set<string> }).TENANT_OWNED_TEMPLATES?.has?.("claim.invitation") ?? false).toBe(false);
+    // Agency-owned templates must never use platform_resend — verify via direct runtime test is in rccf-agency-08
   });
 });

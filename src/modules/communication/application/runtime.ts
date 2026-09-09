@@ -18,6 +18,12 @@ export const MAX_BACKOFF_MS = 60_000;
 // Only these templates are legally allowed to spend tenant's Resend quota.
 const TENANT_OWNED_TEMPLATES = new Set<string>(["order.customer_confirmed"]);
 
+// RCCF-AGENCY-08 — agency-owned email routing.
+// These templates are agency/client communications that must use the agency's
+// verified Resend account when configured. They must NEVER fall back to the
+// platform global RESEND_API_KEY. Absent/unverified → log fallback.
+const AGENCY_OWNED_TEMPLATES = new Set<string>(["claim.invitation", "team.invitation"]);
+
 // ── Send (route → template → deliver → log) ─────────────────
 
 export async function sendCommunication(
@@ -89,6 +95,63 @@ export async function sendCommunication(
       return { success: false, error: result.error ?? "delivery failed" };
     } catch {
       // If tenant lookup fails, fall back to log (never platform for tenant templates)
+      const { __testables } = await import("./adapters");
+      const logAdapter = new __testables.EmailLogAdapter();
+      const result = await logAdapter.deliver(deliverReq).catch(() => ({ success: false, provider: "log", error: "delivery failed" }));
+      if (result.success) {
+        await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: result.provider } });
+        return { success: true };
+      }
+      return { success: false, error: result.error ?? "delivery failed" };
+    }
+  }
+
+  // RCCF-AGENCY-08 — agency-owned templates: NEVER use platform global.
+  // opts.tenantId is the agency's tenant (resolved server-side from agencyId).
+  // Verified agency config → tenant_resend; absent/unverified/decrypt fail → log.
+  if (def.channel === "email" && AGENCY_OWNED_TEMPLATES.has(templateId)) {
+    if (opts?.tenantId) {
+      try {
+        const { getTenantResendConfig } = await import("@/modules/tenant-integration/resend");
+        const cfg = await getTenantResendConfig(opts.tenantId);
+        if (cfg) {
+          const { __testables } = await import("./adapters");
+          const tenantAdapter = new __testables.TenantResendAdapter(cfg.apiKey, cfg.emailFrom);
+          const agencyReq = { ...deliverReq, tenantId: opts.tenantId };
+          const agencyResult = await tenantAdapter.deliver(agencyReq).catch((e) => ({ success: false, provider: "tenant_resend", error: e instanceof Error ? e.message : "delivery failed" }));
+          if (agencyResult.success) {
+            await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: agencyResult.provider } });
+            return { success: true };
+          }
+          const retries = log.retries + 1;
+          const failed = retries >= def.retries;
+          await prisma.communicationLog.update({
+            where: { id: log.id },
+            data: { status: failed ? "failed" : "queued", retries, error: agencyResult.error ?? "delivery failed" },
+          });
+          return { success: false, error: agencyResult.error ?? "delivery failed" };
+        }
+      } catch {
+        // fall through to log fallback below
+      }
+    }
+    // No verified agency config or no agency tenantId → log fallback, never platform
+    try {
+      const { __testables } = await import("./adapters");
+      const logAdapter = new __testables.EmailLogAdapter();
+      const result = await logAdapter.deliver(deliverReq).catch((e) => ({ success: false, provider: "log", error: e instanceof Error ? e.message : "delivery failed" }));
+      if (result.success) {
+        await prisma.communicationLog.update({ where: { id: log.id }, data: { status: "delivered", provider: result.provider } });
+        return { success: true };
+      }
+      const retries = log.retries + 1;
+      const failed = retries >= def.retries;
+      await prisma.communicationLog.update({
+        where: { id: log.id },
+        data: { status: failed ? "failed" : "queued", retries, error: result.error ?? "delivery failed" },
+      });
+      return { success: false, error: result.error ?? "delivery failed" };
+    } catch {
       const { __testables } = await import("./adapters");
       const logAdapter = new __testables.EmailLogAdapter();
       const result = await logAdapter.deliver(deliverReq).catch(() => ({ success: false, provider: "log", error: "delivery failed" }));
@@ -227,25 +290,43 @@ export async function retryFailedCommunications(limit = 50): Promise<{ retried: 
     const payload = (log.payload as Record<string, unknown>) ?? {};
     const subject = renderTemplate(def.template.subject, payload);
     const body = renderTemplate(def.template.body, payload);
-    // Respect tenant-owned routing on retry as well
+    // Respect tenant/agency-owned routing on retry as well
     let adapter = getAdapter(def.channel);
     let deliverReq: Record<string, unknown> = { templateId: log.templateId, recipient, channel: def.channel, subject, body, payload };
     const tenantIdForRetry = (payload["__tenantId"] as string) ?? null;
-    if (def.channel === "email" && TENANT_OWNED_TEMPLATES.has(log.templateId) && tenantIdForRetry) {
-      try {
-        const { getTenantResendConfig } = await import("@/modules/tenant-integration/resend");
-        const cfg = await getTenantResendConfig(tenantIdForRetry);
-        if (cfg) {
-          const { __testables } = await import("./adapters");
-          adapter = new __testables.TenantResendAdapter(cfg.apiKey, cfg.emailFrom);
-          deliverReq = { ...deliverReq, tenantId: tenantIdForRetry };
-        } else {
+    if (def.channel === "email" && tenantIdForRetry) {
+      if (TENANT_OWNED_TEMPLATES.has(log.templateId)) {
+        try {
+          const { getTenantResendConfig } = await import("@/modules/tenant-integration/resend");
+          const cfg = await getTenantResendConfig(tenantIdForRetry);
+          if (cfg) {
+            const { __testables } = await import("./adapters");
+            adapter = new __testables.TenantResendAdapter(cfg.apiKey, cfg.emailFrom);
+            deliverReq = { ...deliverReq, tenantId: tenantIdForRetry };
+          } else {
+            const { __testables } = await import("./adapters");
+            adapter = new __testables.EmailLogAdapter();
+          }
+        } catch {
           const { __testables } = await import("./adapters");
           adapter = new __testables.EmailLogAdapter();
         }
-      } catch {
-        const { __testables } = await import("./adapters");
-        adapter = new __testables.EmailLogAdapter();
+      } else if (AGENCY_OWNED_TEMPLATES.has(log.templateId)) {
+        try {
+          const { getTenantResendConfig } = await import("@/modules/tenant-integration/resend");
+          const cfg = await getTenantResendConfig(tenantIdForRetry);
+          if (cfg) {
+            const { __testables } = await import("./adapters");
+            adapter = new __testables.TenantResendAdapter(cfg.apiKey, cfg.emailFrom);
+            deliverReq = { ...deliverReq, tenantId: tenantIdForRetry };
+          } else {
+            const { __testables } = await import("./adapters");
+            adapter = new __testables.EmailLogAdapter();
+          }
+        } catch {
+          const { __testables } = await import("./adapters");
+          adapter = new __testables.EmailLogAdapter();
+        }
       }
     }
     const result = adapter ? await adapter.deliver(deliverReq as never).catch(() => ({ success: false, provider: "none", error: "delivery failed" })) : { success: false, provider: "none", error: "no adapter" };

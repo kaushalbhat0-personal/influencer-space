@@ -74,10 +74,9 @@ export class CreatorInvitationService {
     });
     await logAction(input.tenantId, "partner:invitation-created", { agencyId: input.agencyId, email: input.email }).catch(() => {});
 
-    // RCCF-PILOT-02 — branded prospect claim email via platform Resend.
-    // Runs AFTER the upsert (never inside the DB transaction). The invitation
-    // token/email remain authoritative; the email is a delivery mechanism only.
-    // Failure preserves manual copy fallback — creation still returns success.
+    // RCCF-PILOT-02 + RCCF-AGENCY-08 — branded prospect claim email.
+    // AGENCY_OWNED: uses agency's verified Resend when configured, never platform.
+    // Runs AFTER the upsert (never inside the DB transaction).
     try {
       const tenantPromise = (prisma as unknown as { tenant?: { findUnique: (args: unknown) => Promise<{ subdomain: string; customDomain: string | null } | null> } }).tenant?.findUnique
         ? (prisma as unknown as { tenant: { findUnique: (args: unknown) => Promise<{ subdomain: string; customDomain: string | null } | null> } }).tenant.findUnique({ where: { id: input.tenantId }, select: { subdomain: true, customDomain: true } }).catch(() => null)
@@ -93,11 +92,22 @@ export class CreatorInvitationService {
       const claimUrl = `${getPlatformConfig().appUrl}/claim-invite?token=${invite.token}&email=${encodeURIComponent(invite.email)}`;
       const expiryDate = expiresAt.toISOString().split("T")[0] ?? expiresAt.toISOString();
 
+      // RCCF-AGENCY-08: resolve agency tenant for cost isolation (server-derived, never browser)
+      let agencyTenantId: string | undefined;
+      try {
+        const { getAgencyTenantIdForRead } = await import("@/modules/tenant-integration/agency-tenant");
+        const atid = await getAgencyTenantIdForRead(input.agencyId);
+        if (atid) agencyTenantId = atid;
+      } catch {
+        // fall back to log
+      }
+
       const { sendCommunication } = await import("@/modules/communication");
       const result = await sendCommunication(
         "claim.invitation",
         { audience: "customer", recipientId: input.tenantId, email: invite.email },
         { agencyName, prospectName: invite.creatorName, previewUrl, claimUrl, expiryDate, email: invite.email },
+        agencyTenantId ? { tenantId: agencyTenantId } : undefined,
       );
       if (!result.success) {
         await logAction(input.tenantId, "partner:claim-email-failed", {

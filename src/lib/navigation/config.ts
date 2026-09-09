@@ -168,6 +168,7 @@ export const AGENCY_NAV: DashboardNav = {
       items: [
         { label: "Domains", href: "/agency/domains", icon: Globe, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
         { label: "Team", href: "/agency/team", icon: Users, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
+        { label: "Integrations", href: "/agency/integrations", icon: Mail, roles: allRoles("AGENCY_ADMIN", "AGENCY_STAFF") },
         { label: "Billing", href: "/agency/billing", icon: CreditCard, roles: allRoles("AGENCY_ADMIN") },
       ],
     },
