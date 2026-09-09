@@ -271,7 +271,7 @@ export const ARCHETYPE_RULES: ArchetypeRule[] = [
     id: "signal_location",
     signal: "signal.location",
     check: (i) => {
-      if (i.source.location || i.source.resume?.location) return 1;
+      if (i.source.location || i.source.resume?.location || (i.source as unknown as { googleMapsUrl?: string }).googleMapsUrl) return 1;
       if (hasPlatform(i, "google_maps")) return 1;
       const txt = sourceTextLower(i);
       const locKeywords = ["pune", "mumbai", "delhi", "bangalore", "new york", "london", "paris", "address"];
@@ -317,7 +317,7 @@ export const ARCHETYPE_RULES: ArchetypeRule[] = [
   {
     id: "platform_google_maps",
     signal: "platform.google_maps",
-    check: (i) => hasPlatform(i, "google_maps") ? 1 : 0,
+    check: (i) => hasPlatform(i, "google_maps") || !!(i.source as unknown as { googleMapsUrl?: string }).googleMapsUrl ? 1 : 0,
     weights: { local_business: 3 },
     description: "Google Maps platform",
   },

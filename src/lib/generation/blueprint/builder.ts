@@ -226,25 +226,19 @@ function hasReviewSignal(source: ContentSource): boolean {
 }
 
 function hasMenuSignal(source: ContentSource): boolean {
-  const txt = [
-    source.bio ?? "",
-    source.resume?.summary ?? "",
-    ...(source.resume?.skills ?? []),
-    ...(source.resume?.projects.map((p) => `${p.name} ${p.description}`) ?? []),
-    source.location ?? "",
-    source.resume?.location ?? "",
-  ].join(" ").toLowerCase();
-  return txt.includes("menu") || txt.includes("dish") || txt.includes("cuisine") || txt.includes("restaurant") || txt.includes("biryani") || txt.includes("pizza");
-}
-
-function hasHoursSignal(source: ContentSource): boolean {
-  const txt = [source.bio ?? "", source.resume?.summary ?? "", source.location ?? "", source.resume?.location ?? ""].join(" ").toLowerCase();
-  return txt.includes("hours") || txt.includes("open") || txt.includes("closed") || txt.includes("timings") || txt.includes("am -") || txt.includes("am –");
-}
-
-function hasReservationSignal(source: ContentSource): boolean {
+  // Batch B: only explicit structured "Menu:" list counts — generic words must not create menu
   const txt = [source.bio ?? "", source.resume?.summary ?? ""].join(" ").toLowerCase();
-  return txt.includes("reservation") || txt.includes("reserve") || txt.includes("book a table") || txt.includes("order now") || txt.includes("booking");
+  return txt.includes("menu:");
+}
+
+function hasHoursSignal(_source: ContentSource): boolean {
+  // Batch B: removed bio fallback — hours requires structured source.hours
+  return false;
+}
+
+function hasReservationSignal(_source: ContentSource): boolean {
+  // Batch B: require valid reservationUrl — keyword-only must not create CTA
+  return false;
 }
 
 function promote(sections: SectionPlan[], id: string): void {

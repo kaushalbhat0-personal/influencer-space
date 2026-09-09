@@ -14,9 +14,11 @@ import { InstagramAdapter } from "./instagram";
 import { TikTokAdapter } from "./tiktok";
 import { LinkedInAdapter } from "./linkedin";
 import { TwitterAdapter } from "./twitter";
+import { GoogleMapsAdapter } from "./google-maps";
 
 export const ADAPTERS: PlatformAdapter[] = [
   YouTubeAdapter,
+  GoogleMapsAdapter,
   InstagramAdapter,
   TikTokAdapter,
   LinkedInAdapter,
@@ -30,6 +32,6 @@ export function getAdapterForUrl(url: string): { adapter: PlatformAdapter; platf
   return { adapter, platform };
 }
 
-export { YouTubeAdapter, ManualAdapter, InstagramAdapter, TikTokAdapter, LinkedInAdapter, TwitterAdapter };
+export { YouTubeAdapter, ManualAdapter, InstagramAdapter, TikTokAdapter, LinkedInAdapter, TwitterAdapter, GoogleMapsAdapter };
 
 

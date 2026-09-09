@@ -15,7 +15,7 @@ import { Store } from "lucide-react";
  */
 
 function looksLikeUrl(input: string): boolean {
-  return /^(https?:\/\/)?(www\.)?(maps\.google|google\.com\/maps|goo\.gl)/i.test(input.trim());
+  return /^(https?:\/\/)?(www\.)?(maps\.google|google\.com\/maps|goo\.gl|maps\.app\.goo\.gl)/i.test(input.trim());
 }
 
 function decodeSegment(segment: string): string {
@@ -29,14 +29,23 @@ function decodeSegment(segment: string): string {
 function extractNameFromMapsUrl(input: string): string | null {
   const url = input.trim();
   // https://maps.google.com/maps/place/Business+Name/@lat,lng,...
-  const placeMatch = url.match(/\/maps\/place\/([^/]+)/i);
-  if (placeMatch?.[1]) return decodeSegment(placeMatch[1]);
+  const placeMatch = url.match(/\/maps\/place\/([^/?#]+)/i);
+  if (placeMatch?.[1]) return decodeSegment(placeMatch[1].split(",")[0] ?? placeMatch[1]);
+  // https://www.google.com/maps/dir//Business+Name,Address/@lat
+  const dirMatch = url.match(/\/maps\/dir\/[^/]*\/([^/?#@]+)/i);
+  if (dirMatch?.[1]) {
+    const raw = dirMatch[1];
+    const namePart = raw.split(",")[0] ?? raw;
+    if (namePart) return decodeSegment(namePart);
+  }
+  // /maps/search/Business+Name
+  const searchMatch = url.match(/\/maps\/search\/([^/?#]+)/i);
+  if (searchMatch?.[1]) return decodeSegment(searchMatch[1]);
   // ?q=Business+Name
   const qMatch = url.match(/[?&]q=([^&#]+)/i);
   if (qMatch?.[1]) return decodeSegment(qMatch[1]);
-  // /maps/search/Business+Name
-  const searchMatch = url.match(/\/maps\/search\/([^/]+)/i);
-  if (searchMatch?.[1]) return decodeSegment(searchMatch[1]);
+  // maps.app.goo.gl — short URL, no name in path
+  if (/maps\.app\.goo\.gl/i.test(url)) return null;
   return null;
 }
 

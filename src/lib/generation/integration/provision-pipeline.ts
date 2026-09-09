@@ -152,6 +152,7 @@ export function buildBuilderArtifactData(pipelineResult: PipelineResult): Record
 export function detectPlatform(url: string): string {
   const lower = url.toLowerCase();
   if (lower.includes("youtube") || lower.includes("youtu.be")) return "youtube";
+  if (lower.includes("google.com/maps") || lower.includes("maps.app.goo.gl") || lower.includes("goo.gl/maps")) return "google_maps";
   if (lower.includes("instagram")) return "instagram";
   if (lower.includes("tiktok")) return "tiktok";
   if (lower.includes("linkedin")) return "linkedin";

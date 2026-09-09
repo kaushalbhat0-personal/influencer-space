@@ -326,25 +326,16 @@ export function bindSection(
       if (h && h.trim().length > 0) {
         return withData({ title: fallbackLabel, hours: h, items: [{ q: "Hours", a: h }, { question: "Hours", answer: h, category: "hours" }] }, 1);
       }
-      // Legacy fallback: derive from bio keywords for backward compat
-      if (hasSource) {
-        const txt = bio.toLowerCase();
-        const has = txt.includes("hours") || txt.includes("open") || txt.includes("timings");
-        if (has) return withData({ title: fallbackLabel, hours: bio.slice(0, 200), items: [{ q: "Hours", a: bio.slice(0, 200) }, { question: "Hours", answer: bio.slice(0, 200), category: "hours" }] }, 1);
-        return empty({ title: fallbackLabel, items: [] });
-      }
+      // Batch B: removed bio.slice fallback — hours must be structured; no fabrication
+      if (hasSource) return empty({ title: fallbackLabel, items: [] });
       return withData({ title: fallbackLabel, items: [] }, 0);
     }
     case "reservations":
     case "booking": {
       const r = source?.reservationUrl ?? null;
       if (r && isValidUrl(r)) return withData({ title: fallbackLabel, cta: "Reserve Table", email: "", phone: "", reservationUrl: r, url: r }, 1);
-      // Legacy fallback: keyword in bio for backward compat
-      if (hasSource) {
-        const hasRes = bio.toLowerCase().includes("reservation") || bio.toLowerCase().includes("book a table") || bio.toLowerCase().includes("booking") || bio.toLowerCase().includes("reserve");
-        if (hasRes) return withData({ title: fallbackLabel, cta: "Reserve Table", email: "", phone: "" }, 1);
-        return empty({ title: fallbackLabel, email: "", phone: "" });
-      }
+      // Batch B: require valid reservationUrl — keyword-only must not create empty CTA destination
+      if (hasSource) return empty({ title: fallbackLabel, email: "", phone: "" });
       return withData({ title: fallbackLabel, email: "", phone: "" }, 0);
     }
     case "contact": {

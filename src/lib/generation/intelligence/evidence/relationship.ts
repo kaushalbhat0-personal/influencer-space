@@ -110,16 +110,18 @@ export function buildRelationshipGraph(sourceText: string, contentTexts: string[
   for (const [token, rule] of Object.entries(RELATIONSHIP_RULES)) {
     let matches = text.includes(token);
     // RCCF-PRELAUNCH-12D: allow maps URL to also trigger google_maps platform (not just phrase)
+    // Batch A: also handle platform string "google_maps" and maps.app.goo.gl
     if (token === "google maps" && !matches) {
-      const hasMapsUrlAlt = text.includes("google.com/maps") || text.includes("maps.google") || text.includes("goo.gl/maps") || text.includes("maps.app.goo.gl");
+      const hasMapsUrlAlt = text.includes("google.com/maps") || text.includes("maps.google") || text.includes("goo.gl/maps") || text.includes("maps.app.goo.gl") || text.includes("google_maps");
       if (hasMapsUrlAlt) matches = true;
     }
     if (!matches) continue;
     // RCCF-PRELAUNCH-12D: Google Maps false positive fix — phrase "Google Maps integration" in a software project
     // must NOT create strong local_business evidence. Require stronger local-business signals:
     // actual maps URL, address/location data, or menu/hours/reservation evidence.
+    // Batch A: pure Maps URL (with maps.app.goo.gl) should still trigger local_business without extra local signal — it's sufficient evidence
     if (token === "google maps") {
-      const hasMapsUrl = text.includes("google.com/maps") || text.includes("maps.google") || text.includes("goo.gl/maps") || text.includes("maps.app.goo.gl");
+      const hasMapsUrl = text.includes("google.com/maps") || text.includes("maps.google") || text.includes("goo.gl/maps") || text.includes("maps.app.goo.gl") || text.includes("google_maps");
       const hasLocalBusinessSignal =
         text.includes("location:") ||
         text.includes("address") ||
@@ -130,6 +132,7 @@ export function buildRelationshipGraph(sourceText: string, contentTexts: string[
         text.includes("restaurant");
       if (!hasMapsUrl && !hasLocalBusinessSignal) continue;
       // Even with local signal, require maps URL for google_maps platform to avoid "Google Maps integration" false positive
+      // Batch A: if hasMapsUrl is true (including google_maps token), allow even without local signal — pure Maps URL is local evidence
       if (!hasMapsUrl) continue;
     }
     nodes.set(rule.label, { id: rule.label, kind: rule.kind, label: rule.label });

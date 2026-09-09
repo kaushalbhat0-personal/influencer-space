@@ -106,14 +106,19 @@ registerImportProvider({
   capabilities: ["branding", "location", "reviews"],
   available: true,
   supportsLaterImport: true,
-  matches(input: string) { return /google\.com\/maps|goo\.gl\/maps/i.test(input); },
+  matches(input: string) { return /google\.com\/maps|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(input); },
   validateInput(input: string) {
-    if (!/google\.com\/maps|goo\.gl\/maps/i.test(input)) return "Enter a valid Google Maps or Business Profile URL.";
+    if (!/google\.com\/maps|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(input)) return "Enter a valid Google Maps or Business Profile URL.";
     return null;
   },
   async acquire(input: string): Promise<CreatorProfile> {
-    const name = decodeURIComponent(input).match(/place\/([^/]+)/)?.[1]?.replace(/\+/g, " ") || "My Business";
-    return { platform: "google_business", creatorName: name, bio: `Google Business: ${name}`, rawSource: input, category: "business" };
+    const name =
+      decodeURIComponent(input).match(/\/maps\/place\/([^/?#]+)/i)?.[1]?.replace(/\+/g, " ").split(",")[0] ||
+      decodeURIComponent(input).match(/\/maps\/dir\/[^/]*\/([^/?#@,]+)/i)?.[1]?.replace(/\+/g, " ") ||
+      decodeURIComponent(input).match(/\/maps\/search\/([^/?#]+)/i)?.[1]?.replace(/\+/g, " ") ||
+      decodeURIComponent(input).match(/[?&]q=([^&#]+)/i)?.[1]?.replace(/\+/g, " ") ||
+      "My Business";
+    return { platform: "google_business", creatorName: decodeURIComponent(name), bio: `Google Business: ${decodeURIComponent(name)}`, rawSource: input, category: "business" };
   },
 });
 

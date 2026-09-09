@@ -17,6 +17,7 @@ export type PlatformId =
   | "twitter"
   | "twitch"
   | "website"
+  | "google_maps"
   | "manual";
 
 /**
