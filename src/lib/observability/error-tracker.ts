@@ -173,6 +173,7 @@ async function persistSystemError(
     // Use eval to hide prisma import from client bundler (pg requires Node built-ins)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prismaMod: any = await (0, eval)('import("@/lib/prisma")');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prisma: any = prismaMod.prisma ?? prismaMod.default?.prisma ?? prismaMod.default;
 
     const existing = await prisma.systemError.findFirst({ where: { fingerprint }, select: { id: true, tenantIds: true, count: true, status: true } });
