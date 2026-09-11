@@ -65,6 +65,13 @@ export async function analyzeUrl(sourceUrl: string): Promise<{
     if (!auth.ok || !auth.session) return { success: false, error: auth.error ?? "Unauthorized" };
     const session = auth.session;
 
+    // RCCF-FINANCE-03: agency generation gate (DB-authoritative, tenant/agency scoped, cannot bypass via another entry point)
+    if (session.user.role === "AGENCY_ADMIN" && session.user.agencyId) {
+      const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
+      const gate = await checkAgencyGenerationGate({ agencyId: session.user.agencyId });
+      if (!gate.allowed) return { success: false, error: gate.reason ?? "Generation limit reached. Please try again tomorrow." };
+    }
+
     const sourcePlatform = detectPlatform(sourceUrl);
     const slug = sourceUrl.split("/").filter(Boolean).pop()?.toLowerCase().replace(/[^a-z0-9-]/g, "-") || "creator";
     const creatorName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -74,6 +81,11 @@ export async function analyzeUrl(sourceUrl: string): Promise<{
       { sourceUrl, creatorId: session.user.id, creatorName, idempotencyPrefix: "analyze", strategy: "free" },
       source,
     );
+    // Record agency generation consumption (even for analyze — acquisition cost)
+    if (session.user.role === "AGENCY_ADMIN" && session.user.agencyId) {
+      const { recordAgencyGenerationConsumption } = await import("@/lib/generation/agency-generation-guard");
+      await recordAgencyGenerationConsumption({ agencyId: session.user.agencyId }).catch(() => {});
+    }
 
     const existingTenant = await prisma.tenant.findFirst({
       where: { subdomain: slug },
@@ -133,6 +145,13 @@ export async function confirmProvision(params: {
     if (!auth.ok || !auth.session) return { success: false, error: auth.error ?? "Unauthorized" };
     const session = auth.session;
 
+    // RCCF-FINANCE-03: agency generation gate
+    if (session.user.role === "AGENCY_ADMIN" && session.user.agencyId) {
+      const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
+      const gate = await checkAgencyGenerationGate({ agencyId: session.user.agencyId });
+      if (!gate.allowed) return { success: false, error: gate.reason ?? "Generation limit reached. Please try again tomorrow." };
+    }
+
     // RCCF-73.3 — server-authoritative Creator plan validation. The client
     // supplies only a plan code; the server resolves the canonical commerce
     // registry and the canonical BillingPlan row. The agency-provisioned client
@@ -167,6 +186,11 @@ export async function confirmProvision(params: {
 
     if (!pipelineResult.blueprint || pipelineResult.artifacts.length === 0) {
       return { success: false, error: "Website generation failed" };
+    }
+    // Record agency generation consumption (DB-authoritative, survives offboard/recreate)
+    if (session.user.role === "AGENCY_ADMIN" && session.user.agencyId) {
+      const { recordAgencyGenerationConsumption } = await import("@/lib/generation/agency-generation-guard");
+      await recordAgencyGenerationConsumption({ agencyId: session.user.agencyId }).catch(() => {});
     }
 
     const provisioningInput = {

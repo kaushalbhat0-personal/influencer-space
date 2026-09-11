@@ -128,10 +128,8 @@ function safePaiseAmount(raw: unknown): bigint | null {
   }
 }
 
-// RCCF-FINANCE-02 — renewal date from provider/current-period-end semantics.
-// Do not hardcode +30 days. Use subscription entity's period end if present,
-// else cycle-aware setMonth/setFullYear fallback.
-function deriveRenewsAt(payload: RazorpayPayload, event: string, planCode?: string): Date | null {
+// RCCF-FINANCE-03 — renewal date cycle-aware (monthly +1 month, yearly +1 year) + provider current_period_end authoritative.
+function deriveRenewsAt(payload: RazorpayPayload, event: string, planCode?: string, cycle?: string | null, capturedAmount?: number | null): Date | null {
   if (!(event === "subscription.activated" || event === "subscription.charged")) return null;
   const subEntity = payload.payload?.subscription?.entity as Record<string, unknown> | undefined;
   const candidates: unknown[] = [
@@ -165,29 +163,37 @@ function deriveRenewsAt(payload: RazorpayPayload, event: string, planCode?: stri
       }
     }
   }
-  // Fallback: cycle-aware from commerce config — monthly +1 month, yearly +1 year,
-  // not fixed 30 days (handles Feb, 31-day months, yearly correctly).
-  try {
-    // Dynamic to avoid circular import in webhook route; fallback is monthly if unknown
-    const plans = require("@/config/commerce/plans") as { getCommercePlan?: (c: string) => { cycle?: string; annualPrice?: number | null } };
-    const commerce = planCode ? plans.getCommercePlan?.(planCode) : null;
-    const cycle = commerce?.cycle ?? "monthly";
-    // Heuristic: if captured yearly amount matches, treat as yearly
-    // But without amount here, use commerce cycle (all partner now monthly by default, yearly via separate plan id)
-    const now = new Date();
-    if (cycle === "yearly") {
-      const d = new Date(now);
-      d.setFullYear(d.getFullYear() + 1);
-      return d;
-    }
+  // Fallback: cycle-aware — yearly +1 year, monthly +1 month
+  // Cycle from notes.cycle is authoritative (checkout), else infer from capturedAmount matching yearly price
+  let effectiveCycle: "monthly" | "yearly" = (cycle as "monthly" | "yearly") ?? "monthly";
+  if (!cycle && capturedAmount && planCode) {
+    try {
+      const { getCommercePlan: gcp } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
+      const c = gcp(planCode);
+      if (c?.annualPrice && Math.abs(capturedAmount - c.annualPrice) < 0.5) effectiveCycle = "yearly";
+      else {
+        const { PARTNER_RECURRING_PRICES: prp } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
+        const pe = prp[planCode];
+        if (pe && Math.abs(capturedAmount - pe.yearly) < 0.5) effectiveCycle = "yearly";
+      }
+    } catch {}
+  }
+  if (!cycle) {
+    try {
+      const plans = require("@/config/commerce/plans") as { getCommercePlan?: (c: string) => { cycle?: string } };
+      const commerce = planCode ? plans.getCommercePlan?.(planCode) : null;
+      if (commerce?.cycle === "yearly" && !capturedAmount) effectiveCycle = "yearly";
+    } catch {}
+  }
+  const now = new Date();
+  if (effectiveCycle === "yearly") {
     const d = new Date(now);
-    d.setMonth(d.getMonth() + 1);
-    return d;
-  } catch {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
+    d.setFullYear(d.getFullYear() + 1);
     return d;
   }
+  const d = new Date(now);
+  d.setMonth(d.getMonth() + 1);
+  return d;
 }
 
 export async function POST(req: Request) {
@@ -394,14 +400,16 @@ export async function POST(req: Request) {
       if (!effectiveWorkspaceId) return NextResponse.json({ ok: true });
       const rawSubAmount = (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.amount;
       const parsedSubAmount = safePaiseToRupees(rawSubAmount);
+      const cycle = (notes as Record<string, string>).cycle as "monthly" | "yearly" | undefined;
       const result = await billingService.handleSubscriptionWebhook({
         eventName: event,
         workspaceId: effectiveWorkspaceId,
         planCode: notes.planCode || undefined,
         providerReference: ref,
         idempotencyKey,
-        renewsAt: deriveRenewsAt(payload, event, notes.planCode),
+        renewsAt: deriveRenewsAt(payload, event, notes.planCode, cycle, parsedSubAmount),
         amount: parsedSubAmount ?? (undefined as unknown as number),
+        cycle: cycle ?? undefined,
       });
       if (!result.handled && result.error) {
         captureError(new Error(result.error), { service: "razorpay-webhook", operation: "subscriptionWebhook" });
@@ -431,6 +439,7 @@ export async function POST(req: Request) {
       const capturedRupees = safePaiseToRupees(rawCapturedPaise);
 
       try {
+        const paymentCycle = (notes as Record<string, string>).cycle as "monthly" | "yearly" | undefined;
         if (workspaceId) {
           await billingService.handleSubscriptionWebhook({
             eventName: "payment.captured",
@@ -439,6 +448,7 @@ export async function POST(req: Request) {
             providerReference: orderId || paymentId,
             idempotencyKey,
             amount: capturedRupees ?? (undefined as unknown as number),
+            cycle: paymentCycle,
           });
         } else {
           const guestEmail: string = notes.email || "";
@@ -454,6 +464,7 @@ export async function POST(req: Request) {
                   providerReference: orderId || paymentId,
                   idempotencyKey: `${idempotencyKey}_${m.workspace.id}`,
                   amount: capturedRupees ?? (undefined as unknown as number),
+                  cycle: paymentCycle,
                 });
               }
             }

@@ -40,14 +40,17 @@ export class RazorpayProvider implements BillingProvider {
       // through to a single Razorpay ORDER at the DB-authoritative price.
       const planId = isOneTimePlan(params.planCode) ? null : params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
       if (planId && !isManualPlan(params.planCode)) {
-        // RCCF-FINANCE-02: cycle-aware total_count — monthly 12, yearly 1
+        // RCCF-FINANCE-03: cycle-aware — yearly uses single period vs monthly 12
         let totalCount = 12;
-        try {
-          const plan = getCommercePlan(params.planCode);
-          // If price matches yearly/annual amount (e.g. 49990) treat as yearly
-          if (plan?.annualPrice && params.price && Math.abs(params.price - plan.annualPrice) < 0.01) totalCount = 1;
-          else if (plan?.cycle === "yearly") totalCount = 1;
-        } catch {}
+        const cycle = params.cycle ?? "monthly";
+        if (cycle === "yearly") totalCount = 1;
+        else {
+          try {
+            const plan = getCommercePlan(params.planCode);
+            if (plan?.annualPrice && params.price && Math.abs(params.price - plan.annualPrice) < 0.01) totalCount = 1;
+            else if (plan?.cycle === "yearly") totalCount = 1;
+          } catch {}
+        }
         const subscription = await razorpay.subscriptions.create({
           plan_id: planId,
           total_count: totalCount,
@@ -57,6 +60,7 @@ export class RazorpayProvider implements BillingProvider {
             accountId: params.accountId,
             email: params.email ?? "",
             workspaceId: params.accountId,
+            cycle,
           },
           ...(params.email ? { customer_notify: 1, start_at: Math.floor(Date.now() / 1000) + 300 } : {}),
         });
@@ -75,6 +79,7 @@ export class RazorpayProvider implements BillingProvider {
       // subscription id still produces a valid payable order at the currently
       // configured price.
       const price = params.price ?? getCommercePlan(params.planCode)?.price ?? 0;
+      const cycle = params.cycle ?? "monthly";
       const order = await razorpay.orders.create({
         amount: Math.round((price ?? 0) * 100),
         currency: params.currency ?? "INR",
@@ -83,6 +88,7 @@ export class RazorpayProvider implements BillingProvider {
           planCode: params.planCode,
           accountId: params.accountId,
           email: params.email ?? "",
+          cycle,
         },
       });
 

@@ -22,6 +22,12 @@ export async function generateWebsite(
     if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "AGENCY_ADMIN") {
       return { success: false, error: "Forbidden" };
     }
+    // RCCF-FINANCE-03: agency gate
+    if (session.user.role === "AGENCY_ADMIN" && (session.user as { agencyId?: string }).agencyId) {
+      const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
+      const gate = await checkAgencyGenerationGate({ agencyId: (session.user as { agencyId?: string }).agencyId! });
+      if (!gate.allowed) return { success: false, error: gate.reason ?? "Generation limit reached" };
+    }
 
     const source = (input.source ?? "").trim();
     if (!source) return { success: false, error: "A source URL or description is required." };
@@ -35,6 +41,10 @@ export async function generateWebsite(
       { sourceUrl: source, creatorId: session.user.id, creatorName, idempotencyPrefix: "generate", strategy: input.strategy ?? "balanced" },
       contentSource,
     );
+    if (session.user.role === "AGENCY_ADMIN" && (session.user as { agencyId?: string }).agencyId) {
+      const { recordAgencyGenerationConsumption } = await import("@/lib/generation/agency-generation-guard");
+      await recordAgencyGenerationConsumption({ agencyId: (session.user as { agencyId?: string }).agencyId! }).catch(() => {});
+    }
     const totalDurationMs = Date.now() - started;
 
     if (!pipelineResult.blueprint) {

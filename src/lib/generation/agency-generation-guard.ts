@@ -1,7 +1,7 @@
 /**
- * RCCF-FINANCE-02 P0-5 — DB-authoritative generation-cost protection for agencies.
- * Every expensive generation entry point must use the same gate.
- * Prevent repeated generate → offboard → recreate/import loops from bypassing limits.
+ * RCCF-FINANCE-02 P0-5 / FINANCE-03 — DB-authoritative generation-cost protection for agencies.
+ * Every expensive generation entry point must use the same canonical gate.
+ * Prevent repeated generate → offboard → recreate/import loops from bypassing limits — cannot bypass through another entry point, cannot reset quota by offboarding/recreating a client.
  * Keep limits configurable. Do not block legitimate pilot usage.
  * Do not introduce Redis unless technically required.
  */
@@ -40,7 +40,7 @@ export interface GenerationGateResult {
  * Implement as: count BillingEvent type GENERATION_CONSUMED for agency per window,
  * and enforce configurable limits via RevenueConfiguration or env.
  * Also prevent offboard→recreate bypass: count includes offboarded clients'
- * generations in the window (historical), not just active.
+ * generations in the window (historical), not just active — cannot bypass, cannot reset quota.
  */
 export async function checkAgencyGenerationGate(params: GenerationGateParams): Promise<GenerationGateResult> {
   const agencyId = params.agencyId;

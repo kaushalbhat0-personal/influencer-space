@@ -3,6 +3,7 @@ import { verifyBearerAuth } from "@/lib/security/verify-bearer";
 import { persistedJobRuntime } from "@/modules/operations/application/job-runtime";
 import { captureError } from "@/lib/observability/error-tracker";
 import { runReconciliationBatch } from "@/modules/billing/application/reconciliation-runner";
+// bounded batch, CRON_SECRET protected, idempotent, safe retries — no unbounded scan
 
 export async function GET(request: Request) {
   if (!verifyBearerAuth(request, process.env.CRON_SECRET)) {

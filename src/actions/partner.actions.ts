@@ -32,12 +32,14 @@ export async function importCreatorViaAgency(input: {
   }
   const actorId = ctx.session?.user.id;
 
-  // RCCF-FINANCE-02 P0-5: DB-authoritative generation gate (same for every entry point)
-  try {
-    const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
-    const gate = await checkAgencyGenerationGate({ agencyId: ctx.agencyId });
-    if (!gate.allowed) return { success: false, error: gate.reason ?? "Generation limit reached. Please try again tomorrow." };
-  } catch {}
+  // RCCF-FINANCE-03: agency generation gate — only for AGENCY_ADMIN
+  if (ctx.session?.user.role === "AGENCY_ADMIN" && ctx.agencyId) {
+    try {
+      const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
+      const gate = await checkAgencyGenerationGate({ agencyId: ctx.agencyId });
+      if (!gate.allowed) return { success: false, error: gate.reason ?? "Generation limit reached. Please try again tomorrow." };
+    } catch {}
+  }
 
   // IMPLEMENTATION-42 Phase 5: agency-provisioned creators require Creator Grow
   // minimum — Creator Launch is not available for partner-onboarded creators.
@@ -232,12 +234,12 @@ export async function offboardAgencyClient(relationshipId: string): Promise<{ su
  * authoritative amount is returned so checkout.js can render the exact
  * server-derived figure.
  */
-export async function changeAgencyPlanAction(planCode: string): Promise<{ success: boolean; checkout?: { orderId?: string; subscriptionId?: string; keyId?: string; amountPaise?: number; currency?: string }; error?: string }> {
+export async function changeAgencyPlanAction(planCode: string, cycle: "monthly" | "yearly" = "monthly"): Promise<{ success: boolean; checkout?: { orderId?: string; subscriptionId?: string; keyId?: string; amountPaise?: number; currency?: string; cycle?: string }; error?: string }> {
   const ctx = await requireAgencyMember();
   if (!ctx.ok || !ctx.agencyId) return { success: false, error: ctx.error ?? "Unauthorized" };
   if (!canMutate(ctx.session?.user.role)) return { success: false, error: "Only agency admins can change the plan" };
 
-  const { getCommercePlan, isOneTimePlan } = await import("@/config/commerce/plans");
+  const { getCommercePlan } = await import("@/config/commerce/plans");
   const target = getCommercePlan(planCode);
   if (!target || target.family !== "partner") return { success: false, error: "Invalid partner plan" };
 
@@ -245,19 +247,33 @@ export async function changeAgencyPlanAction(planCode: string): Promise<{ succes
   if (!workspace) return { success: false, error: "Partner workspace not found" };
 
   const { billingService } = await import("@/modules/billing/application/service");
-  const checkout = await billingService.changePlan(workspace.id, planCode);
+  const checkout = await billingService.changePlan(workspace.id, planCode, undefined, cycle);
   if (!checkout.success) return { success: false, error: checkout.error ?? "Checkout failed" };
 
-  // Server-derived display amount for one-time orders (never client input).
+  // Server-derived display amount — cycle-aware (never client input).
   let amountPaise: number | undefined;
   let currency: string | undefined;
-  if (isOneTimePlan(planCode)) {
+  {
     const { getRuntimePlan } = await import("@/modules/pricing/application/runtime");
     const runtime = await getRuntimePlan(planCode).catch(() => null);
-    const price = runtime?.price ?? target.price ?? 0;
-    if (!(price > 0)) return { success: false, error: "Plan price is not configured" };
-    amountPaise = Math.round(price * 100);
-    currency = runtime?.currency ?? target.currency;
+    let price: number | null = null;
+    if (cycle === "yearly") {
+      try {
+        const { partnerPriceForCycle } = await import("@/config/commerce/agency-commercial");
+        price = partnerPriceForCycle(planCode, "yearly");
+      } catch {}
+      if (price === null) price = (target as { annualPrice?: number | null }).annualPrice ?? target.price ?? 0;
+    } else {
+      price = runtime?.price ?? target.price ?? 0;
+    }
+    if (price !== null && price > 0) {
+      amountPaise = Math.round(price * 100);
+      currency = runtime?.currency ?? target.currency;
+    } else if (!price) {
+      // For free plans, keep undefined
+    } else {
+      return { success: false, error: "Plan price is not configured" };
+    }
   }
 
   return {
@@ -268,6 +284,7 @@ export async function changeAgencyPlanAction(planCode: string): Promise<{ succes
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
       amountPaise,
       currency,
+      cycle,
     },
   };
 }

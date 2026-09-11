@@ -41,6 +41,10 @@
     {
       "path": "/api/cron/generation",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/reconciliation",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

@@ -91,6 +91,15 @@ export async function acquireAndProvision(
 ): Promise<AcquisitionProvisionResult> {
   const startedAt = Date.now();
   const recordId = nextId();
+  // RCCF-FINANCE-03: agency generation gate
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.role === "AGENCY_ADMIN" && (session.user as { agencyId?: string }).agencyId) {
+      const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
+      const gate = await checkAgencyGenerationGate({ agencyId: (session.user as { agencyId?: string }).agencyId! });
+      if (!gate.allowed) return { success: false, tenantId: "", storefrontUrl: "", status: "failed", record: { id: recordId, strategy, input, creatorName: profile.businessName || "", tenantId: "", storefrontUrl: "", status: "failed", confidence: 0, completeness: 0, warnings: [], duration: 0, errors: [gate.reason ?? "Generation limit reached"], createdAt: new Date().toISOString() } as AcquisitionRecord, error: gate.reason ?? "Generation limit reached" };
+    }
+  } catch {}
   const record: AcquisitionRecord = {
     id: recordId, strategy, input, creatorName: profile.businessName || profile.ownerName || "Storefront",
     tenantId: "", storefrontUrl: "", status: "started", confidence: 0,
@@ -132,6 +141,14 @@ export async function acquireAndProvision(
     };
 
     const provisionResult = await provisioningService.provision(provisioningInput as Parameters<typeof provisioningService.provision>[0]);
+    // Record agency generation consumption on success path
+    try {
+      const session2 = await getServerSession(authOptions);
+      if (session2?.user?.role === "AGENCY_ADMIN" && (session2.user as { agencyId?: string }).agencyId) {
+        const { recordAgencyGenerationConsumption } = await import("@/lib/generation/agency-generation-guard");
+        await recordAgencyGenerationConsumption({ agencyId: (session2.user as { agencyId?: string }).agencyId! }).catch(() => {});
+      }
+    } catch {}
     if (!provisionResult.success) {
       record.status = "failed";
       record.tenantId = provisionResult.tenantId;

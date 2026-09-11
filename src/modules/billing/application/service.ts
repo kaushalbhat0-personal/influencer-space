@@ -1,7 +1,7 @@
 import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
 import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
-import { isOneTimePlan } from "@/config/commerce/plans";
+import { isOneTimePlan, getCommercePlan } from "@/config/commerce/plans";
 import { assertEligiblePlan } from "./plan-restriction";
 import { countStorageUsage, resolveStorageCapability, BYTES_PER_MB } from "./storage.enforcement";
 import { validateTransition } from "../domain/lifecycle";
@@ -64,7 +64,7 @@ export function paiseFromRupees(amount: number): bigint {
 }
 
 export class BillingService {
-  async createCheckout(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {
+  async createCheckout(workspaceId: string, planCode: string, email?: string, cycle: "monthly" | "yearly" = "monthly"): Promise<CheckoutResult> {
     const start = Date.now();
     logger.info("createCheckout started", "billing", { operation: "create_checkout", metadata: { workspaceId, planCode } as Record<string, unknown> });
     // RCCF-IMPLEMENTATION-71: read the RUNTIME plan (BillingPlan) so Super Admin
@@ -81,14 +81,34 @@ export class BillingService {
     // RCCF-36: the DB plan is the commercial authority. Its price drives
     // one-time order amounts and its provisioned razorpayPlanId drives the
     // recurring subscription plan (falling back to the registry mapping).
+    // RCCF-FINANCE-03: cycle-aware pricing — yearly checkout charges annualPrice / yearly canonical.
     const rc = (dbPlan?.runtimeConfig as PlanRuntimeConfig | null) ?? null;
+    let checkoutPrice = plan.price;
+    let checkoutPlanId = rc?.pricing?.razorpayPlanId ?? null;
+    if (cycle === "yearly") {
+      // Prefer canonical yearly from agency-commercial, fallback to commerce annualPrice
+      try {
+        const { partnerPriceForCycle } = await import("@/config/commerce/agency-commercial");
+        const yearly = partnerPriceForCycle(planCode, "yearly");
+        if (yearly !== null) checkoutPrice = yearly;
+        else if (getCommercePlan(planCode)?.annualPrice) checkoutPrice = getCommercePlan(planCode)!.annualPrice as number;
+      } catch {}
+      // Yearly plan id if provisioned per cycle
+      try {
+        const { partnerRazorpayPlanIdForCycle } = await import("@/config/commerce/agency-commercial");
+        const yPlanId = partnerRazorpayPlanIdForCycle(planCode, "yearly");
+        if (yPlanId) checkoutPlanId = yPlanId;
+        else if ((rc?.pricing as unknown as { razorpayYearlyPlanId?: string })?.razorpayYearlyPlanId) checkoutPlanId = (rc!.pricing as unknown as { razorpayYearlyPlanId: string }).razorpayYearlyPlanId;
+      } catch {}
+    }
     const order = await razorpayProvider.createCheckout({
       planCode,
       accountId: workspaceId,
       email,
       currency: plan.currency,
-      price: plan.price,
-      razorpayPlanId: rc?.pricing?.razorpayPlanId ?? null,
+      price: checkoutPrice,
+      razorpayPlanId: checkoutPlanId,
+      cycle,
     });
 
     if (!order.success) {
@@ -102,7 +122,7 @@ export class BillingService {
       accountId: workspaceId,
       type: "CHECKOUT_STARTED",
       idempotencyKey: `checkout_${order.orderId}`,
-      payload: { planCode, orderId: order.orderId, amount: plan.price },
+      payload: { planCode, orderId: order.orderId, amount: checkoutPrice, cycle },
     });
 
     logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
@@ -125,6 +145,7 @@ export class BillingService {
     idempotencyKey: string;
     renewsAt?: Date | null;
     amount?: number | string;
+    cycle?: "monthly" | "yearly";
   }): Promise<{ handled: boolean; status?: string | null; error?: string }> {
     const { eventName, workspaceId, planCode, providerReference, idempotencyKey } = input;
     const start = Date.now();
@@ -204,13 +225,9 @@ export class BillingService {
       return { handled: true, status: existing?.status ?? null };
     }
 
-    // RCCF-FINANCE-02 — price integrity for ALL paid transitions.
-    // RCCF-73 one-time guard kept for lifetime plans; FINANCE-02 adds recurring
-    // drift detection for subscription plans (monthly/yearly). A capture outside
-    // 1 paise of ANY canonical price (monthly or yearly) NEVER activates and
-    // emits RECONCILIATION_REQUIRED. Never silently activate incorrectly priced
-    // recurring subscription — detect price drift against DB BillingPlan and
-    // the canonical commerce config (agency-commercial.ts for partners).
+    // RCCF-FINANCE-03 — price integrity cycle-aware.
+    // Monthly checkout must charge monthly, yearly must charge yearly.
+    // Wrong-cycle provider amount is rejected/reconciled, not silently accepted.
     if (isPaidTransition) {
       const isOneTime = isOneTimePlan(plan.code);
       // Build list of canonical expected amounts (rupees) for this plan code.
@@ -219,29 +236,45 @@ export class BillingService {
         const amt = Math.round((plan.price ?? 0) * 100) / 100;
         if (amt > 0) expectedAmounts.push(amt);
       } else {
-        // Recurring: allow monthly or yearly canonical price. For partner plans,
-        // monthly is BillingPlan.price (or commerce monthly), yearly is 10x.
-        // For creator plans, monthly is price, yearly is annualPrice/12? No —
-        // yearly charge is full annualPrice, not monthly slice.
+        const cycle = (input.cycle as "monthly" | "yearly" | undefined) ?? null;
         const monthlyAmt = Math.round((plan.price ?? 0) * 100) / 100;
-        if (monthlyAmt > 0) expectedAmounts.push(monthlyAmt);
-        try {
-          const { getCommercePlan } = await import("@/config/commerce/plans");
-          const commerce = getCommercePlan(plan.code);
-          if (commerce?.annualPrice && commerce.annualPrice > 0) {
-            const yearlyAmt = Math.round(commerce.annualPrice * 100) / 100;
-            if (!expectedAmounts.includes(yearlyAmt)) expectedAmounts.push(yearlyAmt);
-          }
-          // Partner canonical yearly from agency-commercial (authoritative if commerce annual missing)
-          const { PARTNER_RECURRING_PRICES } = await import("@/config/commerce/agency-commercial");
-          const partnerEntry = (PARTNER_RECURRING_PRICES as Record<string, { monthly: number; yearly: number }>)[plan.code];
-          if (partnerEntry?.yearly && partnerEntry.yearly > 0) {
-            const py = Math.round(partnerEntry.yearly * 100) / 100;
-            if (!expectedAmounts.includes(py)) expectedAmounts.push(py);
-            const pm = Math.round(partnerEntry.monthly * 100) / 100;
-            if (pm > 0 && !expectedAmounts.includes(pm)) expectedAmounts.push(pm);
-          }
-        } catch {}
+        const yearlyAmtFromCommerce = (() => {
+          try {
+            const { getCommercePlan } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
+            const commerce = getCommercePlan(plan.code);
+            if (commerce?.annualPrice && commerce.annualPrice > 0) return Math.round(commerce.annualPrice * 100) / 100;
+          } catch {}
+          return null;
+        })();
+        const yearlyAmtFromAgency = (() => {
+          try {
+            const { PARTNER_RECURRING_PRICES } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { monthly: number; yearly: number }> };
+            const partnerEntry = PARTNER_RECURRING_PRICES[plan.code];
+            if (partnerEntry?.yearly) return Math.round(partnerEntry.yearly * 100) / 100;
+          } catch {}
+          return null;
+        })();
+        const yearlyAmt = yearlyAmtFromCommerce ?? yearlyAmtFromAgency;
+        if (cycle === "monthly") {
+          if (monthlyAmt > 0) expectedAmounts.push(monthlyAmt);
+        } else if (cycle === "yearly") {
+          if (yearlyAmt && yearlyAmt > 0) expectedAmounts.push(yearlyAmt);
+          else if (monthlyAmt > 0) expectedAmounts.push(monthlyAmt);
+        } else {
+          // No cycle specified (legacy webhook without cycle) — allow both for backward compat, but prefer monthly
+          if (monthlyAmt > 0) expectedAmounts.push(monthlyAmt);
+          if (yearlyAmt && yearlyAmt > 0 && !expectedAmounts.includes(yearlyAmt)) expectedAmounts.push(yearlyAmt);
+          try {
+            const { PARTNER_RECURRING_PRICES: pr } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { monthly: number; yearly: number }> };
+            const pe = pr[plan.code];
+            if (pe) {
+              const pm = Math.round(pe.monthly * 100) / 100;
+              const py = Math.round(pe.yearly * 100) / 100;
+              if (pm > 0 && !expectedAmounts.includes(pm)) expectedAmounts.push(pm);
+              if (py > 0 && !expectedAmounts.includes(py)) expectedAmounts.push(py);
+            }
+          } catch {}
+        }
       }
       const capturedPaise = validPaidAmount !== null ? paiseFromRupees(validPaidAmount) : null;
       const expectedPaiseList = expectedAmounts.map((a) => paiseFromRupees(a));
@@ -749,7 +782,7 @@ export class BillingService {
    * driven (BillingEvent → BillingSubscription → capability refresh), so the old
    * plan's capabilities remain until the new subscription activates.
    */
-  async changePlan(workspaceId: string, planCode: string, email?: string): Promise<CheckoutResult> {    const target = getPlan(planCode);
+  async changePlan(workspaceId: string, planCode: string, email?: string, cycle: "monthly" | "yearly" = "monthly"): Promise<CheckoutResult> {    const target = getPlan(planCode);
     if (!target) return { success: false, error: `Unknown plan: ${planCode}` };
 
     // IMPLEMENTATION-42 Phase 5: agency-managed creators cannot be on Launch.
@@ -791,7 +824,7 @@ export class BillingService {
     // No other ₹0 Razorpay order — Launch downgrade is rejected above, other
     // free/enterprise manual plans remain admin-only via adminSetPlan.
 
-    return this.createCheckout(workspaceId, planCode, email);
+    return this.createCheckout(workspaceId, planCode, email, cycle);
   }
 
   /**

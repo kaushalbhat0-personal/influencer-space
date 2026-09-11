@@ -92,6 +92,8 @@ export interface CheckoutParams {
   razorpayPlanId?: string | null;
   /** RCCF-36: DB-authoritative monthly price used for one-time order checkouts. */
   price?: number | null;
+  /** RCCF-FINANCE-03: selected billing cycle — monthly vs yearly (annual). */
+  cycle?: "monthly" | "yearly";
 }
 
 export interface CheckoutResult {
