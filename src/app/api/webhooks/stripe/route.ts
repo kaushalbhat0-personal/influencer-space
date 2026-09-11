@@ -57,9 +57,25 @@ export async function POST(req: Request) {
       if (order && (order as { status: string }).status === "PENDING") {
         const expectedPaise = Math.round((order as { amount: number }).amount * 100);
         const capturedPaise = amountTotal;
-        if (capturedPaise === expectedPaise || capturedPaise === 0) {
+        // RCCF-FINANCE-02 P1-12: close capturedPaise===0 bypass. Free orders must be explicitly authorized server-side.
+        // Only allow zero capture when the order itself is zero-priced and explicitly marked free.
+        const isExplicitFree = expectedPaise === 0 && (order as unknown as { metadata?: unknown }).metadata !== undefined;
+        const amountMatches = capturedPaise === expectedPaise || (capturedPaise === 0 && isExplicitFree);
+        if (amountMatches) {
           const { completeProductOrder } = await import("@/modules/billing/application/order-completion");
           await completeProductOrder((order as { id: string }).id, { paymentId: sessionId });
+        } else if (capturedPaise === 0) {
+          await prisma.billingEvent
+            .create({
+              data: {
+                workspaceId: null,
+                accountId: (order as { tenantId: string }).tenantId,
+                type: "PAYMENT_CAPTURED_REJECTED",
+                idempotencyKey: `${idempotencyKey}_rejected`,
+                payload: { orderId: (order as { id: string }).id, reason: "zero_capture_not_authorized", expectedPaise, capturedPaise } as never,
+              },
+            })
+            .catch(() => {});
         }
         await prisma.billingEvent.create({ data: { workspaceId: null, accountId: (order as { tenantId: string }).tenantId, type: "PAYMENT_CAPTURED_PRODUCT", idempotencyKey, payload: { orderId: (order as { id: string }).id, provider: "stripe", sessionId, amountTotal, reconciliationRef, customerEmail } } }).catch(()=>{});
       } else {

@@ -22,17 +22,27 @@ export interface LoyaltyProgress {
   clientsToNext: number;
 }
 
-/** Canonical active-client count: AgencyTenant links with a live subscription. */
+/** Canonical active-client count: AgencyTenant links with a live subscription.
+ * RCCF-FINANCE-02: counts only ACTIVE qualifying client websites (tenant/agency
+ * scoped). Do not count offboarded, deleted, expired, pending, historical.
+ * TRIALING is not a qualifying active client for royalty.
+ */
 export async function getActiveClientCount(agencyId: string): Promise<number> {
   return prisma.agencyTenant.count({
     where: {
       agencyId,
-      workspace: { billingSubscription: { status: { in: ["ACTIVE", "TRIALING"] } } },
+      // Only ACTIVE counts toward royalty; TRIALING/PAST_DUE/CANCELLED/EXPIRED excluded
+      workspace: { billingSubscription: { status: "ACTIVE" } },
     },
   });
 }
 
-/** ACTIVE loyalty tiers effective now, ascending by client range. */
+/** ACTIVE loyalty tiers effective now, ascending by client range.
+ * RCCF-FINANCE-02: canonical tiers are 0–4→0%, 5–25→20%, 26–50→30%, 51+→40%.
+ * If DB has no active rows (fresh env) or rows still carry legacy 30/40/50
+ * without the 0–4 bucket, fall back to the canonical in-code tiers so
+ * financial semantics are correct before/after data migration.
+ */
 export async function getLoyaltyTiers(): Promise<LoyaltyTierRow[]> {
   const now = new Date();
   const rows = await prisma.loyaltyTier.findMany({
@@ -50,6 +60,32 @@ export async function getLoyaltyTiers(): Promise<LoyaltyTierRow[]> {
       commissionPercent: true,
     },
   });
+  if (rows.length === 0) {
+    const { AGENCY_ROYALTY_TIERS } = await import("@/config/commerce/agency-commercial");
+    return AGENCY_ROYALTY_TIERS.map((t, idx) => ({
+      id: `canonical-${idx}`,
+      name: t.label,
+      minActiveClients: t.minActiveClients,
+      maxActiveClients: t.maxActiveClients,
+      commissionPercent: t.percent,
+    }));
+  }
+  // If DB has legacy tiers but no 0-4 bucket, inject the 0% bucket so 0–4 never falls through to 20% default
+  const hasZeroBucket = rows.some((r) => r.minActiveClients === 0 && r.maxActiveClients === 4);
+  if (!hasZeroBucket) {
+    // Prepend canonical 0–4 tier while preserving DB tiers for 5+
+    const canonicalZero: LoyaltyTierRow = { id: "canonical-0", name: "0–4 active — 0%", minActiveClients: 0, maxActiveClients: 4, commissionPercent: 0 };
+    // Filter out any DB tier that overlaps 0-4 to avoid duplicate
+    const filtered = rows.filter((r) => r.minActiveClients > 4 || (r.minActiveClients === 0 && r.maxActiveClients !== 4));
+    // If DB tiers are legacy 30/40/50, replace their percents with canonical 20/30/40 if count matches expected ranges
+    const mapped = filtered.map((r) => {
+      if (r.minActiveClients === 5 && r.maxActiveClients === 25) return { ...r, commissionPercent: 20 };
+      if (r.minActiveClients === 26 && r.maxActiveClients === 50) return { ...r, commissionPercent: 30 };
+      if (r.minActiveClients === 51 && r.maxActiveClients === null) return { ...r, commissionPercent: 40 };
+      return r;
+    });
+    return [canonicalZero, ...mapped].sort((a, b) => a.minActiveClients - b.minActiveClients);
+  }
   return rows;
 }
 

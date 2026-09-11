@@ -169,7 +169,15 @@ export const resolveSplitSource = requestCache(async (partnerId: string, planCod
     return { platformPercent: 100 - partnerPercent, partnerPercent, ruleId: null, source: "policy" };
   }
 
-  // 7. Default 80/20.
+  // 7. Default — RCCF-FINANCE-02: until an agency reaches 5 ACTIVE clients,
+  // royalty is 0%. The loyalty tier 0–4 → 0% encodes this; if no tier row
+  // matches (e.g. DB not yet seeded), fall back to 0% not 20%.
+  const { royaltyPercentForActiveClients } = await import("@/config/commerce/agency-commercial");
+  try {
+    const fallbackCount = await getActiveClientCount(partnerId);
+    const fallbackPercent = royaltyPercentForActiveClients(fallbackCount);
+    if (fallbackPercent === 0) return { platformPercent: 100, partnerPercent: 0, ruleId: null, source: "default" };
+  } catch {}
   return { platformPercent: 80, partnerPercent: 20, ruleId: null, source: "default" };
 });
 

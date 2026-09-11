@@ -34,12 +34,13 @@ describe("RCCF-BILLING-07E — pricing parity contract (marketing ↔ billing �
     expect(getEnterprisePlan("partner")?.code).toBe("partner_enterprise");
   });
 
+  // FINANCE-02: partner plans are now recurring monthly/yearly (no one-time perpetual)
   it("billing model: partner one-time vs creator recurring agrees across registry and helper", () => {
-    // Registry is authority
-    expect(isOneTimePlan("partner_solo")).toBe(true);
-    expect(isOneTimePlan("partner_scale")).toBe(true);
-    expect(getCommercePlan("partner_solo")?.billingForm).toBe("one_time");
-    expect(getCommercePlan("partner_scale")?.billingForm).toBe("one_time");
+    // Registry is authority — FINANCE-02 partner is recurring
+    expect(isOneTimePlan("partner_solo")).toBe(false);
+    expect(isOneTimePlan("partner_scale")).toBe(false);
+    expect(getCommercePlan("partner_solo")?.billingForm).toBeUndefined();
+    expect(getCommercePlan("partner_scale")?.billingForm).toBeUndefined();
 
     expect(isOneTimePlan("creator_grow")).toBe(false);
     expect(isOneTimePlan("creator_scale")).toBe(false);
@@ -89,11 +90,14 @@ describe("RCCF-BILLING-07E — pricing parity contract (marketing ↔ billing �
     expect(pricingSrc).toMatch(/Save \{maxSavings\}%/);
     expect(pricingSrc).toContain("maxSavings");
 
-    // One-time partner plans must have NO annual savings (never fabricate)
+    // FINANCE-02: partner plans now have yearly pricing (10× monthly)
     const soloCfg = getCommercePlan("partner_solo")!;
-    expect(soloCfg.annualPrice).toBeUndefined();
+    expect(soloCfg.annualPrice).toBe(49990);
     const soloResolved = { price: soloCfg.price, annualPrice: (soloCfg as any).annualPrice } as any;
-    expect(getAnnualSavings(soloResolved)).toBeNull();
+    expect(getAnnualSavings(soloResolved)).toBe(17);
+    const scaleCfg = getCommercePlan("partner_scale")!;
+    expect(scaleCfg.annualPrice).toBe(149990);
+    expect(getAnnualSavings({ price: scaleCfg.price, annualPrice: scaleCfg.annualPrice } as any)).toBe(17);
   });
 
   it("Pricing Center grace presentation disabled for one-time, preserved in data", () => {

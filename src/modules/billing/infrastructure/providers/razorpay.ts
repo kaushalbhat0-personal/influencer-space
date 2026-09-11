@@ -40,9 +40,17 @@ export class RazorpayProvider implements BillingProvider {
       // through to a single Razorpay ORDER at the DB-authoritative price.
       const planId = isOneTimePlan(params.planCode) ? null : params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
       if (planId && !isManualPlan(params.planCode)) {
+        // RCCF-FINANCE-02: cycle-aware total_count — monthly 12, yearly 1
+        let totalCount = 12;
+        try {
+          const plan = getCommercePlan(params.planCode);
+          // If price matches yearly/annual amount (e.g. 49990) treat as yearly
+          if (plan?.annualPrice && params.price && Math.abs(params.price - plan.annualPrice) < 0.01) totalCount = 1;
+          else if (plan?.cycle === "yearly") totalCount = 1;
+        } catch {}
         const subscription = await razorpay.subscriptions.create({
           plan_id: planId,
-          total_count: 12,
+          total_count: totalCount,
           customer_notify: 1,
           notes: {
             planCode: params.planCode,

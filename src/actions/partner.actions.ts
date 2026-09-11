@@ -32,6 +32,13 @@ export async function importCreatorViaAgency(input: {
   }
   const actorId = ctx.session?.user.id;
 
+  // RCCF-FINANCE-02 P0-5: DB-authoritative generation gate (same for every entry point)
+  try {
+    const { checkAgencyGenerationGate } = await import("@/lib/generation/agency-generation-guard");
+    const gate = await checkAgencyGenerationGate({ agencyId: ctx.agencyId });
+    if (!gate.allowed) return { success: false, error: gate.reason ?? "Generation limit reached. Please try again tomorrow." };
+  } catch {}
+
   // IMPLEMENTATION-42 Phase 5: agency-provisioned creators require Creator Grow
   // minimum — Creator Launch is not available for partner-onboarded creators.
   const { isAgencyRestrictedPlan } = await import("@/config/commerce/plans");
@@ -82,6 +89,12 @@ export async function importCreatorViaAgency(input: {
     if (link && !link.workspaceId && workspaceId) {
       await prisma.agencyTenant.update({ where: { id: link.id }, data: { workspaceId } });
     }
+
+    // Record generation consumption (DB-authoritative, counted even if later offboarded)
+    try {
+      const { recordAgencyGenerationConsumption } = await import("@/lib/generation/agency-generation-guard");
+      await recordAgencyGenerationConsumption({ agencyId: ctx.agencyId, workspaceId, tenantId });
+    } catch {}
 
     // 3. Passwordless invitation — the creator sets their own password.
     const invite = await creatorInvitationService.createInvitation({

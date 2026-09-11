@@ -8,10 +8,23 @@ import { captureError } from "@/lib/observability/error-tracker";
  * RCCF-BILLING-06H — canonical billing expiry logic.
  * Extracted so the cron route stays Next.js-type-clean and tests can import directly.
  */
-export async function runBillingExpiry(now = new Date()) {
+/**
+ * RCCF-FINANCE-02 P1-8 — bounded and observable expiry processing.
+ * Batch processing, maxDuration, liveness/failure alert, no unbounded full-table scan.
+ */
+export const BILLING_EXPIRY_BATCH_SIZE = 100;
+export const BILLING_EXPIRY_MAX_DURATION_MS = 25_000;
+
+export async function runBillingExpiry(now = new Date(), opts?: { batchSize?: number; maxDurationMs?: number }) {
+  const batchSize = opts?.batchSize ?? BILLING_EXPIRY_BATCH_SIZE;
+  const maxDurationMs = opts?.maxDurationMs ?? BILLING_EXPIRY_MAX_DURATION_MS;
+  const startedAt = Date.now();
+  // Bounded: only process first batchSize past-due, ordered by renewsAt (oldest first)
   const pastDueSubs = await prisma.billingSubscription.findMany({
     where: { status: "PAST_DUE" },
     select: { id: true, workspaceId: true, accountId: true, renewsAt: true, status: true },
+    orderBy: { renewsAt: "asc" },
+    take: batchSize,
   });
 
   let expired = 0;
@@ -19,6 +32,22 @@ export async function runBillingExpiry(now = new Date()) {
   const details: string[] = [];
 
   for (const sub of pastDueSubs) {
+    // Bounded by maxDuration: if we exceed wall clock, stop and report liveness
+    if (Date.now() - startedAt > maxDurationMs) {
+      try {
+        await prisma.alertRecord.create({
+          data: {
+            level: "WARNING",
+            status: "ACTIVE",
+            title: "Billing expiry batch hit maxDuration",
+            message: `Processed ${expired + skipped}/${pastDueSubs.length} in ${Date.now() - startedAt}ms (limit ${maxDurationMs}ms)`,
+            source: "billing",
+            metadata: { expired, skipped, totalPastDue: pastDueSubs.length, batchSize } as never,
+          },
+        });
+      } catch {}
+      break;
+    }
     const renewsAt = sub.renewsAt;
     let graceExpired: boolean;
     if (!renewsAt) {

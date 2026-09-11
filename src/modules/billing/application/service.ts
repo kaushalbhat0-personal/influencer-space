@@ -204,24 +204,60 @@ export class BillingService {
       return { handled: true, status: existing?.status ?? null };
     }
 
-    // RCCF-73 — ONE-TIME price integrity. A paid transition for a one-time
-    // plan (Partner Solo/Scale) must carry the DB-authoritative price within
-    // 1 paise (rounding tolerance). A capture outside that window NEVER activates
-    // and NEVER mints an invoice; the event is recorded and RECONCILIATION_REQUIRED
-    // is emitted so support can reconcile. Subscription-form plans keep their
-    // existing provider-contract semantics (Creator behavior unchanged).
-    if (isPaidTransition && isOneTimePlan(plan.code)) {
-      const expectedAmount = Math.round((plan.price ?? 0) * 100) / 100;
-      const expectedPaise = paiseFromRupees(expectedAmount);
+    // RCCF-FINANCE-02 — price integrity for ALL paid transitions.
+    // RCCF-73 one-time guard kept for lifetime plans; FINANCE-02 adds recurring
+    // drift detection for subscription plans (monthly/yearly). A capture outside
+    // 1 paise of ANY canonical price (monthly or yearly) NEVER activates and
+    // emits RECONCILIATION_REQUIRED. Never silently activate incorrectly priced
+    // recurring subscription — detect price drift against DB BillingPlan and
+    // the canonical commerce config (agency-commercial.ts for partners).
+    if (isPaidTransition) {
+      const isOneTime = isOneTimePlan(plan.code);
+      // Build list of canonical expected amounts (rupees) for this plan code.
+      const expectedAmounts: number[] = [];
+      if (isOneTime) {
+        const amt = Math.round((plan.price ?? 0) * 100) / 100;
+        if (amt > 0) expectedAmounts.push(amt);
+      } else {
+        // Recurring: allow monthly or yearly canonical price. For partner plans,
+        // monthly is BillingPlan.price (or commerce monthly), yearly is 10x.
+        // For creator plans, monthly is price, yearly is annualPrice/12? No —
+        // yearly charge is full annualPrice, not monthly slice.
+        const monthlyAmt = Math.round((plan.price ?? 0) * 100) / 100;
+        if (monthlyAmt > 0) expectedAmounts.push(monthlyAmt);
+        try {
+          const { getCommercePlan } = await import("@/config/commerce/plans");
+          const commerce = getCommercePlan(plan.code);
+          if (commerce?.annualPrice && commerce.annualPrice > 0) {
+            const yearlyAmt = Math.round(commerce.annualPrice * 100) / 100;
+            if (!expectedAmounts.includes(yearlyAmt)) expectedAmounts.push(yearlyAmt);
+          }
+          // Partner canonical yearly from agency-commercial (authoritative if commerce annual missing)
+          const { PARTNER_RECURRING_PRICES } = await import("@/config/commerce/agency-commercial");
+          const partnerEntry = (PARTNER_RECURRING_PRICES as Record<string, { monthly: number; yearly: number }>)[plan.code];
+          if (partnerEntry?.yearly && partnerEntry.yearly > 0) {
+            const py = Math.round(partnerEntry.yearly * 100) / 100;
+            if (!expectedAmounts.includes(py)) expectedAmounts.push(py);
+            const pm = Math.round(partnerEntry.monthly * 100) / 100;
+            if (pm > 0 && !expectedAmounts.includes(pm)) expectedAmounts.push(pm);
+          }
+        } catch {}
+      }
       const capturedPaise = validPaidAmount !== null ? paiseFromRupees(validPaidAmount) : null;
-      const diffPaise = capturedPaise !== null ? (capturedPaise > expectedPaise ? capturedPaise - expectedPaise : expectedPaise - capturedPaise) : null;
-      if (validPaidAmount === null || expectedAmount <= 0 || diffPaise === null || diffPaise > BigInt(1)) {
+      const expectedPaiseList = expectedAmounts.map((a) => paiseFromRupees(a));
+      const matches = capturedPaise !== null && expectedPaiseList.some((ep) => {
+        const diff = capturedPaise > ep ? capturedPaise - ep : ep - capturedPaise;
+        return diff <= BigInt(1);
+      });
+      // Also enforce positive captured amount already via validPaidAmount null guard above, but double-check
+      if (!matches) {
+        const reason = isOneTime ? "one_time_amount_mismatch" : "recurring_price_drift";
         await billingRepository.createEvent({
           workspaceId,
           accountId: workspaceId,
           type: mapping.eventType,
           idempotencyKey,
-          payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: existing?.status, note: "one_time_amount_mismatch:no_activation", capturedAmount: validPaidAmount, expectedAmount },
+          payload: { eventName, planCode: plan.code, providerReference, previousStatus: existing?.status, newStatus: existing?.status, note: `${reason}:no_activation`, capturedAmount: validPaidAmount, expectedAmounts },
         });
         await billingRepository
           .createEvent({
@@ -229,13 +265,13 @@ export class BillingService {
             accountId: workspaceId,
             type: "RECONCILIATION_REQUIRED",
             idempotencyKey: `reconcile_required_${providerReference}`,
-            payload: { paymentId: providerReference, planCode: plan.code, eventName, reason: "one_time_amount_mismatch", capturedAmount: validPaidAmount, expectedAmount },
+            payload: { paymentId: providerReference, planCode: plan.code, eventName, reason, capturedAmount: validPaidAmount, expectedAmounts },
           })
           .catch(() => {});
         await logAction(
           (await prisma.workspace.findUnique({ where: { id: workspaceId }, select: { tenantId: true } }))?.tenantId ?? "system",
           "billing:payment-ignored",
-          { eventName, planCode: plan.code, providerReference, reason: "one-time-amount-mismatch", capturedAmount: validPaidAmount, expectedAmount },
+          { eventName, planCode: plan.code, providerReference, reason, capturedAmount: validPaidAmount, expectedAmounts },
         ).catch(() => {});
         return { handled: true, status: existing?.status ?? null };
       }
@@ -407,6 +443,31 @@ export class BillingService {
       // No invoice for this payment — nothing to reverse. Safe no-op.
       return { handled: true };
     }
+
+    // RCCF-FINANCE-02 P1-13: enforce refundWindowDays=30 (RevenueConfiguration).
+    // Refunds beyond the window are still reconciled but flagged for manual review.
+    try {
+      const revCfg = await prisma.revenueConfiguration.findFirst({ where: { status: "ACTIVE" }, select: { refundWindowDays: true } });
+      const windowDays = revCfg?.refundWindowDays ?? 30;
+      const paidAt = invoice.paidAt ?? invoice.issuedAt;
+      if (paidAt) {
+        const daysSince = (Date.now() - new Date(paidAt).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSince > windowDays) {
+          await prisma.billingEvent
+            .create({
+              data: {
+                workspaceId: invoice.workspaceId,
+                accountId: invoice.accountId,
+                type: "REFUND_WINDOW_EXCEEDED",
+                idempotencyKey: `refund_window_${input.refundId}`,
+                payload: { refundId: input.refundId, paymentId: input.paymentId, invoiceId: invoice.id, daysSince: Math.floor(daysSince), windowDays } as never,
+              },
+            })
+            .catch(() => {});
+          captureError(new Error(`Refund beyond window: ${Math.floor(daysSince)}d > ${windowDays}d`), { service: "billing", operation: "refundWindow" });
+        }
+      }
+    } catch {}
 
     // The original positive subscription commission for this invoice.
     const commission = await prisma.commissionEntry.findFirst({

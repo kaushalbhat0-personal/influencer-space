@@ -44,6 +44,18 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // RCCF-FINANCE-02 P0-6: trial farming hardening — reuse DB identity signals
+    try {
+      const { checkAgencyTrialEligibility, checkCreatorTrialEligibility } = await import("@/lib/auth/trial-eligibility");
+      if (persona === "agency") {
+        const elig = await checkAgencyTrialEligibility({ email });
+        if (!elig.eligible) return NextResponse.json({ error: elig.reason ?? "Trial not eligible" }, { status: 409 });
+      } else {
+        const elig = await checkCreatorTrialEligibility({ email });
+        if (!elig.eligible) return NextResponse.json({ error: elig.reason ?? "Trial not eligible" }, { status: 409 });
+      }
+    } catch {}
+
     if (persona === "agency") {
       const result = await prisma.$transaction(async (tx) => {
         const user = await tx.user.create({

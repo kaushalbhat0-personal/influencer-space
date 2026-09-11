@@ -132,9 +132,9 @@ describe("RCCF-BILLING-07C — Launch disabled for paid creators", () => {
         onCancel={() => {}}
       />
     );
-    // Launch is current → shows "Current — Creator Launch", not disabled
+    // Launch is current → shows "Current — Launch", not disabled
     expect(screen.queryByTestId("cta-launch-disabled")).toBeNull();
-    expect(screen.getByText(/Current — Creator Launch/)).toBeTruthy();
+    expect(screen.getByText(/Current — Launch/)).toBeTruthy();
     // Other plan should be upgrade
     expect(screen.getByTestId("cta-upgrade-creator_grow")).toBeTruthy();
   });

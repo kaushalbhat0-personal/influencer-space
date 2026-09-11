@@ -128,6 +128,68 @@ function safePaiseAmount(raw: unknown): bigint | null {
   }
 }
 
+// RCCF-FINANCE-02 — renewal date from provider/current-period-end semantics.
+// Do not hardcode +30 days. Use subscription entity's period end if present,
+// else cycle-aware setMonth/setFullYear fallback.
+function deriveRenewsAt(payload: RazorpayPayload, event: string, planCode?: string): Date | null {
+  if (!(event === "subscription.activated" || event === "subscription.charged")) return null;
+  const subEntity = payload.payload?.subscription?.entity as Record<string, unknown> | undefined;
+  const candidates: unknown[] = [
+    subEntity?.current_period_end,
+    subEntity?.current_end,
+    subEntity?.charge_at,
+    subEntity?.end_at,
+    subEntity?.next_charge_at,
+    subEntity?.current_end_at,
+    subEntity?.expire_by,
+    // payment entity may also carry next period
+    (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.subscription_id,
+  ];
+  for (const cand of candidates) {
+    if (typeof cand === "number" && Number.isFinite(cand) && cand > 0) {
+      // Razorpay often uses seconds; also handle milliseconds if > 1e12
+      const ms = cand > 1e12 ? cand : cand * 1000;
+      const d = new Date(ms);
+      if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now() - 24 * 60 * 60 * 1000) return d;
+    }
+    if (typeof cand === "string" && cand) {
+      // numeric string seconds
+      if (/^\d+$/.test(cand)) {
+        const n = Number(cand);
+        const ms = n > 1e12 ? n : n * 1000;
+        const d = new Date(ms);
+        if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now() - 24 * 60 * 60 * 1000) return d;
+      } else {
+        const d = new Date(cand);
+        if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now() - 24 * 60 * 60 * 1000) return d;
+      }
+    }
+  }
+  // Fallback: cycle-aware from commerce config — monthly +1 month, yearly +1 year,
+  // not fixed 30 days (handles Feb, 31-day months, yearly correctly).
+  try {
+    // Dynamic to avoid circular import in webhook route; fallback is monthly if unknown
+    const plans = require("@/config/commerce/plans") as { getCommercePlan?: (c: string) => { cycle?: string; annualPrice?: number | null } };
+    const commerce = planCode ? plans.getCommercePlan?.(planCode) : null;
+    const cycle = commerce?.cycle ?? "monthly";
+    // Heuristic: if captured yearly amount matches, treat as yearly
+    // But without amount here, use commerce cycle (all partner now monthly by default, yearly via separate plan id)
+    const now = new Date();
+    if (cycle === "yearly") {
+      const d = new Date(now);
+      d.setFullYear(d.getFullYear() + 1);
+      return d;
+    }
+    const d = new Date(now);
+    d.setMonth(d.getMonth() + 1);
+    return d;
+  } catch {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d;
+  }
+}
+
 export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for") ?? "webhook";
   const rateCheck = checkRateLimit(`webhook:${ip}`, "/api/webhooks/razorpay");
@@ -287,16 +349,58 @@ export async function POST(req: Request) {
 
     // â”€â”€ Subscription lifecycle events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (SUBSCRIPTION_EVENTS.has(event)) {
-      if (!workspaceId) return NextResponse.json({ ok: true });
+      // RCCF-FINANCE-02 P0-4: payment.failed may arrive without workspaceId in notes.
+      // Resolve the correct workspace/subscription via provider identifiers.
+      let effectiveWorkspaceId = workspaceId;
+      if (!effectiveWorkspaceId && event === "payment.failed") {
+        const subIdFromPayload =
+          (payload.payload?.subscription?.entity as Record<string, unknown> | undefined)?.id as string | undefined ??
+          (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.subscription_id as string | undefined;
+        if (subIdFromPayload) {
+          try {
+            const inv = await prisma.billingInvoice.findFirst({ where: { providerReference: subIdFromPayload }, select: { workspaceId: true } });
+            if (inv?.workspaceId) effectiveWorkspaceId = inv.workspaceId;
+          } catch {}
+          if (!effectiveWorkspaceId) {
+            try {
+              // Search billing events that stored providerReference for this subscription
+              const evt = await prisma.billingEvent.findFirst({
+                where: { type: { in: ["SUBSCRIPTION_ACTIVATED", "SUBSCRIPTION_RENEWED", "CHECKOUT_STARTED"] } },
+                orderBy: { createdAt: "desc" },
+                select: { workspaceId: true, payload: true },
+              });
+              const payloadRef = (evt?.payload as Record<string, unknown> | null)?.providerReference as string | undefined;
+              if (payloadRef === subIdFromPayload && evt?.workspaceId) effectiveWorkspaceId = evt.workspaceId;
+            } catch {}
+          }
+          if (!effectiveWorkspaceId) {
+            await prisma.billingEvent
+              .create({
+                data: {
+                  accountId: "00000000-0000-0000-0000-000000000000",
+                  workspaceId: null,
+                  type: "RECONCILIATION_REQUIRED",
+                  idempotencyKey: `reconcile_required_failed_${ref}`,
+                  payload: { eventName: event, providerReference: ref, subscriptionId: subIdFromPayload, reason: "payment_failed_missing_workspaceId" },
+                },
+              })
+              .catch(() => {});
+            return NextResponse.json({ ok: true });
+          }
+        } else {
+          return NextResponse.json({ ok: true });
+        }
+      }
+      if (!effectiveWorkspaceId) return NextResponse.json({ ok: true });
       const rawSubAmount = (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.amount;
       const parsedSubAmount = safePaiseToRupees(rawSubAmount);
       const result = await billingService.handleSubscriptionWebhook({
         eventName: event,
-        workspaceId,
+        workspaceId: effectiveWorkspaceId,
         planCode: notes.planCode || undefined,
         providerReference: ref,
         idempotencyKey,
-        renewsAt: event === "subscription.activated" || event === "subscription.charged" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
+        renewsAt: deriveRenewsAt(payload, event, notes.planCode),
         amount: parsedSubAmount ?? (undefined as unknown as number),
       });
       if (!result.handled && result.error) {

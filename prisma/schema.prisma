@@ -1220,7 +1220,9 @@ model BillingInvoice {
   planCode          String
   planVersion       Int       @default(1)
   amount            Float
+  amountPaise       Int? // RCCF-FINANCE-02 P1-11 additive paise authority (prefer over Float)
   taxAmount         Float     @default(0)
+  taxAmountPaise    Int?      @default(0)
   currency          String    @default("INR")
   status            String    @default("PENDING")
   lineItems         Json?     @default("[]")
@@ -1240,6 +1242,7 @@ model BillingInvoice {
   @@index([dueAt])
   @@index([workspaceId, issuedAt])
   @@index([status, issuedAt])
+  @@index([providerReference])
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

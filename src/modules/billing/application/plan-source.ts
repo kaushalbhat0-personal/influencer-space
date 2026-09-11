@@ -185,6 +185,11 @@ async function resolveActivePlanImpl(
       select: { plan: true, status: true, currentPeriodEnd: true },
     });
     if (legacy?.plan) {
+      // RCCF-FINANCE-02 P1-14: prevent legacy ACTIVE/null-period perpetual entitlement.
+      // An ACTIVE legacy record with no currentPeriodEnd would otherwise grant forever via isSubscriptionEntitlementEligible (!end => true).
+      if (legacy.status === "ACTIVE" && !legacy.currentPeriodEnd) {
+        return noEntitlement("legacy", legacy.status);
+      }
       if (!isSubscriptionEntitlementEligible({ status: legacy.status, currentPeriodEnd: legacy.currentPeriodEnd })) {
         return noEntitlement("legacy", legacy.status);
       }
@@ -314,6 +319,9 @@ export async function resolvePlansForTenantIds(tenantIds: string[]): Promise<Ten
     }
     const legacy = legacyByTenant.get(tenantId);
     if (legacy?.plan) {
+      if (legacy.status === "ACTIVE" && !legacy.currentPeriodEnd) {
+        return { tenantId, planCode: null, planDisplay: "Free", origin: "legacy" as const, status: legacy.status };
+      }
       if (!isSubscriptionEntitlementEligible(legacy)) {
         return { tenantId, planCode: null, planDisplay: "Free", origin: "legacy" as const, status: legacy.status };
       }
