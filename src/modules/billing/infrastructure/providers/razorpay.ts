@@ -8,16 +8,27 @@
 import type { BillingProvider, CheckoutParams, CheckoutResult } from "../../domain/types";
 import { razorpayPlanIdFor, isManualPlan, getCommercePlan, isOneTimePlan } from "@/config/commerce/plans";
 import crypto from "crypto";
+import { captureError } from "@/lib/observability/error-tracker";
 
 export class RazorpayProvider implements BillingProvider {
   readonly name = "razorpay";
 
   private get keyId(): string {
-    return process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+    // Prefer test key for agency test mode; fallback to live key
+    const testId = process.env.TEST_RAZORPAY_KEY_ID ?? "";
+    const liveId = process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+    // If liveId is test (rzp_test) use it, otherwise prefer testId when available
+    if (liveId.startsWith("rzp_test")) return liveId;
+    if (testId) return testId;
+    return liveId;
   }
 
   private get keySecret(): string {
-    return process.env.RAZORPAY_KEY_SECRET ?? "";
+    const testSecret = process.env.TEST_RAZORPAY_KEY_SECRET ?? "";
+    const liveSecret = process.env.RAZORPAY_KEY_SECRET ?? "";
+    const keyId = this.keyId;
+    if (keyId.startsWith("rzp_test") && testSecret) return testSecret;
+    return liveSecret || testSecret;
   }
 
   async createCheckout(params: CheckoutParams): Promise<CheckoutResult> {
@@ -98,6 +109,7 @@ export class RazorpayProvider implements BillingProvider {
         providerOrderId: order.id,
       };
     } catch (error) {
+      captureError(error, { service: "razorpay-provider", operation: "createCheckout", planCode: params.planCode });
       return {
         success: false,
         error: error instanceof Error ? error.message : "Checkout creation failed",
