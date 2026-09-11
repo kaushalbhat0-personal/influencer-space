@@ -281,7 +281,7 @@ export async function changeAgencyPlanAction(planCode: string, cycle: "monthly" 
     checkout: {
       orderId: checkout.orderId,
       subscriptionId: checkout.subscriptionId,
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "",
       amountPaise,
       currency,
       cycle,

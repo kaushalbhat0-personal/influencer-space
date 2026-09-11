@@ -13,7 +13,7 @@ export class RazorpayProvider implements BillingProvider {
   readonly name = "razorpay";
 
   private get keyId(): string {
-    return process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+    return process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
   }
 
   private get keySecret(): string {
