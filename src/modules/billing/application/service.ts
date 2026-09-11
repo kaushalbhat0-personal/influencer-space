@@ -237,11 +237,11 @@ export class BillingService {
         if (cycleForValidation === "yearly") {
           let yearly: number | null = null;
           try {
-            const { getCommercePlan: gcp } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
-            yearly = gcp(plan.code)?.annualPrice ?? null;
+            const { getCommercePlan: gcp } = await import("@/config/commerce/plans");
+            yearly = (gcp as (c: string) => { annualPrice?: number | null })(plan.code)?.annualPrice ?? null;
             if (!yearly) {
-              const { PARTNER_RECURRING_PRICES: pr } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
-              yearly = pr[plan.code]?.yearly ?? null;
+              const { PARTNER_RECURRING_PRICES: pr } = await import("@/config/commerce/agency-commercial");
+              yearly = (pr as Record<string, { yearly: number }>)[plan.code]?.yearly ?? null;
             }
           } catch {}
           if (yearly && yearly > 0) expectedAmounts.push(Math.round(yearly * 100) / 100);
@@ -257,7 +257,7 @@ export class BillingService {
           const amt = Math.round((plan.price ?? 0) * 100) / 100;
           if (amt > 0) expectedAmounts.push(amt);
           try {
-            const { getCommercePlan: gcp2 } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
+            const { getCommercePlan: gcp2 } = await import("@/config/commerce/plans");
             const yearly2 = gcp2(plan.code)?.annualPrice;
             if (yearly2 && yearly2 > 0) {
               const y = Math.round(yearly2 * 100) / 100;
@@ -265,8 +265,8 @@ export class BillingService {
             }
           } catch {}
           try {
-            const { PARTNER_RECURRING_PRICES: pr2 } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
-            const y3 = pr2[plan.code]?.yearly;
+            const { PARTNER_RECURRING_PRICES: pr2 } = await import("@/config/commerce/agency-commercial");
+            const y3 = (pr2 as unknown as Record<string, { yearly: number }>)[plan.code]?.yearly;
             if (y3) {
               const y = Math.round(y3 * 100) / 100;
               if (!expectedAmounts.includes(y)) expectedAmounts.push(y);
@@ -278,6 +278,7 @@ export class BillingService {
         const monthlyAmt = Math.round((plan.price ?? 0) * 100) / 100;
         const yearlyAmtFromCommerce = (() => {
           try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
             const { getCommercePlan } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
             const commerce = getCommercePlan(plan.code);
             if (commerce?.annualPrice && commerce.annualPrice > 0) return Math.round(commerce.annualPrice * 100) / 100;
@@ -286,7 +287,8 @@ export class BillingService {
         })();
         const yearlyAmtFromAgency = (() => {
           try {
-            const { PARTNER_RECURRING_PRICES } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { monthly: number; yearly: number }> };
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const { PARTNER_RECURRING_PRICES } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
             const partnerEntry = PARTNER_RECURRING_PRICES[plan.code];
             if (partnerEntry?.yearly) return Math.round(partnerEntry.yearly * 100) / 100;
           } catch {}
@@ -303,8 +305,8 @@ export class BillingService {
           if (monthlyAmt > 0) expectedAmounts.push(monthlyAmt);
           if (yearlyAmt && yearlyAmt > 0 && !expectedAmounts.includes(yearlyAmt)) expectedAmounts.push(yearlyAmt);
           try {
-            const { PARTNER_RECURRING_PRICES: pr } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { monthly: number; yearly: number }> };
-            const pe = pr[plan.code];
+            const { PARTNER_RECURRING_PRICES: pr } = await import("@/config/commerce/agency-commercial");
+            const pe = (pr as unknown as Record<string, { yearly: number; monthly: number }>)[plan.code];
             if (pe) {
               const pm = Math.round(pe.monthly * 100) / 100;
               const py = Math.round(pe.yearly * 100) / 100;
@@ -369,8 +371,8 @@ export class BillingService {
         const amt = validPaidAmount ?? 0;
         let inferredYearly: number | null = null;
         try {
-          const { PARTNER_RECURRING_PRICES: pr } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
-          inferredYearly = pr[plan.code]?.yearly ?? null;
+          const { PARTNER_RECURRING_PRICES: pr } = await import("@/config/commerce/agency-commercial");
+          inferredYearly = (pr as unknown as Record<string, { yearly: number }>)[plan.code]?.yearly ?? null;
         } catch {}
         if (inferredYearly && Math.abs(amt - inferredYearly) < 0.5) {
           const d = new Date();
@@ -1066,3 +1068,6 @@ export class BillingService {
 }
 
 export const billingService = new BillingService();
+
+
+
