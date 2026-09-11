@@ -114,9 +114,19 @@ function applyDataDrivenHide(sections: SectionPlan[], input: BlueprintInput): Se
   const hasData = (id: string): boolean => {
     switch (id) {
       case "hero":
-      case "contact":
       case "footer":
         return true;
+      case "contact":
+        // RCCF-PILOT-FIX-02: Contact only when real business contact/location evidence exists.
+        // Prevents generic Contact on every local_business draft when no location/contact data.
+        return !!(
+          source.location ||
+          source.resume?.location ||
+          source.googleMapsUrl ||
+          hasPlatforms(input, ["google_maps"]) ||
+          (source.socialLinks?.length ?? 0) > 0 ||
+          source.links.length > 0
+        );
       case "experience":
         return (source.resume?.experience.length ?? 0) > 0;
       case "skills":
@@ -157,9 +167,9 @@ function applyDataDrivenHide(sections: SectionPlan[], input: BlueprintInput): Se
       case "events":
         return (source.socialLinks?.length ?? 0) > 0 || (source.links.length ?? 0) > 1 || (source.resume?.socialLinks.length ?? 0) > 0;
       case "menu":
-        // 15B: require structured menu when available, fallback to keyword for legacy
+        // RCCF-PILOT-FIX-02: Menu only when structured menu evidence exists.
+        // Structured = menuItems array OR explicit "Menu:" in bio (parsed). No products fallback for location-only.
         if ((source.menuItems?.length ?? 0) > 0) return true;
-        if ((source.products?.length ?? 0) > 0 && input.archetype?.archetype === "local_business") return true;
         return hasMenuSignal(source);
       case "location":
         return !!(source.location || source.resume?.location || source.googleMapsUrl || hasPlatforms(input, ["google_maps"]));
@@ -231,9 +241,11 @@ function hasMenuSignal(source: ContentSource): boolean {
   return txt.includes("menu:");
 }
 
-function hasHoursSignal(_source: ContentSource): boolean {
-  // Batch B: removed bio fallback — hours requires structured source.hours
-  return false;
+function hasHoursSignal(source: ContentSource): boolean {
+  // RCCF-PILOT-FIX-02: Hours requires explicit "Hours:" in bio (structured) or source.hours.
+  // Generic "open"/"closed" must not create hours — prevents fabrication for location-only businesses.
+  const txt = [source.bio ?? "", source.resume?.summary ?? ""].join(" ").toLowerCase();
+  return txt.includes("hours:");
 }
 
 function hasReservationSignal(_source: ContentSource): boolean {

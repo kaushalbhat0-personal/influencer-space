@@ -257,7 +257,8 @@ export function bindSection(
       return withData({ title: fallbackLabel, feed: [] }, 0);
     }
     case "menu": {
-      // 15B: bind to products.* infrastructure, never dummy url "#"
+      // RCCF-PILOT-FIX-02: Menu only when structured menuItems evidence exists.
+      // Structured = menuItems array OR explicit "Menu:" in bio (parsed). No products fallback for location-only.
       const menu = source?.menuItems ?? [];
       if (menu.length > 0) {
         const products = menu.map((m, i) => ({
@@ -274,23 +275,6 @@ export function bindSection(
         }));
         return withData({ title: fallbackLabel, products, layout: "grid", columns: 3 }, products.length);
       }
-      // Fallback: if local business has products that look like menu (same shape) use them
-      if (source?.products && source.products.length > 0 && archetype === "local_business") {
-        const products = source.products.map((p, i) => ({
-          id: p.id || `menu_prod_${i}`,
-          name: p.name,
-          description: p.description ?? null,
-          price: p.price ?? 0,
-          imageUrl: p.imageUrl ?? null,
-          images: p.imageUrl ? [p.imageUrl] : [],
-          slug: p.slug ?? p.name.toLowerCase().replace(/\s+/g, "-"),
-          isFeatured: false,
-          isActive: true,
-          category: p.category ?? null,
-        }));
-        return withData({ title: fallbackLabel, products, layout: "grid", columns: 3 }, products.length);
-      }
-      // Legacy fallback: parse Menu: from bio into products (no dummy URL) for backward compat
       if (hasSource) {
         const parsed = parseMenuItems(bio);
         if (parsed.length > 0) {
@@ -339,6 +323,10 @@ export function bindSection(
       return withData({ title: fallbackLabel, email: "", phone: "" }, 0);
     }
     case "contact": {
+      const loc = source?.location || resume?.location || null;
+      const gmaps = source?.googleMapsUrl ?? null;
+      const hasContactEvidence = !!(loc || gmaps || (source?.socialLinks?.length ?? 0) > 0 || (source?.links?.length ?? 0) > 0);
+      if (!hasContactEvidence && hasSource) return empty({ title: fallbackLabel, email: "", phone: "" });
       return withData({ title: fallbackLabel, email: "", phone: "" }, 1);
     }
     case "footer": {

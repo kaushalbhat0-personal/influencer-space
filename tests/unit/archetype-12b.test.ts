@@ -240,6 +240,12 @@ describe("RCCF-PRELAUNCH-12B — Archetype Resolver + Intelligent Website Bluepr
       links: [],
       socialLinks: [],
       location: "Pune, India",
+      hours: "Mon-Sun 9am - 10pm",
+      reservationUrl: "https://tastybites.com/reserve",
+      menuItems: [
+        { name: "Biryani", description: "Hyderabadi", price: 350, category: "Main" },
+        { name: "Paneer", description: "Cottage cheese", price: 280, category: "Starter" },
+      ],
     };
     const intel = buildEvidenceIntelligence({
       sourceText: bio,
