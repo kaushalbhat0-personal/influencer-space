@@ -40,7 +40,7 @@ export async function updateTheme(
     headingWeight?: string;
     /**
      * RCCF-71.3: HERO PRESENTATION presets. Persisted into Website.themeConfig
-      * (advanced_builder gated like the rest of the custom Appearance surface) and merged
+     * (advanced_builder gated like the rest of the custom Appearance surface) and merged
      * onto snapshot.content.hero by buildRuntimeSnapshot / the canvas. Unknown
      * values are ignored — never stored, never rendered.
      */
@@ -60,7 +60,15 @@ export async function updateTheme(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.tenantId || session.user.tenantId !== tenantId) {
+    let isAuthorized = false;
+    if (session?.user?.tenantId && session.user.tenantId === tenantId) {
+      isAuthorized = true;
+    } else if ((session?.user as { agencyId?: string })?.agencyId) {
+      const { getAgencyBuilderTenantId } = await import("@/actions/agency-builder.actions");
+      const agencyTenantId = await getAgencyBuilderTenantId();
+      if (agencyTenantId && agencyTenantId === tenantId) isAuthorized = true;
+    }
+    if (!isAuthorized) {
       return { success: false, error: "Unauthorized" };
     }
 
@@ -202,7 +210,15 @@ export async function applyThemePackage(
 ): Promise<{ success: boolean; themeId?: string; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.tenantId || session.user.tenantId !== tenantId) {
+    let isAuthorized = false;
+    if (session?.user?.tenantId && session.user.tenantId === tenantId) {
+      isAuthorized = true;
+    } else if ((session?.user as { agencyId?: string })?.agencyId) {
+      const { getAgencyBuilderTenantId } = await import("@/actions/agency-builder.actions");
+      const agencyTenantId = await getAgencyBuilderTenantId();
+      if (agencyTenantId && agencyTenantId === tenantId) isAuthorized = true;
+    }
+    if (!isAuthorized) {
       return { success: false, error: "Unauthorized" };
     }
 
