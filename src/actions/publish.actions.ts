@@ -36,8 +36,13 @@ export async function getCreatorPublishUsage(): Promise<{ success: boolean; usag
 
 async function requireTenant(): Promise<string> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId) throw new Error("Unauthorized");
-  return session.user.tenantId;
+  if (session?.user?.tenantId) return session.user.tenantId;
+  if ((session?.user as { agencyId?: string })?.agencyId) {
+    const { getAgencyBuilderTenantId } = await import("@/actions/agency-builder.actions");
+    const agencyTenantId = await getAgencyBuilderTenantId();
+    if (agencyTenantId) return agencyTenantId;
+  }
+  throw new Error("Unauthorized");
 }
 
 export async function publishWebsite(): Promise<PublishActionResult> {
