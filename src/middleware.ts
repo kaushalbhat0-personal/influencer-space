@@ -178,14 +178,31 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   if (workspaceId) requestHeaders.set("x-workspace-id", workspaceId);
 
-  // CRITICAL-02 (audit): the old `/agency/* → /workspace/*` compatibility 308
-  // redirected every real agency route to a nonexistent `/workspace`, making the
-  // entire agency console 404. The agency console lives at `/agency/**`; removed.
-  // Role-based redirects for authenticated users
-  const redirect = lifecycleService.redirectTo(pathname, lifecycle);
-  if (redirect) {
-    const url = new URL(redirect, request.url);
-    return NextResponse.redirect(url);
+  // RCCF-PILOT-FIX-01 D2: agency Builder access requires valid __agency_client.
+  // The Lifecycle redirect previously forced every AGENCY_ADMIN away from /builder
+  // (return "/agency") before the encrypted cookie could be evaluated. Allow
+  // /builder for AGENCY_* only when a non-empty cookie is present; full
+  // ownership/expiry/role validation happens server-side via
+  // getAgencyBuilderTenantId() (fail-closed). Missing cookie still redirects.
+  if ((lifecycle.role === "AGENCY_ADMIN" || lifecycle.role === "AGENCY_STAFF") && pathname.startsWith("/builder")) {
+    const agencyCookie = request.cookies.get("__agency_client")?.value;
+    if (agencyCookie && agencyCookie.length > 20) {
+      // Skip the generic agency→/agency redirect and fall through to
+      // canAccess (which allows AGENCY_ADMIN on /builder via LIFECYCLE_ROUTE_GUARDS).
+    } else {
+      const url = new URL("/agency", request.url);
+      return NextResponse.redirect(url);
+    }
+  } else {
+    // CRITICAL-02 (audit): the old `/agency/* → /workspace/*` compatibility 308
+    // redirected every real agency route to a nonexistent `/workspace`, making the
+    // entire agency console 404. The agency console lives at `/agency/**`; removed.
+    // Role-based redirects for authenticated users
+    const redirect = lifecycleService.redirectTo(pathname, lifecycle);
+    if (redirect) {
+      const url = new URL(redirect, request.url);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Access control

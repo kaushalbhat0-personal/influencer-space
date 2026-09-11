@@ -19,11 +19,37 @@ export default async function AgencyDashboard() {
   const agencyId = (session?.user as { agencyId?: string })?.agencyId;
   if (!agencyId) return <ContentContainer><p className="text-red-400">No agency configured</p></ContentContainer>;
 
-  const [summary, recentActivity, capacity] = await Promise.all([
-    clientService.getSummary(agencyId),
-    clientService.getRecentActivity(agencyId, 10),
-    getAgencyClientCapacity(agencyId).catch(() => null),
-  ]);
+  // RCCF-PILOT-FIX-01 D1: the previous Promise.all failed closed on any
+  // single rejection, surfacing a 500 digest for the entire /agency RSC.
+  // Each data source now fails open with a safe empty fallback so an empty
+  // agency or a transient health/capacity error cannot poison the workspace.
+  let summary: Awaited<ReturnType<typeof clientService.getSummary>> | null = null;
+  let recentActivity: Awaited<ReturnType<typeof clientService.getRecentActivity>> = [];
+  let capacity: Awaited<ReturnType<typeof getAgencyClientCapacity>> | null = null;
+  try {
+    summary = await clientService.getSummary(agencyId);
+  } catch (e) {
+    const { captureError } = await import("@/lib/observability/error-tracker");
+    captureError(e, { service: "agency", operation: "getSummary", route: "/agency" });
+    summary = { totalClients: 0, activeClients: 0, publishedWebsites: 0, averageHealth: 0, recentClients: [], needingAttention: 0, unpublished: 0 };
+  }
+  try {
+    recentActivity = await clientService.getRecentActivity(agencyId, 10);
+  } catch (e) {
+    const { captureError } = await import("@/lib/observability/error-tracker");
+    captureError(e, { service: "agency", operation: "getRecentActivity", route: "/agency" });
+    recentActivity = [];
+  }
+  try {
+    capacity = await getAgencyClientCapacity(agencyId);
+  } catch (e) {
+    const { captureError } = await import("@/lib/observability/error-tracker");
+    captureError(e, { service: "agency", operation: "getAgencyClientCapacity", route: "/agency" });
+    capacity = null;
+  }
+  if (!summary) {
+    summary = { totalClients: 0, activeClients: 0, publishedWebsites: 0, averageHealth: 0, recentClients: [], needingAttention: 0, unpublished: 0 };
+  }
 
   const tenantNames = new Map(
     summary.recentClients.map((c) => [c.tenantId, c.businessName])

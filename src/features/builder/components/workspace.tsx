@@ -191,6 +191,18 @@ export function BuilderWorkspace() {
             if (h.success && h.score != null) setHealthScore(h.score);
           })
         ).catch(() => {});
+      } else if (!r.success && r.error && String(r.error).toLowerCase().includes("unauthorized")) {
+        // RCCF-PILOT-FIX-01 D2: fail-closed for invalid agency Builder cookie.
+        // An AGENCY_ADMIN without a valid __agency_client must not see an
+        // empty builder; redirect to the agency workspace (creator still owns
+        // their own builder at /builder with their own tenantId).
+        try {
+          const isAgency = typeof window !== "undefined" && window.location.pathname.startsWith("/builder");
+          if (isAgency) window.location.replace("/agency");
+          else window.location.replace("/admin/login");
+        } catch {
+          window.location.href = "/agency";
+        }
       }
     }).catch(() => {});
 
