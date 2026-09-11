@@ -243,7 +243,7 @@ export async function withLaunchCoreContentCapacity<T>(
   // and remote-Supabase round-trips can exceed 5s on the first invocation).
   return prisma.$transaction(
     async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "Tenant" WHERE id = ${tenantId}::uuid FOR UPDATE`;
       if (!isLaunchPlan(planCode)) {
         // Non-Launch: creates fall through to the existing per-type enforcement
         // contract; update transitions are not newly gated (existing behavior).
