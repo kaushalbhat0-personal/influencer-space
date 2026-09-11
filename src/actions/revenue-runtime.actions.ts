@@ -146,18 +146,23 @@ export async function getAgencyRevenueData(agencyId: string): Promise<{
     if (!membership.ok) return { ok: false, error: membership.error ?? "Forbidden" };
   }
 
-  const [summary, payoutSummary, entries, loyalty] = await Promise.all([
-    getPartnerRevenueSummary(agencyId),
-    getPayoutSummary(agencyId),
-    prisma.commissionEntry.findMany({ where: { partnerId: agencyId }, orderBy: { createdAt: "desc" }, take: 25, select: { id: true, planCode: true, amount: true, partnerShare: true, status: true, createdAt: true } }),
-    getLoyaltyProgress(agencyId),
-  ]);
-
-  return {
-    ok: true,
-    summary,
-    payoutSummary,
-    loyalty,
-    entries: entries.map((e) => ({ ...e, createdAt: e.createdAt.toISOString() })),
-  };
+  try {
+    const [summary, payoutSummary, entries, loyalty] = await Promise.all([
+      getPartnerRevenueSummary(agencyId),
+      getPayoutSummary(agencyId),
+      prisma.commissionEntry.findMany({ where: { partnerId: agencyId }, orderBy: { createdAt: "desc" }, take: 25, select: { id: true, planCode: true, amount: true, partnerShare: true, status: true, createdAt: true } }),
+      getLoyaltyProgress(agencyId),
+    ]);
+    return {
+      ok: true,
+      summary,
+      payoutSummary,
+      loyalty,
+      entries: entries.map((e) => ({ ...e, createdAt: e.createdAt.toISOString() })),
+    };
+  } catch (e) {
+    const { captureError } = await import("@/lib/observability/error-tracker");
+    captureError(e, { service: "revenue-runtime", operation: "getAgencyRevenueData", route: "/agency" });
+    return { ok: false, error: "Revenue data unavailable" };
+  }
 }

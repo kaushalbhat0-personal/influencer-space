@@ -88,5 +88,11 @@ export async function getAgencySuccessData(agencyId: string): Promise<{ ok: bool
     const membership = await assertAgencyMembership(session.user.id, agencyId);
     if (!membership.ok) return { ok: false, error: membership.error ?? "Forbidden" };
   }
-  return { ok: true, clients: await getAgencySuccessClients(agencyId) };
+  try {
+    return { ok: true, clients: await getAgencySuccessClients(agencyId) };
+  } catch (e) {
+    const { captureError } = await import("@/lib/observability/error-tracker");
+    captureError(e, { service: "customer-success", operation: "getAgencySuccessData", route: "/agency" });
+    return { ok: false, error: "Success data unavailable" };
+  }
 }
