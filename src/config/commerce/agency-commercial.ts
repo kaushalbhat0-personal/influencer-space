@@ -1,20 +1,22 @@
 /**
- * Agency / Freelancer Commercial Authority — RCCF-FINANCE-02
+ * Agency / Freelancer Commercial Authority — RCCF-FINANCE-02/04
  *
  * Single canonical source for every commercial constant that governs the
- * recurring Partner/Agency/Freelancer model. No other file may hardcode a
+ * Partner/Agency/Freelancer model. No other file may hardcode a
  * monthly, yearly, add-on or royalty value — import from here.
  *
- * Business decisions (FINANCE-02):
- *  - Partner plans are MONTHLY/YEARLY recurring (no perpetual entitlement)
+ * Business decisions (FINANCE-04 MANUAL RENEWAL):
+ *  - Partner plans are MANUAL RENEWAL via one-time Razorpay payments (no Razorpay Subscriptions)
+ *  - Monthly ₹4,999 grants ~1 month, Yearly ₹49,990 grants ~1 year; renew manually at expiry/grace
+ *  - No perpetual access, no automatic charging, no razorpayPlanId required
  *  - Passive royalty starts only at 5 ACTIVE client websites
  *  - Tiers: 0-4 → 0%, 5-25 → 20%, 26-50 → 30%, 51+ → 40%
- *  - Royalty applies ONLY to recurring Pendallo SaaS subscription revenue
+ *  - Royalty applies ONLY to qualifying ACTIVE client SaaS subscription revenue
  *    for qualifying ACTIVE client websites (BillingSubscription ACTIVE).
  *    It does NOT apply to product/order GMV, DIRECT_CREATOR settlements,
  *    platform fees or any client-generated business revenue.
  *  - Active client = tenant-agency scoped, ACTIVE BillingSubscription only.
- *    Do not count offboarded, deleted, expired, pending, historical.
+ *    Do not count offboarded, deleted, expired, pending, historical, trial-only, PAST_DUE/CANCELLED/EXPIRED.
  */
 
 export const PARTNER_ADDON_UNIT_PRICE_INR = 2000;
@@ -23,11 +25,11 @@ export const PARTNER_TRIAL_DAYS = 15;
 export const PARTNER_TRIAL_CLIENT_CAPACITY = 1;
 
 /**
- * Canonical recurring prices for Partner plans (INR).
+ * Canonical MANUAL RENEWAL prices for Partner plans (INR) — one-time payment per period.
  * The `price` field in COMMERCE_PLANS is the monthly authority; yearly is
- * derived as 10× monthly (same invariant as creator annualPrice = 10× monthly).
- * Razorpay plan ids are provisioned per cycle via Super Admin Pricing Center;
- * these numbers are the DB-authoritative amounts.
+ * 10× monthly (same invariant as creator annualPrice = 10× monthly).
+ * Razorpay plan ids NOT required (manual renewal uses one-time orders).
+ * These numbers are the DB-authoritative amounts for amount validation.
  */
 export const PARTNER_RECURRING_PRICES = {
   partner_free: { monthly: 0, yearly: 0, razorpayMonthlyPlanId: null as string | null, razorpayYearlyPlanId: null as string | null },

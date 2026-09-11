@@ -468,12 +468,13 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     name: "Solo Partner",
     description: "Run client projects with confidence: custom domains, premium themes and automation help.",
     family: "partner",
-    // RCCF-FINANCE-02: recurring monthly/yearly subscription. No perpetual
-    // entitlement — entitlement follows successful subscription lifecycle/grace.
+    // RCCF-FINANCE-04: MANUAL RENEWAL — one-time Razorpay payment per period, no Razorpay Subscription.
+    // Monthly ₹4,999 grants ~1 month, Yearly ₹49,990 grants ~1 year; renew manually at expiry/grace.
     // Prices canonical in agency-commercial.ts (monthly 4999, yearly 49990).
     price: 4999,
     currency: "INR",
     cycle: "monthly",
+    billingForm: "one_time",
     annualPrice: 49990,
     razorpayPlanId: null,
     manual: false,
@@ -536,10 +537,11 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     name: "Partner Scale",
     description: "Scale many creators under your own brand with white-label and priority support.",
     family: "partner",
-    // RCCF-FINANCE-02: recurring monthly/yearly subscription (yearly 149990).
+    // RCCF-FINANCE-04: MANUAL RENEWAL — one-time payment per period, no provider subscription.
     price: 14999,
     currency: "INR",
     cycle: "monthly",
+    billingForm: "one_time",
     annualPrice: 149990,
     razorpayPlanId: null,
     manual: false,

@@ -230,11 +230,49 @@ export class BillingService {
     // Wrong-cycle provider amount is rejected/reconciled, not silently accepted.
     if (isPaidTransition) {
       const isOneTime = isOneTimePlan(plan.code);
-      // Build list of canonical expected amounts (rupees) for this plan code.
+      // RCCF-FINANCE-04 manual renewal: one_time now time-limited, cycle determines price.
+      const cycleForValidation = (input.cycle as "monthly" | "yearly" | undefined) ?? null;
       const expectedAmounts: number[] = [];
       if (isOneTime) {
-        const amt = Math.round((plan.price ?? 0) * 100) / 100;
-        if (amt > 0) expectedAmounts.push(amt);
+        if (cycleForValidation === "yearly") {
+          let yearly: number | null = null;
+          try {
+            const { getCommercePlan: gcp } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
+            yearly = gcp(plan.code)?.annualPrice ?? null;
+            if (!yearly) {
+              const { PARTNER_RECURRING_PRICES: pr } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
+              yearly = pr[plan.code]?.yearly ?? null;
+            }
+          } catch {}
+          if (yearly && yearly > 0) expectedAmounts.push(Math.round(yearly * 100) / 100);
+          else {
+            const amt = Math.round((plan.price ?? 0) * 100) / 100;
+            if (amt > 0) expectedAmounts.push(amt);
+          }
+        } else if (cycleForValidation === "monthly") {
+          const amt = Math.round((plan.price ?? 0) * 100) / 100;
+          if (amt > 0) expectedAmounts.push(amt);
+        } else {
+          // Legacy without cycle — allow both monthly and yearly for backward compat
+          const amt = Math.round((plan.price ?? 0) * 100) / 100;
+          if (amt > 0) expectedAmounts.push(amt);
+          try {
+            const { getCommercePlan: gcp2 } = require("@/config/commerce/plans") as { getCommercePlan: (c: string) => { annualPrice?: number | null } };
+            const yearly2 = gcp2(plan.code)?.annualPrice;
+            if (yearly2 && yearly2 > 0) {
+              const y = Math.round(yearly2 * 100) / 100;
+              if (!expectedAmounts.includes(y)) expectedAmounts.push(y);
+            }
+          } catch {}
+          try {
+            const { PARTNER_RECURRING_PRICES: pr2 } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
+            const y3 = pr2[plan.code]?.yearly;
+            if (y3) {
+              const y = Math.round(y3 * 100) / 100;
+              if (!expectedAmounts.includes(y)) expectedAmounts.push(y);
+            }
+          } catch {}
+        }
       } else {
         const cycle = (input.cycle as "monthly" | "yearly" | undefined) ?? null;
         const monthlyAmt = Math.round((plan.price ?? 0) * 100) / 100;
@@ -310,10 +348,45 @@ export class BillingService {
       }
     }
 
+    // RCCF-FINANCE-04: manual one-time renewal — compute renewsAt from cycle when provider does not supply it (payment.captured)
+    let effectiveRenewsAt: Date | null = input.renewsAt ?? null;
+    const isPaidForRenew = mapping.action === "activate" || mapping.action === "renew";
+    if (!effectiveRenewsAt && isPaidForRenew) {
+      const c = (input.cycle as "monthly" | "yearly" | undefined) ?? null;
+      if (c) {
+        const now = new Date();
+        if (c === "yearly") {
+          const d = new Date(now);
+          d.setFullYear(d.getFullYear() + 1);
+          effectiveRenewsAt = d;
+        } else {
+          const d = new Date(now);
+          d.setMonth(d.getMonth() + 1);
+          effectiveRenewsAt = d;
+        }
+      } else if (isOneTimePlan(plan.code) && plan.code.startsWith("partner_")) {
+        // Fallback: infer cycle from captured amount (yearly vs monthly) when cycle not explicitly passed (legacy webhook)
+        const amt = validPaidAmount ?? 0;
+        let inferredYearly: number | null = null;
+        try {
+          const { PARTNER_RECURRING_PRICES: pr } = require("@/config/commerce/agency-commercial") as { PARTNER_RECURRING_PRICES: Record<string, { yearly: number }> };
+          inferredYearly = pr[plan.code]?.yearly ?? null;
+        } catch {}
+        if (inferredYearly && Math.abs(amt - inferredYearly) < 0.5) {
+          const d = new Date();
+          d.setFullYear(d.getFullYear() + 1);
+          effectiveRenewsAt = d;
+        } else if (amt > 0) {
+          const d = new Date();
+          d.setMonth(d.getMonth() + 1);
+          effectiveRenewsAt = d;
+        }
+      }
+    }
     const sub = await billingRepository.upsertSubscription(workspaceId, {
       planId: plan.id,
       status,
-      renewsAt: input.renewsAt ?? null,
+      renewsAt: effectiveRenewsAt,
     });
 
     await billingRepository.createEvent({
@@ -800,14 +873,12 @@ export class BillingService {
       }
     }
 
-    // RCCF-73 — one-time lifecycle: ACTIVE → NO RENEWAL. Re-checking out the
-    // SAME one-time plan while it is already ACTIVE is a no-op error, not a
-    // second charge. Upgrades (Solo → Scale) remain allowed and are paid
-    // through their own one-time checkout.
-    if (current?.plan?.code === planCode && current.status === "ACTIVE" && isOneTimePlan(planCode)) {
+    // RCCF-FINANCE-04: manual one-time renewal — same partner plan re-purchase extends entitlement (monthly/yearly cycle).
+    // Keep one-time guard for non-partner one-time plans, but allow partner manual renewal.
+    if (current?.plan?.code === planCode && current.status === "ACTIVE" && isOneTimePlan(planCode) && !planCode.startsWith("partner_")) {
       return { success: false, error: "This plan is already active — a one-time purchase does not renew." };
     }
-    if (current?.plan?.code === planCode) {
+    if (current?.plan?.code === planCode && !planCode.startsWith("partner_")) {
       return { success: false, error: `Already on ${target.name} — no change needed.` };
     }
 

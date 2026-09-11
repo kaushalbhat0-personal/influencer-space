@@ -19,6 +19,31 @@ export async function runBillingExpiry(now = new Date(), opts?: { batchSize?: nu
   const batchSize = opts?.batchSize ?? BILLING_EXPIRY_BATCH_SIZE;
   const maxDurationMs = opts?.maxDurationMs ?? BILLING_EXPIRY_MAX_DURATION_MS;
   const startedAt = Date.now();
+  // RCCF-FINANCE-04: manual renewal — ACTIVE with past renewsAt must enter PAST_DUE grace (no perpetual), then expiry handles PAST_DUE→EXPIRED
+  // Promote expired ACTIVE (renewsAt < now) to PAST_DUE in bounded batch before handling grace expiry.
+  const expiredActives = await prisma.billingSubscription.findMany({
+    where: { status: "ACTIVE", renewsAt: { lt: now } },
+    select: { id: true, workspaceId: true, accountId: true, renewsAt: true, status: true },
+    orderBy: { renewsAt: "asc" },
+    take: Math.min(batchSize, 50),
+  });
+  for (const sub of expiredActives) {
+    if (Date.now() - startedAt > maxDurationMs) break;
+    try {
+      validateTransition(sub.status as never, "PAST_DUE");
+      const idempotencyKey = `billing_pastdue_${sub.id}_${sub.renewsAt ? new Date(sub.renewsAt).toISOString().slice(0, 10) : "no_renews"}`;
+      const existing = await prisma.billingEvent.findUnique({ where: { idempotencyKey } }).catch(() => null);
+      if (existing) continue;
+      const fresh = await prisma.billingSubscription.findUnique({ where: { id: sub.id }, select: { status: true } });
+      if (!fresh || fresh.status !== "ACTIVE") continue;
+      await prisma.$transaction(async (tx) => {
+        await tx.billingSubscription.update({ where: { id: sub.id }, data: { status: "PAST_DUE" } });
+        await tx.billingEvent.create({
+          data: { workspaceId: sub.workspaceId, accountId: sub.accountId, type: "SUBSCRIPTION_PAST_DUE", idempotencyKey, payload: { previousStatus: "ACTIVE", newStatus: "PAST_DUE", renewsAt: sub.renewsAt?.toISOString() ?? null, reason: "period_expired", graceDays: RENEWAL_GRACE_DAYS } },
+        });
+      });
+    } catch {}
+  }
   // Bounded: only process first batchSize past-due, ordered by renewsAt (oldest first)
   const pastDueSubs = await prisma.billingSubscription.findMany({
     where: { status: "PAST_DUE" },

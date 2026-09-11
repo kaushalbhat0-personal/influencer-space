@@ -93,7 +93,7 @@ export default async function AgencyBilling() {
 
       <PageSection>
         <MetricGrid>
-          <MetricCard label="Partner Tier" value={displayName} icon={CreditCard} subtext={`Renews ${subscriptionData[0]?.renewsAt ? new Date(subscriptionData[0].renewsAt).toISOString().slice(0, 10) : "per your plan"}`} />
+          <MetricCard label="Partner Tier" value={displayName} icon={CreditCard} subtext={subscriptionData[0]?.renewsAt ? `Valid until ${new Date(subscriptionData[0].renewsAt).toISOString().slice(0, 10)} — Renew manually` : trialActive ? "Trial — renew manually at expiry" : "No active period — renew manually"} />
           <MetricCard label="Client Websites" value={managedCreators} icon={Users} subtext={`Limit: ${limitLabel}`} />
           <MetricCard label="Client Subscriptions" value={activeSubs.length} icon={TrendingUp} />
           <MetricCard label="Client Invoices" value={invoiceData.length} icon={FileText} />

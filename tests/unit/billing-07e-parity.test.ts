@@ -34,13 +34,13 @@ describe("RCCF-BILLING-07E — pricing parity contract (marketing ↔ billing �
     expect(getEnterprisePlan("partner")?.code).toBe("partner_enterprise");
   });
 
-  // FINANCE-02: partner plans are now recurring monthly/yearly (no one-time perpetual)
+  // FINANCE-04: partner plans are manual renewal one-time (no Razorpay Subscription)
   it("billing model: partner one-time vs creator recurring agrees across registry and helper", () => {
-    // Registry is authority — FINANCE-02 partner is recurring
-    expect(isOneTimePlan("partner_solo")).toBe(false);
-    expect(isOneTimePlan("partner_scale")).toBe(false);
-    expect(getCommercePlan("partner_solo")?.billingForm).toBeUndefined();
-    expect(getCommercePlan("partner_scale")?.billingForm).toBeUndefined();
+    // Registry is authority — FINANCE-04 partner is one_time manual renewal
+    expect(isOneTimePlan("partner_solo")).toBe(true);
+    expect(isOneTimePlan("partner_scale")).toBe(true);
+    expect(getCommercePlan("partner_solo")?.billingForm).toBe("one_time");
+    expect(getCommercePlan("partner_scale")?.billingForm).toBe("one_time");
 
     expect(isOneTimePlan("creator_grow")).toBe(false);
     expect(isOneTimePlan("creator_scale")).toBe(false);

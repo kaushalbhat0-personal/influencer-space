@@ -16,23 +16,25 @@ import { PARTNER_ADDON_UNIT_PRICE_INR } from "@/config/commerce/agency-addons";
 // ── Registry: billing-form truth ─────────────────────────────────────────────
 
 describe("RCCF-73 — registry billing forms", () => {
-  // RCCF-FINANCE-02: Partner plans are now RECURRING monthly/yearly (no perpetual).
-  // Prices canonical in agency-commercial.ts: monthly 4999/14999, yearly 49990/149990.
-  it("Partner Solo = ₹4,999 recurring monthly (yearly 49990)", () => {
+  // RCCF-FINANCE-04: Manual renewal — one-time payment per period, no Razorpay Subscription.
+  // Partner Solo/Scale are one_time with yearly price 10× monthly, isOneTimePlan true.
+  it("Partner Solo = ₹4,999 monthly / ₹49,990 yearly — manual one-time", () => {
     const p = getCommercePlan("partner_solo")!;
     expect(p.price).toBe(4999);
     expect(p.family).toBe("partner");
     expect(p.annualPrice).toBe(49990);
+    expect(p.billingForm).toBe("one_time");
     expect(p.razorpayPlanId).toBeNull();
-    expect(isOneTimePlan("partner_solo")).toBe(false);
+    expect(isOneTimePlan("partner_solo")).toBe(true);
   });
 
-  it("Partner Scale = ₹14,999 recurring monthly (yearly 149990)", () => {
+  it("Partner Scale = ₹14,999 monthly / ₹1,49,990 yearly — manual one-time", () => {
     const p = getCommercePlan("partner_scale")!;
     expect(p.price).toBe(14999);
     expect(p.annualPrice).toBe(149990);
+    expect(p.billingForm).toBe("one_time");
     expect(p.razorpayPlanId).toBeNull();
-    expect(isOneTimePlan("partner_scale")).toBe(false);
+    expect(isOneTimePlan("partner_scale")).toBe(true);
   });
 
   it("unknown codes default to subscription semantics (pre-RCCF-73 behavior preserved)", () => {
@@ -206,11 +208,11 @@ describe("RCCF-73 — provider routing (one-time vs recurring)", () => {
     expect(h.ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 1499900 }));
   });
 
-  // RCCF-FINANCE-02: Partner Solo/Scale are now recurring, so a stored plan id DOES create a subscription
-  it("a stored DB subscription plan id is honored for recurring partner plans", async () => {
+  // RCCF-FINANCE-04: Manual renewal — stale DB plan id must NOT resurrect subscription (agency never uses subscriptions)
+  it("a STALE DB subscription plan id cannot resurrect recurring billing for a one-time plan", async () => {
     await provider.createCheckout({ planCode: "partner_solo", accountId: "ws-a", price: 4999, currency: "INR", razorpayPlanId: "plan_stale_legacy" });
-    expect(h.subsCreate).toHaveBeenCalled();
-    expect(h.ordersCreate).not.toHaveBeenCalled();
+    expect(h.subsCreate).not.toHaveBeenCalled();
+    expect(h.ordersCreate).toHaveBeenCalled();
   });
 
   it("Creator Growth keeps its RECURRING subscription contract (regression)", async () => {
@@ -237,26 +239,28 @@ describe("RCCF-73 — provider routing (one-time vs recurring)", () => {
   });
 });
 
-// ── Webhook activation: price integrity + lifecycle ──────────────────────────
+// ── Webhook activation: price integrity + lifecycle (FINANCE-04 manual renewal) ──────────────────────────
 
 describe("RCCF-73 — Partner Solo one-time activation (price integrity)", () => {
-  it("₹4,999 capture → ACTIVE, renewsAt never set, PAID invoice minted once", async () => {
+  it("₹4,999 capture → ACTIVE, renewsAt = ~1 month (manual renewal), PAID invoice minted once", async () => {
     h.findSubByWorkspace.mockResolvedValue(null);
     const result = await paidEvent({ planCode: "partner_solo", amount: 4999 });
     expect(result.handled).toBe(true);
     expect(result.status).toBe("ACTIVE");
-    expect(h.upsertSub).toHaveBeenCalledWith("ws-p", expect.objectContaining({ status: "ACTIVE", planId: "plan-partner_solo", renewsAt: null }));
+    expect(h.upsertSub).toHaveBeenCalledWith("ws-p", expect.objectContaining({ status: "ACTIVE", planId: "plan-partner_solo" }));
+    // Manual renewal sets renewsAt to cycle period (not null)
+    const call = h.upsertSub.mock.calls[0]?.[1] as { renewsAt: Date | null };
+    expect(call?.renewsAt).toBeInstanceOf(Date);
     expect(h.createInvoice).toHaveBeenCalledTimes(1);
   });
 
-  // FINANCE-02: recurring price drift (monthly 4999, yearly 49990) — 1 paise tolerance
   it("₹4,998 capture → DENIED (no activation, no invoice, durable ignored-event)", async () => {
     h.findSubByWorkspace.mockResolvedValue(null);
     const result = await paidEvent({ planCode: "partner_solo", amount: 4998, idempotencyKey: "k-low" });
     expect(result.status).toBeNull();
     expect(h.upsertSub).not.toHaveBeenCalled();
     expect(h.createInvoice).not.toHaveBeenCalled();
-    expect(h.createEvent).toHaveBeenCalledWith(expect.objectContaining({ payload: expect.objectContaining({ note: expect.stringContaining("price_drift:no_activation") }) }));
+    expect(h.createEvent).toHaveBeenCalledWith(expect.objectContaining({ payload: expect.objectContaining({ note: expect.stringContaining("one_time_amount_mismatch:no_activation") }) }));
   });
 
   it("₹5,000 capture → DENIED", async () => {
@@ -268,7 +272,7 @@ describe("RCCF-73 — Partner Solo one-time activation (price integrity)", () =>
   });
 });
 
-describe("RCCF-73 — Partner Scale recurring activation (price integrity)", () => {
+describe("RCCF-73 — Partner Scale manual renewal activation (price integrity)", () => {
   it("₹14,999 capture → ACTIVE exactly once", async () => {
     h.findSubByWorkspace.mockResolvedValue(null);
     const result = await paidEvent({ planCode: "partner_scale", amount: 14999 });
@@ -310,10 +314,9 @@ describe("RCCF-73 — Partner Scale recurring activation (price integrity)", () 
   });
 });
 
-describe("RCCF-73 — recurring purchase state machine (FINANCE-02)", () => {
-  // FINANCE-02: recurring plans can re-checkout while ACTIVE (renewal/upgrade path)
-  // The old one-time refusal no longer applies — ACTIVE recurring can renew.
-  it("re-checking out an ALREADY-ACTIVE recurring plan is allowed (creates new checkout)", async () => {
+describe("RCCF-73 — manual renewal state machine (FINANCE-04)", () => {
+  // FINANCE-04: manual one-time renewal — same partner plan re-purchase extends entitlement (renew manually)
+  it("re-checking out an ALREADY-ACTIVE manual renewal plan is allowed (extends entitlement)", async () => {
     h.findSubWithPlan.mockResolvedValue({ plan: { code: "partner_solo", family: "partner" }, status: "ACTIVE", planId: "plan-partner_solo" });
     h.findPlanByCode.mockResolvedValue({ id: "plan-partner_solo", code: "partner_solo", price: 4999 } as never);
     // changePlan will call createCheckout path; mock it via h.ordersCreate / subsCreate

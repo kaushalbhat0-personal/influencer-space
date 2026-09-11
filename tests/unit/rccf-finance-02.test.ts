@@ -111,18 +111,20 @@ describe("FINANCE-02 — product revenue isolation (agency royalty = SaaS only)"
   });
 });
 
-// ── Partner recurring billing ────────────────────────────────────────────
+// ── Partner manual renewal billing (FINANCE-04: one-time per period, no Razorpay Subscription) ────────────
 
-describe("FINANCE-02 — partner recurring billing (monthly/yearly, no perpetual)", () => {
-  it("partner_solo/scale are recurring (not one_time) with annualPrice yearly", () => {
+describe("FINANCE-02 — partner manual renewal billing (monthly/yearly, no perpetual)", () => {
+  it("partner_solo/scale are manual one_time with annualPrice yearly (no subscription)", () => {
     const solo = getCommercePlan("partner_solo")!;
     const scale = getCommercePlan("partner_scale")!;
-    expect(isOneTimePlan("partner_solo")).toBe(false);
-    expect(isOneTimePlan("partner_scale")).toBe(false);
+    expect(isOneTimePlan("partner_solo")).toBe(true);
+    expect(isOneTimePlan("partner_scale")).toBe(true);
     expect(solo.price).toBe(4999);
     expect(solo.annualPrice).toBe(49990);
+    expect(solo.billingForm).toBe("one_time");
     expect(scale.price).toBe(14999);
     expect(scale.annualPrice).toBe(149990);
+    expect(scale.billingForm).toBe("one_time");
   });
 
   it("royalty tiers start at 5 active — 0–4 is 0% (no perpetual entitlement)", () => {
