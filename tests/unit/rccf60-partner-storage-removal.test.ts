@@ -85,7 +85,7 @@ describe("RCCF-60.3 — Agency never participates in storage accounting", () => 
   it("Partner client/team/capacity capabilities remain unchanged (RCCF-40/49/53)", () => {
     expect(capabilityService.limit("partner_free", "max_clients")).toBe(1);
     expect(capabilityService.limit("partner_solo", "max_clients")).toBe(5);
-    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(15);
+    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(25);
     expect(capabilityService.limit("partner_enterprise", "max_clients")).toBe(-1);
     expect(capabilityService.limit("partner_solo", "max_team_members")).toBe(3);
     expect(capabilityService.can("partner_scale", "white_label").allowed).toBe(true);

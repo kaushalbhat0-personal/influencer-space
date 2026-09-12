@@ -22,10 +22,10 @@ describe("RCCF-60.2 — Partner pricing matrix (canonical)", () => {
     expect(partner("partner_enterprise").enterprise).toBe(true);
   });
 
-  it("client limits 1 / 5 / 15 / custom (-1)", () => {
+  it("client limits 1 / 5 / 25 / custom (-1)", () => {
     expect(capabilityService.limit("partner_free", "max_clients")).toBe(1);
     expect(capabilityService.limit("partner_solo", "max_clients")).toBe(5);
-    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(15);
+    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(25);
     expect(capabilityService.limit("partner_enterprise", "max_clients")).toBe(-1);
   });
 

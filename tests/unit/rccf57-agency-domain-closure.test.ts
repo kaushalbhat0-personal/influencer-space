@@ -147,7 +147,7 @@ describe("RCCF-57 — capacity invariants", () => {
     expect(capabilityService.limit("partner_free", "max_team_members")).toBe(1);
     expect(capabilityService.limit("partner_solo", "max_clients")).toBe(5);
     expect(capabilityService.limit("partner_solo", "max_team_members")).toBe(3);
-    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(15);
+    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(25);
     expect(capabilityService.limit("partner_scale", "max_team_members")).toBe(10);
     expect(capabilityService.limit("partner_enterprise", "max_clients")).toBe(-1);
     expect(capabilityService.limit("partner_enterprise", "max_team_members")).toBe(50);

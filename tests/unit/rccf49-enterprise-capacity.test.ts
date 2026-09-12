@@ -206,6 +206,6 @@ describe("RCCF-49 — propagation to the capability layer", () => {
   it("Launch/Solo/Scale capacities are unchanged", () => {
     expect(capabilityService.limit("partner_free", "max_clients")).toBe(1);
     expect(capabilityService.limit("partner_solo", "max_clients")).toBe(5);
-    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(15);
+    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(25);
   });
 });

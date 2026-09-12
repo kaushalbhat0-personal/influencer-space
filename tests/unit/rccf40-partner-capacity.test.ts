@@ -77,10 +77,10 @@ beforeEach(() => {
 });
 
 describe("RCCF-40 — canonical partner max_clients defaults", () => {
-  it("partner_free 1, partner_solo 5, partner_scale 15, partner_enterprise -1", () => {
+  it("partner_free 1, partner_solo 5, partner_scale 25, partner_enterprise -1", () => {
     expect(capabilityService.limit("partner_free", "max_clients")).toBe(1);
     expect(capabilityService.limit("partner_solo", "max_clients")).toBe(5);
-    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(15);
+    expect(capabilityService.limit("partner_scale", "max_clients")).toBe(25);
     expect(capabilityService.limit("partner_enterprise", "max_clients")).toBe(-1);
   });
 });
@@ -103,12 +103,12 @@ describe("RCCF-40 — client capacity enforcement at linkCreator", () => {
     expect(h.links.length).toBe(5);
   });
 
-  it("Partner Scale allows client #15 and rejects client #16", async () => {
+  it("Partner Scale allows client #25 and rejects client #26", async () => {
     h.mockResolveActivePlan.mockResolvedValue({ code: "partner_scale", origin: "v2", status: "ACTIVE" });
-    for (let i = 1; i <= 15; i++) await agencyTenantRelationship.linkCreator({ agencyId: AGENCY_A, tenantId: tenantId(i) });
+    for (let i = 1; i <= 25; i++) await agencyTenantRelationship.linkCreator({ agencyId: AGENCY_A, tenantId: tenantId(i) });
 
-    await expect(agencyTenantRelationship.linkCreator({ agencyId: AGENCY_A, tenantId: tenantId(16) })).rejects.toThrow(ClientCapacityError);
-    expect(h.links.length).toBe(15);
+    await expect(agencyTenantRelationship.linkCreator({ agencyId: AGENCY_A, tenantId: tenantId(26) })).rejects.toThrow(ClientCapacityError);
+    expect(h.links.length).toBe(25);
   });
 
   it("Enterprise (-1) is unlimited — no capacity rejection", async () => {
