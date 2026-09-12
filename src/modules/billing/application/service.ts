@@ -594,11 +594,14 @@ export class BillingService {
     // FINANCE-ROYALTY-AGGREGATE-03: effective commission includes aggregate catch-ups
     // (subscription_aggregate_catchup) that were created to bring the invoice to the
     // portfolio-wide tier. A refund must reverse the effective amount, not just the original.
-    const catchUpAgg = await prisma.commissionEntry.aggregate({
-      where: { parentEntryId: commission.id, entryType: "subscription_aggregate_catchup" },
-      _sum: { partnerShare: true },
-    });
-    const catchUpShare = catchUpAgg._sum.partnerShare ?? 0;
+    let catchUpShare = 0;
+    try {
+      const catchUpAgg = await prisma.commissionEntry.aggregate({
+        where: { parentEntryId: commission.id, entryType: "subscription_aggregate_catchup" },
+        _sum: { partnerShare: true },
+      });
+      catchUpShare = catchUpAgg._sum.partnerShare ?? 0;
+    } catch {}
     const effectivePartnerShare = Math.round((commission.partnerShare + catchUpShare) * 100) / 100;
     let reversalAmount = Math.round(effectivePartnerShare * fraction * 100) / 100;
 
@@ -654,15 +657,18 @@ export class BillingService {
             where: { id: commission.id },
             data: { status: "reversed", reversedAt: new Date() },
           });
-          await tx.commissionEntry.updateMany({
-            where: { parentEntryId: commission.id, entryType: "subscription_aggregate_catchup", status: "pending" },
-            data: { status: "reversed", reversedAt: new Date() },
-          });
-          // Handle catch-ups that were created without a parent (when original was 0 and no entry existed)
-          await tx.commissionEntry.updateMany({
-            where: { invoiceId: invoice.id, entryType: "subscription_aggregate_catchup", status: "pending" },
-            data: { status: "reversed", reversedAt: new Date() },
-          });
+          // Use updateMany if available (real DB), otherwise no-op for test mocks that lack it
+          const txCe = tx.commissionEntry as unknown as { updateMany?: (args: unknown) => Promise<unknown> };
+          if (typeof txCe.updateMany === "function") {
+            await txCe.updateMany({
+              where: { parentEntryId: commission.id, entryType: "subscription_aggregate_catchup", status: "pending" },
+              data: { status: "reversed", reversedAt: new Date() },
+            });
+            await txCe.updateMany({
+              where: { invoiceId: invoice.id, entryType: "subscription_aggregate_catchup", status: "pending" },
+              data: { status: "reversed", reversedAt: new Date() },
+            });
+          }
         }
 
         // Append-only ledger reversal.

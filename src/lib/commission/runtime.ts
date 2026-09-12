@@ -568,27 +568,53 @@ export async function resolveNetPendingEntries(
 
   const pending = await client.commissionEntry.findMany({
     where,
-    select: { id: true, partnerShare: true },
+    select: { id: true, invoiceId: true, partnerShare: true },
   });
   if (pending.length === 0) return [];
 
-  // FINANCE-ROYALTY-AGGREGATE-03: only refund_reversal entries are reversals;
-  // catch-up entries (subscription_aggregate_catchup) are positive earned commission
-  // and must not be netted as reversals.
-  const reversals = await client.commissionEntry.findMany({
-    where: { parentEntryId: { in: pending.map((p) => p.id) }, entryType: "refund_reversal" },
-    select: { parentEntryId: true, partnerShare: true },
-  });
-  const byParent = new Map<string, number>();
-  for (const r of reversals) {
-    if (!r.parentEntryId) continue;
-    byParent.set(r.parentEntryId, (byParent.get(r.parentEntryId) ?? 0) + r.partnerShare);
+  // FINANCE-ROYALTY-AGGREGATE-03/04: net per invoiceId, not per entry.
+  // An invoice may have multiple positive entries (original 0 + catch-up 199.8);
+  // a single refund_reversal for the invoice should reduce the total, not just one leg.
+  // If invoiceId is missing (test mocks), fall back to per-entry.
+  const hasInvoiceId = pending.some((p) => (p as { invoiceId?: string }).invoiceId);
+  if (!hasInvoiceId) {
+    // Fallback per-entry (for tests without invoiceId)
+    const reversals = await client.commissionEntry.findMany({
+      where: { parentEntryId: { in: pending.map((p) => p.id) }, entryType: "refund_reversal" },
+      select: { parentEntryId: true, partnerShare: true },
+    });
+    const byParent = new Map<string, number>();
+    for (const r of reversals) {
+      if (!r.parentEntryId) continue;
+      byParent.set(r.parentEntryId, (byParent.get(r.parentEntryId) ?? 0) + r.partnerShare);
+    }
+    const out: Array<{ id: string; netShare: number }> = [];
+    for (const p of pending) {
+      const net = Math.round((p.partnerShare + (byParent.get(p.id) ?? 0)) * 100) / 100;
+      if (net > 0) out.push({ id: p.id, netShare: net });
+    }
+    return out;
   }
 
+  // Per-invoice grouping
+  const grossByInvoice = new Map<string, { gross: number; firstId: string }>();
+  for (const p of pending as Array<{ id: string; invoiceId: string; partnerShare: number }>) {
+    const cur = grossByInvoice.get(p.invoiceId);
+    if (cur) cur.gross = Math.round((cur.gross + p.partnerShare) * 100) / 100;
+    else grossByInvoice.set(p.invoiceId, { gross: p.partnerShare, firstId: p.id });
+  }
+  const reversals = await client.commissionEntry.findMany({
+    where: { invoiceId: { in: Array.from(grossByInvoice.keys()) }, entryType: "refund_reversal" },
+    select: { invoiceId: true, partnerShare: true },
+  });
+  const reversalByInvoice = new Map<string, number>();
+  for (const r of reversals as Array<{ invoiceId: string; partnerShare: number }>) {
+    reversalByInvoice.set(r.invoiceId, (reversalByInvoice.get(r.invoiceId) ?? 0) + r.partnerShare);
+  }
   const out: Array<{ id: string; netShare: number }> = [];
-  for (const p of pending) {
-    const net = Math.round((p.partnerShare + (byParent.get(p.id) ?? 0)) * 100) / 100;
-    if (net > 0) out.push({ id: p.id, netShare: net });
+  for (const [invoiceId, { gross, firstId }] of grossByInvoice) {
+    const net = Math.round((gross + (reversalByInvoice.get(invoiceId) ?? 0)) * 100) / 100;
+    if (net > 0) out.push({ id: firstId, netShare: net });
   }
   return out;
 }

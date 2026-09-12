@@ -44,8 +44,9 @@ vi.mock("@/lib/prisma", () => ({
         );
         return matches[0] ?? null;
       },
-      aggregate: async ({ where }: { where: { parentEntryId?: string | { in: string[] } } }) => {
+      aggregate: async ({ where }: { where: { parentEntryId?: string | { in: string[] }; entryType?: string } }) => {
         const match = (r: Record<string, unknown>) => {
+          if (where.entryType && r.entryType !== where.entryType) return false;
           if (r.parentEntryId === undefined) return false;
           if (typeof where.parentEntryId === "string") return r.parentEntryId === where.parentEntryId;
           const ids = (where.parentEntryId as { in: string[] }).in;
