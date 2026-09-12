@@ -591,17 +591,27 @@ export class BillingService {
 
     const grossAmount = typeof invoice.amount === "number" && invoice.amount > 0 ? invoice.amount : commission.amount;
     const fraction = grossAmount > 0 ? Math.min(1, Math.max(0, refundAmount / grossAmount)) : 1;
-    let reversalAmount = Math.round(commission.partnerShare * fraction * 100) / 100;
+    // FINANCE-ROYALTY-AGGREGATE-03: effective commission includes aggregate catch-ups
+    // (subscription_aggregate_catchup) that were created to bring the invoice to the
+    // portfolio-wide tier. A refund must reverse the effective amount, not just the original.
+    const catchUpAgg = await prisma.commissionEntry.aggregate({
+      where: { parentEntryId: commission.id, entryType: "subscription_aggregate_catchup" },
+      _sum: { partnerShare: true },
+    });
+    const catchUpShare = catchUpAgg._sum.partnerShare ?? 0;
+    const effectivePartnerShare = Math.round((commission.partnerShare + catchUpShare) * 100) / 100;
+    let reversalAmount = Math.round(effectivePartnerShare * fraction * 100) / 100;
 
     // RCCF-43 overflow protection: cumulative reversals for this commission can
-    // never exceed the original partner share, even if the provider emits
-    // overlapping/duplicate refund events.
+    // never exceed the effective partner share, even if the provider emits
+    // overlapping/duplicate refund events. Only refund_reversal entries count as reversals;
+    // catch-up entries remain positive earned commission.
     const existingReversals = await prisma.commissionEntry.aggregate({
-      where: { parentEntryId: commission.id },
+      where: { parentEntryId: commission.id, entryType: "refund_reversal" },
       _sum: { partnerShare: true },
     });
     const alreadyReversed = Math.abs(existingReversals._sum.partnerShare ?? 0);
-    const maxReversal = Math.max(0, Math.round((commission.partnerShare - alreadyReversed) * 100) / 100);
+    const maxReversal = Math.max(0, Math.round((effectivePartnerShare - alreadyReversed) * 100) / 100);
     if (reversalAmount > maxReversal) reversalAmount = maxReversal;
     if (reversalAmount <= 0) {
       // Already fully reversed — safe no-op (never create a negative reversal).
@@ -637,9 +647,20 @@ export class BillingService {
         // Settlement safety: a FULL refund makes the original ineligible; a
         // PARTIAL refund keeps it pending so the unrefunded remainder stays
         // settleable (settlement nets against reversal children).
+        // FINANCE-ROYALTY-AGGREGATE-03: full refund also reverses any aggregate
+        // catch-ups for this invoice (they are part of the effective commission).
         if (isFullRefund) {
           await tx.commissionEntry.update({
             where: { id: commission.id },
+            data: { status: "reversed", reversedAt: new Date() },
+          });
+          await tx.commissionEntry.updateMany({
+            where: { parentEntryId: commission.id, entryType: "subscription_aggregate_catchup", status: "pending" },
+            data: { status: "reversed", reversedAt: new Date() },
+          });
+          // Handle catch-ups that were created without a parent (when original was 0 and no entry existed)
+          await tx.commissionEntry.updateMany({
+            where: { invoiceId: invoice.id, entryType: "subscription_aggregate_catchup", status: "pending" },
             data: { status: "reversed", reversedAt: new Date() },
           });
         }

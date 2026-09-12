@@ -299,6 +299,20 @@ export async function recordSubscriptionCommission(
       invoiceId: params.invoiceId, amount: params.amount, partnerShare: split.partnerShare,
     }).catch(() => {});
 
+    // FINANCE-ROYALTY-AGGREGATE-03: portfolio-wide catch-up for current billing period
+    // If this invoice caused the agency to cross into a higher tier, all other
+    // qualifying PAID invoices in the same YYYY-MM period that are still below
+    // the new portfolio rate receive an additive delta (append-only, idempotent).
+    try {
+      await createAggregateRoyaltyCatchUp({
+        agencyId: partnerId,
+        triggerInvoiceId: params.invoiceId,
+        triggerWorkspaceId: params.workspaceId,
+      });
+    } catch (err) {
+      captureError(err, { service: "commission-runtime", operation: "aggregateCatchUp" });
+    }
+
     return { success: true, split };
   } catch (err) {
     await emitEvent({
@@ -314,6 +328,224 @@ export async function recordSubscriptionCommission(
 
 async function emitEvent(event: Omit<RuntimeEvent, "occurredAt">): Promise<void> {
   await runtimeEventBus.publish({ ...event, occurredAt: new Date().toISOString() }).catch(() => {});
+}
+
+// ── FINANCE-ROYALTY-AGGREGATE-03 — portfolio-wide catch-up ────────────────────
+
+/**
+ * Current billing period catch-up: when the agency crosses into a new portfolio
+ * tier, qualifying PAID SaaS invoices in the current YYYY-MM period that are
+ * below the new portfolio rate receive an additive delta CommissionEntry.
+ *
+ * Keeps invoice-level traceability (one CommissionEntry per invoice) while the
+ * portfolio total becomes TOTAL qualifying revenue × newRate. Uses append-only
+ * catch-up entries (entryType subscription_aggregate_catchup) with parentEntryId
+ * pointing to the original commission, so refunds can sum original + catch-ups.
+ *
+ * Idempotent via BillingEvent idempotencyKey:
+ *   commission_aggregate_catchup:<agencyId>:<period>:<toPercent>
+ * The whole batch is atomic; replay finds the BillingEvent and skips.
+ */
+export async function createAggregateRoyaltyCatchUp(params: {
+  agencyId: string;
+  triggerInvoiceId: string;
+  triggerWorkspaceId: string;
+  period?: string; // YYYY-MM, defaults to trigger invoice issuedAt
+  tx?: Prisma.TransactionClient;
+}): Promise<{ created: number; totalDelta: number; period: string; toPercent: number } | null> {
+  const agencyId = params.agencyId;
+  // Resolve current tier (portfolio-wide) — must be after the triggering invoice's ACTIVE count includes it
+  const { royaltyPercentForActiveClients } = await import("@/config/commerce/agency-commercial");
+  const activeCount = await getActiveClientCount(agencyId);
+  const toPercent = royaltyPercentForActiveClients(activeCount);
+  if (toPercent === 0) return null; // 0–4 → no catch-up needed
+
+  // Determine billing period from triggering invoice
+  const triggerInvoice = await (params.tx ?? prisma).billingInvoice.findUnique({
+    where: { id: params.triggerInvoiceId },
+    select: { issuedAt: true, createdAt: true },
+  });
+  if (!triggerInvoice) return null;
+  const issuedAt = (triggerInvoice as { issuedAt: Date }).issuedAt ?? (triggerInvoice as { createdAt: Date }).createdAt;
+  const period = params.period ?? `${issuedAt.getFullYear()}-${String(issuedAt.getMonth() + 1).padStart(2, "0")}`;
+  const periodStart = new Date(`${period}-01T00:00:00.000Z`);
+  const periodEnd = new Date(periodStart);
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+  // Idempotency: one catch-up batch per agency+period+toPercent
+  const batchIdempotencyKey = `commission_aggregate_catchup:${agencyId}:${period}:${toPercent}`;
+  const existingBatch = await (params.tx ?? prisma).billingEvent.findUnique({
+    where: { idempotencyKey: batchIdempotencyKey },
+    select: { id: true },
+  });
+  if (existingBatch) return null;
+
+  // Find qualifying PAID SaaS invoices for this agency in this period
+  // Qualifying: workspace belongs to ACTIVE AgencyTenant with ACTIVE BillingSubscription, planCode in creator family, status PAID
+  // We resolve workspaceIds via AgencyTenant → Workspace → BillingSubscription ACTIVE
+  const activeLinks = await prisma.agencyTenant.findMany({
+    where: { agencyId, status: "ACTIVE", offboardedAt: null },
+    select: { tenantId: true, workspaceId: true },
+  });
+  if (activeLinks.length === 0) return null;
+
+  // Collect workspaceIds that are currently ACTIVE clients
+  const activeWorkspaceIds: string[] = [];
+  for (const link of activeLinks) {
+    // Prefer linked workspaceId, fallback to tenant lookup
+    let wsId = link.workspaceId;
+    if (!wsId && link.tenantId) {
+      const ws = await prisma.workspace.findUnique({ where: { tenantId: link.tenantId }, select: { id: true } });
+      wsId = ws?.id ?? null;
+    }
+    if (!wsId) continue;
+    const sub = await prisma.billingSubscription.findUnique({ where: { workspaceId: wsId }, select: { status: true } });
+    if (sub?.status === "ACTIVE") activeWorkspaceIds.push(wsId);
+  }
+  if (activeWorkspaceIds.length === 0) return null;
+
+  const qualifyingInvoices = await prisma.billingInvoice.findMany({
+    where: {
+      workspaceId: { in: activeWorkspaceIds },
+      status: "PAID",
+      issuedAt: { gte: periodStart, lt: periodEnd },
+    },
+    select: { id: true, workspaceId: true, planCode: true, amount: true, amountPaise: true, subscriptionId: true },
+  });
+
+  // Filter to creator SaaS family only (exclude any non-creator invoices that might have slipped)
+  const { getCommercePlan } = await import("@/config/commerce/plans");
+  const qualifying = qualifyingInvoices.filter((inv) => {
+    const plan = getCommercePlan(inv.planCode);
+    return plan?.family === "creator";
+  });
+  if (qualifying.length === 0) return null;
+
+  // For each qualifying invoice, compute effective current percent and delta
+  let created = 0;
+  let totalDelta = 0;
+  const catchUps: Array<{ invoice: typeof qualifying[0]; originalId: string; deltaShare: number; deltaPaise: number }> = [];
+
+  for (const inv of qualifying) {
+    // Find original subscription commission for this invoice (first subscription_* entry)
+    const original = await prisma.commissionEntry.findFirst({
+      where: { invoiceId: inv.id, entryType: { startsWith: "subscription_" } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, partnerShare: true, partnerPercent: true },
+    });
+    // If no original (e.g. invoice created before commission was enabled), treat as 0%
+    const originalShare = original?.partnerShare ?? 0;
+
+    // Sum existing catch-ups for this invoice (any catch-up for this invoice, regardless of parent)
+    const catchUpAgg = await prisma.commissionEntry.aggregate({
+      where: { invoiceId: inv.id, entryType: "subscription_aggregate_catchup" },
+      _sum: { partnerShare: true },
+    });
+    const existingCatchUpShare = (catchUpAgg._sum.partnerShare ?? 0) as number;
+    const effectiveShare = originalShare + existingCatchUpShare;
+    const effectivePercent = inv.amount > 0 ? Math.round((effectiveShare / inv.amount) * 100) : 0;
+
+    if (effectivePercent >= toPercent) continue; // already at or above new tier
+
+    const deltaPercent = toPercent - effectivePercent;
+    const deltaShare = Math.round((inv.amount * deltaPercent) / 100 * 100) / 100;
+    if (deltaShare <= 0) continue;
+
+    // Idempotency per invoice+period+toPercent: check if a catch-up for this invoice already exists for this toPercent
+    const existingCatchUpForInvoice = await prisma.commissionEntry.findFirst({
+      where: { invoiceId: inv.id, entryType: "subscription_aggregate_catchup", audit: { path: ["toPercent"], equals: toPercent } },
+      select: { id: true },
+    });
+    if (existingCatchUpForInvoice) continue;
+
+    catchUps.push({ invoice: inv, originalId: original?.id ?? null, deltaShare, deltaPaise: Math.round(deltaShare * 100) });
+  }
+
+  if (catchUps.length === 0) {
+    // Still create the batch idempotency marker so future same-tier triggers don't re-scan unnecessarily?
+    // We create it only if at least one catch-up was needed, to allow later tier increases.
+    return null;
+  }
+
+  // Atomic batch: BillingEvent + all catch-up CommissionEntry + PartnerLedger entries
+  const run = async (client: Prisma.TransactionClient | typeof prisma) => {
+    await client.billingEvent.create({
+      data: {
+        workspaceId: params.triggerWorkspaceId,
+        accountId: agencyId,
+        type: "COMMISSION_AGGREGATE_CATCHUP",
+        idempotencyKey: batchIdempotencyKey,
+        payload: {
+          agencyId,
+          period,
+          toPercent,
+          triggerInvoiceId: params.triggerInvoiceId,
+          catchUpCount: catchUps.length,
+          totalDelta: Math.round(catchUps.reduce((s, c) => s + c.deltaShare, 0) * 100) / 100,
+        },
+      },
+    });
+
+    for (const cu of catchUps) {
+      const originalCommission = await client.commissionEntry.findFirst({
+        where: { id: cu.originalId },
+        select: { id: true, partnerId: true, subscriptionId: true, planCode: true, amount: true },
+      });
+      // If originalId was invoiceId (no original commission), fetch invoice's subscriptionId/planCode from invoice
+      const partnerIdForEntry = originalCommission?.partnerId ?? agencyId;
+      const subscriptionIdForEntry = originalCommission?.subscriptionId ?? cu.invoice.subscriptionId ?? null;
+      const planCodeForEntry = originalCommission?.planCode ?? cu.invoice.planCode;
+
+      const entry = await client.commissionEntry.create({
+        data: {
+          invoiceId: cu.invoice.id,
+          partnerId: partnerIdForEntry,
+          subscriptionId: subscriptionIdForEntry,
+          planCode: planCodeForEntry,
+          amount: cu.invoice.amount,
+          platformShare: Math.round((cu.invoice.amount - cu.deltaShare) * 100) / 100 - (cu.invoice.amount - cu.deltaShare > 0 ? 0 : 0), // platformShare not critical for catch-up; set as 0 or delta complement
+          partnerShare: cu.deltaShare,
+          platformPercent: 100 - toPercent,
+          partnerPercent: toPercent,
+          entryType: "subscription_aggregate_catchup",
+          status: "pending",
+          parentEntryId: cu.originalId,
+          description: `Aggregate catch-up to ${toPercent}% for period ${period} — invoice ${cu.invoice.id}`,
+          audit: { source: "aggregate_catchup", period, toPercent, fromPercent: Math.round(((cu.deltaShare / cu.invoice.amount) * 100) * 100) / 100, triggerInvoiceId: params.triggerInvoiceId },
+        },
+      });
+
+      const last = await client.partnerLedger.findFirst({
+        where: { partnerId: agencyId },
+        orderBy: { createdAt: "desc" },
+        select: { balanceAfter: true },
+      });
+      const balanceBefore = last?.balanceAfter ?? 0;
+      await client.partnerLedger.create({
+        data: {
+          partnerId: agencyId,
+          type: "COMMISSION_EARNED",
+          amount: cu.deltaShare,
+          reference: entry.id,
+          referenceType: "commission_entry",
+          description: `Aggregate catch-up ${toPercent}% for ${cu.invoice.id} period ${period}`,
+          commissionId: entry.id,
+          balanceBefore,
+          balanceAfter: Math.round((balanceBefore + cu.deltaShare) * 100) / 100,
+        },
+      });
+      created++;
+      totalDelta = Math.round((totalDelta + cu.deltaShare) * 100) / 100;
+    }
+  };
+
+  if (params.tx) {
+    await run(params.tx as Prisma.TransactionClient);
+  } else {
+    await prisma.$transaction(async (tx) => run(tx));
+  }
+
+  return { created, totalDelta, period, toPercent };
 }
 
 // ── Reporting + health (Phases 13 + 14) ──────────────────────────────────────
@@ -340,8 +572,11 @@ export async function resolveNetPendingEntries(
   });
   if (pending.length === 0) return [];
 
+  // FINANCE-ROYALTY-AGGREGATE-03: only refund_reversal entries are reversals;
+  // catch-up entries (subscription_aggregate_catchup) are positive earned commission
+  // and must not be netted as reversals.
   const reversals = await client.commissionEntry.findMany({
-    where: { parentEntryId: { in: pending.map((p) => p.id) } },
+    where: { parentEntryId: { in: pending.map((p) => p.id) }, entryType: "refund_reversal" },
     select: { parentEntryId: true, partnerShare: true },
   });
   const byParent = new Map<string, number>();
