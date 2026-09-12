@@ -141,12 +141,31 @@ export class BillingRepository {
     });
   }
 
-  async createInvoice(data: { workspaceId: string; accountId: string; planCode: string; amount: number; currency?: string; status?: string; providerReference?: string | null }, tx?: Prisma.TransactionClient): Promise<BillingInvoice> {
+  async createInvoice(data: { workspaceId: string; accountId: string; planCode: string; amount: number; currency?: string; status?: string; providerReference?: string | null; amountPaise?: number | null; taxAmount?: number | null; taxAmountPaise?: number | null }, tx?: Prisma.TransactionClient): Promise<BillingInvoice> {
     const start = Date.now();
+    // FINANCE-07: amountPaise is the paise-authoritative field. Derive exactly from the
+    // rupee amount via BigInt to avoid floating-point multiplication errors (FINANCE-02/06 convention).
+    // If the caller supplies an explicit paise value (e.g. capacity purchase from captured paise),
+    // trust it when finite; otherwise compute from amount.
+    const computePaise = (rupees: number | null | undefined): number | null => {
+      if (rupees == null || !Number.isFinite(rupees)) return null;
+      try {
+        return Number(BigInt(Math.round(rupees * 100)));
+      } catch {
+        return Math.round(rupees * 100);
+      }
+    };
+    const resolvedAmountPaise = data.amountPaise != null && Number.isFinite(data.amountPaise) && Number.isInteger(data.amountPaise) && data.amountPaise > 0
+      ? data.amountPaise
+      : computePaise(data.amount);
+    const resolvedTaxPaise = data.taxAmountPaise != null && Number.isFinite(data.taxAmountPaise)
+      ? data.taxAmountPaise
+      : data.taxAmount != null ? computePaise(data.taxAmount) : null;
     const result = await this.client(tx).billingInvoice.create({
       data: {
         workspaceId: data.workspaceId, accountId: data.accountId, planCode: data.planCode,
-        amount: data.amount, currency: data.currency ?? "INR", status: data.status ?? "PENDING",
+        amount: data.amount, amountPaise: resolvedAmountPaise, taxAmount: data.taxAmount ?? 0, taxAmountPaise: resolvedTaxPaise ?? 0,
+        currency: data.currency ?? "INR", status: data.status ?? "PENDING",
         providerReference: data.providerReference ?? null,
       },
     });

@@ -116,12 +116,14 @@ export class PartnerCapacityPurchaseService {
         });
 
         // Immutable financial record referencing the provider payment.
+        // FINANCE-07: persist exact paise (capturedAmountPaise is authoritative, no float drift)
         await tx.billingInvoice.create({
           data: {
             workspaceId: agencyWorkspace?.id ?? null,
             accountId: agencyId,
             planCode: "partner_capacity_addon",
             amount: Math.round((capturedAmountPaise / 100) * 100) / 100,
+            amountPaise: capturedAmountPaise,
             currency: "INR",
             status: "PAID",
             providerReference: paymentId,
