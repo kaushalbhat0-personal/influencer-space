@@ -260,7 +260,7 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
     expect(getCommercePlan("creator_scale")?.razorpayPlanId).not.toBe(RETIRED_RAZORPAY_PLAN);
   });
 
-  it("keeps creator_grow with no provider plan when its price is unchanged (legacy removed) — but provisions missing yearly", async () => {
+  it("keeps creator_grow with no provider plan when its price is unchanged (legacy removed) — provisions both missing plans", async () => {
     h.mockFindUnique.mockResolvedValue({ price: 999, runtimeConfig: null });
     h.mockPlansCreate.mockImplementation(async (args: any) => {
       if (args.period === "yearly") return { id: "plan_grow_yearly" };
@@ -269,9 +269,10 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
     const res = await savePlanConfig({ ...scaleInput, code: "creator_grow", name: "Growth", monthlyPrice: 999, annualPrice: 9990, changeNote: "no-op edit" });
 
     expect(res.success).toBe(true);
-    // monthly unchanged -> no monthly provision, yearly missing -> yearly provisioned
-    expect(h.mockPlansCreate).toHaveBeenCalledTimes(1);
-    expect(h.mockPlansCreate.mock.calls[0][0].period).toBe("yearly");
+    // both monthly and yearly missing -> both provisioned even though price unchanged
+    expect(h.mockPlansCreate).toHaveBeenCalledTimes(2);
+    const periods = h.mockPlansCreate.mock.calls.map((c: any) => c[0].period).sort();
+    expect(periods).toEqual(["monthly", "yearly"]);
     expect(getCommercePlan("creator_grow")?.razorpayPlanId).toBeNull();
     expect(getCommercePlan("creator_grow")?.razorpayPlanId).not.toBe(RETIRED_GROW_PLAN);
   });

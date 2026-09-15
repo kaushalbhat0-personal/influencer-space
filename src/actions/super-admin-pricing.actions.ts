@@ -153,16 +153,24 @@ export async function savePlanConfig(input: PlanEditorInput): Promise<{ success:
     // stored contracts must survive unrelated edits (marketing, capabilities,
     // limits) instead of silently detaching and forcing a fresh provisioning
     // cycle. A successful reprovisioning below overwrites this value.
-    runtimeConfig.pricing!.razorpayPlanId =
+    const existingMonthlyPlanId =
       (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.razorpayPlanId ?? null;
-    runtimeConfig.pricing!.razorpayYearlyPlanId =
+    const existingYearlyPlanId =
       (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.razorpayYearlyPlanId ?? null;
+    runtimeConfig.pricing!.razorpayPlanId = existingMonthlyPlanId;
+    runtimeConfig.pricing!.razorpayYearlyPlanId = existingYearlyPlanId;
     let warning: string | undefined;
     // RCCF-LIVE-SMOKE-15B: first-class monthly + yearly plan provisioning.
     // RCCF-73 — ONE-TIME plans (Partner Solo/Scale) must NEVER receive a recurring provider contract.
-    const shouldProvisionMonthly = newPrice > 0 && !isManual && priceChanged && !isOneTimePlan(input.code);
+    // Also provision if no plan ID exists yet (first-time after legacy removal) even if price unchanged.
+    const shouldProvisionMonthly =
+      newPrice > 0 && !isManual && !isOneTimePlan(input.code) && (priceChanged || !existingMonthlyPlanId);
     const shouldProvisionYearly =
-      newAnnualPrice != null && newAnnualPrice > 0 && !isManual && annualPriceChanged && !isOneTimePlan(input.code);
+      newAnnualPrice != null &&
+      newAnnualPrice > 0 &&
+      !isManual &&
+      !isOneTimePlan(input.code) &&
+      (annualPriceChanged || !existingYearlyPlanId);
     if (shouldProvisionMonthly || shouldProvisionYearly) {
       // Preserve existing IDs until new ones succeed — do not clear on failure.
       let monthlyId: string | null | undefined;
