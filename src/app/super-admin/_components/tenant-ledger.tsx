@@ -74,13 +74,30 @@ export function TenantLedger({ tenants }: { tenants: TenantWithDetails[] }) {
   async function handleLoginAs(tenantId: string) {
     setOpenMenuId(null);
     setLoading(tenantId);
-    const result = await generateLoginAsToken(tenantId);
-    setLoading(null);
-    if (result.success && result.loginUrl) {
-      window.open(result.loginUrl, "_blank");
-      showToast("Logged in as tenant");
-    } else {
+    const result = await generateLoginAsToken(tenantId) as { success: boolean; token?: string; loginUrl?: string; error?: string };
+    if (!result.success || !result.token) {
+      setLoading(null);
       showToast(result.error || "Failed");
+      return;
+    }
+    try {
+      const res = await fetch("/api/auth/login-as", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: result.token }),
+      });
+      setLoading(null);
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        window.open((data as { redirectTo?: string }).redirectTo || "/admin/dashboard", "_blank");
+        showToast("Logged in as tenant");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast((err as { error?: string }).error || "Failed");
+      }
+    } catch {
+      setLoading(null);
+      showToast("Failed");
     }
   }
 

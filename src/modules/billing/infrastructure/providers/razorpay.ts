@@ -14,16 +14,26 @@ export class RazorpayProvider implements BillingProvider {
   readonly name = "razorpay";
 
   private get keyId(): string {
-    // Prefer test key for agency test mode; fallback to live key
+    // RCCF-PAYMENT-MODE-02: production MUST use LIVE credentials — TEST must never
+    // override production even if TEST vars are present (preview/development may
+    // still use TEST). VERCEL_ENV is set by Vercel: production | preview | development.
+    const isProduction = process.env.VERCEL_ENV === "production";
+    if (isProduction) {
+      return process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+    }
     const testId = process.env.TEST_RAZORPAY_KEY_ID ?? "";
     const liveId = process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
-    // If liveId is test (rzp_test) use it, otherwise prefer testId when available
+    // If liveId is test (rzp_test) use it, otherwise prefer testId when available (preview/dev only)
     if (liveId.startsWith("rzp_test")) return liveId;
     if (testId) return testId;
     return liveId;
   }
 
   private get keySecret(): string {
+    const isProduction = process.env.VERCEL_ENV === "production";
+    if (isProduction) {
+      return process.env.RAZORPAY_KEY_SECRET ?? "";
+    }
     const testSecret = process.env.TEST_RAZORPAY_KEY_SECRET ?? "";
     const liveSecret = process.env.RAZORPAY_KEY_SECRET ?? "";
     const keyId = this.keyId;

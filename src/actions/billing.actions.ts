@@ -15,9 +15,12 @@ import { capabilityService } from "@/lib/capabilities";
 import { COMMERCE_PLANS, getCommercePlan } from "@/config/commerce/plans";
 import type { CheckoutResult } from "@/modules/billing/domain/types";
 
-function requireAuth(tenantId: string): { ok: true } | { ok: false; error: string } {
-  // Session check is performed by the caller-provided tenantId comparison below.
-  return { ok: true };
+async function requireAuth(tenantId: string): Promise<{ ok: true; session: { user: { id?: string; tenantId?: string | null; role?: string } } } | { ok: false; error: string }> {
+  const session = (await getServerSession(authOptions)) as { user?: { id?: string; tenantId?: string | null; role?: string } } | null;
+  if (!session?.user?.id) return { ok: false, error: "Unauthorized" };
+  if (session.user.role === "SUPER_ADMIN") return { ok: true, session: session as never };
+  if (!tenantId || session.user.tenantId !== tenantId) return { ok: false, error: "Forbidden" };
+  return { ok: true, session: session as never };
 }
 
 function enabledFeatures(features: Record<string, number | boolean | string>): string[] {

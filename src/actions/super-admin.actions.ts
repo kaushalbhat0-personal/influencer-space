@@ -394,7 +394,7 @@ export async function deleteTenant(tenantId: string): Promise<DeleteTenantResult
 
 export type LoginAsTokenResult = { success: boolean; loginUrl?: string; error?: string };
 
-export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTokenResult> {
+export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTokenResult & { token?: string }> {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "SUPER_ADMIN") {
     return { success: false, error: "Unauthorized" };
@@ -407,13 +407,19 @@ export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTok
   if (!tenant) return { success: false, error: "Tenant not found" };
 
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
-  const token = await new SignJWT({ tenantId, type: "superadmin-impersonation" })
+  const jti = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  await prisma.loginAsToken.create({
+    data: { jti, type: "superadmin-impersonation", tenantId, createdBy: session.user.id, expiresAt },
+  });
+  const token = await new SignJWT({ tenantId, type: "superadmin-impersonation", jti })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("5m")
+    .setJti(jti)
     .sign(secret);
 
   const baseUrl = getPlatformConfig().appUrl;
-  return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };
+  return { success: true, token, loginUrl: `${baseUrl}/api/auth/login-as` };
 }
 
 /**
@@ -421,7 +427,7 @@ export async function generateLoginAsToken(tenantId: string): Promise<LoginAsTok
  * the agency's AGENCY_ADMIN. 5-min JWT, audited, session cookie + workspace
  * cookie set by /api/auth/login-as; exit via normal sign-out.
  */
-export async function generateLoginAsAgencyToken(agencyId: string): Promise<LoginAsTokenResult> {
+export async function generateLoginAsAgencyToken(agencyId: string): Promise<LoginAsTokenResult & { token?: string }> {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "SUPER_ADMIN") {
     return { success: false, error: "Unauthorized" };
@@ -434,14 +440,20 @@ export async function generateLoginAsAgencyToken(agencyId: string): Promise<Logi
   if (!agency) return { success: false, error: "Agency not found" };
 
   const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
-  const token = await new SignJWT({ agencyId, type: "agency-impersonation" })
+  const jti = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  await prisma.loginAsToken.create({
+    data: { jti, type: "agency-impersonation", agencyId, createdBy: session.user.id, expiresAt },
+  });
+  const token = await new SignJWT({ agencyId, type: "agency-impersonation", jti })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("5m")
+    .setJti(jti)
     .sign(secret);
   await logAction("system", "support:impersonate-agency", { agencyId, actor: session.user.email }).catch(() => {});
 
   const baseUrl = getPlatformConfig().appUrl;
-  return { success: true, loginUrl: `${baseUrl}/api/auth/login-as?token=${token}` };
+  return { success: true, token, loginUrl: `${baseUrl}/api/auth/login-as` };
 }
 
 export type PlanUpdateResult = { success: boolean; error?: string };

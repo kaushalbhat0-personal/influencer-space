@@ -430,6 +430,32 @@ export class BillingService {
             }, tx);
             invoiceId = invoice.id;
 
+            // ── Agency Paid Capacity (RCCF-AGENCY-CAPACITY-02) ────────────────
+            // Every successful PAID Partner Solo/Scale invoice adds 5 or 25
+            // cumulative slots. One row per invoice, idempotent via
+            // billingInvoiceId @unique. Must be in same transaction as invoice
+            // so duplicate webhook cannot double-allocate.
+            if (plan.code === "partner_solo" || plan.code === "partner_scale") {
+              const quantity = plan.code === "partner_solo" ? 5 : 25;
+              const period = `${invoice.issuedAt.getFullYear()}-${String(invoice.issuedAt.getMonth() + 1).padStart(2, "0")}`;
+              const wsForCapacity = await tx.workspace.findUnique({ where: { id: workspaceId }, select: { agencyId: true } });
+              const agencyIdForCapacity = wsForCapacity?.agencyId;
+              if (agencyIdForCapacity) {
+                await tx.agencyPaidCapacity.create({
+                  data: {
+                    agencyId: agencyIdForCapacity,
+                    billingInvoiceId: invoice.id,
+                    quantity,
+                    planCode: plan.code,
+                    cycle: (input.cycle as string) ?? "monthly",
+                    period,
+                  },
+                }).catch(() => {
+                  // idempotent: duplicate billingInvoiceId (replayed webhook) → ignore
+                });
+              }
+            }
+
             // ── Partner Commission (RCCF-IMPLEMENTATION-72) ─────────────────
             // Recurring subscription revenue share for the agency managing the
             // creator. Attribution runs through AgencyTenant (workspace → tenant
@@ -784,6 +810,26 @@ export class BillingService {
           status: "PAID",
           providerReference: paymentId,
         }, tx);
+
+        // RCCF-AGENCY-CAPACITY-02: same cumulative capacity allocation as webhook path
+        if (planCode === "partner_solo" || planCode === "partner_scale") {
+          const quantity = planCode === "partner_solo" ? 5 : 25;
+          const period = `${invoice.issuedAt.getFullYear()}-${String(invoice.issuedAt.getMonth() + 1).padStart(2, "0")}`;
+          const wsForCapacity = await tx.workspace.findUnique({ where: { id: workspaceId }, select: { agencyId: true } });
+          const agencyIdForCapacity = wsForCapacity?.agencyId;
+          if (agencyIdForCapacity) {
+            await tx.agencyPaidCapacity.create({
+              data: {
+                agencyId: agencyIdForCapacity,
+                billingInvoiceId: invoice.id,
+                quantity,
+                planCode,
+                cycle: "monthly",
+                period,
+              },
+            }).catch(() => {});
+          }
+        }
 
         const { recordSubscriptionCommission } = await import("@/lib/commission/runtime");
         await recordSubscriptionCommission({

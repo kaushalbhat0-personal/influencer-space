@@ -414,6 +414,25 @@ model AgencyCapacityAddon {
   @@index([agencyId, status])
 }
 
+/// RCCF-AGENCY-CAPACITY-02 — cumulative paid Partner capacity ledger.
+/// One immutable row per successful PAID Partner Solo/Scale invoice.
+/// Period is YYYY-MM from BillingInvoice.issuedAt, quantity is 5 (Solo) or 25 (Scale).
+/// Idempotent via billingInvoiceId @unique (one allocation per invoice, duplicate webhook cannot double-allocate).
+/// Unused capacity carries forward indefinitely; historical rows are never deleted.
+model AgencyPaidCapacity {
+  id               String   @id @default(uuid()) @db.Uuid
+  agencyId         String   @db.Uuid
+  billingInvoiceId String   @unique @db.Uuid
+  quantity         Int
+  planCode         String
+  cycle            String   // monthly | yearly
+  period           String   // YYYY-MM
+  createdAt        DateTime @default(now())
+
+  @@index([agencyId])
+  @@index([agencyId, period])
+}
+
 /// Client assignments link workspace members to tenants (clients).
 /// Replaces the legacy Setting JSON storage for client assignments.
 /// Created in v1.2.1 — see docs/v1.2.1-engineering-plan.md
@@ -1323,7 +1342,25 @@ model LoyaltyTier {
   @@index([status, effectiveFrom, effectiveTo])
 }
 
-/// Global billing defaults and operational settings.
+/// RCCF-PLATFORM-P1-01 — one-time login-as impersonation tokens. JWT jti is the
+/// single-use authority: the row is created at generation (5m expiry) and
+/// atomically consumed at POST /api/auth/login-as. Prevents replay even if the
+/// JWT itself is still cryptographically valid.
+model LoginAsToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  jti       String    @unique
+  type      String // superadmin-impersonation | agency-impersonation
+  tenantId  String?   @db.Uuid
+  agencyId  String?   @db.Uuid
+  createdBy String    @db.Uuid
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
+ /// Global billing defaults and operational settings.
 model BillingConfiguration {
   id                 String    @id @default(uuid()) @db.Uuid
   status             String    @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED

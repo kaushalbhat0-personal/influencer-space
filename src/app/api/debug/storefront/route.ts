@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getStorefrontData } from "@/lib/storefront/storefront-loader";
 import { prisma } from "@/lib/prisma";
 import { publishSnapshotService } from "@/lib/publishing/snapshot";
 
 export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const slug = req.nextUrl.searchParams.get("slug") || "3-all-day";
   try {
     const data = await getStorefrontData(slug);

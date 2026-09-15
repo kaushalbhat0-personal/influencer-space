@@ -341,7 +341,7 @@ export async function createAdditionalClientCheckoutAction(input: {
     return {
       success: true,
       orderId: order.orderId,
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "",
       amountPaise: order.amountPaise,
       currency: "INR",
       unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,

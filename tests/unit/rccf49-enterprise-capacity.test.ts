@@ -34,6 +34,7 @@ vi.mock("@/lib/prisma", () => ({
     planPricingVersion: { create: v.mockVersionCreate },
     websiteAgency: { findUnique: v.mockAgencyFindUnique },
     billingSubscription: { findFirst: async () => ({ status: "TRIALING", trialEndsAt: new Date(Date.now() + 86400000) }) },
+    agencyPaidCapacity: { aggregate: async () => ({ _sum: { quantity: null } }) },
     agencyCapacityAddon: { aggregate: async () => ({ _sum: { quantity: null } }) },
     workspace: { findUnique: v.mockWorkspaceFindUnique },
     agencyTenant: {

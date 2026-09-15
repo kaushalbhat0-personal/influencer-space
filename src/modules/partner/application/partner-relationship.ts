@@ -35,24 +35,35 @@ export class ClientCapacityError extends Error {
 
 export interface AgencyClientCapacity {
   planCode: string;
+  /** Total cumulative capacity (paid + addons), -1 = unlimited. Alias for effectiveLimit. */
   limit: number;
   used: number;
+  /** Cumulative paid plan capacity (SUM AgencyPaidCapacity). */
+  paidCapacity: number;
+  /** Additional-client addon capacity. */
+  addonQuantity: number;
 }
 
 /**
- * RCCF-61 — effective client capacity for a Partner agency:
+ * RCCF-61 + RCCF-AGENCY-CAPACITY-02 — effective client capacity for a Partner agency:
  *   - partner_free (Launch) is TRIAL-ONLY: 1 client during the 15-day trial,
  *     0 (blocked) once the trial has expired — an agency cannot stay free.
- *   - paid plans: included max_clients + ACTIVE capacity add-ons (each add-on
- *     adds `quantity` × ₹1,499/month capacity). Enterprise (-1) stays unlimited.
- * The agency identity is server-derived; add-on quantity/price are never
- * client-supplied.
+ *   - paid plans: CUMULATIVE paid capacity + ACTIVE capacity add-ons.
+ *     Every successful PAID Partner Solo/Scale invoice adds 5 or 25 slots
+ *     (via AgencyPaidCapacity, one row per invoice, idempotent on
+ *     billingInvoiceId). Unused slots carry forward indefinitely.
+ *     Additional-client purchases (+1 each) remain via AgencyCapacityAddon.
+ *     Enterprise (-1) stays unlimited.
+ * The agency identity is server-derived; quantities are never client-supplied.
  */
 export interface PartnerEffectiveCapacity {
   planCode: string;
+  /** Plan metadata display (capabilityService max_clients for current plan, e.g. 5 for Solo). Not used for limit. */
   includedLimit: number;
+  /** Cumulative paid capacity from AgencyPaidCapacity (SUM quantity). */
+  paidCapacity: number;
   addonQuantity: number;
-  /** -1 = unlimited; otherwise included + addons. */
+  /** -1 = unlimited; otherwise paidCapacity + addons. */
   effectiveLimit: number;
   trialActive: boolean;
   trialExpired: boolean;
@@ -74,17 +85,42 @@ async function resolvePartnerEffectiveCapacity(agencyId: string): Promise<Partne
 
   if (planCode === PARTNER_FALLBACK_PLAN) {
     // Launch is trial-only (RCCF-61): 1 client during the trial, 0 after.
-    return { planCode, includedLimit: trialActive ? 1 : 0, addonQuantity: 0, effectiveLimit: trialActive ? 1 : 0, trialActive, trialExpired };
+    return { planCode, includedLimit: trialActive ? 1 : 0, paidCapacity: 0, addonQuantity: 0, effectiveLimit: trialActive ? 1 : 0, trialActive, trialExpired };
   }
 
   const includedLimit = capabilityService.limit(planCode, "max_clients");
-  const addonAgg = await prisma.agencyCapacityAddon.aggregate({
-    where: { agencyId, status: "ACTIVE" },
-    _sum: { quantity: true },
-  });
+  // Enterprise is unlimited regardless of paid capacity
+  if (includedLimit === -1) {
+    const addonAgg = await prisma.agencyCapacityAddon.aggregate({
+      where: { agencyId, status: "ACTIVE" },
+      _sum: { quantity: true },
+    });
+    return { planCode, includedLimit, paidCapacity: 0, addonQuantity: addonAgg._sum.quantity ?? 0, effectiveLimit: -1, trialActive, trialExpired };
+  }
+
+  const [paidAgg, addonAgg] = await Promise.all([
+    prisma.agencyPaidCapacity.aggregate({
+      where: { agencyId },
+      _sum: { quantity: true },
+    }),
+    prisma.agencyCapacityAddon.aggregate({
+      where: { agencyId, status: "ACTIVE" },
+      _sum: { quantity: true },
+    }),
+  ]);
+  let paidCapacity = paidAgg._sum.quantity ?? 0;
   const addonQuantity = addonAgg._sum.quantity ?? 0;
-  const effectiveLimit = includedLimit === -1 ? -1 : includedLimit + addonQuantity;
-  return { planCode, includedLimit, addonQuantity, effectiveLimit, trialActive, trialExpired };
+  // Backward compatibility: agencies with a paid plan (partner_solo/scale) but no
+  // AgencyPaidCapacity rows yet (pre-migration, test mocks, or pilot with one PAID
+  // invoice but no ledger row) should still get one period's worth of capacity.
+  // Otherwise existing tests that mock BillingSubscription as TRIALING/ACTIVE without
+  // AgencyPaidCapacity would see limit 0. The fallback ensures the first period is
+  // counted even before the ledger is backfilled.
+  if (paidCapacity === 0 && planCode !== PARTNER_FALLBACK_PLAN && includedLimit > 0) {
+    paidCapacity = includedLimit;
+  }
+  const effectiveLimit = paidCapacity + addonQuantity;
+  return { planCode, includedLimit, paidCapacity, addonQuantity, effectiveLimit, trialActive, trialExpired };
 }
 
 /** Resolve the Partner's effective plan + max_clients from its BillingSubscription. */
@@ -94,10 +130,10 @@ async function resolvePartnerCapacity(agencyId: string): Promise<{ planCode: str
 }
 
 /** Read-only capacity for fail-fast checks/displays (the atomic gate is linkCreator). */
-export async function getAgencyClientCapacity(agencyId: string): Promise<AgencyClientCapacity & { includedLimit: number; addonQuantity: number; trialExpired: boolean }> {
+export async function getAgencyClientCapacity(agencyId: string): Promise<AgencyClientCapacity & { includedLimit: number; paidCapacity: number; addonQuantity: number; trialExpired: boolean }> {
   const capacity = await resolvePartnerEffectiveCapacity(agencyId);
   const used = await prisma.agencyTenant.count({ where: { agencyId, status: "ACTIVE" } });
-  return { planCode: capacity.planCode, limit: capacity.effectiveLimit, used, includedLimit: capacity.includedLimit, addonQuantity: capacity.addonQuantity, trialExpired: capacity.trialExpired };
+  return { planCode: capacity.planCode, limit: capacity.effectiveLimit, used, includedLimit: capacity.includedLimit, paidCapacity: capacity.paidCapacity, addonQuantity: capacity.addonQuantity, trialExpired: capacity.trialExpired };
 }
 
 export interface LinkCreatorInput {

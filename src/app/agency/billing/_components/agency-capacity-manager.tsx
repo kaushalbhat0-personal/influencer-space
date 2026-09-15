@@ -14,21 +14,32 @@ interface AddonView {
 }
 
 interface Props {
+  /** @deprecated — plan's single-period max_clients (for display only). Use paidCapacity for limit. */
   includedLimit: number;
+  /** Cumulative paid capacity from AgencyPaidCapacity (SUM quantity). */
+  paidCapacity?: number;
+  /** Total cumulative capacity (paid + addons), -1 = unlimited. */
+  totalCapacity?: number;
   addons: AddonView[];
   used: number;
   unitPriceInr: number;
 }
 
-export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceInr }: Props) {
+export function AgencyCapacityManager({ includedLimit, paidCapacity: paidCapacityProp, totalCapacity: totalCapacityProp, addons, used, unitPriceInr }: Props) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const addonQty = addons.reduce((s, a) => s + a.quantity, 0);
-  const effectiveLimit = includedLimit === -1 ? Infinity : includedLimit + addonQty;
-  const remaining = effectiveLimit === Infinity ? null : Math.max(0, effectiveLimit - used);
+  // RCCF-AGENCY-CAPACITY-02: cumulative model — total = paid (SUM AgencyPaidCapacity) + addons
+  // paidCapacity is passed from the server (SUM quantity); fallback to includedLimit for trial/unmigrated agencies
+  const paidCapacity = paidCapacityProp ?? includedLimit;
+  const effectiveLimit = totalCapacityProp ?? (paidCapacity === -1 || includedLimit === -1 ? Infinity : paidCapacity + addonQty);
+  const totalCapacity = totalCapacityProp ?? (effectiveLimit === Infinity ? -1 : effectiveLimit);
+  const remaining = effectiveLimit === Infinity ? null : Math.max(0, (typeof totalCapacity === "number" && totalCapacity !== -1 ? totalCapacity : effectiveLimit) - used);
+  const displayPaidCapacity = paidCapacity;
+  const displayTotalCapacity = totalCapacity === -1 ? -1 : totalCapacity;
 
   async function loadRazorpay(): Promise<unknown> {
     if ((window as unknown as { Razorpay?: unknown }).Razorpay) return (window as unknown as { Razorpay?: unknown }).Razorpay;
@@ -86,8 +97,7 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
     <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-5 text-sm" data-testid="capacity-manager">
       <h3 className="mb-1 font-semibold text-white">Client Website Capacity</h3>
       <p className="mb-4 text-xs text-[var(--text-muted)]">
-        Each managed client equals one client website. Additional capacity beyond your plan&apos;s included
-        allowance is <span className="text-[var(--text-primary)]">{formatCurrency(unitPriceInr)} one-time</span> per client website — no monthly charge.
+        Each paid Partner period adds client slots — <span className="text-[var(--text-primary)]">{includedLimit === -1 ? "Unlimited" : `${includedLimit} per paid period`}</span>. Additional capacity is <span className="text-[var(--text-primary)]">{formatCurrency(unitPriceInr)} one-time</span> per client website. Unused slots carry forward.
       </p>
 
       {notice && (
@@ -96,21 +106,25 @@ export function AgencyCapacityManager({ includedLimit, addons, used, unitPriceIn
         </p>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div className="rounded-lg bg-zinc-800/50 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Included</p>
-          <p className="text-sm font-semibold text-white">{includedLimit === -1 ? "Unlimited" : includedLimit}</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Purchased capacity</p>
+          <p className="text-sm font-semibold text-white">{displayPaidCapacity === -1 ? "Unlimited" : displayPaidCapacity}</p>
         </div>
         <div className="rounded-lg bg-zinc-800/50 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Additional</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Additional capacity</p>
           <p className="text-sm font-semibold text-white">{addonQty}</p>
         </div>
         <div className="rounded-lg bg-zinc-800/50 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Used</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Total capacity</p>
+          <p className="text-sm font-semibold text-white">{displayTotalCapacity === -1 ? "Unlimited" : displayTotalCapacity}</p>
+        </div>
+        <div className="rounded-lg bg-zinc-800/50 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Active clients</p>
           <p className="text-sm font-semibold text-white">{used}</p>
         </div>
         <div className="rounded-lg bg-zinc-800/50 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Remaining</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Available slots</p>
           <p className="text-sm font-semibold text-white">{remaining === null ? "—" : remaining}</p>
         </div>
       </div>

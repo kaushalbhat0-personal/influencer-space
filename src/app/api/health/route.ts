@@ -3,11 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase";
 
 const BUCKET_NAME = "influencer-images";
-const HEALTH_SECRET = process.env.HEALTH_SECRET || "local-dev-secret";
 
 export async function GET(request: Request) {
+  const configuredSecret = process.env.HEALTH_SECRET;
+  if (!configuredSecret) {
+    return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  }
   const authHeader = request.headers.get("x-health-secret");
-  if (!authHeader || authHeader !== HEALTH_SECRET) {
+  if (!authHeader || authHeader !== configuredSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -16,13 +19,6 @@ export async function GET(request: Request) {
     database: "disconnected" as string,
     storage: "disconnected" as string,
     timestamp: new Date().toISOString(),
-    env: {
-      supabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      supabaseServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      databaseUrl: !!process.env.DATABASE_URL,
-      nextauthSecret: !!process.env.NEXTAUTH_SECRET,
-    },
     errors: [] as string[],
   };
 
@@ -36,7 +32,7 @@ export async function GET(request: Request) {
 
   try {
     if (!supabaseAdmin) {
-      throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing");
+      throw new Error("Storage not configured");
     }
 
     const { data: buckets, error: bucketError } = await supabaseAdmin.storage.listBuckets();

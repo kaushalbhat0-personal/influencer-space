@@ -85,6 +85,8 @@ export default async function AgencyBilling() {
       <PageSection>
         <AgencyCapacityManager
           includedLimit={capacity.includedLimit}
+          paidCapacity={capacity.paidCapacity}
+          totalCapacity={capacity.limit}
           addons={addons.map((a) => ({ id: a.id, quantity: a.quantity, unitPriceInr: a.unitPriceInr, createdAt: a.createdAt.toISOString() }))}
           used={managedCreators}
           unitPriceInr={PARTNER_ADDON_UNIT_PRICE_INR}
