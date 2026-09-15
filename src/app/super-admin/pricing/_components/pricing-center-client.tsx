@@ -117,6 +117,7 @@ export function PricingCenterClient({ plans, versions, coupons, programs, analyt
 
       {tab === "editor" && (
         <Editor
+          plan={plans.find((p) => p.code === selected)}
           form={form}
           setForm={setForm}
           save={save}
@@ -248,7 +249,8 @@ function CapacityLimitControl({ value, onChange }: { value: number | boolean | s
   );
 }
 
-function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatures, onReset }: {
+function Editor({ plan, form, setForm, save, saving, msg, capabilityGroups, limitFeatures, onReset }: {
+  plan?: CenterPlan;
   form: EditorState;
   setForm: React.Dispatch<React.SetStateAction<EditorState>>;
   save: () => void;
@@ -310,6 +312,16 @@ function Editor({ form, setForm, save, saving, msg, capabilityGroups, limitFeatu
           <Field label="Comparison order"><input className={inputCls} value={form.comparisonOrder} onChange={(e) => set("comparisonOrder", e.target.value)} /></Field>
           <Field label="Color accent"><input className={inputCls} value={form.colorAccent} onChange={(e) => set("colorAccent", e.target.value)} placeholder="#6366f1" /></Field>
         </div>
+        {!isOneTimePlan(form.code) && form.family === "creator" && !form.enterprise && (
+          <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-3 text-xs" data-testid="razorpay-plan-status">
+            <p className="font-medium text-zinc-300">Razorpay Plans</p>
+            <div className="mt-1 space-y-1">
+              <p className={plan?.runtimeConfig?.pricing?.razorpayPlanId ? "text-emerald-400" : "text-amber-400"}>Monthly: {plan?.runtimeConfig?.pricing?.razorpayPlanId ? "provisioned" : "missing — save to provision"}</p>
+              <p className={plan?.runtimeConfig?.pricing?.razorpayYearlyPlanId ? "text-emerald-400" : "text-amber-400"}>Yearly: {plan?.runtimeConfig?.pricing?.razorpayYearlyPlanId ? "provisioned" : "missing — save to provision"}</p>
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-500">Monthly ₹{form.monthlyPrice || "—"} / Yearly ₹{form.annualPrice || "—"} — auto-provisions on price change when authorized.</p>
+          </div>
+        )}
         <Field label="Marketing highlights (one per line)"><textarea className={inputCls} rows={8} value={form.highlightsText} onChange={(e) => set("highlightsText", e.target.value)} /></Field>
         <div className="flex flex-wrap gap-3">
           {(["hidden", "enterprise", "popular", "bestValue", "recommended"] as const).map((f) => (

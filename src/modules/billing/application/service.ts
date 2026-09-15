@@ -89,8 +89,9 @@ export class BillingService {
     // RCCF-LIVE-SMOKE-14: legacy ₹699 plan `plan_TLTGQBU1EXkseF` is retired — never use as fallback.
     // If DB still carries it (pre-cleanup), treat as null so checkout does not bill old amount.
     const LEGACY_GROW_PLAN = "plan_TLTGQBU1EXkseF";
-    let checkoutPlanId: string | null = rc?.pricing?.razorpayPlanId ?? null;
-    if (checkoutPlanId === LEGACY_GROW_PLAN) checkoutPlanId = null;
+    // RCCF-LIVE-SMOKE-15B: first-class monthly + yearly plan IDs — no fallback from yearly to monthly.
+    // Yearly without a provisioned yearly plan must fall back to ORDER at annual amount, not monthly plan.
+    let checkoutPlanId: string | null;
     if (cycle === "yearly") {
       // Prefer canonical yearly from agency-commercial, fallback to commerce annualPrice
       try {
@@ -99,14 +100,21 @@ export class BillingService {
         if (yearly !== null) checkoutPrice = yearly;
         else if (getCommercePlan(planCode)?.annualPrice) checkoutPrice = getCommercePlan(planCode)!.annualPrice as number;
       } catch {}
-      // Yearly plan id if provisioned per cycle
-      try {
-        const { partnerRazorpayPlanIdForCycle } = await import("@/config/commerce/agency-commercial");
-        const yPlanId = partnerRazorpayPlanIdForCycle(planCode, "yearly");
-        if (yPlanId) checkoutPlanId = yPlanId;
-        else if ((rc?.pricing as unknown as { razorpayYearlyPlanId?: string })?.razorpayYearlyPlanId) checkoutPlanId = (rc!.pricing as unknown as { razorpayYearlyPlanId: string }).razorpayYearlyPlanId;
-      } catch {}
+      checkoutPlanId = rc?.pricing?.razorpayYearlyPlanId ?? null;
+      // Partner yearly via agency-commercial typed IDs (still null for creator until provisioned)
+      if (!checkoutPlanId) {
+        try {
+          const { partnerRazorpayPlanIdForCycle } = await import("@/config/commerce/agency-commercial");
+          const yPlanId = partnerRazorpayPlanIdForCycle(planCode, "yearly");
+          if (yPlanId) checkoutPlanId = yPlanId;
+        } catch {}
+      }
+    } else {
+      checkoutPlanId = rc?.pricing?.razorpayPlanId ?? null;
     }
+    if (checkoutPlanId === LEGACY_GROW_PLAN) checkoutPlanId = null;
+    // Also guard yearly legacy if ever mis-stored
+    if (rc?.pricing?.razorpayYearlyPlanId === LEGACY_GROW_PLAN) checkoutPlanId = null;
     // ── RCCF-LIVE-SMOKE-01 — SUPER_ADMIN-only ₹1 LIVE smoke test override ──────
     // Canonical pricing never mutated. When singleton enabled + eligible plan + SUPER_ADMIN caller,
     // checkout amount is derived as ₹1 server-side (never from client input).

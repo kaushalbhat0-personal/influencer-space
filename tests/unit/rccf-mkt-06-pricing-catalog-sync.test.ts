@@ -222,22 +222,29 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
   it("provisions a ₹1,999 INR monthly provider plan and stores the returned id in runtimeConfig", async () => {
     // Existing row carries the retired ₹1,995 amount → priceChanged triggers
     // auto-provisioning through the existing Pricing Center mechanism.
+    // RCCF-15B: also provisions yearly 19990 when annualPrice present.
     h.mockFindUnique.mockResolvedValue({ price: 1995, runtimeConfig: null });
+    h.mockPlansCreate.mockImplementation(async (args: any) => {
+      if (args.period === "yearly") return { id: "plan_new_scale_yearly" };
+      return { id: "plan_new_scale_1" };
+    });
 
     const res = await savePlanConfig(scaleInput);
 
     expect(res.success).toBe(true);
     expect(res.warning).toBeUndefined();
-    expect(h.mockPlansCreate).toHaveBeenCalledTimes(1);
-    const args = h.mockPlansCreate.mock.calls[0][0] as { period: string; interval: number; item: { amount: number; currency: string; name: string }; notes: { planCode: string } };
-    expect(args.period).toBe("monthly");
-    expect(args.interval).toBe(1);
-    expect(args.item.amount).toBe(199900); // ₹1,999 in paise
-    expect(args.item.currency).toBe("INR");
-    expect(args.notes.planCode).toBe("creator_scale");
+    expect(h.mockPlansCreate).toHaveBeenCalledTimes(2);
+    const calls = h.mockPlansCreate.mock.calls.map((c: any) => c[0]);
+    expect(calls.find((c: any) => c.period === "monthly")?.item.amount).toBe(199900); // ₹1,999 in paise
+    expect(calls.find((c: any) => c.period === "yearly")?.item.amount).toBe(1999000); // ₹19,990 in paise
+    const monthly = calls.find((c: any) => c.period === "monthly");
+    expect(monthly.interval).toBe(1);
+    expect(monthly.item.currency).toBe("INR");
+    expect(monthly.notes.planCode).toBe("creator_scale");
 
-    const rc = h.mockUpsert.mock.calls[0][0].update.runtimeConfig as { pricing?: { razorpayPlanId?: string | null } };
+    const rc = h.mockUpsert.mock.calls[0][0].update.runtimeConfig as { pricing?: { razorpayPlanId?: string | null; razorpayYearlyPlanId?: string | null } };
     expect(rc.pricing?.razorpayPlanId).toBe("plan_new_scale_1");
+    expect(rc.pricing?.razorpayYearlyPlanId).toBe("plan_new_scale_yearly");
     expect(rc.pricing?.razorpayPlanId).not.toBe(RETIRED_RAZORPAY_PLAN);
   });
 
@@ -253,12 +260,18 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
     expect(getCommercePlan("creator_scale")?.razorpayPlanId).not.toBe(RETIRED_RAZORPAY_PLAN);
   });
 
-  it("keeps creator_grow with no provider plan when its price is unchanged (legacy removed)", async () => {
+  it("keeps creator_grow with no provider plan when its price is unchanged (legacy removed) — but provisions missing yearly", async () => {
     h.mockFindUnique.mockResolvedValue({ price: 999, runtimeConfig: null });
-    const res = await savePlanConfig({ ...scaleInput, code: "creator_grow", name: "Growth", monthlyPrice: 999, changeNote: "no-op edit" });
+    h.mockPlansCreate.mockImplementation(async (args: any) => {
+      if (args.period === "yearly") return { id: "plan_grow_yearly" };
+      return { id: "plan_grow_monthly" };
+    });
+    const res = await savePlanConfig({ ...scaleInput, code: "creator_grow", name: "Growth", monthlyPrice: 999, annualPrice: 9990, changeNote: "no-op edit" });
 
     expect(res.success).toBe(true);
-    expect(h.mockPlansCreate).not.toHaveBeenCalled(); // no new provider contract
+    // monthly unchanged -> no monthly provision, yearly missing -> yearly provisioned
+    expect(h.mockPlansCreate).toHaveBeenCalledTimes(1);
+    expect(h.mockPlansCreate.mock.calls[0][0].period).toBe("yearly");
     expect(getCommercePlan("creator_grow")?.razorpayPlanId).toBeNull();
     expect(getCommercePlan("creator_grow")?.razorpayPlanId).not.toBe(RETIRED_GROW_PLAN);
   });
@@ -282,12 +295,16 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
     process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID = "rzp_live_unitTestKey";
     process.env.RAZORPAY_LIVE_PROVISIONING_AUTHORIZED = "1";
     h.mockFindUnique.mockResolvedValue({ price: 1995, runtimeConfig: null });
+    h.mockPlansCreate.mockImplementation(async (args: any) => {
+      if (args.period === "yearly") return { id: "plan_live_yearly" };
+      return { id: "plan_live_monthly" };
+    });
 
     const res = await savePlanConfig(scaleInput);
 
     expect(res.success).toBe(true);
     expect(res.warning).toBeUndefined();
-    expect(h.mockPlansCreate).toHaveBeenCalledTimes(1);
+    expect(h.mockPlansCreate).toHaveBeenCalledTimes(2);
   });
 });
 

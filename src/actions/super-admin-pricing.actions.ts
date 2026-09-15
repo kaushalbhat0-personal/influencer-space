@@ -140,29 +140,62 @@ export async function savePlanConfig(input: PlanEditorInput): Promise<{ success:
       select: { price: true, runtimeConfig: true },
     });
     const newPrice = input.monthlyPrice ?? 0;
+    const newAnnualPrice = input.annualPrice ?? null;
     const cfg = getCommercePlan(input.code);
     const isManual = cfg?.manual ?? false;
     const priceChanged = !existingPlan || existingPlan.price !== newPrice;
-    // RCCF-MKT-06.1 — preserve the DB-authoritative Razorpay plan id across
+    const existingAnnualPrice =
+      (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.annualPrice ?? null;
+    const annualPriceChanged =
+      newAnnualPrice !== null && newAnnualPrice !== undefined && existingAnnualPrice !== newAnnualPrice;
+    // RCCF-MKT-06.1 — preserve the DB-authoritative Razorpay plan ids across
     // saves that do not change the price. Provider plans are immutable; the
-    // stored contract must survive unrelated edits (marketing, capabilities,
+    // stored contracts must survive unrelated edits (marketing, capabilities,
     // limits) instead of silently detaching and forcing a fresh provisioning
     // cycle. A successful reprovisioning below overwrites this value.
     runtimeConfig.pricing!.razorpayPlanId =
       (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.razorpayPlanId ?? null;
+    runtimeConfig.pricing!.razorpayYearlyPlanId =
+      (existingPlan?.runtimeConfig as PlanRuntimeConfig | null | undefined)?.pricing?.razorpayYearlyPlanId ?? null;
     let warning: string | undefined;
-    // RCCF-73 — family/billing-form aware provisioning. ONE-TIME plans
-    // (Partner Solo/Scale) are charged as single Razorpay ORDERS; they must
-    // NEVER receive a recurring provider subscription contract, so the price
-    // save skips provisioning entirely for them. Creator subscription plans
-    // keep the exact RCCF-36 auto-provisioning behavior (Creator Scale's live
-    // contract is untouched).
-    if (newPrice > 0 && !isManual && priceChanged && !isOneTimePlan(input.code)) {
-      try {
-        const providerPlanId = await createRazorpayPlanForPlan(input.code, input.name, newPrice);
-        runtimeConfig.pricing!.razorpayPlanId = providerPlanId;
-      } catch (e) {
-        warning = `Price saved, but Razorpay plan provisioning failed (${e instanceof Error ? e.message : "provider error"}). New subscription checkouts may still charge the previous provider amount until provisioning succeeds.`;
+    // RCCF-LIVE-SMOKE-15B: first-class monthly + yearly plan provisioning.
+    // RCCF-73 — ONE-TIME plans (Partner Solo/Scale) must NEVER receive a recurring provider contract.
+    const shouldProvisionMonthly = newPrice > 0 && !isManual && priceChanged && !isOneTimePlan(input.code);
+    const shouldProvisionYearly =
+      newAnnualPrice != null && newAnnualPrice > 0 && !isManual && annualPriceChanged && !isOneTimePlan(input.code);
+    if (shouldProvisionMonthly || shouldProvisionYearly) {
+      // Preserve existing IDs until new ones succeed — do not clear on failure.
+      let monthlyId: string | null | undefined;
+      let yearlyId: string | null | undefined;
+      let monthlyError: unknown = null;
+      let yearlyError: unknown = null;
+      if (shouldProvisionMonthly) {
+        try {
+          monthlyId = await createRazorpayPlanForPlan(input.code, input.name, newPrice, "monthly");
+        } catch (e) {
+          monthlyError = e;
+        }
+      }
+      if (shouldProvisionYearly) {
+        try {
+          const annual = newAnnualPrice as number;
+          yearlyId = await createRazorpayPlanForPlan(input.code, input.name, annual, "yearly");
+        } catch (e) {
+          yearlyError = e;
+        }
+      }
+      // Atomic persistence semantics: only persist IDs that actually succeeded.
+      // If one fails, do not substitute the other and do not clear the existing.
+      if (monthlyId) runtimeConfig.pricing!.razorpayPlanId = monthlyId;
+      if (yearlyId) runtimeConfig.pricing!.razorpayYearlyPlanId = yearlyId;
+      // Report partial failure without pretending full success.
+      if (monthlyError || yearlyError) {
+        const parts: string[] = [];
+        if (monthlyError) parts.push(`monthly: ${monthlyError instanceof Error ? monthlyError.message : "provider error"}`);
+        if (yearlyError) parts.push(`yearly: ${yearlyError instanceof Error ? yearlyError.message : "provider error"}`);
+        warning = `Price saved, but Razorpay plan provisioning partially failed (${parts.join("; ")}). New subscription checkouts may still charge the previous provider amount until provisioning succeeds.`;
+        // If monthly succeeded but yearly failed, we have a partial external plan (monthly) persisted; yearly stays as previous (null if none).
+        // Retry is safe/idempotent — next save with same prices will re-attempt missing yearly if annualPriceChanged still true.
       }
     }
 
@@ -221,7 +254,12 @@ export async function savePlanConfig(input: PlanEditorInput): Promise<{ success:
  * configured price. Plans are immutable in Razorpay, so a price change creates
  * a new plan (never mutating the plan existing subscriptions are on).
  */
-async function createRazorpayPlanForPlan(planCode: string, planName: string, monthlyPrice: number): Promise<string> {
+async function createRazorpayPlanForPlan(
+  planCode: string,
+  planName: string,
+  price: number,
+  period: "monthly" | "yearly" = "monthly",
+): Promise<string> {
   // RCCF-MKT-06 — live-mode fail-closed guard. Provisioning against LIVE keys
   // creates a real-money subscription contract, so it requires explicit
   // operator authorization (RAZORPAY_LIVE_PROVISIONING_AUTHORIZED=1). Without
@@ -238,10 +276,10 @@ async function createRazorpayPlanForPlan(planCode: string, planName: string, mon
     key_secret: process.env.RAZORPAY_KEY_SECRET ?? "",
   });
   const plan = await razorpay.plans.create({
-    period: "monthly",
+    period,
     interval: 1,
-    item: { name: planName, amount: Math.round(monthlyPrice * 100), currency: "INR" },
-    notes: { planCode },
+    item: { name: planName, amount: Math.round(price * 100), currency: "INR" },
+    notes: { planCode, period },
   });
   return plan.id;
 }

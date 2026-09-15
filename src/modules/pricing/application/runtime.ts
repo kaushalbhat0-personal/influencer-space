@@ -60,6 +60,8 @@ export interface PlanRuntimeConfig {
     schedule?: ScheduledPrice[];
     /** RCCF-36: DB-authoritative Razorpay plan id provisioned for this price. */
     razorpayPlanId?: string | null;
+    /** RCCF-LIVE-SMOKE-15B: DB-authoritative yearly Razorpay plan id (annual amount). */
+    razorpayYearlyPlanId?: string | null;
   };
   updatedBy?: string;
   updatedAt?: string;
@@ -93,6 +95,7 @@ export interface ResolvedPlan {
   features: Record<string, number | boolean | string>;
   publishing?: { mode: "lifetime" | "monthly" | "unlimited"; limit: number | null };
   razorpayPlanId?: string | null;
+  razorpayYearlyPlanId?: string | null;
   highlights: string[];
   scheduled: ScheduledPrice[];
 }
@@ -132,6 +135,7 @@ export function mergeRuntimePlan(defaults: CommercePlanConfig, rc?: PlanRuntimeC
       ? { mode: rc.publishing.mode ?? "unlimited", limit: rc.publishing.limit ?? null }
       : undefined,
     razorpayPlanId: p?.razorpayPlanId ?? null,
+    razorpayYearlyPlanId: p?.razorpayYearlyPlanId ?? null,
     highlights: m?.highlights ?? defaults.marketingHighlights ?? [],
     scheduled: p?.schedule ?? [],
   };
@@ -232,6 +236,7 @@ const loadCached = requestCache(async (): Promise<Map<string, ResolvedPlan>> => 
         ? { mode: rc.publishing.mode ?? "unlimited", limit: rc.publishing.limit ?? null }
         : undefined,
       razorpayPlanId: rc?.pricing?.razorpayPlanId ?? null,
+      razorpayYearlyPlanId: rc?.pricing?.razorpayYearlyPlanId ?? null,
       highlights: rc?.marketing?.highlights ?? [],
       scheduled: rc?.pricing?.schedule ?? [],
     });
