@@ -82,6 +82,7 @@ export class RazorpayProvider implements BillingProvider {
             email: params.email ?? "",
             workspaceId: params.accountId,
             cycle,
+            ...(params.smokeTest ? { smokeTest: "true", liveSmokeTest: "true" } : {}),
           },
           ...(params.email ? { customer_notify: 1, start_at: Math.floor(Date.now() / 1000) + 300 } : {}),
         });
@@ -110,6 +111,7 @@ export class RazorpayProvider implements BillingProvider {
           accountId: params.accountId,
           email: params.email ?? "",
           cycle,
+          ...(params.smokeTest ? { smokeTest: "true", liveSmokeTest: "true" } : {}),
         },
       });
 
@@ -146,7 +148,7 @@ export class RazorpayProvider implements BillingProvider {
    * reconcile the capture without trusting any tenant signal from the wire.
    * No capacity is granted here — only the payment capture (webhook) grants.
    */
-  async createCapacityAddonOrder(input: { agencyId: string; quantity: number; unitPriceInr: number }): Promise<{ success: boolean; orderId?: string; amountPaise?: number; error?: string }> {
+  async createCapacityAddonOrder(input: { agencyId: string; quantity: number; unitPriceInr: number; smokeTest?: boolean }): Promise<{ success: boolean; orderId?: string; amountPaise?: number; error?: string }> {
     try {
       if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
         return { success: false, error: "Invalid quantity" };
@@ -166,6 +168,7 @@ export class RazorpayProvider implements BillingProvider {
           agencyId: input.agencyId,
           quantity: String(input.quantity),
           unitPriceInr: String(input.unitPriceInr),
+          ...(input.smokeTest ? { smokeTest: "true", liveSmokeTest: "true" } : {}),
         },
       });
       return { success: true, orderId: order.id, amountPaise };

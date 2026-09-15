@@ -401,6 +401,7 @@ export async function POST(req: Request) {
       const rawSubAmount = (payload.payload?.payment?.entity as Record<string, unknown> | undefined)?.amount;
       const parsedSubAmount = safePaiseToRupees(rawSubAmount);
       const cycle = (notes as Record<string, string>).cycle as "monthly" | "yearly" | undefined;
+      const isSmokeTest = (notes as Record<string, string>).smokeTest === "true" || (notes as Record<string, string>).liveSmokeTest === "true";
       const result = await billingService.handleSubscriptionWebhook({
         eventName: event,
         workspaceId: effectiveWorkspaceId,
@@ -410,6 +411,7 @@ export async function POST(req: Request) {
         renewsAt: deriveRenewsAt(payload, event, notes.planCode, cycle, parsedSubAmount),
         amount: parsedSubAmount ?? (undefined as unknown as number),
         cycle: cycle ?? undefined,
+        isSmokeTest,
       });
       if (!result.handled && result.error) {
         captureError(new Error(result.error), { service: "razorpay-webhook", operation: "subscriptionWebhook" });
@@ -440,6 +442,7 @@ export async function POST(req: Request) {
 
       try {
         const paymentCycle = (notes as Record<string, string>).cycle as "monthly" | "yearly" | undefined;
+        const isSmokeTestCapture = (notes as Record<string, string>).smokeTest === "true" || (notes as Record<string, string>).liveSmokeTest === "true";
         if (workspaceId) {
           await billingService.handleSubscriptionWebhook({
             eventName: "payment.captured",
@@ -449,6 +452,7 @@ export async function POST(req: Request) {
             idempotencyKey,
             amount: capturedRupees ?? (undefined as unknown as number),
             cycle: paymentCycle,
+            isSmokeTest: isSmokeTestCapture,
           });
         } else {
           const guestEmail: string = notes.email || "";
@@ -465,6 +469,7 @@ export async function POST(req: Request) {
                   idempotencyKey: `${idempotencyKey}_${m.workspace.id}`,
                   amount: capturedRupees ?? (undefined as unknown as number),
                   cycle: paymentCycle,
+                  isSmokeTest: isSmokeTestCapture,
                 });
               }
             }

@@ -1,6 +1,9 @@
 import { getPricingCenterData, getPricingAnalytics } from "@/actions/super-admin-pricing.actions";
 import { buildCapabilityCatalog, buildLimitFeatureList } from "@/lib/capabilities/catalog";
 import { PricingCenterClient } from "./_components/pricing-center-client";
+import { LiveSmokeTestToggle } from "../_components/live-smoke-test-toggle";
+import { prisma } from "@/lib/prisma";
+import { SMOKE_TEST_CONFIG_ID } from "@/modules/billing/domain/live-smoke-test";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +14,11 @@ const CAPABILITY_GROUPS = buildCapabilityCatalog();
 const LIMIT_FEATURES_LIST = buildLimitFeatureList();
 
 export default async function PricingCenterPage() {
-  const [data, analytics] = await Promise.all([getPricingCenterData(), getPricingAnalytics()]);
+  const [data, analytics, smokeRow] = await Promise.all([
+    getPricingCenterData(),
+    getPricingAnalytics(),
+    prisma.liveSmokeTestConfig.findUnique({ where: { id: SMOKE_TEST_CONFIG_ID } }).catch(() => null),
+  ]);
 
   return (
     <div>
@@ -21,6 +28,13 @@ export default async function PricingCenterPage() {
         marketing and scheduled pricing here — every surface (marketing, checkout, upgrade dialogs, the public API)
         reflects your changes without a redeploy. Every save is versioned and audited.
       </p>
+      <div className="mt-6">
+        <LiveSmokeTestToggle
+          initialEnabled={!!(smokeRow as unknown as { enabled?: boolean })?.enabled}
+          initialEnabledBy={(smokeRow as unknown as { enabledBy?: string | null })?.enabledBy ?? null}
+          initialEnabledAt={(smokeRow as unknown as { enabledAt?: Date | null })?.enabledAt ? new Date((smokeRow as unknown as { enabledAt: Date }).enabledAt).toISOString() : null}
+        />
+      </div>
       <PricingCenterClient
         plans={data.plans}
         versions={data.versions}

@@ -6,6 +6,9 @@ import { alertEvaluator } from "@/lib/observability/alert-evaluator";
 import { Building2, Package, Image, IndianRupee, CreditCard, Users, Activity, ScrollText, CheckCircle, AlertTriangle, AlertCircle, Info, Bell, BookOpen, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { LiveSmokeTestToggle } from "./_components/live-smoke-test-toggle";
+import { prisma } from "@/lib/prisma";
+import { SMOKE_TEST_CONFIG_ID } from "@/modules/billing/domain/live-smoke-test";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +42,17 @@ export default async function SuperAdminPage() {
   ]);
 
   const hasAlerts = alertReport.criticalCount + alertReport.warningCount > 0;
+  // RCCF-LIVE-SMOKE-01: fetch smoke test state for banner/toggle
+  const smokeRow = await prisma.liveSmokeTestConfig.findUnique({ where: { id: SMOKE_TEST_CONFIG_ID } }).catch(() => null);
+  const smokeEnabled = !!(smokeRow as unknown as { enabled?: boolean })?.enabled;
 
   return (
     <div>
+      {smokeEnabled && (
+        <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-200" data-testid="global-smoke-warning">
+          ⚠️ LIVE SMOKE TEST PRICING — REAL MONEY — Eligible checkouts are ₹1. Disable immediately after test.
+        </div>
+      )}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white font-display">Platform Dashboard</h1>
@@ -71,6 +82,15 @@ export default async function SuperAdminPage() {
         <StatCard label="Paid Subscriptions" value={stats.activeProSubscriptions} accent="bg-rose-500/20 text-rose-400" icon={<CreditCard className="h-5 w-5" />} />
         <StatCard label="Publishes" value={stats.publishCount} accent="bg-indigo-500/20 text-indigo-400" icon={<Activity className="h-5 w-5" />} />
         <StatCard label="Audit (24h)" value={stats.auditEntries24h} accent="bg-zinc-500/20 text-zinc-400" icon={<ScrollText className="h-5 w-5" />} />
+      </div>
+
+      {/* RCCF-LIVE-SMOKE-01 — isolated LIVE smoke test toggle */}
+      <div className="mt-6">
+        <LiveSmokeTestToggle
+          initialEnabled={smokeEnabled}
+          initialEnabledBy={(smokeRow as unknown as { enabledBy?: string | null })?.enabledBy ?? null}
+          initialEnabledAt={(smokeRow as unknown as { enabledAt?: Date | null })?.enabledAt ? new Date((smokeRow as unknown as { enabledAt: Date }).enabledAt).toISOString() : null}
+        />
       </div>
 
       {/* Operational Metrics */}

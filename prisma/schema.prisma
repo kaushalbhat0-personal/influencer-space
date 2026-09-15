@@ -1360,6 +1360,20 @@ model LoginAsToken {
   @@index([expiresAt])
 }
 
+/// RCCF-LIVE-SMOKE-01 — temporary LIVE smoke test pricing override.
+/// Singleton id="live-smoke-test": when enabled, eligible paid plans checkout at ₹1.
+/// Canonical pricing/entitlements/royalties/capacities unchanged. Amount derived
+/// server-side from SUPER_ADMIN-controlled state; webhook accepts ₹1 only when
+/// override ON + eligible plan. Default OFF, audit-logged, production warning.
+model LiveSmokeTestConfig {
+  id        String   @id @default("live-smoke-test")
+  enabled   Boolean  @default(false)
+  enabledBy String?  @db.Uuid
+  enabledAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
  /// Global billing defaults and operational settings.
 model BillingConfiguration {
   id                 String    @id @default(uuid()) @db.Uuid

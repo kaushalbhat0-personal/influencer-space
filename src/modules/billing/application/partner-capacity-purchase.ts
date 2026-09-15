@@ -72,14 +72,26 @@ export class PartnerCapacityPurchaseService {
     }
 
     const { PARTNER_ADDON_UNIT_PRICE_INR } = await import("@/config/commerce/agency-addons");
+    const { SMOKE_TEST_PRICE_INR } = await import("@/modules/billing/domain/live-smoke-test");
+    const { isLiveSmokeTestEnabled: isSmokeEnabledCap } = await import("@/lib/live-smoke-test");
 
     // Amount verification: the captured paise MUST equal the canonical
     // unit price × quantity. ₹1,999 / ₹2,001 captures are rejected with
     // zero mutation (a durable, idempotent rejection record is kept).
+    // RCCF-LIVE-SMOKE-01: when smoke test enabled + smokeTest note present, ₹1×qty is also valid.
     const expectedPaise = this.expectedAmountPaise(quantity, PARTNER_ADDON_UNIT_PRICE_INR);
-    if (!Number.isFinite(capturedAmountPaise) || capturedAmountPaise !== expectedPaise) {
+    const isSmokeNote = input.notes.smokeTest === "true" || input.notes.liveSmokeTest === "true";
+    let smokeEnabledCap = false;
+    try {
+      smokeEnabledCap = await isSmokeEnabledCap();
+    } catch {}
+    const smokePaise = this.expectedAmountPaise(quantity, SMOKE_TEST_PRICE_INR);
+    const isValidAmount =
+      capturedAmountPaise === expectedPaise ||
+      ((smokeEnabledCap || isSmokeNote) && capturedAmountPaise === smokePaise);
+    if (!Number.isFinite(capturedAmountPaise) || !isValidAmount) {
       await this.recordRejection(paymentId, "amount_mismatch");
-      captureError(new Error(`Capacity purchase amount mismatch: payment=${paymentId} captured=${capturedAmountPaise} expected=${expectedPaise}`), {
+      captureError(new Error(`Capacity purchase amount mismatch: payment=${paymentId} captured=${capturedAmountPaise} expected=${expectedPaise} smokePaise=${smokePaise} smokeNote=${isSmokeNote} smokeEnabled=${smokeEnabledCap}`), {
         service: "billing",
         operation: "capacity-capture-amount-mismatch",
       });
@@ -100,6 +112,8 @@ export class PartnerCapacityPurchaseService {
       select: { id: true },
     });
 
+    const effectiveUnitPriceInr = capturedAmountPaise === smokePaise && (smokeEnabledCap || isSmokeNote) ? SMOKE_TEST_PRICE_INR : PARTNER_ADDON_UNIT_PRICE_INR;
+    const isSmokeTestCap = effectiveUnitPriceInr === SMOKE_TEST_PRICE_INR;
     try {
       await prisma.$transaction(async (tx) => {
         // Entitlement: ACTIVE addon keyed by (agencyId, capacity_<paymentId>)
@@ -109,7 +123,7 @@ export class PartnerCapacityPurchaseService {
           data: {
             agencyId,
             quantity,
-            unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+            unitPriceInr: effectiveUnitPriceInr,
             status: "ACTIVE",
             idempotencyKey: `capacity_${paymentId}`,
           },
@@ -117,6 +131,7 @@ export class PartnerCapacityPurchaseService {
 
         // Immutable financial record referencing the provider payment.
         // FINANCE-07: persist exact paise (capturedAmountPaise is authoritative, no float drift)
+        // RCCF-LIVE-SMOKE-01: tag smoke test with metadata
         await tx.billingInvoice.create({
           data: {
             workspaceId: agencyWorkspace?.id ?? null,
@@ -127,6 +142,7 @@ export class PartnerCapacityPurchaseService {
             currency: "INR",
             status: "PAID",
             providerReference: paymentId,
+            ...(isSmokeTestCap ? ({ metadata: { liveSmokeTest: true, originalUnitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR, smokeTestPriceInr: SMOKE_TEST_PRICE_INR, warning: "LIVE SMOKE TEST PRICING — REAL MONEY" } } as unknown as Record<string, unknown>) : {}),
           },
         });
 
@@ -141,9 +157,10 @@ export class PartnerCapacityPurchaseService {
               providerOrderId: orderId,
               providerPaymentId: paymentId,
               quantity,
-              unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+              unitPriceInr: effectiveUnitPriceInr,
               amountPaise: capturedAmountPaise,
               event: "payment.captured",
+              ...(isSmokeTestCap ? { liveSmokeTest: true, originalUnitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR, warning: "LIVE SMOKE TEST PRICING — REAL MONEY" } : {}),
             },
           },
         });
@@ -162,9 +179,10 @@ export class PartnerCapacityPurchaseService {
     await logAction("system", "partner:capacity-addon-purchased", {
       agencyId,
       quantity,
-      unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+      unitPriceInr: effectiveUnitPriceInr,
       paymentId,
       orderId,
+      ...(isSmokeTestCap ? { liveSmokeTest: true } : {}),
     }).catch(() => {});
 
     return { handled: true, granted: true };

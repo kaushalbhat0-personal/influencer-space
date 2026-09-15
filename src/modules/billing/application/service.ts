@@ -16,6 +16,8 @@ import { captureError } from "@/lib/observability/error-tracker";
 import { metricsService } from "@/lib/observability/metrics-service";
 import type { CheckoutResult } from "../domain/types";
 import type { BillingLineItem } from "@/lib/billing/types";
+import { SMOKE_TEST_PRICE_INR, SMOKE_TEST_WARNING, isSmokeTestEligiblePlan } from "../domain/live-smoke-test";
+import { isLiveSmokeTestEnabled } from "@/lib/live-smoke-test";
 
 // RCCF-BILLING-UX-02B: capability UNLIMITED (-1) → billing presentation Infinity.
 const toQuotaLimit = (value: number): number => (value === -1 ? Infinity : value);
@@ -101,14 +103,36 @@ export class BillingService {
         else if ((rc?.pricing as unknown as { razorpayYearlyPlanId?: string })?.razorpayYearlyPlanId) checkoutPlanId = (rc!.pricing as unknown as { razorpayYearlyPlanId: string }).razorpayYearlyPlanId;
       } catch {}
     }
+    // ── RCCF-LIVE-SMOKE-01 — SUPER_ADMIN-only ₹1 LIVE smoke test override ──────
+    // Canonical pricing never mutated. When singleton enabled + eligible plan + SUPER_ADMIN caller,
+    // checkout amount is derived as ₹1 server-side (never from client input).
+    let isSmokeTest = false;
+    const originalPriceForAudit: number | null = checkoutPrice;
+    if (isSmokeTestEligiblePlan(planCode) && checkoutPrice != null && checkoutPrice > 1) {
+      try {
+        const enabled = await isLiveSmokeTestEnabled();
+        if (enabled) {
+          try {
+            const { getServerSession: gss } = await import("next-auth");
+            const { authOptions: ao } = await import("@/lib/auth");
+            const sess = await (gss as unknown as (opts: unknown) => Promise<{ user?: { role?: string } } | null>)(ao).catch(() => null);
+            if (sess?.user?.role === "SUPER_ADMIN") {
+              isSmokeTest = true;
+              checkoutPrice = SMOKE_TEST_PRICE_INR;
+            }
+          } catch {}
+        }
+      } catch {}
+    }
     const order = await razorpayProvider.createCheckout({
       planCode,
       accountId: workspaceId,
       email,
       currency: plan.currency,
       price: checkoutPrice,
-      razorpayPlanId: checkoutPlanId,
+      razorpayPlanId: isSmokeTest ? null : checkoutPlanId,
       cycle,
+      smokeTest: isSmokeTest,
     });
 
     if (!order.success) {
@@ -122,7 +146,13 @@ export class BillingService {
       accountId: workspaceId,
       type: "CHECKOUT_STARTED",
       idempotencyKey: `checkout_${order.orderId}`,
-      payload: { planCode, orderId: order.orderId, amount: checkoutPrice, cycle },
+      payload: {
+        planCode,
+        orderId: order.orderId,
+        amount: checkoutPrice,
+        cycle,
+        ...(isSmokeTest ? { liveSmokeTest: true, originalPrice: originalPriceForAudit, smokeTestPrice: SMOKE_TEST_PRICE_INR, warning: SMOKE_TEST_WARNING } : {}),
+      },
     });
 
     logger.info("createCheckout completed", "billing", { operation: "create_checkout", duration: Date.now() - start, metadata: { result: "success" } as Record<string, unknown> });
@@ -146,6 +176,8 @@ export class BillingService {
     renewsAt?: Date | null;
     amount?: number | string;
     cycle?: "monthly" | "yearly";
+    /** RCCF-LIVE-SMOKE-01: provider notes indicated smokeTest (late webhook after disable). */
+    isSmokeTest?: boolean;
   }): Promise<{ handled: boolean; status?: string | null; error?: string }> {
     const { eventName, workspaceId, planCode, providerReference, idempotencyKey } = input;
     const start = Date.now();
@@ -316,6 +348,16 @@ export class BillingService {
           } catch {}
         }
       }
+      // RCCF-LIVE-SMOKE-01 — when smoke test enabled, ₹1 is valid for eligible plans
+      if (isSmokeTestEligiblePlan(plan.code)) {
+        try {
+          const enabled = await isLiveSmokeTestEnabled();
+          if (enabled && !expectedAmounts.includes(SMOKE_TEST_PRICE_INR)) expectedAmounts.push(SMOKE_TEST_PRICE_INR);
+          // Also honor smokeTest note from provider (covers late webhook after disable)
+          const isSmokeNote = (input as unknown as { isSmokeTest?: boolean }).isSmokeTest === true;
+          if (isSmokeNote && !expectedAmounts.includes(SMOKE_TEST_PRICE_INR)) expectedAmounts.push(SMOKE_TEST_PRICE_INR);
+        } catch {}
+      }
       const capturedPaise = validPaidAmount !== null ? paiseFromRupees(validPaidAmount) : null;
       const expectedPaiseList = expectedAmounts.map((a) => paiseFromRupees(a));
       const matches = capturedPaise !== null && expectedPaiseList.some((ep) => {
@@ -429,6 +471,19 @@ export class BillingService {
               providerReference,
             }, tx);
             invoiceId = invoice.id;
+            // RCCF-LIVE-SMOKE-01: tag invoice metadata when ₹1 smoke test
+            if (isSmokeTestEligiblePlan(plan.code) && amount === SMOKE_TEST_PRICE_INR) {
+              try {
+                const smokeEnabledForInvoice = await isLiveSmokeTestEnabled().catch(() => false);
+                const isSmokeNoteForInvoice = (input as unknown as { isSmokeTest?: boolean }).isSmokeTest === true;
+                if (smokeEnabledForInvoice || isSmokeNoteForInvoice) {
+                  await tx.billingInvoice.update({
+                    where: { id: invoice.id },
+                    data: { metadata: { liveSmokeTest: true, warning: SMOKE_TEST_WARNING, originalPrice: plan.price, smokeTestPrice: SMOKE_TEST_PRICE_INR } as never },
+                  }).catch(() => {});
+                }
+              } catch {}
+            }
 
             // ── Agency Paid Capacity (RCCF-AGENCY-CAPACITY-02) ────────────────
             // Every successful PAID Partner Solo/Scale invoice adds 5 or 25

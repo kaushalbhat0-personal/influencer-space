@@ -251,20 +251,36 @@ export async function changeAgencyPlanAction(planCode: string, cycle: "monthly" 
   if (!checkout.success) return { success: false, error: checkout.error ?? "Checkout failed" };
 
   // Server-derived display amount — cycle-aware (never client input).
+  // RCCF-LIVE-SMOKE-01: when smoke test enabled + SUPER_ADMIN, eligible partner plans display ₹1
   let amountPaise: number | undefined;
   let currency: string | undefined;
   {
     const { getRuntimePlan } = await import("@/modules/pricing/application/runtime");
     const runtime = await getRuntimePlan(planCode).catch(() => null);
     let price: number | null = null;
-    if (cycle === "yearly") {
-      try {
-        const { partnerPriceForCycle } = await import("@/config/commerce/agency-commercial");
-        price = partnerPriceForCycle(planCode, "yearly");
-      } catch {}
-      if (price === null) price = (target as { annualPrice?: number | null }).annualPrice ?? target.price ?? 0;
-    } else {
-      price = runtime?.price ?? target.price ?? 0;
+    // Smoke test display override — SUPER_ADMIN-only, server-side enabled flag, never client input
+    let isSmokeForDisplay = false;
+    try {
+      const { isLiveSmokeTestEnabled } = await import("@/lib/live-smoke-test");
+      const { isSmokeTestEligiblePlan, SMOKE_TEST_PRICE_INR } = await import("@/modules/billing/domain/live-smoke-test");
+      const { getServerSession: gssDisp } = await import("next-auth");
+      const { authOptions: aoDisp } = await import("@/lib/auth");
+      const sessDisp = await (gssDisp as unknown as (o: unknown) => Promise<{ user?: { role?: string } } | null>)(aoDisp).catch(() => null);
+      if (isSmokeTestEligiblePlan(planCode) && sessDisp?.user?.role === "SUPER_ADMIN" && (await isLiveSmokeTestEnabled().catch(() => false))) {
+        price = SMOKE_TEST_PRICE_INR;
+        isSmokeForDisplay = true;
+      }
+    } catch {}
+    if (!isSmokeForDisplay) {
+      if (cycle === "yearly") {
+        try {
+          const { partnerPriceForCycle } = await import("@/config/commerce/agency-commercial");
+          price = partnerPriceForCycle(planCode, "yearly");
+        } catch {}
+        if (price === null) price = (target as { annualPrice?: number | null }).annualPrice ?? target.price ?? 0;
+      } else {
+        price = runtime?.price ?? target.price ?? 0;
+      }
     }
     if (price !== null && price > 0) {
       amountPaise = Math.round(price * 100);
@@ -313,13 +329,25 @@ export async function createAdditionalClientCheckoutAction(input: {
   if (!Number.isInteger(qty) || qty <= 0 || qty > 100) return { success: false, error: "Quantity must be a positive integer (max 100 per order)" };
 
   const { PARTNER_ADDON_UNIT_PRICE_INR } = await import("@/config/commerce/agency-addons");
+  // RCCF-LIVE-SMOKE-01: effective unit price — ₹1 when smoke test enabled (server-side)
+  let effectiveUnitPriceInr = PARTNER_ADDON_UNIT_PRICE_INR;
+  let isSmokeForAddon = false;
+  try {
+    const { isLiveSmokeTestEnabled } = await import("@/lib/live-smoke-test");
+    const { SMOKE_TEST_PRICE_INR } = await import("@/modules/billing/domain/live-smoke-test");
+    if (await isLiveSmokeTestEnabled().catch(() => false)) {
+      effectiveUnitPriceInr = SMOKE_TEST_PRICE_INR;
+      isSmokeForAddon = true;
+    }
+  } catch {}
 
   try {
     const { razorpayProvider } = await import("@/modules/billing/infrastructure/providers/razorpay");
     const order = await razorpayProvider.createCapacityAddonOrder({
       agencyId: ctx.agencyId,
       quantity: qty,
-      unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+      unitPriceInr: effectiveUnitPriceInr,
+      smokeTest: isSmokeForAddon,
     });
     if (!order.success || !order.orderId) {
       return { success: false, error: order.error ?? "Failed to create capacity checkout" };
@@ -332,11 +360,11 @@ export async function createAdditionalClientCheckoutAction(input: {
         accountId: ctx.agencyId,
         type: "CAPACITY_CHECKOUT_STARTED",
         idempotencyKey: `capacity_checkout_${order.orderId}`,
-        payload: { purpose: "partner_capacity_addon", orderId: order.orderId, quantity: qty, unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR },
+        payload: { purpose: "partner_capacity_addon", orderId: order.orderId, quantity: qty, unitPriceInr: effectiveUnitPriceInr, ...(isSmokeForAddon ? { liveSmokeTest: true } : {}) },
       },
     }).catch(() => {});
 
-    await logAction("system", "partner:capacity-checkout-created", { agencyId: ctx.agencyId, quantity: qty, unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR, orderId: order.orderId }).catch(() => {});
+    await logAction("system", "partner:capacity-checkout-created", { agencyId: ctx.agencyId, quantity: qty, unitPriceInr: effectiveUnitPriceInr, orderId: order.orderId, ...(isSmokeForAddon ? { liveSmokeTest: true } : {}) }).catch(() => {});
 
     return {
       success: true,
@@ -344,7 +372,7 @@ export async function createAdditionalClientCheckoutAction(input: {
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? process.env.RAZORPAY_KEY_ID ?? "",
       amountPaise: order.amountPaise,
       currency: "INR",
-      unitPriceInr: PARTNER_ADDON_UNIT_PRICE_INR,
+      unitPriceInr: effectiveUnitPriceInr,
     };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to start capacity checkout" };

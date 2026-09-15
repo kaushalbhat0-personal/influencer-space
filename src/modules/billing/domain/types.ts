@@ -94,6 +94,8 @@ export interface CheckoutParams {
   price?: number | null;
   /** RCCF-FINANCE-03: selected billing cycle — monthly vs yearly (annual). */
   cycle?: "monthly" | "yearly";
+  /** RCCF-LIVE-SMOKE-01: when true, checkout is a SUPER_ADMIN-only ₹1 LIVE smoke test (real money). */
+  smokeTest?: boolean;
 }
 
 export interface CheckoutResult {
