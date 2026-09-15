@@ -1,12 +1,12 @@
 import { billingRepository } from "../infrastructure/repository";
 import { razorpayProvider } from "../infrastructure/providers/razorpay";
-import { getPlan, getAllPlans, getPlansByFamily } from "@/lib/capabilities";
+import { getPlan, getAllPlans } from "@/lib/capabilities";
 import { isOneTimePlan, getCommercePlan } from "@/config/commerce/plans";
 import { assertEligiblePlan } from "./plan-restriction";
 import { countStorageUsage, resolveStorageCapability, BYTES_PER_MB } from "./storage.enforcement";
 import { validateTransition } from "../domain/lifecycle";
 import { mappingForRazorpayEvent, statusForWebhookEvent } from "../domain/webhook";
-import { getRuntimePlan, type PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
+import { getRuntimePlan, getRuntimePlansByFamily, type PlanRuntimeConfig } from "@/modules/pricing/application/runtime";
 import { capabilityService } from "@/lib/capabilities";
 import { logAction } from "@/lib/audit";
 import { platformEventBus } from "@/lib/events";
@@ -1194,8 +1194,34 @@ export class BillingService {
     };
   }
 
-  getPlans() {
-    return getPlansByFamily("creator");
+  /**
+   * RCCF-PRICING-AUTHORITY-02 — billing dashboard plan list now consumes the
+   * shared DB/runtime authority (getRuntimePlansByFamily) instead of the
+   * static COMMERCE_PLANS registry. No duplicate resolver, no new cache.
+   */
+  async getPlans() {
+    const runtime = await getRuntimePlansByFamily("creator");
+    // Adapter: ResolvedPlan -> BillingPlan (preserve required fields)
+    return runtime.map((p) => ({
+      code: p.code,
+      family: p.family as unknown as "creator" | "agency",
+      name: p.name,
+      description: p.description,
+      price: p.price ?? 0,
+      currency: p.currency,
+      cycle: "monthly" as const,
+      features: p.features,
+      recommended: p.recommended,
+      badge: p.badge ?? "",
+      // extras preserved for audit (annualPrice/billingForm) but not in BillingPlan type
+      annualPrice: p.annualPrice,
+      popular: p.popular,
+      bestValue: p.bestValue,
+      comparisonOrder: p.comparisonOrder,
+      capabilities: p.capabilities,
+      featureOverrides: p.featureOverrides,
+      highlights: p.highlights,
+    })) as unknown as import("@/lib/billing/types").BillingPlan[];
   }
 }
 

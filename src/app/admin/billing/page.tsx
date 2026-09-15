@@ -39,7 +39,7 @@ export default async function BillingPage() {
   if (workspace) {
     const [billingData, plans, paymentStrategy] = await Promise.all([
       billingService.getBillingInfo(workspace.id, tenant.id).catch(() => null) as Promise<BillingDashboard | null>,
-      Promise.resolve(billingService.getPlans()).catch(() => []) as Promise<BillingPlan[]>,
+      (billingService.getPlans() as Promise<BillingPlan[]>).catch(() => []),
       getPaymentStrategyProps(tenant.id),
     ]);
     if (!billingData) {
@@ -55,7 +55,7 @@ export default async function BillingPage() {
   const storageUsedMb = storageBytesToMb(await countStorageUsage(tenant.id).catch(() => 0));
   const storageCapability = resolveStorageCapability("creator_launch");
   const storageLimitMb = typeof storageCapability.limitBytes === "number" && Number.isFinite(storageCapability.limitBytes) ? Math.round(storageCapability.limitBytes / 1024 / 1024) : null;
-  const plans = billingService.getPlans() as BillingPlan[];
+  const plans = (await billingService.getPlans().catch(() => [])) as BillingPlan[];
 
   const billingData: BillingDashboard = {
     plan: { code: "creator_launch", family: "creator", name: "Creator Launch", description: "Get your storefront online and start selling — free.", price: 0, currency: "INR", features: {}, recommended: false, badge: "", cycle: "monthly" as const },
