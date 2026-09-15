@@ -213,13 +213,18 @@ function initForm(plan: CenterPlan | undefined): EditorState {
   };
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
       <span className="text-xs font-medium text-zinc-400">{label}</span>
+      {hint && <span className="text-[11px] leading-snug text-zinc-500">{hint}</span>}
       {children}
     </label>
   );
+}
+
+function CapabilityHint({ text }: { text: string }) {
+  return <p className="mt-1 text-[11px] leading-snug text-zinc-500">{text}</p>;
 }
 
 const inputCls = "rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-600";
@@ -273,24 +278,24 @@ function Editor({ plan, form, setForm, save, saving, msg, capabilityGroups, limi
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-2">
-      {/* Left: marketing + pricing */}
+      {/* Left: marketing + pricing — hints explain operational impact */}
       <div className="space-y-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
         <h2 className="text-sm font-semibold text-white">Marketing & Pricing</h2>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Plan name"><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
-          <Field label="Badge"><input className={inputCls} value={form.badge} onChange={(e) => set("badge", e.target.value)} placeholder="Most Popular" /></Field>
+          <Field label="Plan name" hint="Display name. Used in marketing cards and billing. Change requires no external provisioning."><input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
+          <Field label="Badge" hint="Marketing badge (Most Popular/Best Value). Informational only — does not affect checkout or entitlements."><input className={inputCls} value={form.badge} onChange={(e) => set("badge", e.target.value)} placeholder="Most Popular" /></Field>
         </div>
-        <Field label="Description"><textarea className={inputCls} rows={2} value={form.description} onChange={(e) => set("description", e.target.value)} /></Field>
-        <Field label="Target audience"><input className={inputCls} value={form.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} /></Field>
+        <Field label="Description" hint="Marketing pitch on the pricing card. Informational only — backed by real capabilities below."><textarea className={inputCls} rows={2} value={form.description} onChange={(e) => set("description", e.target.value)} /></Field>
+        <Field label="Target audience" hint="Who this plan is for. Shown under the title. Informational only."><input className={inputCls} value={form.targetAudience} onChange={(e) => set("targetAudience", e.target.value)} /></Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Monthly price (₹)"><input className={inputCls} value={form.monthlyPrice} onChange={(e) => set("monthlyPrice", e.target.value)} placeholder="999" /></Field>
-          <Field label="Annual price (₹/yr)"><input className={inputCls} value={form.annualPrice} onChange={(e) => set("annualPrice", e.target.value)} placeholder="9990" /></Field>
-          <Field label="Trial days"><input className={inputCls} value={form.trialDays} onChange={(e) => set("trialDays", e.target.value)} placeholder="15" /></Field>
+          <Field label="Monthly price (₹)" hint="Customer-facing monthly price. Updates marketing, billing dashboard and checkout via the runtime authority. Changing this provisions a new LIVE Razorpay monthly plan (₹ ×100 paise) when authorized."><input className={inputCls} value={form.monthlyPrice} onChange={(e) => set("monthlyPrice", e.target.value)} placeholder="999" /></Field>
+          <Field label="Annual price (₹/yr)" hint="Customer-facing annual price. Separate amount with separate Razorpay yearly plan. Yearly must not reuse the monthly plan — the yearly plan must have the annual amount."><input className={inputCls} value={form.annualPrice} onChange={(e) => set("annualPrice", e.target.value)} placeholder="9990" /></Field>
+          <Field label="Trial days" hint="Free trial length. Controls entitlement timing, not just display."><input className={inputCls} value={form.trialDays} onChange={(e) => set("trialDays", e.target.value)} placeholder="15" /></Field>
           {/* RCCF-BILLING-07E — Partner one-time plans have no renewal grace; hide/disable presentation but preserve data/schema */}
           {(() => {
             const oneTime = isOneTimePlan(form.code);
             return (
-              <Field label={`Grace period (days)${oneTime ? " — not applicable (one-time)" : ""}`}>
+              <Field label={`Grace period (days)${oneTime ? " — not applicable (one-time)" : ""}`} hint={oneTime ? "One-time purchases have no renewal — value is stored but ignored at runtime. No grace is shown to customers." : "Days after renewal failure before subscription expires. Affects billing lifecycle, not just display."}>
                 <input
                   className={cn(inputCls, oneTime && "opacity-50 cursor-not-allowed")}
                   value={form.gracePeriodDays}
@@ -303,47 +308,50 @@ function Editor({ plan, form, setForm, save, saving, msg, capabilityGroups, limi
               </Field>
             );
           })()}
-          <Field label="CTA label"><input className={inputCls} value={form.ctaLabel} onChange={(e) => set("ctaLabel", e.target.value)} /></Field>
-          <Field label="CTA type">
+          <Field label="CTA label" hint="Button text. Informational."><input className={inputCls} value={form.ctaLabel} onChange={(e) => set("ctaLabel", e.target.value)} /></Field>
+          <Field label="CTA type" hint="signup = free trial, checkout = paid subscription, contact = enterprise. Affects available purchase flow.">
             <select className={inputCls} value={form.ctaType} onChange={(e) => set("ctaType", e.target.value)}>
               <option value="signup">Signup</option><option value="checkout">Checkout</option><option value="contact">Contact Sales</option>
             </select>
           </Field>
-          <Field label="Comparison order"><input className={inputCls} value={form.comparisonOrder} onChange={(e) => set("comparisonOrder", e.target.value)} /></Field>
-          <Field label="Color accent"><input className={inputCls} value={form.colorAccent} onChange={(e) => set("colorAccent", e.target.value)} placeholder="#6366f1" /></Field>
+          <Field label="Comparison order" hint="Left-to-right order on pricing table. Display only."><input className={inputCls} value={form.comparisonOrder} onChange={(e) => set("comparisonOrder", e.target.value)} /></Field>
+          <Field label="Color accent" hint="Card accent color. Display only."><input className={inputCls} value={form.colorAccent} onChange={(e) => set("colorAccent", e.target.value)} placeholder="#6366f1" /></Field>
         </div>
         {!isOneTimePlan(form.code) && form.family === "creator" && !form.enterprise && (
           <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-3 text-xs" data-testid="razorpay-plan-status">
-            <p className="font-medium text-zinc-300">Razorpay Plans</p>
-            <div className="mt-1 space-y-1">
-              <p className={plan?.runtimeConfig?.pricing?.razorpayPlanId ? "text-emerald-400" : "text-amber-400"}>Monthly: {plan?.runtimeConfig?.pricing?.razorpayPlanId ? "provisioned" : "missing — save to provision"}</p>
-              <p className={plan?.runtimeConfig?.pricing?.razorpayYearlyPlanId ? "text-emerald-400" : "text-amber-400"}>Yearly: {plan?.runtimeConfig?.pricing?.razorpayYearlyPlanId ? "provisioned" : "missing — save to provision"}</p>
+            <p className="font-medium text-zinc-300">Razorpay Plans — external subscription contracts</p>
+            <CapabilityHint text="Monthly and yearly use separate Razorpay plans because Razorpay plan amount is authoritative. Changing a price provisions a new plan with that amount (monthly ×100 / yearly ×100 paise)." />
+            <div className="mt-2 space-y-1">
+              <p className={plan?.runtimeConfig?.pricing?.razorpayPlanId ? "text-emerald-400" : "text-amber-400"}>Monthly: {plan?.runtimeConfig?.pricing?.razorpayPlanId ? `provisioned (${plan.runtimeConfig.pricing.razorpayPlanId.slice(0, 12)}…)` : "missing — save to provision ₹" + (form.monthlyPrice || "—") + " monthly"}</p>
+              <p className={plan?.runtimeConfig?.pricing?.razorpayYearlyPlanId ? "text-emerald-400" : "text-amber-400"}>Yearly: {plan?.runtimeConfig?.pricing?.razorpayYearlyPlanId ? `provisioned (${plan.runtimeConfig.pricing.razorpayYearlyPlanId.slice(0, 12)}…)` : "missing — save to provision ₹" + (form.annualPrice || "—") + " yearly"}</p>
             </div>
-            <p className="mt-1 text-[10px] text-zinc-500">Monthly ₹{form.monthlyPrice || "—"} / Yearly ₹{form.annualPrice || "—"} — auto-provisions on price change when authorized.</p>
+            <p className="mt-2 text-[10px] font-medium text-amber-300">⚠ Creates LIVE Razorpay plans when price changed and RAZORPAY_LIVE_PROVISIONING_AUTHORIZED=1. Affects real checkout — monthly and yearly are provisioned independently. Yearly must not reuse the monthly plan.</p>
           </div>
         )}
-        <Field label="Marketing highlights (one per line)"><textarea className={inputCls} rows={8} value={form.highlightsText} onChange={(e) => set("highlightsText", e.target.value)} /></Field>
+        <Field label="Marketing highlights (one per line)" hint="Value points on the card. Should map to real capabilities below — not free-form marketing."><textarea className={inputCls} rows={8} value={form.highlightsText} onChange={(e) => set("highlightsText", e.target.value)} /></Field>
         <div className="flex flex-wrap gap-3">
           {(["hidden", "enterprise", "popular", "bestValue", "recommended"] as const).map((f) => (
-            <label key={f} className="flex items-center gap-2 text-sm text-zinc-300">
+            <label key={f} className="flex items-center gap-2 text-sm text-zinc-300" title={f === "hidden" ? "Hide from pricing table" : f === "enterprise" ? "Contact-sales only" : "Marketing badge flag"}>
               <input type="checkbox" className={checkCls} checked={form[f]} onChange={(e) => set(f, e.target.checked)} />
               {f}
             </label>
           ))}
         </div>
+        <CapabilityHint text="Badge/display flags are informational only — they do not gate entitlements or checkout. Currency is fixed to INR." />
       </div>
 
       {/* Right: capabilities + limits + schedule + preview */}
       <div className="space-y-4">
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-          <h2 className="mb-3 text-sm font-semibold text-white">Capabilities</h2>
-          <div className="max-h-80 space-y-3 overflow-y-auto pr-2">
+          <h2 className="mb-3 text-sm font-semibold text-white">Capabilities — entitlement gates</h2>
+          <CapabilityHint text="Checked capabilities grant features. These are not marketing text — they control what the plan can actually do (checked = available via CapabilityService). Boolean capabilities are on/off." />
+          <div className="mt-3 max-h-80 space-y-3 overflow-y-auto pr-2">
             {capabilityGroups.map((g) => (
               <div key={g.category}>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">{g.category}</p>
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   {g.items.map((cap) => (
-                    <label key={cap.key} className="flex items-center gap-1.5 text-xs text-zinc-300">
+                    <label key={cap.key} className="flex items-center gap-1.5 text-xs text-zinc-300" title="Grant this capability — controls entitlements, not just display">
                       <input type="checkbox" className={checkCls} checked={form.capabilities.has(cap.key)} onChange={() => toggleCap(cap.key)} />
                       {cap.label}
                     </label>
@@ -355,14 +363,15 @@ function Editor({ plan, form, setForm, save, saving, msg, capabilityGroups, limi
         </div>
 
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-          <h2 className="mb-3 text-sm font-semibold text-white">Limits <span className="text-[10px] font-normal text-zinc-500">(-1 = unlimited, 0 = off)</span></h2>
-          <div className="grid grid-cols-3 gap-2">
+          <h2 className="mb-3 text-sm font-semibold text-white">Limits <span className="text-[10px] font-normal text-zinc-500">entitlement limits — affects enforcement</span></h2>
+          <CapabilityHint text="0 = unavailable/off, numeric = limit, -1 = unlimited (only where the resolver uses -1 as unlimited). Changing a limit here changes what checkout+billing actually enforce." />
+          <div className="mt-3 grid grid-cols-3 gap-2">
             {limitFeatures
               // RCCF-60.3: Partner plans have no storage capability — storage
               // limits are never editable for non-Creator plans.
               .filter((f) => form.family === "creator" || (f.id !== "storage_mb" && f.id !== "storage_gb"))
               .map((f) => (
-                <Field key={f.id} label={f.label}>
+                <Field key={f.id} label={f.label} hint={f.id.startsWith("max_") ? "0 off, -1 unlimited where supported, otherwise numeric limit — enforced at checkout/billing." : "Numeric limit — enforced."}>
                   {f.id === "max_clients" ? (
                     <CapacityLimitControl value={form.featureOverrides[f.id] ?? -1} onChange={(raw) => setLimit(f.id, raw)} />
                   ) : (
@@ -375,6 +384,7 @@ function Editor({ plan, form, setForm, save, saving, msg, capabilityGroups, limi
 
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
           <h2 className="mb-3 text-sm font-semibold text-white">Scheduled pricing</h2>
+          <CapabilityHint text="Future-dated price changes. Informational until effective — runtime resolver picks the scheduled entry whose effectiveAt is in the past. Does not create Razorpay plans by itself." />
           {form.scheduled.length === 0 && <p className="text-xs text-zinc-500">No scheduled changes.</p>}
           <div className="space-y-2">
             {form.scheduled.map((s, i) => (
@@ -436,7 +446,11 @@ function Editor({ plan, form, setForm, save, saving, msg, capabilityGroups, limi
           </div>
         </div>
 
-        <Field label="Change note (audit)"><input className={inputCls} value={form.changeNote} onChange={(e) => set("changeNote", e.target.value)} placeholder="e.g. Price increase for Sept" /></Field>
+        <Field label="Change note (audit)" hint="Required for audit log. Briefly describe why you changed pricing or entitlements."><input className={inputCls} value={form.changeNote} onChange={(e) => set("changeNote", e.target.value)} placeholder="e.g. Price increase for Sept" /></Field>
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs">
+          <p className="font-medium text-amber-300">⚠ LIVE provisioning</p>
+          <p className="mt-1 leading-relaxed text-amber-200/80">Saving a price change for a recurring creator plan creates LIVE Razorpay subscription plans (monthly + yearly) with those amounts. This affects real checkout configuration. Requires <span className="font-mono text-amber-200">RAZORPAY_LIVE_PROVISIONING_AUTHORIZED=1</span> in production. Yearly must not reuse the monthly plan.</p>
+        </div>
         <div className="flex items-center gap-3">
           <button onClick={save} disabled={saving} className="rounded-lg bg-indigo-500 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50">
             {saving ? "Saving…" : "Save plan"}
