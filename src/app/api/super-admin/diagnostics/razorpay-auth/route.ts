@@ -15,7 +15,10 @@ export const dynamic = "force-dynamic";
  * Returns ONLY: success, statusCode, errorCode, errorDescription, errorReason, planCount.
  *
  * TEMPORARY — remove immediately after single SUPER_ADMIN call.
- * Path: /api/super-admin/_diagnostics/razorpay-auth
+ * NOTE: Next.js treats folders prefixed with "_" as private (not routable).
+ * Original spec suggests /api/super-admin/_diagnostics/razorpay-auth — that private prefix returns 404.
+ * Using /api/super-admin/diagnostics/razorpay-auth instead (same SUPER_ADMIN guard, same semantics, routable).
+ * Path: /api/super-admin/diagnostics/razorpay-auth
  */
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -80,7 +83,6 @@ export async function POST() {
     const errorDescription = err.error?.description ?? err.message ?? "unknown error";
     const errorReason = err.error?.reason ?? null;
 
-    // Never include key material in response or logs
     return NextResponse.json(
       {
         success: false,
@@ -95,7 +97,6 @@ export async function POST() {
   }
 }
 
-// No GET — POST only per spec. Return 405 for any GET attempt.
 export async function GET() {
   return NextResponse.json({ error: "Method not allowed — use POST" }, { status: 405 });
 }
