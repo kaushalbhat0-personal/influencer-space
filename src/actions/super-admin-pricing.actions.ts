@@ -492,6 +492,7 @@ export async function getPricingCenterData(): Promise<{
     name: string;
     family: string;
     price: number | null;
+    annualPrice: number | null;
     runtimeConfig: PlanRuntimeConfig | null;
     gracePeriodDays: number;
     hasRow: boolean;
@@ -511,12 +512,14 @@ export async function getPricingCenterData(): Promise<{
   const { COMMERCE_PLANS, LEGACY_TO_CANONICAL } = await import("@/config/commerce/plans");
   const plans = COMMERCE_PLANS.map((cfg) => {
     const row = rowByCode.get(cfg.code);
+    const rc = row?.runtimeConfig as PlanRuntimeConfig | null;
     return {
       code: cfg.code,
       name: row?.name ?? cfg.name,
       family: cfg.family,
       price: row?.price ?? cfg.price,
-      runtimeConfig: (row?.runtimeConfig as PlanRuntimeConfig | null) ?? null,
+      annualPrice: rc?.pricing?.annualPrice ?? cfg.annualPrice ?? null,
+      runtimeConfig: rc,
       gracePeriodDays: row?.gracePeriodDays ?? 0,
       hasRow: !!row,
     };
@@ -529,12 +532,14 @@ export async function getPricingCenterData(): Promise<{
     if (row.status !== "ACTIVE") continue;
     if (Object.prototype.hasOwnProperty.call(LEGACY_TO_CANONICAL, row.code)) continue;
     if (!row.runtimeConfig) continue;
+    const rc2 = row.runtimeConfig as PlanRuntimeConfig | null;
     plans.push({
       code: row.code,
       name: row.name,
       family: row.family === "agency" ? "partner" : "creator",
       price: row.price,
-      runtimeConfig: (row.runtimeConfig as PlanRuntimeConfig | null) ?? null,
+      annualPrice: rc2?.pricing?.annualPrice ?? null,
+      runtimeConfig: rc2,
       gracePeriodDays: row.gracePeriodDays ?? 0,
       hasRow: true,
     });

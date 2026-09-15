@@ -12,6 +12,7 @@ export interface CenterPlan {
   name: string;
   family: string;
   price: number | null;
+  annualPrice: number | null;
   runtimeConfig: PlanRuntimeConfig | null;
   gracePeriodDays: number;
   hasRow: boolean;
@@ -190,7 +191,7 @@ function initForm(plan: CenterPlan | undefined): EditorState {
     description: m?.description ?? "",
     targetAudience: m?.targetAudience ?? "",
     monthlyPrice: p?.price !== undefined && p.price !== null ? String(p.price) : plan?.price !== null && plan?.price !== undefined ? String(plan.price) : "",
-    annualPrice: p?.annualPrice !== undefined && p.annualPrice !== null ? String(p.annualPrice) : "",
+    annualPrice: p?.annualPrice !== undefined && p.annualPrice !== null ? String(p.annualPrice) : plan?.annualPrice !== null && plan?.annualPrice !== undefined ? String(plan.annualPrice) : "",
     trialDays: m?.trialDays !== undefined ? String(m.trialDays) : "",
     gracePeriodDays: String(plan?.gracePeriodDays ?? 0),
     badge: m?.badge ?? "",
