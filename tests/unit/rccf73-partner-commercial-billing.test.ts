@@ -215,11 +215,19 @@ describe("RCCF-73 — provider routing (one-time vs recurring)", () => {
     expect(h.ordersCreate).toHaveBeenCalled();
   });
 
-  it("Creator Growth keeps its RECURRING subscription contract (regression)", async () => {
-    const res = await provider.createCheckout({ planCode: "creator_grow", accountId: "ws-c", razorpayPlanId: "plan_TLTGQBU1EXkseF" });
+  it("Creator Growth legacy ₹699 plan is retired — checkout uses ORDER at ₹999 (regression)", async () => {
+    const res = await provider.createCheckout({ planCode: "creator_grow", accountId: "ws-c", razorpayPlanId: "plan_TLTGQBU1EXkseF", price: 999, currency: "INR" });
     expect(res.success).toBe(true);
-    expect(h.subsCreate).toHaveBeenCalledWith(expect.objectContaining({ plan_id: "plan_TLTGQBU1EXkseF", total_count: 12 }));
-    expect(h.ordersCreate).not.toHaveBeenCalled();
+    // legacy plan_TLTGQBU1EXkseF is hard-guarded to null -> ORDER at 99900
+    expect(h.subsCreate).not.toHaveBeenCalled();
+    expect(h.ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 99900 }));
+  });
+
+  it("Creator Growth smokeTest still forces ORDER at 100 paise", async () => {
+    const res = await provider.createCheckout({ planCode: "creator_grow", accountId: "ws-c", price: 1, currency: "INR", razorpayPlanId: null, smokeTest: true });
+    expect(res.success).toBe(true);
+    expect(h.subsCreate).not.toHaveBeenCalled();
+    expect(h.ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 100 }));
   });
 
   it("capacity-addon orders are priced server-side (unit × quantity) and carry the purpose tag", async () => {
@@ -553,13 +561,14 @@ describe("RCCF-73 — Super Admin pricing center (family/billing-form aware)", (
     expect(src).toMatch(/from "@\/config\/commerce\/plans"/);
   });
 
-  it("Creator catalog invariants untouched: Growth ₹999/month w/ live contract, Scale ₹1,999/month", () => {
+  it("Creator catalog invariants untouched: Growth ₹999/month (legacy 699 removed), Scale ₹1,999/month", () => {
     const grow = getCommercePlan("creator_grow")!;
     const scale = getCommercePlan("creator_scale")!;
     expect(grow.price).toBe(999);
     expect(grow.cycle).toBe("monthly");
     expect(grow.billingForm).toBeUndefined();
-    expect(grow.razorpayPlanId).toBe("plan_TLTGQBU1EXkseF");
+    expect(grow.razorpayPlanId).toBeNull();
+    expect(grow.razorpayPlanId).not.toBe("plan_TLTGQBU1EXkseF");
     expect(scale.price).toBe(1999);
     expect(scale.cycle).toBe("monthly");
     expect(scale.billingForm).toBeUndefined();

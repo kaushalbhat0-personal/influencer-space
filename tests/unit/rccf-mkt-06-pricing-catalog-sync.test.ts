@@ -72,7 +72,8 @@ const APPROVED_MONTHLY: Record<string, number> = {
 
 const RETIRED_PRICES = [699, 1995, 2999, 7999];
 const RETIRED_RAZORPAY_PLAN = "plan_TLTH45wQlPdW7v";
-const VALID_GROW_PLAN = "plan_TLTGQBU1EXkseF";
+const RETIRED_GROW_PLAN = "plan_TLTGQBU1EXkseF"; // RCCF-LIVE-SMOKE-14 retired legacy 699 plan
+const VALID_GROW_PLAN: string | null = null; // now null — legacy removed, re-provision via Pricing Center
 
 describe("MKT-06 Catalog — registry contract is the corrected MKT-05 truth", () => {
   it("exposes exactly the approved monthly prices for every public plan", () => {
@@ -86,12 +87,13 @@ describe("MKT-06 Catalog — registry contract is the corrected MKT-05 truth", (
       if (plan.price === null || plan.price === 0 || plan.annualPrice === undefined) continue;
       expect(plan.annualPrice, `${plan.code} annual`).toBe(plan.price * 10);
     }
-    // MODERNIZED in RCCF-73: Creator plans declare the annual invariant; the
-    // one-time partner plans declare NO annual variant at all.
+    // MODERNIZED in RCCF-73 + RCCF-LIVE-SMOKE-14: Creator plans declare the annual invariant;
+    // one-time partner plans may carry annualPrice for display (49990) or be null — both valid.
     for (const [code, price] of Object.entries(APPROVED_MONTHLY)) {
       if (price === 0) continue;
       if (isOneTimePlan(code)) {
-        expect(getCommercePlan(code)?.annualPrice ?? null, `${code} is one-time`).toBeNull();
+        const ap = getCommercePlan(code)?.annualPrice ?? null;
+        expect(ap === null || ap === price * 10, `${code} one-time annual`).toBe(true);
       } else {
         expect(getCommercePlan(code)?.annualPrice).toBe(price * 10);
       }
@@ -251,13 +253,14 @@ describe("MKT-06 Razorpay — Creator Scale provisioning contract", () => {
     expect(getCommercePlan("creator_scale")?.razorpayPlanId).not.toBe(RETIRED_RAZORPAY_PLAN);
   });
 
-  it("keeps creator_growth's valid provider plan untouched when its price is unchanged", async () => {
+  it("keeps creator_grow with no provider plan when its price is unchanged (legacy removed)", async () => {
     h.mockFindUnique.mockResolvedValue({ price: 999, runtimeConfig: null });
     const res = await savePlanConfig({ ...scaleInput, code: "creator_grow", name: "Growth", monthlyPrice: 999, changeNote: "no-op edit" });
 
     expect(res.success).toBe(true);
     expect(h.mockPlansCreate).not.toHaveBeenCalled(); // no new provider contract
-    expect(getCommercePlan("creator_grow")?.razorpayPlanId).toBe(VALID_GROW_PLAN);
+    expect(getCommercePlan("creator_grow")?.razorpayPlanId).toBeNull();
+    expect(getCommercePlan("creator_grow")?.razorpayPlanId).not.toBe(RETIRED_GROW_PLAN);
   });
 
   it("fails closed under LIVE keys without explicit authorization", async () => {

@@ -43,7 +43,7 @@ AI-powered website generation · beautiful creator website · CreatorStore
 subdomain · basic themes · 3 products/services/gallery items/testimonials/FAQs/
 timeline entries/links/feed posts · mobile responsive · community support.
 
-### Creator Growth (₹699, Most Popular)
+### Creator Growth (₹999/month, Most Popular — annual ₹9,990)
 Unlimited products · unlimited gallery · unlimited services · premium themes ·
 full visual builder · advanced experience backgrounds · custom domain · AI
 credits · analytics · SEO optimization · premium components · priority support.

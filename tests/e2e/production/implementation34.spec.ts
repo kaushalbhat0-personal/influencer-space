@@ -15,8 +15,8 @@ test("R8.1 - Pricing page reflects the canonical plan matrix (Launch/Grow/Scale/
     expect(await page.locator(`text=${name}`).count()).toBeGreaterThan(0);
   }
   // Canonical prices, not duplicated.
-  expect(await page.locator("text=699").count()).toBeGreaterThan(0);
-  expect(await page.locator("text=1,995").count()).toBeGreaterThan(0);
+  expect(await page.locator("text=999").count()).toBeGreaterThan(0);
+  expect(await page.locator("text=1,999").count()).toBeGreaterThan(0);
 
   await shot(page, "r8-1-pricing-matrix");
   errors.assertClean();

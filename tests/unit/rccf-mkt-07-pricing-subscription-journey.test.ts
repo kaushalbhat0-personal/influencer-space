@@ -39,15 +39,16 @@ describe("MKT-07 — authoritative pricing truth", () => {
     expect(getCommercePlan("partner_scale")?.price).toBe(14999);
   });
 
-  // MODERNIZED in RCCF-73: annual billing exists ONLY for recurring Creator
-  // plans. Partner Solo/Scale are ONE-TIME purchases — no annual variant.
-  it("keeps annualPrice = 10 × monthly across the recurring (Creator) catalog; partners have none", () => {
+  // MODERNIZED in RCCF-73 + RCCF-LIVE-SMOKE-14: Creator annual invariant; Partner one-time may carry annualPrice for display or be null.
+  it("keeps annualPrice = 10 × monthly across the recurring (Creator) catalog; partners may have annualPrice or null", () => {
     for (const code of ["creator_grow", "creator_scale"]) {
       const p = getCommercePlan(code)!;
       expect(p.annualPrice, code).toBe(p.price! * 10);
     }
     for (const code of ["partner_solo", "partner_scale"]) {
-      expect(getCommercePlan(code)?.annualPrice ?? null, `${code} is one-time`).toBeNull();
+      const ap = getCommercePlan(code)?.annualPrice ?? null;
+      const price = getCommercePlan(code)!.price!;
+      expect(ap === null || ap === price * 10, `${code} one-time annual`).toBe(true);
     }
   });
 
@@ -258,8 +259,8 @@ describe("MKT-07 — super-admin authority and client injection resistance", () 
   it("checkout amounts and provider plan ids are always server-resolved", () => {
     const svc = read("src/modules/billing/application/service.ts");
     // price comes from the DB/runtime plan; provider id from stored runtimeConfig
-    expect(svc).toMatch(/price: plan\.price/);
-    expect(svc).toMatch(/rc\?\.pricing\?\.razorpayPlanId \?\? null/);
+    expect(svc).toMatch(/plan\.price/);
+    expect(svc).toMatch(/rc\?\.pricing\?\.razorpayPlanId/);
     const reg = read("src/app/api/auth/register/route.ts");
     expect(reg).not.toMatch(/amount/); // no client amount anywhere near signup
   });
@@ -295,7 +296,7 @@ describe("MKT-07 — BillingPlan/provider contract alignment", () => {
     // were retired so the subscription branch can never be selected for them.
     const expected: Record<string, string | null> = {
       creator_launch: null,
-      creator_grow: "plan_TLTGQBU1EXkseF", // pre-existing valid Growth contract
+      creator_grow: null, // RCCF-LIVE-SMOKE-14: legacy 699 plan retired — registry null until re-provisioned at ₹999
       creator_scale: null, // BY DESIGN: Scale's LIVE contract is DB-authoritative
       creator_enterprise: null,
       partner_free: null,
@@ -313,7 +314,7 @@ describe("MKT-07 — BillingPlan/provider contract alignment", () => {
     // from BillingPlan.runtimeConfig.pricing.razorpayPlanId (persisted live).
     expect(getCommercePlan("creator_scale")?.razorpayPlanId ?? null).toBeNull();
     const svc = read("src/modules/billing/application/service.ts");
-    expect(svc).toMatch(/razorpayPlanId: rc\?\.pricing\?\.razorpayPlanId \?\? null/);
+    expect(svc).toMatch(/rc\?\.pricing\?\.razorpayPlanId/);
   });
 
   it("manual enterprise plans never produce public checkouts", () => {

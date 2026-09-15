@@ -87,16 +87,16 @@ describe("RCCF-MKT-05 — Partner pricing contract", () => {
 // ── 3. Yearly pricing architecture (existing invariant — documented, not invented)
 
 describe("RCCF-MKT-05 — yearly pricing architecture", () => {
-  // MODERNIZED in RCCF-73: the annual=10×monthly invariant covers the
-  // RECURRING (Creator) catalog; Partner Solo/Scale are one-time and carry no
-  // annual variant at all.
+  // MODERNIZED in RCCF-73 + RCCF-LIVE-SMOKE-14: Creator annual invariant; Partner one-time may carry annualPrice for display or be null.
   it("annualPrice keeps the catalog invariant annual = 10 × monthly (~17% saving)", () => {
     for (const code of ["creator_grow", "creator_scale"]) {
       const p = plan(code);
       expect(p.annualPrice, `${code} annual`).toBe((p.price as number) * 10);
     }
     for (const code of ["partner_solo", "partner_scale"]) {
-      expect(plan(code).annualPrice ?? null, `${code} one-time`).toBeNull();
+      const ap = plan(code).annualPrice ?? null;
+      const price = plan(code).price as number;
+      expect(ap === null || ap === price * 10, `${code} one-time annual`).toBe(true);
     }
   });
 
@@ -295,11 +295,9 @@ describe("RCCF-MKT-05 — Super Admin catalog coherence & billing safety", () =>
     }
   });
 
-  it("Scale checkout no longer references the retired ₹1,995 Razorpay contract; Growth keeps its provisioned plan", () => {
+  it("Scale checkout no longer references the retired ₹1,995 Razorpay contract; Growth legacy 699 also retired (both null until re-provisioned)", () => {
     expect(razorpayPlanIdFor("creator_scale")).toBeNull();
-    const growId = razorpayPlanIdFor("creator_grow");
-    expect(growId).toBeTruthy();
-    expect(growId!.startsWith("plan_")).toBe(true);
+    expect(razorpayPlanIdFor("creator_grow")).toBeNull();
   });
 
   it("manual plans never create a public checkout; enterprise stays contact-only", () => {

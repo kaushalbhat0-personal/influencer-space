@@ -19,7 +19,7 @@ test("R9.1 - Billing harness exposes the subscription + capability state", async
   expect(await page.locator('[data-testid="bh-status"]').innerText()).toMatch(/ACTIVE|TRIALING|CANCELLED|PAST_DUE|EXPIRED|none/);
   // Capability matrix + enabled capabilities render.
   const matrix = await page.locator('[data-testid="bh-plan-mapping"] [data-plan="creator_grow"]').innerText();
-  expect(matrix).toContain("699");
+  expect(matrix).toContain("999");
   expect(await page.locator('[data-testid="bh-capabilities"]').innerText().then((t) => t.length)).toBeGreaterThan(0);
 
   await shot(page, "r9-1-billing-harness");

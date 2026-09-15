@@ -213,7 +213,13 @@ export const COMMERCE_PLANS: CommercePlanConfig[] = [
     price: 999,
     currency: "INR",
     cycle: "monthly",
-    razorpayPlanId: "plan_TLTGQBU1EXkseF",
+    // RCCF-LIVE-SMOKE-14: legacy Razorpay plan `plan_TLTGQBU1EXkseF` (legacy amount) removed.
+    // Canonical is ₹999/month (₹9,990/year). No active Razorpay plan exists yet for
+    // the new price — checkout falls back to DB-authoritative ORDER at ₹999 until
+    // a fresh subscription plan is provisioned via Super Admin Pricing Center
+    // (savePlanConfig auto-provisions on next price-authorized save, like Scale
+    // plan_TTZhIq131KIkGH). Do not reintroduce legacy ID as fallback.
+    razorpayPlanId: null,
     manual: false,
     recommended: true,
     popular: true,

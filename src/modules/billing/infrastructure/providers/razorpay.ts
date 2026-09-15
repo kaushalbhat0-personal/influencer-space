@@ -62,11 +62,13 @@ export class RazorpayProvider implements BillingProvider {
       // RCCF-LIVE-SMOKE-01: smokeTest MUST force ORDER path (100 paise) — even
       // for creator_grow/scale which otherwise would use subscription plan.
       // Provider must not fallback to registry when smokeTest explicitly nulled razorpayPlanId.
-      const planId = params.smokeTest
+      let planId: string | null = params.smokeTest
         ? null
         : isOneTimePlan(params.planCode)
           ? null
           : params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
+      // RCCF-LIVE-SMOKE-14: hard guard — legacy ₹699 plan must never be used even if DB/params still carries it
+      if (planId === "plan_TLTGQBU1EXkseF") planId = null;
       if (planId && !isManualPlan(params.planCode)) {
         // RCCF-FINANCE-03: cycle-aware — yearly uses single period vs monthly 12
         let totalCount = 12;

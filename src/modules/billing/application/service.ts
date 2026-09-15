@@ -86,7 +86,11 @@ export class BillingService {
     // RCCF-FINANCE-03: cycle-aware pricing — yearly checkout charges annualPrice / yearly canonical.
     const rc = (dbPlan?.runtimeConfig as PlanRuntimeConfig | null) ?? null;
     let checkoutPrice = plan.price;
-    let checkoutPlanId = rc?.pricing?.razorpayPlanId ?? null;
+    // RCCF-LIVE-SMOKE-14: legacy ₹699 plan `plan_TLTGQBU1EXkseF` is retired — never use as fallback.
+    // If DB still carries it (pre-cleanup), treat as null so checkout does not bill old amount.
+    const LEGACY_GROW_PLAN = "plan_TLTGQBU1EXkseF";
+    let checkoutPlanId: string | null = rc?.pricing?.razorpayPlanId ?? null;
+    if (checkoutPlanId === LEGACY_GROW_PLAN) checkoutPlanId = null;
     if (cycle === "yearly") {
       // Prefer canonical yearly from agency-commercial, fallback to commerce annualPrice
       try {

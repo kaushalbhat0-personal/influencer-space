@@ -8,9 +8,9 @@ Playwright, and the webhook simulator.
 
 1. Create a Razorpay account (test mode) at https://dashboard.razorpay.com.
 2. **Plans** → create three plans:
-   - `Creator Grow` → internal code `creator_grow` → ₹699/month → copy the
-     `plan_...` id.
-   - `Creator Scale` → `creator_scale` → ₹1,995/month → copy the `plan_...` id.
+   - `Creator Grow` → internal code `creator_grow` → ₹999/month → copy the
+     `plan_...` id (legacy `plan_TLTGQBU1EXkseF` ₹699 retired — do not reuse).
+   - `Creator Scale` → `creator_scale` → ₹1,999/month → copy the `plan_...` id.
 3. Put those plan ids into `src/config/commerce/plans.ts` (`razorpayPlanId`).
    **Never reference them in feature code.**
 

@@ -35,10 +35,23 @@ describe("RCCF-36 — Razorpay provider DB-authoritative resolution", () => {
   });
 
   it("falls back to the registry razorpay plan id when no DB id is present", async () => {
-    await razorpayProvider.createCheckout({ planCode: "creator_grow", accountId: "ws-1", currency: "INR" });
+    // RCCF-LIVE-SMOKE-14: registry for creator_grow is now null (legacy 699 removed). No plan -> ORDER at DB price.
+    await razorpayProvider.createCheckout({ planCode: "creator_grow", accountId: "ws-1", currency: "INR", price: 999 });
 
-    // registry razorpayPlanIdFor("creator_grow") = plan_TLTGQBU1EXkseF
-    expect(h.mockSubscriptionsCreate).toHaveBeenCalledWith(expect.objectContaining({ plan_id: "plan_TLTGQBU1EXkseF" }));
+    expect(h.mockSubscriptionsCreate).not.toHaveBeenCalled();
+    expect(h.mockOrdersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 99900 }));
+  });
+
+  it("legacy ₹699 plan plan_TLTGQBU1EXkseF is never used for creator_grow (regression)", async () => {
+    await razorpayProvider.createCheckout({ planCode: "creator_grow", accountId: "ws-1", currency: "INR", price: 999, razorpayPlanId: "plan_TLTGQBU1EXkseF" });
+    expect(h.mockSubscriptionsCreate).not.toHaveBeenCalled();
+    expect(h.mockOrdersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 99900 }));
+  });
+
+  it("smokeTest forces ORDER at 100 paise even for creator_grow", async () => {
+    await razorpayProvider.createCheckout({ planCode: "creator_grow", accountId: "ws-1", currency: "INR", price: 1, razorpayPlanId: null, smokeTest: true });
+    expect(h.mockSubscriptionsCreate).not.toHaveBeenCalled();
+    expect(h.mockOrdersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 100 }));
   });
 
   it("one-time order amount derives from the DB price, not the registry", async () => {

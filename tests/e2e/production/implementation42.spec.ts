@@ -25,8 +25,8 @@ test("R16.1 - Marketing pricing renders canonical creator + partner plans", asyn
   // Creator plans (canonical codes, real prices).
   await page.waitForSelector("text=Creator Launch", { timeout: 30000 });
   expect(await page.locator("text=Creator Grow").count()).toBeGreaterThan(0);
-  expect(await page.locator("text=₹699").count()).toBeGreaterThan(0);
-  expect(await page.locator("text=₹1,995").count()).toBeGreaterThan(0);
+  expect(await page.locator("text=₹999").count()).toBeGreaterThan(0);
+  expect(await page.locator("text=₹1,999").count()).toBeGreaterThan(0);
 
   // Partner tab → canonical partner plans + partner-rules note.
   await page.click("text=For Partners");

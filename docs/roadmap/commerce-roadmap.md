@@ -8,8 +8,8 @@ reflects their status. Markers: ✅ completed · 🚧 in progress · 🟦 planne
 | Plan | Code | Price | Razorpay plan | Status |
 |---|---|---|---|---|
 | Creator Launch | `creator_launch` | ₹0 | — | ✅ |
-| Creator Grow | `creator_grow` | ₹699/mo | `plan_TLTGQBU1EXkseF` (config) | ✅ |
-| Creator Scale | `creator_scale` | ₹1,995/mo | `plan_TLTH45wQlPdW7v` (config) | ✅ |
+| Creator Grow | `creator_grow` | ₹999/mo | — (DB-authoritative, legacy `plan_TLTGQBU1EXkseF` retired) | ✅ |
+| Creator Scale | `creator_scale` | ₹1,999/mo | — (DB-authoritative `plan_TTZhIq131KIkGH`) | ✅ |
 | Creator Enterprise | `creator_enterprise` | Manual sales | — | ✅ (manual) |
 
 Razorpay plan ids are **configuration only** — code references internal codes
