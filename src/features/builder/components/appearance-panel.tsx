@@ -423,6 +423,11 @@ export function AppearancePanel({
         </div>
       </Field>
 
+      {/* RCCF-BUILDER-UX-01 — hero media vs presentation guidance */}
+      <div className="rounded-md border border-white/10 bg-white/[0.02] p-2">
+        <p className="text-[10px] leading-snug text-zinc-400">Hero media is managed in Settings. Builder controls how your hero is presented.</p>
+        <Link href="/admin/settings" className="mt-1 inline-flex text-[10px] font-medium text-[var(--brand-primary)] hover:underline underline-offset-2">Manage hero media → Settings</Link>
+      </div>
       {/* RCCF-71.3 — Hero Presentation (text alignment / content width / overlay
            strength). Persisted into Website.themeConfig through the same
            premium_themes-gated `updateTheme`; the canvas + publish resolve the

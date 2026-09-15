@@ -39,7 +39,7 @@ export function AddSectionButton({ onAdded }: { onAdded?: () => void }) {
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Add Section</h3>
               <button onClick={() => setOpen(false)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">Close</button>
             </div>
-            <p className="text-xs text-[var(--text-muted)] mb-3">Choose a section to add. A new empty section will be created.</p>
+            <p className="text-xs text-[var(--text-muted)] mb-3">Add a section in Builder — Choose a section from the Builder section catalog, then customize it there.</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {FEATURED_SECTIONS.map((entry) => (
                 <button

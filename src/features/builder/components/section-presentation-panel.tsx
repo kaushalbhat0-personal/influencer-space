@@ -69,6 +69,7 @@ export function SectionPresentationPanel() {
           <label className="flex flex-1 flex-col gap-1 text-[11px] text-zinc-400">
             Title
             <input className={inputCls} value={p.titleOverride ?? ""} onChange={(e) => set({ titleOverride: e.target.value || undefined })} placeholder="e.g. Courses, Portfolio, My Journey" />
+            <span className="text-[10px] leading-snug text-zinc-500">Display title — changes how this section title appears without changing the original content.</span>
           </label>
           <ResetButton property="titleOverride" show={p.titleOverride !== undefined} />
         </div>
