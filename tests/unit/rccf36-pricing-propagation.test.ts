@@ -78,14 +78,18 @@ describe("RCCF-36 — checkout uses the DB-authoritative price + provisioned pla
     const res = await billingService.createCheckout("ws-1", "creator_grow", "c@x.io");
 
     expect(res.success).toBe(true);
-    expect(h.mockProviderCreateCheckout).toHaveBeenCalledWith({
-      planCode: "creator_grow",
-      accountId: "ws-1",
-      email: "c@x.io",
-      currency: "INR",
-      price: 999,
-      razorpayPlanId: "plan_prov_1",
-    });
+    expect(h.mockProviderCreateCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planCode: "creator_grow",
+        accountId: "ws-1",
+        email: "c@x.io",
+        currency: "INR",
+        price: 999,
+        razorpayPlanId: "plan_prov_1",
+        smokeTest: false,
+        cycle: "monthly",
+      }),
+    );
   });
 
   it("passes price:null razorpayPlanId when the DB plan has no runtime config (registry fallback)", async () => {

@@ -59,7 +59,14 @@ export class RazorpayProvider implements BillingProvider {
       // no recurring subscription contract may exist for them, even if a stale
       // DB runtimeConfig still carries a legacy provider plan id. They fall
       // through to a single Razorpay ORDER at the DB-authoritative price.
-      const planId = isOneTimePlan(params.planCode) ? null : params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
+      // RCCF-LIVE-SMOKE-01: smokeTest MUST force ORDER path (100 paise) — even
+      // for creator_grow/scale which otherwise would use subscription plan.
+      // Provider must not fallback to registry when smokeTest explicitly nulled razorpayPlanId.
+      const planId = params.smokeTest
+        ? null
+        : isOneTimePlan(params.planCode)
+          ? null
+          : params.razorpayPlanId ?? razorpayPlanIdFor(params.planCode);
       if (planId && !isManualPlan(params.planCode)) {
         // RCCF-FINANCE-03: cycle-aware — yearly uses single period vs monthly 12
         let totalCount = 12;
@@ -121,7 +128,37 @@ export class RazorpayProvider implements BillingProvider {
         providerOrderId: order.id,
       };
     } catch (error) {
-      captureError(error, { service: "razorpay-provider", operation: "createCheckout", planCode: params.planCode });
+      // RCCF-LIVE-SMOKE-13B — sanitized Razorpay error observability (no secrets)
+      const raw = error as {
+        statusCode?: number;
+        status?: number;
+        error?: { code?: string; description?: string; reason?: string; field?: string; step?: string; source?: string };
+        message?: string;
+      };
+      const statusCode = typeof raw.statusCode === "number" ? raw.statusCode : typeof raw.status === "number" ? raw.status : undefined;
+      const errCode = raw.error?.code ?? undefined;
+      const errDesc = raw.error?.description ?? raw.message ?? undefined;
+      const errReason = raw.error?.reason ?? undefined;
+      // Log only non-secret structured fields (captureError context is strict; details go to logger)
+      captureError(error, {
+        service: "razorpay-provider",
+        operation: "createCheckout",
+      });
+      // Also structured logger for production log search (no secrets)
+      try {
+        const { logger } = await import("@/lib/observability/logger");
+        logger.info("razorpay createCheckout failed", "billing", {
+          operation: "create_checkout",
+          metadata: {
+            planCode: params.planCode,
+            smokeTest: !!params.smokeTest,
+            statusCode: statusCode ?? null,
+            errorCode: errCode ?? null,
+            errorDescription: errDesc ?? null,
+            errorReason: errReason ?? null,
+          } as Record<string, unknown>,
+        });
+      } catch {}
       return {
         success: false,
         error: error instanceof Error ? error.message : "Checkout creation failed",

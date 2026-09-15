@@ -102,7 +102,8 @@ export async function createSmokeTestCheckout(input: {
   if (!enabled) return { success: false, error: "Smoke test not enabled — enable ₹1 mode first" };
 
   const { billingService } = await import("@/modules/billing/application/service");
-  const result = await billingService.changePlan(input.workspaceId, input.planCode, undefined, input.cycle ?? "monthly");
+  // RCCF-LIVE-SMOKE-13B: bypass changePlan's "Already on plan" guard — smoke test must always produce an ₹1 ORDER for verification even if workspace already on that plan.
+  const result = await billingService.createCheckout(input.workspaceId, input.planCode, undefined, input.cycle ?? "monthly");
   if (!result.success) return { success: false, error: result.error };
   // Amount is server-derived (₹1) — never from input
   const amountPaise = 100;
